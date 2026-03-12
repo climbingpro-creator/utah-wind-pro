@@ -1,5 +1,6 @@
 import React from 'react';
 import { Wind, Sailboat, Ship, Waves } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 
 // Activity configurations with thresholds and preferences
 export const ACTIVITY_CONFIGS = {
@@ -108,10 +109,12 @@ export const ACTIVITY_CONFIGS = {
 };
 
 const ActivityMode = ({ selectedActivity, onActivityChange }) => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const activities = ['kiting', 'sailing', 'boating', 'paddling', 'paragliding'];
   
   return (
-    <div className="flex items-center gap-1 bg-slate-800/50 rounded-lg p-1">
+    <div className={`flex items-center gap-1 rounded-lg p-1 ${isDark ? 'bg-slate-800/50' : 'bg-slate-100'}`}>
       {activities.map(activityId => {
         const activity = ACTIVITY_CONFIGS[activityId];
         const isSelected = selectedActivity === activityId;
@@ -125,7 +128,9 @@ const ActivityMode = ({ selectedActivity, onActivityChange }) => {
               transition-all duration-200
               ${isSelected 
                 ? 'bg-blue-600 text-white shadow-lg' 
-                : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+                : (isDark 
+                    ? 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200')
               }
             `}
             title={activity.description}

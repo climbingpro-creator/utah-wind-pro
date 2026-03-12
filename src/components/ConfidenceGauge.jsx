@@ -1,6 +1,9 @@
 import { useMemo } from 'react';
+import { useTheme } from '../context/ThemeContext';
 
 export function ConfidenceGauge({ value, size = 200 }) {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const rotation = useMemo(() => {
     const clampedValue = Math.max(0, Math.min(100, value));
     return (clampedValue / 100) * 180 - 90;
@@ -39,7 +42,7 @@ export function ConfidenceGauge({ value, size = 200 }) {
           <path
             d="M 20 100 A 80 80 0 0 1 180 100"
             fill="none"
-            stroke="#334155"
+            stroke={isDark ? "#334155" : "#e2e8f0"}
             strokeWidth="16"
             strokeLinecap="round"
           />
@@ -69,13 +72,13 @@ export function ConfidenceGauge({ value, size = 200 }) {
                   y1={y1}
                   x2={x2}
                   y2={y2}
-                  stroke="#64748b"
+                  stroke={isDark ? "#64748b" : "#94a3b8"}
                   strokeWidth="2"
                 />
                 <text
                   x={textX}
                   y={textY}
-                  fill="#94a3b8"
+                  fill={isDark ? "#94a3b8" : "#64748b"}
                   fontSize="10"
                   textAnchor="middle"
                   dominantBaseline="middle"
@@ -93,7 +96,7 @@ export function ConfidenceGauge({ value, size = 200 }) {
               className="drop-shadow-lg"
             />
             <circle cx="100" cy="100" r="6" fill={color} />
-            <circle cx="100" cy="100" r="3" fill="#1e293b" />
+            <circle cx="100" cy="100" r="3" fill={isDark ? "#1e293b" : "#ffffff"} />
           </g>
         </svg>
       </div>
@@ -102,15 +105,17 @@ export function ConfidenceGauge({ value, size = 200 }) {
       <div 
         className="text-4xl font-black drop-shadow-lg -mt-1"
         style={{ 
-          color: '#fff',
-          textShadow: `0 0 20px ${color}, 0 2px 4px rgba(0,0,0,0.8)`,
+          color: isDark ? '#fff' : '#1e293b',
+          textShadow: isDark 
+            ? `0 0 20px ${color}, 0 2px 4px rgba(0,0,0,0.8)` 
+            : `0 0 10px ${color}40`,
         }}
       >
         {value}
         <span className="text-2xl">%</span>
       </div>
       
-      <p className="text-slate-300 text-sm mt-1 font-medium">Thermal Confidence Score</p>
+      <p className={`text-sm mt-1 font-medium ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>Thermal Confidence Score</p>
     </div>
   );
 }

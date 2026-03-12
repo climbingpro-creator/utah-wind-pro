@@ -265,24 +265,31 @@ export function Dashboard() {
         {activityScore && (
           <div className={`
             rounded-xl p-4 border flex items-center justify-between
-            ${activityScore.score >= 70 ? 'bg-green-500/10 border-green-500/30' :
-              activityScore.score >= 40 ? 'bg-yellow-500/10 border-yellow-500/30' :
-              'bg-red-500/10 border-red-500/30'}
+            ${activityScore.score >= 70 
+              ? (theme === 'dark' ? 'bg-green-500/10 border-green-500/30' : 'bg-green-100 border-green-300')
+              : activityScore.score >= 40 
+                ? (theme === 'dark' ? 'bg-yellow-500/10 border-yellow-500/30' : 'bg-yellow-100 border-yellow-300')
+                : (theme === 'dark' ? 'bg-red-500/10 border-red-500/30' : 'bg-red-100 border-red-300')}
           `}>
             <div className="flex items-center gap-3">
               <span className="text-2xl">{activityConfig?.icon}</span>
               <div>
                 <div className={`font-medium ${
-                  activityScore.score >= 70 ? 'text-green-400' :
-                  activityScore.score >= 40 ? 'text-yellow-400' : 'text-red-400'
+                  activityScore.score >= 70 
+                    ? (theme === 'dark' ? 'text-green-400' : 'text-green-700')
+                    : activityScore.score >= 40 
+                      ? (theme === 'dark' ? 'text-yellow-400' : 'text-yellow-700')
+                      : (theme === 'dark' ? 'text-red-400' : 'text-red-700')
                 }`}>
                   {activityConfig?.name} Score: {activityScore.score}%
                 </div>
-                <div className="text-sm text-slate-400">{activityScore.message}</div>
+                <div className={`text-sm ${theme === 'dark' ? 'text-slate-400' : 'text-slate-600'}`}>{activityScore.message}</div>
               </div>
             </div>
             {activityScore.gustFactor > 1.3 && (
-              <div className="text-xs text-orange-400 bg-orange-500/20 px-2 py-1 rounded">
+              <div className={`text-xs px-2 py-1 rounded ${
+                theme === 'dark' ? 'text-orange-400 bg-orange-500/20' : 'text-orange-700 bg-orange-100'
+              }`}>
                 ⚠️ Gusty ({((activityScore.gustFactor - 1) * 100).toFixed(0)}%)
               </div>
             )}
@@ -290,9 +297,13 @@ export function Dashboard() {
         )}
 
         {error && (
-          <div className="bg-red-900/30 border border-red-500/50 rounded-xl p-4 text-red-400">
+          <div className={`rounded-xl p-4 border ${
+            theme === 'dark' 
+              ? 'bg-red-900/30 border-red-500/50 text-red-400' 
+              : 'bg-red-100 border-red-300 text-red-700'
+          }`}>
             <p className="font-medium">Connection Error</p>
-            <p className="text-sm text-red-400/80">{error}</p>
+            <p className={`text-sm ${theme === 'dark' ? 'text-red-400/80' : 'text-red-600'}`}>{error}</p>
           </div>
         )}
 
@@ -314,8 +325,12 @@ export function Dashboard() {
             {/* Activity-Specific Primary Gauge */}
             {activityConfig?.wantsWind ? (
               /* Wind-seeking activities: Show Thermal Confidence */
-              <div className="flex flex-col items-center bg-slate-800/30 rounded-2xl p-6 border border-slate-700">
-                <div className="text-xs text-slate-500 mb-2">
+              <div className={`flex flex-col items-center rounded-2xl p-6 border ${
+                theme === 'dark' 
+                  ? 'bg-slate-800/30 border-slate-700' 
+                  : 'bg-white border-slate-200 shadow-sm'
+              }`}>
+                <div className={`text-xs mb-2 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-500'}`}>
                   {selectedActivity === 'sailing' ? 'Racing Wind Probability' : 'Thermal Probability'}
                 </div>
                 <ConfidenceGauge value={lakeState?.probability || 0} size={180} />
