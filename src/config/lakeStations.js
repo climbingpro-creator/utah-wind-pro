@@ -78,9 +78,9 @@ export const LAKE_CONFIGS = {
       ],
       
       groundTruth: {
-        id: 'FPS',
-        name: 'Flight Park South',
-        role: 'Ground Truth - Thermal indicator',
+        id: 'KPVU',
+        name: 'Provo Municipal Airport',
+        role: 'Ground Truth - Best indicator for southern launches',
       },
       
       // Spanish Fork Canyon early indicator
@@ -105,28 +105,30 @@ export const LAKE_CONFIGS = {
       
       lakeshore: [
         { 
-          id: 'FPS', 
-          name: 'Flight Park South',
-          elevation: 5202,
-          role: 'Primary thermal indicator station',
+          id: 'KPVU', 
+          name: 'Provo Municipal Airport',
+          elevation: 4495,
+          role: 'Primary indicator - closest to Lincoln Beach',
           priority: 1
         },
         { 
-          id: 'KPVU', 
-          name: 'Provo Municipal',
-          elevation: 4495,
-          role: 'Valley floor reference',
+          id: 'FPS', 
+          name: 'Flight Park South',
+          elevation: 5202,
+          role: 'Secondary - good for SE thermal only',
           priority: 2
         },
       ],
       
       reference: [
         { id: 'UTALP', name: 'Point of the Mountain', elevation: 4796 },
+        { id: 'FPS', name: 'Flight Park South', elevation: 5202 },
       ],
     },
     
     thermal: {
       optimalDirection: { min: 135, max: 165, ideal: 150 },
+      northFlow: { min: 315, max: 45, ideal: 360 },
       optimalSpeed: { min: 8, max: 18, average: 10.3 },
       peakHours: { start: 10, end: 13, peak: 11 },
       buildTime: { start: 5, usable: 8 },
@@ -184,28 +186,37 @@ export const LAKE_CONFIGS = {
       ],
       
       groundTruth: {
-        id: 'FPS',
-        name: 'Flight Park South',
-        role: 'Ground Truth - Thermal indicator',
+        id: 'KPVU',
+        name: 'Provo Municipal Airport',
+        role: 'Ground Truth - Best indicator for southern launches',
       },
       
       lakeshore: [
         { 
+          id: 'KPVU', 
+          name: 'Provo Municipal Airport',
+          elevation: 4495,
+          role: 'Primary indicator - closest to Sandy Beach',
+          priority: 1
+        },
+        { 
           id: 'FPS', 
           name: 'Flight Park South',
           elevation: 5202,
-          role: 'Primary thermal indicator',
-          priority: 1
+          role: 'Secondary - good for SE thermal only',
+          priority: 2
         },
       ],
       
       reference: [
         { id: 'UTALP', name: 'Point of the Mountain', elevation: 4796 },
+        { id: 'FPS', name: 'Flight Park South', elevation: 5202 },
       ],
     },
     
     thermal: {
       optimalDirection: { min: 130, max: 160, ideal: 145 },
+      northFlow: { min: 315, max: 45, ideal: 360 },
       optimalSpeed: { min: 8, max: 18, average: 10 },
       peakHours: { start: 10, end: 13, peak: 11 },
       buildTime: { start: 5, usable: 8 },
