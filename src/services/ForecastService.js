@@ -79,13 +79,22 @@ const ALERT_SEVERITY = {
   'Minor': { level: 1, color: 'blue', action: 'Monitor conditions' },
 };
 
+// Forecast stages for multi-stage prediction system
+export const FORECAST_STAGES = {
+  DAY_BEFORE: 'day_before',      // Evening before - initial outlook
+  MORNING: 'morning',            // Morning of - updated forecast
+  PRE_THERMAL: 'pre_thermal',    // 1-2 hours before expected thermal
+  IMMINENT: 'imminent',          // 30 min - 1 hour before
+  ACTIVE: 'active',              // Thermal/wind event is happening
+};
+
 /**
  * Fetch NWS forecast grid data for a location
  */
 async function getForecastGrid(lat, lng) {
   try {
     const response = await axios.get(`${NWS_BASE_URL}/points/${lat},${lng}`, {
-      headers: { 'User-Agent': USER_AGENT },
+      headers: { 'Accept': 'application/geo+json' },
       timeout: 10000,
     });
     
@@ -110,7 +119,7 @@ export async function getActiveAlerts() {
   try {
     const response = await axios.get(`${NWS_BASE_URL}/alerts/active`, {
       params: { area: 'UT' },
-      headers: { 'User-Agent': USER_AGENT },
+      headers: { 'Accept': 'application/geo+json' },
       timeout: 10000,
     });
     
@@ -197,7 +206,7 @@ export async function get7DayForecast(locationId = 'utah-lake') {
     if (!grid) return null;
     
     const response = await axios.get(grid.forecastUrl, {
-      headers: { 'User-Agent': USER_AGENT },
+      headers: { 'Accept': 'application/geo+json' },
       timeout: 10000,
     });
     
@@ -234,7 +243,7 @@ export async function getHourlyForecast(locationId = 'utah-lake') {
     if (!grid) return null;
     
     const response = await axios.get(grid.forecastHourlyUrl, {
-      headers: { 'User-Agent': USER_AGENT },
+      headers: { 'Accept': 'application/geo+json' },
       timeout: 10000,
     });
     
@@ -558,11 +567,170 @@ export function correlateForecastWithIndicators(forecastAnalysis, currentIndicat
   return correlation;
 }
 
+/**
+ * Get full forecast with multi-stage predictions
+ * This is a synchronous function that calculates forecast based on current conditions
+ */
+export function getFullForecast(locationId, conditions = {}) {
+  const {
+    pressureGradient = 0,
+    eveningTemp,
+    eveningWindSpeed = 0,
+    morningTemp,
+    morningWindSpeed = 0,
+    morningWindDirection,
+    currentWindSpeed = 0,
+    currentWindDirection,
+    thermalDelta = 0,
+  } = conditions;
+  
+  const now = new Date();
+  const hour = now.getHours();
+  
+  // Determine current stage based on time of day
+  let currentStage = FORECAST_STAGES.DAY_BEFORE;
+  if (hour >= 6 && hour < 10) {
+    currentStage = FORECAST_STAGES.MORNING;
+  } else if (hour >= 10 && hour < 11) {
+    currentStage = FORECAST_STAGES.PRE_THERMAL;
+  } else if (hour >= 11 && hour < 12) {
+    currentStage = FORECAST_STAGES.IMMINENT;
+  } else if (hour >= 12 && hour < 18) {
+    currentStage = FORECAST_STAGES.ACTIVE;
+  }
+  
+  // Calculate base probability from conditions
+  let baseProbability = 50;
+  
+  // Pressure gradient effect
+  if (Math.abs(pressureGradient) < 1.0) {
+    baseProbability += 20; // Good for thermal
+  } else if (Math.abs(pressureGradient) > 2.0) {
+    baseProbability -= 20; // North flow dominant
+  }
+  
+  // Thermal delta effect
+  if (thermalDelta > 5) {
+    baseProbability += 15;
+  } else if (thermalDelta > 10) {
+    baseProbability += 25;
+  }
+  
+  // Wind speed effect
+  if (currentWindSpeed > 8 && currentWindSpeed < 20) {
+    baseProbability += 10;
+  }
+  
+  baseProbability = Math.max(0, Math.min(100, baseProbability));
+  
+  // Determine wind type
+  let windType = 'thermal';
+  let expectedDirection = 'SE';
+  
+  if (pressureGradient > 1.5) {
+    windType = 'north_flow';
+    expectedDirection = 'N';
+    baseProbability = Math.min(baseProbability + 20, 95);
+  } else if (pressureGradient < -1.5) {
+    windType = 'south_flow';
+    expectedDirection = 'S';
+  }
+  
+  // Build stage forecasts
+  const stages = {
+    [FORECAST_STAGES.DAY_BEFORE]: {
+      stage: FORECAST_STAGES.DAY_BEFORE,
+      probability: Math.round(baseProbability * 0.7), // Lower confidence day before
+      confidence: 0.6,
+      windType,
+      expectedDirection,
+      expectedSpeed: { min: 8, max: 15 },
+      message: `${windType === 'thermal' ? 'Thermal' : 'North flow'} conditions expected tomorrow`,
+      factors: [
+        { name: 'Pressure Gradient', value: pressureGradient?.toFixed(1) || '0', impact: pressureGradient > 1.5 ? 'positive' : 'neutral' },
+      ],
+    },
+    [FORECAST_STAGES.MORNING]: {
+      stage: FORECAST_STAGES.MORNING,
+      probability: Math.round(baseProbability * 0.85),
+      confidence: 0.75,
+      windType,
+      expectedDirection,
+      expectedSpeed: { min: 10, max: 18 },
+      message: morningWindSpeed > 5 
+        ? 'Early wind activity detected - good sign' 
+        : 'Calm morning - thermal development expected',
+      factors: [
+        { name: 'Morning Wind', value: `${morningWindSpeed?.toFixed(0) || 0} mph`, impact: morningWindSpeed > 5 ? 'positive' : 'neutral' },
+        { name: 'Temperature', value: `${morningTemp?.toFixed(0) || '--'}°F`, impact: 'neutral' },
+      ],
+    },
+    [FORECAST_STAGES.PRE_THERMAL]: {
+      stage: FORECAST_STAGES.PRE_THERMAL,
+      probability: Math.round(baseProbability * 0.95),
+      confidence: 0.85,
+      windType,
+      expectedDirection,
+      expectedSpeed: { min: 10, max: 20 },
+      message: thermalDelta > 5 
+        ? 'Thermal pump active - wind building' 
+        : 'Conditions developing',
+      factors: [
+        { name: 'Thermal Delta', value: `${thermalDelta?.toFixed(1) || 0}°F`, impact: thermalDelta > 5 ? 'positive' : 'neutral' },
+      ],
+    },
+    [FORECAST_STAGES.IMMINENT]: {
+      stage: FORECAST_STAGES.IMMINENT,
+      probability: baseProbability,
+      confidence: 0.9,
+      windType,
+      expectedDirection,
+      expectedSpeed: { min: 12, max: 22 },
+      message: currentWindSpeed > 8 
+        ? 'Wind event starting!' 
+        : 'Thermal should start within 30-60 minutes',
+      factors: [
+        { name: 'Current Wind', value: `${currentWindSpeed?.toFixed(0) || 0} mph`, impact: currentWindSpeed > 8 ? 'positive' : 'neutral' },
+      ],
+    },
+    [FORECAST_STAGES.ACTIVE]: {
+      stage: FORECAST_STAGES.ACTIVE,
+      probability: baseProbability,
+      confidence: 0.95,
+      windType,
+      expectedDirection,
+      expectedSpeed: { min: currentWindSpeed * 0.8, max: currentWindSpeed * 1.3 },
+      message: currentWindSpeed > 10 
+        ? `Active ${windType === 'thermal' ? 'thermal' : 'north flow'} - ${currentWindSpeed?.toFixed(0)} mph` 
+        : 'Light conditions - may improve',
+      factors: [
+        { name: 'Current Wind', value: `${currentWindSpeed?.toFixed(0) || 0} mph ${currentWindDirection ? `from ${currentWindDirection}°` : ''}`, impact: currentWindSpeed > 10 ? 'positive' : 'negative' },
+      ],
+    },
+  };
+  
+  return {
+    locationId,
+    timestamp: now.toISOString(),
+    currentStage,
+    stages,
+    overall: {
+      probability: baseProbability,
+      windType,
+      expectedDirection,
+      peakWindow: '12:00 PM - 4:00 PM',
+      confidence: stages[currentStage]?.confidence || 0.7,
+    },
+  };
+}
+
 export default {
   getActiveAlerts,
   get7DayForecast,
   getHourlyForecast,
   getKiteWindows,
   getForecastSummary,
+  getFullForecast,
   correlateForecastWithIndicators,
+  FORECAST_STAGES,
 };

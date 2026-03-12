@@ -2,14 +2,61 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    
+    <!-- SEO & Social -->
+    <title>Utah Wind Pro - Professional Wind Forecasting</title>
+    <meta name="description" content="Real-time wind forecasting for Utah Lake, Deer Creek, and Willard Bay. Thermal predictions for kiteboarding, sailing, boating, and paddling." />
+    <meta name="keywords" content="Utah Lake wind, kiteboarding Utah, sailing forecast, thermal wind, Deer Creek wind, Willard Bay, wind prediction" />
+    <meta name="author" content="Utah Wind Pro" />
+    
+    <!-- Open Graph / Social Sharing -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://utahwindpro.com/" />
+    <meta property="og:title" content="Utah Wind Pro - Professional Wind Forecasting" />
+    <meta property="og:description" content="Real-time wind forecasting for Utah Lake, Deer Creek, and Willard Bay. Know before you go!" />
+    <meta property="og:image" content="https://utahwindpro.com/og-image.png" />
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Utah Wind Pro" />
+    <meta name="twitter:description" content="Real-time wind forecasting for Utah's best water sports locations" />
+    
+    <!-- PWA / Mobile -->
     <meta name="theme-color" content="#0f172a" />
-    <meta name="description" content="Thermal wind predictions for Utah Lake, Deer Creek, and Willard Bay" />
-    <title>Utah Wind Pro</title>
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="UtahWind" />
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-32x32.png" />
+    
+    <!-- Preconnect to API domains for faster loading -->
+    <link rel="preconnect" href="https://api.synopticdata.com" />
+    <link rel="preconnect" href="https://rt.ambientweather.net" />
+    <link rel="preconnect" href="https://api.weather.gov" />
+    
+    <!-- Leaflet CSS for maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" 
+          crossorigin="" />
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+    
+    <!-- Register Service Worker -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then(reg => console.log('SW registered'))
+            .catch(err => console.log('SW registration failed:', err));
+        });
+      }
+    </script>
   </body>
 </html>

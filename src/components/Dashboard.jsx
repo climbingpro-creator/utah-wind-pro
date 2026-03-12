@@ -18,6 +18,13 @@ import { NotificationSettings } from './NotificationSettings';
 import { checkAndNotify } from '../services/NotificationService';
 import { getFullForecast } from '../services/ForecastService';
 import LearningDashboard from './LearningDashboard';
+import ActivityMode, { ACTIVITY_CONFIGS, calculateActivityScore, calculateGlassScore } from './ActivityMode';
+import GlassScore from './GlassScore';
+import HourlyTimeline from './HourlyTimeline';
+import WeeklyBestDays from './WeeklyBestDays';
+import RaceDayMode from './RaceDayMode';
+import SevereWeatherAlerts from './SevereWeatherAlerts';
+import DataFreshness from './DataFreshness';
 
 function windDirectionToCardinal(degrees) {
   if (degrees == null) return 'N/A';
@@ -30,7 +37,20 @@ export function Dashboard() {
   const [selectedLake, setSelectedLake] = useState('utah-lake');
   const [showNotificationSettings, setShowNotificationSettings] = useState(false);
   const [showLearningDashboard, setShowLearningDashboard] = useState(false);
+  const [selectedActivity, setSelectedActivity] = useState('kiting');
   const { lakeState, history, status, isLoading, error, lastUpdated, refresh } = useLakeData(selectedLake);
+  
+  // Get activity-specific data
+  const activityConfig = ACTIVITY_CONFIGS[selectedActivity];
+  const currentWindSpeed = lakeState?.pws?.windSpeed || lakeState?.wind?.stations?.[0]?.speed;
+  const currentWindGust = lakeState?.pws?.windGust || lakeState?.wind?.stations?.[0]?.gust;
+  const currentWindDirection = lakeState?.pws?.windDirection || lakeState?.wind?.stations?.[0]?.direction;
+  
+  const activityScore = selectedActivity && currentWindSpeed != null
+    ? calculateActivityScore(selectedActivity, currentWindSpeed, currentWindGust, currentWindDirection)
+    : null;
+  
+  const glassScore = calculateGlassScore(currentWindSpeed, currentWindGust);
 
   // Check for notifications when data updates
   React.useEffect(() => {
@@ -76,8 +96,16 @@ export function Dashboard() {
               <h1 className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
                 Utah Wind Pro
               </h1>
-              <p className="text-slate-500 text-sm">Professional Thermal Forecasting</p>
+              <p className="text-slate-500 text-sm">
+                {activityConfig?.description || 'Professional Wind Forecasting'}
+              </p>
             </div>
+
+            {/* Activity Mode Selector */}
+            <ActivityMode 
+              selectedActivity={selectedActivity}
+              onActivityChange={setSelectedActivity}
+            />
 
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 text-slate-400 text-sm">
@@ -146,6 +174,34 @@ export function Dashboard() {
       <main className="max-w-7xl mx-auto px-4 py-6 space-y-6">
         <LakeSelector selectedLake={selectedLake} onSelectLake={setSelectedLake} />
 
+        {/* Activity Score Banner */}
+        {activityScore && (
+          <div className={`
+            rounded-xl p-4 border flex items-center justify-between
+            ${activityScore.score >= 70 ? 'bg-green-500/10 border-green-500/30' :
+              activityScore.score >= 40 ? 'bg-yellow-500/10 border-yellow-500/30' :
+              'bg-red-500/10 border-red-500/30'}
+          `}>
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">{activityConfig?.icon}</span>
+              <div>
+                <div className={`font-medium ${
+                  activityScore.score >= 70 ? 'text-green-400' :
+                  activityScore.score >= 40 ? 'text-yellow-400' : 'text-red-400'
+                }`}>
+                  {activityConfig?.name} Score: {activityScore.score}%
+                </div>
+                <div className="text-sm text-slate-400">{activityScore.message}</div>
+              </div>
+            </div>
+            {activityScore.gustFactor > 1.3 && (
+              <div className="text-xs text-orange-400 bg-orange-500/20 px-2 py-1 rounded">
+                ⚠️ Gusty ({((activityScore.gustFactor - 1) * 100).toFixed(0)}%)
+              </div>
+            )}
+          </div>
+        )}
+
         {error && (
           <div className="bg-red-900/30 border border-red-500/50 rounded-xl p-4 text-red-400">
             <p className="font-medium">Connection Error</p>
@@ -156,19 +212,32 @@ export function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Gauges */}
           <div className="lg:col-span-1 space-y-4">
-            {/* Thermal Confidence */}
-            <div className="flex flex-col items-center bg-slate-800/30 rounded-2xl p-6 border border-slate-700">
-              <div className="text-xs text-slate-500 mb-2">Thermal Probability</div>
-              <ConfidenceGauge value={lakeState?.probability || 0} size={180} />
-              
-              {status && (
-                <div className={`mt-3 px-4 py-2 rounded-lg text-center ${status.bgColor}`}>
-                  <p className={`font-medium text-sm ${status.color}`}>
-                    {status.message}
-                  </p>
+            {/* Activity-Specific Primary Gauge */}
+            {activityConfig?.wantsWind ? (
+              /* Wind-seeking activities: Show Thermal Confidence */
+              <div className="flex flex-col items-center bg-slate-800/30 rounded-2xl p-6 border border-slate-700">
+                <div className="text-xs text-slate-500 mb-2">
+                  {selectedActivity === 'sailing' ? 'Racing Wind Probability' : 'Thermal Probability'}
                 </div>
-              )}
-            </div>
+                <ConfidenceGauge value={lakeState?.probability || 0} size={180} />
+                
+                {status && (
+                  <div className={`mt-3 px-4 py-2 rounded-lg text-center ${status.bgColor}`}>
+                    <p className={`font-medium text-sm ${status.color}`}>
+                      {status.message}
+                    </p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* Calm-seeking activities: Show Glass Score */
+              <GlassScore 
+                windSpeed={currentWindSpeed}
+                windGust={currentWindGust}
+                thermalStartHour={lakeState?.thermalPrediction?.startHour || 10}
+                size={180}
+              />
+            )}
 
             {/* North Flow / Prefrontal Gauge */}
             <div className="flex flex-col items-center bg-slate-800/30 rounded-2xl p-4 border border-slate-700">
@@ -184,12 +253,15 @@ export function Dashboard() {
               pwsUnavailable={selectedLake === 'utah-lake-zigzag' && !lakeState?.pws}
             />
 
-            {/* Kite Safety */}
-            <KiteSafetyIndicator
-              lakeId={selectedLake}
-              windDirection={lakeState?.pws?.windDirection || lakeState?.wind?.stations?.[0]?.direction}
-              windSpeed={lakeState?.pws?.windSpeed || lakeState?.wind?.stations?.[0]?.speed}
-            />
+            {/* Kite Safety - Only show for wind sports */}
+            {activityConfig?.wantsWind && (
+              <KiteSafetyIndicator
+                lakeId={selectedLake}
+                windDirection={currentWindDirection}
+                windSpeed={currentWindSpeed}
+                activity={selectedActivity}
+              />
+            )}
 
             {/* 3-Step Model Bars */}
             {lakeState?.thermalPrediction && (
@@ -220,8 +292,46 @@ export function Dashboard() {
           </div>
 
           <div className="lg:col-span-2 space-y-4">
-            {/* Multi-Stage Forecast Panel */}
-            {/* 5-Day Forecast */}
+            {/* Hourly Timeline - Activity Specific */}
+            <HourlyTimeline
+              activity={selectedActivity}
+              currentConditions={{
+                windSpeed: currentWindSpeed,
+                windGust: currentWindGust,
+                windDirection: currentWindDirection,
+              }}
+              thermalStartHour={lakeState?.thermalPrediction?.startHour || 10}
+              thermalPeakHour={lakeState?.thermalPrediction?.peakHour || 12}
+              thermalEndHour={lakeState?.thermalPrediction?.endHour || 17}
+            />
+
+            {/* Sailing-specific: Race Day Mode */}
+            {selectedActivity === 'sailing' && (
+              <RaceDayMode
+                currentWind={{
+                  speed: currentWindSpeed,
+                  direction: currentWindDirection,
+                  gust: currentWindGust,
+                }}
+                windHistory={history?.wind || []}
+              />
+            )}
+
+            {/* Weekly Best Days */}
+            <WeeklyBestDays selectedActivity={selectedActivity} />
+
+            {/* Severe Weather Alerts - Always visible */}
+            <SevereWeatherAlerts />
+
+            {/* Data Freshness Indicator */}
+            <DataFreshness
+              lastUpdated={lastUpdated}
+              isLoading={isLoading}
+              error={error}
+              onRefresh={refresh}
+              refreshInterval={3}
+            />
+
             {/* Wind Map */}
             <WindMap
               selectedLake={selectedLake}

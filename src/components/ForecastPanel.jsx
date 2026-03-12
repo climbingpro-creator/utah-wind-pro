@@ -57,7 +57,16 @@ export function ForecastPanel({ lakeId, conditions, isLoading }) {
     );
   }
 
-  const { currentStage, currentForecast, allForecasts } = forecast;
+  // Extract data from forecast - handle both old and new format
+  const currentStage = forecast.currentStage || FORECAST_STAGES.MORNING;
+  const stages = forecast.stages || {};
+  const currentForecast = stages[currentStage] || {
+    probability: forecast.overall?.probability || 50,
+    message: forecast.overall?.windType === 'north_flow' 
+      ? 'North flow conditions expected' 
+      : 'Thermal conditions developing',
+    factors: [],
+  };
   
   const stageIcons = {
     [FORECAST_STAGES.DAY_BEFORE]: Calendar,
@@ -147,9 +156,13 @@ export function ForecastPanel({ lakeId, conditions, isLoading }) {
           <div className="space-y-1">
             <p className="text-xs text-slate-500 uppercase tracking-wide">Key Factors</p>
             {currentForecast.factors.map((factor, i) => (
-              <div key={i} className="flex items-start gap-2 text-sm text-slate-400">
-                <span className="text-slate-600">•</span>
-                <span>{factor}</span>
+              <div key={i} className="flex items-center gap-2 text-sm text-slate-400">
+                <span className={`w-2 h-2 rounded-full ${
+                  factor.impact === 'positive' ? 'bg-green-400' : 
+                  factor.impact === 'negative' ? 'bg-red-400' : 'bg-slate-500'
+                }`} />
+                <span className="text-slate-500">{factor.name}:</span>
+                <span className="text-slate-300">{factor.value}</span>
               </div>
             ))}
           </div>
@@ -162,21 +175,21 @@ export function ForecastPanel({ lakeId, conditions, isLoading }) {
             <ForecastStageCard
               label="Evening"
               sublabel="Tomorrow"
-              probability={allForecasts.dayBefore.probability}
+              probability={stages[FORECAST_STAGES.DAY_BEFORE]?.probability || 0}
               isActive={currentStage === FORECAST_STAGES.DAY_BEFORE}
               icon={Calendar}
             />
             <ForecastStageCard
               label="Morning"
               sublabel="Today"
-              probability={allForecasts.morning.probability}
+              probability={stages[FORECAST_STAGES.MORNING]?.probability || 0}
               isActive={currentStage === FORECAST_STAGES.MORNING}
               icon={Sun}
             />
             <ForecastStageCard
               label="Pre-Thermal"
               sublabel="1-2 hrs"
-              probability={allForecasts.preThermal.probability}
+              probability={stages[FORECAST_STAGES.PRE_THERMAL]?.probability || 0}
               isActive={currentStage === FORECAST_STAGES.PRE_THERMAL}
               icon={Clock}
             />
