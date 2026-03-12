@@ -231,19 +231,23 @@ export const LAKE_CONFIGS = {
     name: 'Vineyard',
     shortName: 'Vineyard',
     region: 'Utah Lake - Central',
-    // Vineyard Beach - east side of Utah Lake
+    // Vineyard Beach - EAST side of Utah Lake (water is to the WEST)
     coordinates: { lat: 40.31765814163484, lng: -111.76473863107265 },
     elevation: 4489,
     
-    primaryWindType: 'SE/S Thermal',
-    thermalDirection: 'SE to S (140-180°)',
-    description: 'Central launch - SE to South thermal',
+    primaryWindType: 'S/SSW/W Thermal',
+    thermalDirection: 'S to W (180-270°)',
+    description: 'East shore launch - S, SSW, W winds are onshore. SE is OFFSHORE!',
     
-    shoreOrientation: 120, // Shore faces ESE to SE
+    // Vineyard is on EAST shore - shore faces WEST toward the lake
+    shoreOrientation: 270, // Shore faces West
     kiting: {
-      onshore: { min: 75, max: 165 },
-      sideOn: { min: 165, max: 210, min2: 30, max2: 75 },
-      offshore: { min: 255, max: 345 },
+      // Onshore = wind blowing FROM the lake (west) toward shore
+      onshore: { min: 225, max: 315 },    // SW to NW - wind FROM lake
+      // Side-on = S or SSW (parallel to shore)
+      sideOn: { min: 180, max: 225, min2: 315, max2: 360 }, // S to SW, NW to N
+      // Offshore = wind blowing TOWARD the lake - DANGEROUS
+      offshore: { min: 45, max: 135 },    // NE to SE - DANGEROUS, blows you out to lake
     },
     
     stations: {
@@ -302,7 +306,9 @@ export const LAKE_CONFIGS = {
     },
     
     thermal: {
-      optimalDirection: { min: 140, max: 180, ideal: 160 },
+      // S, SSW, W are good for Vineyard (onshore/side-on from east shore)
+      // SE is OFFSHORE and dangerous!
+      optimalDirection: { min: 180, max: 270, ideal: 225 }, // S to W, ideal SSW
       optimalSpeed: { min: 6, max: 16, average: 9 },
       peakHours: { start: 10, end: 14, peak: 12 },
       buildTime: { start: 6, usable: 9 },
