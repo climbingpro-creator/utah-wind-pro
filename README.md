@@ -2,7 +2,7 @@
 
 Professional wind forecasting for Utah's best water sports locations.
 
-**Live Site:** [utahwindpro.com](https://utahwindpro.com)
+**Live Site:** [utahwindfinder.com](https://utahwindfinder.com)
 
 ## Features
 
@@ -75,7 +75,7 @@ VITE_AMBIENT_APP_KEY=your_app_key
 4. Deploy
 
 ### Custom Domain
-1. Add `utahwindpro.com` in Vercel domain settings
+1. Add `utahwindfinder.com` in Vercel domain settings
 2. Update DNS records:
    - A record: `76.76.21.21`
    - CNAME: `cname.vercel-dns.com`
