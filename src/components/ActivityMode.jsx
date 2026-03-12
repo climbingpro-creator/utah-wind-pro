@@ -81,12 +81,30 @@ export const ACTIVITY_CONFIGS = {
       tooLight: 5,
       ideal: { min: 10, max: 16 },
       tooStrong: 18,
-      gustFactor: 1.3, // Very sensitive to gusts
+      gustFactor: 1.3,
     },
     wantsWind: true,
     primaryMetric: 'paraglidingScore',
     goodCondition: (speed, gust) => speed >= 5 && speed <= 18 && (!gust || gust - speed <= 5),
-    specialMode: true, // Uses special paragliding dashboard
+    specialMode: true,
+    hideLakeSelector: true,
+  },
+  
+  fishing: {
+    id: 'fishing',
+    name: 'Fishing',
+    icon: '🎣',
+    description: 'Utah Lakes & Rivers',
+    thresholds: {
+      ideal: { min: 0, max: 10 },
+      choppy: 15,
+      rough: 20,
+    },
+    wantsWind: false,
+    primaryMetric: 'fishingScore',
+    goodCondition: (speed) => speed < 15,
+    specialMode: true,
+    hideLakeSelector: true,
   },
   
   windsurfing: {
@@ -111,7 +129,7 @@ export const ACTIVITY_CONFIGS = {
 const ActivityMode = ({ selectedActivity, onActivityChange }) => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
-  const activities = ['kiting', 'sailing', 'boating', 'paddling', 'paragliding'];
+  const activities = ['kiting', 'sailing', 'fishing', 'boating', 'paddling', 'paragliding'];
   
   return (
     <div className={`flex items-center gap-1 rounded-lg p-1 ${isDark ? 'bg-slate-800/50' : 'bg-slate-100'}`}>

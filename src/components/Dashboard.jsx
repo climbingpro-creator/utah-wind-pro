@@ -26,6 +26,7 @@ import RaceDayMode from './RaceDayMode';
 import SevereWeatherAlerts from './SevereWeatherAlerts';
 import DataFreshness from './DataFreshness';
 import ParaglidingMode from './ParaglidingMode';
+import FishingMode from './FishingMode';
 import ThemeToggle from './ThemeToggle';
 import { useTheme } from '../context/ThemeContext';
 
@@ -259,10 +260,13 @@ export function Dashboard() {
       )}
 
       <main className="max-w-7xl mx-auto px-4 py-6 space-y-6">
-        <LakeSelector selectedLake={selectedLake} onSelectLake={setSelectedLake} />
+        {/* Only show lake selector for water sports (not paragliding or fishing) */}
+        {!activityConfig?.hideLakeSelector && (
+          <LakeSelector selectedLake={selectedLake} onSelectLake={setSelectedLake} />
+        )}
 
-        {/* Activity Score Banner */}
-        {activityScore && (
+        {/* Activity Score Banner - hide for special modes that have their own scoring */}
+        {activityScore && !activityConfig?.specialMode && (
           <div className={`
             rounded-xl p-4 border flex items-center justify-between
             ${activityScore.score >= 70 
@@ -307,7 +311,7 @@ export function Dashboard() {
           </div>
         )}
 
-        {/* Paragliding Mode - Special Full-Width Layout */}
+        {/* Special Activity Modes */}
         {selectedActivity === 'paragliding' ? (
           <ParaglidingMode 
             windData={{
@@ -315,6 +319,15 @@ export function Dashboard() {
               FPS: lakeState?.wind?.stations?.find(s => s.id === 'FPS'),
               UTALP: lakeState?.wind?.stations?.find(s => s.id === 'UTALP'),
             }}
+            isLoading={isLoading}
+          />
+        ) : selectedActivity === 'fishing' ? (
+          <FishingMode 
+            windData={{
+              stations: lakeState?.wind?.stations,
+              speed: currentWindSpeed,
+            }}
+            pressureData={pressureData}
             isLoading={isLoading}
           />
         ) : (
