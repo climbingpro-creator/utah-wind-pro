@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Fish, Moon, Thermometer, Gauge, Clock, MapPin, TrendingUp, TrendingDown, Minus, Sun, Sunset, CloudRain, Wind, Waves, Calendar, Target, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Fish, Moon, Thermometer, Gauge, Clock, MapPin, TrendingUp, TrendingDown, Minus, Sun, Sunset, CloudRain, Wind, Waves, Calendar, Target, AlertTriangle, CheckCircle, Anchor, Navigation, Egg, Mountain } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 
 // Utah Fishing Locations Configuration
@@ -21,6 +21,23 @@ export const FISHING_LOCATIONS = {
       fall: { min: 10, max: 30, description: 'Following baitfish' },
       winter: { min: 15, max: 40, description: 'Ice fishing depths' },
     },
+    spawning: {
+      'Cutthroat Trout': { months: [5, 6], location: 'Tributary streams', behavior: 'Run up Strawberry River and Indian Creek' },
+      'Rainbow Trout': { months: [4, 5], location: 'Inlet streams', behavior: 'Spawn in flowing water' },
+      'Kokanee Salmon': { months: [9, 10], location: 'Tributary mouths', behavior: 'Turn red, stage near inlets' },
+    },
+    structure: [
+      { type: 'Weed Beds', description: 'Submerged vegetation in 10-20 ft', bestFor: ['Cutthroat Trout', 'Rainbow Trout'] },
+      { type: 'Drop-offs', description: 'Ledges from 15-40 ft', bestFor: ['Cutthroat Trout', 'Kokanee Salmon'] },
+      { type: 'Inlet Areas', description: 'Where streams enter', bestFor: ['Rainbow Trout', 'Cutthroat Trout'] },
+      { type: 'Rocky Points', description: 'Submerged rock piles', bestFor: ['Cutthroat Trout'] },
+    ],
+    hotspots: [
+      { name: 'Soldier Creek Arm', description: 'Most productive area, tube jigs work great', species: ['Cutthroat Trout', 'Rainbow Trout'], coordinates: { lat: 40.165, lng: -111.145 } },
+      { name: 'Strawberry Bay', description: 'Easy access, good shore fishing', species: ['Rainbow Trout', 'Cutthroat Trout'], coordinates: { lat: 40.178, lng: -111.195 } },
+      { name: 'Chicken Creek Arm', description: 'Less pressure, quality fish', species: ['Cutthroat Trout'], coordinates: { lat: 40.155, lng: -111.225 } },
+      { name: 'Indian Creek Inlet', description: 'Spring spawning run hotspot', species: ['Cutthroat Trout', 'Rainbow Trout'], coordinates: { lat: 40.142, lng: -111.168 } },
+    ],
     regulations: 'Cutthroat: 15" minimum, 4 fish limit',
     tips: 'Soldier Creek arm is most productive. Use tube jigs tipped with worm.',
   },
@@ -40,6 +57,25 @@ export const FISHING_LOCATIONS = {
       fall: { min: 40, max: 80, description: 'Following kokanee spawn' },
       winter: { min: 60, max: 100, description: 'Deep ledges' },
     },
+    spawning: {
+      'Lake Trout': { months: [10, 11], location: 'Rocky shoals 40-80 ft', behavior: 'Spawn on underwater rock structure' },
+      'Kokanee Salmon': { months: [9, 10], location: 'Sheep Creek, tributaries', behavior: 'Run up streams, turn bright red' },
+      'Smallmouth Bass': { months: [5, 6], location: 'Rocky shallows 5-15 ft', behavior: 'Males guard nests on gravel' },
+      'Rainbow Trout': { months: [4, 5], location: 'Inlet streams', behavior: 'Spawn in flowing water' },
+    },
+    structure: [
+      { type: 'Deep Ledges', description: 'Underwater cliffs 60-120 ft', bestFor: ['Lake Trout'] },
+      { type: 'Submerged Humps', description: 'Underwater hills rising from deep water', bestFor: ['Lake Trout', 'Kokanee Salmon'] },
+      { type: 'Rocky Points', description: 'Shoreline points with rock substrate', bestFor: ['Smallmouth Bass', 'Rainbow Trout'] },
+      { type: 'Canyon Walls', description: 'Steep underwater walls', bestFor: ['Lake Trout'] },
+    ],
+    hotspots: [
+      { name: 'Sheep Creek Bay', description: 'Kokanee staging area, fall hotspot', species: ['Kokanee Salmon', 'Lake Trout'], coordinates: { lat: 41.015, lng: -109.685 } },
+      { name: 'Antelope Flat', description: 'Trophy lake trout water', species: ['Lake Trout'], coordinates: { lat: 41.045, lng: -109.545 } },
+      { name: 'Lucerne Marina Area', description: 'Good access, consistent fishing', species: ['Rainbow Trout', 'Lake Trout'], coordinates: { lat: 41.035, lng: -109.575 } },
+      { name: 'Jarvies Canyon', description: 'Deep water structure, big lakers', species: ['Lake Trout'], coordinates: { lat: 41.085, lng: -109.495 } },
+      { name: 'Linwood Bay', description: 'Excellent smallmouth bass', species: ['Smallmouth Bass'], coordinates: { lat: 41.065, lng: -109.625 } },
+    ],
     regulations: 'Lake trout: 8 fish limit, only 1 over 28"',
     tips: 'Trophy lake trout over 50 lbs possible. Use downriggers in summer.',
   },
@@ -59,6 +95,24 @@ export const FISHING_LOCATIONS = {
       fall: { min: 15, max: 35, description: 'Following shad' },
       winter: { min: 25, max: 50, description: 'Deep structure' },
     },
+    spawning: {
+      'Walleye': { months: [3, 4], location: 'Rocky flats 8-15 ft', behavior: 'Night spawning on gravel/rock' },
+      'Largemouth Bass': { months: [5, 6], location: 'Shallow coves 3-8 ft', behavior: 'Males fan out nests in soft bottom' },
+      'Yellow Perch': { months: [4, 5], location: 'Weedy shallows', behavior: 'Spawn in vegetation' },
+      'Brown Trout': { months: [10, 11], location: 'Provo River inlet', behavior: 'Run up river to spawn' },
+    },
+    structure: [
+      { type: 'Main Lake Points', description: 'Rocky points extending into deep water', bestFor: ['Walleye', 'Brown Trout'] },
+      { type: 'Weed Beds', description: 'Submerged vegetation in coves', bestFor: ['Largemouth Bass', 'Yellow Perch'] },
+      { type: 'Dam Face', description: 'Steep rocky structure near dam', bestFor: ['Walleye', 'Rainbow Trout'] },
+      { type: 'River Channel', description: 'Old Provo River channel', bestFor: ['Walleye', 'Brown Trout'] },
+    ],
+    hotspots: [
+      { name: 'Dam Area', description: 'Night walleye hotspot, deep water access', species: ['Walleye', 'Rainbow Trout'], coordinates: { lat: 40.395, lng: -111.525 } },
+      { name: 'Wallsburg Bay', description: 'Good bass and perch fishing', species: ['Largemouth Bass', 'Yellow Perch'], coordinates: { lat: 40.425, lng: -111.485 } },
+      { name: 'Charleston Inlet', description: 'Trout staging area', species: ['Rainbow Trout', 'Brown Trout'], coordinates: { lat: 40.445, lng: -111.465 } },
+      { name: 'Island Area', description: 'Structure-rich, multiple species', species: ['Walleye', 'Largemouth Bass'], coordinates: { lat: 40.415, lng: -111.505 } },
+    ],
     regulations: 'Walleye: 6 fish limit, only 1 over 24"',
     tips: 'Night fishing for walleye is excellent. Try the dam area.',
   },
@@ -77,6 +131,23 @@ export const FISHING_LOCATIONS = {
       middle: { description: 'Jordanelle to Deer Creek - good access' },
       lower: { description: 'Below Deer Creek - trophy water, 2500+ fish/mile' },
     },
+    spawning: {
+      'Brown Trout': { months: [10, 11], location: 'Gravel runs throughout', behavior: 'Aggressive pre-spawn, build redds in gravel' },
+      'Rainbow Trout': { months: [3, 4, 5], location: 'Gravel riffles', behavior: 'Spring spawners, look for paired fish' },
+      'Mountain Whitefish': { months: [10, 11], location: 'Deep pools', behavior: 'Spawn in deeper water' },
+    },
+    structure: [
+      { type: 'Riffles', description: 'Fast shallow water over gravel', bestFor: ['Rainbow Trout', 'Brown Trout'] },
+      { type: 'Deep Pools', description: 'Slow deep sections', bestFor: ['Brown Trout', 'Mountain Whitefish'] },
+      { type: 'Undercut Banks', description: 'Eroded banks with cover', bestFor: ['Brown Trout'] },
+      { type: 'Log Jams', description: 'Woody debris structure', bestFor: ['Brown Trout', 'Rainbow Trout'] },
+    ],
+    hotspots: [
+      { name: 'Lower Section (Below Deer Creek)', description: 'Trophy water, 2500+ fish/mile', species: ['Brown Trout', 'Rainbow Trout'], coordinates: { lat: 40.355, lng: -111.585 } },
+      { name: 'Midway Area', description: 'Good access, consistent hatches', species: ['Brown Trout', 'Rainbow Trout'], coordinates: { lat: 40.515, lng: -111.475 } },
+      { name: 'Deer Creek Tailwater', description: 'Cold water, year-round fishing', species: ['Brown Trout', 'Rainbow Trout'], coordinates: { lat: 40.385, lng: -111.545 } },
+      { name: 'Olmstead Diversion', description: 'Classic dry fly water', species: ['Brown Trout'], coordinates: { lat: 40.335, lng: -111.615 } },
+    ],
     regulations: 'Lower section: Artificial flies/lures only, catch & release',
     tips: 'Blue Winged Olive hatches in March-May. Match the hatch!',
   },
@@ -95,6 +166,23 @@ export const FISHING_LOCATIONS = {
       b: { description: 'Little Hole to Indian Crossing - 9 miles, technical' },
       c: { description: 'Indian Crossing to Ouray - remote, big fish' },
     },
+    spawning: {
+      'Rainbow Trout': { months: [3, 4, 5], location: 'Gravel bars A & B sections', behavior: 'Spring spawners, aggressive feeders' },
+      'Brown Trout': { months: [10, 11], location: 'Throughout river', behavior: 'Fall spawners, territorial' },
+      'Cutthroat Trout': { months: [5, 6], location: 'Upper sections', behavior: 'Late spring spawners' },
+    },
+    structure: [
+      { type: 'Tailouts', description: 'End of pools where water speeds up', bestFor: ['Rainbow Trout', 'Brown Trout'] },
+      { type: 'Seams', description: 'Current breaks between fast/slow water', bestFor: ['Rainbow Trout', 'Brown Trout'] },
+      { type: 'Boulders', description: 'Large rocks creating eddies', bestFor: ['Brown Trout'] },
+      { type: 'Weed Beds', description: 'Aquatic vegetation', bestFor: ['Rainbow Trout'] },
+    ],
+    hotspots: [
+      { name: 'Little Hole', description: 'Classic access point, consistent fishing', species: ['Rainbow Trout', 'Brown Trout'], coordinates: { lat: 40.905, lng: -109.395 } },
+      { name: 'Red Creek Rapids', description: 'Technical water, big fish', species: ['Brown Trout', 'Rainbow Trout'], coordinates: { lat: 40.875, lng: -109.365 } },
+      { name: 'Grasshopper Flats', description: 'Summer terrestrial fishing', species: ['Rainbow Trout'], coordinates: { lat: 40.895, lng: -109.385 } },
+      { name: 'Browns Park', description: 'Remote, trophy browns', species: ['Brown Trout'], coordinates: { lat: 40.825, lng: -109.025 } },
+    ],
     regulations: 'A Section: 3 trout limit, 1 over 20"',
     tips: 'World-class tailwater. Cicada hatch in June is legendary.',
   },
@@ -113,6 +201,26 @@ export const FISHING_LOCATIONS = {
       summer: { min: 6, max: 14, description: 'Max depth ~14 ft' },
       fall: { min: 5, max: 12, description: 'Cooling flats' },
     },
+    spawning: {
+      'White Bass': { months: [5, 6], location: 'Tributary mouths, Provo River', behavior: 'Massive spawning runs up rivers' },
+      'Channel Catfish': { months: [6, 7], location: 'Rocky areas, rip-rap', behavior: 'Males guard eggs in cavities' },
+      'Largemouth Bass': { months: [5, 6], location: 'Shallow coves 2-6 ft', behavior: 'Nest builders in soft bottom' },
+      'Black Crappie': { months: [5, 6], location: 'Brush piles, marinas', behavior: 'Spawn around structure' },
+      'Walleye': { months: [3, 4], location: 'Rocky shorelines', behavior: 'Night spawners on hard bottom' },
+    },
+    structure: [
+      { type: 'Marina Docks', description: 'Shade and structure', bestFor: ['Largemouth Bass', 'Black Crappie'] },
+      { type: 'Rip-rap', description: 'Rocky shoreline protection', bestFor: ['Channel Catfish', 'White Bass'] },
+      { type: 'River Mouths', description: 'Where rivers enter lake', bestFor: ['White Bass', 'Channel Catfish'] },
+      { type: 'Weed Lines', description: 'Edge of vegetation', bestFor: ['Largemouth Bass', 'Black Crappie'] },
+    ],
+    hotspots: [
+      { name: 'Lincoln Beach Marina', description: 'Year-round catfish, white bass run', species: ['Channel Catfish', 'White Bass'], coordinates: { lat: 40.144, lng: -111.802 } },
+      { name: 'Provo River Inlet', description: 'White bass spawning run hotspot', species: ['White Bass', 'Channel Catfish'], coordinates: { lat: 40.235, lng: -111.725 } },
+      { name: 'American Fork Marina', description: 'Good bass and crappie', species: ['Largemouth Bass', 'Black Crappie'], coordinates: { lat: 40.345, lng: -111.795 } },
+      { name: 'Pelican Point', description: 'Walleye and catfish', species: ['Walleye', 'Channel Catfish'], coordinates: { lat: 40.185, lng: -111.875 } },
+      { name: 'Spanish Fork River Inlet', description: 'Spring white bass run', species: ['White Bass'], coordinates: { lat: 40.115, lng: -111.715 } },
+    ],
     regulations: 'Catfish: No limit. Carp bow fishing allowed.',
     tips: 'White bass run in May is incredible. Lincoln Beach marina area.',
   },
@@ -131,6 +239,24 @@ export const FISHING_LOCATIONS = {
       summer: { min: 15, max: 35, description: 'Rocky points' },
       fall: { min: 10, max: 25, description: 'Following baitfish' },
     },
+    spawning: {
+      'Smallmouth Bass': { months: [5, 6], location: 'Rocky flats 5-12 ft', behavior: 'Males guard nests aggressively' },
+      'Yellow Perch': { months: [4, 5], location: 'Weedy shallows', behavior: 'Spawn in vegetation' },
+      'Rainbow Trout': { months: [4, 5], location: 'Provo River inlet', behavior: 'Run up tributary' },
+      'Brown Trout': { months: [10, 11], location: 'Provo River inlet', behavior: 'Fall spawning run' },
+    },
+    structure: [
+      { type: 'Rocky Points', description: 'Main lake points with rock substrate', bestFor: ['Smallmouth Bass', 'Rainbow Trout'] },
+      { type: 'Submerged Road Beds', description: 'Old roads now underwater', bestFor: ['Smallmouth Bass', 'Yellow Perch'] },
+      { type: 'Standing Timber', description: 'Flooded trees in arms', bestFor: ['Yellow Perch', 'Brown Trout'] },
+      { type: 'Dam Face', description: 'Deep rocky structure', bestFor: ['Rainbow Trout', 'Brown Trout'] },
+    ],
+    hotspots: [
+      { name: 'Rock Cliff Recreation Area', description: 'Excellent smallmouth, easy access', species: ['Smallmouth Bass', 'Yellow Perch'], coordinates: { lat: 40.615, lng: -111.395 } },
+      { name: 'Hailstone Marina', description: 'Good trout fishing, boat access', species: ['Rainbow Trout', 'Brown Trout'], coordinates: { lat: 40.585, lng: -111.435 } },
+      { name: 'Provo River Arm', description: 'Trout staging, fall browns', species: ['Brown Trout', 'Rainbow Trout'], coordinates: { lat: 40.635, lng: -111.385 } },
+      { name: 'Ross Creek Arm', description: 'Less pressure, quality bass', species: ['Smallmouth Bass'], coordinates: { lat: 40.595, lng: -111.415 } },
+    ],
     regulations: 'Bass: 6 fish limit',
     tips: 'Excellent smallmouth fishery. Drop shot on rocky points.',
   },
@@ -149,6 +275,24 @@ export const FISHING_LOCATIONS = {
       summer: { min: 15, max: 30, description: 'Weed edges' },
       fall: { min: 10, max: 25, description: 'Pre-winter feed' },
     },
+    spawning: {
+      'Tiger Muskie': { months: [0], location: 'N/A - Sterile hybrid', behavior: 'Does not spawn (stocked only)' },
+      'Largemouth Bass': { months: [5, 6], location: 'Shallow coves 3-8 ft', behavior: 'Nest builders in soft bottom' },
+      'Crappie': { months: [5, 6], location: 'Brush piles, docks', behavior: 'Spawn around woody structure' },
+      'Yellow Perch': { months: [4, 5], location: 'Weedy shallows', behavior: 'Spawn in vegetation' },
+    },
+    structure: [
+      { type: 'Weed Beds', description: 'Extensive aquatic vegetation', bestFor: ['Tiger Muskie', 'Largemouth Bass'] },
+      { type: 'Docks/Marinas', description: 'Man-made structure', bestFor: ['Crappie', 'Largemouth Bass'] },
+      { type: 'Points', description: 'Shoreline points', bestFor: ['Tiger Muskie', 'Yellow Perch'] },
+      { type: 'Creek Channels', description: 'Old creek beds', bestFor: ['Crappie', 'Yellow Perch'] },
+    ],
+    hotspots: [
+      { name: 'Cemetery Point', description: 'Prime muskie water, weed edges', species: ['Tiger Muskie', 'Largemouth Bass'], coordinates: { lat: 41.265, lng: -111.825 } },
+      { name: 'Anderson Cove', description: 'Good bass and crappie', species: ['Largemouth Bass', 'Crappie'], coordinates: { lat: 41.245, lng: -111.855 } },
+      { name: 'Middle Inlet Arm', description: 'Muskie cruising area', species: ['Tiger Muskie'], coordinates: { lat: 41.275, lng: -111.815 } },
+      { name: 'Dam Area', description: 'Deep water, trout and perch', species: ['Rainbow Trout', 'Yellow Perch'], coordinates: { lat: 41.235, lng: -111.875 } },
+    ],
     regulations: 'Tiger Muskie: Catch & release only',
     tips: 'State record muskie water. Large swimbaits and jerkbaits.',
   },
@@ -643,6 +787,147 @@ const FishingMode = ({ windData, pressureData, isLoading }) => {
           )}
         </div>
       </div>
+      
+      {/* Spawning Seasons */}
+      {location.spawning && (
+        <div className={`rounded-xl p-4 border ${isDark ? 'bg-slate-800/30 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`}>
+          <h3 className={`text-sm font-medium mb-3 flex items-center gap-2 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+            <Egg className="w-4 h-4" />
+            Spawning Seasons
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {Object.entries(location.spawning).map(([species, spawn]) => {
+              const speciesData = FISH_SPECIES[species];
+              const currentMonth = new Date().getMonth() + 1;
+              const isSpawning = spawn.months.includes(currentMonth);
+              const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+              const spawnMonthsText = spawn.months.length > 0 && spawn.months[0] !== 0
+                ? spawn.months.map(m => monthNames[m - 1]).join('-')
+                : 'N/A';
+              
+              return (
+                <div 
+                  key={species}
+                  className={`p-3 rounded-lg border ${
+                    isSpawning 
+                      ? (isDark ? 'bg-pink-500/10 border-pink-500/30' : 'bg-pink-50 border-pink-200')
+                      : (isDark ? 'bg-slate-700/30 border-slate-600' : 'bg-slate-50 border-slate-200')
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span>{speciesData?.icon || '🐟'}</span>
+                      <span className={`font-medium ${isDark ? 'text-white' : 'text-slate-800'}`}>{species}</span>
+                    </div>
+                    {isSpawning ? (
+                      <span className={`text-[10px] px-2 py-0.5 rounded ${isDark ? 'bg-pink-500/30 text-pink-400' : 'bg-pink-200 text-pink-700'}`}>
+                        SPAWNING NOW
+                      </span>
+                    ) : (
+                      <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{spawnMonthsText}</span>
+                    )}
+                  </div>
+                  <div className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                    <MapPin className="w-3 h-3 inline mr-1" />
+                    {spawn.location}
+                  </div>
+                  <div className={`text-xs mt-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                    {spawn.behavior}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+      
+      {/* Structure Types */}
+      {location.structure && (
+        <div className={`rounded-xl p-4 border ${isDark ? 'bg-slate-800/30 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`}>
+          <h3 className={`text-sm font-medium mb-3 flex items-center gap-2 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+            <Mountain className="w-4 h-4" />
+            Structure Types to Target
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {location.structure.map((struct, i) => (
+              <div 
+                key={i}
+                className={`p-3 rounded-lg ${isDark ? 'bg-slate-700/30' : 'bg-slate-50'}`}
+              >
+                <div className={`font-medium mb-1 ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                  {struct.type}
+                </div>
+                <div className={`text-xs mb-2 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                  {struct.description}
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {struct.bestFor.map((species, j) => {
+                    const speciesData = FISH_SPECIES[species];
+                    return (
+                      <span 
+                        key={j}
+                        className={`text-[10px] px-2 py-0.5 rounded-full ${isDark ? 'bg-slate-600 text-slate-300' : 'bg-slate-200 text-slate-600'}`}
+                      >
+                        {speciesData?.icon || '🐟'} {species}
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      
+      {/* Hotspots */}
+      {location.hotspots && (
+        <div className={`rounded-xl p-4 border ${isDark ? 'bg-slate-800/30 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`}>
+          <h3 className={`text-sm font-medium mb-3 flex items-center gap-2 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+            <Navigation className="w-4 h-4" />
+            Hotspots & Fishing Areas
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {location.hotspots.map((spot, i) => (
+              <div 
+                key={i}
+                className={`p-3 rounded-lg border ${isDark ? 'bg-gradient-to-br from-cyan-900/20 to-slate-800/50 border-cyan-500/20' : 'bg-gradient-to-br from-cyan-50 to-white border-cyan-200'}`}
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <div className={`font-medium ${isDark ? 'text-cyan-400' : 'text-cyan-700'}`}>
+                    📍 {spot.name}
+                  </div>
+                  {spot.coordinates && (
+                    <a 
+                      href={`https://www.google.com/maps?q=${spot.coordinates.lat},${spot.coordinates.lng}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`text-[10px] px-2 py-0.5 rounded ${isDark ? 'bg-slate-600 text-slate-300 hover:bg-slate-500' : 'bg-slate-200 text-slate-600 hover:bg-slate-300'}`}
+                    >
+                      Map →
+                    </a>
+                  )}
+                </div>
+                <div className={`text-xs mb-2 ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+                  {spot.description}
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {spot.species.map((species, j) => {
+                    const speciesData = FISH_SPECIES[species];
+                    return (
+                      <span 
+                        key={j}
+                        className={`text-[10px] px-2 py-0.5 rounded-full ${isDark ? 'bg-cyan-500/20 text-cyan-300' : 'bg-cyan-100 text-cyan-700'}`}
+                      >
+                        {speciesData?.icon || '🐟'} {species}
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       
       {/* Scoring Factors */}
       <div className={`rounded-xl p-4 border ${isDark ? 'bg-slate-800/30 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`}>
