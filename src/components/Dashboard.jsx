@@ -25,6 +25,7 @@ import WeeklyBestDays from './WeeklyBestDays';
 import RaceDayMode from './RaceDayMode';
 import SevereWeatherAlerts from './SevereWeatherAlerts';
 import DataFreshness from './DataFreshness';
+import ParaglidingMode from './ParaglidingMode';
 
 function windDirectionToCardinal(degrees) {
   if (degrees == null) return 'N/A';
@@ -209,6 +210,18 @@ export function Dashboard() {
           </div>
         )}
 
+        {/* Paragliding Mode - Special Full-Width Layout */}
+        {selectedActivity === 'paragliding' ? (
+          <ParaglidingMode 
+            windData={{
+              stations: lakeState?.wind?.stations,
+              FPS: lakeState?.wind?.stations?.find(s => s.id === 'FPS'),
+              UTALP: lakeState?.wind?.stations?.find(s => s.id === 'UTALP'),
+            }}
+            isLoading={isLoading}
+          />
+        ) : (
+        <>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Gauges */}
           <div className="lg:col-span-1 space-y-4">
@@ -394,6 +407,7 @@ export function Dashboard() {
           </div>
         </div>
 
+        {/* Live Wind Vectors */}
         <div>
           <h2 className="text-lg font-semibold text-slate-200 mb-4 flex items-center gap-2">
             <Wind className="w-5 h-5 text-cyan-400" />
@@ -430,7 +444,11 @@ export function Dashboard() {
             )}
           </div>
         </div>
+        </>
+        )}
 
+        {/* Only show 3-Step Model for non-paragliding activities */}
+        {selectedActivity !== 'paragliding' && (
         <div className="bg-slate-800/30 rounded-xl p-4 border border-slate-700">
           <h3 className="text-sm font-medium text-slate-400 mb-3">3-Step Prediction Model</h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
@@ -491,6 +509,7 @@ export function Dashboard() {
             />
           </div>
         </div>
+        )}
       </main>
 
       <footer className="border-t border-slate-800 mt-8">

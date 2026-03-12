@@ -71,6 +71,23 @@ export const ACTIVITY_CONFIGS = {
     goodCondition: (speed) => speed < 8,
   },
   
+  paragliding: {
+    id: 'paragliding',
+    name: 'Paragliding',
+    icon: '🪂',
+    description: 'Point of the Mountain',
+    thresholds: {
+      tooLight: 5,
+      ideal: { min: 10, max: 16 },
+      tooStrong: 18,
+      gustFactor: 1.3, // Very sensitive to gusts
+    },
+    wantsWind: true,
+    primaryMetric: 'paraglidingScore',
+    goodCondition: (speed, gust) => speed >= 5 && speed <= 18 && (!gust || gust - speed <= 5),
+    specialMode: true, // Uses special paragliding dashboard
+  },
+  
   windsurfing: {
     id: 'windsurfing',
     name: 'Windsurfing',
@@ -91,7 +108,7 @@ export const ACTIVITY_CONFIGS = {
 };
 
 const ActivityMode = ({ selectedActivity, onActivityChange }) => {
-  const activities = ['kiting', 'sailing', 'boating', 'paddling'];
+  const activities = ['kiting', 'sailing', 'boating', 'paddling', 'paragliding'];
   
   return (
     <div className="flex items-center gap-1 bg-slate-800/50 rounded-lg p-1">
