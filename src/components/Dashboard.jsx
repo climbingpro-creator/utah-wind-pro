@@ -26,6 +26,8 @@ import RaceDayMode from './RaceDayMode';
 import SevereWeatherAlerts from './SevereWeatherAlerts';
 import DataFreshness from './DataFreshness';
 import ParaglidingMode from './ParaglidingMode';
+import ThemeToggle from './ThemeToggle';
+import { useTheme } from '../context/ThemeContext';
 
 function windDirectionToCardinal(degrees) {
   if (degrees == null) return 'N/A';
@@ -40,6 +42,7 @@ export function Dashboard() {
   const [showLearningDashboard, setShowLearningDashboard] = useState(false);
   const [selectedActivity, setSelectedActivity] = useState('kiting');
   const { lakeState, history, status, isLoading, error, lastUpdated, refresh } = useLakeData(selectedLake);
+  const { theme } = useTheme();
   
   // Get activity-specific data
   const activityConfig = ACTIVITY_CONFIGS[selectedActivity];
@@ -156,10 +159,18 @@ export function Dashboard() {
   } : null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800">
+    <div className={`min-h-screen transition-colors duration-300 ${
+      theme === 'dark' 
+        ? 'bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 text-white' 
+        : 'bg-gradient-to-br from-slate-100 via-white to-slate-50 text-slate-900'
+    }`}>
       <ToastContainer />
       
-      <header className="border-b border-slate-800 bg-slate-900/80 backdrop-blur-sm sticky top-0 z-40">
+      <header className={`border-b backdrop-blur-sm sticky top-0 z-40 transition-colors duration-300 ${
+        theme === 'dark' 
+          ? 'border-slate-800 bg-slate-900/80' 
+          : 'border-slate-200 bg-white/80'
+      }`}>
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
@@ -207,10 +218,16 @@ export function Dashboard() {
               <button
                 onClick={refresh}
                 disabled={isLoading}
-                className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors disabled:opacity-50"
+                className={`p-2 rounded-lg transition-colors disabled:opacity-50 ${
+                  theme === 'dark' 
+                    ? 'bg-slate-800 hover:bg-slate-700' 
+                    : 'bg-slate-200 hover:bg-slate-300'
+                }`}
               >
-                <RefreshCw className={`w-5 h-5 text-slate-400 ${isLoading ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`w-5 h-5 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-600'} ${isLoading ? 'animate-spin' : ''}`} />
               </button>
+
+              <ThemeToggle />
             </div>
           </div>
         </div>
