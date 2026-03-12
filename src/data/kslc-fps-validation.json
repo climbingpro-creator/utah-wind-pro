@@ -1,0 +1,67 @@
+{
+  "analysis": "KSLC to Zig Zag/FPS Wind Speed Validation",
+  "sameHour": {
+    "0-3": {
+      "samples": 199,
+      "avgFpsSpeed": "9.0",
+      "kiteablePct": "37"
+    },
+    "3-5": {
+      "samples": 122,
+      "avgFpsSpeed": "8.2",
+      "kiteablePct": "34"
+    },
+    "5-8": {
+      "samples": 258,
+      "avgFpsSpeed": "9.5",
+      "kiteablePct": "44"
+    },
+    "8-10": {
+      "samples": 98,
+      "avgFpsSpeed": "10.9",
+      "kiteablePct": "53"
+    },
+    "10-15": {
+      "samples": 87,
+      "avgFpsSpeed": "15.0",
+      "kiteablePct": "72"
+    },
+    "15+": {
+      "samples": 15,
+      "avgFpsSpeed": "22.6",
+      "kiteablePct": "100"
+    }
+  },
+  "oneHourLead": {
+    "0-3": {
+      "samples": 170,
+      "avgFpsSpeed": "9.0",
+      "kiteablePct": "39"
+    },
+    "3-5": {
+      "samples": 110,
+      "avgFpsSpeed": "7.5",
+      "kiteablePct": "26"
+    },
+    "5-8": {
+      "samples": 208,
+      "avgFpsSpeed": "9.3",
+      "kiteablePct": "45"
+    },
+    "8-10": {
+      "samples": 71,
+      "avgFpsSpeed": "12.6",
+      "kiteablePct": "56"
+    },
+    "10-15": {
+      "samples": 73,
+      "avgFpsSpeed": "15.5",
+      "kiteablePct": "81"
+    },
+    "15+": {
+      "samples": 9,
+      "avgFpsSpeed": "23.4",
+      "kiteablePct": "100"
+    }
+  }
+}

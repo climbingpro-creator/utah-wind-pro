@@ -1,0 +1,84 @@
+{
+  "kpvu": {
+    "station": "KPVU",
+    "name": "Provo Airport",
+    "coordinates": {
+      "lat": 40.2192,
+      "lng": -111.7236
+    },
+    "elevation": 4495,
+    "correlation": {
+      "0-5": {
+        "samples": 278,
+        "avgFps": "11.2",
+        "foilKiteable": "60",
+        "twinTipKiteable": "20"
+      },
+      "5-8": {
+        "samples": 39,
+        "avgFps": "11.2",
+        "foilKiteable": "51",
+        "twinTipKiteable": "28"
+      },
+      "8-10": {
+        "samples": 18,
+        "avgFps": "13.5",
+        "foilKiteable": "78",
+        "twinTipKiteable": "33"
+      },
+      "10-15": {
+        "samples": 66,
+        "avgFps": "14.9",
+        "foilKiteable": "89",
+        "twinTipKiteable": "56"
+      },
+      "15+": {
+        "samples": 46,
+        "avgFps": "22.7",
+        "foilKiteable": "100",
+        "twinTipKiteable": "96"
+      }
+    }
+  },
+  "utalp": {
+    "station": "UTALP",
+    "name": "Point of Mountain",
+    "coordinates": {
+      "lat": 40.4456,
+      "lng": -111.8983
+    },
+    "elevation": 4796,
+    "correlation": {
+      "0-5": {
+        "samples": 60,
+        "avgFps": "7.1",
+        "foilKiteable": "27",
+        "twinTipKiteable": "2"
+      },
+      "5-8": {
+        "samples": 90,
+        "avgFps": "9.3",
+        "foilKiteable": "43",
+        "twinTipKiteable": "9"
+      },
+      "8-10": {
+        "samples": 89,
+        "avgFps": "11.4",
+        "foilKiteable": "58",
+        "twinTipKiteable": "17"
+      },
+      "10-15": {
+        "samples": 140,
+        "avgFps": "14.4",
+        "foilKiteable": "86",
+        "twinTipKiteable": "43"
+      },
+      "15+": {
+        "samples": 46,
+        "avgFps": "22.0",
+        "foilKiteable": "98",
+        "twinTipKiteable": "93"
+      }
+    }
+  }
+}

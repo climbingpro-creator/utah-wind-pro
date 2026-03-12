@@ -1,0 +1,92 @@
+{
+  "analysis": {
+    "totalDays": 1080,
+    "dateRange": "2023-03-29 to 2026-03-12",
+    "seThermalDays": 249,
+    "northFlowDays": 165,
+    "seThermalRate": 23.1,
+    "northFlowRate": 15.3
+  },
+  "monthlyPatterns": {
+    "1": { "seRate": 10.8, "nRate": 10.8, "peakHour": 13, "startHour": 10, "avgHighTemp": 38, "avgLowTemp": 22 },
+    "2": { "seRate": 24.7, "nRate": 9.4, "peakHour": 13, "startHour": 10, "avgHighTemp": 45, "avgLowTemp": 27 },
+    "3": { "seRate": 19.5, "nRate": 20.8, "peakHour": 14, "startHour": 11, "avgHighTemp": 55, "avgLowTemp": 34 },
+    "4": { "seRate": 26.7, "nRate": 35.6, "peakHour": 14, "startHour": 11, "avgHighTemp": 62, "avgLowTemp": 40 },
+    "5": { "seRate": 28.0, "nRate": 28.0, "peakHour": 14, "startHour": 11, "avgHighTemp": 72, "avgLowTemp": 48 },
+    "6": { "seRate": 32.2, "nRate": 30.0, "peakHour": 16, "startHour": 12, "avgHighTemp": 84, "avgLowTemp": 57 },
+    "7": { "seRate": 46.2, "nRate": 14.0, "peakHour": 15, "startHour": 11, "avgHighTemp": 92, "avgLowTemp": 65 },
+    "8": { "seRate": 37.6, "nRate": 8.6, "peakHour": 16, "startHour": 12, "avgHighTemp": 90, "avgLowTemp": 63 },
+    "9": { "seRate": 23.3, "nRate": 5.6, "peakHour": 12, "startHour": 10, "avgHighTemp": 80, "avgLowTemp": 53 },
+    "10": { "seRate": 14.0, "nRate": 7.5, "peakHour": 14, "startHour": 11, "avgHighTemp": 65, "avgLowTemp": 42 },
+    "11": { "seRate": 3.3, "nRate": 6.7, "peakHour": 11, "startHour": 9, "avgHighTemp": 50, "avgLowTemp": 32 },
+    "12": { "seRate": 9.7, "nRate": 7.5, "peakHour": 13, "startHour": 10, "avgHighTemp": 40, "avgLowTemp": 24 }
+  },
+  "hourlyPatterns": {
+    "6": { "avgSpeed": 12.5, "avgDir": 162, "observations": 110 },
+    "7": { "avgSpeed": 12.4, "avgDir": 161, "observations": 179 },
+    "8": { "avgSpeed": 12.1, "avgDir": 155, "observations": 438 },
+    "9": { "avgSpeed": 12.3, "avgDir": 153, "observations": 781 },
+    "10": { "avgSpeed": 12.3, "avgDir": 151, "observations": 853 },
+    "11": { "avgSpeed": 12.6, "avgDir": 151, "observations": 774 },
+    "12": { "avgSpeed": 13.2, "avgDir": 151, "observations": 618 },
+    "13": { "avgSpeed": 13.9, "avgDir": 151, "observations": 562 },
+    "14": { "avgSpeed": 13.5, "avgDir": 150, "observations": 644 },
+    "15": { "avgSpeed": 13.8, "avgDir": 154, "observations": 541 },
+    "16": { "avgSpeed": 13.5, "avgDir": 156, "observations": 515 },
+    "17": { "avgSpeed": 13.7, "avgDir": 158, "observations": 391 },
+    "18": { "avgSpeed": 13.9, "avgDir": 161, "observations": 273 },
+    "19": { "avgSpeed": 13.4, "avgDir": 163, "observations": 253 },
+    "20": { "avgSpeed": 13.3, "avgDir": 165, "observations": 199 }
+  },
+  "dayBeforePatterns": {
+    "seThermal": {
+      "eveningTemp": 58.2,
+      "eveningPressure": 25.45,
+      "eveningWind": 6.0,
+      "sampleSize": 248
+    },
+    "northFlow": {
+      "eveningTemp": 46.9,
+      "eveningPressure": 25.42,
+      "eveningWind": 6.7,
+      "sampleSize": 165
+    }
+  },
+  "multiDayPatterns": {
+    "seThermal": {
+      "day5": { "pressure": 25.51, "temp": 51.4, "maxWind": 17.3 },
+      "day4": { "pressure": 25.50, "temp": 51.8, "maxWind": 17.6 },
+      "day3": { "pressure": 25.49, "temp": 51.5, "maxWind": 17.7 },
+      "day2": { "pressure": 25.49, "temp": 51.8, "maxWind": 17.8 },
+      "day1": { "pressure": 25.48, "temp": 52.4, "maxWind": 18.9 }
+    },
+    "northFlow": {
+      "day5": { "pressure": 25.49, "temp": 42.6, "maxWind": 17.6 },
+      "day4": { "pressure": 25.48, "temp": 43.4, "maxWind": 17.7 },
+      "day3": { "pressure": 25.48, "temp": 43.5, "maxWind": 18.5 },
+      "day2": { "pressure": 25.47, "temp": 43.4, "maxWind": 18.3 },
+      "day1": { "pressure": 25.43, "temp": 43.1, "maxWind": 20.3 }
+    }
+  },
+  "pressureChangePatterns": {
+    "seThermal": {
+      "avgChange": -0.025,
+      "risingPercent": 31.9,
+      "stablePercent": 21.4,
+      "fallingPercent": 46.8
+    },
+    "northFlow": {
+      "avgChange": 0.031,
+      "risingPercent": 48.5,
+      "stablePercent": 14.5,
+      "fallingPercent": 37.0
+    }
+  },
+  "bestDays": [
+    { "date": "2023-04-18", "maxSpeed": 44.5, "maxGust": 53.7, "peakHour": 15, "direction": 357, "type": "SE Thermal" },
+    { "date": "2024-04-05", "maxSpeed": 43.4, "maxGust": 51.4, "peakHour": 13, "direction": 234, "type": "SE Thermal" },
+    { "date": "2025-10-12", "maxSpeed": 43.2, "maxGust": 57.0, "peakHour": 19, "direction": 344, "type": "North Flow" },
+    { "date": "2025-08-16", "maxSpeed": 41.6, "maxGust": 50.1, "peakHour": 17, "direction": 146, "type": "SE Thermal" },
+    { "date": "2023-06-19", "maxSpeed": 39.8, "maxGust": 49.0, "peakHour": 9, "direction": 196, "type": "SE Thermal" }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "analysis": "North Flow Early Indicators - Complete Analysis",
+  "baseline": "FPS (Flight Park South)",
+  "totalDays": 192,
+  "goodNorthDays": 127,
+  "indicators": {
+    "primary": {
+      "station": "KSLC",
+      "stationName": "Salt Lake City Airport",
+      "coordinates": {
+        "lat": 40.7884,
+        "lng": -111.9778
+      },
+      "elevation": 4226,
+      "leadTimeHours": 1,
+      "northPercentage": 44.881889763779526,
+      "role": "Primary early indicator - north wind here precedes Utah Lake by ~1 hour",
+      "trigger": {
+        "direction": {
+          "min": 315,
+          "max": 45,
+          "label": "N (NW to NE)"
+        },
+        "speed": {
+          "min": 5,
+          "optimal": 8
+        }
+      },
+      "statistics": {
+        "northDirectionOnGoodDays": "45%",
+        "combinedNorthNW": "71%"
+      }
+    },
+    "secondary": {
+      "station": "SLCNW",
+      "stationName": "SLC Airport Wind 2",
+      "coordinates": {
+        "lat": 40.79,
+        "lng": -111.98
+      },
+      "elevation": 4280,
+      "leadTimeHours": 1,
+      "role": "Secondary indicator - runway wind sensor"
+    },
+    "pressureGradient": {
+      "highStation": "KSLC",
+      "lowStation": "KPVU",
+      "positiveGradientMeaning": "SLC > Provo = North flow likely",
+      "negativeGradientMeaning": "Provo > SLC = South flow (thermal) likely",
+      "threshold": 0.5,
+      "description": "When gradient > 0.5 mb, strong north flow expected"
+    }
+  }
+}

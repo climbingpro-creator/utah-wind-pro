@@ -1,0 +1,28 @@
+{
+  "station": "QSF",
+  "stationName": "Spanish Fork",
+  "analysis": {
+    "totalDays": 92,
+    "goodKiteDays": 67,
+    "thermalDays": 12,
+    "bustDays": 13
+  },
+  "leadIndicator": {
+    "optimalLeadHours": 2,
+    "goodKiteDayPattern": {
+      "avgSpeed": "6.3",
+      "sePct": "86"
+    },
+    "bustDayPattern": {
+      "avgSpeed": "4.9",
+      "sePct": "100"
+    }
+  },
+  "thresholds": {
+    "goodKiteIndicator": {
+      "direction": "100-180° (SE)",
+      "speed": "> 6 mph",
+      "leadTime": "2 hours before thermal"
+    }
+  }
+}
