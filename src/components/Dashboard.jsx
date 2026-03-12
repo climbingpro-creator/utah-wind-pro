@@ -47,9 +47,78 @@ export function Dashboard() {
   const currentWindGust = lakeState?.pws?.windGust || lakeState?.wind?.stations?.[0]?.gust;
   const currentWindDirection = lakeState?.pws?.windDirection || lakeState?.wind?.stations?.[0]?.direction;
   
-  const activityScore = selectedActivity && currentWindSpeed != null
-    ? calculateActivityScore(selectedActivity, currentWindSpeed, currentWindGust, currentWindDirection)
-    : null;
+  // For paragliding, use Flight Park South/North data instead of generic wind
+  const fpsStation = lakeState?.wind?.stations?.find(s => s.id === 'FPS');
+  const utalpStation = lakeState?.wind?.stations?.find(s => s.id === 'UTALP');
+  
+  // Get best paragliding site data
+  const getParaglidingScore = () => {
+    if (selectedActivity !== 'paragliding') return null;
+    
+    const fpsSpeed = fpsStation?.speed || fpsStation?.windSpeed;
+    const fpsDir = fpsStation?.direction || fpsStation?.windDirection;
+    const fpsGust = fpsStation?.gust || fpsStation?.windGust;
+    
+    const utalpSpeed = utalpStation?.speed || utalpStation?.windSpeed;
+    const utalpDir = utalpStation?.direction || utalpStation?.windDirection;
+    const utalpGust = utalpStation?.gust || utalpStation?.windGust;
+    
+    // Check Flight Park South (SSE to SSW: 160-200°)
+    const fpsDirectionOk = fpsDir >= 160 && fpsDir <= 200;
+    const fpsSpeedOk = fpsSpeed >= 5 && fpsSpeed <= 18;
+    const fpsGustOk = !fpsGust || (fpsGust - fpsSpeed) <= 5;
+    
+    // Check Flight Park North (N to NW: 315-360 or 0-45)
+    const utalpDirectionOk = utalpDir >= 315 || utalpDir <= 45;
+    const utalpSpeedOk = utalpSpeed >= 5 && utalpSpeed <= 18;
+    const utalpGustOk = !utalpGust || (utalpGust - utalpSpeed) <= 5;
+    
+    // Calculate scores
+    let fpsScore = 0;
+    if (fpsDirectionOk) fpsScore += 50;
+    if (fpsSpeedOk) fpsScore += 30;
+    if (fpsGustOk) fpsScore += 20;
+    if (fpsSpeed >= 10 && fpsSpeed <= 16) fpsScore += 10; // Ideal range bonus
+    
+    let utalpScore = 0;
+    if (utalpDirectionOk) utalpScore += 50;
+    if (utalpSpeedOk) utalpScore += 30;
+    if (utalpGustOk) utalpScore += 20;
+    if (utalpSpeed >= 12 && utalpSpeed <= 16) utalpScore += 10; // Ideal range bonus
+    
+    // Use the better site
+    const bestScore = Math.max(fpsScore, utalpScore);
+    const bestSite = fpsScore >= utalpScore ? 'Flight Park South' : 'Flight Park North';
+    const bestSpeed = fpsScore >= utalpScore ? fpsSpeed : utalpSpeed;
+    const bestDir = fpsScore >= utalpScore ? fpsDir : utalpDir;
+    const bestGust = fpsScore >= utalpScore ? fpsGust : utalpGust;
+    
+    let message = '';
+    if (bestScore >= 80) {
+      message = `Excellent at ${bestSite} - ${bestSpeed?.toFixed(0)} mph from ${bestDir?.toFixed(0)}°`;
+    } else if (bestScore >= 50) {
+      message = `Flyable at ${bestSite} - ${bestSpeed?.toFixed(0)} mph`;
+    } else if (bestSpeed != null) {
+      message = `Marginal - ${bestSpeed?.toFixed(0)} mph at ${bestDir?.toFixed(0)}°`;
+    } else {
+      message = 'No data from Flight Park stations';
+    }
+    
+    const gustFactor = bestGust && bestSpeed ? bestGust / bestSpeed : 1;
+    
+    return {
+      score: Math.min(100, bestScore),
+      message,
+      gustFactor,
+      bestSite,
+    };
+  };
+  
+  const activityScore = selectedActivity === 'paragliding'
+    ? getParaglidingScore()
+    : (selectedActivity && currentWindSpeed != null
+      ? calculateActivityScore(selectedActivity, currentWindSpeed, currentWindGust, currentWindDirection)
+      : null);
   
   const glassScore = calculateGlassScore(currentWindSpeed, currentWindGust);
 
