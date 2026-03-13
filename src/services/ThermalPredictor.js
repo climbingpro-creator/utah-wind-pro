@@ -74,6 +74,10 @@ function getWeights() {
       speedBiasCorrection: learnedWeights.speedBiasCorrection || 0,
       hourlyMultipliers: learnedWeights.hourlyMultipliers || {},
       indicators: learnedWeights.indicators || {},
+      probabilityCalibration: learnedWeights.probabilityCalibration || {},
+      monthlyQualityRates: learnedWeights.monthlyQualityRates || {},
+      windTypeScores: learnedWeights.windTypeScores || {},
+      consistencyProfile: learnedWeights.consistencyProfile || {},
     };
   }
   
@@ -84,6 +88,10 @@ function getWeights() {
     speedBiasCorrection: 0,
     hourlyMultipliers: {},
     indicators: {},
+    probabilityCalibration: {},
+    monthlyQualityRates: {},
+    windTypeScores: {},
+    consistencyProfile: {},
   };
 }
 
@@ -1085,27 +1093,40 @@ export function predictThermal(lakeId, currentConditions) {
     }
   }
   
-  // Calculate final probability using weighted 3-step model
-  // Step A (Gradient): 40%, Step B (Elevation): 30%, Current Conditions: 30%
-  let probability = baseProbability * monthlyMultiplier;
+  // ─── Apply learned weights ──────────────────────────────────────
+  const weights = getWeights();
   
-  // STEP A: Gradient Check (40% weight)
-  if (pressureStatus === 'bust' || pressureStatus === 'marginal-bust') {
-    probability *= 0.1; // 90% reduction - North flow dominates
-  } else if (pressureStatus === 'excellent') {
-    probability *= 1.4; // 40% boost
-  } else if (pressureStatus === 'favorable') {
-    probability *= 1.2; // 20% boost
-  }
+  // Pressure/thermal/convergence weights from learning (default: 0.40, 0.40, 0.20)
+  const pW = weights.pressure;
+  const tW = weights.thermal;
+  const cW = weights.convergence;
   
-  // STEP B: Elevation Delta (30% weight)
-  if (elevationStatus === 'inversion' || elevationStatus === 'inverted') {
-    probability *= 0.2; // 80% reduction - air trapped
-  } else if (elevationStatus === 'pump-active' || elevationStatus === 'optimal') {
-    probability *= 1.5; // 50% boost - thermal pump active!
-  } else if (elevationStatus === 'building') {
-    probability *= 1.2; // 20% boost
-  }
+  // Hourly multiplier from learning (if the model learned this hour is over/under-predicted)
+  const hourlyMult = weights.hourlyMultipliers?.[currentHour] ?? 1.0;
+  
+  // Monthly quality rate from backtest (e.g., July = 0.84, May = 0.52)
+  // Blends with the existing monthlyMultiplier for seasonal accuracy
+  const learnedMonthlyRate = weights.monthlyQualityRates?.[currentMonth];
+  const seasonalAdj = learnedMonthlyRate != null ? (0.7 + learnedMonthlyRate * 0.6) : 1.0;
+  
+  // Calculate final probability using learned weighted 3-step model
+  let probability = baseProbability * monthlyMultiplier * hourlyMult * seasonalAdj;
+  
+  // STEP A: Gradient Check (learned pressure weight)
+  const pressureImpact = pressureStatus === 'bust' || pressureStatus === 'marginal-bust'
+    ? 0.1
+    : pressureStatus === 'excellent' ? 1.4
+    : pressureStatus === 'favorable' ? 1.2
+    : 1.0;
+  probability *= (1.0 + (pressureImpact - 1.0) * (pW / 0.40));
+  
+  // STEP B: Elevation Delta (learned thermal weight)
+  const elevationImpact = (elevationStatus === 'inversion' || elevationStatus === 'inverted')
+    ? 0.2
+    : (elevationStatus === 'pump-active' || elevationStatus === 'optimal') ? 1.5
+    : elevationStatus === 'building' ? 1.2
+    : 1.0;
+  probability *= (1.0 + (elevationImpact - 1.0) * (tW / 0.40));
   
   // ARROWHEAD TRIGGER (Deer Creek specific)
   if (lakeId === 'deer-creek' && arrowheadStatus === 'trigger') {
@@ -1370,18 +1391,16 @@ export function predictThermal(lakeId, currentConditions) {
     };
   }
   
-  // STEP C: Ground Truth / Current Conditions (30% weight)
-  if (directionStatus === 'wrong') {
-    probability *= 0.1; // 90% reduction
-  } else if (directionStatus === 'optimal') {
-    probability *= 1.3; // 30% boost
-  }
+  // STEP C: Ground Truth / Current Conditions (learned convergence weight)
+  const dirImpact = directionStatus === 'wrong' ? 0.1
+    : directionStatus === 'optimal' ? 1.3
+    : 1.0;
+  probability *= (1.0 + (dirImpact - 1.0) * (cW / 0.20));
   
-  if (speedStatus === 'good') {
-    probability *= 1.2;
-  } else if (speedStatus === 'light') {
-    probability *= 0.5;
-  }
+  const spdImpact = speedStatus === 'good' ? 1.2
+    : speedStatus === 'light' ? 0.5
+    : 1.0;
+  probability *= (1.0 + (spdImpact - 1.0) * (cW / 0.20));
   
   // Hard rules from historical data
   if (pressureStatus === 'bust') {
@@ -1397,6 +1416,15 @@ export function predictThermal(lakeId, currentConditions) {
     probability = 0;
   } else if (phase === 'pre-thermal' && currentHour < 5) {
     probability *= 0.3;
+  }
+  
+  // Apply learned probability calibration (shifts the curve toward actual hit rates)
+  if (weights.probabilityCalibration) {
+    const bucket = getBucket(probability);
+    const cal = weights.probabilityCalibration[bucket];
+    if (cal != null && cal > 0) {
+      probability *= cal;
+    }
   }
   
   // Cap at 95%
@@ -1450,7 +1478,7 @@ export function predictThermal(lakeId, currentConditions) {
       status: speedStatus,
       score: speedScore,
       message: speedMessage,
-      expectedAvg: expectedPeakSpeed,
+      expectedAvg: Math.max(0, expectedPeakSpeed + (weights.speedBiasCorrection || 0)),
       expectedRange: `${speed.typical.min}-${speed.typical.max} mph`,
       current: currentConditions?.windSpeed,
     },
@@ -1563,7 +1591,59 @@ export function predictThermal(lakeId, currentConditions) {
     },
     
     statistics: profile.statistics,
+    
+    // Learning metadata
+    weightsVersion: learnedWeights?.version || 'default',
+    isUsingLearnedWeights: learnedWeights != null && learnedWeights.version !== 'default',
+    speedBiasCorrection: weights.speedBiasCorrection || 0,
+    
+    // Consistency prediction from backtest data
+    consistencyForecast: (() => {
+      const wts = weights.windTypeScores || {};
+      const cp = weights.consistencyProfile || {};
+      
+      // Predict session quality based on detected wind type
+      let detectedType = 'calm';
+      if (directionStatus === 'optimal' && currentConditions?.windDirection >= 90 &&
+          currentConditions?.windDirection <= 180) {
+        detectedType = 'thermal';
+      } else if (currentConditions?.windDirection != null &&
+          (currentConditions.windDirection >= 315 || currentConditions.windDirection <= 45)) {
+        detectedType = 'north_flow';
+      } else if (speedStatus === 'good' || speedStatus === 'strong') {
+        detectedType = 'other';
+      }
+      
+      const typeData = wts[detectedType];
+      if (!typeData) return null;
+      
+      return {
+        expectedType: detectedType,
+        qualityLikelihood: Math.round(typeData.qualityRate * 100),
+        consistency: typeData.consistency,
+        avgSessionScore: typeData.avgScore,
+        bestHour: cp.bestQualityHour || 10,
+        message: detectedType === 'thermal'
+          ? `Thermal wind: ${Math.round(typeData.qualityRate * 100)}% chance of quality session (smooth, consistent)`
+          : detectedType === 'north_flow'
+            ? `North flow: ${Math.round(typeData.qualityRate * 100)}% quality — stronger but gustier than thermal`
+            : detectedType === 'other'
+              ? `Variable wind: only ${Math.round(typeData.qualityRate * 100)}% quality — likely inconsistent`
+              : 'Too light for kiting',
+      };
+    })(),
   };
+}
+
+/**
+ * Map a raw probability into a calibration bucket key
+ */
+function getBucket(prob) {
+  if (prob < 20) return '0-20';
+  if (prob < 40) return '20-40';
+  if (prob < 60) return '40-60';
+  if (prob < 80) return '60-80';
+  return '80-100';
 }
 
 /**

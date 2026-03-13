@@ -1,5 +1,14 @@
 import { LAKE_CONFIGS, WIND_DIRECTION_OPTIMAL, getPrimaryRidgeStation, STATION_INFO } from '../config/lakeStations';
 import { predictThermal } from './ThermalPredictor';
+import { learningSystem } from './LearningSystem';
+
+// Learned weights cache for DataNormalizer's probability calculation
+let _learnedWeightsForNorm = null;
+
+// Subscribe to weight updates from the learning system
+learningSystem.onWeightsUpdated((weights) => {
+  _learnedWeightsForNorm = weights;
+});
 
 /**
  * LakeState - Normalized data structure for thermal prediction
@@ -476,11 +485,16 @@ function calculateVectorConvergence(stations, optimalRange) {
   };
 }
 
+/**
+ * @deprecated This function is not currently called — probability comes from
+ * ThermalPredictor.predictThermal() which uses learned weights directly.
+ * Kept for potential future use as an alternative probability path.
+ */
 export function calculateProbability(state) {
   const WEIGHTS = {
-    pressure: 0.40,
-    thermal: 0.40,
-    convergence: 0.20,
+    pressure: _learnedWeightsForNorm?.pressureWeight ?? 0.40,
+    thermal: _learnedWeightsForNorm?.thermalWeight ?? 0.40,
+    convergence: _learnedWeightsForNorm?.convergenceWeight ?? 0.20,
   };
 
   let pressureScore = 50;
@@ -543,6 +557,12 @@ export function calculateProbability(state) {
     timeMultiplier = 0.6;
   }
 
+  // Apply learned hourly correction on top of the base time multiplier
+  const learnedHourly = _learnedWeightsForNorm?.hourlyMultipliers?.[hour];
+  if (learnedHourly != null && learnedHourly > 0) {
+    timeMultiplier *= learnedHourly;
+  }
+
   const finalScore = Math.min(100, Math.max(0, Math.round(weightedTotal * timeMultiplier)));
 
   return {
@@ -554,6 +574,8 @@ export function calculateProbability(state) {
     },
     weights: WEIGHTS,
     timeMultiplier,
+    weightsVersion: _learnedWeightsForNorm?.version || 'default',
+    isLearned: _learnedWeightsForNorm != null && _learnedWeightsForNorm.version !== 'default',
   };
 }
 

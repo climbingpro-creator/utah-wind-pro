@@ -188,5 +188,72 @@
         "description": "S flow at Provo = south side active (morning pattern)"
       }
     }
+  },
+
+  "TREND_RULES": {
+    "NORTH_CLIFF": {
+      "description": "Day-over-day temp drop signals incoming cold front / north push",
+      "temp_drop_dod": 8,
+      "label": "Frontal Push Likely",
+      "confidence": "High",
+      "wind_dir": "NW",
+      "wind_speed_range": [15, 30],
+      "prefrontal_boost": {
+        "description": "Day BEFORE the cliff is often the best wind day — warm prefrontal surge",
+        "label": "Pre-Frontal Spike",
+        "typical_wind": "Strong S/SW before switch to NW"
+      }
+    },
+    "SOUTH_CLIMB": {
+      "description": "Day-over-day temp rise signals building thermal potential or south surge",
+      "temp_rise_dod": 8,
+      "label": "South Surge Likely",
+      "confidence": "High",
+      "wind_dir": "S",
+      "wind_speed_range": [10, 20]
+    },
+    "MODERATE_DROP": {
+      "description": "Smaller temp drop still significant for wind direction change",
+      "temp_drop_dod": 5,
+      "label": "Cool Change Coming",
+      "confidence": "Medium",
+      "wind_dir": "N/NW"
+    },
+    "MODERATE_RISE": {
+      "description": "Smaller temp rise — thermals strengthening",
+      "temp_rise_dod": 5,
+      "label": "Thermals Building",
+      "confidence": "Medium",
+      "wind_dir": "S/SE"
+    }
+  },
+
+  "SWING_MONITOR": {
+    "description": "Real-time monitoring for rapid weather changes using PWS and station data",
+    "front_trigger_3h": 10,
+    "front_trigger_1h": 5,
+    "pressure_trigger_3h": 0.04,
+    "pressure_trigger_1h": 0.02,
+    "gust_spike_threshold": 15,
+    "alerts": {
+      "FRONTAL_HIT": {
+        "temp_drop_3h": 10,
+        "message": "Frontal Boundary Hit: Rapid temp drop detected",
+        "wind_expectation": "Immediate north surge, possible strong gusts",
+        "severity": "critical"
+      },
+      "PRESSURE_BOMB": {
+        "pressure_rise_3h": 0.04,
+        "message": "Pressure surge: post-frontal high building",
+        "wind_expectation": "Gusty NW, then settling",
+        "severity": "warning"
+      },
+      "WIND_SHIFT": {
+        "direction_change_1h": 90,
+        "message": "Major wind shift detected",
+        "wind_expectation": "Frontal passage — direction changing rapidly",
+        "severity": "warning"
+      }
+    }
   }
 }

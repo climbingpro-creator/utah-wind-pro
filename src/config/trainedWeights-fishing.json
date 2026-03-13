@@ -1,0 +1,77 @@
+{
+  "_meta": {
+    "generatedAt": "2026-03-13T20:46:46.056Z",
+    "source": "backtest-boating-fishing-2025",
+    "samples": 4984,
+    "originalAccuracy": 75.1,
+    "trainedAccuracy": 52.7,
+    "insights": [
+      "Dawn (5-7 AM) and dusk (5-7 PM) confirmed as golden hours",
+      "Falling pressure produces highest quality rate",
+      "New Moon and Full Moon boost fishing quality"
+    ]
+  },
+  "weights": {
+    "version": "fish-2025-v1",
+    "createdAt": "2026-03-13T20:46:46.056Z",
+    "source": "historical-backtest-fishing",
+    "basedOnSamples": 4984,
+    "activity": "fishing",
+    "probabilityCalibration": {
+      "20-40": 0.3,
+      "40-60": 0.545,
+      "60-80": 0.928,
+      "0-20": 0.3,
+      "80-100": 1.111
+    },
+    "hourlyMultipliers": {
+      "5": 1.5,
+      "6": 1.5,
+      "7": 1.5,
+      "8": 1.24,
+      "9": 0.96,
+      "10": 0.5,
+      "11": 0.5,
+      "12": 0.5,
+      "13": 0.5,
+      "14": 0.5,
+      "15": 0.5,
+      "16": 0.917,
+      "17": 1.37,
+      "18": 1.33,
+      "19": 1.48,
+      "20": 1.29,
+      "21": 0.5
+    },
+    "monthlyQualityRates": {
+      "10": 0.478,
+      "11": 0.458,
+      "12": 0.277,
+      "03": 0.361,
+      "04": 0.392,
+      "05": 0.421,
+      "06": 0.227,
+      "07": 0.157,
+      "08": 0.252,
+      "09": 0.4
+    },
+    "moonPhaseMultipliers": {
+      "Full Moon": 1.017,
+      "Waning Gibbous": 0.916,
+      "Last Quarter": 1.006,
+      "Waning Crescent": 0.964,
+      "New Moon": 1.495,
+      "Waxing Crescent": 0.771,
+      "First Quarter": 0.939,
+      "Waxing Gibbous": 0.887
+    },
+    "pressureTrendMultipliers": {
+      "falling_fast": 0.821,
+      "falling_slow": 1.465,
+      "stable": 1.438,
+      "rising_slow": 0.799,
+      "rising_fast": 1.177,
+      "unknown": 0.733
+    }
+  }
+}

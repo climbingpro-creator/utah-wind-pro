@@ -15,6 +15,11 @@ import { learningSystem } from './LearningSystem';
 import { weatherService } from './WeatherService';
 import { LakeState } from './DataNormalizer';
 import { LAKE_CONFIGS, getAllStationIds } from '../config/lakeStations';
+import { setLearnedWeights } from './ThermalPredictor';
+import { setParaglidingLearnedWeights } from './ParaglidingPredictor';
+import { setBoatingLearnedWeights } from './BoatingPredictor';
+import { setFishingLearnedWeights } from './FishingPredictor';
+import { scoreSessionForActivity } from './ActivityScoring';
 
 // Schedule work during idle periods to avoid blocking the UI thread
 function scheduleIdle(fn) {
@@ -45,10 +50,18 @@ class DataCollector {
   async start() {
     if (this.isRunning) return;
     
-    console.log('🎓 Starting Data Collector for Learning System...');
+    console.log('Starting Data Collector for Learning System...');
     
     await learningSystem.initialize();
     this.isRunning = true;
+
+    // Subscribe all predictors to weight updates — closes the learning loop
+    this._unsubWeights = learningSystem.onWeightsUpdated((weights) => {
+      setLearnedWeights(weights);
+      if (weights?.activity === 'paragliding') setParaglidingLearnedWeights(weights);
+      if (weights?.activity === 'boating') setBoatingLearnedWeights(weights);
+      if (weights?.activity === 'fishing') setFishingLearnedWeights(weights);
+    });
 
     // Collect actuals every 15 minutes (idle-scheduled)
     this.intervals.push(
@@ -84,6 +97,10 @@ class DataCollector {
     this.isRunning = false;
     this.intervals.forEach(interval => clearInterval(interval));
     this.intervals = [];
+    if (this._unsubWeights) {
+      this._unsubWeights();
+      this._unsubWeights = null;
+    }
   }
 
   /**
@@ -106,12 +123,32 @@ class DataCollector {
         const synopticData = await weatherService.getSynopticStationData(stationIds);
         
         for (const station of synopticData) {
+          const wind = {
+            speed: station.windSpeed,
+            gust: station.windGust,
+            direction: station.windDirection,
+          };
+          const conditions = {
+            temperature: station.temperature,
+            pressure: station.pressure,
+          };
+
+          // Score this observation for each relevant activity
+          const activityScores = {
+            kiting: scoreSessionForActivity('kiting', wind, conditions),
+            sailing: scoreSessionForActivity('sailing', wind, conditions),
+            paragliding: scoreSessionForActivity('paragliding', wind, conditions),
+            fishing: scoreSessionForActivity('fishing', wind, conditions),
+            boating: scoreSessionForActivity('boating', wind),
+          };
+
           await learningSystem.recordActual(lakeId, station.stationId, {
             windSpeed: station.windSpeed,
             windGust: station.windGust,
             windDirection: station.windDirection,
             temperature: station.temperature,
             pressure: station.pressure,
+            activityScores,
           });
           
           this.collectionStats.actualsCollected++;
@@ -149,9 +186,12 @@ class DataCollector {
     console.log('🔮 Recording predictions and verifying past ones...');
 
     try {
-      // Record predictions for each lake
-      const lakes = ['utah-lake-zigzag', 'utah-lake-lincoln', 'utah-lake-sandy', 
-                     'utah-lake-vineyard', 'utah-lake-mm19'];
+      // Record predictions for ALL locations, not just Utah Lake
+      const lakes = [
+        'utah-lake-zigzag', 'utah-lake-lincoln', 'utah-lake-sandy',
+        'utah-lake-vineyard', 'utah-lake-mm19',
+        'deer-creek', 'willard-bay',
+      ];
 
       for (const lakeId of lakes) {
         // Get current data
@@ -221,9 +261,9 @@ class DataCollector {
     console.log('📈 Collecting indicator correlation data...');
 
     try {
-      // Get data from all indicator stations
-      const indicatorStations = ['KSLC', 'KPVU', 'QSF', 'UTALP'];
-      const targetStations = ['FPS', 'PWS'];
+      // Get data from all indicator and target stations
+      const indicatorStations = ['KSLC', 'KPVU', 'QSF', 'UTALP', 'UID28'];
+      const targetStations = ['FPS', 'PWS', 'KHCR'];
       
       const allStations = [...indicatorStations, ...targetStations];
       const synopticData = await weatherService.getSynopticStationData(allStations);
@@ -241,8 +281,9 @@ class DataCollector {
         });
       }
 
-      // Record correlations
+      // Record correlations for all location indicator→target pairs
       const indicatorConfigs = [
+        // Utah Lake: KSLC/KPVU/QSF/UTALP → FPS/PWS
         { indicator: 'KSLC', target: 'FPS', leadTime: 60 },
         { indicator: 'KSLC', target: 'PWS', leadTime: 60 },
         { indicator: 'KPVU', target: 'FPS', leadTime: 60 },
@@ -251,6 +292,14 @@ class DataCollector {
         { indicator: 'QSF', target: 'PWS', leadTime: 120 },
         { indicator: 'UTALP', target: 'FPS', leadTime: 30 },
         { indicator: 'UTALP', target: 'PWS', leadTime: 30 },
+        // Deer Creek: Arrowhead → Heber / Dam
+        { indicator: 'UID28', target: 'KHCR', leadTime: 60 },
+        { indicator: 'KPVU', target: 'KHCR', leadTime: 90 },
+        // Willard Bay: Hill AFB → Willard
+        { indicator: 'KSLC', target: 'KSLC', leadTime: 0 },
+        // Paragliding: KSLC → FPS (north side), KPVU → UTALP
+        { indicator: 'KSLC', target: 'UTALP', leadTime: 45 },
+        { indicator: 'KPVU', target: 'UTALP', leadTime: 45 },
       ];
 
       for (const config of indicatorConfigs) {

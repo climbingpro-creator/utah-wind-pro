@@ -20,6 +20,8 @@ import { getFullForecast } from '../services/ForecastService';
 import LearningDashboard from './LearningDashboard';
 import ActivityMode, { ACTIVITY_CONFIGS, calculateActivityScore, calculateGlassScore } from './ActivityMode';
 import GlassScore from './GlassScore';
+import { predictGlass } from '../services/BoatingPredictor';
+import WaterForecast from './WaterForecast';
 import HourlyTimeline from './HourlyTimeline';
 import WeeklyBestDays from './WeeklyBestDays';
 import RaceDayMode from './RaceDayMode';
@@ -31,6 +33,8 @@ import ThemeToggle from './ThemeToggle';
 import { useTheme } from '../context/ThemeContext';
 import { SafeComponent } from './ErrorBoundary';
 import { calculateCorrelatedWind } from '../services/CorrelationEngine';
+import { monitorSwings } from '../services/FrontalTrendPredictor';
+import TrendPatterns from './TrendPatterns';
 
 function windDirectionToCardinal(degrees) {
   if (degrees == null) return 'N/A';
@@ -56,6 +60,14 @@ export function Dashboard() {
   // For paragliding, use Flight Park South/North data instead of generic wind
   const fpsStation = lakeState?.wind?.stations?.find(s => s.id === 'FPS');
   const utalpStation = lakeState?.wind?.stations?.find(s => s.id === 'UTALP');
+
+  // Frontal Swing Monitor — checks 3-hour history for rapid changes
+  const swingAlerts = React.useMemo(() => {
+    const primaryStationId = lakeState?.pws ? 'PWS' : lakeState?.wind?.stations?.[0]?.id;
+    const stationHistory = primaryStationId && history?.[primaryStationId];
+    if (!stationHistory || stationHistory.length < 4) return [];
+    return monitorSwings(stationHistory);
+  }, [history, lakeState]);
 
   // Meso-Relational Correlation: refine prediction using upstream indicators
   const mesoData = React.useMemo(() => {
@@ -154,6 +166,16 @@ export function Dashboard() {
   
   const glassScore = calculateGlassScore(currentWindSpeed, currentWindGust);
 
+  // Boating AI prediction (trained on 4,984 observations)
+  const boatingPrediction = React.useMemo(() => {
+    try {
+      return predictGlass(
+        { speed: currentWindSpeed, gust: currentWindGust },
+        { slcPressure: lakeState?.pressure?.slc, provoPressure: lakeState?.pressure?.provo, gradient: lakeState?.pressure?.gradient },
+      );
+    } catch (e) { return null; }
+  }, [currentWindSpeed, currentWindGust, lakeState?.pressure]);
+
   // Check for notifications when data updates
   React.useEffect(() => {
     if (lakeState) {
@@ -238,10 +260,15 @@ export function Dashboard() {
 
               <button
                 onClick={() => setShowLearningDashboard(!showLearningDashboard)}
-                className={`p-2 rounded-lg transition-colors ${showLearningDashboard ? 'bg-purple-600' : 'bg-slate-800 hover:bg-slate-700'}`}
-                title="Learning System"
+                className={`p-2 rounded-lg transition-colors relative ${showLearningDashboard ? 'bg-purple-600' : (theme === 'dark' ? 'bg-slate-800 hover:bg-slate-700' : 'bg-slate-200 hover:bg-slate-300')}`}
+                title={lakeState?.thermalPrediction?.isUsingLearnedWeights
+                  ? `Learning Active (v${lakeState.thermalPrediction.weightsVersion})`
+                  : 'Learning System — collecting data'}
               >
                 <Brain className={`w-5 h-5 ${showLearningDashboard ? 'text-white' : 'text-purple-400'}`} />
+                {lakeState?.thermalPrediction?.isUsingLearnedWeights && (
+                  <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-green-400 rounded-full border border-slate-900 animate-pulse" />
+                )}
               </button>
 
               <button
@@ -293,40 +320,125 @@ export function Dashboard() {
           <LakeSelector selectedLake={selectedLake} onSelectLake={setSelectedLake} />
         )}
 
-        {/* Activity Score Banner - hide for special modes that have their own scoring */}
-        {activityScore && !activityConfig?.specialMode && (
-          <div className={`
-            rounded-xl p-4 border flex items-center justify-between
-            ${activityScore.score >= 70 
-              ? (theme === 'dark' ? 'bg-green-500/10 border-green-500/30' : 'bg-green-100 border-green-300')
-              : activityScore.score >= 40 
-                ? (theme === 'dark' ? 'bg-yellow-500/10 border-yellow-500/30' : 'bg-yellow-100 border-yellow-300')
-                : (theme === 'dark' ? 'bg-red-500/10 border-red-500/30' : 'bg-red-100 border-red-300')}
-          `}>
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">{activityConfig?.icon}</span>
-              <div>
-                <div className={`font-medium ${
-                  activityScore.score >= 70 
-                    ? (theme === 'dark' ? 'text-green-400' : 'text-green-700')
-                    : activityScore.score >= 40 
-                      ? (theme === 'dark' ? 'text-yellow-400' : 'text-yellow-700')
-                      : (theme === 'dark' ? 'text-red-400' : 'text-red-700')
-                }`}>
-                  {activityConfig?.name} Score: {activityScore.score}%
+        {/* Activity Score Banner — forecast-aware, shows best opportunity */}
+        {activityScore && !activityConfig?.specialMode && (() => {
+          const score = activityScore.score;
+          const prediction = lakeState?.thermalPrediction;
+          const prob = prediction?.probability || 0;
+          const startHour = prediction?.startHour;
+          const windType = prediction?.windType;
+          const consistencyForecast = prediction?.consistencyForecast;
+          const wantsWind = activityConfig?.wantsWind !== false;
+          const currentHour = new Date().getHours();
+
+          // Determine if there's a predicted opportunity
+          const hasForecastOpp = wantsWind && prob >= 40 && score < 60;
+          const isForecastBetter = wantsWind && prob > score;
+          const isGoodNow = score >= 60;
+          const isGreatNow = score >= 75;
+
+          // For boating/glass — use boating prediction
+          const hasGlassOpp = !wantsWind && boatingPrediction?.probability >= 45;
+
+          // Build the display
+          let displayScore = score;
+          let headline = `${activityConfig?.name}: ${activityScore.message}`;
+          let subline = null;
+          let bannerColor = score >= 70 ? 'green' : score >= 40 ? 'yellow' : 'red';
+          let badge = null;
+          let arriveTime = null;
+
+          if (isGreatNow) {
+            displayScore = score;
+            headline = `${activityConfig?.name} is ON!`;
+            subline = `${currentWindSpeed?.toFixed(0) || '--'} mph — get out there!`;
+            bannerColor = 'green';
+            badge = { text: 'GO', color: 'bg-green-500 text-white animate-pulse' };
+          } else if (isGoodNow && isForecastBetter) {
+            displayScore = score;
+            headline = `Good ${activityConfig?.name} now — getting better!`;
+            subline = consistencyForecast?.description || `${prob}% probability, building to peak`;
+            bannerColor = 'green';
+            badge = { text: 'IMPROVING', color: 'bg-green-500/20 text-green-400 border border-green-500/50' };
+          } else if (hasForecastOpp) {
+            displayScore = prob;
+            const timeStr = startHour ? (startHour > 12 ? `${startHour - 12} PM` : `${startHour} AM`) : null;
+            headline = timeStr
+              ? `${activityConfig?.name} Expected at ${timeStr}`
+              : `${activityConfig?.name} Likely Today`;
+            subline = windType === 'thermal'
+              ? (consistencyForecast?.description || 'Thermal cycle building — smooth, consistent wind expected')
+              : windType === 'north_flow'
+                ? 'North flow developing — stronger conditions incoming'
+                : `${prob}% probability — conditions are building`;
+            bannerColor = prob >= 60 ? 'green' : 'yellow';
+            badge = { text: 'PREDICTED', color: prob >= 60 ? 'bg-green-500/20 text-green-400 border border-green-500/50' : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/50' };
+            if (timeStr) arriveTime = timeStr;
+          } else if (hasGlassOpp && !wantsWind) {
+            displayScore = boatingPrediction.probability;
+            headline = boatingPrediction.isGlass
+              ? 'Glass Conditions Now!'
+              : boatingPrediction.glassWindow?.start
+                ? `Glass Window: ${boatingPrediction.glassWindow.start} – ${boatingPrediction.glassWindow.end}`
+                : 'Calm Conditions Possible';
+            subline = boatingPrediction.recommendation;
+            bannerColor = boatingPrediction.probability >= 60 ? 'green' : boatingPrediction.probability >= 40 ? 'yellow' : 'red';
+            if (boatingPrediction.isGlass) badge = { text: 'GLASS', color: 'bg-emerald-500 text-white animate-pulse' };
+          } else {
+            headline = `${activityConfig?.name}: ${activityScore.message}`;
+          }
+
+          const colorMap = {
+            green: theme === 'dark' ? 'bg-green-500/10 border-green-500/30' : 'bg-green-100 border-green-300',
+            yellow: theme === 'dark' ? 'bg-yellow-500/10 border-yellow-500/30' : 'bg-yellow-100 border-yellow-300',
+            red: theme === 'dark' ? 'bg-red-500/10 border-red-500/30' : 'bg-red-100 border-red-300',
+          };
+          const textColorMap = {
+            green: theme === 'dark' ? 'text-green-400' : 'text-green-700',
+            yellow: theme === 'dark' ? 'text-yellow-400' : 'text-yellow-700',
+            red: theme === 'dark' ? 'text-red-400' : 'text-red-700',
+          };
+
+          return (
+            <div className={`rounded-xl p-4 border ${colorMap[bannerColor]}`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <span className="text-2xl">{activityConfig?.icon}</span>
+                  <div className="min-w-0">
+                    <div className={`font-bold text-lg ${textColorMap[bannerColor]}`}>
+                      {headline}
+                    </div>
+                    {subline && (
+                      <div className={`text-sm mt-0.5 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-600'}`}>{subline}</div>
+                    )}
+                    {arriveTime && (
+                      <div className="mt-1.5 inline-flex items-center gap-1 bg-green-500/20 text-green-400 text-xs font-medium px-2 py-0.5 rounded-full">
+                        🕐 Be there by {arriveTime}
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div className={`text-sm ${theme === 'dark' ? 'text-slate-400' : 'text-slate-600'}`}>{activityScore.message}</div>
+                <div className="text-right ml-3 flex-shrink-0">
+                  <div className={`text-4xl font-black ${textColorMap[bannerColor]}`}>
+                    {displayScore}%
+                  </div>
+                  {badge && (
+                    <div className={`text-[10px] font-bold px-2 py-0.5 rounded-full mt-1 ${badge.color}`}>
+                      {badge.text}
+                    </div>
+                  )}
+                  {!badge && activityScore.gustFactor > 1.3 && (
+                    <div className={`text-[10px] px-2 py-0.5 rounded mt-1 ${
+                      theme === 'dark' ? 'text-orange-400 bg-orange-500/20' : 'text-orange-700 bg-orange-100'
+                    }`}>
+                      ⚠️ Gusty
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-            {activityScore.gustFactor > 1.3 && (
-              <div className={`text-xs px-2 py-1 rounded ${
-                theme === 'dark' ? 'text-orange-400 bg-orange-500/20' : 'text-orange-700 bg-orange-100'
-              }`}>
-                ⚠️ Gusty ({((activityScore.gustFactor - 1) * 100).toFixed(0)}%)
-              </div>
-            )}
-          </div>
-        )}
+          );
+        })()}
 
         {error && (
           <div className={`rounded-xl p-4 border ${
@@ -403,6 +515,34 @@ export function Dashboard() {
                 thermalStartHour={lakeState?.thermalPrediction?.startHour || 10}
                 size={180}
               />
+            )}
+
+            {/* Boating AI Prediction — shown for calm-seeking activities */}
+            {boatingPrediction && (selectedActivity === 'boating' || selectedActivity === 'paddling') && (
+              <div className="bg-slate-800/30 rounded-2xl p-4 border border-slate-700">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-sm">🚤</span>
+                  <span className="text-xs font-medium text-white">Glass Forecast</span>
+                  <span className="text-[10px] bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded ml-auto">AI</span>
+                </div>
+                <div className="text-center mb-2">
+                  <div className={`text-2xl font-bold ${
+                    boatingPrediction.probability >= 60 ? 'text-green-400' :
+                    boatingPrediction.probability >= 40 ? 'text-yellow-400' : 'text-red-400'
+                  }`}>
+                    {boatingPrediction.probability}%
+                  </div>
+                  <div className="text-xs text-slate-400">{boatingPrediction.waveLabel}</div>
+                </div>
+                {boatingPrediction.glassWindow?.start && (
+                  <div className="text-xs text-cyan-400 text-center">
+                    Glass window: {boatingPrediction.glassWindow.start} – {boatingPrediction.glassWindow.end}
+                  </div>
+                )}
+                <div className="text-[10px] text-slate-500 text-center mt-1">
+                  {boatingPrediction.recommendation}
+                </div>
+              </div>
             )}
 
             {/* North Flow / Prefrontal Gauge */}
@@ -540,8 +680,79 @@ export function Dashboard() {
               />
             )}
 
+            {/* Temp Trend Patterns — 7-day cliff/climb detection */}
+            <SafeComponent name="Trend Patterns">
+              <TrendPatterns locationId={selectedLake} />
+            </SafeComponent>
+
             {/* Weekly Best Days */}
             <WeeklyBestDays selectedActivity={selectedActivity} />
+
+            {/* Frontal Swing Alerts — Real-time rapid changes */}
+            {swingAlerts.length > 0 && (
+              <div className="space-y-2">
+                {swingAlerts.map(alert => (
+                  <div
+                    key={alert.id}
+                    className={`rounded-xl p-4 border flex items-start gap-3 ${
+                      alert.severity === 'critical'
+                        ? (theme === 'dark'
+                          ? 'bg-red-500/15 border-red-500/40 animate-pulse'
+                          : 'bg-red-50 border-red-300 animate-pulse')
+                        : alert.severity === 'warning'
+                          ? (theme === 'dark'
+                            ? 'bg-orange-500/10 border-orange-500/30'
+                            : 'bg-orange-50 border-orange-200')
+                          : (theme === 'dark'
+                            ? 'bg-blue-500/10 border-blue-500/30'
+                            : 'bg-blue-50 border-blue-200')
+                    }`}
+                  >
+                    <span className="text-xl flex-shrink-0">{alert.icon}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={`text-sm font-bold ${
+                          alert.severity === 'critical'
+                            ? (theme === 'dark' ? 'text-red-300' : 'text-red-700')
+                            : alert.severity === 'warning'
+                              ? (theme === 'dark' ? 'text-orange-300' : 'text-orange-700')
+                              : (theme === 'dark' ? 'text-blue-300' : 'text-blue-700')
+                        }`}>
+                          {alert.label}
+                        </span>
+                        <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${
+                          alert.severity === 'critical'
+                            ? 'bg-red-500 text-white'
+                            : alert.severity === 'warning'
+                              ? (theme === 'dark' ? 'bg-orange-500/30 text-orange-300' : 'bg-orange-200 text-orange-800')
+                              : (theme === 'dark' ? 'bg-blue-500/30 text-blue-300' : 'bg-blue-200 text-blue-800')
+                        }`}>
+                          {alert.severity}
+                        </span>
+                      </div>
+                      <p className={`text-xs ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>
+                        {alert.detail}
+                      </p>
+                      <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-500'}`}>
+                        Wind: {alert.windExpectation}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Water Forecast — for boating, paddling, fishing */}
+            {(selectedActivity === 'boating' || selectedActivity === 'paddling' || selectedActivity === 'fishing') && (
+              <SafeComponent name="Water Forecast">
+                <WaterForecast
+                  locationId={selectedLake}
+                  currentWind={{ speed: currentWindSpeed, gust: currentWindGust }}
+                  pressureData={lakeState?.pressure}
+                  activity={selectedActivity}
+                />
+              </SafeComponent>
+            )}
 
             {/* Severe Weather Alerts - Always visible */}
             <SevereWeatherAlerts />
@@ -554,6 +765,31 @@ export function Dashboard() {
               onRefresh={refresh}
               refreshInterval={3}
             />
+
+            {/* Learning Status */}
+            {lakeState?.thermalPrediction && (
+              <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] ${
+                theme === 'dark' ? 'bg-slate-800/50 text-slate-500' : 'bg-slate-100 text-slate-500'
+              }`}>
+                <Brain className="w-3 h-3" />
+                {lakeState.thermalPrediction.isUsingLearnedWeights ? (
+                  <span>
+                    Model: <span className={theme === 'dark' ? 'text-green-400' : 'text-green-600'}>Learned</span>
+                    {' '}(v{String(lakeState.thermalPrediction.weightsVersion).slice(-6)})
+                    {lakeState.thermalPrediction.speedBiasCorrection !== 0 && (
+                      <span className="ml-1 opacity-60">
+                        bias: {lakeState.thermalPrediction.speedBiasCorrection > 0 ? '+' : ''}
+                        {lakeState.thermalPrediction.speedBiasCorrection.toFixed(1)} mph
+                      </span>
+                    )}
+                  </span>
+                ) : (
+                  <span>
+                    Model: Default — <span className="opacity-60">collecting data for learning</span>
+                  </span>
+                )}
+              </div>
+            )}
 
             {/* Wind Map */}
             <WindMap

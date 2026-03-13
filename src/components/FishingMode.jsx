@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Fish, Moon, Thermometer, Gauge, Clock, MapPin, TrendingUp, TrendingDown, Minus, Sun, Sunset, CloudRain, Wind, Waves, Calendar, Target, AlertTriangle, CheckCircle, Anchor, Navigation, Egg, Mountain } from 'lucide-react';
+import { Fish, Moon, Thermometer, Gauge, Clock, MapPin, TrendingUp, TrendingDown, Minus, Sun, Sunset, CloudRain, Wind, Waves, Calendar, Target, AlertTriangle, CheckCircle, Anchor, Navigation, Egg, Mountain, Brain, Zap } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import { predictFishing } from '../services/FishingPredictor';
+import WaterForecast from './WaterForecast';
 
 // Utah Fishing Locations Configuration
 export const FISHING_LOCATIONS = {
@@ -545,46 +547,219 @@ const FishingMode = ({ windData, pressureData, isLoading }) => {
   
   const pressureAnalysis = analyzePressure(pressure, pressureTrend);
   const depthInfo = location.depths?.[season] || { min: 10, max: 30, description: 'Variable' };
+
+  // Learned model prediction
+  const aiPrediction = useMemo(() => {
+    try {
+      return predictFishing(
+        { speed: windSpeed, temperature: estimatedWaterTemp },
+        { slcPressure: pressure, pressure },
+      );
+    } catch (e) { return null; }
+  }, [windSpeed, pressure, estimatedWaterTemp]);
   
+  // Build the fishing opportunity banner
+  const fishOpp = useMemo(() => {
+    const score = fishingScore.score;
+    const aiProb = aiPrediction?.probability || 0;
+    const bestHours = aiPrediction?.bestTimesToday || [];
+    const goldenHour = aiPrediction?.isGoldenHour;
+    const solunarActive = aiPrediction?.solunar?.currentPeriod;
+    const moonGood = aiPrediction?.moonPhase?.rating >= 4;
+    const pressureFalling = aiPrediction?.pressureTrend?.trend?.includes('falling');
+    const now = new Date().getHours();
+
+    // Currently a great time
+    if (score >= 70 || goldenHour || solunarActive) {
+      const reasons = [];
+      if (goldenHour) reasons.push('Golden Hour');
+      if (solunarActive) reasons.push(`${solunarActive} Solunar`);
+      if (pressureFalling) reasons.push('Falling Pressure');
+      if (moonGood) reasons.push('Strong Moon Phase');
+      return {
+        color: 'green', headline: 'Fish Are Biting!',
+        subline: reasons.length > 0 ? reasons.join(' + ') : `${score}% activity — conditions are excellent`,
+        displayScore: Math.max(score, aiProb),
+        badge: goldenHour ? { text: 'GOLDEN HOUR', color: 'bg-amber-500 text-white animate-pulse' }
+          : solunarActive ? { text: 'SOLUNAR', color: 'bg-green-500 text-white animate-pulse' }
+          : { text: 'GO FISH', color: 'bg-green-500 text-white' },
+      };
+    }
+
+    // AI prediction says good time coming
+    if (aiProb >= 45 && bestHours.length > 0) {
+      const nextGoodHour = bestHours.find(h => {
+        const parsed = parseInt(h);
+        return parsed >= now;
+      });
+      const timeStr = nextGoodHour || bestHours[0];
+      return {
+        color: aiProb >= 60 ? 'green' : 'yellow',
+        headline: nextGoodHour ? `Best Bite at ${timeStr}` : `Peak Hours: ${bestHours.slice(0, 3).join(', ')}`,
+        subline: [
+          moonGood ? 'Strong moon' : null,
+          pressureFalling ? 'Falling pressure (active fish)' : null,
+          aiPrediction?.recommendation,
+        ].filter(Boolean)[0] || `${aiProb}% activity predicted`,
+        displayScore: aiProb,
+        badge: { text: 'PREDICTED', color: aiProb >= 60
+          ? (isDark ? 'bg-green-500/20 text-green-400 border border-green-500/50' : 'bg-green-100 text-green-700 border border-green-300')
+          : (isDark ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/50' : 'bg-yellow-100 text-yellow-700 border border-yellow-300') },
+        arriveBy: nextGoodHour,
+      };
+    }
+
+    return {
+      color: score >= 50 ? 'yellow' : 'red',
+      headline: `${location.name} — ${fishingScore.recommendation}`,
+      subline: 'Monitoring conditions',
+      displayScore: score, badge: null,
+    };
+  }, [fishingScore, aiPrediction, location, isDark]);
+
+  const fishBannerColors = {
+    green: isDark ? 'bg-gradient-to-r from-green-900/50 to-emerald-900/50 border-green-500/40' : 'bg-gradient-to-r from-green-100 to-emerald-100 border-green-300',
+    yellow: isDark ? 'bg-gradient-to-r from-yellow-900/30 to-amber-900/30 border-yellow-500/30' : 'bg-gradient-to-r from-yellow-100 to-amber-100 border-yellow-300',
+    red: isDark ? 'bg-gradient-to-r from-blue-900/50 to-cyan-900/50 border-blue-500/30' : 'bg-gradient-to-r from-blue-100 to-cyan-100 border-blue-300',
+  };
+  const fishScoreColors = {
+    green: isDark ? 'text-green-400' : 'text-green-600',
+    yellow: isDark ? 'text-yellow-400' : 'text-yellow-600',
+    red: isDark ? 'text-red-400' : 'text-red-600',
+  };
+
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className={`rounded-xl p-4 border ${isDark ? 'bg-gradient-to-r from-blue-900/50 to-cyan-900/50 border-blue-500/30' : 'bg-gradient-to-r from-blue-100 to-cyan-100 border-blue-300'}`}>
+      {/* Header — Forecast-driven */}
+      <div className={`rounded-xl p-4 border ${fishBannerColors[fishOpp.color]}`}>
         <div className="flex items-center gap-3 mb-3">
-          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isDark ? 'bg-blue-500/20' : 'bg-blue-200'}`}>
+          <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+            fishOpp.color === 'green' ? (isDark ? 'bg-green-500/30' : 'bg-green-200') : (isDark ? 'bg-blue-500/20' : 'bg-blue-200')
+          }`}>
             <Fish className={`w-6 h-6 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
           </div>
-          <div>
+          <div className="flex-1">
             <h2 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>Utah Fishing Forecast</h2>
-            <p className={`text-xs ${isDark ? 'text-blue-300' : 'text-blue-600'}`}>Wasatch Front & Beyond</p>
+            <p className={`text-xs ${isDark ? 'text-blue-300' : 'text-blue-600'}`}>{location.name}</p>
           </div>
+          {fishOpp.badge && (
+            <div className={`text-[10px] font-bold px-3 py-1 rounded-full ${fishOpp.badge.color}`}>
+              {fishOpp.badge.text}
+            </div>
+          )}
         </div>
         
-        {/* Overall Score */}
-        <div className={`rounded-lg p-3 ${
-          fishingScore.score >= 75 ? (isDark ? 'bg-green-500/20 border border-green-500/30' : 'bg-green-100 border border-green-300') :
-          fishingScore.score >= 50 ? (isDark ? 'bg-yellow-500/20 border border-yellow-500/30' : 'bg-yellow-100 border border-yellow-300') :
-          (isDark ? 'bg-red-500/20 border border-red-500/30' : 'bg-red-100 border border-red-300')
+        {/* Opportunity Card */}
+        <div className={`rounded-lg p-4 ${
+          fishOpp.color === 'green' ? (isDark ? 'bg-green-500/15 border border-green-500/40' : 'bg-green-50 border border-green-300')
+          : fishOpp.color === 'yellow' ? (isDark ? 'bg-yellow-500/10 border border-yellow-500/30' : 'bg-yellow-50 border border-yellow-300')
+          : (isDark ? 'bg-slate-700/30 border border-slate-600/30' : 'bg-white border border-slate-200')
         }`}>
           <div className="flex items-center justify-between">
-            <div>
-              <div className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Fishing Score</div>
-              <div className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{location.name}</div>
-            </div>
-            <div className="text-right">
-              <div className={`text-3xl font-bold ${
-                fishingScore.score >= 75 ? (isDark ? 'text-green-400' : 'text-green-600') :
-                fishingScore.score >= 50 ? (isDark ? 'text-yellow-400' : 'text-yellow-600') :
-                (isDark ? 'text-red-400' : 'text-red-600')
-              }`}>
-                {fishingScore.score}%
+            <div className="flex-1 min-w-0">
+              <div className={`text-xl font-bold ${fishOpp.color === 'green' ? (isDark ? 'text-white' : 'text-slate-800') : (isDark ? 'text-slate-200' : 'text-slate-700')}`}>
+                {fishOpp.headline}
               </div>
-              <div className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{fishingScore.recommendation}</div>
+              <div className={`text-sm mt-1 ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>{fishOpp.subline}</div>
+              {fishOpp.arriveBy && (
+                <div className={`mt-1.5 inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${
+                  isDark ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-700'
+                }`}>
+                  🎣 Best window at {fishOpp.arriveBy}
+                </div>
+              )}
+            </div>
+            <div className="text-right ml-3 flex-shrink-0">
+              <div className={`text-4xl font-black ${fishScoreColors[fishOpp.color]}`}>
+                {fishOpp.displayScore}%
+              </div>
+              <div className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>activity</div>
             </div>
           </div>
         </div>
       </div>
       
+      {/* AI Prediction Panel */}
+      {aiPrediction && (
+        <div className={`rounded-xl p-4 border ${isDark ? 'bg-slate-800/50 border-blue-500/30' : 'bg-blue-50 border-blue-200 shadow-sm'}`}>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Brain className={`w-4 h-4 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
+              <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-slate-800'}`}>AI Fishing Prediction</span>
+              {aiPrediction.isUsingLearnedWeights && (
+                <span className={`text-[10px] px-1.5 py-0.5 rounded ${isDark ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-700'}`}>
+                  {aiPrediction.weightsVersion}
+                </span>
+              )}
+            </div>
+            <span className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>4,984 observations</span>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3 mb-3">
+            <div className="text-center">
+              <div className={`text-2xl font-bold ${
+                aiPrediction.probability >= 60 ? (isDark ? 'text-green-400' : 'text-green-600') :
+                aiPrediction.probability >= 40 ? (isDark ? 'text-yellow-400' : 'text-yellow-600') :
+                (isDark ? 'text-red-400' : 'text-red-600')
+              }`}>
+                {aiPrediction.probability}%
+              </div>
+              <div className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Activity</div>
+            </div>
+            <div className="text-center">
+              <div className={`text-lg font-bold ${isDark ? 'text-purple-400' : 'text-purple-600'}`}>
+                {aiPrediction.moonPhase?.name?.split(' ')[0] || '--'}
+              </div>
+              <div className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                {aiPrediction.moonPhase?.rating >= 5 ? '⭐ Best' : aiPrediction.moonPhase?.rating >= 4 ? 'Good' : 'Fair'} Moon
+              </div>
+            </div>
+            <div className="text-center">
+              <div className={`text-lg font-bold ${
+                aiPrediction.pressureTrend?.trend?.includes('falling') ? (isDark ? 'text-green-400' : 'text-green-600') :
+                aiPrediction.pressureTrend?.trend === 'stable' ? (isDark ? 'text-blue-400' : 'text-blue-600') :
+                (isDark ? 'text-orange-400' : 'text-orange-600')
+              }`}>
+                {aiPrediction.pressureTrend?.trend?.includes('falling') ? '↓' :
+                 aiPrediction.pressureTrend?.trend === 'stable' ? '→' : '↑'}
+              </div>
+              <div className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Pressure</div>
+            </div>
+          </div>
+
+          {/* Solunar period */}
+          {aiPrediction.solunar?.currentPeriod && (
+            <div className={`rounded-lg p-2 mb-2 flex items-center gap-2 text-xs ${isDark ? 'bg-yellow-500/10 text-yellow-400' : 'bg-yellow-100 text-yellow-700'}`}>
+              <Zap className="w-3 h-3" />
+              {aiPrediction.solunar.currentPeriod} Solunar Period Active — fish are feeding!
+            </div>
+          )}
+
+          {aiPrediction.isGoldenHour && (
+            <div className={`rounded-lg p-2 mb-2 flex items-center gap-2 text-xs ${isDark ? 'bg-green-500/10 text-green-400' : 'bg-green-100 text-green-700'}`}>
+              <Sun className="w-3 h-3" />
+              Golden Hour — peak feeding window!
+            </div>
+          )}
+
+          {/* Recommendation */}
+          <div className={`text-xs italic ${isDark ? 'text-blue-300' : 'text-blue-700'}`}>
+            {aiPrediction.recommendation}
+          </div>
+
+          {aiPrediction.bestTimesToday?.length > 0 && (
+            <div className={`mt-2 text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+              Best hours today: {aiPrediction.bestTimesToday.join(', ')}
+            </div>
+          )}
+
+          <div className={`mt-1 text-[10px] ${isDark ? 'text-slate-600' : 'text-slate-400'} flex items-center gap-2`}>
+            <span>Seasonal: ×{aiPrediction.seasonalMult}</span>
+            <span>Hourly: ×{aiPrediction.hourlyMult}</span>
+          </div>
+        </div>
+      )}
+
       {/* Location Selector */}
       <div className={`rounded-xl p-4 border ${isDark ? 'bg-slate-800/30 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`}>
         <h3 className={`text-sm font-medium mb-3 flex items-center gap-2 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
@@ -958,6 +1133,13 @@ const FishingMode = ({ windData, pressureData, isLoading }) => {
           ))}
         </div>
       </div>
+      {/* Wind Forecast & Water Safety Warnings */}
+      <WaterForecast
+        locationId={selectedLocation === 'utah-lake' ? 'utah-lake' : 'utah-lake'}
+        currentWind={{ speed: windSpeed }}
+        pressureData={pressureData}
+        activity="fishing"
+      />
     </div>
   );
 };

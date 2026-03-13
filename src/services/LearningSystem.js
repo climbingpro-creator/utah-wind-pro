@@ -17,6 +17,8 @@
  * 6. REPEAT: Continuous improvement loop
  */
 
+import trainedWeightsData from '../config/trainedWeights.json';
+
 const DB_NAME = 'UtahWindProLearning';
 const DB_VERSION = 2;
 
@@ -35,6 +37,31 @@ class LearningSystem {
     this.db = null;
     this.isInitialized = false;
     this.currentWeights = null;
+    this._weightListeners = [];
+  }
+
+  /**
+   * Register a callback that fires whenever weights are updated.
+   * Returns an unsubscribe function.
+   */
+  onWeightsUpdated(callback) {
+    this._weightListeners.push(callback);
+    // Immediately fire with current weights if available
+    if (this.currentWeights) {
+      try { callback(this.currentWeights); } catch (e) { /* ignore */ }
+    }
+    return () => {
+      this._weightListeners = this._weightListeners.filter(cb => cb !== callback);
+    };
+  }
+
+  _pushWeightsToPredictor() {
+    if (!this.currentWeights) return;
+    for (const cb of this._weightListeners) {
+      try { cb(this.currentWeights); } catch (e) {
+        console.error('Error in weight listener:', e);
+      }
+    }
   }
 
   // =========================================
@@ -49,10 +76,11 @@ class LearningSystem {
 
       request.onerror = () => reject(request.error);
       
-      request.onsuccess = () => {
+      request.onsuccess = async () => {
         this.db = request.result;
         this.isInitialized = true;
-        this.loadCurrentWeights();
+        await this.loadCurrentWeights();
+        this._pushWeightsToPredictor();
         resolve();
       };
 
@@ -394,21 +422,26 @@ class LearningSystem {
   async checkAndLearn() {
     const recentAccuracy = await this.getRecentAccuracy(7); // Last 7 days
     
-    if (recentAccuracy.length < 50) {
-      console.log('Not enough data for learning yet:', recentAccuracy.length, 'records');
+    if (recentAccuracy.length < 10) {
+      console.log('Not enough data for learning yet:', recentAccuracy.length, 'records (need 10)');
       return;
     }
 
-    // Calculate current model performance
     const avgAccuracy = recentAccuracy.reduce((sum, r) => sum + (r.overallScore || 0), 0) / recentAccuracy.length;
     
-    console.log('Current model accuracy:', avgAccuracy.toFixed(1) + '%');
+    console.log('Current model accuracy:', avgAccuracy.toFixed(1) + '% across', recentAccuracy.length, 'records');
 
-    // If accuracy is below threshold, trigger learning
+    // Always recalibrate — even high accuracy benefits from refinement.
+    // More aggressive learning when accuracy is low, fine-tuning when high.
     if (avgAccuracy < 70) {
-      console.log('Accuracy below threshold, triggering learning...');
-      await this.learnFromData();
+      console.log('Accuracy below 70% — aggressive recalibration...');
+    } else if (avgAccuracy < 85) {
+      console.log('Accuracy moderate — standard recalibration...');
+    } else {
+      console.log('Accuracy good — fine-tuning weights...');
     }
+
+    await this.learnFromData();
   }
 
   /**
@@ -790,6 +823,7 @@ class LearningSystem {
       indicators: {},
       probabilityCalibration: {},
       hourlyMultipliers: {},
+      source: 'hardcoded',
     };
   }
 
@@ -801,18 +835,43 @@ class LearningSystem {
       
       return new Promise((resolve) => {
         request.onsuccess = () => {
-          this.currentWeights = request.result || this.getDefaultWeights();
+          const stored = request.result;
+          
+          if (stored && stored.version !== 'default') {
+            // Live-learned weights exist — use them (they're more current)
+            this.currentWeights = stored;
+            console.log('Loaded live-learned weights v' + stored.version +
+              ' (' + (stored.basedOnSamples || '?') + ' samples)');
+          } else {
+            // No live weights yet — bootstrap from historical backtest
+            this.currentWeights = this._getBootstrapWeights();
+            console.log('Bootstrapping with historically-trained weights (' +
+              trainedWeightsData._meta.samples + ' samples, ' +
+              trainedWeightsData._meta.trainedAccuracy + ' accuracy)');
+          }
+          
           resolve(this.currentWeights);
         };
         request.onerror = () => {
-          this.currentWeights = this.getDefaultWeights();
+          this.currentWeights = this._getBootstrapWeights();
           resolve(this.currentWeights);
         };
       });
     } catch (e) {
-      this.currentWeights = this.getDefaultWeights();
+      this.currentWeights = this._getBootstrapWeights();
       return this.currentWeights;
     }
+  }
+
+  _getBootstrapWeights() {
+    if (trainedWeightsData?.weights) {
+      return {
+        ...trainedWeightsData.weights,
+        id: 'current',
+        source: 'historical-backtest',
+      };
+    }
+    return this.getDefaultWeights();
   }
 
   async saveWeights(weights) {
@@ -826,6 +885,10 @@ class LearningSystem {
     await store.put({ ...weights, id: `v${weights.version}` });
     
     this.currentWeights = weights;
+
+    // Push new weights to all listeners (ThermalPredictor, DataNormalizer, etc.)
+    this._pushWeightsToPredictor();
+    console.log('Weights v' + weights.version + ' pushed to prediction engine');
   }
 
   // =========================================
@@ -1131,6 +1194,59 @@ class LearningSystem {
   async getLearnedWeights() {
     await this.initialize();
     return this.currentWeights || this.getDefaultWeights();
+  }
+
+  /**
+   * Get accuracy stats broken down by location.
+   * This is how we track whether Deer Creek and Willard Bay
+   * are learning independently from Utah Lake.
+   */
+  async getLocationAccuracy(days = 30) {
+    await this.initialize();
+    const recent = await this.getRecentAccuracy(days);
+
+    const byLocation = {};
+    for (const record of recent) {
+      const loc = record.lakeId || 'unknown';
+      if (!byLocation[loc]) {
+        byLocation[loc] = { count: 0, sumAccuracy: 0, predictions: 0 };
+      }
+      byLocation[loc].count++;
+      byLocation[loc].sumAccuracy += record.overallScore || 0;
+    }
+
+    const result = {};
+    for (const [loc, data] of Object.entries(byLocation)) {
+      result[loc] = {
+        predictions: data.count,
+        avgAccuracy: data.count > 0 ? Math.round(data.sumAccuracy / data.count) : null,
+      };
+    }
+    return result;
+  }
+
+  /**
+   * Get summary for the learning dashboard — includes per-location breakdown
+   * and per-activity quality tracking.
+   */
+  async getExtendedStats() {
+    await this.initialize();
+
+    const [accuracy, locationAccuracy, weights] = await Promise.all([
+      this.getAccuracyStats(),
+      this.getLocationAccuracy(30),
+      this.getLearnedWeights(),
+    ]);
+
+    return {
+      ...accuracy,
+      locationBreakdown: locationAccuracy,
+      weightsVersion: weights?.version || 'default',
+      weightsSource: weights?.source || 'unknown',
+      basedOnSamples: weights?.basedOnSamples || 0,
+      isBootstrapped: weights?.source === 'historical-backtest',
+      hasLiveLearnedWeights: weights?.source !== 'historical-backtest' && weights?.version !== 'default',
+    };
   }
 
   /**

@@ -1,0 +1,82 @@
+{
+  "_meta": {
+    "generatedAt": "2026-03-13T19:24:34.944Z",
+    "method": "full-2025-backtest-consistency-aware",
+    "samples": 3092,
+    "dateRange": "Full 2025 (295 days, March 2025 - Jan 2026)",
+    "scoringPhilosophy": "Consistency over peak speed. Quality session = 10+ mph sustained, gust factor < 1.4",
+    "keyInsights": [
+      "THERMAL is the most consistent wind type: 34.4% quality sessions, avg 12.4 mph, GF ~1.2",
+      "NORTH FLOW is second: 17.3% quality, avg 14.1 mph but gustier",
+      "Best months: July (84% quality days), December (94%), October (81%)",
+      "Weakest month: May (52% quality days) — late spring transition",
+      "Best hours for quality sessions: 9-10am (56% quality) not afternoon",
+      "Top 20 epic sessions are ALL thermal with GF 1.11-1.20 at 15-18 mph",
+      "FPS kiteable 97-100% of days March-December — wind is reliable",
+      "Model severely under-predicts: 92% of predictions fall in 20-40% bucket",
+      "When model says 20-40%: actually 27.6% quality sessions, 66.1% kiteable"
+    ]
+  },
+  "weights": {
+    "version": 1773429874942,
+    "createdAt": "2026-03-13T19:24:34.942Z",
+    "basedOnSamples": 3092,
+    "source": "historical-backtest-2025",
+
+    "pressureWeight": 0.40,
+    "thermalWeight": 0.40,
+    "convergenceWeight": 0.20,
+    "speedBiasCorrection": -0.11,
+
+    "indicators": {
+      "KSLC-FPS": { "weight": 0.85, "speedMultiplier": 1.30, "reliability": 0.78 },
+      "KPVU-FPS": { "weight": 0.80, "speedMultiplier": 1.15, "reliability": 0.82 },
+      "QSF-FPS":  { "weight": 0.65, "speedMultiplier": 1.20, "reliability": 0.63 },
+      "UTALP-FPS":{ "weight": 0.70, "speedMultiplier": 1.10, "reliability": 0.70 }
+    },
+
+    "probabilityCalibration": {
+      "0-20": 1.80,
+      "20-40": 1.45,
+      "40-60": 0.70,
+      "60-80": 1.00,
+      "80-100": 0.95
+    },
+
+    "hourlyMultipliers": {
+      "9": 0.59,
+      "10": 0.62,
+      "11": 0.67,
+      "12": 0.71,
+      "13": 0.77,
+      "14": 0.80,
+      "15": 0.79,
+      "16": 0.79,
+      "17": 0.81,
+      "18": 0.80,
+      "19": 0.79
+    },
+
+    "consistencyProfile": {
+      "smoothWindPct": 14.2,
+      "gustyWindPct": 54.3,
+      "thermalQualityRate": 34.4,
+      "northFlowQualityRate": 17.3,
+      "bestQualityHour": 9,
+      "peakKiteableMonths": [7, 12, 10, 6]
+    },
+
+    "monthlyQualityRates": {
+      "1": 0.50,  "2": 0.50,  "3": 0.79,  "4": 0.60,
+      "5": 0.52,  "6": 0.70,  "7": 0.84,  "8": 0.74,
+      "9": 0.70, "10": 0.81, "11": 0.80, "12": 0.94
+    },
+
+    "windTypeScores": {
+      "thermal":    { "avgScore": 58.5, "qualityRate": 0.344, "avgSpeed": 12.4, "consistency": "high" },
+      "north_flow": { "avgScore": 58.0, "qualityRate": 0.173, "avgSpeed": 14.1, "consistency": "moderate" },
+      "other":      { "avgScore": 51.2, "qualityRate": 0.069, "avgSpeed": 14.2, "consistency": "low" },
+      "calm":       { "avgScore": 14.3, "qualityRate": 0.000, "avgSpeed": 5.0,  "consistency": "none" }
+    }
+  }
+}
