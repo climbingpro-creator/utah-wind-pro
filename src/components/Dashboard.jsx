@@ -315,9 +315,16 @@ export function Dashboard() {
         {selectedActivity === 'paragliding' ? (
           <ParaglidingMode 
             windData={{
-              stations: lakeState?.wind?.stations,
+              stations: [
+                ...(lakeState?.wind?.stations || []),
+                ...(lakeState?.kslcStation ? [{ id: 'KSLC', ...lakeState.kslcStation }] : []),
+                ...(lakeState?.kpvuStation ? [{ id: 'KPVU', ...lakeState.kpvuStation }] : []),
+                ...(lakeState?.utalpStation ? [{ id: 'UTALP', ...lakeState.utalpStation }] : []),
+              ].filter((s, i, arr) => arr.findIndex(x => x.id === s.id) === i),
               FPS: lakeState?.wind?.stations?.find(s => s.id === 'FPS'),
-              UTALP: lakeState?.wind?.stations?.find(s => s.id === 'UTALP'),
+              UTALP: lakeState?.utalpStation || lakeState?.wind?.stations?.find(s => s.id === 'UTALP'),
+              KSLC: lakeState?.kslcStation,
+              KPVU: lakeState?.kpvuStation,
             }}
             isLoading={isLoading}
           />

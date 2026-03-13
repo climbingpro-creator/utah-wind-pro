@@ -303,6 +303,258 @@ const SiteCard = ({ site, windData, isLoading }) => {
   );
 };
 
+// Predict wind switch based on indicators
+function predictWindSwitch(windData, currentHour) {
+  const indicators = [];
+  let northSwitchLikelihood = 0;
+  let estimatedSwitchTime = null;
+  
+  const findStation = (id) => windData?.[id] || windData?.stations?.find(s => s.id === id);
+  
+  const kslcData = findStation('KSLC');
+  const fpsData = findStation('FPS');
+  const utalpData = findStation('UTALP');
+  const kpvuData = findStation('KPVU');
+  
+  const getSpeed = (d) => d?.speed || d?.windSpeed || 0;
+  const getDir = (d) => d?.direction || d?.windDirection || 0;
+  
+  const kslcSpeed = getSpeed(kslcData);
+  const kslcDir = getDir(kslcData);
+  const fpsSpeed = getSpeed(fpsData);
+  const fpsDir = getDir(fpsData);
+  const utalpSpeed = getSpeed(utalpData);
+  const utalpDir = getDir(utalpData);
+  const kpvuSpeed = getSpeed(kpvuData);
+  
+  // 1. KSLC NW/N wind = early indicator (30-60 min lead time)
+  const kslcIsNorth = (kslcDir >= 280 && kslcDir <= 360) || kslcDir <= 30;
+  if (kslcIsNorth && kslcSpeed >= 5) {
+    northSwitchLikelihood += 30;
+    indicators.push({
+      station: 'KSLC',
+      signal: 'positive',
+      message: `SLC Airport: ${kslcSpeed.toFixed(0)} mph from ${kslcDir.toFixed(0)}° - North flow active upstream`,
+    });
+  } else if (kslcIsNorth && kslcSpeed >= 3) {
+    northSwitchLikelihood += 15;
+    indicators.push({
+      station: 'KSLC',
+      signal: 'developing',
+      message: `SLC Airport: Light NW ${kslcSpeed.toFixed(0)} mph - North flow developing`,
+    });
+  }
+  
+  // 2. UTALP south wind dying = switch imminent
+  const utalpIsSouth = utalpDir >= 140 && utalpDir <= 220;
+  if (utalpIsSouth && utalpSpeed < 5 && currentHour >= 14) {
+    northSwitchLikelihood += 25;
+    indicators.push({
+      station: 'UTALP',
+      signal: 'developing',
+      message: `UTALP: South dying (${utalpSpeed.toFixed(0)} mph) - Switch to north imminent!`,
+    });
+    estimatedSwitchTime = '15-30 min';
+  }
+  
+  // 3. UTALP already north = confirmed
+  const utalpIsNorth = (utalpDir >= 315 || utalpDir <= 45);
+  if (utalpIsNorth && utalpSpeed >= 5) {
+    northSwitchLikelihood += 40;
+    indicators.push({
+      station: 'UTALP',
+      signal: 'positive',
+      message: `UTALP: North side ACTIVE - ${utalpSpeed.toFixed(0)} mph from ${utalpDir.toFixed(0)}°`,
+    });
+  }
+  
+  // 4. Time of day bonus (March-Oct, 3-7 PM = high probability)
+  const month = new Date().getMonth() + 1;
+  if (currentHour >= 15 && currentHour <= 19 && month >= 3 && month <= 10) {
+    northSwitchLikelihood += 15;
+    indicators.push({
+      station: 'TIME',
+      signal: 'positive',
+      message: `Prime time for evening north flow (${currentHour > 12 ? currentHour - 12 : currentHour} PM, ${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][month-1]})`,
+    });
+  }
+  
+  // 5. Provo light/variable = no south flow blocking
+  if (kpvuSpeed < 8) {
+    northSwitchLikelihood += 10;
+    indicators.push({
+      station: 'KPVU',
+      signal: 'positive',
+      message: `Provo light (${kpvuSpeed.toFixed(0)} mph) - No strong south flow to block switch`,
+    });
+  } else if (kpvuSpeed >= 12) {
+    northSwitchLikelihood -= 15;
+    indicators.push({
+      station: 'KPVU',
+      signal: 'negative',
+      message: `Provo strong (${kpvuSpeed.toFixed(0)} mph) - May delay/prevent north switch`,
+    });
+  }
+  
+  // 6. FPS switching to north = confirmation
+  const fpsIsNorth = (fpsDir >= 315 || fpsDir <= 45);
+  if (fpsIsNorth && fpsSpeed >= 3) {
+    northSwitchLikelihood += 20;
+    indicators.push({
+      station: 'FPS',
+      signal: 'positive',
+      message: `FPS switched north - Both sites transitioning!`,
+    });
+  }
+  
+  return {
+    likelihood: Math.max(0, Math.min(100, northSwitchLikelihood)),
+    estimatedSwitchTime,
+    indicators,
+    isConfirmed: utalpIsNorth && utalpSpeed >= 5,
+  };
+}
+
+// Wind Switch Predictor Component
+const WindSwitchPredictor = ({ windData }) => {
+  const currentHour = new Date().getHours();
+  const prediction = predictWindSwitch(windData, currentHour);
+  
+  const isMorning = currentHour < 12;
+  
+  if (isMorning) {
+    return (
+      <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+        <div className="flex items-center gap-2 mb-2">
+          <Clock className="w-4 h-4 text-yellow-400" />
+          <span className="text-sm font-medium text-white">Evening Outlook</span>
+        </div>
+        <p className="text-xs text-slate-400">
+          North side typically activates 3-5 PM. Check back in the afternoon for early indicators from KSLC and UTALP.
+        </p>
+      </div>
+    );
+  }
+  
+  return (
+    <div className={`rounded-xl p-4 border ${
+      prediction.isConfirmed ? 'bg-green-500/10 border-green-500/30' :
+      prediction.likelihood >= 60 ? 'bg-yellow-500/10 border-yellow-500/30' :
+      prediction.likelihood >= 30 ? 'bg-blue-500/10 border-blue-500/30' :
+      'bg-slate-800/50 border-slate-700'
+    }`}>
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <Wind className={`w-4 h-4 ${prediction.isConfirmed ? 'text-green-400' : 'text-cyan-400'}`} />
+          <span className="text-sm font-medium text-white">
+            {prediction.isConfirmed ? '✅ North Side Active' : '🔮 Wind Switch Predictor'}
+          </span>
+        </div>
+        <div className={`text-lg font-bold ${
+          prediction.likelihood >= 70 ? 'text-green-400' :
+          prediction.likelihood >= 40 ? 'text-yellow-400' : 'text-slate-400'
+        }`}>
+          {prediction.likelihood}%
+        </div>
+      </div>
+      
+      {prediction.estimatedSwitchTime && (
+        <div className="bg-yellow-500/20 rounded px-3 py-1.5 mb-3 text-xs text-yellow-400">
+          ⏱️ Estimated switch in: {prediction.estimatedSwitchTime}
+        </div>
+      )}
+      
+      <div className="space-y-2">
+        {prediction.indicators.map((ind, i) => (
+          <div key={i} className="flex items-start gap-2 text-xs">
+            <span className={`mt-0.5 w-2 h-2 rounded-full flex-shrink-0 ${
+              ind.signal === 'positive' ? 'bg-green-400' :
+              ind.signal === 'developing' ? 'bg-yellow-400' : 'bg-red-400'
+            }`} />
+            <div>
+              <span className="text-slate-500">{ind.station}:</span>
+              <span className={`ml-1 ${
+                ind.signal === 'positive' ? 'text-green-400' :
+                ind.signal === 'developing' ? 'text-yellow-400' : 'text-red-400'
+              }`}>
+                {ind.message}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// Upstream Station Indicators
+const UpstreamIndicators = ({ windData }) => {
+  const stations = [
+    { id: 'KSLC', name: 'SLC Airport', role: 'North Flow Origin', leadTime: '30-60 min', 
+      getNorthSignal: (d, s) => ((d >= 280 || d <= 30) && s >= 5) },
+    { id: 'UTOLY', name: 'Murray', role: 'Valley Confirmation', leadTime: '20-40 min',
+      getNorthSignal: (d, s) => ((d >= 290 || d <= 40) && s >= 4) },
+    { id: 'FPS', name: 'Flight Park S', role: 'S/N Boundary', leadTime: 'Real-time',
+      getNorthSignal: (d, s) => ((d >= 315 || d <= 45) && s >= 3) },
+    { id: 'UTALP', name: 'Point of Mtn N', role: 'Ground Truth', leadTime: 'Active',
+      getNorthSignal: (d, s) => ((d >= 315 || d <= 45) && s >= 5) },
+    { id: 'KPVU', name: 'Provo Airport', role: 'South Flow Blocker', leadTime: 'Opposing',
+      getNorthSignal: (d, s) => s < 8 }, // Light provo = good for north switch
+  ];
+  
+  return (
+    <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+      <div className="flex items-center gap-2 mb-3">
+        <Radio className="w-4 h-4 text-cyan-400" />
+        <span className="text-sm font-medium text-white">Upstream Indicators</span>
+        <span className="text-xs text-slate-500 ml-auto">N → S flow path</span>
+      </div>
+      
+      <div className="space-y-2">
+        {stations.map(station => {
+          const data = windData?.[station.id] || windData?.stations?.find(s => s.id === station.id);
+          const speed = data?.speed || data?.windSpeed || 0;
+          const dir = data?.direction || data?.windDirection || 0;
+          const isNorthSignal = station.getNorthSignal(dir, speed);
+          
+          const cardinal = getCardinalDir(dir);
+          
+          return (
+            <div key={station.id} className="flex items-center gap-3 text-xs">
+              <span className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                isNorthSignal ? 'bg-green-400 animate-pulse' : 'bg-slate-600'
+              }`} />
+              <span className="text-slate-400 w-20 truncate">{station.name}</span>
+              <span className={`w-16 font-mono ${speed > 0 ? 'text-white' : 'text-slate-600'}`}>
+                {speed > 0 ? `${speed.toFixed(0)} mph` : '--'}
+              </span>
+              <span className={`w-10 font-mono ${isNorthSignal ? 'text-green-400' : 'text-slate-500'}`}>
+                {dir > 0 ? `${cardinal}` : '--'}
+              </span>
+              <span className="text-slate-600 hidden sm:inline">{station.leadTime}</span>
+              <span className={`ml-auto text-xs px-1.5 py-0.5 rounded ${
+                isNorthSignal ? 'bg-green-500/20 text-green-400' : 'bg-slate-700 text-slate-500'
+              }`}>
+                {isNorthSignal ? '✓' : '—'}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+      
+      <div className="mt-3 pt-2 border-t border-slate-700/50 text-xs text-slate-500">
+        Green = supporting north flow. KSLC leads UTALP by ~30-60 min.
+      </div>
+    </div>
+  );
+};
+
+function getCardinalDir(deg) {
+  if (!deg && deg !== 0) return '--';
+  const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+  return dirs[Math.round(deg / 22.5) % 16];
+}
+
 // Main Paragliding Dashboard
 const ParaglidingMode = ({ windData, isLoading }) => {
   const [selectedSite, setSelectedSite] = useState(null);
@@ -330,8 +582,21 @@ const ParaglidingMode = ({ windData, isLoading }) => {
   const southScore = calculateParaglidingScore('flight-park-south', stationWindData.FPS?.speed, stationWindData.FPS?.direction, stationWindData.FPS?.gust);
   const northScore = calculateParaglidingScore('flight-park-north', stationWindData.UTALP?.speed, stationWindData.UTALP?.direction, stationWindData.UTALP?.gust);
   
-  // Determine best site right now
-  const bestSite = (southScore?.score || 0) > (northScore?.score || 0) ? 'flight-park-south' : 'flight-park-north';
+  // Wind switch prediction for smarter recommendations
+  const switchPrediction = predictWindSwitch(windData, currentHour);
+  
+  // Determine best site - factor in prediction
+  let bestSite;
+  if ((northScore?.score || 0) >= 60) {
+    bestSite = 'flight-park-north';
+  } else if ((southScore?.score || 0) >= 60) {
+    bestSite = 'flight-park-south';
+  } else if (currentHour >= 14 && switchPrediction.likelihood >= 60) {
+    bestSite = 'flight-park-north';
+  } else {
+    bestSite = (southScore?.score || 0) > (northScore?.score || 0) ? 'flight-park-south' : 'flight-park-north';
+  }
+  
   const bestSiteConfig = PARAGLIDING_SITES[bestSite];
   const bestScore = bestSite === 'flight-park-south' ? southScore : northScore;
   
@@ -360,6 +625,17 @@ const ParaglidingMode = ({ windData, isLoading }) => {
             <div>
               <div className="text-xs text-slate-400">Best Site Right Now</div>
               <div className="text-lg font-bold text-white">{bestSiteConfig.name}</div>
+              {currentHour >= 14 && switchPrediction.likelihood >= 40 && !switchPrediction.isConfirmed && (
+                <div className="text-xs text-yellow-400 mt-1">
+                  Wind switch {switchPrediction.likelihood}% likely
+                  {switchPrediction.estimatedSwitchTime && ` (${switchPrediction.estimatedSwitchTime})`}
+                </div>
+              )}
+              {switchPrediction.isConfirmed && bestSite === 'flight-park-north' && (
+                <div className="text-xs text-green-400 mt-1">
+                  North flow confirmed - pilots are flying!
+                </div>
+              )}
             </div>
             <div className="text-right">
               <div className={`text-2xl font-bold ${
@@ -399,6 +675,12 @@ const ParaglidingMode = ({ windData, isLoading }) => {
           </div>
         </div>
       </div>
+      
+      {/* Wind Switch Predictor - Key new feature */}
+      <WindSwitchPredictor windData={windData} />
+      
+      {/* Upstream Indicators Panel */}
+      <UpstreamIndicators windData={windData} />
       
       {/* Site Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
