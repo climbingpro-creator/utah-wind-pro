@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import * as React from 'react';
-import { RefreshCw, Clock, Wifi, WifiOff, TrendingUp, Gauge, Wind, Thermometer, ArrowUpDown, MapPin, Navigation, Anchor, Bell, Brain } from 'lucide-react';
+import { RefreshCw, Clock, Wifi, WifiOff, Wind, Thermometer, ArrowUpDown, MapPin, Navigation, Bell, Brain } from 'lucide-react';
 import { ConfidenceGauge } from './ConfidenceGauge';
 import { WindVector } from './WindVector';
 import { BustAlert } from './BustAlert';
@@ -18,7 +18,7 @@ import { NotificationSettings } from './NotificationSettings';
 import { checkAndNotify } from '../services/NotificationService';
 import { getFullForecast } from '../services/ForecastService';
 import LearningDashboard from './LearningDashboard';
-import ActivityMode, { ACTIVITY_CONFIGS, calculateActivityScore, calculateGlassScore } from './ActivityMode';
+import ActivityMode, { ACTIVITY_CONFIGS, calculateActivityScore } from './ActivityMode';
 import GlassScore from './GlassScore';
 import HourlyTimeline from './HourlyTimeline';
 import WeeklyBestDays from './WeeklyBestDays';
@@ -29,12 +29,47 @@ import ParaglidingMode from './ParaglidingMode';
 import FishingMode from './FishingMode';
 import ThemeToggle from './ThemeToggle';
 import { useTheme } from '../context/ThemeContext';
+import { useHourlyForecast } from '../hooks/useHourlyForecast';
+import { buildNearTermWindTimeline } from '../services/NearTermWindModel';
 
 function windDirectionToCardinal(degrees) {
   if (degrees == null) return 'N/A';
   const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
   const index = Math.round(degrees / 22.5) % 16;
   return directions[index];
+}
+
+function buildActivityTimeline(activity, timeline) {
+  return timeline.map(hour => {
+    const result = calculateActivityScore(
+      activity,
+      hour.predictedSpeed,
+      hour.predictedGust,
+      hour.predictedDirection
+    );
+
+    return {
+      ...hour,
+      score: result?.score ?? 0,
+      status: result?.status ?? 'unknown',
+    };
+  });
+}
+
+function summarizeActivityOutlook(activityConfig, timeline) {
+  if (!timeline?.length) return null;
+
+  const nextTwoHours = timeline.slice(0, 3);
+  const bestHour = nextTwoHours.reduce((best, hour) => (
+    hour.score > best.score ? hour : best
+  ), nextTwoHours[0]);
+  const scoreDelta = (nextTwoHours[nextTwoHours.length - 1]?.score ?? 0) - (nextTwoHours[0]?.score ?? 0);
+  const trendLabel = scoreDelta >= 10 ? 'improving' : scoreDelta <= -10 ? 'fading' : 'holding steady';
+
+  return {
+    trendLabel,
+    message: `${activityConfig.name} looks ${trendLabel} over the next 2 hours. Best around ${bestHour.time}: ${bestHour.score}% (${bestHour.predictedSpeed} mph).`,
+  };
 }
 
 export function Dashboard() {
@@ -50,10 +85,11 @@ export function Dashboard() {
   const currentWindSpeed = lakeState?.pws?.windSpeed || lakeState?.wind?.stations?.[0]?.speed;
   const currentWindGust = lakeState?.pws?.windGust || lakeState?.wind?.stations?.[0]?.gust;
   const currentWindDirection = lakeState?.pws?.windDirection || lakeState?.wind?.stations?.[0]?.direction;
+  const primaryStation = lakeState?.pws || lakeState?.wind?.stations?.[0];
   
   // For paragliding, use Flight Park South/North data instead of generic wind
   const fpsStation = lakeState?.wind?.stations?.find(s => s.id === 'FPS');
-  const utalpStation = lakeState?.wind?.stations?.find(s => s.id === 'UTALP');
+  const utalpStation = lakeState?.utalpStation || lakeState?.wind?.stations?.find(s => s.id === 'UTALP');
   
   // Get best paragliding site data
   const getParaglidingScore = () => {
@@ -124,7 +160,36 @@ export function Dashboard() {
       ? calculateActivityScore(selectedActivity, currentWindSpeed, currentWindGust, currentWindDirection)
       : null);
   
-  const glassScore = calculateGlassScore(currentWindSpeed, currentWindGust);
+  const { forecastHours: lakeHourlyForecast } = useHourlyForecast({
+    lakeId: selectedLake,
+    enabled: !activityConfig?.specialMode,
+  });
+  const nearTermWindTimeline = React.useMemo(() => buildNearTermWindTimeline({
+    currentConditions: {
+      windSpeed: currentWindSpeed,
+      windGust: currentWindGust,
+      windDirection: currentWindDirection,
+    },
+    historyEntries: history[primaryStation?.id] || [],
+    forecastHours: lakeHourlyForecast,
+    thermalPrediction: lakeState?.thermalPrediction,
+  }), [
+    currentWindDirection,
+    currentWindGust,
+    currentWindSpeed,
+    history,
+    lakeHourlyForecast,
+    lakeState?.thermalPrediction,
+    primaryStation?.id,
+  ]);
+  const activityTimeline = React.useMemo(() => buildActivityTimeline(selectedActivity, nearTermWindTimeline), [
+    nearTermWindTimeline,
+    selectedActivity,
+  ]);
+  const activityOutlook = React.useMemo(() => summarizeActivityOutlook(activityConfig, activityTimeline), [
+    activityConfig,
+    activityTimeline,
+  ]);
 
   // Check for notifications when data updates
   React.useEffect(() => {
@@ -288,6 +353,11 @@ export function Dashboard() {
                   {activityConfig?.name} Score: {activityScore.score}%
                 </div>
                 <div className={`text-sm ${theme === 'dark' ? 'text-slate-400' : 'text-slate-600'}`}>{activityScore.message}</div>
+                {activityOutlook && (
+                  <div className={`text-xs mt-1 ${theme === 'dark' ? 'text-cyan-300' : 'text-cyan-700'}`}>
+                    {activityOutlook.message}
+                  </div>
+                )}
               </div>
             </div>
             {activityScore.gustFactor > 1.3 && (
@@ -317,8 +387,10 @@ export function Dashboard() {
             windData={{
               stations: lakeState?.wind?.stations,
               FPS: lakeState?.wind?.stations?.find(s => s.id === 'FPS'),
-              UTALP: lakeState?.wind?.stations?.find(s => s.id === 'UTALP'),
+              UTALP: lakeState?.utalpStation || lakeState?.wind?.stations?.find(s => s.id === 'UTALP'),
             }}
+            history={history}
+            thermalPrediction={lakeState?.thermalPrediction}
             isLoading={isLoading}
           />
         ) : selectedActivity === 'fishing' ? (
@@ -422,14 +494,7 @@ export function Dashboard() {
             {/* Hourly Timeline - Activity Specific */}
             <HourlyTimeline
               activity={selectedActivity}
-              currentConditions={{
-                windSpeed: currentWindSpeed,
-                windGust: currentWindGust,
-                windDirection: currentWindDirection,
-              }}
-              thermalStartHour={lakeState?.thermalPrediction?.startHour || 10}
-              thermalPeakHour={lakeState?.thermalPrediction?.peakHour || 12}
-              thermalEndHour={lakeState?.thermalPrediction?.endHour || 17}
+              forecastHours={activityTimeline}
             />
 
             {/* Sailing-specific: Race Day Mode */}

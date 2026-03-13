@@ -1,79 +1,13 @@
 import React from 'react';
-import { Sun, Moon, Wind, Waves } from 'lucide-react';
-import { ACTIVITY_CONFIGS, calculateActivityScore, calculateGlassScore } from './ActivityMode';
+import { Sun, Moon, Wind } from 'lucide-react';
+import { ACTIVITY_CONFIGS } from './ActivityMode';
 
 const HourlyTimeline = ({ 
   activity = 'kiting',
-  currentConditions,
-  thermalStartHour = 10,
-  thermalPeakHour = 12,
-  thermalEndHour = 17,
+  forecastHours = [],
 }) => {
-  const currentHour = new Date().getHours();
   const config = ACTIVITY_CONFIGS[activity];
-  
-  // Generate hourly predictions based on typical thermal pattern
-  const generateHourlyForecast = () => {
-    const hours = [];
-    
-    for (let hour = 6; hour <= 20; hour++) {
-      let predictedSpeed = 0;
-      let phase = 'calm';
-      
-      // Simple thermal model
-      if (hour < thermalStartHour - 1) {
-        predictedSpeed = 2 + Math.random() * 3; // Morning calm
-        phase = 'calm';
-      } else if (hour < thermalStartHour) {
-        predictedSpeed = 4 + Math.random() * 3; // Building
-        phase = 'building';
-      } else if (hour < thermalPeakHour) {
-        predictedSpeed = 8 + (hour - thermalStartHour) * 2 + Math.random() * 3;
-        phase = 'building';
-      } else if (hour <= thermalPeakHour + 2) {
-        predictedSpeed = 12 + Math.random() * 5; // Peak
-        phase = 'peak';
-      } else if (hour < thermalEndHour) {
-        predictedSpeed = 10 - (hour - thermalPeakHour - 2) * 1.5 + Math.random() * 3;
-        phase = 'fading';
-      } else {
-        predictedSpeed = 4 + Math.random() * 3; // Evening calm
-        phase = 'calm';
-      }
-      
-      // Use current conditions for current hour
-      if (hour === currentHour && currentConditions?.windSpeed != null) {
-        predictedSpeed = currentConditions.windSpeed;
-      }
-      
-      // Calculate score based on activity
-      let score, status;
-      if (config.wantsWind) {
-        const result = calculateActivityScore(activity, predictedSpeed, predictedSpeed * 1.3);
-        score = result?.score || 0;
-        status = result?.status || 'unknown';
-      } else {
-        const result = calculateGlassScore(predictedSpeed);
-        score = result?.score || 0;
-        status = result?.status || 'unknown';
-      }
-      
-      hours.push({
-        hour,
-        time: hour < 12 ? `${hour}am` : hour === 12 ? '12pm' : `${hour - 12}pm`,
-        predictedSpeed: Math.round(predictedSpeed),
-        phase,
-        score,
-        status,
-        isCurrent: hour === currentHour,
-        isPast: hour < currentHour,
-      });
-    }
-    
-    return hours;
-  };
-  
-  const hourlyData = generateHourlyForecast();
+  const hourlyData = forecastHours;
   
   // Get color for score
   const getScoreColor = (score, wantsWind) => {
@@ -95,22 +29,29 @@ const HourlyTimeline = ({
   
   // Find best window
   const bestHours = hourlyData
-    .filter(h => !h.isPast && h.score >= 70)
+    .filter(h => h.score >= 70)
     .map(h => h.time);
   
   const bestWindow = bestHours.length > 0 
     ? `${bestHours[0]} - ${bestHours[bestHours.length - 1]}`
-    : 'No ideal window today';
+    : 'No ideal near-term window';
+
+  const averageConfidence = hourlyData.length > 0
+    ? Math.round(hourlyData.reduce((sum, hour) => sum + (hour.confidence || 0), 0) / hourlyData.length)
+    : 0;
   
   return (
     <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <span className="text-lg">{config.icon}</span>
-          <span className="text-sm font-medium text-white">{config.name} Timeline</span>
+          <span className="text-sm font-medium text-white">{config.name} Next 6 Hours</span>
         </div>
-        <div className="text-xs text-slate-400">
-          Best: <span className="text-cyan-400">{bestWindow}</span>
+        <div className="text-right text-xs text-slate-400">
+          <div>Best: <span className="text-cyan-400">{bestWindow}</span></div>
+          {averageConfidence > 0 && (
+            <div>Confidence: <span className="text-slate-300">{averageConfidence}%</span></div>
+          )}
         </div>
       </div>
       
@@ -118,20 +59,20 @@ const HourlyTimeline = ({
       <div className="relative">
         {/* Hour labels and bars */}
         <div className="flex gap-0.5 overflow-x-auto pb-2">
-          {hourlyData.map((hour, idx) => (
+          {hourlyData.map((hour) => (
             <div 
               key={hour.hour}
-              className={`flex flex-col items-center min-w-[36px] ${hour.isCurrent ? 'scale-110' : ''}`}
+              className={`flex flex-col items-center min-w-[40px] ${hour.isCurrent ? 'scale-110' : ''}`}
             >
               {/* Time label */}
-              <div className={`text-[10px] mb-1 ${hour.isCurrent ? 'text-cyan-400 font-bold' : hour.isPast ? 'text-slate-600' : 'text-slate-400'}`}>
+              <div className={`text-[10px] mb-1 ${hour.isCurrent ? 'text-cyan-400 font-bold' : 'text-slate-400'}`}>
                 {hour.time}
               </div>
               
               {/* Score bar */}
               <div className="relative w-6 h-16 bg-slate-700 rounded-sm overflow-hidden">
                 <div 
-                  className={`absolute bottom-0 w-full transition-all duration-300 ${getScoreColor(hour.score, config.wantsWind)} ${hour.isPast ? 'opacity-40' : ''}`}
+                  className={`absolute bottom-0 w-full transition-all duration-300 ${getScoreColor(hour.score, config.wantsWind)}`}
                   style={{ height: `${hour.score}%` }}
                 />
                 {hour.isCurrent && (
@@ -140,7 +81,7 @@ const HourlyTimeline = ({
               </div>
               
               {/* Wind speed */}
-              <div className={`text-[10px] mt-1 ${hour.isCurrent ? 'text-white font-bold' : hour.isPast ? 'text-slate-600' : 'text-slate-400'}`}>
+              <div className={`text-[10px] mt-1 ${hour.isCurrent ? 'text-white font-bold' : 'text-slate-400'}`}>
                 {hour.predictedSpeed}
               </div>
               
@@ -179,9 +120,9 @@ const HourlyTimeline = ({
       {/* Activity-specific tips */}
       <div className="mt-3 text-xs text-slate-500">
         {config.wantsWind ? (
-          <p>🎯 Green bars = ideal {config.name.toLowerCase()} conditions</p>
+          <p>🎯 Model blends live stations, recent trend, and hourly forecast.</p>
         ) : (
-          <p>🎯 Blue bars = calm water for {config.name.toLowerCase()}</p>
+          <p>🎯 Blue bars = calmest water in the next 6 hours.</p>
         )}
       </div>
     </div>

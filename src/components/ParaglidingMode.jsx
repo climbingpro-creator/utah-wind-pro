@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { Wind, Mountain, Sun, Sunset, AlertTriangle, CheckCircle, XCircle, Clock, Users, Radio } from 'lucide-react';
+import React from 'react';
+import { Sun, Sunset, AlertTriangle, CheckCircle, XCircle, Clock, Users } from 'lucide-react';
+import { useHourlyForecast } from '../hooks/useHourlyForecast';
+import { buildNearTermWindTimeline } from '../services/NearTermWindModel';
 
 // Paragliding site configurations
 export const PARAGLIDING_SITES = {
@@ -153,8 +155,35 @@ export function calculateParaglidingScore(site, windSpeed, windDirection, windGu
   };
 }
 
+function buildForecastAssessments(site, timeline = []) {
+  return timeline.slice(0, 3).map(hour => ({
+    ...hour,
+    assessment: calculateParaglidingScore(
+      site,
+      hour.predictedSpeed,
+      hour.predictedDirection,
+      hour.predictedGust
+    ),
+  }));
+}
+
+function summarizeSiteForecast(timeline = []) {
+  if (!timeline.length) {
+    return 'Waiting for enough data to project the next 2 hours.';
+  }
+
+  const current = timeline[0];
+  const bestHour = timeline.reduce((best, hour) => (
+    (hour.assessment?.score || 0) > (best.assessment?.score || 0) ? hour : best
+  ), current);
+  const delta = (timeline[timeline.length - 1]?.assessment?.score || 0) - (current.assessment?.score || 0);
+  const trend = delta >= 10 ? 'building' : delta <= -10 ? 'fading' : 'holding';
+
+  return `${trend} through ${bestHour.time}; best score ${bestHour.assessment?.score || 0}% at ${bestHour.predictedSpeed} mph.`;
+}
+
 // Site Card Component
-const SiteCard = ({ site, windData, isLoading }) => {
+const SiteCard = ({ site, windData, forecastTimeline = [] }) => {
   const config = PARAGLIDING_SITES[site];
   const stationData = windData?.[config.stationId];
   
@@ -163,6 +192,8 @@ const SiteCard = ({ site, windData, isLoading }) => {
   const windGust = stationData?.gust;
   
   const assessment = calculateParaglidingScore(site, windSpeed, windDirection, windGust);
+  const forecastAssessments = buildForecastAssessments(site, forecastTimeline);
+  const forecastSummary = summarizeSiteForecast(forecastAssessments);
   
   const getStatusColor = (status) => {
     switch (status) {
@@ -299,16 +330,32 @@ const SiteCard = ({ site, windData, isLoading }) => {
           />
         </div>
       </div>
+
+      {/* 1-2 Hour Outlook */}
+      {forecastAssessments.length > 0 && (
+        <div className="mt-3 pt-3 border-t border-slate-700">
+          <div className="text-xs text-slate-400 mb-2">Next 2 Hours</div>
+          <div className="grid grid-cols-3 gap-2 text-center">
+            {forecastAssessments.map(hour => (
+              <div key={`${site}-${hour.offset}`} className="bg-slate-800/50 rounded p-2">
+                <div className="text-[10px] text-slate-400">{hour.offset === 0 ? 'Now' : `+${hour.offset}h`}</div>
+                <div className="text-sm font-semibold text-white">{hour.assessment?.score || 0}%</div>
+                <div className="text-[10px] text-slate-400">
+                  {hour.predictedSpeed} mph {hour.predictedDirection != null ? `@ ${hour.predictedDirection}°` : ''}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="text-[11px] text-slate-400 mt-2">{forecastSummary}</div>
+        </div>
+      )}
     </div>
   );
 };
 
 // Main Paragliding Dashboard
-const ParaglidingMode = ({ windData, isLoading }) => {
-  const [selectedSite, setSelectedSite] = useState(null);
-  
+const ParaglidingMode = ({ windData, history = {}, thermalPrediction }) => {
   const currentHour = new Date().getHours();
-  const recommendedSite = currentHour < 12 ? 'flight-park-south' : 'flight-park-north';
   
   // Get wind data for both sites
   const fpsData = windData?.FPS || windData?.stations?.find(s => s.id === 'FPS');
@@ -326,14 +373,61 @@ const ParaglidingMode = ({ windData, isLoading }) => {
       gust: utalpData?.gust || utalpData?.windGust,
     },
   };
+  const { forecastHours: southForecastHours } = useHourlyForecast({
+    coordinates: PARAGLIDING_SITES['flight-park-south'].coordinates,
+  });
+  const { forecastHours: northForecastHours } = useHourlyForecast({
+    coordinates: PARAGLIDING_SITES['flight-park-north'].coordinates,
+  });
+  const southTimeline = React.useMemo(() => buildNearTermWindTimeline({
+    currentConditions: stationWindData.FPS,
+    historyEntries: history.FPS || [],
+    forecastHours: southForecastHours,
+    thermalPrediction,
+    profile: {
+      type: 'paragliding-south',
+      idealSpeed: PARAGLIDING_SITES['flight-park-south'].wind.speed.ideal,
+      targetDirection: PARAGLIDING_SITES['flight-park-south'].wind.direction.ideal,
+      preferredWindow: { start: 6, end: 11, peak: 8 },
+      offWindowDecay: 0.16,
+      middayPenalty: { start: 12, end: 15, amount: 2 },
+    },
+    hours: 2,
+  }), [history.FPS, southForecastHours, stationWindData.FPS, thermalPrediction]);
+  const northTimeline = React.useMemo(() => buildNearTermWindTimeline({
+    currentConditions: stationWindData.UTALP,
+    historyEntries: history.UTALP || [],
+    forecastHours: northForecastHours,
+    thermalPrediction,
+    profile: {
+      type: 'paragliding-north',
+      idealSpeed: PARAGLIDING_SITES['flight-park-north'].wind.speed.ideal,
+      targetDirection: PARAGLIDING_SITES['flight-park-north'].wind.direction.ideal,
+      preferredWindow: { start: 15, end: 20, peak: 18 },
+      offWindowDecay: 0.12,
+      middayPenalty: { start: 11, end: 14, amount: 3 },
+    },
+    hours: 2,
+  }), [history.UTALP, northForecastHours, stationWindData.UTALP, thermalPrediction]);
   
   const southScore = calculateParaglidingScore('flight-park-south', stationWindData.FPS?.speed, stationWindData.FPS?.direction, stationWindData.FPS?.gust);
   const northScore = calculateParaglidingScore('flight-park-north', stationWindData.UTALP?.speed, stationWindData.UTALP?.direction, stationWindData.UTALP?.gust);
+  const futureSouth = buildForecastAssessments('flight-park-south', southTimeline);
+  const futureNorth = buildForecastAssessments('flight-park-north', northTimeline);
   
   // Determine best site right now
   const bestSite = (southScore?.score || 0) > (northScore?.score || 0) ? 'flight-park-south' : 'flight-park-north';
   const bestSiteConfig = PARAGLIDING_SITES[bestSite];
   const bestScore = bestSite === 'flight-park-south' ? southScore : northScore;
+  const bestFutureSouth = futureSouth.reduce((best, hour) => (
+    (hour.assessment?.score || 0) > (best.assessment?.score || 0) ? hour : best
+  ), futureSouth[0] || { assessment: { score: 0 } });
+  const bestFutureNorth = futureNorth.reduce((best, hour) => (
+    (hour.assessment?.score || 0) > (best.assessment?.score || 0) ? hour : best
+  ), futureNorth[0] || { assessment: { score: 0 } });
+  const futureBestSite = (bestFutureSouth.assessment?.score || 0) >= (bestFutureNorth.assessment?.score || 0)
+    ? { site: 'flight-park-south', forecast: bestFutureSouth }
+    : { site: 'flight-park-north', forecast: bestFutureNorth };
   
   return (
     <div className="space-y-6">
@@ -372,6 +466,15 @@ const ParaglidingMode = ({ windData, isLoading }) => {
               <div className="text-xs text-slate-400 capitalize">{bestScore?.status || 'Unknown'}</div>
             </div>
           </div>
+          {futureBestSite.forecast?.time && (
+            <div className="mt-3 pt-3 border-t border-slate-700/60">
+              <div className="text-xs text-slate-400">Best Site Over Next 2 Hours</div>
+              <div className="text-sm text-slate-200 mt-1">
+                {PARAGLIDING_SITES[futureBestSite.site].name} around {futureBestSite.forecast.time}
+                {' '}({futureBestSite.forecast.assessment?.score || 0}% • {futureBestSite.forecast.predictedSpeed} mph)
+              </div>
+            </div>
+          )}
         </div>
       </div>
       
@@ -405,12 +508,12 @@ const ParaglidingMode = ({ windData, isLoading }) => {
         <SiteCard 
           site="flight-park-south" 
           windData={stationWindData}
-          isLoading={isLoading}
+          forecastTimeline={southTimeline}
         />
         <SiteCard 
           site="flight-park-north" 
           windData={stationWindData}
-          isLoading={isLoading}
+          forecastTimeline={northTimeline}
         />
       </div>
       

@@ -1,6 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Fish, Moon, Thermometer, Gauge, Clock, MapPin, TrendingUp, TrendingDown, Minus, Sun, Sunset, CloudRain, Wind, Waves, Calendar, Target, AlertTriangle, CheckCircle, Anchor, Navigation, Egg, Mountain } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Fish, Moon, Thermometer, Gauge, Clock, MapPin, TrendingUp, TrendingDown, Minus, Sun, Sunset, Wind, Waves, Calendar, Target, AlertTriangle, CheckCircle, Navigation, Egg, Mountain } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import { useHourlyForecast } from '../hooks/useHourlyForecast';
+import { buildNearTermWindTimeline } from '../services/NearTermWindModel';
 
 // Utah Fishing Locations Configuration
 export const FISHING_LOCATIONS = {
@@ -466,6 +468,18 @@ function calculateFishingScore(location, conditions) {
   };
 }
 
+function summarizeFishingOutlook(hourlyScores = []) {
+  if (!hourlyScores.length) return null;
+
+  const bestHour = hourlyScores.reduce((best, hour) => (
+    hour.scoreData.score > best.scoreData.score ? hour : best
+  ), hourlyScores[0]);
+  const delta = (hourlyScores[hourlyScores.length - 1]?.scoreData.score || 0) - hourlyScores[0].scoreData.score;
+  const trend = delta >= 8 ? 'improving' : delta <= -8 ? 'slowing down' : 'holding steady';
+
+  return `${trend} over the next 2 hours. Best shot is ${bestHour.time} at ${bestHour.scoreData.score}% with ${bestHour.predictedSpeed} mph wind.`;
+}
+
 // Get current season
 function getCurrentSeason() {
   const month = new Date().getMonth() + 1;
@@ -511,7 +525,7 @@ const LocationCard = ({ location, isSelected, onSelect, theme }) => {
 };
 
 // Main Fishing Mode Component
-const FishingMode = ({ windData, pressureData, isLoading }) => {
+const FishingMode = ({ windData, pressureData }) => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const [selectedLocation, setSelectedLocation] = useState('strawberry');
@@ -521,9 +535,13 @@ const FishingMode = ({ windData, pressureData, isLoading }) => {
   const moonPhase = getMoonPhase();
   const solunar = getSolunarPeriods();
   const currentHour = new Date().getHours();
+  const { forecastHours: locationForecast } = useHourlyForecast({
+    coordinates: location.coordinates,
+    enabled: Boolean(location?.coordinates),
+  });
   
   // Get conditions
-  const windSpeed = windData?.stations?.[0]?.speed || windData?.speed || 5;
+  const windSpeed = locationForecast?.[0]?.windSpeed || windData?.stations?.[0]?.speed || windData?.speed || 5;
   const pressure = pressureData?.slcPressure || 30.0;
   const pressureTrend = pressureData?.gradient > 0 ? 'rising' : pressureData?.gradient < 0 ? 'falling' : 'stable';
   
@@ -542,6 +560,32 @@ const FishingMode = ({ windData, pressureData, isLoading }) => {
     moonPhase,
     hour: currentHour,
   });
+  const nearTermWindTimeline = useMemo(() => buildNearTermWindTimeline({
+    currentConditions: {
+      windSpeed,
+      windDirection: locationForecast?.[0]?.windDirectionDegrees,
+      windGust: windSpeed * 1.18,
+    },
+    forecastHours: locationForecast,
+    profile: {
+      type: 'fishing',
+      preferredWindow: { start: 5, end: 10, peak: 7 },
+      offWindowDecay: 0.08,
+    },
+    hours: 2,
+  }), [locationForecast, windSpeed]);
+  const nearTermFishingScores = useMemo(() => nearTermWindTimeline.slice(0, 3).map(hour => ({
+    ...hour,
+    scoreData: calculateFishingScore(selectedLocation, {
+      pressure,
+      pressureTrend,
+      windSpeed: hour.predictedSpeed,
+      waterTemp: estimatedWaterTemp,
+      moonPhase,
+      hour: hour.date.getHours(),
+    }),
+  })), [estimatedWaterTemp, moonPhase, nearTermWindTimeline, pressure, pressureTrend, selectedLocation]);
+  const fishingOutlook = useMemo(() => summarizeFishingOutlook(nearTermFishingScores), [nearTermFishingScores]);
   
   const pressureAnalysis = analyzePressure(pressure, pressureTrend);
   const depthInfo = location.depths?.[season] || { min: 10, max: 30, description: 'Variable' };
@@ -582,6 +626,11 @@ const FishingMode = ({ windData, pressureData, isLoading }) => {
               <div className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{fishingScore.recommendation}</div>
             </div>
           </div>
+          {fishingOutlook && (
+            <div className={`mt-3 pt-3 border-t text-xs ${isDark ? 'border-slate-700 text-cyan-300' : 'border-slate-300 text-cyan-700'}`}>
+              {fishingOutlook}
+            </div>
+          )}
         </div>
       </div>
       
@@ -675,6 +724,37 @@ const FishingMode = ({ windData, pressureData, isLoading }) => {
       </div>
       
       {/* Solunar Feeding Times */}
+      {nearTermFishingScores.length > 0 && (
+        <div className={`rounded-xl p-4 border ${isDark ? 'bg-slate-800/30 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`}>
+          <h3 className={`text-sm font-medium mb-3 flex items-center gap-2 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+            <Wind className="w-4 h-4" />
+            Next 2 Hours
+          </h3>
+          <div className="grid grid-cols-3 gap-3">
+            {nearTermFishingScores.map(hour => (
+              <div
+                key={`${selectedLocation}-${hour.offset}`}
+                className={`rounded-lg p-3 border ${isDark ? 'bg-slate-700/30 border-slate-600' : 'bg-slate-50 border-slate-200'}`}
+              >
+                <div className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                  {hour.offset === 0 ? 'Now' : `+${hour.offset}h`} • {hour.time}
+                </div>
+                <div className={`text-xl font-bold mt-1 ${
+                  hour.scoreData.score >= 75 ? (isDark ? 'text-green-400' : 'text-green-600') :
+                  hour.scoreData.score >= 50 ? (isDark ? 'text-yellow-400' : 'text-yellow-600') :
+                  (isDark ? 'text-red-400' : 'text-red-600')
+                }`}>
+                  {hour.scoreData.score}%
+                </div>
+                <div className={`text-xs mt-1 ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+                  {hour.scoreData.recommendation} • {hour.predictedSpeed} mph
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className={`rounded-xl p-4 border ${isDark ? 'bg-slate-800/30 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`}>
         <h3 className={`text-sm font-medium mb-3 flex items-center gap-2 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
           <Clock className="w-4 h-4" />
