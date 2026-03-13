@@ -1,0 +1,192 @@
+{
+  "METADATA": {
+    "version": "1.0",
+    "description": "Meso-relational spatial mapping: which gates and indicators affect which locations. Multipliers refine base predictions when upstream sensors confirm active patterns."
+  },
+  "RELATIONS": {
+    "utah-lake-zigzag": {
+      "name": "Saratoga Springs / Zig Zag",
+      "thermal_engine": {
+        "generator": "GREAT_SALT_LAKE",
+        "upstream_gate": "KSLC",
+        "indicator_type": "GSL_SURGE",
+        "description": "NW wind from Great Salt Lake accelerates through Point of the Mountain gap",
+        "min_temp_delta": 8,
+        "wind_heading": [280, 360],
+        "min_speed": 8,
+        "multiplier": 1.25
+      },
+      "canyon_boost": {
+        "source": "SPANISH_FORK_CANYON",
+        "gate_sensor": "QSF",
+        "description": "SE canyon drainage funnels into lake thermal — 2hr lead time",
+        "heading": [100, 180],
+        "speed_range": [6, 18],
+        "multiplier": 1.15
+      },
+      "valley_confirmation": {
+        "sensor": "UTALP",
+        "description": "Point of Mountain confirms north flow is reaching the lake",
+        "heading": [315, 45],
+        "min_speed": 5,
+        "multiplier": 1.10
+      }
+    },
+
+    "utah-lake-lincoln": {
+      "name": "Lincoln Beach",
+      "thermal_engine": {
+        "generator": "SE_LAKE_THERMAL",
+        "upstream_gate": "KPVU",
+        "indicator_type": "PROVO_LIGHT",
+        "description": "When Provo stays light, SE thermal develops freely on south shore",
+        "max_speed": 8,
+        "multiplier": 1.10
+      },
+      "north_flow": {
+        "upstream_gate": "KSLC",
+        "confirmation": "UTALP",
+        "description": "NW flow from SLC pushes south to Lincoln — KPVU confirms arrival",
+        "heading": [300, 360],
+        "min_speed": 8,
+        "multiplier": 1.20
+      },
+      "canyon_boost": {
+        "source": "SPANISH_FORK_CANYON",
+        "gate_sensor": "QSF",
+        "heading": [100, 180],
+        "speed_range": [6, 18],
+        "multiplier": 1.10
+      }
+    },
+
+    "utah-lake-sandy": {
+      "name": "Sandy Beach",
+      "thermal_engine": {
+        "generator": "SE_LAKE_THERMAL",
+        "upstream_gate": "KPVU",
+        "indicator_type": "PROVO_LIGHT",
+        "description": "KPVU is closest meter — light winds allow thermal to develop",
+        "max_speed": 8,
+        "multiplier": 1.10
+      },
+      "north_flow": {
+        "upstream_gate": "KSLC",
+        "confirmation": "UTALP",
+        "heading": [300, 360],
+        "min_speed": 8,
+        "multiplier": 1.20
+      }
+    },
+
+    "utah-lake-vineyard": {
+      "name": "Vineyard",
+      "thermal_engine": {
+        "generator": "S_SSW_ONSHORE",
+        "upstream_gate": "KPVU",
+        "indicator_type": "SOUTH_ONSHORE",
+        "description": "S/SSW/W winds are onshore at Vineyard. SE is offshore/dangerous.",
+        "heading": [180, 315],
+        "min_speed": 6,
+        "multiplier": 1.15
+      },
+      "stability_cap": {
+        "sensor": "FPS",
+        "description": "Strong NW at Flight Park can create cross-shore chop at Vineyard",
+        "heading": [300, 350],
+        "speed_threshold": 18,
+        "multiplier": 0.75
+      }
+    },
+
+    "utah-lake-mm19": {
+      "name": "Mile Marker 19",
+      "thermal_engine": {
+        "generator": "SE_LAKE_THERMAL",
+        "upstream_gate": "QSF",
+        "indicator_type": "CANYON_DRAINAGE",
+        "description": "Spanish Fork canyon drainage is primary wind source for MM19",
+        "heading": [100, 170],
+        "min_speed": 6,
+        "multiplier": 1.20
+      },
+      "valley_confirmation": {
+        "sensor": "FPS",
+        "heading": [135, 200],
+        "min_speed": 5,
+        "multiplier": 1.05
+      }
+    },
+
+    "deer-creek": {
+      "name": "Deer Creek Reservoir",
+      "thermal_engine": {
+        "generator": "PROVO_CANYON_VENTURI",
+        "upstream_gate": "KPVU",
+        "target_diff": "KHCR",
+        "description": "Provo Canyon venturi effect: warm valley air drawn up canyon when Heber is cooler",
+        "min_temp_delta": 6,
+        "multiplier": 1.30
+      },
+      "arrowhead_trigger": {
+        "sensor": "SND",
+        "description": "Arrowhead SSW wind 12-18 mph = thermal at dam in ~60 min",
+        "heading": [200, 230],
+        "speed_range": [12, 18],
+        "multiplier": 1.20
+      },
+      "stability_cap": {
+        "sensor": "SND",
+        "description": "Arrowhead wind >20 mph = high-altitude turbulence disrupts surface thermal",
+        "speed_threshold": 20,
+        "multiplier": 0.70
+      }
+    },
+
+    "willard-bay": {
+      "name": "Willard Bay",
+      "thermal_engine": {
+        "generator": "GAP_WIND",
+        "upstream_gate": "KHIF",
+        "indicator_type": "HILL_AFB_PUSH",
+        "description": "Gap wind from north — Hill AFB confirms flow strength",
+        "heading": [170, 220],
+        "min_speed": 8,
+        "multiplier": 1.20
+      },
+      "stability_cap": {
+        "sensor": "BLPU1",
+        "description": "Ben Lomond strong wind = frontal passage, not thermal",
+        "speed_threshold": 25,
+        "multiplier": 0.60
+      }
+    },
+
+    "POINT_OF_THE_MOUNTAIN": {
+      "name": "Flight Parks (Paragliding)",
+      "switch_logic": {
+        "north_sensor": "KSLC",
+        "south_sensor": "KPVU",
+        "boundary_sensor": "FPS",
+        "ground_truth": "UTALP",
+        "description": "Wind switch from S to N typically 3-5 PM. KSLC leads by 30-60 min.",
+        "pressure_trigger": 0.5,
+        "lead_time_mins": 45
+      },
+      "north_engine": {
+        "upstream_gate": "KSLC",
+        "heading": [280, 360],
+        "min_speed": 5,
+        "multiplier": 1.0,
+        "description": "NW flow at SLC airport = north side active within 30-60 min"
+      },
+      "south_engine": {
+        "upstream_gate": "KPVU",
+        "heading": [150, 210],
+        "min_speed": 5,
+        "multiplier": 1.0,
+        "description": "S flow at Provo = south side active (morning pattern)"
+      }
+    }
+  }
+}

@@ -30,6 +30,7 @@ import FishingMode from './FishingMode';
 import ThemeToggle from './ThemeToggle';
 import { useTheme } from '../context/ThemeContext';
 import { SafeComponent } from './ErrorBoundary';
+import { calculateCorrelatedWind } from '../services/CorrelationEngine';
 
 function windDirectionToCardinal(degrees) {
   if (degrees == null) return 'N/A';
@@ -55,6 +56,32 @@ export function Dashboard() {
   // For paragliding, use Flight Park South/North data instead of generic wind
   const fpsStation = lakeState?.wind?.stations?.find(s => s.id === 'FPS');
   const utalpStation = lakeState?.wind?.stations?.find(s => s.id === 'UTALP');
+
+  // Meso-Relational Correlation: refine prediction using upstream indicators
+  const mesoData = React.useMemo(() => {
+    if (!lakeState) return null;
+    const data = { stations: lakeState.wind?.stations || [] };
+    if (lakeState.kslcStation) data.KSLC = lakeState.kslcStation;
+    if (lakeState.kpvuStation) data.KPVU = lakeState.kpvuStation;
+    if (lakeState.utalpStation) data.UTALP = lakeState.utalpStation;
+    if (lakeState.earlyIndicator) data.QSF = lakeState.earlyIndicator;
+    return data;
+  }, [lakeState]);
+
+  const correlation = React.useMemo(() => {
+    if (!selectedLake || !mesoData) return null;
+    return calculateCorrelatedWind(
+      selectedLake,
+      {
+        speed: currentWindSpeed,
+        windSpeed: currentWindSpeed,
+        windDirection: currentWindDirection,
+        expectedSpeed: lakeState?.thermalPrediction?.speed?.expectedAvg,
+      },
+      mesoData,
+      lakeState?.pws
+    );
+  }, [selectedLake, mesoData, currentWindSpeed, currentWindDirection, lakeState?.pws, lakeState?.thermalPrediction]);
   
   // Get best paragliding site data
   const getParaglidingScore = () => {
@@ -426,6 +453,63 @@ export function Dashboard() {
                     icon={MapPin}
                   />
                 </div>
+              </div>
+            )}
+
+            {/* Spatial Correlation Triggers */}
+            {correlation?.activeTriggers?.length > 0 && (
+              <div className={`rounded-xl p-4 border ${
+                theme === 'dark'
+                  ? 'bg-blue-500/10 border-blue-500/30'
+                  : 'bg-blue-50 border-blue-200'
+              }`}>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className={`w-4 h-4 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
+                    <span className={`text-xs font-medium ${theme === 'dark' ? 'text-blue-300' : 'text-blue-700'}`}>
+                      Spatial Correlation
+                    </span>
+                  </div>
+                  {correlation.multiplier !== 1.0 && (
+                    <span className={`text-xs font-mono px-2 py-0.5 rounded ${
+                      correlation.multiplier > 1
+                        ? (theme === 'dark' ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-700')
+                        : (theme === 'dark' ? 'bg-red-500/20 text-red-400' : 'bg-red-100 text-red-700')
+                    }`}>
+                      {correlation.multiplier > 1 ? '+' : ''}{Math.round((correlation.multiplier - 1) * 100)}% bias
+                    </span>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {correlation.activeTriggers.map(trigger => (
+                    <div
+                      key={trigger.id}
+                      className={`text-xs px-2.5 py-1.5 rounded-full flex items-center gap-1.5 ${
+                        trigger.type === 'boost'
+                          ? (theme === 'dark' ? 'bg-blue-900/60 text-blue-200' : 'bg-blue-100 text-blue-800')
+                          : trigger.type === 'penalty'
+                            ? (theme === 'dark' ? 'bg-red-900/60 text-red-200' : 'bg-red-100 text-red-800')
+                            : trigger.type === 'confirmation'
+                              ? (theme === 'dark' ? 'bg-green-900/60 text-green-200' : 'bg-green-100 text-green-800')
+                              : (theme === 'dark' ? 'bg-yellow-900/60 text-yellow-200' : 'bg-yellow-100 text-yellow-800')
+                      }`}
+                      title={trigger.detail}
+                    >
+                      <span className={`w-1.5 h-1.5 rounded-full ${
+                        trigger.type === 'penalty' ? 'bg-red-400' : 'bg-current animate-pulse'
+                      }`} />
+                      <span className="font-medium">{trigger.label}</span>
+                      <span className="opacity-60">{trigger.impact}</span>
+                    </div>
+                  ))}
+                </div>
+                {correlation.refinedSpeed > 0 && correlation.baseSpeed > 0 && correlation.multiplier !== 1.0 && (
+                  <div className={`mt-2 pt-2 border-t text-xs ${
+                    theme === 'dark' ? 'border-blue-500/20 text-blue-400/70' : 'border-blue-200 text-blue-600/70'
+                  }`}>
+                    Base: {correlation.baseSpeed.toFixed(0)} mph → Refined: {correlation.refinedSpeed} mph
+                  </div>
+                )}
               </div>
             )}
           </div>
