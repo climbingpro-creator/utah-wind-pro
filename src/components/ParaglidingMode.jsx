@@ -644,6 +644,21 @@ const ParaglidingMode = ({ windData, isLoading }) => {
 
   // Determine the BEST OPPORTUNITY — current or predicted
   const opportunity = useMemo(() => {
+    // Approximate sunset by month for Utah
+    const month = new Date().getMonth();
+    const sunsetHours = [17.5, 18, 19.3, 19.8, 20.3, 20.8, 21, 20.5, 19.5, 18.5, 17.2, 17.1];
+    const isAfterDark = currentHour >= Math.ceil(sunsetHours[month]);
+
+    if (isAfterDark) {
+      return {
+        mode: 'waiting', site: 'south', siteName: 'Flight Park South',
+        score: 0, status: 'dark',
+        headline: 'After Dark — Flying Done for Today',
+        subline: 'Check back tomorrow morning for the south side forecast',
+        color: 'slate', urgency: 'wait',
+      };
+    }
+
     const southNow = southScore?.status === 'excellent' || southScore?.status === 'good';
     const northNow = northScore?.status === 'excellent' || northScore?.status === 'good';
     const southPred = learnedPrediction?.south;

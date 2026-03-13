@@ -28,22 +28,38 @@ import boatWeights from '../config/trainedWeights-boating.json';
 
 // ─── ACTIVITY THRESHOLDS ─────────────────────────────────────────
 
+// Approximate sunrise/sunset for Utah by month (hour, local time)
+const DAYLIGHT = {
+  0: { rise: 7.5, set: 17.5 },  1: { rise: 7.2, set: 18.0 },
+  2: { rise: 7.5, set: 19.3 },  3: { rise: 6.7, set: 19.8 },
+  4: { rise: 6.1, set: 20.3 },  5: { rise: 5.8, set: 20.8 },
+  6: { rise: 6.0, set: 21.0 },  7: { rise: 6.3, set: 20.5 },
+  8: { rise: 7.0, set: 19.5 },  9: { rise: 7.3, set: 18.5 },
+  10: { rise: 7.0, set: 17.2 }, 11: { rise: 7.3, set: 17.1 },
+};
+
+function isDaylightHour(hour) {
+  const month = new Date().getMonth();
+  const { rise, set } = DAYLIGHT[month];
+  return hour >= Math.floor(rise) && hour < Math.ceil(set);
+}
+
 const ACTIVITY_PROFILES = {
   kiting: {
     idealMin: 10, idealMax: 20, min: 8, max: 30,
-    gustLimit: 1.5, wantsWind: true,
+    gustLimit: 1.5, wantsWind: true, daylightOnly: true,
     scoreLabel: (s) => s >= 80 ? 'Send it' : s >= 60 ? 'Good session' : s >= 40 ? 'Light but doable' : s >= 20 ? 'Foil only' : 'No wind',
     emoji: (s) => s >= 80 ? '🔥' : s >= 60 ? '✅' : s >= 40 ? '〰️' : '❌',
   },
   sailing: {
     idealMin: 10, idealMax: 18, min: 6, max: 25,
-    gustLimit: 1.4, wantsWind: true,
+    gustLimit: 1.4, wantsWind: true, daylightOnly: true,
     scoreLabel: (s) => s >= 80 ? 'Race day' : s >= 60 ? 'Good sail' : s >= 40 ? 'Light air' : s >= 20 ? 'Drifter' : 'No wind',
     emoji: (s) => s >= 80 ? '⛵' : s >= 60 ? '✅' : s >= 40 ? '〰️' : '❌',
   },
   windsurfing: {
     idealMin: 12, idealMax: 22, min: 8, max: 30,
-    gustLimit: 1.5, wantsWind: true,
+    gustLimit: 1.5, wantsWind: true, daylightOnly: true,
     scoreLabel: (s) => s >= 80 ? 'Planing!' : s >= 60 ? 'Good session' : s >= 40 ? 'Light wind' : s >= 20 ? 'Barely' : 'No wind',
     emoji: (s) => s >= 80 ? '🔥' : s >= 60 ? '✅' : s >= 40 ? '〰️' : '❌',
   },
@@ -67,7 +83,7 @@ const ACTIVITY_PROFILES = {
   },
   paragliding: {
     idealMin: 8, idealMax: 15, min: 8, max: 18,
-    gustLimit: 1.25, wantsWind: true,
+    gustLimit: 1.25, wantsWind: true, daylightOnly: true,
     scoreLabel: (s) => s >= 80 ? 'Epic' : s >= 60 ? 'Flyable' : s >= 40 ? 'Marginal' : 'Grounded',
     emoji: (s) => s >= 80 ? '🪂' : s >= 60 ? '✅' : s >= 40 ? '⚠️' : '❌',
   },
@@ -305,8 +321,18 @@ export async function generateSmartForecast(activity, locationId, currentWind = 
     predictedSpeed = Math.max(0, predictedSpeed);
     const estimatedGust = predictedSpeed * (thermal.phase === 'peak' ? 1.25 : 1.15);
     
-    // Score for this activity
-    const { score, label, emoji } = scoreForActivity(activity, predictedSpeed, estimatedGust);
+    // After dark: zero score for daylight-only activities
+    const isLight = isDaylightHour(forecastHour);
+    const afterDark = profile.daylightOnly && !isLight;
+    
+    let score, label, emoji;
+    if (afterDark) {
+      score = 0;
+      label = 'After dark';
+      emoji = '🌙';
+    } else {
+      ({ score, label, emoji } = scoreForActivity(activity, predictedSpeed, estimatedGust));
+    }
     
     // Cloud cover from NWS
     let cloudCover = null;
