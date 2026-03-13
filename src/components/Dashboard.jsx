@@ -23,6 +23,9 @@ import GlassScore from './GlassScore';
 import { predictGlass } from '../services/BoatingPredictor';
 import WaterForecast from './WaterForecast';
 import SmartTimeline from './SmartTimeline';
+import WeekPlanner from './WeekPlanner';
+import SpotRanker from './SpotRanker';
+import IndicatorCascade from './IndicatorCascade';
 import WeeklyBestDays from './WeeklyBestDays';
 import RaceDayMode from './RaceDayMode';
 import SevereWeatherAlerts from './SevereWeatherAlerts';
@@ -34,6 +37,7 @@ import { useTheme } from '../context/ThemeContext';
 import { SafeComponent } from './ErrorBoundary';
 import { calculateCorrelatedWind } from '../services/CorrelationEngine';
 import { monitorSwings } from '../services/FrontalTrendPredictor';
+import { generateBriefing } from '../services/MorningBriefing';
 import TrendPatterns from './TrendPatterns';
 
 function windDirectionToCardinal(degrees) {
@@ -175,6 +179,23 @@ export function Dashboard() {
       );
     } catch (e) { return null; }
   }, [currentWindSpeed, currentWindGust, lakeState?.pressure]);
+
+  // AI Morning Briefing
+  const briefing = React.useMemo(() => {
+    try {
+      return generateBriefing(selectedActivity, {
+        currentWind: { speed: currentWindSpeed, gust: currentWindGust, direction: currentWindDirection },
+        upstream: {
+          kslcSpeed: lakeState?.kslcStation?.speed,
+          kslcDirection: lakeState?.kslcStation?.direction,
+          kpvuSpeed: lakeState?.kpvuStation?.speed,
+          kpvuDirection: lakeState?.kpvuStation?.direction,
+        },
+        thermalPrediction: lakeState?.thermalPrediction,
+        boatingPrediction,
+      });
+    } catch (e) { return null; }
+  }, [selectedActivity, currentWindSpeed, currentWindGust, currentWindDirection, lakeState?.thermalPrediction, boatingPrediction]);
 
   // Check for notifications when data updates
   React.useEffect(() => {
@@ -440,6 +461,41 @@ export function Dashboard() {
           );
         })()}
 
+        {/* AI Morning Briefing */}
+        {briefing && !activityConfig?.specialMode && (
+          <div className={`rounded-xl p-4 border ${theme === 'dark' ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`}>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-lg">🧠</span>
+              <span className={`text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>
+                {briefing.headline}
+              </span>
+              {briefing.excitement >= 4 && (
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${theme === 'dark' ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-700'}`}>
+                  {briefing.excitement >= 5 ? 'EPIC' : 'HOT'}
+                </span>
+              )}
+            </div>
+            {briefing.body && (
+              <p className={`text-sm mb-3 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-600'}`}>{briefing.body}</p>
+            )}
+            <div className="space-y-1.5">
+              {briefing.bullets?.map((b, i) => (
+                <div key={i} className={`flex items-start gap-2 text-xs ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                  <span className="flex-shrink-0">{b.icon || '•'}</span>
+                  <span>{b.text}</span>
+                </div>
+              ))}
+            </div>
+            {briefing.bestAction && (
+              <div className={`mt-3 px-3 py-2 rounded-lg text-xs font-medium ${
+                theme === 'dark' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/30' : 'bg-blue-50 text-blue-700 border border-blue-200'
+              }`}>
+                💡 {briefing.bestAction}
+              </div>
+            )}
+          </div>
+        )}
+
         {error && (
           <div className={`rounded-xl p-4 border ${
             theme === 'dark' 
@@ -676,6 +732,26 @@ export function Dashboard() {
               mesoData={mesoData}
             />
 
+            {/* Spot Ranker — "Where should I go right now?" */}
+            <SafeComponent name="Spot Ranker">
+              <SpotRanker
+                activity={selectedActivity}
+                currentWind={{ speed: currentWindSpeed, gust: currentWindGust, direction: currentWindDirection }}
+                lakeState={lakeState}
+                mesoData={mesoData}
+              />
+            </SafeComponent>
+
+            {/* Indicator Cascade — live wind flow visualization */}
+            <SafeComponent name="Indicator Cascade">
+              <IndicatorCascade lakeState={lakeState} activity={selectedActivity} />
+            </SafeComponent>
+
+            {/* Smart Week Planner — best day this week per activity */}
+            <SafeComponent name="Week Planner">
+              <WeekPlanner activity={selectedActivity} locationId={selectedLake} />
+            </SafeComponent>
+
             {/* Sailing-specific: Race Day Mode */}
             {selectedActivity === 'sailing' && (
               <RaceDayMode
@@ -693,7 +769,7 @@ export function Dashboard() {
               <TrendPatterns locationId={selectedLake} />
             </SafeComponent>
 
-            {/* Weekly Best Days */}
+            {/* Legacy Weekly Best Days */}
             <WeeklyBestDays selectedActivity={selectedActivity} />
 
             {/* Frontal Swing Alerts — Real-time rapid changes */}
