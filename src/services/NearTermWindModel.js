@@ -165,6 +165,36 @@ function getProfileAdjustment({ date, offset, profile, currentSpeed }) {
   }
 
   const hour = date.getHours();
+  if (profile.mode === 'calm' && profile.calmWindow) {
+    const { buildStart, end, peak } = profile.calmWindow;
+    let speedDelta = 0;
+    let phase = 'steady';
+
+    if (hour < buildStart) {
+      speedDelta -= Math.max(1.5, (currentSpeed ?? 4) * 0.25);
+      phase = 'calm';
+    } else if (hour < end) {
+      speedDelta -= Math.max(0.5, (currentSpeed ?? 4) * 0.12);
+      phase = 'calm';
+    } else if (hour <= peak) {
+      speedDelta += 1.25;
+      phase = 'building';
+    } else {
+      speedDelta += 0.5;
+      phase = 'fading';
+    }
+
+    if (offset > 3) {
+      speedDelta *= 0.8;
+    }
+
+    return {
+      speedDelta: round(speedDelta, 1) || 0,
+      targetDirection: null,
+      phase,
+    };
+  }
+
   const preferredWindow = profile.preferredWindow;
   const idealMidpoint = profile.idealSpeed
     ? (profile.idealSpeed.min + profile.idealSpeed.max) / 2
@@ -203,10 +233,15 @@ function getProfileAdjustment({ date, offset, profile, currentSpeed }) {
   };
 }
 
-function getIndicatorAdjustment({ thermalPrediction, profileType, offset }) {
-  if (!thermalPrediction || offset > 2) {
-    return { speedDelta: 0, confidenceDelta: 0 };
-  }
+function getIndicatorAdjustment({
+  thermalPrediction,
+  profileType,
+  offset,
+  currentSpeed,
+  indicatorEvaluations = [],
+}) {
+  let speedDelta = 0;
+  let confidenceDelta = 0;
 
   const statusToBoost = {
     strong: 4,
@@ -216,32 +251,56 @@ function getIndicatorAdjustment({ thermalPrediction, profileType, offset }) {
     weak: 1,
   };
 
-  let speedDelta = 0;
-  let confidenceDelta = 0;
-
-  const spanishForkStatus = thermalPrediction.spanishFork?.status;
+  const spanishForkStatus = thermalPrediction?.spanishFork?.status;
   if (spanishForkStatus && profileType === 'thermal') {
     speedDelta += statusToBoost[spanishForkStatus] || 0;
     confidenceDelta += 0.05;
   }
 
-  const northFlowStatus = thermalPrediction.northFlow?.status;
+  const northFlowStatus = thermalPrediction?.northFlow?.status;
   if (northFlowStatus && profileType === 'thermal') {
     speedDelta += statusToBoost[northFlowStatus] || 0;
     confidenceDelta += 0.07;
   }
 
-  const provoStatus = thermalPrediction.provoIndicator?.status;
+  const provoStatus = thermalPrediction?.provoIndicator?.status;
   if (provoStatus && profileType === 'thermal') {
     speedDelta += statusToBoost[provoStatus] || 0;
     confidenceDelta += 0.05;
   }
 
-  const pointOfMountainStatus = thermalPrediction.pointOfMountain?.status;
+  const pointOfMountainStatus = thermalPrediction?.pointOfMountain?.status;
   if (pointOfMountainStatus && profileType?.startsWith('paragliding')) {
     speedDelta += (statusToBoost[pointOfMountainStatus] || 0) * 0.85;
     confidenceDelta += 0.06;
   }
+
+  indicatorEvaluations.forEach((evaluation) => {
+    const status = evaluation?.status;
+    const prediction = evaluation?.prediction;
+    if (!status || !prediction) return;
+
+    const statusWeight = {
+      strong: 1,
+      good: 0.8,
+      moderate: 0.7,
+      possible: 0.55,
+      marginal: 0.35,
+    }[status] || 0;
+
+    if (statusWeight === 0) return;
+
+    const leadTimeHours = prediction.leadTimeHours ?? 0;
+    const proximity = Math.max(0, 1 - Math.abs(offset - leadTimeHours));
+    if (proximity === 0) return;
+
+    const expectedSpeed = prediction.expectedSpeed ?? currentSpeed ?? 0;
+    const baseSpeed = currentSpeed ?? expectedSpeed;
+    const modeledDelta = Math.max(0, expectedSpeed - baseSpeed);
+
+    speedDelta += modeledDelta * 0.3 * statusWeight * proximity;
+    confidenceDelta += 0.03 * statusWeight * proximity;
+  });
 
   return { speedDelta, confidenceDelta };
 }
@@ -260,6 +319,7 @@ export function buildNearTermWindTimeline({
   forecastHours = [],
   thermalPrediction = null,
   profile = null,
+  indicatorEvaluations = [],
   now = new Date(),
   hours = DEFAULT_HORIZON_HOURS,
 }) {
@@ -284,6 +344,8 @@ export function buildNearTermWindTimeline({
       thermalPrediction,
       profileType: profile?.type || 'generic',
       offset,
+      currentSpeed: current.windSpeed,
+      indicatorEvaluations,
     });
 
     const observedSpeedProjection = current.windSpeed != null

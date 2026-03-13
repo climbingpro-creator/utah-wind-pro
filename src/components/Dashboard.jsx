@@ -31,6 +31,7 @@ import ThemeToggle from './ThemeToggle';
 import { useTheme } from '../context/ThemeContext';
 import { useHourlyForecast } from '../hooks/useHourlyForecast';
 import { buildNearTermWindTimeline } from '../services/NearTermWindModel';
+import { getActivityModelContext } from '../services/ActivityModelContext';
 
 function windDirectionToCardinal(degrees) {
   if (degrees == null) return 'N/A';
@@ -85,7 +86,17 @@ export function Dashboard() {
   const currentWindSpeed = lakeState?.pws?.windSpeed || lakeState?.wind?.stations?.[0]?.speed;
   const currentWindGust = lakeState?.pws?.windGust || lakeState?.wind?.stations?.[0]?.gust;
   const currentWindDirection = lakeState?.pws?.windDirection || lakeState?.wind?.stations?.[0]?.direction;
-  const primaryStation = lakeState?.pws || lakeState?.wind?.stations?.[0];
+  const fallbackPrimaryStation = lakeState?.pws || lakeState?.wind?.stations?.[0];
+  const activityModelContext = React.useMemo(() => (
+    lakeState ? getActivityModelContext(selectedActivity, lakeState, history) : null
+  ), [history, lakeState, selectedActivity]);
+  const activityTargetStation = activityModelContext?.targetStation || fallbackPrimaryStation;
+  const activityWindSpeed = activityTargetStation?.speed ?? activityTargetStation?.windSpeed ?? currentWindSpeed;
+  const activityWindGust = activityTargetStation?.gust ?? activityTargetStation?.windGust ?? currentWindGust;
+  const activityWindDirection = activityTargetStation?.direction ?? activityTargetStation?.windDirection ?? currentWindDirection;
+  const activityTargetHistory = activityModelContext?.targetHistory || [];
+  const activityProfile = activityModelContext?.profile || null;
+  const activityIndicators = activityModelContext?.indicatorEvaluations || [];
   
   // For paragliding, use Flight Park South/North data instead of generic wind
   const fpsStation = lakeState?.wind?.stations?.find(s => s.id === 'FPS');
@@ -156,8 +167,8 @@ export function Dashboard() {
   
   const activityScore = selectedActivity === 'paragliding'
     ? getParaglidingScore()
-    : (selectedActivity && currentWindSpeed != null
-      ? calculateActivityScore(selectedActivity, currentWindSpeed, currentWindGust, currentWindDirection)
+    : (selectedActivity && activityWindSpeed != null
+      ? calculateActivityScore(selectedActivity, activityWindSpeed, activityWindGust, activityWindDirection)
       : null);
   
   const { forecastHours: lakeHourlyForecast } = useHourlyForecast({
@@ -166,21 +177,24 @@ export function Dashboard() {
   });
   const nearTermWindTimeline = React.useMemo(() => buildNearTermWindTimeline({
     currentConditions: {
-      windSpeed: currentWindSpeed,
-      windGust: currentWindGust,
-      windDirection: currentWindDirection,
+      windSpeed: activityWindSpeed,
+      windGust: activityWindGust,
+      windDirection: activityWindDirection,
     },
-    historyEntries: history[primaryStation?.id] || [],
+    historyEntries: activityTargetHistory,
     forecastHours: lakeHourlyForecast,
     thermalPrediction: lakeState?.thermalPrediction,
+    profile: activityProfile,
+    indicatorEvaluations: activityIndicators,
   }), [
-    currentWindDirection,
-    currentWindGust,
-    currentWindSpeed,
-    history,
+    activityIndicators,
+    activityProfile,
+    activityTargetHistory,
+    activityWindDirection,
+    activityWindGust,
+    activityWindSpeed,
     lakeHourlyForecast,
     lakeState?.thermalPrediction,
-    primaryStation?.id,
   ]);
   const activityTimeline = React.useMemo(() => buildActivityTimeline(selectedActivity, nearTermWindTimeline), [
     nearTermWindTimeline,
@@ -446,7 +460,7 @@ export function Dashboard() {
 
             {/* Primary Wind Display - For Zig Zag, always show PWS first */}
             <PrimaryWindDisplay 
-              station={lakeState?.pws || lakeState?.wind?.stations?.[0]}
+              station={activityTargetStation}
               optimalDirection={lakeState?.thermalPrediction?.direction}
               isLoading={isLoading}
               pwsUnavailable={selectedLake === 'utah-lake-zigzag' && !lakeState?.pws}
@@ -456,8 +470,8 @@ export function Dashboard() {
             {activityConfig?.wantsWind && (
               <KiteSafetyIndicator
                 lakeId={selectedLake}
-                windDirection={currentWindDirection}
-                windSpeed={currentWindSpeed}
+                windDirection={activityWindDirection}
+                windSpeed={activityWindSpeed}
                 activity={selectedActivity}
               />
             )}
@@ -501,11 +515,15 @@ export function Dashboard() {
             {selectedActivity === 'sailing' && (
               <RaceDayMode
                 currentWind={{
-                  speed: currentWindSpeed,
-                  direction: currentWindDirection,
-                  gust: currentWindGust,
+                  speed: activityWindSpeed,
+                  direction: activityWindDirection,
+                  gust: activityWindGust,
                 }}
-                windHistory={history?.wind || []}
+                windHistory={activityTargetHistory.map((entry) => ({
+                  speed: entry.windSpeed ?? entry.speed,
+                  direction: entry.windDirection ?? entry.direction,
+                  gust: entry.windGust ?? entry.gust,
+                }))}
               />
             )}
 
@@ -550,8 +568,8 @@ export function Dashboard() {
               conditions={{
                 pressureGradient: lakeState?.pressure?.gradient,
                 temperature: lakeState?.pws?.temperature,
-                windSpeed: lakeState?.pws?.windSpeed || lakeState?.wind?.stations?.[0]?.speed,
-                windDirection: lakeState?.pws?.windDirection || lakeState?.wind?.stations?.[0]?.direction,
+                windSpeed: activityWindSpeed,
+                windDirection: activityWindDirection,
                 thermalDelta: lakeState?.thermal?.delta,
               }}
               isLoading={isLoading}
@@ -560,8 +578,8 @@ export function Dashboard() {
             <ThermalForecast
               lakeId={selectedLake}
               currentConditions={{
-                windSpeed: lakeState?.pws?.windSpeed || lakeState?.wind?.stations?.[0]?.speed,
-                windDirection: lakeState?.pws?.windDirection || lakeState?.wind?.stations?.[0]?.direction,
+                windSpeed: activityWindSpeed,
+                windDirection: activityWindDirection,
                 temperature: lakeState?.pws?.temperature,
               }}
               pressureGradient={lakeState?.pressure?.gradient}
