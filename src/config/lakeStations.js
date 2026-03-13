@@ -302,6 +302,9 @@ export const LAKE_CONFIGS = {
       
       reference: [
         { id: 'UTALP', name: 'Point of the Mountain', elevation: 4796 },
+        { id: 'FPN', name: 'Flight Park North', elevation: 5030, role: 'Exploratory north-flow precursor' },
+        { id: 'SLCNW', name: 'Salt Lake City North Field', elevation: 4226, role: 'Secondary north-flow reference' },
+        { id: 'KTVY', name: 'Tooele Valley Airport', elevation: 4238, role: 'Great Salt Lake outflow precursor' },
       ],
     },
     
@@ -397,6 +400,9 @@ export const LAKE_CONFIGS = {
       
       reference: [
         { id: 'UTALP', name: 'Point of the Mountain', elevation: 4796 },
+        { id: 'FPN', name: 'Flight Park North', elevation: 5030, role: 'Exploratory north-flow precursor' },
+        { id: 'SLCNW', name: 'Salt Lake City North Field', elevation: 4226, role: 'Secondary north-flow reference' },
+        { id: 'KTVY', name: 'Tooele Valley Airport', elevation: 4238, role: 'Great Salt Lake outflow precursor' },
       ],
     },
     
@@ -483,6 +489,9 @@ export const LAKE_CONFIGS = {
       
       reference: [
         { id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226 },
+        { id: 'FPN', name: 'Flight Park North', elevation: 5030, role: 'Exploratory north-flow precursor' },
+        { id: 'SLCNW', name: 'Salt Lake City North Field', elevation: 4226, role: 'Secondary north-flow reference' },
+        { id: 'KTVY', name: 'Tooele Valley Airport', elevation: 4238, role: 'Great Salt Lake outflow precursor' },
       ],
     },
     
@@ -576,6 +585,9 @@ export const LAKE_CONFIGS = {
       
       reference: [
         { id: 'UTALP', name: 'Point of the Mountain', elevation: 4796 },
+        { id: 'FPN', name: 'Flight Park North', elevation: 5030, role: 'Exploratory north-flow precursor' },
+        { id: 'SLCNW', name: 'Salt Lake City North Field', elevation: 4226, role: 'Secondary north-flow reference' },
+        { id: 'KTVY', name: 'Tooele Valley Airport', elevation: 4238, role: 'Great Salt Lake outflow precursor' },
       ],
     },
     
@@ -953,6 +965,9 @@ export const STATION_INFO = {
   'UR328': { fullName: 'Willard', type: 'mesonet', network: 'MesoWest' },
   'QLN': { fullName: 'Lindon', type: 'mesonet', network: 'MesoWest' },
   'UTALP': { fullName: 'Point of the Mountain I-15', type: 'rwis', network: 'UDOT' },
+  'FPN': { fullName: 'Flight Park North', type: 'mesonet', network: 'MesoWest' },
+  'SLCNW': { fullName: 'Salt Lake City North Field', type: 'aviation', network: 'NWS' },
+  'KTVY': { fullName: 'Tooele Valley Airport', type: 'aviation', network: 'NWS' },
   'UTPCY': { fullName: 'Provo Canyon Mile Post 10', type: 'rwis', network: 'UDOT' },
   'MDAU1': { fullName: 'Midway', type: 'coop', network: 'NWS' },
   'GSLM': { fullName: 'Great Salt Lake Minerals', type: 'industrial', network: 'MesoWest' },

@@ -15,6 +15,8 @@ import axios from 'axios';
 // NWS API configuration
 const NWS_BASE_URL = 'https://api.weather.gov';
 const USER_AGENT = 'UtahWindPro/1.0 (kite-forecast-app)';
+const FORECAST_CACHE_MS = 30 * 60 * 1000;
+const hourlyForecastCache = new Map();
 
 // Forecast grid points for our locations
 const FORECAST_POINTS = {
@@ -22,6 +24,62 @@ const FORECAST_POINTS = {
   'deer-creek': { lat: 40.48, lng: -111.50 },
   'willard-bay': { lat: 41.38, lng: -112.07 },
 };
+
+const DIRECTION_TO_DEGREES = {
+  N: 0,
+  NNE: 22.5,
+  NE: 45,
+  ENE: 67.5,
+  E: 90,
+  ESE: 112.5,
+  SE: 135,
+  SSE: 157.5,
+  S: 180,
+  SSW: 202.5,
+  SW: 225,
+  WSW: 247.5,
+  W: 270,
+  WNW: 292.5,
+  NW: 315,
+  NNW: 337.5,
+};
+
+export function directionStringToDegrees(direction) {
+  if (direction == null) return null;
+  if (typeof direction === 'number') return direction;
+
+  const normalized = String(direction).trim().toUpperCase();
+  return DIRECTION_TO_DEGREES[normalized] ?? null;
+}
+
+function getCachedValue(cacheKey) {
+  const cached = hourlyForecastCache.get(cacheKey);
+  if (!cached) return null;
+  if (Date.now() - cached.timestamp > FORECAST_CACHE_MS) {
+    hourlyForecastCache.delete(cacheKey);
+    return null;
+  }
+  return cached.value;
+}
+
+function setCachedValue(cacheKey, value) {
+  hourlyForecastCache.set(cacheKey, {
+    timestamp: Date.now(),
+    value,
+  });
+}
+
+function parseHourlyPeriods(periods) {
+  return periods.slice(0, 48).map(period => ({
+    startTime: period.startTime,
+    temperature: period.temperature,
+    windSpeed: parseWindSpeed(period.windSpeed),
+    windDirection: period.windDirection,
+    windDirectionDegrees: directionStringToDegrees(period.windDirection),
+    shortForecast: period.shortForecast,
+    kiteAnalysis: analyzeHourlyForKiting(period),
+  }));
+}
 
 // Weather pattern keywords and their wind implications
 const WEATHER_PATTERNS = {
@@ -237,27 +295,33 @@ export async function get7DayForecast(locationId = 'utah-lake') {
  */
 export async function getHourlyForecast(locationId = 'utah-lake') {
   const point = FORECAST_POINTS[locationId] || FORECAST_POINTS['utah-lake'];
-  
+
+  return getHourlyForecastForPoint(point.lat, point.lng, locationId);
+}
+
+export async function getHourlyForecastForPoint(lat, lng, cacheKey = null) {
+  const pointKey = cacheKey || `${lat.toFixed(3)},${lng.toFixed(3)}`;
+  const cached = getCachedValue(pointKey);
+  if (cached) {
+    return cached;
+  }
+
   try {
-    const grid = await getForecastGrid(point.lat, point.lng);
+    const grid = await getForecastGrid(lat, lng);
     if (!grid) return null;
-    
+
     const response = await axios.get(grid.forecastHourlyUrl, {
-      headers: { 'Accept': 'application/geo+json' },
+      headers: {
+        'Accept': 'application/geo+json',
+        'User-Agent': USER_AGENT,
+      },
       timeout: 10000,
     });
-    
+
     const periods = response.data.properties.periods || [];
-    
-    return periods.slice(0, 48).map(period => ({
-      startTime: period.startTime,
-      temperature: period.temperature,
-      windSpeed: parseWindSpeed(period.windSpeed),
-      windDirection: period.windDirection,
-      shortForecast: period.shortForecast,
-      // Kiting analysis
-      kiteAnalysis: analyzeHourlyForKiting(period),
-    }));
+    const hourlyForecast = parseHourlyPeriods(periods);
+    setCachedValue(pointKey, hourlyForecast);
+    return hourlyForecast;
   } catch (error) {
     console.error('Error fetching hourly forecast:', error.message);
     return null;
@@ -533,7 +597,6 @@ export function correlateForecastWithIndicators(forecastAnalysis, currentIndicat
   if (!forecastAnalysis || !currentIndicators) return correlation;
   
   const forecastPattern = forecastAnalysis.pattern;
-  const forecastDir = forecastAnalysis.windDirection;
   
   // Check if forecast matches current indicator signals
   if (forecastPattern === 'northFlow') {
@@ -574,11 +637,8 @@ export function correlateForecastWithIndicators(forecastAnalysis, currentIndicat
 export function getFullForecast(locationId, conditions = {}) {
   const {
     pressureGradient = 0,
-    eveningTemp,
-    eveningWindSpeed = 0,
     morningTemp,
     morningWindSpeed = 0,
-    morningWindDirection,
     currentWindSpeed = 0,
     currentWindDirection,
     thermalDelta = 0,

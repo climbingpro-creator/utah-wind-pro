@@ -1,4 +1,4 @@
-import { LAKE_CONFIGS, WIND_DIRECTION_OPTIMAL, getPrimaryRidgeStation, STATION_INFO } from '../config/lakeStations';
+import { LAKE_CONFIGS, WIND_DIRECTION_OPTIMAL, STATION_INFO } from '../config/lakeStations';
 import { predictThermal } from './ThermalPredictor';
 
 /**
@@ -38,6 +38,8 @@ export class LakeState {
     
     this.wind = { stations: [], convergence: null };
     this.history = { wind: [], temperature: [], pressure: [] };
+    this.stationReadings = {};
+    this.referenceStations = [];
     
     this.probability = 0;
     this.factors = {
@@ -106,6 +108,23 @@ export class LakeState {
 
     if (synopticStations && synopticStations.length > 0) {
       const stationMap = new Map(synopticStations.map((s) => [s.stationId, s]));
+      state.stationReadings = Object.fromEntries(
+        synopticStations.map((station) => {
+          const info = STATION_INFO[station.stationId] || {};
+          return [station.stationId, {
+            id: station.stationId,
+            name: info.fullName || station.name,
+            speed: station.windSpeed,
+            gust: station.windGust,
+            direction: station.windDirection,
+            temperature: station.temperature,
+            pressure: station.pressure,
+            network: info.network,
+            type: info.type,
+            timestamp: station.timestamp,
+          }];
+        })
+      );
 
       // =========================================
       // STEP A: GRADIENT CHECK
@@ -245,6 +264,25 @@ export class LakeState {
             role: stationConfig.role,
             network: info.network,
             isPWS: false,
+          });
+        }
+      });
+
+      config.stations.reference.forEach((stationConfig) => {
+        const station = stationMap.get(stationConfig.id);
+        if (station) {
+          const info = STATION_INFO[stationConfig.id] || {};
+          state.referenceStations.push({
+            id: station.stationId,
+            name: stationConfig.name,
+            speed: station.windSpeed,
+            gust: station.windGust,
+            direction: station.windDirection,
+            temperature: station.temperature,
+            elevation: stationConfig.elevation,
+            network: info.network,
+            type: info.type,
+            role: stationConfig.role || 'Reference station',
           });
         }
       });
