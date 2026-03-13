@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { useState, useMemo } from 'react';
 import { Fish, Moon, Thermometer, Gauge, Clock, MapPin, TrendingUp, TrendingDown, Minus, Sun, Sunset, Wind, Waves, Calendar, Target, AlertTriangle, CheckCircle, Navigation, Egg, Mountain } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
@@ -574,7 +575,7 @@ const FishingMode = ({ windData, pressureData }) => {
     },
     hours: 2,
   }), [locationForecast, windSpeed]);
-  const nearTermFishingScores = useMemo(() => nearTermWindTimeline.slice(0, 3).map(hour => ({
+  const nearTermFishingScores = nearTermWindTimeline.slice(0, 3).map(hour => ({
     ...hour,
     scoreData: calculateFishingScore(selectedLocation, {
       pressure,
@@ -584,8 +585,8 @@ const FishingMode = ({ windData, pressureData }) => {
       moonPhase,
       hour: hour.date.getHours(),
     }),
-  })), [estimatedWaterTemp, moonPhase, nearTermWindTimeline, pressure, pressureTrend, selectedLocation]);
-  const fishingOutlook = useMemo(() => summarizeFishingOutlook(nearTermFishingScores), [nearTermFishingScores]);
+  }));
+  const fishingOutlook = summarizeFishingOutlook(nearTermFishingScores);
   
   const pressureAnalysis = analyzePressure(pressure, pressureTrend);
   const depthInfo = location.depths?.[season] || { min: 10, max: 30, description: 'Variable' };

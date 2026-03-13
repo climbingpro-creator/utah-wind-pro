@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React from 'react';
 import { Sun, Sunset, AlertTriangle, CheckCircle, XCircle, Clock, Users } from 'lucide-react';
 import { useHourlyForecast } from '../hooks/useHourlyForecast';

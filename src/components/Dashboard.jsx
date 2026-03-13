@@ -801,19 +801,20 @@ function PrimaryWindDisplay({ station, optimalDirection, isLoading, pwsUnavailab
   );
 }
 
-function FactorBar({ label, value, detail, icon: Icon }) {
+function FactorBar({ label, value, detail, icon }) {
   const getColor = (v) => {
     if (v >= 70) return 'bg-green-500';
     if (v >= 50) return 'bg-yellow-500';
     if (v >= 30) return 'bg-orange-500';
     return 'bg-red-500';
   };
+  const iconElement = icon ? React.createElement(icon, { className: 'w-3 h-3' }) : null;
 
   return (
     <div className="space-y-1">
       <div className="flex items-center justify-between text-xs">
         <div className="flex items-center gap-1.5 text-slate-400">
-          <Icon className="w-3 h-3" />
+          {iconElement}
           <span>{label}</span>
         </div>
         <div className="flex items-center gap-2">
