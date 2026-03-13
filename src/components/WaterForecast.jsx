@@ -158,7 +158,7 @@ const WindEventsList = ({ events }) => {
  * Shows hourly glass timeline, glass window predictions, upstream warnings,
  * and pressure alerts for boaters and fishermen.
  */
-const WaterForecast = ({ locationId = 'utah-lake', currentWind = {}, pressureData = {}, activity = 'boating' }) => {
+const WaterForecast = ({ locationId = 'utah-lake', currentWind = {}, pressureData = {}, activity = 'boating', upstreamData = {} }) => {
   const [forecast, setForecast] = useState(null);
   const [warnings, setWarnings] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -173,7 +173,7 @@ const WaterForecast = ({ locationId = 'utah-lake', currentWind = {}, pressureDat
       setError(null);
       try {
         const [hourlyResult, upstreamResult] = await Promise.all([
-          getHourlyGlassForecast(locationId, currentWind),
+          getHourlyGlassForecast(locationId, currentWind, upstreamData),
           getUpstreamWarnings(locationId),
         ]);
         if (!cancelled) {
@@ -190,7 +190,7 @@ const WaterForecast = ({ locationId = 'utah-lake', currentWind = {}, pressureDat
     loadForecast();
     const interval = setInterval(loadForecast, 10 * 60 * 1000);
     return () => { cancelled = true; clearInterval(interval); };
-  }, [locationId, currentWind?.speed]);
+  }, [locationId, currentWind?.speed, upstreamData?.kslcSpeed, upstreamData?.kpvuSpeed]);
 
   const pressureAlerts = useMemo(() => analyzePressureForWater(pressureData), [pressureData]);
 
@@ -294,6 +294,16 @@ const WaterForecast = ({ locationId = 'utah-lake', currentWind = {}, pressureDat
               {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
             </button>
           </div>
+
+          {/* Translation factor indicator */}
+          {forecast.flowBlocked && (
+            <div className="flex items-center gap-2 mb-2 px-2 py-1.5 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
+              <Shield className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
+              <span className="text-[11px] text-emerald-400">
+                Upstream wind is not reaching the lake — glass conditions likely to persist
+              </span>
+            </div>
+          )}
 
           <GlassTimeline hours={forecast.hours} expanded={expanded} />
 

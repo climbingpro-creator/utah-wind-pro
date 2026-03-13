@@ -513,7 +513,7 @@ const LocationCard = ({ location, isSelected, onSelect, theme }) => {
 };
 
 // Main Fishing Mode Component
-const FishingMode = ({ windData, pressureData, isLoading }) => {
+const FishingMode = ({ windData, pressureData, isLoading, upstreamData = {} }) => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const [selectedLocation, setSelectedLocation] = useState('strawberry');
@@ -1139,6 +1139,7 @@ const FishingMode = ({ windData, pressureData, isLoading }) => {
         currentWind={{ speed: windSpeed }}
         pressureData={pressureData}
         activity="fishing"
+        upstreamData={upstreamData}
       />
     </div>
   );

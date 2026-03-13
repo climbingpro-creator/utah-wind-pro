@@ -479,6 +479,12 @@ export function Dashboard() {
               }}
               pressureData={pressureData}
               isLoading={isLoading}
+              upstreamData={{
+                kslcSpeed: lakeState?.kslcStation?.speed,
+                kslcDirection: lakeState?.kslcStation?.direction,
+                kpvuSpeed: lakeState?.kpvuStation?.speed,
+                kpvuDirection: lakeState?.kpvuStation?.direction,
+              }}
             />
           </SafeComponent>
         ) : (
@@ -750,6 +756,12 @@ export function Dashboard() {
                   currentWind={{ speed: currentWindSpeed, gust: currentWindGust }}
                   pressureData={lakeState?.pressure}
                   activity={selectedActivity}
+                  upstreamData={{
+                    kslcSpeed: lakeState?.kslcStation?.speed,
+                    kslcDirection: lakeState?.kslcStation?.direction,
+                    kpvuSpeed: lakeState?.kpvuStation?.speed,
+                    kpvuDirection: lakeState?.kpvuStation?.direction,
+                  }}
                 />
               </SafeComponent>
             )}
