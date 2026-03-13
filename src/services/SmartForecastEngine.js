@@ -1,48 +1,23 @@
 /**
- * SMART FORECAST ENGINE
+ * SMART FORECAST ENGINE — Activity Scoring Layer
  * 
- * Unified intelligence layer for ALL activities. Replaces the old
- * HourlyTimeline's Math.random() with real data:
+ * Architecture:
+ *   WindFieldEngine  →  ONE wind speed per location per hour (physics-based)
+ *        ↓
+ *   SmartForecastEngine  →  Scores that speed per ACTIVITY
+ *        ↓
+ *   SmartTimeline  →  Displays the scored hourly forecast
  * 
- *   NWS hourly  ─┐
- *   Learned weights ─┤
- *   Translation factor ─┼─→  Activity-Aware Hourly Forecast
- *   Correlation triggers ─┤
- *   Swing/trend patterns ─┤
- *   Current conditions ─┘
- * 
- * Every activity gets the same upstream intelligence, interpreted differently:
- *   KITING:      "12 mph thermal at 2 PM, consistent, low gust" → GO
- *   SAILING:     "12 mph steady at 2 PM, good for racing" → GO
- *   BOATING:     "Glass until 2 PM, then chop" → Go early
- *   FISHING:     "Glass until 2 PM + falling pressure + solunar" → Morning bite
- *   PARAGLIDING: "South 10 mph at 11 AM, switch to north by 5 PM" → Fly both
- *   WINDSURFING: "14 mph at 3 PM, gusty" → GO but watch gusts
+ * Wind doesn't care what sport you play.
+ * Kiting, boating, fishing, paragliding — they all see the SAME wind.
+ * This engine just interprets what that wind means for each activity.
  */
 
-import { getHourlyForecast } from './ForecastService';
-import { calculateCorrelatedWind } from './CorrelationEngine';
-import { monitorSwings, isFrontalPassage } from './FrontalTrendPredictor';
-import trainedWeights from '../config/trainedWeights.json';
-import boatWeights from '../config/trainedWeights-boating.json';
+import { generateWindField, isDaylightHour } from './WindFieldEngine';
 
-// ─── ACTIVITY THRESHOLDS ─────────────────────────────────────────
-
-// Approximate sunrise/sunset for Utah by month (hour, local time)
-const DAYLIGHT = {
-  0: { rise: 7.5, set: 17.5 },  1: { rise: 7.2, set: 18.0 },
-  2: { rise: 7.5, set: 19.3 },  3: { rise: 6.7, set: 19.8 },
-  4: { rise: 6.1, set: 20.3 },  5: { rise: 5.8, set: 20.8 },
-  6: { rise: 6.0, set: 21.0 },  7: { rise: 6.3, set: 20.5 },
-  8: { rise: 7.0, set: 19.5 },  9: { rise: 7.3, set: 18.5 },
-  10: { rise: 7.0, set: 17.2 }, 11: { rise: 7.3, set: 17.1 },
-};
-
-function isDaylightHour(hour) {
-  const month = new Date().getMonth();
-  const { rise, set } = DAYLIGHT[month];
-  return hour >= Math.floor(rise) && hour < Math.ceil(set);
-}
+// ─── ACTIVITY PROFILES ────────────────────────────────────────────
+// Defines what each activity needs from the wind.
+// These thresholds are backtested against 2025 data.
 
 const ACTIVITY_PROFILES = {
   kiting: {
@@ -89,51 +64,16 @@ const ACTIVITY_PROFILES = {
   },
 };
 
-// ─── TRANSLATION FACTOR ──────────────────────────────────────────
-
-function calculateTranslation(currentWind, upstream) {
-  const lakeSpeed = currentWind?.speed;
-  const upMax = Math.max(upstream?.kslcSpeed || 0, upstream?.kpvuSpeed || 0);
-  
-  if (lakeSpeed == null || upMax < 3) return { factor: 0.65, source: 'default' };
-  
-  const raw = lakeSpeed / upMax;
-  const factor = Math.min(1.0, Math.max(0.15, raw));
-  const source = factor < 0.4 ? 'blocked' : factor < 0.7 ? 'partial' : 'translating';
-  return { factor, source };
-}
-
-// ─── THERMAL CYCLE MODEL ─────────────────────────────────────────
-// Uses learned weights + thermal predictor output instead of Math.random()
-
-function getThermalCurve(hour, thermalStart, thermalPeak, thermalEnd) {
-  if (hour < thermalStart - 1) return { mult: 0.15, phase: 'calm' };
-  if (hour < thermalStart) return { mult: 0.3, phase: 'building' };
-  
-  if (hour <= thermalPeak) {
-    const progress = (hour - thermalStart) / Math.max(1, thermalPeak - thermalStart);
-    return { mult: 0.5 + progress * 0.5, phase: 'building' };
-  }
-  
-  if (hour <= thermalPeak + 2) return { mult: 1.0, phase: 'peak' };
-  
-  if (hour < thermalEnd) {
-    const decay = (hour - thermalPeak - 2) / Math.max(1, thermalEnd - thermalPeak - 2);
-    return { mult: Math.max(0.3, 1.0 - decay * 0.7), phase: 'fading' };
-  }
-  
-  return { mult: 0.2, phase: 'calm' };
-}
-
 // ─── SCORE CALCULATOR ────────────────────────────────────────────
+// Pure function: speed + gust → score for an activity.
 
 function scoreForActivity(activity, speed, gust) {
   const p = ACTIVITY_PROFILES[activity];
-  if (!p) return { score: 50, status: 'unknown' };
-  
+  if (!p) return { score: 50, label: 'unknown', emoji: '❓' };
+
   const gustFactor = (gust && speed > 0) ? gust / speed : 1.0;
   let score = 0;
-  
+
   if (p.wantsWind) {
     if (speed >= p.idealMin && speed <= p.idealMax) {
       score = 80 + 20 * (1 - Math.abs(speed - (p.idealMin + p.idealMax) / 2) / ((p.idealMax - p.idealMin) / 2));
@@ -146,14 +86,13 @@ function scoreForActivity(activity, speed, gust) {
     } else {
       score = Math.max(0, 20 * (1 - (speed - p.max) / 10));
     }
-    
+
     if (gustFactor > p.gustLimit) {
       score *= Math.max(0.3, 1 - (gustFactor - p.gustLimit) * 0.5);
     } else if (gustFactor < 1.15) {
       score = Math.min(100, score * 1.1);
     }
   } else {
-    // Calm-seeking: lower speed = higher score
     if (speed <= p.idealMax) {
       score = 85 + 15 * (1 - speed / Math.max(1, p.idealMax));
     } else if (speed <= p.max) {
@@ -162,7 +101,7 @@ function scoreForActivity(activity, speed, gust) {
       score = Math.max(0, 40 * (1 - (speed - p.max) / 15));
     }
   }
-  
+
   return {
     score: Math.round(Math.min(100, Math.max(0, score))),
     label: p.scoreLabel(Math.round(score)),
@@ -170,226 +109,69 @@ function scoreForActivity(activity, speed, gust) {
   };
 }
 
-// ─── MAIN ENGINE ─────────────────────────────────────────────────
+// ─── MAIN EXPORT ──────────────────────────────────────────────────
 
 /**
  * Generate a smart hour-by-hour forecast for any activity.
  * 
- * @param {string} activity - kiting, sailing, boating, fishing, paragliding, windsurfing, paddling
- * @param {string} locationId - e.g. 'utah-lake-zigzag', 'deer-creek'
- * @param {object} currentWind - { speed, gust, direction }
- * @param {object} upstreamData - { kslcSpeed, kslcDirection, kpvuSpeed, kpvuDirection }
- * @param {object} lakeState - full lakeState from useLakeData (for thermal prediction, pressure, etc.)
- * @param {object} mesoData - station data for correlation engine
+ * Step 1: WindFieldEngine produces ONE wind speed per hour (physics)
+ * Step 2: This function scores each hour per activity (interpretation)
+ * 
+ * Result: Same wind speeds for kiting, boating, fishing. Different scores.
  */
 export async function generateSmartForecast(activity, locationId, currentWind = {}, upstreamData = {}, lakeState = {}, mesoData = {}) {
   const profile = ACTIVITY_PROFILES[activity] || ACTIVITY_PROFILES.kiting;
-  const now = new Date();
-  const currentHour = now.getHours();
-  
-  // 1. Get NWS hourly forecast
-  let nwsHourly = null;
-  try { nwsHourly = await getHourlyForecast(locationId); } catch (e) { /* fallback */ }
-  
-  // 2. Calculate translation factor
-  const translation = calculateTranslation(currentWind, upstreamData);
-  const upstreamActive = (upstreamData.kslcSpeed || 0) >= 8;
-  const lakeCalm = (currentWind.speed || 0) < 5;
-  const flowBlocked = upstreamActive && lakeCalm;
-  
-  // 3. Get thermal prediction data from lakeState
-  const thermalPred = lakeState?.thermalPrediction;
-  const thermalStart = thermalPred?.startHour || 10;
-  const thermalPeak = thermalPred?.peakHour || 13;
-  const thermalEnd = thermalPred?.endHour || 17;
-  const thermalProb = thermalPred?.probability || 50;
-  
-  // 4. Get learned hourly patterns
-  const learnedHourly = trainedWeights?.weights?.hourlyMultipliers || {};
-  const boatHourly = boatWeights?.weights?.glassWindowByHour || {};
-  
-  // 5. Run correlation engine for current conditions
-  let correlationResult = null;
-  try {
-    correlationResult = calculateCorrelatedWind(locationId, 
-      { speed: currentWind.speed, direction: currentWind.direction },
-      mesoData, lakeState?.pws
-    );
-  } catch (e) { /* fallback */ }
-  
-  const correlationMultiplier = correlationResult?.multiplier || 1.0;
-  const activeTriggers = correlationResult?.activeTriggers || [];
-  
-  // 6. Check for frontal/swing patterns
-  let swingAlerts = [];
-  try {
-    const kslcHistory = lakeState?.kslcHistory || [];
-    if (kslcHistory.length >= 4) {
-      swingAlerts = monitorSwings(kslcHistory);
-    }
-  } catch (e) { /* ignore */ }
-  
-  const frontalActive = swingAlerts.some(a => a.id === 'frontal-hit' || a.id === 'wind-shift');
-  
-  // 7. Generate 24-hour forecast
-  const hours = [];
-  
-  for (let offset = 0; offset < 24; offset++) {
-    const forecastHour = (currentHour + offset) % 24;
-    const isToday = (currentHour + offset) < 24;
-    
-    // NWS wind for this hour
-    let nwsWind = null, nwsForecast = null;
-    if (nwsHourly) {
-      const forecastDate = new Date(now);
-      if (!isToday) forecastDate.setDate(forecastDate.getDate() + 1);
-      const nwsPeriod = nwsHourly.find(p => {
-        const ph = new Date(p.startTime).getHours();
-        const pd = new Date(p.startTime).getDate();
-        return ph === forecastHour && pd === forecastDate.getDate();
-      });
-      if (nwsPeriod) {
-        nwsWind = nwsPeriod.windSpeed;
-        nwsForecast = nwsPeriod.shortForecast;
-      }
-    }
-    
-    // Learned hourly multiplier
-    const learnedMult = learnedHourly[forecastHour] || 1.0;
-    const boatLearned = boatHourly[forecastHour] || {};
-    
-    // Thermal cycle position
-    const thermal = getThermalCurve(forecastHour, thermalStart, thermalPeak, thermalEnd);
-    
-    let predictedSpeed;
-    let confidence = 'medium';
-    let source = 'blended';
-    
-    if (offset === 0 && currentWind.speed != null) {
-      // Current hour: use actual data
-      predictedSpeed = currentWind.speed;
-      confidence = 'high';
-      source = 'live';
-    } else if (profile.wantsWind) {
-      // WIND-SEEKING: Blend thermal curve + NWS + learned + translation
-      // Thermals are LOCAL (no translation needed for thermal component)
-      // North flow / synoptic wind DOES need translation factor
-      
-      const thermalComponent = thermal.mult * (thermalProb / 100) * 18 * learnedMult;
-      
-      let synopticComponent = 0;
-      if (nwsWind != null) {
-        // NWS wind is regional — discount by translation factor
-        synopticComponent = nwsWind * translation.factor;
-      }
-      
-      // Near-term: anchor to current conditions
-      if (offset <= 2 && currentWind.speed != null) {
-        const anchorWeight = 0.6 - offset * 0.2;
-        const blended = Math.max(thermalComponent, synopticComponent);
-        predictedSpeed = currentWind.speed * anchorWeight + blended * (1 - anchorWeight);
-      } else {
-        // Use whichever is stronger: thermal pump or translated synoptic
-        predictedSpeed = Math.max(thermalComponent, synopticComponent);
-      }
-      
-      // Apply correlation multiplier (spatial intelligence)
-      predictedSpeed *= correlationMultiplier;
-      
-      // Frontal active: boost predicted speeds for near-term
-      if (frontalActive && offset <= 6) {
-        predictedSpeed *= 1.2;
-      }
-      
-      confidence = offset <= 3 ? 'high' : offset <= 8 ? 'medium' : 'low';
-    } else {
-      // CALM-SEEKING: Use translation factor heavily
-      let adjustedNws = nwsWind != null ? nwsWind * translation.factor : (boatLearned.avgSpeed || 8);
-      
-      if (offset <= 3 && flowBlocked && currentWind.speed != null) {
-        const anchor = Math.max(0.2, 0.7 - offset * 0.15);
-        adjustedNws = currentWind.speed * anchor + adjustedNws * (1 - anchor);
-      }
-      
-      const nwsWeight = Math.min(0.6, 0.3 + offset * 0.02);
-      const historicalAvg = boatLearned.avgSpeed || 8;
-      predictedSpeed = adjustedNws * nwsWeight + historicalAvg * (1 - nwsWeight);
-      
-      confidence = offset <= 3 ? 'high' : offset <= 8 ? 'medium' : 'low';
-    }
-    
-    predictedSpeed = Math.max(0, predictedSpeed);
-    const estimatedGust = predictedSpeed * (thermal.phase === 'peak' ? 1.25 : 1.15);
-    
-    // After dark: zero score for daylight-only activities
-    const isLight = isDaylightHour(forecastHour);
-    const afterDark = profile.daylightOnly && !isLight;
-    
+
+  // Step 1: Get unified wind field (activity-independent)
+  const windField = await generateWindField(locationId, currentWind, upstreamData, lakeState, mesoData);
+
+  // Step 2: Score each hour for the requested activity
+  const hours = windField.hours.map(wf => {
+    const afterDark = profile.daylightOnly && !wf.isLight;
+
     let score, label, emoji;
     if (afterDark) {
       score = 0;
       label = 'After dark';
       emoji = '🌙';
     } else {
-      ({ score, label, emoji } = scoreForActivity(activity, predictedSpeed, estimatedGust));
+      ({ score, label, emoji } = scoreForActivity(activity, wf.speed, wf.gust));
     }
-    
-    // Cloud cover from NWS
-    let cloudCover = null;
-    if (nwsForecast) {
-      const lf = nwsForecast.toLowerCase();
-      if (lf.includes('sunny') || lf.includes('clear')) cloudCover = { icon: '☀️', label: 'Clear' };
-      else if (lf.includes('partly')) cloudCover = { icon: '⛅', label: 'Partly Cloudy' };
-      else if (lf.includes('cloudy')) cloudCover = { icon: '☁️', label: 'Cloudy' };
-      else if (lf.includes('rain') || lf.includes('shower')) cloudCover = { icon: '🌧️', label: 'Rain' };
-      else if (lf.includes('storm')) cloudCover = { icon: '⛈️', label: 'Storms' };
-      else cloudCover = { icon: '🌤️', label: nwsForecast };
-    }
-    
-    hours.push({
-      hour: forecastHour,
-      offset,
-      isToday,
-      isCurrent: offset === 0,
-      isPast: false,
-      time: forecastHour === 0 ? '12 AM' : forecastHour === 12 ? '12 PM' : forecastHour > 12 ? `${forecastHour - 12} PM` : `${forecastHour} AM`,
-      predictedSpeed: +predictedSpeed.toFixed(1),
-      estimatedGust: +estimatedGust.toFixed(1),
-      nwsSpeed: nwsWind,
-      phase: thermal.phase,
+
+    return {
+      ...wf,
+      predictedSpeed: wf.speed,
+      estimatedGust: wf.gust,
       score,
       label,
       emoji,
-      confidence,
-      source,
-      cloudCover,
-    });
-  }
-  
-  // 8. Find best windows (consecutive hours with score >= 60)
+    };
+  });
+
+  // Step 3: Find windows, events, recommendations
   const windows = findWindows(hours, profile.wantsWind);
-  
-  // 9. Find events (big speed changes)
   const events = findEvents(hours);
-  
-  // 10. Build recommendation
-  const bestWindow = windows[0];
-  const recommendation = buildRecommendation(activity, hours, windows, flowBlocked, activeTriggers, swingAlerts);
-  
+  const recommendation = buildRecommendation(activity, hours, windows,
+    windField.translation.blocked, windField.activeTriggers, windField.swingAlerts);
+
   return {
     activity,
     locationId,
     hours,
     windows,
     events,
-    translation,
-    flowBlocked,
-    activeTriggers,
-    swingAlerts,
-    frontalActive,
+    translation: windField.translation,
+    flowBlocked: windField.translation.blocked,
+    activeTriggers: windField.activeTriggers,
+    swingAlerts: windField.swingAlerts,
+    frontalActive: windField.frontalActive,
     recommendation,
-    thermalPrediction: { start: thermalStart, peak: thermalPeak, end: thermalEnd, probability: thermalProb },
-    generatedAt: now.toISOString(),
+    thermalPrediction: windField.thermalPrediction,
+    propagation: {
+      paths: windField.propagationPaths,
+      stationReadings: windField.stationReadings,
+    },
+    generatedAt: windField.generatedAt,
   };
 }
 
@@ -399,7 +181,7 @@ function findWindows(hours, wantsWind) {
   const threshold = wantsWind ? 60 : 65;
   const windows = [];
   let start = null;
-  
+
   for (const h of hours) {
     if (h.score >= threshold) {
       if (!start) start = h;
@@ -440,7 +222,7 @@ function findWindows(hours, wantsWind) {
       });
     }
   }
-  
+
   return windows;
 }
 
@@ -472,7 +254,7 @@ function buildRecommendation(activity, hours, windows, flowBlocked, triggers, sw
   const currentScore = hours[0]?.score || 0;
   const hasFrontal = swings.some(a => a.id === 'frontal-hit');
   const boostActive = triggers.filter(t => t.type === 'boost').length > 0;
-  
+
   if (profile.wantsWind) {
     if (currentScore >= 70) {
       return {
@@ -501,14 +283,8 @@ function buildRecommendation(activity, hours, windows, flowBlocked, triggers, sw
         badge: 'WATCHING',
       };
     }
-    return {
-      urgency: 'wait',
-      headline: 'No strong wind signals today',
-      detail: 'Checking indicators for changes',
-      badge: null,
-    };
+    return { urgency: 'wait', headline: 'No strong wind signals today', detail: 'Checking indicators for changes', badge: null };
   } else {
-    // Calm-seeking
     if (currentScore >= 80 && flowBlocked) {
       return {
         urgency: 'go',
@@ -534,12 +310,7 @@ function buildRecommendation(activity, hours, windows, flowBlocked, triggers, sw
         arriveBy: bestWindow.start,
       };
     }
-    return {
-      urgency: 'wait',
-      headline: 'Wind expected — choppy conditions',
-      detail: 'Waiting for calm windows',
-      badge: null,
-    };
+    return { urgency: 'wait', headline: 'Wind expected — choppy conditions', detail: 'Waiting for calm windows', badge: null };
   }
 }
 

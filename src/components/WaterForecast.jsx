@@ -158,7 +158,7 @@ const WindEventsList = ({ events }) => {
  * Shows hourly glass timeline, glass window predictions, upstream warnings,
  * and pressure alerts for boaters and fishermen.
  */
-const WaterForecast = ({ locationId = 'utah-lake', currentWind = {}, pressureData = {}, activity = 'boating', upstreamData = {} }) => {
+const WaterForecast = ({ locationId = 'utah-lake', currentWind = {}, pressureData = {}, activity = 'boating', upstreamData = {}, lakeState = {}, mesoData = {} }) => {
   const [forecast, setForecast] = useState(null);
   const [warnings, setWarnings] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -173,7 +173,7 @@ const WaterForecast = ({ locationId = 'utah-lake', currentWind = {}, pressureDat
       setError(null);
       try {
         const [hourlyResult, upstreamResult] = await Promise.all([
-          getHourlyGlassForecast(locationId, currentWind, upstreamData),
+          getHourlyGlassForecast(locationId, currentWind, upstreamData, lakeState, mesoData),
           getUpstreamWarnings(locationId),
         ]);
         if (!cancelled) {

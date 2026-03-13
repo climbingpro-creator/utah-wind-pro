@@ -10,10 +10,9 @@
  *   3. PRESSURE & WEATHER ALERTS — detect pressure changes and cloud cover shifts
  */
 
-import { getHourlyForecast } from './ForecastService';
 import { weatherService } from './WeatherService';
 import { monitorSwings } from './FrontalTrendPredictor';
-import boatWeightsData from '../config/trainedWeights-boating.json';
+import { generateWindField } from './WindFieldEngine';
 
 const UPSTREAM_STATIONS = {
   KSLC: { name: 'SLC Airport', leadTimeMin: 45, role: 'North flow / cold front origin' },
@@ -24,150 +23,50 @@ const UPSTREAM_STATIONS = {
 // ─── HOURLY GLASS FORECAST ──────────────────────────────────────
 
 /**
- * Generate hour-by-hour glass/wave forecast for today + tomorrow.
+ * Generate hour-by-hour glass/wave forecast.
  * 
- * KEY LOGIC: NWS forecasts report general valley wind (e.g. KSLC at 11 mph),
- * but the lake surface often stays calm because that wind never translates.
- * We calculate a "translation factor" by comparing upstream wind to what's
- * actually happening at the lake right now. If KSLC is 11 mph but the lake
- * is 2.5 mph, the translation factor is low and we discount the NWS forecast.
+ * NOW POWERED BY WindFieldEngine — same wind speeds as every other activity.
+ * We just interpret the speeds through a glass/wave lens.
  */
-export async function getHourlyGlassForecast(locationId = 'utah-lake', currentWind = {}, upstreamData = {}) {
-  const nwsHourly = await getHourlyForecast(locationId);
-  const learnedHourly = boatWeightsData?.weights?.glassWindowByHour || {};
-  const now = new Date();
-  const currentHour = now.getHours();
+export async function getHourlyGlassForecast(locationId = 'utah-lake', currentWind = {}, upstreamData = {}, lakeState = {}, mesoData = {}) {
+  // Get unified wind field — SAME speeds as kiting, sailing, etc.
+  const windField = await generateWindField(locationId, currentWind, upstreamData, lakeState, mesoData);
 
-  // Calculate how much upstream wind is actually reaching the lake right now
-  const translationFactor = calculateTranslationFactor(currentWind, upstreamData);
-
-  // If upstream has been active for a while but lake is still calm,
-  // the flow is being blocked — glass is likely to persist
-  const upstreamActive = (upstreamData.kslcSpeed || 0) >= 8;
-  const lakeCalm = (currentWind.speed || 0) < 5;
-  const flowBlocked = upstreamActive && lakeCalm;
-
-  const hours = [];
-
-  for (let offset = 0; offset < 24; offset++) {
-    const forecastHour = (currentHour + offset) % 24;
-    const isToday = (currentHour + offset) < 24;
-    const forecastDate = new Date(now);
-    if (!isToday) forecastDate.setDate(forecastDate.getDate() + 1);
-
-    // NWS predicted wind for this hour
-    let nwsWind = null, nwsForecast = null;
-    if (nwsHourly) {
-      const nwsPeriod = nwsHourly.find(p => {
-        const pHour = new Date(p.startTime).getHours();
-        const pDate = new Date(p.startTime).getDate();
-        return pHour === forecastHour && pDate === forecastDate.getDate();
-      });
-      if (nwsPeriod) {
-        nwsWind = nwsPeriod.windSpeed;
-        nwsForecast = nwsPeriod.shortForecast;
-      }
-    }
-
-    // Learned historical pattern for this hour
-    const learned = learnedHourly[forecastHour] || {};
-    const historicalAvgSpeed = learned.avgSpeed || 10;
-
-    let predictedSpeed;
-    if (offset === 0 && currentWind.speed != null) {
-      // Current hour: use actual reading
-      predictedSpeed = currentWind.speed;
-    } else if (nwsWind != null) {
-      // Apply translation factor to NWS forecast
-      // NWS reports valley/regional wind — discount it based on what's
-      // actually reaching the lake right now
-      let adjustedNws = nwsWind * translationFactor;
-
-      // Near-term (1-3 hours): current conditions are a strong anchor
-      // If it's glass now and flow is blocked, it's likely to stay glass
-      if (offset <= 3 && flowBlocked) {
-        const currentAnchor = currentWind.speed || 0;
-        const anchorWeight = Math.max(0.2, 0.7 - offset * 0.15);
-        adjustedNws = currentAnchor * anchorWeight + adjustedNws * (1 - anchorWeight);
-      }
-
-      // Blend adjusted NWS with historical
-      const nwsWeight = Math.min(0.6, 0.3 + offset * 0.02);
-      predictedSpeed = adjustedNws * nwsWeight + historicalAvgSpeed * (1 - nwsWeight);
-    } else {
-      predictedSpeed = historicalAvgSpeed;
-    }
-
-    predictedSpeed = Math.max(0, predictedSpeed);
-
-    // Wave / glass assessment
-    const { label, score, color, emoji } = assessWaveConditions(predictedSpeed);
-
-    // Cloud cover from NWS short forecast
-    const cloudCover = nwsForecast ? parseCloudCover(nwsForecast) : null;
-
-    hours.push({
-      hour: forecastHour,
-      offset,
-      isToday,
-      isCurrent: offset === 0,
-      time: formatHour(forecastHour),
-      predictedSpeed: +predictedSpeed.toFixed(1),
-      nwsSpeed: nwsWind,
-      historicalSpeed: +historicalAvgSpeed.toFixed(1),
+  const hours = windField.hours.map(wf => {
+    const { label, score, color, emoji } = assessWaveConditions(wf.speed);
+    return {
+      hour: wf.hour,
+      offset: wf.offset,
+      isToday: wf.isToday,
+      isCurrent: wf.isCurrent,
+      time: wf.time,
+      predictedSpeed: wf.speed,
+      nwsSpeed: wf.nwsSpeed,
+      historicalSpeed: wf.speed,
       waveLabel: label,
       waveScore: score,
       waveColor: color,
       waveEmoji: emoji,
-      cloudCover,
-      nwsForecast,
-      translationFactor: +translationFactor.toFixed(2),
-      flowBlocked,
-    });
-  }
+      cloudCover: wf.cloudCover,
+      nwsForecast: wf.cloudCover?.label || null,
+      translationFactor: windField.translation.factor,
+      flowBlocked: windField.translation.blocked || false,
+    };
+  });
 
-  // Find glass windows (consecutive hours with score >= 70)
   const glassWindows = findGlassWindows(hours);
-
-  // Find wind events (rapid increases)
   const windEvents = findWindEvents(hours);
 
-  return { hours, glassWindows, windEvents, translationFactor, flowBlocked };
+  return {
+    hours,
+    glassWindows,
+    windEvents,
+    translationFactor: windField.translation.factor,
+    flowBlocked: windField.translation.blocked || false,
+  };
 }
 
-/**
- * Calculate how much upstream wind is reaching the lake surface.
- * 
- * If KSLC is 11 mph but the lake is 2.5 mph, only ~23% of the wind
- * is translating. We use this to discount NWS forecasts which report
- * regional/valley wind, not lake surface wind.
- * 
- * Returns a factor between 0.15 (almost none reaching lake) and 1.0 (full translation).
- */
-function calculateTranslationFactor(currentWind = {}, upstream = {}) {
-  const lakeSpeed = currentWind.speed;
-  const kslcSpeed = upstream.kslcSpeed;
-  const kpvuSpeed = upstream.kpvuSpeed;
-
-  // If we don't have both local and upstream data, use conservative default
-  if (lakeSpeed == null || (kslcSpeed == null && kpvuSpeed == null)) {
-    return 0.65;
-  }
-
-  // Use the strongest upstream station as reference
-  const upstreamMax = Math.max(kslcSpeed || 0, kpvuSpeed || 0);
-
-  if (upstreamMax < 3) {
-    // Upstream is calm too — not enough data to calculate ratio, assume moderate
-    return 0.65;
-  }
-
-  // What fraction of upstream wind is actually at the lake?
-  const rawRatio = lakeSpeed / upstreamMax;
-
-  // Clamp between 0.15 (heavily blocked) and 1.0 (full pass-through)
-  return Math.min(1.0, Math.max(0.15, rawRatio));
-}
+// Translation factor now calculated by WindFieldEngine — single source of truth
 
 function assessWaveConditions(speed) {
   if (speed <= 2) return { label: 'Glass', score: 100, color: 'emerald', emoji: '🪞' };

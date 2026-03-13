@@ -744,7 +744,7 @@ export function Dashboard() {
 
             {/* Indicator Cascade — live wind flow visualization */}
             <SafeComponent name="Indicator Cascade">
-              <IndicatorCascade lakeState={lakeState} activity={selectedActivity} />
+              <IndicatorCascade lakeState={lakeState} activity={selectedActivity} locationId={selectedLake} />
             </SafeComponent>
 
             {/* Smart Week Planner — best day this week per activity */}
@@ -840,6 +840,8 @@ export function Dashboard() {
                     kpvuSpeed: lakeState?.kpvuStation?.speed,
                     kpvuDirection: lakeState?.kpvuStation?.direction,
                   }}
+                  lakeState={lakeState}
+                  mesoData={lakeState?.wind}
                 />
               </SafeComponent>
             )}
