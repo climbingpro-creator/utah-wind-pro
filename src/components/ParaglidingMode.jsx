@@ -107,26 +107,26 @@ export function calculateParaglidingScore(site, windSpeed, windDirection, windGu
   
   // Speed check — below minimum is NOT flyable, hard cap at 30
   if (windSpeed > config.wind.speed.max) {
-    issues.push(`Wind ${windSpeed} mph exceeds ${config.wind.speed.max} mph limit`);
+    issues.push(`Wind ${windSpeed?.toFixed(0)} mph exceeds ${config.wind.speed.max} mph limit`);
     score = Math.min(score, 20);
   } else if (windSpeed < config.wind.speed.min) {
-    issues.push(`Wind ${windSpeed} mph below minimum ${config.wind.speed.min} mph`);
+    issues.push(`Wind ${windSpeed?.toFixed(0)} mph below minimum ${config.wind.speed.min} mph`);
     score = Math.min(score, 30);
   } else if (windSpeed >= config.wind.speed.ideal.min && windSpeed <= config.wind.speed.ideal.max) {
     score += 40;
-    positives.push(`Speed ${windSpeed} mph is ideal (${config.wind.speed.ideal.min}-${config.wind.speed.ideal.max} mph)`);
+    positives.push(`Speed ${windSpeed?.toFixed(0)} mph is ideal (${config.wind.speed.ideal.min}-${config.wind.speed.ideal.max} mph)`);
   } else {
     score += 25;
-    positives.push(`Speed ${windSpeed} mph is acceptable`);
+    positives.push(`Speed ${windSpeed?.toFixed(0)} mph is acceptable`);
   }
   
   // Gust check
   if (gustOver > config.wind.gustLimit) {
-    issues.push(`Gusts ${windGust} mph (${gustOver} over sustained) exceed ${config.wind.gustLimit} mph limit`);
+    issues.push(`Gusts ${windGust?.toFixed(0)} mph (${gustOver.toFixed(0)} over sustained) exceed ${config.wind.gustLimit} mph limit`);
     score = Math.max(0, score - 30);
   } else if (gustOver > 0) {
     score += 15;
-    positives.push(`Gusts manageable (${gustOver} mph over sustained)`);
+    positives.push(`Gusts manageable (${gustOver.toFixed(0)} mph over sustained)`);
   } else {
     score += 20;
     positives.push('Smooth conditions (no significant gusts)');
