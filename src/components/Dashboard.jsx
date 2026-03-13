@@ -94,9 +94,15 @@ export function Dashboard() {
   const activityWindSpeed = activityTargetStation?.speed ?? activityTargetStation?.windSpeed ?? currentWindSpeed;
   const activityWindGust = activityTargetStation?.gust ?? activityTargetStation?.windGust ?? currentWindGust;
   const activityWindDirection = activityTargetStation?.direction ?? activityTargetStation?.windDirection ?? currentWindDirection;
-  const activityTargetHistory = activityModelContext?.targetHistory || [];
+  const activityTargetHistory = React.useMemo(
+    () => activityModelContext?.targetHistory || [],
+    [activityModelContext]
+  );
   const activityProfile = activityModelContext?.profile || null;
-  const activityIndicators = activityModelContext?.indicatorEvaluations || [];
+  const activityIndicators = React.useMemo(
+    () => activityModelContext?.indicatorEvaluations || [],
+    [activityModelContext]
+  );
   
   // For paragliding, use Flight Park South/North data instead of generic wind
   const fpsStation = lakeState?.wind?.stations?.find(s => s.id === 'FPS');
