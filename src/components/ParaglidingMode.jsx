@@ -105,13 +105,13 @@ export function calculateParaglidingScore(site, windSpeed, windDirection, windGu
     positives.push(`Direction ${windDirection}° is good (${config.wind.direction.label})`);
   }
   
-  // Speed check
+  // Speed check — below minimum is NOT flyable, hard cap at 30
   if (windSpeed > config.wind.speed.max) {
     issues.push(`Wind ${windSpeed} mph exceeds ${config.wind.speed.max} mph limit`);
     score = Math.min(score, 20);
   } else if (windSpeed < config.wind.speed.min) {
     issues.push(`Wind ${windSpeed} mph below minimum ${config.wind.speed.min} mph`);
-    score += 20;
+    score = Math.min(score, 30);
   } else if (windSpeed >= config.wind.speed.ideal.min && windSpeed <= config.wind.speed.ideal.max) {
     score += 40;
     positives.push(`Speed ${windSpeed} mph is ideal (${config.wind.speed.ideal.min}-${config.wind.speed.ideal.max} mph)`);
@@ -132,12 +132,13 @@ export function calculateParaglidingScore(site, windSpeed, windDirection, windGu
     positives.push('Smooth conditions (no significant gusts)');
   }
   
-  // Determine status
-  if (score >= 80 && directionOk && windSpeed <= config.wind.speed.max && gustOver <= config.wind.gustLimit) {
+  // Determine status — speed must be at or above minimum for any flyable status
+  const speedInRange = windSpeed >= config.wind.speed.min && windSpeed <= config.wind.speed.max;
+  if (score >= 80 && directionOk && speedInRange && gustOver <= config.wind.gustLimit) {
     status = 'excellent';
-  } else if (score >= 60 && directionOk && windSpeed <= config.wind.speed.max) {
+  } else if (score >= 60 && directionOk && speedInRange) {
     status = 'good';
-  } else if (score >= 40 && directionOk) {
+  } else if (score >= 40 && directionOk && speedInRange) {
     status = 'marginal';
   } else {
     status = 'unflyable';
@@ -659,28 +660,36 @@ const ParaglidingMode = ({ windData, isLoading }) => {
       };
     }
 
-    const southNow = southScore?.status === 'excellent' || southScore?.status === 'good';
-    const northNow = northScore?.status === 'excellent' || northScore?.status === 'good';
+    const MIN_FLYABLE_SPEED = 8;
+    const northSpeed = stationWindData.UTALP?.speed || 0;
+    const southSpeed = stationWindData.FPS?.speed || 0;
+
+    // Hard speed gate: status doesn't matter if wind is below minimum
+    const northActuallyFlyable = northSpeed >= MIN_FLYABLE_SPEED && 
+      (northScore?.status === 'excellent' || northScore?.status === 'good');
+    const southActuallyFlyable = southSpeed >= MIN_FLYABLE_SPEED && 
+      (southScore?.status === 'excellent' || southScore?.status === 'good');
+
     const southPred = learnedPrediction?.south;
     const northPred = learnedPrediction?.north;
     const switchLikely = switchPrediction?.likelihood >= 40 || (learnedPrediction?.windSwitch?.likelihood >= 35);
 
-    // Currently flyable — show excitement
-    if (northNow && (northScore?.score || 0) >= 60) {
+    // Currently flyable — show excitement (only if speed is actually above minimum)
+    if (northActuallyFlyable && (northScore?.score || 0) >= 60) {
       return {
         mode: 'now', site: 'north', siteName: 'Flight Park North',
         score: northScore.score, status: northScore.status,
         headline: northPred?.isGlassOff ? 'Glass-Off Happening Now!' : 'North Side is ON!',
-        subline: `${stationWindData.UTALP?.speed?.toFixed(0) || '--'} mph — pilots are flying!`,
+        subline: `${northSpeed.toFixed(0)} mph — pilots are flying!`,
         color: 'green', urgency: 'go',
       };
     }
-    if (southNow && (southScore?.score || 0) >= 60) {
+    if (southActuallyFlyable && (southScore?.score || 0) >= 60) {
       return {
         mode: 'now', site: 'south', siteName: 'Flight Park South',
         score: southScore.score, status: southScore.status,
         headline: 'South Side is Flying!',
-        subline: `${stationWindData.FPS?.speed?.toFixed(0) || '--'} mph smooth thermal`,
+        subline: `${southSpeed.toFixed(0)} mph smooth thermal`,
         color: 'green', urgency: 'go',
       };
     }
