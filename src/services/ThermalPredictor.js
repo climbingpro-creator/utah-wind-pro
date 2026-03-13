@@ -1020,48 +1020,67 @@ export function predictThermal(lakeId, currentConditions) {
   if (currentConditions?.thermalDelta != null) {
     const delta = currentConditions.thermalDelta;
     
-    // Deer Creek has specific temperature correlation from Arrowhead data
+    // Deer Creek: bell-curve scoring around the 8-12°F optimal zone.
+    // Excessive deltas (>18°F) indicate high-altitude turbulence that
+    // can shut down smooth surface thermals in the canyon.
     if (lakeId === 'deer-creek') {
-      // Data shows thermals occur when DCC is 8-12°F warmer than Arrowhead
-      if (delta >= DEER_CREEK_TEMP_DELTA.optimal.min && delta <= DEER_CREEK_TEMP_DELTA.optimal.max) {
+      const { min: optMin, max: optMax } = DEER_CREEK_TEMP_DELTA.optimal;
+      const center = (optMin + optMax) / 2; // 10°F
+      
+      if (delta < 0) {
+        elevationScore = 10;
+        elevationStatus = 'inverted';
+        elevationMessage = `Inverted: Arrowhead ${Math.abs(delta).toFixed(1)}°F warmer - no thermal`;
+      } else if (delta >= optMin && delta <= optMax) {
         elevationScore = 100;
         elevationStatus = 'optimal';
-        elevationMessage = `Arrowhead correlation OPTIMAL: Δ${delta}°F (ideal: 8-12°F)`;
+        elevationMessage = `Arrowhead correlation OPTIMAL: Δ${delta.toFixed(1)}°F (ideal: ${optMin}-${optMax}°F)`;
+      } else if (delta > optMax && delta <= 18) {
+        // Bell curve decay above optimal: score drops from 100 to ~50 at 18°F
+        const overshoot = delta - optMax;
+        elevationScore = Math.round(100 - (overshoot / (18 - optMax)) * 50);
+        elevationStatus = 'strong';
+        elevationMessage = `High delta: Δ${delta.toFixed(1)}°F — thermal strong but possible turbulence`;
+      } else if (delta > 18) {
+        // Excessive delta: likely turbulence shuts down smooth thermals
+        elevationScore = Math.max(15, Math.round(50 - (delta - 18) * 5));
+        elevationStatus = 'turbulent';
+        elevationMessage = `Excessive Δ${delta.toFixed(1)}°F — high-altitude turbulence likely disrupting surface flow`;
       } else if (delta >= 5) {
         elevationScore = 70;
         elevationStatus = 'building';
-        elevationMessage = `Thermal building: Δ${delta}°F (need 8-12°F)`;
-      } else if (delta >= 0) {
+        elevationMessage = `Thermal building: Δ${delta.toFixed(1)}°F (need ${optMin}-${optMax}°F)`;
+      } else {
         elevationScore = 40;
         elevationStatus = 'weak';
-        elevationMessage = `Weak delta: Only ${delta}°F (need 8-12°F)`;
-      } else {
-        elevationScore = 10;
-        elevationStatus = 'inverted';
-        elevationMessage = `Inverted: Arrowhead ${Math.abs(delta)}°F warmer - no thermal`;
+        elevationMessage = `Weak delta: Only ${delta.toFixed(1)}°F (need ${optMin}-${optMax}°F)`;
       }
     } else {
-      // Standard logic for other lakes
+      // Standard logic for other lakes with same turbulence cap
       if (currentConditions.inversionTrapped) {
         elevationScore = 0;
         elevationStatus = 'inversion';
-        elevationMessage = `Inversion: Ridge warmer than shore (Δ${delta}°F)`;
+        elevationMessage = `Inversion: Ridge warmer than shore (Δ${delta.toFixed(1)}°F)`;
+      } else if (delta > 20) {
+        elevationScore = 40;
+        elevationStatus = 'turbulent';
+        elevationMessage = `Excessive Δ${delta.toFixed(1)}°F — possible turbulent mixing`;
       } else if (currentConditions.pumpActive) {
         elevationScore = 100;
         elevationStatus = 'pump-active';
-        elevationMessage = `Thermal Pump ACTIVE: Shore ${delta}°F warmer`;
+        elevationMessage = `Thermal Pump ACTIVE: Shore ${delta.toFixed(1)}°F warmer`;
       } else if (delta >= 5) {
         elevationScore = 70;
         elevationStatus = 'building';
-        elevationMessage = `Thermal building: Shore ${delta}°F warmer`;
+        elevationMessage = `Thermal building: Shore ${delta.toFixed(1)}°F warmer`;
       } else if (delta >= 0) {
         elevationScore = 40;
         elevationStatus = 'weak';
-        elevationMessage = `Weak thermal: Shore only ${delta}°F warmer`;
+        elevationMessage = `Weak thermal: Shore only ${delta.toFixed(1)}°F warmer`;
       } else {
         elevationScore = 10;
         elevationStatus = 'inverted';
-        elevationMessage = `Cold shore: Ridge ${Math.abs(delta)}°F warmer`;
+        elevationMessage = `Cold shore: Ridge ${Math.abs(delta).toFixed(1)}°F warmer`;
       }
     }
   }

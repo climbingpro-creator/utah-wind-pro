@@ -933,30 +933,16 @@ export const WIND_DIRECTION_OPTIMAL = Object.fromEntries(
 );
 
 /**
- * Station metadata for display
+ * Station metadata for display — re-exported from the central registry.
+ * Import from stationRegistry.js for the full API.
  */
-export const STATION_INFO = {
-  'KSLC': { fullName: 'Salt Lake City International Airport', type: 'aviation', network: 'NWS' },
-  'KPVU': { fullName: 'Provo Municipal Airport', type: 'aviation', network: 'NWS' },
-  'KHCR': { fullName: 'Heber Valley Airport', type: 'aviation', network: 'NWS' },
-  'KOGD': { fullName: 'Ogden-Hinckley Airport', type: 'aviation', network: 'NWS' },
-  'KBMC': { fullName: 'Brigham City Regional Airport', type: 'aviation', network: 'NWS' },
-  'KHIF': { fullName: 'Hill Air Force Base', type: 'military', network: 'USAF' },
-  'FPS': { fullName: 'Flight Park South', type: 'mesonet', network: 'MesoWest' },
-  'CSC': { fullName: 'Cascade Peak', type: 'mountaintop', network: 'MesoWest' },
-  'TIMU1': { fullName: 'Timpanogos Divide', type: 'snotel', network: 'NRCS' },
-  'SND': { fullName: 'Arrowhead Summit (Sundance)', type: 'ski', network: 'MesoWest' },
-  'QSF': { fullName: 'Spanish Fork', type: 'mesonet', network: 'MesoWest', role: 'Early Indicator - 2hr lead time' },
-  'DCC': { fullName: 'Deer Creek Dam', type: 'mesonet', network: 'MesoWest' },
-  'BLPU1': { fullName: 'Ben Lomond Peak', type: 'snotel', network: 'NRCS' },
-  'OGP': { fullName: 'Mount Ogden (Snowbasin)', type: 'ski', network: 'MesoWest' },
-  'UR328': { fullName: 'Willard', type: 'mesonet', network: 'MesoWest' },
-  'QLN': { fullName: 'Lindon', type: 'mesonet', network: 'MesoWest' },
-  'UTALP': { fullName: 'Point of the Mountain I-15', type: 'rwis', network: 'UDOT' },
-  'UTPCY': { fullName: 'Provo Canyon Mile Post 10', type: 'rwis', network: 'UDOT' },
-  'MDAU1': { fullName: 'Midway', type: 'coop', network: 'NWS' },
-  'GSLM': { fullName: 'Great Salt Lake Minerals', type: 'industrial', network: 'MesoWest' },
-  'COOPOGNU1': { fullName: 'Pineview Dam', type: 'coop', network: 'NWS' },
-  'PC496': { fullName: 'Pineview Reservoir', type: 'mesonet', network: 'MesoWest' },
-  'UTHUN': { fullName: 'Huntsville', type: 'rwis', network: 'UDOT' },
-};
+import { STATION_REGISTRY, getStation, getStationName } from './stationRegistry';
+
+export const STATION_INFO = Object.fromEntries(
+  Object.entries(STATION_REGISTRY).map(([id, s]) => [
+    id,
+    { fullName: s.name, type: s.type, network: s.network },
+  ])
+);
+
+export { STATION_REGISTRY, getStation, getStationName };

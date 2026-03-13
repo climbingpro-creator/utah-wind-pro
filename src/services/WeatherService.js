@@ -1,11 +1,15 @@
 import axios from 'axios';
 import { getAllStationIds } from '../config/lakeStations';
 
+const IS_PRODUCTION = import.meta.env.PROD;
+
+// In production, keys stay on the server via /api/weather proxy.
+// In development, use VITE_ env vars directly for local testing.
 const AMBIENT_API_KEY = import.meta.env.VITE_AMBIENT_API_KEY;
 const AMBIENT_APP_KEY = import.meta.env.VITE_AMBIENT_APP_KEY;
-const SYNOPTIC_TOKEN = import.meta.env.VITE_SYNOPTIC_TOKEN;
+const SYNOPTIC_TOKEN  = import.meta.env.VITE_SYNOPTIC_TOKEN;
 
-const AMBIENT_BASE_URL = 'https://rt.ambientweather.net/v1';
+const AMBIENT_BASE_URL  = 'https://rt.ambientweather.net/v1';
 const SYNOPTIC_BASE_URL = 'https://api.synopticdata.com/v2';
 
 let lastAmbientCall = 0;
@@ -20,15 +24,20 @@ class WeatherService {
     lastAmbientCall = now;
 
     try {
-      const response = await axios.get(`${AMBIENT_BASE_URL}/devices`, {
-        params: {
-          apiKey: AMBIENT_API_KEY,
-          applicationKey: AMBIENT_APP_KEY,
-        },
-      });
-      
-      if (response.data && response.data.length > 0) {
-        const device = response.data[0];
+      let data;
+
+      if (IS_PRODUCTION) {
+        const response = await axios.get('/api/weather', { params: { source: 'ambient' } });
+        data = response.data;
+      } else {
+        const response = await axios.get(`${AMBIENT_BASE_URL}/devices`, {
+          params: { apiKey: AMBIENT_API_KEY, applicationKey: AMBIENT_APP_KEY },
+        });
+        data = response.data;
+      }
+
+      if (data && data.length > 0) {
+        const device = data[0];
         const lastData = device.lastData;
         
         return {
@@ -64,17 +73,27 @@ class WeatherService {
     if (!stationIds || stationIds.length === 0) return [];
     
     try {
-      const response = await axios.get(`${SYNOPTIC_BASE_URL}/stations/latest`, {
-        params: {
-          token: SYNOPTIC_TOKEN,
-          stid: stationIds.join(','),
-          vars: 'air_temp,relative_humidity,wind_speed,wind_direction,wind_gust,altimeter,sea_level_pressure',
-          units: 'english',
-        },
-      });
+      let responseData;
+
+      if (IS_PRODUCTION) {
+        const response = await axios.get('/api/weather', {
+          params: { source: 'synoptic', stids: stationIds.join(',') },
+        });
+        responseData = response.data;
+      } else {
+        const response = await axios.get(`${SYNOPTIC_BASE_URL}/stations/latest`, {
+          params: {
+            token: SYNOPTIC_TOKEN,
+            stid: stationIds.join(','),
+            vars: 'air_temp,relative_humidity,wind_speed,wind_direction,wind_gust,altimeter,sea_level_pressure',
+            units: 'english',
+          },
+        });
+        responseData = response.data;
+      }
       
-      if (response.data?.STATION) {
-        return response.data.STATION.map((station) => ({
+      if (responseData?.STATION) {
+        return responseData.STATION.map((station) => ({
           stationId: station.STID,
           name: station.NAME,
           latitude: station.LATITUDE,
@@ -105,25 +124,38 @@ class WeatherService {
   async getSynopticHistory(stationIds, hours = 3) {
     if (!stationIds || stationIds.length === 0) return [];
     
-    const end = new Date();
-    const start = new Date(end.getTime() - hours * 60 * 60 * 1000);
-    
-    const formatDate = (d) => d.toISOString().replace(/[-:]/g, '').split('.')[0];
-    
     try {
-      const response = await axios.get(`${SYNOPTIC_BASE_URL}/stations/timeseries`, {
-        params: {
-          token: SYNOPTIC_TOKEN,
-          stid: stationIds.join(','),
-          start: formatDate(start),
-          end: formatDate(end),
-          vars: 'wind_speed,wind_direction,wind_gust,air_temp',
-          units: 'english',
-        },
-      });
+      let responseData;
+
+      if (IS_PRODUCTION) {
+        const response = await axios.get('/api/weather', {
+          params: {
+            source: 'synoptic-history',
+            stids: stationIds.join(','),
+            hours: String(hours),
+          },
+        });
+        responseData = response.data;
+      } else {
+        const end = new Date();
+        const start = new Date(end.getTime() - hours * 60 * 60 * 1000);
+        const formatDate = (d) => d.toISOString().replace(/[-:]/g, '').split('.')[0];
+
+        const response = await axios.get(`${SYNOPTIC_BASE_URL}/stations/timeseries`, {
+          params: {
+            token: SYNOPTIC_TOKEN,
+            stid: stationIds.join(','),
+            start: formatDate(start),
+            end: formatDate(end),
+            vars: 'wind_speed,wind_direction,wind_gust,air_temp',
+            units: 'english',
+          },
+        });
+        responseData = response.data;
+      }
       
-      if (response.data?.STATION) {
-        return response.data.STATION.map((station) => {
+      if (responseData?.STATION) {
+        return responseData.STATION.map((station) => {
           const obs = station.OBSERVATIONS || {};
           const times = obs.date_time || [];
           

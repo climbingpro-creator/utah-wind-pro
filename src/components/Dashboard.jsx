@@ -29,6 +29,7 @@ import ParaglidingMode from './ParaglidingMode';
 import FishingMode from './FishingMode';
 import ThemeToggle from './ThemeToggle';
 import { useTheme } from '../context/ThemeContext';
+import { SafeComponent } from './ErrorBoundary';
 
 function windDirectionToCardinal(degrees) {
   if (degrees == null) return 'N/A';
@@ -313,30 +314,34 @@ export function Dashboard() {
 
         {/* Special Activity Modes */}
         {selectedActivity === 'paragliding' ? (
-          <ParaglidingMode 
-            windData={{
-              stations: [
-                ...(lakeState?.wind?.stations || []),
-                ...(lakeState?.kslcStation ? [{ id: 'KSLC', ...lakeState.kslcStation }] : []),
-                ...(lakeState?.kpvuStation ? [{ id: 'KPVU', ...lakeState.kpvuStation }] : []),
-                ...(lakeState?.utalpStation ? [{ id: 'UTALP', ...lakeState.utalpStation }] : []),
-              ].filter((s, i, arr) => arr.findIndex(x => x.id === s.id) === i),
-              FPS: lakeState?.wind?.stations?.find(s => s.id === 'FPS'),
-              UTALP: lakeState?.utalpStation || lakeState?.wind?.stations?.find(s => s.id === 'UTALP'),
-              KSLC: lakeState?.kslcStation,
-              KPVU: lakeState?.kpvuStation,
-            }}
-            isLoading={isLoading}
-          />
+          <SafeComponent name="Paragliding Mode">
+            <ParaglidingMode 
+              windData={{
+                stations: [
+                  ...(lakeState?.wind?.stations || []),
+                  ...(lakeState?.kslcStation ? [{ id: 'KSLC', ...lakeState.kslcStation }] : []),
+                  ...(lakeState?.kpvuStation ? [{ id: 'KPVU', ...lakeState.kpvuStation }] : []),
+                  ...(lakeState?.utalpStation ? [{ id: 'UTALP', ...lakeState.utalpStation }] : []),
+                ].filter((s, i, arr) => arr.findIndex(x => x.id === s.id) === i),
+                FPS: lakeState?.wind?.stations?.find(s => s.id === 'FPS'),
+                UTALP: lakeState?.utalpStation || lakeState?.wind?.stations?.find(s => s.id === 'UTALP'),
+                KSLC: lakeState?.kslcStation,
+                KPVU: lakeState?.kpvuStation,
+              }}
+              isLoading={isLoading}
+            />
+          </SafeComponent>
         ) : selectedActivity === 'fishing' ? (
-          <FishingMode 
-            windData={{
-              stations: lakeState?.wind?.stations,
-              speed: currentWindSpeed,
-            }}
-            pressureData={pressureData}
-            isLoading={isLoading}
-          />
+          <SafeComponent name="Fishing Mode">
+            <FishingMode 
+              windData={{
+                stations: lakeState?.wind?.stations,
+                speed: currentWindSpeed,
+              }}
+              pressureData={pressureData}
+              isLoading={isLoading}
+            />
+          </SafeComponent>
         ) : (
         <>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

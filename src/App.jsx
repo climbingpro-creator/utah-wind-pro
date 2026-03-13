@@ -2,22 +2,22 @@ import { useEffect } from 'react';
 import { Dashboard } from './components/Dashboard';
 import { dataCollector } from './services/DataCollector';
 import { ThemeProvider } from './context/ThemeContext';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 function App() {
-  // Start the learning data collector when app loads
   useEffect(() => {
     dataCollector.start();
-    
-    // Cleanup on unmount
     return () => {
       dataCollector.stop();
     };
   }, []);
 
   return (
-    <ThemeProvider>
-      <Dashboard />
-    </ThemeProvider>
+    <ErrorBoundary name="Utah Wind Pro">
+      <ThemeProvider>
+        <Dashboard />
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }
 

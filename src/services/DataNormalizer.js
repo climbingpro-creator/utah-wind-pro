@@ -139,20 +139,44 @@ export class LakeState {
           (state.pressure.high.value - state.pressure.low.value).toFixed(3)
         );
         state.pressure.bustThreshold = config.stations.pressure.bustThreshold || 2.0;
-        state.pressure.isBusted = state.pressure.gradient > state.pressure.bustThreshold;
+
+        // Locations with northFlow config *benefit* from a positive gradient
+        // (north flow is their wind source, not a thermal killer)
+        const hasNorthFlowConfig = config.thermal?.northFlow != null;
         
-        state.modelSteps.stepA = {
-          name: 'Gradient Check',
-          status: 'complete',
-          result: {
-            gradient: state.pressure.gradient,
-            threshold: state.pressure.bustThreshold,
-            isBusted: state.pressure.isBusted,
-            explanation: state.pressure.isBusted 
-              ? `ΔP ${state.pressure.gradient.toFixed(2)}mb > ${state.pressure.bustThreshold}mb = North flow dominates`
-              : `ΔP ${state.pressure.gradient.toFixed(2)}mb < ${state.pressure.bustThreshold}mb = Thermal possible`,
-          },
-        };
+        if (hasNorthFlowConfig) {
+          state.pressure.isBusted = false;
+          state.pressure.northFlowActive = state.pressure.gradient > 0.5;
+          
+          state.modelSteps.stepA = {
+            name: 'Gradient Check (North Flow Location)',
+            status: 'complete',
+            result: {
+              gradient: state.pressure.gradient,
+              threshold: state.pressure.bustThreshold,
+              isBusted: false,
+              northFlowActive: state.pressure.northFlowActive,
+              explanation: state.pressure.gradient > 0.5
+                ? `ΔP ${state.pressure.gradient.toFixed(2)}mb = North flow active (GOOD for this location)`
+                : `ΔP ${state.pressure.gradient.toFixed(2)}mb = Weak gradient, thermal may be primary wind`,
+            },
+          };
+        } else {
+          state.pressure.isBusted = state.pressure.gradient > state.pressure.bustThreshold;
+          
+          state.modelSteps.stepA = {
+            name: 'Gradient Check',
+            status: 'complete',
+            result: {
+              gradient: state.pressure.gradient,
+              threshold: state.pressure.bustThreshold,
+              isBusted: state.pressure.isBusted,
+              explanation: state.pressure.isBusted 
+                ? `ΔP ${state.pressure.gradient.toFixed(2)}mb > ${state.pressure.bustThreshold}mb = North flow dominates`
+                : `ΔP ${state.pressure.gradient.toFixed(2)}mb < ${state.pressure.bustThreshold}mb = Thermal possible`,
+            },
+          };
+        }
       }
 
       // =========================================

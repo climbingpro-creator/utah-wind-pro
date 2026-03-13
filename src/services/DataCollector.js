@@ -16,6 +16,15 @@ import { weatherService } from './WeatherService';
 import { LakeState } from './DataNormalizer';
 import { LAKE_CONFIGS, getAllStationIds } from '../config/lakeStations';
 
+// Schedule work during idle periods to avoid blocking the UI thread
+function scheduleIdle(fn) {
+  if (typeof requestIdleCallback === 'function') {
+    requestIdleCallback(() => fn(), { timeout: 10000 });
+  } else {
+    setTimeout(fn, 100);
+  }
+}
+
 class DataCollector {
   constructor() {
     this.isRunning = false;
@@ -41,28 +50,28 @@ class DataCollector {
     await learningSystem.initialize();
     this.isRunning = true;
 
-    // Collect actuals every 15 minutes
+    // Collect actuals every 15 minutes (idle-scheduled)
     this.intervals.push(
-      setInterval(() => this.collectActuals(), 15 * 60 * 1000)
+      setInterval(() => scheduleIdle(() => this.collectActuals()), 15 * 60 * 1000)
     );
 
-    // Record predictions and verify every hour
+    // Record predictions and verify every hour (idle-scheduled)
     this.intervals.push(
-      setInterval(() => this.recordAndVerify(), 60 * 60 * 1000)
+      setInterval(() => scheduleIdle(() => this.recordAndVerify()), 60 * 60 * 1000)
     );
 
-    // Check indicator correlations every 6 hours
+    // Check indicator correlations every 6 hours (idle-scheduled)
     this.intervals.push(
-      setInterval(() => this.collectIndicatorData(), 6 * 60 * 60 * 1000)
+      setInterval(() => scheduleIdle(() => this.collectIndicatorData()), 6 * 60 * 60 * 1000)
     );
 
-    // Trigger learning check every 24 hours
+    // Trigger learning check every 24 hours (idle-scheduled)
     this.intervals.push(
-      setInterval(() => this.triggerLearning(), 24 * 60 * 60 * 1000)
+      setInterval(() => scheduleIdle(() => this.triggerLearning()), 24 * 60 * 60 * 1000)
     );
 
-    // Run initial collection
-    await this.collectActuals();
+    // Delay initial collection to not block app startup
+    scheduleIdle(() => this.collectActuals());
     
     console.log('✅ Data Collector started');
   }
