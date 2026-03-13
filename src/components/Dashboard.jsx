@@ -39,6 +39,9 @@ import { calculateCorrelatedWind } from '../services/CorrelationEngine';
 import { monitorSwings } from '../services/FrontalTrendPredictor';
 import { generateBriefing } from '../services/MorningBriefing';
 import TrendPatterns from './TrendPatterns';
+import PropagationBanner from './PropagationBanner';
+import SessionFeedback from './SessionFeedback';
+import SessionReplay from './SessionReplay';
 
 function windDirectionToCardinal(degrees) {
   if (degrees == null) return 'N/A';
@@ -717,7 +720,32 @@ export function Dashboard() {
           </div>
 
           <div className="lg:col-span-2 space-y-4">
-            {/* Smart Hourly Forecast — powered by all pattern logic */}
+            {/* PROPAGATION ALERT — "Wind is coming!" — top priority */}
+            <SafeComponent name="Propagation Banner">
+              <PropagationBanner
+                locationId={selectedLake}
+                stationReadings={{
+                  KSLC: lakeState?.kslcStation ? { speed: lakeState.kslcStation.speed ?? lakeState.kslcStation.windSpeed, direction: lakeState.kslcStation.direction ?? lakeState.kslcStation.windDirection } : null,
+                  KPVU: lakeState?.kpvuStation ? { speed: lakeState.kpvuStation.speed ?? lakeState.kpvuStation.windSpeed, direction: lakeState.kpvuStation.direction ?? lakeState.kpvuStation.windDirection } : null,
+                  UTALP: lakeState?.utalpStation ? { speed: lakeState.utalpStation.speed ?? lakeState.utalpStation.windSpeed, direction: lakeState.utalpStation.direction ?? lakeState.utalpStation.windDirection } : null,
+                  ...(mesoData || {}),
+                }}
+                currentWind={{ speed: currentWindSpeed, direction: currentWindDirection }}
+                translationFactor={0.55}
+              />
+            </SafeComponent>
+
+            {/* SPOT RANKER — "Where should I go?" — primary decision */}
+            <SafeComponent name="Spot Ranker">
+              <SpotRanker
+                activity={selectedActivity}
+                currentWind={{ speed: currentWindSpeed, gust: currentWindGust, direction: currentWindDirection }}
+                lakeState={lakeState}
+                mesoData={mesoData}
+              />
+            </SafeComponent>
+
+            {/* Smart Hourly Forecast — powered by WindFieldEngine */}
             <SmartTimeline
               activity={selectedActivity}
               locationId={selectedLake}
@@ -732,13 +760,22 @@ export function Dashboard() {
               mesoData={mesoData}
             />
 
-            {/* Spot Ranker — "Where should I go right now?" */}
-            <SafeComponent name="Spot Ranker">
-              <SpotRanker
+            {/* SESSION FEEDBACK — post-session "How was it?" prompt */}
+            <SafeComponent name="Session Feedback">
+              <SessionFeedback
                 activity={selectedActivity}
-                currentWind={{ speed: currentWindSpeed, gust: currentWindGust, direction: currentWindDirection }}
+                locationId={selectedLake}
+                locationName={lakeState?.config?.name || selectedLake}
+                forecast={null}
+              />
+            </SafeComponent>
+
+            {/* SESSION REPLAY — yesterday's predictions vs reality */}
+            <SafeComponent name="Session Replay">
+              <SessionReplay
+                locationId={selectedLake}
+                activity={selectedActivity}
                 lakeState={lakeState}
-                mesoData={mesoData}
               />
             </SafeComponent>
 
