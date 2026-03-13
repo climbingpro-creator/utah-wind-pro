@@ -22,7 +22,7 @@ import ActivityMode, { ACTIVITY_CONFIGS, calculateActivityScore, calculateGlassS
 import GlassScore from './GlassScore';
 import { predictGlass } from '../services/BoatingPredictor';
 import WaterForecast from './WaterForecast';
-import HourlyTimeline from './HourlyTimeline';
+import SmartTimeline from './SmartTimeline';
 import WeeklyBestDays from './WeeklyBestDays';
 import RaceDayMode from './RaceDayMode';
 import SevereWeatherAlerts from './SevereWeatherAlerts';
@@ -661,17 +661,19 @@ export function Dashboard() {
           </div>
 
           <div className="lg:col-span-2 space-y-4">
-            {/* Hourly Timeline - Activity Specific */}
-            <HourlyTimeline
+            {/* Smart Hourly Forecast — powered by all pattern logic */}
+            <SmartTimeline
               activity={selectedActivity}
-              currentConditions={{
-                windSpeed: currentWindSpeed,
-                windGust: currentWindGust,
-                windDirection: currentWindDirection,
+              locationId={selectedLake}
+              currentWind={{ speed: currentWindSpeed, gust: currentWindGust, direction: currentWindDirection }}
+              upstreamData={{
+                kslcSpeed: lakeState?.kslcStation?.speed,
+                kslcDirection: lakeState?.kslcStation?.direction,
+                kpvuSpeed: lakeState?.kpvuStation?.speed,
+                kpvuDirection: lakeState?.kpvuStation?.direction,
               }}
-              thermalStartHour={lakeState?.thermalPrediction?.startHour || 10}
-              thermalPeakHour={lakeState?.thermalPrediction?.peakHour || 12}
-              thermalEndHour={lakeState?.thermalPrediction?.endHour || 17}
+              lakeState={lakeState}
+              mesoData={mesoData}
             />
 
             {/* Sailing-specific: Race Day Mode */}
