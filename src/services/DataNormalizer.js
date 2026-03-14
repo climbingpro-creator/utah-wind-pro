@@ -77,16 +77,11 @@ export class LakeState {
     // STEP C: GROUND TRUTH - Your PWS data
     // Verifies exact minute thermal hits boundary
     // =========================================
-    if (ambientData) {
-      // Use location-specific name for PWS based on selected lake
-      let pwsDisplayName = 'Zig Zag (Your Station)';
-      if (lakeId === 'utah-lake-zigzag') {
-        pwsDisplayName = 'Zig Zag (Your Station)';
-      } else if (lakeId.startsWith('utah-lake')) {
-        pwsDisplayName = 'Saratoga Springs PWS';
-      } else {
-        pwsDisplayName = ambientData.stationName || 'Your Weather Station';
-      }
+    // PWS is physically at Zig Zag / Utah Lake — only attach for Utah Lake locations
+    if (ambientData && lakeId.startsWith('utah-lake')) {
+      const pwsDisplayName = lakeId === 'utah-lake-zigzag'
+        ? 'Zig Zag (Your Station)'
+        : 'Saratoga Springs PWS';
       
       state.pws = {
         name: pwsDisplayName,
@@ -218,6 +213,17 @@ export class LakeState {
         };
       }
       
+      // For non-PWS locations, use the primary lakeshore station temperature
+      if (state.thermal.lakeshore == null && config.stations.lakeshore?.length > 0) {
+        for (const ls of config.stations.lakeshore) {
+          const lsStation = stationMap.get(ls.id);
+          if (lsStation?.temperature != null) {
+            state.thermal.lakeshore = lsStation.temperature;
+            break;
+          }
+        }
+      }
+
       if (state.thermal.lakeshore != null && state.thermal.ridge != null) {
         state.thermal.delta = parseFloat(
           (state.thermal.lakeshore - state.thermal.ridge).toFixed(1)
