@@ -130,7 +130,7 @@ export function predictSouth(windData, conditions = {}) {
   const currentDir = fps.windDirection;
 
   const directionOK = currentDir != null && currentDir >= 140 && currentDir <= 220;
-  const speedOK = currentSpeed >= (profile.speedRange?.min || 8) && currentSpeed <= (profile.speedRange?.max || 18);
+  const speedOK = currentSpeed >= (profile.speedRange?.min || 6) && currentSpeed <= (profile.speedRange?.max || 18);
   const gustOK = currentGF <= (gustThresholds.acceptable || 1.35);
   const flyable = directionOK && speedOK && gustOK;
 
@@ -280,7 +280,7 @@ export function predictNorth(windData, conditions = {}) {
   const currentDir = utalp.windDirection;
 
   const directionOK = currentDir != null && (currentDir >= 300 || currentDir <= 60);
-  const speedOK = currentSpeed >= (profile.speedRange?.min || 8) && currentSpeed <= (profile.speedRange?.max || 20);
+  const speedOK = currentSpeed >= (profile.speedRange?.min || 6) && currentSpeed <= (profile.speedRange?.max || 20);
   const gustOK = currentGF <= (gustThresholds.acceptable || 1.35);
   const flyable = directionOK && speedOK && gustOK;
 

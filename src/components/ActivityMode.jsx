@@ -85,7 +85,7 @@ export const ACTIVITY_CONFIGS = {
     },
     wantsWind: true,
     primaryMetric: 'paraglidingScore',
-    goodCondition: (speed, gust) => speed >= 8 && speed <= 18 && (!gust || gust - speed <= 5),
+    goodCondition: (speed, gust) => speed >= 6 && speed <= 18 && (!gust || gust - speed <= 5),
     specialMode: true,
     hideLakeSelector: true,
   },

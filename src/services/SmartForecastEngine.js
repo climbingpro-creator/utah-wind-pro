@@ -57,7 +57,7 @@ const ACTIVITY_PROFILES = {
     emoji: (s) => s >= 80 ? '🎣' : s >= 60 ? '✅' : s >= 40 ? '〰️' : '❌',
   },
   paragliding: {
-    idealMin: 8, idealMax: 15, min: 8, max: 18,
+    idealMin: 8, idealMax: 15, min: 6, max: 18,
     gustLimit: 1.25, wantsWind: true, daylightOnly: true,
     scoreLabel: (s) => s >= 80 ? 'Epic' : s >= 60 ? 'Flyable' : s >= 40 ? 'Marginal' : 'Grounded',
     emoji: (s) => s >= 80 ? '🪂' : s >= 60 ? '✅' : s >= 40 ? '⚠️' : '❌',

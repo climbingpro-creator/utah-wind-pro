@@ -104,12 +104,13 @@ export function scoreParaglidingSession(wind, site = 'south', conditions = {}) {
 
   let score = 0;
 
-  // Paragliding sweet spot: 8-15 mph — need real lift, not just drift
+  // Paragliding: 6+ mph flyable, 8-15 ideal, laminar flow is key
   if (speed >= 10 && speed <= 14) score += 40;
-  else if (speed >= 8 && speed < 10) score += 30;
+  else if (speed >= 8 && speed < 10) score += 35;
+  else if (speed >= 6 && speed < 8) score += 25;
   else if (speed > 14 && speed <= 18) score += 20;
-  else if (speed > 18) score += 0; // Too strong — dangerous
-  else if (speed >= 3) score += 15;
+  else if (speed > 18) score += 0;
+  else if (speed >= 3) score += 10;
   else score += 5;
 
   // Laminar flow is essential — gusts are dangerous for PG
@@ -280,7 +281,7 @@ export function getIdealConditions(activity) {
       key: 'Steady breeze for racing. Hydrofoil sweet spot: 10-16 mph.',
     },
     paragliding: {
-      speedRange: '8-15 mph',
+      speedRange: '6-15 mph',
       gustFactor: '< 1.25',
       direction: 'S (150-210°) for south, N (315-45°) for north',
       key: 'Laminar flow is everything. Gusts are dangerous.',
