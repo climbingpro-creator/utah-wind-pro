@@ -560,8 +560,8 @@ const FishingMode = ({ windData, pressureData, isLoading, upstreamData = {} }) =
   }, [waterTempData, season, location.elevation]);
 
   const waterTempSource = waterTempData?.source === 'USGS' ? 'usgs'
-    : waterTempData?.source === 'Satellite' ? 'satellite'
-    : waterTempData?.source === 'Seasonal Model' ? 'model' : 'estimate';
+    : waterTempData?.source === 'Satellite Avg' ? 'satellite-avg'
+    : 'estimate';
 
   const fishingScore = calculateFishingScore(selectedLocation, {
     pressure,
@@ -851,16 +851,13 @@ const FishingMode = ({ windData, pressureData, isLoading, upstreamData = {} }) =
         {/* Water Temp */}
         <div className={`rounded-xl p-4 border ${isDark ? 'bg-slate-800/30 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`}>
           <div className="flex items-center gap-2 mb-2">
-            <Droplets className={`w-4 h-4 ${waterTempSource !== 'estimate' ? 'text-cyan-400' : isDark ? 'text-slate-400' : 'text-slate-500'}`} />
+            <Droplets className={`w-4 h-4 ${waterTempSource === 'usgs' ? 'text-cyan-400' : isDark ? 'text-slate-400' : 'text-slate-500'}`} />
             <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
               {waterTempSource === 'usgs' ? 'Water Temp (USGS)' :
-               waterTempSource === 'satellite' ? 'Water Temp (Satellite)' :
-               waterTempSource === 'model' ? 'Water Temp (Avg)' : 'Est. Water Temp'}
+               waterTempSource === 'satellite-avg' ? 'Water Temp' : 'Est. Water Temp'}
             </span>
-            {(waterTempSource === 'usgs' || waterTempSource === 'satellite') && (
-              <span className="text-[9px] bg-cyan-500/20 text-cyan-400 px-1.5 py-0.5 rounded">
-                {waterTempSource === 'usgs' ? 'LIVE' : 'TODAY'}
-              </span>
+            {waterTempSource === 'usgs' && (
+              <span className="text-[9px] bg-cyan-500/20 text-cyan-400 px-1.5 py-0.5 rounded">LIVE</span>
             )}
           </div>
           <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>
