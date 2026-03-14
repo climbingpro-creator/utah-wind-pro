@@ -73,15 +73,15 @@ export function useWeatherData() {
         newData.ridge?.temperature
       );
 
-      let usgsWaterTemp = 65;
+      let lakeWaterTemp = 65;
       try {
-        const usgs = await getWaterTemp('utah-lake');
-        if (usgs?.tempF != null) usgsWaterTemp = usgs.tempF;
+        const wt = await getWaterTemp('utah-lake');
+        if (wt?.tempF != null) lakeWaterTemp = wt.tempF;
       } catch (_) {}
 
       const boundaryCrossing = calculateBoundaryCrossing(
         newData.ambient?.temperature,
-        usgsWaterTemp,
+        lakeWaterTemp,
         newData.ambient?.windSpeed
       );
 
