@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { weatherService } from '../services/WeatherService';
+import { getWaterTemp } from '../services/USGSWaterService';
 import {
   calculatePressureGap,
   calculateThermalDelta,
@@ -72,9 +73,15 @@ export function useWeatherData() {
         newData.ridge?.temperature
       );
 
+      let usgsWaterTemp = 65;
+      try {
+        const usgs = await getWaterTemp('utah-lake');
+        if (usgs?.tempF != null) usgsWaterTemp = usgs.tempF;
+      } catch (_) {}
+
       const boundaryCrossing = calculateBoundaryCrossing(
         newData.ambient?.temperature,
-        65,
+        usgsWaterTemp,
         newData.ambient?.windSpeed
       );
 

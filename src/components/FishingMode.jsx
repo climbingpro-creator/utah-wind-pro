@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Fish, Moon, Thermometer, Gauge, Clock, MapPin, TrendingUp, TrendingDown, Minus, Sun, Sunset, CloudRain, Wind, Waves, Calendar, Target, AlertTriangle, CheckCircle, Anchor, Navigation, Egg, Mountain, Brain, Zap } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { Fish, Moon, Thermometer, Gauge, Clock, MapPin, TrendingUp, TrendingDown, Minus, Sun, Sunset, CloudRain, Wind, Waves, Calendar, Target, AlertTriangle, CheckCircle, Anchor, Navigation, Egg, Mountain, Brain, Zap, Droplets } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { predictFishing } from '../services/FishingPredictor';
+import { getWaterTemp, getAllWaterTemps } from '../services/USGSWaterService';
 import WaterForecast from './WaterForecast';
 
 // Utah Fishing Locations Configuration
@@ -478,7 +479,7 @@ function getCurrentSeason() {
 }
 
 // Location Card Component
-const LocationCard = ({ location, isSelected, onSelect, theme }) => {
+const LocationCard = ({ location, isSelected, onSelect, theme, waterTemp }) => {
   const isDark = theme === 'dark';
   const config = FISHING_LOCATIONS[location];
   const currentMonth = new Date().getMonth() + 1;
@@ -499,11 +500,18 @@ const LocationCard = ({ location, isSelected, onSelect, theme }) => {
         <span className={`font-medium ${isSelected ? (isDark ? 'text-cyan-400' : 'text-cyan-700') : (isDark ? 'text-white' : 'text-slate-800')}`}>
           {config.name}
         </span>
-        {isBestMonth && (
-          <span className={`text-[10px] px-1.5 py-0.5 rounded ${isDark ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-700'}`}>
-            Peak Season
-          </span>
-        )}
+        <div className="flex items-center gap-1.5">
+          {waterTemp?.tempF != null && (
+            <span className={`text-[10px] px-1.5 py-0.5 rounded ${isDark ? 'bg-cyan-500/15 text-cyan-400' : 'bg-cyan-50 text-cyan-600'}`}>
+              💧 {waterTemp.tempF}°F
+            </span>
+          )}
+          {isBestMonth && (
+            <span className={`text-[10px] px-1.5 py-0.5 rounded ${isDark ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-700'}`}>
+              Peak Season
+            </span>
+          )}
+        </div>
       </div>
       <div className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
         {config.primarySpecies} • {config.type}
@@ -529,18 +537,31 @@ const FishingMode = ({ windData, pressureData, isLoading, upstreamData = {} }) =
   const pressure = pressureData?.slcPressure || 30.0;
   const pressureTrend = pressureData?.gradient > 0 ? 'rising' : pressureData?.gradient < 0 ? 'falling' : 'stable';
   
-  // Estimate water temp based on season and elevation
-  const estimatedWaterTemp = useMemo(() => {
+  // Fetch all USGS water temps once for all location cards
+  const [allWaterTemps, setAllWaterTemps] = useState({});
+  useEffect(() => {
+    getAllWaterTemps().then(setAllWaterTemps).catch(() => {});
+  }, []);
+
+  const waterTempData = allWaterTemps[selectedLocation] || null;
+
+  const waterTemp = useMemo(() => {
+    if (waterTempData?.tempF != null && !waterTempData.stale) {
+      return waterTempData.tempF;
+    }
+    // Fallback: seasonal estimate
     const baseTemp = { spring: 50, summer: 65, fall: 55, winter: 38 }[season];
     const elevationAdjust = (location.elevation - 5000) / 1000 * -3;
     return Math.round(baseTemp + elevationAdjust);
-  }, [season, location.elevation]);
-  
+  }, [waterTempData, season, location.elevation]);
+
+  const waterTempSource = waterTempData?.tempF != null && !waterTempData.stale ? 'usgs' : 'estimate';
+
   const fishingScore = calculateFishingScore(selectedLocation, {
     pressure,
     pressureTrend,
     windSpeed,
-    waterTemp: estimatedWaterTemp,
+    waterTemp,
     moonPhase,
     hour: currentHour,
   });
@@ -552,11 +573,11 @@ const FishingMode = ({ windData, pressureData, isLoading, upstreamData = {} }) =
   const aiPrediction = useMemo(() => {
     try {
       return predictFishing(
-        { speed: windSpeed, temperature: estimatedWaterTemp },
+        { speed: windSpeed, temperature: waterTemp },
         { slcPressure: pressure, pressure },
       );
     } catch (e) { return null; }
-  }, [windSpeed, pressure, estimatedWaterTemp]);
+  }, [windSpeed, pressure, waterTemp]);
   
   // Build the fishing opportunity banner
   const fishOpp = useMemo(() => {
@@ -774,6 +795,7 @@ const FishingMode = ({ windData, pressureData, isLoading, upstreamData = {} }) =
               isSelected={selectedLocation === loc}
               onSelect={setSelectedLocation}
               theme={theme}
+              waterTemp={allWaterTemps[loc]}
             />
           ))}
         </div>
@@ -823,15 +845,25 @@ const FishingMode = ({ windData, pressureData, isLoading, upstreamData = {} }) =
         {/* Water Temp */}
         <div className={`rounded-xl p-4 border ${isDark ? 'bg-slate-800/30 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`}>
           <div className="flex items-center gap-2 mb-2">
-            <Thermometer className={`w-4 h-4 ${isDark ? 'text-slate-400' : 'text-slate-500'}`} />
-            <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Est. Water Temp</span>
+            <Droplets className={`w-4 h-4 ${waterTempSource === 'usgs' ? 'text-cyan-400' : isDark ? 'text-slate-400' : 'text-slate-500'}`} />
+            <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+              {waterTempSource === 'usgs' ? 'Water Temp (USGS)' : 'Est. Water Temp'}
+            </span>
+            {waterTempSource === 'usgs' && (
+              <span className="text-[9px] bg-cyan-500/20 text-cyan-400 px-1.5 py-0.5 rounded">LIVE</span>
+            )}
           </div>
           <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>
-            {estimatedWaterTemp}°F
+            {waterTemp}°F
           </div>
           <div className={`text-xs mt-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
             {location.primarySpecies} optimal: {FISH_SPECIES[location.primarySpecies]?.tempOptimal.join('-')}°F
           </div>
+          {waterTempSource === 'usgs' && waterTempData && (
+            <div className={`text-[10px] mt-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+              via {waterTempData.stationName}
+            </div>
+          )}
         </div>
         
         {/* Best Depth */}
