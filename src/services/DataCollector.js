@@ -90,10 +90,14 @@ class DataCollector {
       setInterval(() => scheduleIdle(() => this.triggerLearning()), 24 * 60 * 60 * 1000)
     );
 
-    // Delay initial collection to not block app startup
+    // On startup: backfill last 24 hours from Synoptic history
+    // This ensures no data gaps even if the app was closed for a day
+    scheduleIdle(() => this.backfillFromHistory());
+
+    // Then start normal real-time collection
     scheduleIdle(() => this.collectActuals());
     
-    console.log('✅ Data Collector started');
+    console.log('Data Collector started — backfill + real-time collection active');
   }
 
   /**
@@ -107,6 +111,121 @@ class DataCollector {
     if (this._unsubWeights) {
       this._unsubWeights();
       this._unsubWeights = null;
+    }
+  }
+
+  /**
+   * Backfill learning data on startup — two sources:
+   * 1. Server-collected data (Vercel cron → Redis, if configured)
+   * 2. Synoptic 24hr history (always available as fallback)
+   * 
+   * This ensures no data gaps even if the app was closed for days.
+   */
+  async backfillFromHistory() {
+    if (!this.isRunning) return;
+
+    let serverRecords = 0;
+
+    // SOURCE 1: Server-collected data (if cron + Redis are set up)
+    try {
+      const resp = await fetch('/api/cron/collect?action=sync');
+      if (resp.ok) {
+        const { records } = await resp.json();
+        if (records?.length > 0) {
+          for (const record of records) {
+            if (!record.observations) continue;
+            for (const [lakeId, stations] of Object.entries(record.observations)) {
+              for (const station of stations) {
+                if (station.windSpeed == null) continue;
+                const wind = { speed: station.windSpeed, gust: station.windGust, direction: station.windDirection };
+                const conditions = { temperature: station.temperature, pressure: station.pressure };
+                await learningSystem.recordActual(lakeId, station.stationId, {
+                  ...station,
+                  activityScores: {
+                    kiting: scoreSessionForActivity('kiting', wind, conditions),
+                    sailing: scoreSessionForActivity('sailing', wind, conditions),
+                    paragliding: scoreSessionForActivity('paragliding', wind, conditions),
+                    fishing: scoreSessionForActivity('fishing', wind, conditions),
+                    boating: scoreSessionForActivity('boating', wind),
+                  },
+                });
+                serverRecords++;
+              }
+            }
+          }
+          console.log(`Server backfill: ${serverRecords} observations from ${records.length} snapshots`);
+        }
+      }
+    } catch (e) {
+      console.log('Server backfill unavailable (expected if Redis not configured):', e.message);
+    }
+
+    // SOURCE 2: Synoptic 24hr history (always works, fills remaining gaps)
+    try {
+      const lakes = ['utah-lake-zigzag', 'utah-lake-lincoln', 'utah-lake-sandy',
+                     'utah-lake-vineyard', 'utah-lake-mm19', 'deer-creek', 'willard-bay'];
+
+      const allStationIds = new Set();
+      const stationToLakes = {};
+      for (const lakeId of lakes) {
+        const ids = getAllStationIds(lakeId);
+        for (const id of ids) {
+          allStationIds.add(id);
+          if (!stationToLakes[id]) stationToLakes[id] = [];
+          stationToLakes[id].push(lakeId);
+        }
+      }
+
+      console.log(`Backfilling 24hr history for ${allStationIds.size} stations...`);
+
+      const historyData = await weatherService.getSynopticHistory(
+        Array.from(allStationIds), 24
+      );
+
+      let recordCount = 0;
+
+      for (const station of historyData) {
+        const lakesForStation = stationToLakes[station.stationId] || ['unknown'];
+
+        for (const reading of (station.history || [])) {
+          if (reading.windSpeed == null) continue;
+
+          for (const lakeId of lakesForStation) {
+            const wind = { speed: reading.windSpeed, gust: reading.windGust, direction: reading.windDirection };
+            const conditions = { temperature: reading.temperature, pressure: null };
+            await learningSystem.recordActual(lakeId, station.stationId, {
+              windSpeed: reading.windSpeed,
+              windGust: reading.windGust,
+              windDirection: reading.windDirection,
+              temperature: reading.temperature,
+              pressure: null,
+              activityScores: {
+                kiting: scoreSessionForActivity('kiting', wind, conditions),
+                sailing: scoreSessionForActivity('sailing', wind, conditions),
+                paragliding: scoreSessionForActivity('paragliding', wind, conditions),
+                fishing: scoreSessionForActivity('fishing', wind, conditions),
+                boating: scoreSessionForActivity('boating', wind),
+              },
+            });
+            recordCount++;
+          }
+        }
+      }
+
+      console.log(`Synoptic backfill: ${recordCount} observations ingested`);
+      this.collectionStats.actualsCollected += serverRecords + recordCount;
+
+    } catch (error) {
+      console.error('Backfill error (non-fatal):', error.message);
+    }
+
+    // After backfill, trigger verification and learning immediately
+    try {
+      await learningSystem.verifyPredictions();
+      await learningSystem.learnFromData();
+      console.log('Post-backfill learning cycle completed');
+    } catch (e) {
+      console.log('Post-backfill learning skipped:', e.message);
     }
   }
 
