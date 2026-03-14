@@ -664,11 +664,13 @@ const ParaglidingMode = ({ windData, isLoading }) => {
     const northSpeed = stationWindData.UTALP?.speed || 0;
     const southSpeed = stationWindData.FPS?.speed || 0;
 
-    // Hard speed gate: status doesn't matter if wind is below minimum
+    // Hard speed gate with three tiers: flyable, marginal, unflyable
     const northActuallyFlyable = northSpeed >= MIN_FLYABLE_SPEED && 
       (northScore?.status === 'excellent' || northScore?.status === 'good');
     const southActuallyFlyable = southSpeed >= MIN_FLYABLE_SPEED && 
       (southScore?.status === 'excellent' || southScore?.status === 'good');
+    const northMarginal = northSpeed >= MIN_FLYABLE_SPEED && northScore?.status === 'marginal';
+    const southMarginal = southSpeed >= MIN_FLYABLE_SPEED && southScore?.status === 'marginal';
 
     const southPred = learnedPrediction?.south;
     const northPred = learnedPrediction?.north;
@@ -691,6 +693,26 @@ const ParaglidingMode = ({ windData, isLoading }) => {
         headline: 'South Side is Flying!',
         subline: `${southSpeed.toFixed(0)} mph smooth thermal`,
         color: 'green', urgency: 'go',
+      };
+    }
+
+    // Marginal / on the edge — yellow card
+    if (northMarginal) {
+      return {
+        mode: 'now', site: 'north', siteName: 'Flight Park North',
+        score: northScore.score, status: 'marginal',
+        headline: 'North Side — On the Edge',
+        subline: `${northSpeed.toFixed(0)} mph — flyable but light, experienced pilots up`,
+        color: 'yellow', urgency: 'watch',
+      };
+    }
+    if (southMarginal) {
+      return {
+        mode: 'now', site: 'south', siteName: 'Flight Park South',
+        score: southScore.score, status: 'marginal',
+        headline: 'South Side — On the Edge',
+        subline: `${southSpeed.toFixed(0)} mph — light but flyable, watch for changes`,
+        color: 'yellow', urgency: 'watch',
       };
     }
 
@@ -773,6 +795,11 @@ const ParaglidingMode = ({ windData, isLoading }) => {
               GET READY
             </div>
           )}
+          {opportunity.urgency === 'watch' && opportunity.mode === 'now' && (
+            <div className="bg-yellow-500/20 text-yellow-400 text-xs font-bold px-3 py-1 rounded-full border border-yellow-500/50">
+              HEADS UP
+            </div>
+          )}
         </div>
         
         {/* The Big Opportunity Card */}
@@ -784,13 +811,15 @@ const ParaglidingMode = ({ windData, isLoading }) => {
           <div className="flex items-center justify-between">
             <div className="flex-1">
               <div className={`text-xs font-medium ${
-                opportunity.mode === 'now' ? 'text-green-400' :
+                opportunity.mode === 'now' && opportunity.color === 'green' ? 'text-green-400' :
+                opportunity.mode === 'now' && opportunity.color === 'yellow' ? 'text-yellow-400' :
                 opportunity.mode === 'predicted' ? 'text-cyan-400' : 'text-slate-500'
               }`}>
-                {opportunity.mode === 'now' ? '🟢 FLYING NOW' :
+                {opportunity.mode === 'now' && opportunity.color === 'green' ? '🟢 FLYING NOW' :
+                 opportunity.mode === 'now' && opportunity.color === 'yellow' ? '🟡 BORDERLINE' :
                  opportunity.mode === 'predicted' ? '🔮 PREDICTED' : 'MONITORING'}
               </div>
-              <div className={`text-xl font-bold mt-1 ${opportunity.color === 'green' ? 'text-white' : 'text-slate-200'}`}>
+              <div className={`text-xl font-bold mt-1 ${opportunity.color === 'green' ? 'text-white' : opportunity.color === 'yellow' ? 'text-yellow-100' : 'text-slate-200'}`}>
                 {opportunity.headline}
               </div>
               <div className="text-sm text-slate-300 mt-1">
