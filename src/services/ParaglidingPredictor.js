@@ -16,10 +16,8 @@ import pgWeightsData from '../config/trainedWeights-paragliding.json';
 let learnedWeights = null;
 
 export function setParaglidingLearnedWeights(weights) {
-  if (weights?.activity === 'paragliding') {
-    learnedWeights = weights;
-    console.log('🪂 ParaglidingPredictor: loaded learned weights v' + (weights.version || '?'));
-  }
+  learnedWeights = weights;
+  console.log('ParaglidingPredictor: loaded learned weights v' + (weights.version || '?'));
 }
 
 function getWeights() {

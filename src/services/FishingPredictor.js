@@ -19,10 +19,8 @@ import fishWeightsData from '../config/trainedWeights-fishing.json';
 let learnedWeights = null;
 
 export function setFishingLearnedWeights(weights) {
-  if (weights?.activity === 'fishing') {
-    learnedWeights = weights;
-    console.log('🎣 FishingPredictor: loaded learned weights v' + (weights.version || '?'));
-  }
+  learnedWeights = weights;
+  console.log('FishingPredictor: loaded learned weights v' + (weights.version || '?'));
 }
 
 function getWeights() {

@@ -17,10 +17,8 @@ import boatWeightsData from '../config/trainedWeights-boating.json';
 let learnedWeights = null;
 
 export function setBoatingLearnedWeights(weights) {
-  if (weights?.activity === 'boating') {
-    learnedWeights = weights;
-    console.log('🚤 BoatingPredictor: loaded learned weights v' + (weights.version || '?'));
-  }
+  learnedWeights = weights;
+  console.log('BoatingPredictor: loaded learned weights v' + (weights.version || '?'));
 }
 
 function getWeights() {

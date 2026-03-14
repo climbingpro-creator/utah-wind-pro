@@ -26,8 +26,21 @@ import { getHourlyForecast } from './ForecastService';
 import { monitorSwings } from './FrontalTrendPredictor';
 import { calculateCorrelatedWind } from './CorrelationEngine';
 import registry from '../config/mesoRegistry.json';
-import trainedWeights from '../config/trainedWeights.json';
-import boatWeights from '../config/trainedWeights-boating.json';
+import trainedWeightsStatic from '../config/trainedWeights.json';
+import boatWeightsStatic from '../config/trainedWeights-boating.json';
+
+// Live-learned weights override static JSON when available
+let liveWeights = null;
+
+export function setWindFieldLearnedWeights(weights) {
+  if (weights && !weights.activity) {
+    liveWeights = weights;
+    console.log('WindFieldEngine: loaded learned weights v' + (weights.version || '?'));
+  }
+}
+
+function getTrainedWeights() { return liveWeights || trainedWeightsStatic; }
+function getBoatWeights() { return boatWeightsStatic; }
 
 // ─── STATION NETWORK ──────────────────────────────────────────────
 // Directed graph: edges define how wind physically flows from
@@ -297,8 +310,10 @@ export async function generateWindField(locationId, currentWind = {}, upstreamDa
   const thermalProb = thermalPred?.probability || 50;
 
   // 5. Load learned hourly patterns
-  const learnedHourly = trainedWeights?.weights?.hourlyMultipliers || {};
-  const boatHourly = boatWeights?.weights?.glassWindowByHour || {};
+  const tw = getTrainedWeights();
+  const bw = getBoatWeights();
+  const learnedHourly = tw?.weights?.hourlyMultipliers || liveWeights?.hourlyMultipliers || {};
+  const boatHourly = bw?.weights?.glassWindowByHour || {};
 
   // 6. Correlation engine (spatial multiplier)
   let correlationMultiplier = 1.0;

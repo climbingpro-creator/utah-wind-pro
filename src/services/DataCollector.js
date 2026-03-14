@@ -19,6 +19,7 @@ import { setLearnedWeights } from './ThermalPredictor';
 import { setParaglidingLearnedWeights } from './ParaglidingPredictor';
 import { setBoatingLearnedWeights } from './BoatingPredictor';
 import { setFishingLearnedWeights } from './FishingPredictor';
+import { setWindFieldLearnedWeights } from './WindFieldEngine';
 import { scoreSessionForActivity } from './ActivityScoring';
 
 // Schedule work during idle periods to avoid blocking the UI thread
@@ -57,10 +58,16 @@ class DataCollector {
 
     // Subscribe all predictors to weight updates — closes the learning loop
     this._unsubWeights = learningSystem.onWeightsUpdated((weights) => {
-      setLearnedWeights(weights);
-      if (weights?.activity === 'paragliding') setParaglidingLearnedWeights(weights);
-      if (weights?.activity === 'boating') setBoatingLearnedWeights(weights);
-      if (weights?.activity === 'fishing') setFishingLearnedWeights(weights);
+      if (weights?.activity === 'paragliding') {
+        setParaglidingLearnedWeights(weights);
+      } else if (weights?.activity === 'boating') {
+        setBoatingLearnedWeights(weights);
+      } else if (weights?.activity === 'fishing') {
+        setFishingLearnedWeights(weights);
+      } else {
+        setLearnedWeights(weights);
+        setWindFieldLearnedWeights(weights);
+      }
     });
 
     // Collect actuals every 15 minutes (idle-scheduled)

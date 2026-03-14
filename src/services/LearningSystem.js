@@ -212,11 +212,16 @@ class LearningSystem {
       temperature: data.temperature,
       pressure: data.pressure,
       
+      // Activity scores (from ActivityScoring.js)
+      activityScores: data.activityScores || null,
+      
       // Derived
       isKiteable: data.windSpeed >= 10,
       isTwinTipKiteable: data.windSpeed >= 15,
       isNorthFlow: data.windDirection !== null && (data.windDirection >= 315 || data.windDirection <= 45),
       isSEThermal: data.windDirection !== null && data.windDirection >= 90 && data.windDirection <= 180,
+      isGlass: data.windSpeed != null && data.windSpeed < 5,
+      isFlyable: data.windSpeed >= 6 && data.windSpeed <= 25,
     };
 
     return this.addRecord(STORES.ACTUALS, record);
@@ -733,7 +738,9 @@ class LearningSystem {
   }
 
   /**
-   * Calculate new model weights based on learning
+   * Calculate new model weights based on learning.
+   * Returns the base thermal weights AND emits activity-specific weight sets
+   * to close the loop for paragliding, boating, and fishing predictors.
    */
   calculateNewWeights(indicatorLearning, errorAnalysis, patterns) {
     const currentWeights = this.currentWeights || this.getDefaultWeights();
@@ -743,29 +750,16 @@ class LearningSystem {
       createdAt: new Date().toISOString(),
       basedOnSamples: errorAnalysis.totalPredictions,
       
-      // Adjust pressure weight based on high gradient accuracy
       pressureWeight: currentWeights.pressureWeight,
-      
-      // Adjust thermal weight based on thermal prediction accuracy
       thermalWeight: currentWeights.thermalWeight,
-      
-      // Adjust convergence weight
       convergenceWeight: currentWeights.convergenceWeight,
       
-      // Indicator-specific weights
       indicators: {},
-      
-      // Speed prediction adjustment
-      speedBiasCorrection: -errorAnalysis.speedBias, // Correct for systematic bias
-      
-      // Probability calibration
+      speedBiasCorrection: -errorAnalysis.speedBias,
       probabilityCalibration: {},
-      
-      // Time of day adjustments
       hourlyMultipliers: {},
     };
     
-    // Adjust indicator weights based on learned correlations
     for (const [key, correlation] of Object.entries(indicatorLearning)) {
       newWeights.indicators[key] = {
         weight: correlation.kiteablePredictionRate * correlation.confidence,
@@ -774,25 +768,21 @@ class LearningSystem {
       };
     }
     
-    // Adjust probability calibration
     for (const [bucket, data] of Object.entries(errorAnalysis.probabilityBuckets)) {
-      if (data.predicted > 10) { // Need minimum samples
+      if (data.predicted > 10) {
         const expectedRate = (parseInt(bucket.split('-')[0]) + parseInt(bucket.split('-')[1])) / 200;
         const actualRate = data.actualRate;
         newWeights.probabilityCalibration[bucket] = actualRate / expectedRate;
       }
     }
     
-    // Adjust hourly multipliers
     for (const [hour, data] of Object.entries(errorAnalysis.hourlyAccuracy)) {
       if (data.total > 5) {
         const avgAccuracy = data.sumAccuracy / data.total;
-        // If accuracy is low at this hour, reduce confidence
         newWeights.hourlyMultipliers[hour] = avgAccuracy / 100;
       }
     }
     
-    // Adjust main weights based on wind type accuracy
     const thermalAccuracy = errorAnalysis.windTypeAccuracy.thermal;
     const northFlowAccuracy = errorAnalysis.windTypeAccuracy.north_flow;
     
@@ -805,6 +795,26 @@ class LearningSystem {
       const rate = northFlowAccuracy.correct / northFlowAccuracy.total;
       newWeights.pressureWeight = currentWeights.pressureWeight * (0.5 + rate * 0.5);
     }
+
+    // Derive activity-specific weight sets from the same learning data.
+    // These get pushed through onWeightsUpdated and recognized by each predictor.
+    this._activityWeights = {
+      paragliding: {
+        ...newWeights,
+        activity: 'paragliding',
+        speedBiasCorrection: newWeights.speedBiasCorrection * 0.8,
+      },
+      boating: {
+        ...newWeights,
+        activity: 'boating',
+        speedBiasCorrection: newWeights.speedBiasCorrection,
+      },
+      fishing: {
+        ...newWeights,
+        activity: 'fishing',
+        speedBiasCorrection: newWeights.speedBiasCorrection * 0.5,
+      },
+    };
     
     return newWeights;
   }
@@ -886,9 +896,21 @@ class LearningSystem {
     
     this.currentWeights = weights;
 
-    // Push new weights to all listeners (ThermalPredictor, DataNormalizer, etc.)
+    // Push base weights to ThermalPredictor / DataNormalizer
     this._pushWeightsToPredictor();
-    console.log('Weights v' + weights.version + ' pushed to prediction engine');
+    console.log('Weights v' + weights.version + ' pushed to thermal prediction engine');
+
+    // Push activity-specific weights so paragliding/boating/fishing predictors receive them
+    if (this._activityWeights) {
+      for (const [activity, actWeights] of Object.entries(this._activityWeights)) {
+        for (const cb of this._weightListeners) {
+          try { cb(actWeights); } catch (e) {
+            console.error(`Error pushing ${activity} weights:`, e);
+          }
+        }
+      }
+      console.log('Activity weights pushed: paragliding, boating, fishing');
+    }
   }
 
   // =========================================
