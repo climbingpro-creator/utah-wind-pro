@@ -103,6 +103,10 @@ const LOCATION_STATIONS = {
   'utah-lake-mm19':     { primary: 'QSF',  secondary: ['KPVU','FPS'], upstreamNorth: ['KSLC', 'UTALP'], upstreamThermal: ['QSF'] },
   'deer-creek':         { primary: 'KHCR', secondary: ['SND'],        upstreamNorth: ['KSLC'],           upstreamThermal: ['KPVU', 'SND'] },
   'willard-bay':        { primary: 'KHIF', secondary: [],             upstreamNorth: ['KSLC'],           upstreamThermal: ['KHIF'] },
+  'strawberry-ladders': { primary: 'KHCR', secondary: ['CRU1'],       upstreamNorth: ['KSLC'],           upstreamThermal: ['KHCR', 'SBDU1'] },
+  'strawberry-bay':     { primary: 'KHCR', secondary: ['CRU1'],       upstreamNorth: ['KSLC'],           upstreamThermal: ['KHCR'] },
+  'strawberry-soldier': { primary: 'CRU1', secondary: ['KHCR'],       upstreamNorth: ['KSLC'],           upstreamThermal: ['CRU1'] },
+  'skyline-drive':      { primary: 'UFCU1', secondary: ['EPHU1'],     upstreamNorth: ['KSLC'],           upstreamThermal: ['UFCU1'] },
 };
 
 // ─── DAYLIGHT ─────────────────────────────────────────────────────

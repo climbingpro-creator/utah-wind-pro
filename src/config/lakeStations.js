@@ -802,6 +802,379 @@ export const LAKE_CONFIGS = {
     waterTempEstimate: 55,
   },
 
+  // =====================================================
+  // STRAWBERRY RESERVOIR — 3 SNOWKITE LOCATIONS
+  // =====================================================
+
+  'strawberry-ladders': {
+    id: 'strawberry-ladders',
+    name: 'Ladders (NW)',
+    shortName: 'Ladders',
+    region: 'Strawberry Reservoir',
+    coordinates: { lat: 40.1850, lng: -111.1600 },
+    elevation: 7600,
+
+    primaryWindType: 'W/NW Frontal',
+    thermalDirection: 'W to NW (260-340°)',
+    description: 'Primary snowkite launch — shallow water, best access from marina road',
+
+    shoreOrientation: 315, // Shore faces NW
+    kiting: {
+      onshore: { min: 270, max: 350 },       // W to NNW — wind from water
+      sideOn: { min: 350, max: 45, min2: 225, max2: 270 },
+      sideOffshore: { min: 90, max: 135 },   // E-SE — side-off
+      offshore: { min: 135, max: 225 },       // SE to SW — offshore
+    },
+
+    stations: {
+      pressure: {
+        high: {
+          id: 'KSLC',
+          name: 'Salt Lake City Intl',
+          elevation: 4226,
+          role: 'Regional pressure reference',
+        },
+        low: {
+          id: 'KHCR',
+          name: 'Heber Valley Airport',
+          elevation: 5637,
+          role: 'Valley pressure reference',
+        },
+        bustThreshold: 2.5,
+      },
+
+      ridge: [
+        {
+          id: 'SBDU1',
+          name: 'Strawberry Divide',
+          elevation: 8100,
+          role: 'Primary ridge reference',
+          priority: 1,
+        },
+        {
+          id: 'DANU1',
+          name: 'Daniels Summit',
+          elevation: 8000,
+          role: 'North ridge reference',
+          priority: 2,
+        },
+      ],
+
+      groundTruth: {
+        id: 'KHCR',
+        name: 'Heber Valley Airport',
+        role: 'Ground Truth — closest reliable wind station',
+      },
+
+      lakeshore: [
+        {
+          id: 'KHCR',
+          name: 'Heber Valley Airport',
+          elevation: 5637,
+          role: 'Primary — nearest aviation station',
+          priority: 1,
+        },
+        {
+          id: 'CRU1',
+          name: 'Currant Creek',
+          elevation: 7900,
+          role: 'East side reference',
+          priority: 2,
+        },
+      ],
+
+      reference: [
+        { id: 'DANU1', name: 'Daniels Summit', elevation: 8000 },
+      ],
+    },
+
+    thermal: {
+      optimalDirection: { min: 260, max: 340, ideal: 300 },
+      optimalSpeed: { min: 8, max: 25, average: 14 },
+      peakHours: { start: 10, end: 16, peak: 13 },
+      buildTime: { start: 8, usable: 10 },
+      fadeTime: { start: 16, end: 18 },
+    },
+
+    snowkite: true,
+    waterTempEstimate: 34,
+  },
+
+  'strawberry-bay': {
+    id: 'strawberry-bay',
+    name: 'Strawberry Bay',
+    shortName: 'Straw Bay',
+    region: 'Strawberry Reservoir',
+    coordinates: { lat: 40.1750, lng: -111.1800 },
+    elevation: 7600,
+
+    primaryWindType: 'W/SW Frontal',
+    thermalDirection: 'W to SW (220-280°)',
+    description: 'West bay near marina — good parking and access, moderate fetch',
+
+    shoreOrientation: 270, // Shore faces West
+    kiting: {
+      onshore: { min: 225, max: 315 },       // SW to NW — wind from water
+      sideOn: { min: 315, max: 360, min2: 180, max2: 225 },
+      sideOffshore: { min: 45, max: 90 },    // NE to E — side-off
+      offshore: { min: 90, max: 180 },        // E to S — offshore
+    },
+
+    stations: {
+      pressure: {
+        high: {
+          id: 'KSLC',
+          name: 'Salt Lake City Intl',
+          elevation: 4226,
+          role: 'Regional pressure reference',
+        },
+        low: {
+          id: 'KHCR',
+          name: 'Heber Valley Airport',
+          elevation: 5637,
+          role: 'Valley pressure reference',
+        },
+        bustThreshold: 2.5,
+      },
+
+      ridge: [
+        {
+          id: 'SBDU1',
+          name: 'Strawberry Divide',
+          elevation: 8100,
+          role: 'Primary ridge reference',
+          priority: 1,
+        },
+      ],
+
+      groundTruth: {
+        id: 'KHCR',
+        name: 'Heber Valley Airport',
+        role: 'Ground Truth — closest reliable wind station',
+      },
+
+      lakeshore: [
+        {
+          id: 'KHCR',
+          name: 'Heber Valley Airport',
+          elevation: 5637,
+          role: 'Primary — nearest aviation station',
+          priority: 1,
+        },
+        {
+          id: 'CRU1',
+          name: 'Currant Creek',
+          elevation: 7900,
+          role: 'East side reference',
+          priority: 2,
+        },
+      ],
+
+      reference: [
+        { id: 'DANU1', name: 'Daniels Summit', elevation: 8000 },
+      ],
+    },
+
+    thermal: {
+      optimalDirection: { min: 220, max: 280, ideal: 250 },
+      optimalSpeed: { min: 8, max: 25, average: 14 },
+      peakHours: { start: 10, end: 16, peak: 13 },
+      buildTime: { start: 8, usable: 10 },
+      fadeTime: { start: 16, end: 18 },
+    },
+
+    snowkite: true,
+    waterTempEstimate: 34,
+  },
+
+  'strawberry-soldier': {
+    id: 'strawberry-soldier',
+    name: 'Soldier Creek',
+    shortName: 'Soldier Ck',
+    region: 'Strawberry Reservoir',
+    coordinates: { lat: 40.1200, lng: -111.1000 },
+    elevation: 7600,
+
+    primaryWindType: 'S/SW Channeled',
+    thermalDirection: 'S to SW (180-240°)',
+    description: 'South end near dam — channeled wind from Soldier Creek canyon',
+
+    shoreOrientation: 180, // Shore faces South
+    kiting: {
+      onshore: { min: 135, max: 225 },       // SE to SW — wind from water
+      sideOn: { min: 225, max: 270, min2: 90, max2: 135 },
+      sideOffshore: { min: 330, max: 20 },   // NNW to NNE — side-off
+      offshore: { min: 315, max: 45 },        // NW to NE — offshore
+    },
+
+    stations: {
+      pressure: {
+        high: {
+          id: 'KSLC',
+          name: 'Salt Lake City Intl',
+          elevation: 4226,
+          role: 'Regional pressure reference',
+        },
+        low: {
+          id: 'KHCR',
+          name: 'Heber Valley Airport',
+          elevation: 5637,
+          role: 'Valley pressure reference',
+        },
+        bustThreshold: 2.5,
+      },
+
+      ridge: [
+        {
+          id: 'SBDU1',
+          name: 'Strawberry Divide',
+          elevation: 8100,
+          role: 'Primary ridge reference',
+          priority: 1,
+        },
+        {
+          id: 'CRU1',
+          name: 'Currant Creek',
+          elevation: 7900,
+          role: 'East reference',
+          priority: 2,
+        },
+      ],
+
+      groundTruth: {
+        id: 'CRU1',
+        name: 'Currant Creek',
+        role: 'Ground Truth — closest to south end',
+      },
+
+      lakeshore: [
+        {
+          id: 'CRU1',
+          name: 'Currant Creek',
+          elevation: 7900,
+          role: 'Primary — nearest to Soldier Creek',
+          priority: 1,
+        },
+        {
+          id: 'KHCR',
+          name: 'Heber Valley Airport',
+          elevation: 5637,
+          role: 'Valley reference',
+          priority: 2,
+        },
+      ],
+
+      reference: [
+        { id: 'SBDU1', name: 'Strawberry Divide', elevation: 8100 },
+      ],
+    },
+
+    thermal: {
+      optimalDirection: { min: 180, max: 240, ideal: 210 },
+      optimalSpeed: { min: 8, max: 25, average: 14 },
+      peakHours: { start: 10, end: 16, peak: 13 },
+      buildTime: { start: 8, usable: 10 },
+      fadeTime: { start: 16, end: 18 },
+    },
+
+    snowkite: true,
+    waterTempEstimate: 34,
+  },
+
+  // =====================================================
+  // SKYLINE DRIVE — SNOWKITE
+  // =====================================================
+
+  'skyline-drive': {
+    id: 'skyline-drive',
+    name: 'Skyline Drive (Big Drift)',
+    shortName: 'Skyline',
+    region: 'Sanpete County',
+    coordinates: { lat: 39.61554, lng: -111.30271 },
+    elevation: 9680,
+
+    primaryWindType: 'W/NW Plateau',
+    thermalDirection: 'W to NW (250-340°)',
+    description: 'High-elevation snowkite complex at 10,000 ft — open bowls, deep snow, strong persistent wind',
+
+    shoreOrientation: null,
+    kiting: {
+      onshore: { min: 250, max: 340 },       // W to NNW — prevailing plateau wind
+      sideOn: { min: 340, max: 30, min2: 210, max2: 250 },
+      sideOffshore: { min: 30, max: 80 },    // NNE to ENE
+      offshore: { min: 80, max: 210 },        // E to SSW — lee side, gusty/turbulent
+    },
+
+    stations: {
+      pressure: {
+        high: {
+          id: 'KSLC',
+          name: 'Salt Lake City Intl',
+          elevation: 4226,
+          role: 'Regional pressure reference',
+        },
+        low: {
+          id: 'EPHU1',
+          name: 'Ephraim',
+          elevation: 5540,
+          role: 'Sanpete Valley pressure reference',
+        },
+        bustThreshold: 3.0,
+      },
+
+      ridge: [
+        {
+          id: 'UFCU1',
+          name: 'Fairview Canyon UDOT',
+          elevation: 9200,
+          role: 'PRIMARY — UDOT station minutes from Big Drift',
+          priority: 1,
+        },
+      ],
+
+      groundTruth: {
+        id: 'UFCU1',
+        name: 'Fairview Canyon UDOT',
+        role: 'Ground Truth — nearest station to Big Drift',
+      },
+
+      lakeshore: [
+        {
+          id: 'UFCU1',
+          name: 'Fairview Canyon UDOT',
+          elevation: 9200,
+          role: 'Primary — closest to kite area',
+          priority: 1,
+        },
+        {
+          id: 'EPHU1',
+          name: 'Ephraim',
+          elevation: 5540,
+          role: 'Valley floor reference',
+          priority: 2,
+        },
+      ],
+
+      reference: [
+        { id: 'MNTU1', name: 'Manti', elevation: 5620 },
+      ],
+    },
+
+    thermal: {
+      optimalDirection: { min: 250, max: 340, ideal: 290 },
+      optimalSpeed: { min: 10, max: 30, average: 16 },
+      peakHours: { start: 10, end: 16, peak: 13 },
+      buildTime: { start: 8, usable: 10 },
+      fadeTime: { start: 16, end: 18 },
+    },
+
+    snowkite: true,
+  },
+
+  // =====================================================
+  // PINEVIEW RESERVOIR
+  // =====================================================
+
   'pineview': {
     id: 'pineview',
     name: 'Pineview Reservoir',

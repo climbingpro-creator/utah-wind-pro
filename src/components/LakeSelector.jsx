@@ -11,10 +11,17 @@ const UTAH_LAKE_LAUNCHES = [
   { id: 'utah-lake-mm19', name: 'Mile Marker 19', wind: 'SE/E', direction: '120-160°', icon: '↖', position: 'North', meter: 'QSF', meterName: 'Spanish Fork' },
 ];
 
+const STRAWBERRY_LAUNCHES = [
+  { id: 'strawberry-ladders', name: 'Ladders (NW)', wind: 'W/NW', direction: '260-340°', icon: '❄️', position: 'Northwest', meter: 'KHCR', meterName: 'Heber Airport' },
+  { id: 'strawberry-bay', name: 'Strawberry Bay', wind: 'W/SW', direction: '220-280°', icon: '❄️', position: 'West', meter: 'KHCR', meterName: 'Heber Airport' },
+  { id: 'strawberry-soldier', name: 'Soldier Creek', wind: 'S/SW', direction: '180-240°', icon: '❄️', position: 'South', meter: 'CRU1', meterName: 'Currant Creek' },
+];
+
 const OTHER_LAKES = [
   { id: 'deer-creek', name: 'Deer Creek', region: 'Wasatch', wind: 'SW Canyon', meter: 'KHCR', meterName: 'Heber Airport' },
   { id: 'willard-bay', name: 'Willard Bay', region: 'Box Elder', wind: 'N "Gap"', meter: 'KHIF', meterName: 'Hill AFB' },
   { id: 'pineview', name: 'Pineview', region: 'Weber', wind: 'E/W Canyon', meter: null, meterName: null },
+  { id: 'skyline-drive', name: 'Skyline Drive', region: 'Sanpete', wind: 'W/NW Plateau', meter: 'UFCU1', meterName: 'Fairview Canyon', snowkite: true },
 ];
 
 function isDirectionFavorable(dir, lakeId) {
@@ -115,6 +122,9 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
   const [utahLakeExpanded, setUtahLakeExpanded] = useState(
     selectedLake?.startsWith('utah-lake')
   );
+  const [strawberryExpanded, setStrawberryExpanded] = useState(
+    selectedLake?.startsWith('strawberry')
+  );
 
   // Persistent station cache — survives tab switches
   const cacheRef = useRef({});
@@ -129,7 +139,7 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
 
   const windStatuses = useMemo(() => {
     const out = {};
-    [...UTAH_LAKE_LAUNCHES, ...OTHER_LAKES].forEach(loc => {
+    [...UTAH_LAKE_LAUNCHES, ...STRAWBERRY_LAUNCHES, ...OTHER_LAKES].forEach(loc => {
       out[loc.id] = getWindStatus(loc, stationCache, activity);
     });
     return out;
@@ -138,6 +148,10 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
   const isUtahLakeSelected = selectedLake?.startsWith('utah-lake');
   const selectedUtahLaunch = UTAH_LAKE_LAUNCHES.find(l => l.id === selectedLake);
   const anyUtahHot = UTAH_LAKE_LAUNCHES.some(l => windStatuses[l.id]?.level === 'hot');
+
+  const isStrawberrySelected = selectedLake?.startsWith('strawberry');
+  const selectedStrawberryLaunch = STRAWBERRY_LAUNCHES.find(l => l.id === selectedLake);
+  const anyStrawberryHot = STRAWBERRY_LAUNCHES.some(l => windStatuses[l.id]?.level === 'hot');
 
   return (
     <div className="space-y-3">
@@ -224,6 +238,89 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
         )}
       </div>
 
+      {/* Strawberry Reservoir Section */}
+      <div className={`rounded-xl border overflow-hidden transition-all duration-300 ${
+        anyStrawberryHot && !isStrawberrySelected
+          ? (isDark ? 'bg-green-900/10 border-green-500/40' : 'bg-green-50 border-green-400')
+          : (isDark ? 'bg-slate-800/30 border-slate-700' : 'bg-white border-slate-200 shadow-sm')
+      }`}>
+        <button
+          onClick={() => setStrawberryExpanded(!strawberryExpanded)}
+          className={`w-full flex items-center justify-between px-4 py-3 transition-colors ${
+            isStrawberrySelected
+              ? (isDark ? 'bg-cyan-500/10' : 'bg-cyan-50')
+              : (isDark ? 'hover:bg-slate-800/50' : 'hover:bg-slate-50')
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-lg">❄️</span>
+            <div className="text-left">
+              <span className={`font-semibold ${isStrawberrySelected ? (isDark ? 'text-cyan-400' : 'text-cyan-600') : (isDark ? 'text-slate-300' : 'text-slate-700')}`}>
+                Strawberry Reservoir
+              </span>
+              {selectedStrawberryLaunch && (
+                <span className={`ml-2 ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}>• {selectedStrawberryLaunch.name}</span>
+              )}
+              <div className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>3 snowkite locations · 7,600 ft</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {anyStrawberryHot && (
+              <span className="animate-pulse text-xs font-bold text-green-400">WIND ON</span>
+            )}
+            {strawberryExpanded ? (
+              <ChevronUp className={`w-5 h-5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`} />
+            ) : (
+              <ChevronDown className={`w-5 h-5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`} />
+            )}
+          </div>
+        </button>
+
+        {strawberryExpanded && (
+          <div className={`border-t p-3 grid grid-cols-1 sm:grid-cols-3 gap-2 ${isDark ? 'border-slate-700' : 'border-slate-200'}`}>
+            {STRAWBERRY_LAUNCHES.map((launch) => {
+              const ws = windStatuses[launch.id];
+              const isHot = ws?.level === 'hot';
+              const isSelected = selectedLake === launch.id;
+
+              return (
+                <button
+                  key={launch.id}
+                  onClick={() => onSelectLake(launch.id)}
+                  className={`
+                    flex flex-col items-center p-3 rounded-lg transition-all duration-300 relative
+                    ${isSelected
+                      ? (isDark
+                          ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400 border-2'
+                          : 'bg-cyan-100 border-cyan-500 text-cyan-700 border-2')
+                      : isHot
+                        ? (isDark
+                            ? 'bg-green-500/15 border-green-500/60 text-green-300 border-2 shadow-[0_0_12px_rgba(34,197,94,0.3)]'
+                            : 'bg-green-50 border-green-500 text-green-700 border-2 shadow-[0_0_12px_rgba(34,197,94,0.2)]')
+                        : (isDark
+                            ? 'bg-slate-800/50 border-slate-700 text-slate-400 border hover:border-slate-500'
+                            : 'bg-slate-50 border-slate-200 text-slate-600 border hover:border-slate-400')
+                    }
+                  `}
+                >
+                  <span className={`text-[10px] mb-1 ${isDark ? 'text-slate-600' : 'text-slate-500'}`}>{launch.position}</span>
+                  <span className="font-medium text-sm">{launch.name}</span>
+                  <span className={`text-xs mt-1 ${isSelected ? (isDark ? 'text-cyan-300' : 'text-cyan-600') : (isDark ? 'text-slate-500' : 'text-slate-500')}`}>
+                    {launch.wind} {launch.direction}
+                  </span>
+                  {launch.meterName && (
+                    <span className={`text-[9px] mt-0.5 ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
+                      {launch.meterName}
+                    </span>
+                  )}
+                  {ws && <div className="mt-1"><WindBadge status={ws} isDark={isDark} /></div>}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
       {/* Other Lakes */}
       <div className="flex gap-2 flex-wrap">
         {OTHER_LAKES.map((lake) => {
@@ -268,4 +365,4 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
   );
 }
 
-export { UTAH_LAKE_LAUNCHES, OTHER_LAKES };
+export { UTAH_LAKE_LAUNCHES, STRAWBERRY_LAUNCHES, OTHER_LAKES };

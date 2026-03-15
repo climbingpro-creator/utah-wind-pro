@@ -33,6 +33,8 @@ const SPOTS = [
         id,
         name: cfg.shortName || cfg.name,
         lake: cfg.region?.replace(/^Utah Lake.*/, 'Utah Lake')
+                         .replace(/^Strawberry.*/, 'Strawberry')
+                         .replace(/^Sanpete.*/, 'Skyline')
                          .replace(/^Wasatch.*/, 'Deer Creek')
                          .replace(/^Box Elder.*/, 'Willard Bay')
                          .replace(/^Weber.*/, 'Pineview')
@@ -44,9 +46,11 @@ const SPOTS = [
         northDir: cfg.thermal?.northFlow
           ? [cfg.thermal.northFlow.min, cfg.thermal.northFlow.max] : null,
         kiting: cfg.kiting || null,
-        bestFor: id.startsWith('utah-lake')
-          ? ['kiting', 'sailing', 'windsurfing', 'boating', 'fishing']
-          : ['kiting', 'sailing', 'boating', 'fishing'],
+        bestFor: cfg.snowkite
+          ? ['kiting', 'windsurfing']
+          : id.startsWith('utah-lake')
+            ? ['kiting', 'sailing', 'windsurfing', 'boating', 'fishing']
+            : ['kiting', 'sailing', 'boating', 'fishing'],
         description: cfg.description || '',
         upstream: loc ? [...(loc.upstreamNorth || []), ...(loc.upstreamThermal || [])] : [],
       };
