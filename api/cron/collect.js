@@ -16,9 +16,14 @@
  * to backfill its IndexedDB learning system.
  */
 
-const SYNOPTIC_TOKEN = process.env.SYNOPTIC_TOKEN || process.env.VITE_SYNOPTIC_TOKEN;
-const UPSTASH_URL = process.env.UPSTASH_REDIS_REST_URL;
-const UPSTASH_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
+// Read env vars at invocation time (not module init) to ensure fresh values
+function getEnv() {
+  return {
+    synopticToken: process.env.SYNOPTIC_TOKEN || process.env.VITE_SYNOPTIC_TOKEN,
+    upstashUrl: process.env.UPSTASH_REDIS_REST_URL,
+    upstashToken: process.env.UPSTASH_REDIS_REST_TOKEN,
+  };
+}
 
 const ALL_STATIONS = [
   'KSLC', 'KPVU', 'QSF', 'FPS', 'UTALP', 'UTOLY', 'UID28',
@@ -36,11 +41,12 @@ const LAKE_STATION_MAP = {
 };
 
 async function redisCommand(command, ...args) {
-  if (!UPSTASH_URL || !UPSTASH_TOKEN) return null;
-  const resp = await fetch(`${UPSTASH_URL}`, {
+  const { upstashUrl, upstashToken } = getEnv();
+  if (!upstashUrl || !upstashToken) return null;
+  const resp = await fetch(upstashUrl, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${UPSTASH_TOKEN}`,
+      Authorization: `Bearer ${upstashToken}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify([command, ...args]),
@@ -50,7 +56,8 @@ async function redisCommand(command, ...args) {
 }
 
 async function fetchSynopticLatest() {
-  const url = `https://api.synopticdata.com/v2/stations/latest?token=${SYNOPTIC_TOKEN}&stids=${ALL_STATIONS.join(',')}&vars=wind_speed,wind_direction,wind_gust,air_temp,pressure&units=english&obtimezone=local`;
+  const { synopticToken } = getEnv();
+  const url = `https://api.synopticdata.com/v2/stations/latest?token=${synopticToken}&stids=${ALL_STATIONS.join(',')}&vars=wind_speed,wind_direction,wind_gust,air_temp,pressure&units=english&obtimezone=local`;
   const resp = await fetch(url);
   if (!resp.ok) throw new Error(`Synoptic ${resp.status}`);
   const json = await resp.json();
@@ -75,8 +82,10 @@ export default async function handler(req, res) {
     return await handleSync(res);
   }
 
+  const env = getEnv();
+
   // Cron collection: called by Vercel every 15 min
-  if (!SYNOPTIC_TOKEN) {
+  if (!env.synopticToken) {
     return res.status(500).json({ error: 'SYNOPTIC_TOKEN not set' });
   }
 
@@ -98,7 +107,7 @@ export default async function handler(req, res) {
     };
 
     // Store in Redis with 7-day TTL (604800 seconds)
-    if (UPSTASH_URL && UPSTASH_TOKEN) {
+    if (env.upstashUrl && env.upstashToken) {
       await redisCommand('SET', key, JSON.stringify(record), 'EX', '604800');
       // Also maintain an index of recent keys
       await redisCommand('LPUSH', 'obs:index', key);
@@ -110,12 +119,13 @@ export default async function handler(req, res) {
       timestamp: now.toISOString(),
       stationsCollected: stations.length,
       storedAs: key,
-      hasRedis: !!(UPSTASH_URL && UPSTASH_TOKEN),
+      hasRedis: !!(env.upstashUrl && env.upstashToken),
       debug: {
-        hasUrl: !!UPSTASH_URL,
-        hasToken: !!UPSTASH_TOKEN,
-        urlPrefix: UPSTASH_URL ? UPSTASH_URL.substring(0, 30) + '...' : null,
-        allEnvKeys: Object.keys(process.env).filter(k => k.includes('UPSTASH') || k.includes('REDIS') || k.includes('KV')),
+        hasUrl: !!env.upstashUrl,
+        hasToken: !!env.upstashToken,
+        urlPrefix: env.upstashUrl ? env.upstashUrl.substring(0, 30) + '...' : null,
+        envKeysWithUpstash: Object.keys(process.env).filter(k => k.toUpperCase().includes('UPSTASH')),
+        envKeysWithSynoptic: Object.keys(process.env).filter(k => k.toUpperCase().includes('SYNOPTIC')),
       },
     });
   } catch (error) {
@@ -125,7 +135,8 @@ export default async function handler(req, res) {
 }
 
 async function handleSync(res) {
-  if (!UPSTASH_URL || !UPSTASH_TOKEN) {
+  const { upstashUrl, upstashToken } = getEnv();
+  if (!upstashUrl || !upstashToken) {
     return res.status(200).json({ records: [], message: 'Redis not configured — using client-side backfill only' });
   }
 
