@@ -341,7 +341,7 @@ export function Dashboard() {
       <main className="max-w-7xl mx-auto px-4 py-6 space-y-6">
         {/* Only show lake selector for water sports (not paragliding or fishing) */}
         {!activityConfig?.hideLakeSelector && (
-          <LakeSelector selectedLake={selectedLake} onSelectLake={setSelectedLake} />
+          <LakeSelector selectedLake={selectedLake} onSelectLake={setSelectedLake} stationReadings={lakeState?.wind?.stations} activity={selectedActivity} />
         )}
 
         {/* Activity Score Banner — forecast-aware, shows best opportunity */}
@@ -742,6 +742,7 @@ export function Dashboard() {
                 currentWind={{ speed: currentWindSpeed, gust: currentWindGust, direction: currentWindDirection }}
                 lakeState={lakeState}
                 mesoData={mesoData}
+                onSelectSpot={setSelectedLake}
               />
             </SafeComponent>
 
