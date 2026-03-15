@@ -26,6 +26,14 @@ export default async function handler(req, res) {
       return await handleSynopticLatest(res, stids);
     } else if (source === 'synoptic-history') {
       return await handleSynopticHistory(res, stids, hours);
+    } else if (source === 'env-debug') {
+      return res.status(200).json({
+        upstash: !!process.env.UPSTASH_REDIS_REST_URL,
+        synoptic: !!process.env.SYNOPTIC_TOKEN,
+        viteSynoptic: !!process.env.VITE_SYNOPTIC_TOKEN,
+        upstashKeys: Object.keys(process.env).filter(k => k.includes('UPSTASH')),
+        synopticKeys: Object.keys(process.env).filter(k => k.includes('SYNOPTIC')),
+      });
     } else {
       return res.status(400).json({ error: 'Invalid source. Use: ambient, synoptic, synoptic-history' });
     }
