@@ -1,8 +1,7 @@
 import { MapPin, ChevronDown, ChevronUp, Wind } from 'lucide-react';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { LAKE_CONFIGS } from '../config/lakeStations';
-import { LOCATION_STATIONS } from '../services/WindFieldEngine';
 
 const UTAH_LAKE_LAUNCHES = [
   { id: 'utah-lake-lincoln', name: 'Lincoln Beach', wind: 'SE', direction: '135-165°', icon: '↖', position: 'South', meter: 'KPVU', meterName: 'Provo Airport' },
@@ -33,24 +32,26 @@ function isNorthFlow(dir, lakeId) {
   return dir >= min || dir <= max;
 }
 
-function getWindStatus(lakeId, stationReadings, activity) {
-  if (!stationReadings?.length) return null;
+// Find a station reading by ID from the cached station map
+function findStation(stationCache, meterId) {
+  if (!stationCache || !meterId) return null;
+  // PWS special case
+  if (meterId === 'PWS') return stationCache['PWS'] || null;
+  return stationCache[meterId] || null;
+}
 
-  const loc = LOCATION_STATIONS[lakeId];
-  const primaryId = loc?.primary;
-  if (!primaryId) return null;
-
-  const station = stationReadings.find(s => s.id === primaryId);
+function getWindStatus(launch, stationCache, activity) {
+  const meterId = launch.meter;
+  const station = findStation(stationCache, meterId);
   if (!station) return null;
 
   const speed = station.speed ?? station.windSpeed ?? 0;
   const dir = station.direction ?? station.windDirection;
-  const gust = station.gust ?? station.windGust ?? speed;
 
   if (speed < 3) return { level: 'calm', speed, dir, label: `${speed.toFixed(0)} mph` };
 
-  const favorable = isDirectionFavorable(dir, lakeId);
-  const north = isNorthFlow(dir, lakeId);
+  const favorable = isDirectionFavorable(dir, launch.id);
+  const north = isNorthFlow(dir, launch.id);
   const wantsWind = !['boating', 'paddling', 'fishing'].includes(activity);
 
   if (wantsWind) {
@@ -67,6 +68,16 @@ function getWindStatus(lakeId, stationReadings, activity) {
       return { level: 'choppy', speed, dir, label: `${speed.toFixed(0)} mph` };
   }
   return { level: 'light', speed, dir, label: `${speed.toFixed(0)} mph` };
+}
+
+// Merge incoming station readings into a persistent cache keyed by station ID
+function mergeStationCache(cache, readings) {
+  if (!readings?.length) return cache;
+  const next = { ...cache };
+  for (const s of readings) {
+    if (s.id) next[s.id] = s;
+  }
+  return next;
 }
 
 function WindBadge({ status, isDark }) {
@@ -105,13 +116,24 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
     selectedLake?.startsWith('utah-lake')
   );
 
+  // Persistent station cache — survives tab switches
+  const cacheRef = useRef({});
+  useEffect(() => {
+    cacheRef.current = mergeStationCache(cacheRef.current, stationReadings);
+  }, [stationReadings]);
+
+  const stationCache = useMemo(
+    () => mergeStationCache(cacheRef.current, stationReadings),
+    [stationReadings]
+  );
+
   const windStatuses = useMemo(() => {
     const out = {};
     [...UTAH_LAKE_LAUNCHES, ...OTHER_LAKES].forEach(loc => {
-      out[loc.id] = getWindStatus(loc.id, stationReadings, activity);
+      out[loc.id] = getWindStatus(loc, stationCache, activity);
     });
     return out;
-  }, [stationReadings, activity]);
+  }, [stationCache, activity]);
 
   const isUtahLakeSelected = selectedLake?.startsWith('utah-lake');
   const selectedUtahLaunch = UTAH_LAKE_LAUNCHES.find(l => l.id === selectedLake);
