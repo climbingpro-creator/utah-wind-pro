@@ -165,11 +165,12 @@ function scoreSpot(spot, activity, currentWind, lakeState, mesoData) {
   if (hasKitingZones && dir != null) {
     if (isInKitingZone(dir, spot.kiting.onshore)) shoreZone = 'onshore';
     else if (isInKitingZone(dir, spot.kiting.sideOn)) shoreZone = 'side-on';
+    else if (isInKitingZone(dir, spot.kiting.sideOffshore)) shoreZone = 'side-offshore';
     else if (isInKitingZone(dir, spot.kiting.offshore)) shoreZone = 'offshore';
   }
 
   if (wantsWind) {
-    // Direction scoring — kiting uses onshore/sideOn/offshore zones
+    // Direction scoring — kiting uses onshore/sideOn/sideOffshore/offshore zones
     if (hasKitingZones && shoreZone) {
       if (shoreZone === 'onshore') {
         score += 30 + (thermalProb / 100) * 10;
@@ -177,6 +178,9 @@ function scoreSpot(spot, activity, currentWind, lakeState, mesoData) {
       } else if (shoreZone === 'side-on') {
         score += 20 + (thermalProb / 100) * 5;
         reason = `Side-on ${dirLabel(dir)} ${speed.toFixed(0)} mph — good angle`;
+      } else if (shoreZone === 'side-offshore') {
+        score += 12;
+        reason = `Side-off ${dirLabel(dir)} ${speed.toFixed(0)} mph — kitable, intermediate+`;
       } else if (shoreZone === 'offshore') {
         score -= 25;
         reason = `Offshore ${dirLabel(dir)} — DANGEROUS`;
@@ -265,6 +269,7 @@ function scoreSpot(spot, activity, currentWind, lakeState, mesoData) {
     score: Math.max(0, Math.min(100, Math.round(score))),
     reason,
     wind: speed > 0 ? { speed, gust, dir } : null,
+    shoreZone,
   };
 }
 
@@ -314,8 +319,8 @@ function SpotRanker({ activity, currentWind, lakeState, mesoData, onSelectSpot }
   const ranked = useMemo(() => {
     return SPOTS
       .map(spot => {
-        const { score, reason, wind } = scoreSpot(spot, activity, currentWind, lakeState, stableData);
-        return { ...spot, score, reason, wind };
+        const { score, reason, wind, shoreZone } = scoreSpot(spot, activity, currentWind, lakeState, stableData);
+        return { ...spot, score, reason, wind, shoreZone };
       })
       .sort((a, b) => b.score - a.score);
   }, [activity, currentWind, lakeState, stableData]);
@@ -403,9 +408,27 @@ function SpotRanker({ activity, currentWind, lakeState, mesoData, onSelectSpot }
                   </span>
                 </div>
 
-                <p className={`text-xs mt-0.5 truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                  {spot.reason}
-                </p>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <p className={`text-xs truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                    {spot.reason}
+                  </p>
+                  {spot.shoreZone && (
+                    <span className={`shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wide ${
+                      spot.shoreZone === 'onshore'
+                        ? (isDark ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-700')
+                        : spot.shoreZone === 'side-on'
+                          ? (isDark ? 'bg-cyan-500/20 text-cyan-400' : 'bg-cyan-100 text-cyan-700')
+                          : spot.shoreZone === 'side-offshore'
+                            ? (isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-100 text-yellow-700')
+                            : (isDark ? 'bg-red-500/20 text-red-400' : 'bg-red-100 text-red-700')
+                    }`}>
+                      {spot.shoreZone === 'onshore' && 'Onshore'}
+                      {spot.shoreZone === 'side-on' && 'Side-on'}
+                      {spot.shoreZone === 'side-offshore' && 'Side-off · Int+'}
+                      {spot.shoreZone === 'offshore' && 'Offshore ⚠'}
+                    </span>
+                  )}
+                </div>
               </div>
             </button>
           );

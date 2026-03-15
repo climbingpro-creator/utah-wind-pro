@@ -42,6 +42,7 @@ import TrendPatterns from './TrendPatterns';
 import PropagationBanner from './PropagationBanner';
 import SessionFeedback from './SessionFeedback';
 import SessionReplay from './SessionReplay';
+import TodayHero from './TodayHero';
 
 function windDirectionToCardinal(degrees) {
   if (degrees == null) return 'N/A';
@@ -341,6 +342,14 @@ export function Dashboard() {
       )}
 
       <main className="max-w-7xl mx-auto px-4 py-6 space-y-6">
+        <TodayHero
+          windSpeed={currentWindSpeed}
+          windGust={currentWindGust}
+          thermalPrediction={lakeState?.thermalPrediction}
+          boatingPrediction={boatingPrediction}
+          onSelectActivity={setSelectedActivity}
+        />
+
         {/* Only show lake selector for water sports (not paragliding or fishing) */}
         {!activityConfig?.hideLakeSelector && (
           <LakeSelector selectedLake={selectedLake} onSelectLake={setSelectedLake} stationReadings={lakeState?.wind?.stations} activity={selectedActivity} />

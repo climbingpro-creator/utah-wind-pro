@@ -38,9 +38,10 @@ export const LAKE_CONFIGS = {
     // Lincoln Beach faces roughly East (shore runs N-S, water is to the East)
     shoreOrientation: 90, // Shore faces East
     kiting: {
-      onshore: { min: 45, max: 135 },    // NE to SE - wind blowing FROM water
-      sideOn: { min: 135, max: 180, min2: 0, max2: 45 }, // SE to S, N to NE
-      offshore: { min: 225, max: 315 },  // SW to NW - DANGEROUS
+      onshore: { min: 45, max: 135 },        // NE to SE — wind from water, safest
+      sideOn: { min: 135, max: 200, min2: 15, max2: 45 }, // SE-SSW and NNE-NE
+      sideOffshore: { min: 330, max: 15 },   // NNW to NNE — north wind, kitable with skill
+      offshore: { min: 225, max: 330 },       // SW to NNW — true offshore, DANGEROUS
     },
     
     stations: {
@@ -153,9 +154,10 @@ export const LAKE_CONFIGS = {
     
     shoreOrientation: 100, // Shore faces ESE
     kiting: {
-      onshore: { min: 55, max: 145 },
-      sideOn: { min: 145, max: 190, min2: 10, max2: 55 },
-      offshore: { min: 235, max: 325 },
+      onshore: { min: 55, max: 145 },        // ENE to SE — wind from water, safest
+      sideOn: { min: 145, max: 210, min2: 20, max2: 55 }, // SE-SSW and NNE-ENE
+      sideOffshore: { min: 335, max: 20 },   // NNW to NNE — north wind, kitable with skill
+      offshore: { min: 235, max: 335 },       // SW to NNW — true offshore, DANGEROUS
     },
     
     stations: {
@@ -242,12 +244,10 @@ export const LAKE_CONFIGS = {
     // Vineyard is on EAST shore - shore faces WEST toward the lake
     shoreOrientation: 270, // Shore faces West
     kiting: {
-      // Onshore = wind blowing FROM the lake (west) toward shore
-      onshore: { min: 225, max: 315 },    // SW to NW - wind FROM lake
-      // Side-on = S or SSW (parallel to shore)
-      sideOn: { min: 180, max: 225, min2: 315, max2: 360 }, // S to SW, NW to N
-      // Offshore = wind blowing TOWARD the lake - DANGEROUS
-      offshore: { min: 45, max: 135 },    // NE to SE - DANGEROUS, blows you out to lake
+      onshore: { min: 225, max: 315 },       // SW to NW — wind from lake, safest
+      sideOn: { min: 180, max: 225, min2: 315, max2: 360 }, // S-SW and NW-N
+      sideOffshore: { min: 0, max: 45 },     // N to NE — side-off, kitable with skill
+      offshore: { min: 90, max: 180 },        // E to S — true offshore at Vineyard, DANGEROUS
     },
     
     stations: {
@@ -331,11 +331,12 @@ export const LAKE_CONFIGS = {
     thermalDirection: 'SE to SSE (135-165°)',
     description: 'Your home launch - Classic SE thermal at Zig Zag',
     
-    shoreOrientation: 135, // Shore faces SE
+    shoreOrientation: 80, // Shore faces ENE (shoreline runs NNW-SSE, water is east)
     kiting: {
-      onshore: { min: 90, max: 180 },
-      sideOn: { min: 180, max: 225, min2: 45, max2: 90 },
-      offshore: { min: 270, max: 360 },
+      onshore: { min: 45, max: 135 },        // NE to SE — wind from lake, safest
+      sideOn: { min: 135, max: 200, min2: 15, max2: 45 }, // SE-SSW and NNE-NE
+      sideOffshore: { min: 315, max: 15 },   // NW to NNE — north wind zone, kitable with skill
+      offshore: { min: 225, max: 315 },       // SW to NW — true offshore, DANGEROUS
     },
     
     stations: {
