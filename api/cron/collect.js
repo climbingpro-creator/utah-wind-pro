@@ -120,13 +120,6 @@ export default async function handler(req, res) {
       stationsCollected: stations.length,
       storedAs: key,
       hasRedis: !!(env.upstashUrl && env.upstashToken),
-      debug: {
-        hasUrl: !!env.upstashUrl,
-        hasToken: !!env.upstashToken,
-        urlPrefix: env.upstashUrl ? env.upstashUrl.substring(0, 30) + '...' : null,
-        envKeysWithUpstash: Object.keys(process.env).filter(k => k.toUpperCase().includes('UPSTASH')),
-        envKeysWithSynoptic: Object.keys(process.env).filter(k => k.toUpperCase().includes('SYNOPTIC')),
-      },
     });
   } catch (error) {
     console.error('Cron collect error:', error);
