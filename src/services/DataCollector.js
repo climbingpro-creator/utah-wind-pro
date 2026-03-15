@@ -90,14 +90,15 @@ class DataCollector {
       setInterval(() => scheduleIdle(() => this.triggerLearning()), 24 * 60 * 60 * 1000)
     );
 
-    // On startup: backfill last 24 hours from Synoptic history
-    // This ensures no data gaps even if the app was closed for a day
-    scheduleIdle(() => this.backfillFromHistory());
-
-    // Then start normal real-time collection
-    scheduleIdle(() => this.collectActuals());
+    // On startup: run the FULL cycle immediately
+    // 1. Backfill 24hr history (fills gaps from when app was closed)
+    // 2. Collect current actuals
+    // 3. Record predictions for all locations
+    // 4. Verify past predictions against actuals
+    // 5. Trigger learning if enough data
+    scheduleIdle(() => this.runFullCycle());
     
-    console.log('Data Collector started — backfill + real-time collection active');
+    console.log('Data Collector started — full cycle on startup + recurring timers');
   }
 
   /**
@@ -111,6 +112,26 @@ class DataCollector {
     if (this._unsubWeights) {
       this._unsubWeights();
       this._unsubWeights = null;
+    }
+  }
+
+  /**
+   * Run the complete learning cycle on every app open.
+   * This ensures predictions, verifications, and learning happen
+   * even if the user only has the app open for a few minutes.
+   */
+  async runFullCycle() {
+    if (!this.isRunning) return;
+
+    try {
+      await this.backfillFromHistory();
+      await this.collectActuals();
+      await this.recordAndVerify();
+      await this.collectIndicatorData();
+      await this.triggerLearning();
+      console.log('Full startup cycle complete');
+    } catch (e) {
+      console.error('Startup cycle error (non-fatal):', e.message);
     }
   }
 
