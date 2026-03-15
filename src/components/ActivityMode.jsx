@@ -126,7 +126,23 @@ export const ACTIVITY_CONFIGS = {
   },
 };
 
-const ActivityMode = ({ selectedActivity, onActivityChange }) => {
+function getActivityStatus(activityId, windSpeed, windGust) {
+  const config = ACTIVITY_CONFIGS[activityId];
+  if (!config || windSpeed == null) return null;
+
+  const good = config.goodCondition?.(windSpeed, windGust);
+  if (!good) {
+    if (config.wantsWind) {
+      if (windSpeed >= config.thresholds.tooLight * 0.7) return 'marginal';
+    } else {
+      if (windSpeed <= (config.thresholds.choppy ?? config.thresholds.manageable ?? 12)) return 'marginal';
+    }
+    return null;
+  }
+  return 'active';
+}
+
+const ActivityMode = ({ selectedActivity, onActivityChange, windSpeed, windGust }) => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const activities = ['kiting', 'sailing', 'fishing', 'boating', 'paddling', 'paragliding'];
@@ -136,25 +152,46 @@ const ActivityMode = ({ selectedActivity, onActivityChange }) => {
       {activities.map(activityId => {
         const activity = ACTIVITY_CONFIGS[activityId];
         const isSelected = selectedActivity === activityId;
+        const status = getActivityStatus(activityId, windSpeed, windGust);
+        const isActive = status === 'active';
+        const isMarginal = status === 'marginal';
         
         return (
           <button
             key={activityId}
             onClick={() => onActivityChange(activityId)}
             className={`
-              flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium
-              transition-all duration-200
+              relative flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium
+              transition-all duration-300
               ${isSelected 
-                ? 'bg-blue-600 text-white shadow-lg' 
-                : (isDark 
-                    ? 'text-slate-400 hover:text-white hover:bg-slate-700/50'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200')
+                ? (isActive
+                    ? 'bg-green-600 text-white shadow-lg shadow-green-500/30'
+                    : isMarginal
+                      ? 'bg-yellow-600 text-white shadow-lg shadow-yellow-500/20'
+                      : 'bg-blue-600 text-white shadow-lg')
+                : isActive
+                  ? (isDark
+                      ? 'text-green-400 bg-green-500/10 hover:bg-green-500/20 ring-1 ring-green-500/30'
+                      : 'text-green-700 bg-green-50 hover:bg-green-100 ring-1 ring-green-400/40')
+                  : isMarginal
+                    ? (isDark
+                        ? 'text-yellow-400 bg-yellow-500/10 hover:bg-yellow-500/20 ring-1 ring-yellow-500/20'
+                        : 'text-yellow-700 bg-yellow-50 hover:bg-yellow-100 ring-1 ring-yellow-400/30')
+                    : (isDark 
+                        ? 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200')
               }
             `}
             title={activity.description}
           >
             <span className="text-base">{activity.icon}</span>
             <span className="hidden sm:inline">{activity.name}</span>
+            {isActive && !isSelected && (
+              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse ring-2 ring-slate-800" />
+            )}
+            {isMarginal && !isSelected && !isActive && (
+              <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-yellow-500 ring-2 ring-slate-800" />
+            )}
           </button>
         );
       })}

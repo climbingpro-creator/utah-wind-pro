@@ -261,6 +261,8 @@ export function Dashboard() {
             <ActivityMode 
               selectedActivity={selectedActivity}
               onActivityChange={setSelectedActivity}
+              windSpeed={currentWindSpeed}
+              windGust={currentWindGust}
             />
 
             <div className="flex items-center gap-4">
