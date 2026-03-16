@@ -118,38 +118,38 @@ function buildOutlook(windSpeed, windGust, thermalPrediction, boatingPrediction)
 
 const MOOD_STYLES = {
   epic: {
-    dark: 'from-green-900/40 via-emerald-900/30 to-slate-900/50 border-green-500/40',
-    light: 'from-green-50 via-emerald-50 to-white border-green-400',
+    dark: 'from-green-900/50 via-emerald-800/40 to-slate-900/80 border-green-500/30 shadow-[0_0_30px_-10px_rgba(34,197,94,0.3)]',
+    light: 'from-green-100 via-emerald-50 to-white border-green-300 shadow-green-500/10',
     accent: 'text-green-400',
     accentLight: 'text-green-700',
     badge: 'bg-green-500',
   },
   good: {
-    dark: 'from-cyan-900/30 via-blue-900/20 to-slate-900/50 border-cyan-500/30',
-    light: 'from-cyan-50 via-blue-50 to-white border-cyan-400',
+    dark: 'from-cyan-900/50 via-blue-800/40 to-slate-900/80 border-cyan-500/30 shadow-[0_0_30px_-10px_rgba(6,182,212,0.3)]',
+    light: 'from-cyan-100 via-blue-50 to-white border-cyan-300 shadow-cyan-500/10',
     accent: 'text-cyan-400',
     accentLight: 'text-cyan-700',
     badge: 'bg-cyan-500',
   },
   calm: {
-    dark: 'from-blue-900/30 via-indigo-900/20 to-slate-900/50 border-blue-500/30',
-    light: 'from-blue-50 via-indigo-50 to-white border-blue-400',
-    accent: 'text-blue-400',
-    accentLight: 'text-blue-700',
-    badge: 'bg-blue-500',
+    dark: 'from-indigo-900/50 via-blue-800/30 to-slate-900/80 border-indigo-500/30 shadow-[0_0_30px_-10px_rgba(99,102,241,0.2)]',
+    light: 'from-indigo-100 via-blue-50 to-white border-indigo-300 shadow-indigo-500/10',
+    accent: 'text-indigo-400',
+    accentLight: 'text-indigo-700',
+    badge: 'bg-indigo-500',
   },
   mixed: {
-    dark: 'from-yellow-900/20 via-amber-900/15 to-slate-900/50 border-yellow-500/25',
-    light: 'from-yellow-50 via-amber-50 to-white border-yellow-400',
-    accent: 'text-yellow-400',
-    accentLight: 'text-yellow-700',
-    badge: 'bg-yellow-500',
+    dark: 'from-amber-900/40 via-yellow-800/30 to-slate-900/80 border-amber-500/30 shadow-[0_0_30px_-10px_rgba(245,158,11,0.2)]',
+    light: 'from-amber-100 via-yellow-50 to-white border-amber-300 shadow-amber-500/10',
+    accent: 'text-amber-400',
+    accentLight: 'text-amber-700',
+    badge: 'bg-amber-500',
   },
   neutral: {
-    dark: 'from-slate-800/50 via-slate-800/30 to-slate-900/50 border-slate-700',
-    light: 'from-slate-50 via-white to-white border-slate-200',
-    accent: 'text-slate-400',
-    accentLight: 'text-slate-600',
+    dark: 'from-slate-800/80 via-slate-800/50 to-slate-900/80 border-slate-700 shadow-xl',
+    light: 'from-slate-100 via-slate-50 to-white border-slate-200 shadow-sm',
+    accent: 'text-slate-300',
+    accentLight: 'text-slate-700',
     badge: 'bg-slate-500',
   },
 };
@@ -167,19 +167,23 @@ export default function TodayHero({ windSpeed, windGust, thermalPrediction, boat
 
   return (
     <div className={`
-      rounded-2xl border p-5 bg-gradient-to-br transition-all duration-500
+      relative overflow-hidden rounded-2xl border p-6 bg-gradient-to-br transition-all duration-500
+      backdrop-blur-xl
       ${isDark ? style.dark : style.light}
     `}>
+      {/* Decorative background glow */}
+      <div className="absolute -top-24 -right-24 w-64 h-64 bg-white/5 rounded-full blur-3xl pointer-events-none" />
+
       {/* Greeting + headline */}
-      <div className="mb-4">
-        <p className={`text-xs font-medium uppercase tracking-wider mb-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+      <div className="relative z-10 mb-6">
+        <p className={`text-xs font-bold uppercase tracking-widest mb-2 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
           {getGreeting()} — Today's Outlook
         </p>
-        <h2 className={`text-xl sm:text-2xl font-bold leading-tight ${isDark ? style.accent : style.accentLight}`}>
+        <h2 className={`text-2xl sm:text-3xl font-black leading-tight tracking-tight ${isDark ? style.accent : style.accentLight}`}>
           {outlook.headline}
         </h2>
         {outlook.subline && (
-          <p className={`text-sm mt-1 ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+          <p className={`text-sm sm:text-base mt-2 font-medium ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
             {outlook.subline}
           </p>
         )}
@@ -187,27 +191,27 @@ export default function TodayHero({ windSpeed, windGust, thermalPrediction, boat
 
       {/* Active now row */}
       {outlook.activeNow.length > 0 && (
-        <div className="mb-4">
-          <div className={`flex items-center gap-1.5 mb-2 ${isDark ? 'text-green-400' : 'text-green-700'}`}>
+        <div className="relative z-10 mb-5">
+          <div className={`flex items-center gap-2 mb-3 ${isDark ? 'text-green-400' : 'text-green-700'}`}>
             <Wind className="w-4 h-4" />
-            <span className="text-xs font-bold uppercase tracking-wide">Active Now</span>
+            <span className="text-xs font-black uppercase tracking-widest">Active Now</span>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2.5">
             {outlook.activeNow.map(a => (
               <button
                 key={a.id}
                 onClick={() => onSelectActivity?.(a.id)}
                 className={`
-                  flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold
-                  transition-all hover:scale-105 active:scale-95 cursor-pointer
+                  flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-bold
+                  transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] cursor-pointer shadow-sm
                   ${isDark
-                    ? 'bg-green-500/20 text-green-300 ring-1 ring-green-500/40 hover:bg-green-500/30'
-                    : 'bg-green-100 text-green-800 ring-1 ring-green-400/50 hover:bg-green-200'}
+                    ? 'bg-white/10 text-white border border-white/10 hover:bg-white/20 hover:border-white/20'
+                    : 'bg-white text-slate-900 border border-slate-200 hover:bg-slate-50 hover:border-slate-300'}
                 `}
               >
-                <span>{a.icon}</span>
+                <span className="text-base">{a.icon}</span>
                 <span>{a.name}</span>
-                <ChevronRight className="w-3.5 h-3.5 opacity-50" />
+                <ChevronRight className="w-4 h-4 opacity-40 ml-1" />
               </button>
             ))}
           </div>
@@ -216,30 +220,28 @@ export default function TodayHero({ windSpeed, windGust, thermalPrediction, boat
 
       {/* Coming later row */}
       {outlook.comingLater.length > 0 && (
-        <div className="mb-4">
-          <div className={`flex items-center gap-1.5 mb-2 ${isDark ? 'text-yellow-400' : 'text-yellow-700'}`}>
+        <div className="relative z-10 mb-5">
+          <div className={`flex items-center gap-2 mb-3 ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>
             <Clock className="w-4 h-4" />
-            <span className="text-xs font-bold uppercase tracking-wide">Coming Up</span>
+            <span className="text-xs font-black uppercase tracking-widest">Coming Up</span>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2.5">
             {outlook.comingLater.map(a => (
               <button
                 key={a.id}
                 onClick={() => onSelectActivity?.(a.id)}
                 className={`
-                  flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium
-                  transition-all hover:scale-105 active:scale-95 cursor-pointer
+                  flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold
+                  transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] cursor-pointer
                   ${isDark
-                    ? 'bg-yellow-500/10 text-yellow-300 ring-1 ring-yellow-500/25 hover:bg-yellow-500/20'
-                    : 'bg-yellow-50 text-yellow-800 ring-1 ring-yellow-400/30 hover:bg-yellow-100'}
+                    ? 'bg-slate-800/50 text-slate-200 border border-slate-700/50 hover:bg-slate-800'
+                    : 'bg-white/60 text-slate-700 border border-slate-200 hover:bg-white'}
                 `}
               >
-                <span>{a.icon}</span>
+                <span className="text-base grayscale opacity-80">{a.icon}</span>
                 <span>{a.name}</span>
                 {a.window && (
-                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ml-0.5 ${
-                    isDark ? 'bg-yellow-500/20 text-yellow-300' : 'bg-yellow-200 text-yellow-800'
-                  }`}>
+                  <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md ml-1 ${isDark ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
                     {a.window}
                   </span>
                 )}
@@ -249,21 +251,21 @@ export default function TodayHero({ windSpeed, windGust, thermalPrediction, boat
         </div>
       )}
 
-      {/* Best action CTA */}
+      {/* Best Action callout */}
       {outlook.bestAction && (
         <div className={`
-          flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold
-          ${outlook.bestAction.urgency === 'high'
-            ? (isDark
-              ? 'bg-green-500/15 text-green-300 ring-1 ring-green-500/30 animate-pulse'
-              : 'bg-green-100 text-green-800 ring-1 ring-green-400/40 animate-pulse')
-            : (isDark
-              ? 'bg-slate-700/50 text-slate-300 ring-1 ring-slate-600'
-              : 'bg-slate-100 text-slate-700 ring-1 ring-slate-300')
-          }
+          relative z-10 mt-6 pt-5 border-t 
+          ${isDark ? 'border-white/10' : 'border-black/5'}
         `}>
-          <Sun className="w-4 h-4 shrink-0" />
-          <span>{outlook.bestAction.text}</span>
+          <div className={`
+            inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold shadow-sm
+            ${outlook.bestAction.urgency === 'high'
+              ? (isDark ? 'bg-white text-slate-900' : 'bg-slate-900 text-white')
+              : (isDark ? 'bg-white/10 text-white' : 'bg-white text-slate-900 border border-slate-200')}
+          `}>
+            <Sun className={`w-4 h-4 ${outlook.bestAction.urgency === 'high' ? 'animate-pulse' : ''}`} />
+            {outlook.bestAction.text}
+          </div>
         </div>
       )}
     </div>

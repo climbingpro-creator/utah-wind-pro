@@ -197,7 +197,7 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
         </button>
         
         {utahLakeExpanded && (
-          <div className={`border-t p-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 ${isDark ? 'border-slate-700' : 'border-slate-200'}`}>
+          <div className={`border-t p-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 ${isDark ? 'border-slate-800 bg-slate-900/50' : 'border-slate-200 bg-slate-50/50'}`}>
             {UTAH_LAKE_LAUNCHES.map((launch) => {
               const ws = windStatuses[launch.id];
               const isHot = ws?.level === 'hot';
@@ -208,32 +208,32 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
                   key={launch.id}
                   onClick={() => onSelectLake(launch.id)}
                   className={`
-                    flex flex-col items-center p-3 rounded-lg transition-all duration-300 relative
+                    relative flex flex-col items-center justify-center p-3 rounded-xl transition-all duration-300 group
                     ${isSelected
                       ? (isDark 
-                          ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400 border-2' 
-                          : 'bg-cyan-100 border-cyan-500 text-cyan-700 border-2')
+                          ? 'bg-cyan-500/10 border-cyan-500 text-cyan-400 border-2 shadow-[0_0_15px_-3px_rgba(6,182,212,0.3)]' 
+                          : 'bg-cyan-50 border-cyan-400 text-cyan-700 border-2 shadow-sm')
                       : isHot
                         ? (isDark
-                            ? 'bg-green-500/15 border-green-500/60 text-green-300 border-2 shadow-[0_0_12px_rgba(34,197,94,0.3)]'
-                            : 'bg-green-50 border-green-500 text-green-700 border-2 shadow-[0_0_12px_rgba(34,197,94,0.2)]')
+                            ? 'bg-green-500/10 border-green-500/50 text-green-300 border-2 shadow-[0_0_15px_-3px_rgba(34,197,94,0.3)] hover:bg-green-500/20'
+                            : 'bg-green-50 border-green-400 text-green-700 border-2 shadow-sm hover:bg-green-100')
                         : (isDark 
-                            ? 'bg-slate-800/50 border-slate-700 text-slate-400 border hover:border-slate-500'
-                            : 'bg-slate-50 border-slate-200 text-slate-600 border hover:border-slate-400')
+                            ? 'bg-slate-800/80 border-slate-700 text-slate-300 border hover:border-slate-500 hover:bg-slate-800'
+                            : 'bg-white border-slate-200 text-slate-700 border shadow-sm hover:border-slate-300 hover:bg-slate-50')
                     }
                   `}
                 >
-                  <span className={`text-[10px] mb-1 ${isDark ? 'text-slate-600' : 'text-slate-500'}`}>{launch.position}</span>
-                  <span className="font-medium text-sm">{launch.name}</span>
-                  <span className={`text-xs mt-1 ${isSelected ? (isDark ? 'text-cyan-300' : 'text-cyan-600') : (isDark ? 'text-slate-500' : 'text-slate-500')}`}>
-                    {launch.wind} {launch.direction}
+                  <span className={`text-[10px] font-bold uppercase tracking-widest mb-1.5 opacity-70`}>{launch.position}</span>
+                  <span className="font-bold text-sm text-center leading-tight">{launch.name}</span>
+                  <span className={`text-xs mt-1.5 font-medium flex items-center gap-1 ${isSelected ? (isDark ? 'text-cyan-300' : 'text-cyan-600') : (isDark ? 'text-slate-400' : 'text-slate-500')}`}>
+                    <Wind className="w-3 h-3" /> {launch.wind} {launch.direction}
                   </span>
                   {launch.meterName && (
-                    <span className={`text-[9px] mt-0.5 ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
+                    <span className={`text-[10px] mt-1 uppercase tracking-wide opacity-50`}>
                       {launch.meterName}
                     </span>
                   )}
-                  {ws && <div className="mt-1"><WindBadge status={ws} isDark={isDark} /></div>}
+                  {ws && <div className="mt-2"><WindBadge status={ws} isDark={isDark} /></div>}
                 </button>
               );
             })}
@@ -293,7 +293,7 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
               <span className="text-xs font-bold uppercase tracking-wider">Strawberry Reservoir</span>
               <span className={`text-[10px] ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>· 7,600 ft · 5 spots</span>
             </div>
-            <div className="px-3 pb-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+            <div className="px-4 pb-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
               {STRAWBERRY_LAUNCHES.map((launch) => {
                 const ws = windStatuses[launch.id];
                 const isHot = ws?.level === 'hot';
@@ -304,30 +304,32 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
                     key={launch.id}
                     onClick={() => onSelectLake(launch.id)}
                     className={`
-                      flex flex-col items-center p-2.5 rounded-lg transition-all duration-300 relative
+                      relative flex flex-col items-center justify-center p-3 rounded-xl transition-all duration-300 group
                       ${isSelected
                         ? (isDark
-                            ? 'bg-sky-500/20 border-sky-400 text-sky-300 border-2'
-                            : 'bg-sky-100 border-sky-500 text-sky-700 border-2')
+                            ? 'bg-sky-500/15 border-sky-400 text-sky-300 border-2 shadow-[0_0_15px_-3px_rgba(56,189,248,0.3)]'
+                            : 'bg-sky-50 border-sky-400 text-sky-700 border-2 shadow-sm')
                         : isHot
                           ? (isDark
-                              ? 'bg-sky-500/10 border-sky-400/50 text-sky-300 border-2 shadow-[0_0_12px_rgba(56,189,248,0.25)]'
-                              : 'bg-sky-50 border-sky-400 text-sky-700 border-2 shadow-[0_0_12px_rgba(56,189,248,0.2)]')
+                              ? 'bg-indigo-500/20 border-indigo-400/50 text-indigo-300 border-2 shadow-[0_0_15px_-3px_rgba(99,102,241,0.3)] hover:bg-indigo-500/30'
+                              : 'bg-indigo-50 border-indigo-400 text-indigo-700 border-2 shadow-sm hover:bg-indigo-100')
                           : (isDark
-                              ? 'bg-slate-800/60 border-indigo-500/15 text-slate-400 border hover:border-indigo-400/30'
-                              : 'bg-white/70 border-slate-200 text-slate-600 border hover:border-sky-300')
+                              ? 'bg-slate-800/60 border-slate-700/50 text-slate-300 border hover:border-slate-500 hover:bg-slate-800'
+                              : 'bg-white/80 border-slate-200 text-slate-700 border shadow-sm hover:border-slate-300 hover:bg-white')
                       }
                     `}
                   >
-                    <span className={`text-[10px] mb-0.5 ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>{launch.position}</span>
-                    <span className="font-semibold text-sm">{launch.name}</span>
-                    <span className={`text-[10px] mt-0.5 ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>
-                      {launch.wind} {launch.direction}
+                    <span className={`text-[10px] font-bold uppercase tracking-widest mb-1.5 opacity-70`}>{launch.position}</span>
+                    <span className="font-bold text-sm text-center leading-tight">{launch.name}</span>
+                    <span className={`text-xs mt-1.5 font-medium flex items-center gap-1 ${isSelected ? (isDark ? 'text-sky-300' : 'text-sky-600') : (isDark ? 'text-slate-400' : 'text-slate-500')}`}>
+                      <Wind className="w-3 h-3" /> {launch.wind} {launch.direction}
                     </span>
-                    <span className={`text-[9px] mt-0.5 italic ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
-                      {launch.desc}
-                    </span>
-                    {ws && <div className="mt-1"><WindBadge status={ws} isDark={isDark} /></div>}
+                    {launch.desc && (
+                      <span className={`text-[9px] mt-1 uppercase tracking-wide opacity-50 text-center leading-tight line-clamp-1`}>
+                        {launch.desc}
+                      </span>
+                    )}
+                    {ws && <div className="mt-2"><WindBadge status={ws} isDark={isDark} /></div>}
                   </button>
                 );
               })}
@@ -339,7 +341,7 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
               <span className="text-xs font-bold uppercase tracking-wider">Skyline Drive</span>
               <span className={`text-[10px] ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>· Sanpete County · 9,680 ft</span>
             </div>
-            <div className="px-3 pb-3">
+            <div className="px-4 pb-4">
               {(() => {
                 const ws = windStatuses[SKYLINE_SPOT.id];
                 const isHot = ws?.level === 'hot';
@@ -349,33 +351,35 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
                   <button
                     onClick={() => onSelectLake(SKYLINE_SPOT.id)}
                     className={`
-                      w-full flex items-center gap-4 p-3 rounded-lg transition-all duration-300
+                      w-full flex items-center gap-4 p-4 rounded-xl transition-all duration-300 group
                       ${isSelected
                         ? (isDark
-                            ? 'bg-sky-500/20 border-sky-400 text-sky-300 border-2'
-                            : 'bg-sky-100 border-sky-500 text-sky-700 border-2')
+                            ? 'bg-sky-500/15 border-sky-400 text-sky-300 border-2 shadow-[0_0_15px_-3px_rgba(56,189,248,0.3)]'
+                            : 'bg-sky-50 border-sky-400 text-sky-700 border-2 shadow-sm')
                         : isHot
                           ? (isDark
-                              ? 'bg-sky-500/10 border-sky-400/50 text-sky-300 border-2 shadow-[0_0_12px_rgba(56,189,248,0.25)]'
-                              : 'bg-sky-50 border-sky-400 text-sky-700 border-2 shadow-[0_0_12px_rgba(56,189,248,0.2)]')
+                              ? 'bg-indigo-500/20 border-indigo-400/50 text-indigo-300 border-2 shadow-[0_0_15px_-3px_rgba(99,102,241,0.3)] hover:bg-indigo-500/30'
+                              : 'bg-indigo-50 border-indigo-400 text-indigo-700 border-2 shadow-sm hover:bg-indigo-100')
                           : (isDark
-                              ? 'bg-slate-800/60 border-indigo-500/15 text-slate-400 border hover:border-indigo-400/30'
-                              : 'bg-white/70 border-slate-200 text-slate-600 border hover:border-sky-300')
+                              ? 'bg-slate-800/60 border-slate-700/50 text-slate-300 border hover:border-slate-500 hover:bg-slate-800'
+                              : 'bg-white/80 border-slate-200 text-slate-700 border shadow-sm hover:border-slate-300 hover:bg-white')
                       }
                     `}
                   >
                     <div className="flex-1 text-left">
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-sm">Big Drift Complex</span>
-                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${isDark ? 'bg-indigo-500/20 text-indigo-300' : 'bg-sky-100 text-sky-700'}`}>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-bold text-base">Big Drift Complex</span>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${isDark ? 'bg-indigo-500/20 text-indigo-300' : 'bg-sky-100 text-sky-700'}`}>
                           {SKYLINE_SPOT.position}
                         </span>
                       </div>
-                      <span className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>
-                        {SKYLINE_SPOT.wind} {SKYLINE_SPOT.direction} · {SKYLINE_SPOT.desc}
+                      <span className={`text-[11px] font-medium flex items-center gap-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                        <Wind className="w-3 h-3" /> {SKYLINE_SPOT.wind} {SKYLINE_SPOT.direction}
+                        <span className="opacity-50 mx-1">·</span> 
+                        <span className="italic">{SKYLINE_SPOT.desc}</span>
                       </span>
                     </div>
-                    {ws && <WindBadge status={ws} isDark={isDark} />}
+                    {ws && <div className="shrink-0 scale-110"><WindBadge status={ws} isDark={isDark} /></div>}
                   </button>
                 );
               })()}

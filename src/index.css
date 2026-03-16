@@ -3,44 +3,46 @@
 
 @layer base {
   :root {
-    --color-primary: #3b82f6;
-    --color-primary-dark: #2563eb;
-    --color-success: #22c55e;
-    --color-warning: #f59e0b;
-    --color-danger: #ef4444;
-    --color-thermal: #06b6d4;
+    --color-primary: #0ea5e9; /* Sky 500 */
+    --color-primary-dark: #0284c7; /* Sky 600 */
+    --color-success: #10b981; /* Emerald 500 */
+    --color-warning: #f59e0b; /* Amber 500 */
+    --color-danger: #ef4444; /* Red 500 */
+    --color-thermal: #06b6d4; /* Cyan 500 */
     
-    /* Light mode colors */
-    --bg-primary: #f8fafc;
-    --bg-secondary: #f1f5f9;
+    /* Light mode colors - Sleeker */
+    --bg-primary: #f8fafc; /* Slate 50 */
+    --bg-secondary: #f1f5f9; /* Slate 100 */
     --bg-card: #ffffff;
-    --text-primary: #0f172a;
-    --text-secondary: #475569;
-    --border-color: #e2e8f0;
+    --text-primary: #0f172a; /* Slate 900 */
+    --text-secondary: #475569; /* Slate 600 */
+    --border-color: #e2e8f0; /* Slate 200 */
   }
   
   .dark {
-    --bg-primary: #0f172a;
-    --bg-secondary: #1e293b;
-    --bg-card: #1e293b;
-    --text-primary: #f1f5f9;
-    --text-secondary: #94a3b8;
-    --border-color: #334155;
+    /* Dark mode colors - Deep and premium */
+    --bg-primary: #020617; /* Slate 950 */
+    --bg-secondary: #0f172a; /* Slate 900 */
+    --bg-card: #0f172a;
+    --text-primary: #f8fafc; /* Slate 50 */
+    --text-secondary: #94a3b8; /* Slate 400 */
+    --border-color: #1e293b; /* Slate 800 */
   }
 }
 
 body {
   @apply antialiased;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   background: var(--bg-primary);
   color: var(--text-primary);
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
   overscroll-behavior: none;
-  transition: background-color 0.3s, color 0.3s;
+  transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
 }
 
 .dark body {
-  @apply bg-slate-900 text-slate-100;
+  @apply bg-slate-950 text-slate-50;
 }
 
 .light body {

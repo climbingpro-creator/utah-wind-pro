@@ -1,5 +1,5 @@
 import React from 'react';
-import { Wind, Sailboat, Ship, Waves } from 'lucide-react';
+import { Wind, Sailboat, Ship, Waves, Mountain, Anchor, Navigation, Cloud } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 
 // Activity configurations with thresholds and preferences
@@ -7,15 +7,15 @@ export const ACTIVITY_CONFIGS = {
   kiting: {
     id: 'kiting',
     name: 'Kiting',
-    icon: '🪁',
-    description: 'Kiteboarding & Kite Foiling',
+    icon: <Navigation className="w-4 h-4" />,
+    description: 'Kiteboarding & Foiling',
     thresholds: {
-      tooLight: 8,      // Below this = not worth it
+      tooLight: 8,
       ideal: { min: 12, max: 22 },
       foilMin: 10,
       twinTipMin: 15,
-      tooStrong: 30,    // Above this = dangerous
-      gustFactor: 1.5,  // Gust/sustained ratio concern
+      tooStrong: 30,
+      gustFactor: 1.5,
     },
     wantsWind: true,
     primaryMetric: 'windProbability',
@@ -25,15 +25,15 @@ export const ACTIVITY_CONFIGS = {
   sailing: {
     id: 'sailing',
     name: 'Sailing',
-    icon: '⛵',
-    description: 'Dinghy & Keelboat Sailing',
+    icon: <Sailboat className="w-4 h-4" />,
+    description: 'Dinghy & Keelboat',
     thresholds: {
-      tooLight: 4,      // Can still sail
+      tooLight: 4,
       ideal: { min: 8, max: 18 },
       beginnerMax: 12,
       racingIdeal: { min: 10, max: 15 },
       tooStrong: 25,
-      gustFactor: 1.4,  // Sailors care about consistency
+      gustFactor: 1.4,
     },
     wantsWind: true,
     primaryMetric: 'windProbability',
@@ -43,15 +43,15 @@ export const ACTIVITY_CONFIGS = {
   boating: {
     id: 'boating',
     name: 'Boating',
-    icon: '🚤',
-    description: 'Powerboats, Fishing, Cruising',
+    icon: <Ship className="w-4 h-4" />,
+    description: 'Powerboats & Cruising',
     thresholds: {
-      ideal: { min: 0, max: 8 },  // Want CALM
-      choppy: 10,       // Getting uncomfortable
-      rough: 15,        // Most want to avoid
-      dangerous: 25,    // Stay home
+      ideal: { min: 0, max: 8 },
+      choppy: 10,
+      rough: 15,
+      dangerous: 25,
     },
-    wantsWind: false,   // Inverse - want calm
+    wantsWind: false,
     primaryMetric: 'glassScore',
     goodCondition: (speed) => speed < 8,
   },
@@ -59,13 +59,13 @@ export const ACTIVITY_CONFIGS = {
   paddling: {
     id: 'paddling',
     name: 'Paddling',
-    icon: '🏄',
+    icon: <Waves className="w-4 h-4" />,
     description: 'SUP, Kayak, Canoe',
     thresholds: {
-      ideal: { min: 0, max: 6 },  // Want very calm
-      manageable: 10,   // Experienced paddlers
-      difficult: 15,    // Turn back
-      dangerous: 20,    // Don't go out
+      ideal: { min: 0, max: 6 },
+      manageable: 10,
+      difficult: 15,
+      dangerous: 20,
     },
     wantsWind: false,
     primaryMetric: 'glassScore',
@@ -75,7 +75,7 @@ export const ACTIVITY_CONFIGS = {
   paragliding: {
     id: 'paragliding',
     name: 'Paragliding',
-    icon: '🪂',
+    icon: <Mountain className="w-4 h-4" />,
     description: 'Point of the Mountain',
     thresholds: {
       tooLight: 5,
@@ -93,8 +93,8 @@ export const ACTIVITY_CONFIGS = {
   fishing: {
     id: 'fishing',
     name: 'Fishing',
-    icon: '🎣',
-    description: 'Utah Lakes & Rivers',
+    icon: <Anchor className="w-4 h-4" />,
+    description: 'Lakes & Rivers',
     thresholds: {
       ideal: { min: 0, max: 10 },
       choppy: 15,
@@ -110,8 +110,8 @@ export const ACTIVITY_CONFIGS = {
   windsurfing: {
     id: 'windsurfing',
     name: 'Windsurfing',
-    icon: '🏄‍♂️',
-    description: 'Windsurfing & Wing Foiling',
+    icon: <Wind className="w-4 h-4" />,
+    description: 'Windsurfing & Winging',
     thresholds: {
       tooLight: 6,
       ideal: { min: 10, max: 20 },
@@ -148,7 +148,10 @@ const ActivityMode = ({ selectedActivity, onActivityChange, windSpeed, windGust 
   const activities = ['kiting', 'sailing', 'fishing', 'boating', 'paddling', 'paragliding'];
   
   return (
-    <div className={`flex items-center gap-1 rounded-lg p-1 ${isDark ? 'bg-slate-800/50' : 'bg-slate-100'}`}>
+    <div className={`
+      flex items-center gap-1.5 p-1.5 rounded-xl border backdrop-blur-xl overflow-x-auto hide-scrollbar
+      ${isDark ? 'bg-slate-900/50 border-slate-800' : 'bg-white border-slate-200 shadow-sm'}
+    `}>
       {activities.map(activityId => {
         const activity = ACTIVITY_CONFIGS[activityId];
         const isSelected = selectedActivity === activityId;
@@ -161,36 +164,38 @@ const ActivityMode = ({ selectedActivity, onActivityChange, windSpeed, windGust 
             key={activityId}
             onClick={() => onActivityChange(activityId)}
             className={`
-              relative flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium
-              transition-all duration-300
+              relative flex flex-col sm:flex-row items-center gap-1.5 px-4 py-2 sm:py-2.5 rounded-lg text-sm font-bold tracking-wide
+              transition-all duration-300 ease-out whitespace-nowrap outline-none
               ${isSelected 
                 ? (isActive
-                    ? 'bg-green-600 text-white shadow-lg shadow-green-500/30'
+                    ? 'bg-green-500 text-white shadow-[0_0_15px_-3px_rgba(34,197,94,0.4)] ring-1 ring-green-400/50'
                     : isMarginal
-                      ? 'bg-yellow-600 text-white shadow-lg shadow-yellow-500/20'
-                      : 'bg-blue-600 text-white shadow-lg')
+                      ? 'bg-amber-500 text-white shadow-[0_0_15px_-3px_rgba(245,158,11,0.4)] ring-1 ring-amber-400/50'
+                      : 'bg-primary text-white shadow-[0_0_15px_-3px_rgba(14,165,233,0.4)] ring-1 ring-sky-400/50')
                 : isActive
                   ? (isDark
                       ? 'text-green-400 bg-green-500/10 hover:bg-green-500/20 ring-1 ring-green-500/30'
                       : 'text-green-700 bg-green-50 hover:bg-green-100 ring-1 ring-green-400/40')
                   : isMarginal
                     ? (isDark
-                        ? 'text-yellow-400 bg-yellow-500/10 hover:bg-yellow-500/20 ring-1 ring-yellow-500/20'
-                        : 'text-yellow-700 bg-yellow-50 hover:bg-yellow-100 ring-1 ring-yellow-400/30')
+                        ? 'text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 ring-1 ring-amber-500/30'
+                        : 'text-amber-700 bg-amber-50 hover:bg-amber-100 ring-1 ring-amber-400/40')
                     : (isDark 
-                        ? 'text-slate-400 hover:text-white hover:bg-slate-700/50'
-                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200')
+                        ? 'text-slate-400 hover:text-white hover:bg-slate-800/80'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100')
               }
             `}
             title={activity.description}
           >
-            <span className="text-base">{activity.icon}</span>
+            <span className={`transition-transform duration-300 ${isSelected ? 'scale-110' : ''}`}>
+              {activity.icon}
+            </span>
             <span className="hidden sm:inline">{activity.name}</span>
             {isActive && !isSelected && (
-              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse ring-2 ring-slate-800" />
+              <span className="absolute top-1 sm:-top-1 right-1 sm:-right-1 w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse ring-2 ring-transparent" />
             )}
             {isMarginal && !isSelected && !isActive && (
-              <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-yellow-500 ring-2 ring-slate-800" />
+              <span className="absolute top-1 sm:-top-1 right-1 sm:-right-1 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-transparent" />
             )}
           </button>
         );
