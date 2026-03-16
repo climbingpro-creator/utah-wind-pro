@@ -1,4 +1,4 @@
-import { MapPin, ChevronDown, ChevronUp, Wind } from 'lucide-react';
+import { MapPin, ChevronDown, ChevronUp, Wind, Snowflake, Mountain } from 'lucide-react';
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { LAKE_CONFIGS } from '../config/lakeStations';
@@ -12,16 +12,19 @@ const UTAH_LAKE_LAUNCHES = [
 ];
 
 const STRAWBERRY_LAUNCHES = [
-  { id: 'strawberry-ladders', name: 'Ladders (NW)', wind: 'W/NW', direction: '260-340°', icon: '❄️', position: 'Northwest', meter: 'KHCR', meterName: 'Heber Airport' },
-  { id: 'strawberry-bay', name: 'Strawberry Bay', wind: 'W/SW', direction: '220-280°', icon: '❄️', position: 'West', meter: 'KHCR', meterName: 'Heber Airport' },
-  { id: 'strawberry-soldier', name: 'Soldier Creek', wind: 'S/SW', direction: '180-240°', icon: '❄️', position: 'South', meter: 'CRU1', meterName: 'Currant Creek' },
+  { id: 'strawberry-ladders', name: 'Ladders', wind: 'W/NW', direction: '260-340°', position: 'NW Shore', meter: 'UTCOP', meterName: 'Co-Op Creek', desc: 'Primary launch — shallow, best access' },
+  { id: 'strawberry-bay', name: 'Strawberry Bay', wind: 'W/SW', direction: '220-280°', position: 'W Shore', meter: 'UTCOP', meterName: 'Co-Op Creek', desc: 'Marina area — good parking' },
+  { id: 'strawberry-soldier', name: 'Soldier Creek', wind: 'S/SW', direction: '180-240°', position: 'South Dam', meter: 'RVZU1', meterName: 'Rays Valley', desc: 'Channeled canyon wind' },
+  { id: 'strawberry-view', name: 'The View', wind: 'W/NW', direction: '260-330°', position: 'E Shore', meter: 'UTCOP', meterName: 'Co-Op Creek', desc: 'Long open fetch — full exposure' },
+  { id: 'strawberry-river', name: 'The River', wind: 'S/W', direction: '190-270°', position: 'SE Inlet', meter: 'UTCOP', meterName: 'Co-Op Creek', desc: 'River corridor — sheltered terrain' },
 ];
+
+const SKYLINE_SPOT = { id: 'skyline-drive', name: 'Skyline Drive', wind: 'W/NW', direction: '250-340°', position: '9,680 ft', meter: 'SKY', meterName: 'Skyline UDOT', desc: 'Big Drift — open bowls, deep snow' };
 
 const OTHER_LAKES = [
   { id: 'deer-creek', name: 'Deer Creek', region: 'Wasatch', wind: 'SW Canyon', meter: 'KHCR', meterName: 'Heber Airport' },
   { id: 'willard-bay', name: 'Willard Bay', region: 'Box Elder', wind: 'N "Gap"', meter: 'KHIF', meterName: 'Hill AFB' },
   { id: 'pineview', name: 'Pineview', region: 'Weber', wind: 'E/W Canyon', meter: null, meterName: null },
-  { id: 'skyline-drive', name: 'Skyline Drive', region: 'Sanpete', wind: 'W/NW Plateau', meter: 'UFCU1', meterName: 'Fairview Canyon', snowkite: true },
 ];
 
 function isDirectionFavorable(dir, lakeId) {
@@ -122,8 +125,8 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
   const [utahLakeExpanded, setUtahLakeExpanded] = useState(
     selectedLake?.startsWith('utah-lake')
   );
-  const [strawberryExpanded, setStrawberryExpanded] = useState(
-    selectedLake?.startsWith('strawberry')
+  const [snowExpanded, setSnowExpanded] = useState(
+    selectedLake?.startsWith('strawberry') || selectedLake === 'skyline-drive'
   );
 
   // Persistent station cache — survives tab switches
@@ -139,7 +142,7 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
 
   const windStatuses = useMemo(() => {
     const out = {};
-    [...UTAH_LAKE_LAUNCHES, ...STRAWBERRY_LAUNCHES, ...OTHER_LAKES].forEach(loc => {
+    [...UTAH_LAKE_LAUNCHES, ...STRAWBERRY_LAUNCHES, SKYLINE_SPOT, ...OTHER_LAKES].forEach(loc => {
       out[loc.id] = getWindStatus(loc, stationCache, activity);
     });
     return out;
@@ -149,9 +152,9 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
   const selectedUtahLaunch = UTAH_LAKE_LAUNCHES.find(l => l.id === selectedLake);
   const anyUtahHot = UTAH_LAKE_LAUNCHES.some(l => windStatuses[l.id]?.level === 'hot');
 
-  const isStrawberrySelected = selectedLake?.startsWith('strawberry');
-  const selectedStrawberryLaunch = STRAWBERRY_LAUNCHES.find(l => l.id === selectedLake);
-  const anyStrawberryHot = STRAWBERRY_LAUNCHES.some(l => windStatuses[l.id]?.level === 'hot');
+  const isSnowSelected = selectedLake?.startsWith('strawberry') || selectedLake === 'skyline-drive';
+  const selectedSnowLaunch = [...STRAWBERRY_LAUNCHES, SKYLINE_SPOT].find(l => l.id === selectedLake);
+  const anySnowHot = [...STRAWBERRY_LAUNCHES, SKYLINE_SPOT].some(l => windStatuses[l.id]?.level === 'hot');
 
   return (
     <div className="space-y-3">
@@ -238,37 +241,44 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
         )}
       </div>
 
-      {/* Strawberry Reservoir Section */}
+      {/* ─── SNOWKITE SECTION ─── */}
       <div className={`rounded-xl border overflow-hidden transition-all duration-300 ${
-        anyStrawberryHot && !isStrawberrySelected
-          ? (isDark ? 'bg-green-900/10 border-green-500/40' : 'bg-green-50 border-green-400')
-          : (isDark ? 'bg-slate-800/30 border-slate-700' : 'bg-white border-slate-200 shadow-sm')
+        anySnowHot
+          ? (isDark ? 'bg-gradient-to-br from-sky-900/30 via-indigo-900/20 to-slate-900/40 border-sky-400/50' : 'bg-gradient-to-br from-sky-50 via-indigo-50 to-white border-sky-400')
+          : (isDark ? 'bg-gradient-to-br from-slate-800/60 via-indigo-900/10 to-slate-800/40 border-indigo-500/20' : 'bg-gradient-to-br from-slate-50 via-blue-50/30 to-white border-slate-200 shadow-sm')
       }`}>
         <button
-          onClick={() => setStrawberryExpanded(!strawberryExpanded)}
+          onClick={() => setSnowExpanded(!snowExpanded)}
           className={`w-full flex items-center justify-between px-4 py-3 transition-colors ${
-            isStrawberrySelected
-              ? (isDark ? 'bg-cyan-500/10' : 'bg-cyan-50')
-              : (isDark ? 'hover:bg-slate-800/50' : 'hover:bg-slate-50')
+            isSnowSelected
+              ? (isDark ? 'bg-sky-500/10' : 'bg-sky-50')
+              : (isDark ? 'hover:bg-indigo-900/20' : 'hover:bg-sky-50/50')
           }`}
         >
           <div className="flex items-center gap-3">
-            <span className="text-lg">❄️</span>
+            <Snowflake className={`w-5 h-5 ${isSnowSelected ? (isDark ? 'text-sky-400' : 'text-sky-600') : (isDark ? 'text-indigo-400' : 'text-sky-500')}`} />
             <div className="text-left">
-              <span className={`font-semibold ${isStrawberrySelected ? (isDark ? 'text-cyan-400' : 'text-cyan-600') : (isDark ? 'text-slate-300' : 'text-slate-700')}`}>
-                Strawberry Reservoir
-              </span>
-              {selectedStrawberryLaunch && (
-                <span className={`ml-2 ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}>• {selectedStrawberryLaunch.name}</span>
+              <div className="flex items-center gap-2">
+                <span className={`font-semibold ${isSnowSelected ? (isDark ? 'text-sky-400' : 'text-sky-600') : (isDark ? 'text-slate-200' : 'text-slate-700')}`}>
+                  Snowkite Utah
+                </span>
+                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider ${
+                  isDark ? 'bg-indigo-500/20 text-indigo-300' : 'bg-sky-100 text-sky-700'
+                }`}>
+                  Snow Only
+                </span>
+              </div>
+              {selectedSnowLaunch && (
+                <span className={`text-sm ${isDark ? 'text-sky-400' : 'text-sky-600'}`}>• {selectedSnowLaunch.name}</span>
               )}
-              <div className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>3 snowkite locations · 7,600 ft</div>
+              <div className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>Strawberry Reservoir · Skyline Drive · 7,600–9,680 ft</div>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {anyStrawberryHot && (
-              <span className="animate-pulse text-xs font-bold text-green-400">WIND ON</span>
+            {anySnowHot && (
+              <span className={`animate-pulse text-xs font-bold ${isDark ? 'text-sky-400' : 'text-sky-600'}`}>WIND ON</span>
             )}
-            {strawberryExpanded ? (
+            {snowExpanded ? (
               <ChevronUp className={`w-5 h-5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`} />
             ) : (
               <ChevronDown className={`w-5 h-5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`} />
@@ -276,47 +286,100 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
           </div>
         </button>
 
-        {strawberryExpanded && (
-          <div className={`border-t p-3 grid grid-cols-1 sm:grid-cols-3 gap-2 ${isDark ? 'border-slate-700' : 'border-slate-200'}`}>
-            {STRAWBERRY_LAUNCHES.map((launch) => {
-              const ws = windStatuses[launch.id];
-              const isHot = ws?.level === 'hot';
-              const isSelected = selectedLake === launch.id;
+        {snowExpanded && (
+          <div className={`border-t ${isDark ? 'border-indigo-500/20' : 'border-sky-200'}`}>
+            {/* Strawberry Reservoir sub-header */}
+            <div className={`px-4 pt-3 pb-1 flex items-center gap-2 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+              <span className="text-xs font-bold uppercase tracking-wider">Strawberry Reservoir</span>
+              <span className={`text-[10px] ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>· 7,600 ft · 5 spots</span>
+            </div>
+            <div className="px-3 pb-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+              {STRAWBERRY_LAUNCHES.map((launch) => {
+                const ws = windStatuses[launch.id];
+                const isHot = ws?.level === 'hot';
+                const isSelected = selectedLake === launch.id;
 
-              return (
-                <button
-                  key={launch.id}
-                  onClick={() => onSelectLake(launch.id)}
-                  className={`
-                    flex flex-col items-center p-3 rounded-lg transition-all duration-300 relative
-                    ${isSelected
-                      ? (isDark
-                          ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400 border-2'
-                          : 'bg-cyan-100 border-cyan-500 text-cyan-700 border-2')
-                      : isHot
+                return (
+                  <button
+                    key={launch.id}
+                    onClick={() => onSelectLake(launch.id)}
+                    className={`
+                      flex flex-col items-center p-2.5 rounded-lg transition-all duration-300 relative
+                      ${isSelected
                         ? (isDark
-                            ? 'bg-green-500/15 border-green-500/60 text-green-300 border-2 shadow-[0_0_12px_rgba(34,197,94,0.3)]'
-                            : 'bg-green-50 border-green-500 text-green-700 border-2 shadow-[0_0_12px_rgba(34,197,94,0.2)]')
-                        : (isDark
-                            ? 'bg-slate-800/50 border-slate-700 text-slate-400 border hover:border-slate-500'
-                            : 'bg-slate-50 border-slate-200 text-slate-600 border hover:border-slate-400')
-                    }
-                  `}
-                >
-                  <span className={`text-[10px] mb-1 ${isDark ? 'text-slate-600' : 'text-slate-500'}`}>{launch.position}</span>
-                  <span className="font-medium text-sm">{launch.name}</span>
-                  <span className={`text-xs mt-1 ${isSelected ? (isDark ? 'text-cyan-300' : 'text-cyan-600') : (isDark ? 'text-slate-500' : 'text-slate-500')}`}>
-                    {launch.wind} {launch.direction}
-                  </span>
-                  {launch.meterName && (
-                    <span className={`text-[9px] mt-0.5 ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
-                      {launch.meterName}
+                            ? 'bg-sky-500/20 border-sky-400 text-sky-300 border-2'
+                            : 'bg-sky-100 border-sky-500 text-sky-700 border-2')
+                        : isHot
+                          ? (isDark
+                              ? 'bg-sky-500/10 border-sky-400/50 text-sky-300 border-2 shadow-[0_0_12px_rgba(56,189,248,0.25)]'
+                              : 'bg-sky-50 border-sky-400 text-sky-700 border-2 shadow-[0_0_12px_rgba(56,189,248,0.2)]')
+                          : (isDark
+                              ? 'bg-slate-800/60 border-indigo-500/15 text-slate-400 border hover:border-indigo-400/30'
+                              : 'bg-white/70 border-slate-200 text-slate-600 border hover:border-sky-300')
+                      }
+                    `}
+                  >
+                    <span className={`text-[10px] mb-0.5 ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>{launch.position}</span>
+                    <span className="font-semibold text-sm">{launch.name}</span>
+                    <span className={`text-[10px] mt-0.5 ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>
+                      {launch.wind} {launch.direction}
                     </span>
-                  )}
-                  {ws && <div className="mt-1"><WindBadge status={ws} isDark={isDark} /></div>}
-                </button>
-              );
-            })}
+                    <span className={`text-[9px] mt-0.5 italic ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
+                      {launch.desc}
+                    </span>
+                    {ws && <div className="mt-1"><WindBadge status={ws} isDark={isDark} /></div>}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Skyline Drive sub-header */}
+            <div className={`px-4 pt-2 pb-1 flex items-center gap-2 border-t ${isDark ? 'border-indigo-500/15 text-slate-400' : 'border-sky-100 text-slate-500'}`}>
+              <Mountain className={`w-3.5 h-3.5 ${isDark ? 'text-indigo-400' : 'text-sky-500'}`} />
+              <span className="text-xs font-bold uppercase tracking-wider">Skyline Drive</span>
+              <span className={`text-[10px] ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>· Sanpete County · 9,680 ft</span>
+            </div>
+            <div className="px-3 pb-3">
+              {(() => {
+                const ws = windStatuses[SKYLINE_SPOT.id];
+                const isHot = ws?.level === 'hot';
+                const isSelected = selectedLake === SKYLINE_SPOT.id;
+
+                return (
+                  <button
+                    onClick={() => onSelectLake(SKYLINE_SPOT.id)}
+                    className={`
+                      w-full flex items-center gap-4 p-3 rounded-lg transition-all duration-300
+                      ${isSelected
+                        ? (isDark
+                            ? 'bg-sky-500/20 border-sky-400 text-sky-300 border-2'
+                            : 'bg-sky-100 border-sky-500 text-sky-700 border-2')
+                        : isHot
+                          ? (isDark
+                              ? 'bg-sky-500/10 border-sky-400/50 text-sky-300 border-2 shadow-[0_0_12px_rgba(56,189,248,0.25)]'
+                              : 'bg-sky-50 border-sky-400 text-sky-700 border-2 shadow-[0_0_12px_rgba(56,189,248,0.2)]')
+                          : (isDark
+                              ? 'bg-slate-800/60 border-indigo-500/15 text-slate-400 border hover:border-indigo-400/30'
+                              : 'bg-white/70 border-slate-200 text-slate-600 border hover:border-sky-300')
+                      }
+                    `}
+                  >
+                    <div className="flex-1 text-left">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-sm">Big Drift Complex</span>
+                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${isDark ? 'bg-indigo-500/20 text-indigo-300' : 'bg-sky-100 text-sky-700'}`}>
+                          {SKYLINE_SPOT.position}
+                        </span>
+                      </div>
+                      <span className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>
+                        {SKYLINE_SPOT.wind} {SKYLINE_SPOT.direction} · {SKYLINE_SPOT.desc}
+                      </span>
+                    </div>
+                    {ws && <WindBadge status={ws} isDark={isDark} />}
+                  </button>
+                );
+              })()}
+            </div>
           </div>
         )}
       </div>
@@ -365,4 +428,4 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
   );
 }
 
-export { UTAH_LAKE_LAUNCHES, STRAWBERRY_LAUNCHES, OTHER_LAKES };
+export { UTAH_LAKE_LAUNCHES, STRAWBERRY_LAUNCHES, SKYLINE_SPOT, OTHER_LAKES };

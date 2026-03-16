@@ -835,56 +835,64 @@ export const LAKE_CONFIGS = {
           role: 'Regional pressure reference',
         },
         low: {
-          id: 'KHCR',
-          name: 'Heber Valley Airport',
-          elevation: 5637,
-          role: 'Valley pressure reference',
+          id: 'UTCOP',
+          name: 'US-40 at Co-Op Creek (UDOT)',
+          elevation: 7637,
+          role: 'Reservoir-level pressure reference',
         },
         bustThreshold: 2.5,
       },
 
       ridge: [
         {
-          id: 'SBDU1',
-          name: 'Strawberry Divide',
-          elevation: 8100,
-          role: 'Primary ridge reference',
+          id: 'CCPUT',
+          name: 'Currant Creek Peak (USFS)',
+          elevation: 10547,
+          role: 'Primary high ridge reference',
           priority: 1,
         },
         {
-          id: 'DANU1',
-          name: 'Daniels Summit',
+          id: 'DSTU1',
+          name: 'Daniels-Strawberry SNOTEL',
+          elevation: 8007,
+          role: 'Pass-level ridge reference',
+          priority: 2,
+        },
+        {
+          id: 'UTDAN',
+          name: 'US-40 Daniels Summit (UDOT)',
           elevation: 8000,
           role: 'North ridge reference',
-          priority: 2,
+          priority: 3,
         },
       ],
 
       groundTruth: {
-        id: 'KHCR',
-        name: 'Heber Valley Airport',
-        role: 'Ground Truth — closest reliable wind station',
+        id: 'UTCOP',
+        name: 'US-40 at Co-Op Creek (UDOT)',
+        role: 'Ground Truth — closest station to reservoir',
       },
 
       lakeshore: [
         {
-          id: 'KHCR',
-          name: 'Heber Valley Airport',
-          elevation: 5637,
-          role: 'Primary — nearest aviation station',
+          id: 'UTCOP',
+          name: 'US-40 at Co-Op Creek (UDOT)',
+          elevation: 7637,
+          role: 'Primary — closest to reservoir NW shore',
           priority: 1,
         },
         {
-          id: 'CRU1',
-          name: 'Currant Creek',
-          elevation: 7900,
-          role: 'East side reference',
+          id: 'DSTU1',
+          name: 'Daniels-Strawberry SNOTEL',
+          elevation: 8007,
+          role: 'High-elevation snow/wind reference',
           priority: 2,
         },
       ],
 
       reference: [
-        { id: 'DANU1', name: 'Daniels Summit', elevation: 8000 },
+        { id: 'UWCU1', name: 'Provo 22E AgriMet', elevation: 7812 },
+        { id: 'UTDAN', name: 'US-40 Daniels Summit (UDOT)', elevation: 8000 },
       ],
     },
 
@@ -929,49 +937,57 @@ export const LAKE_CONFIGS = {
           role: 'Regional pressure reference',
         },
         low: {
-          id: 'KHCR',
-          name: 'Heber Valley Airport',
-          elevation: 5637,
-          role: 'Valley pressure reference',
+          id: 'UTCOP',
+          name: 'US-40 at Co-Op Creek (UDOT)',
+          elevation: 7637,
+          role: 'Reservoir-level pressure reference',
         },
         bustThreshold: 2.5,
       },
 
       ridge: [
         {
-          id: 'SBDU1',
-          name: 'Strawberry Divide',
-          elevation: 8100,
-          role: 'Primary ridge reference',
+          id: 'CCPUT',
+          name: 'Currant Creek Peak (USFS)',
+          elevation: 10547,
+          role: 'Primary high ridge reference',
           priority: 1,
+        },
+        {
+          id: 'DSTU1',
+          name: 'Daniels-Strawberry SNOTEL',
+          elevation: 8007,
+          role: 'Pass-level ridge reference',
+          priority: 2,
         },
       ],
 
       groundTruth: {
-        id: 'KHCR',
-        name: 'Heber Valley Airport',
-        role: 'Ground Truth — closest reliable wind station',
+        id: 'UTCOP',
+        name: 'US-40 at Co-Op Creek (UDOT)',
+        role: 'Ground Truth — closest station to reservoir',
       },
 
       lakeshore: [
         {
-          id: 'KHCR',
-          name: 'Heber Valley Airport',
-          elevation: 5637,
-          role: 'Primary — nearest aviation station',
+          id: 'UTCOP',
+          name: 'US-40 at Co-Op Creek (UDOT)',
+          elevation: 7637,
+          role: 'Primary — closest to reservoir west shore',
           priority: 1,
         },
         {
-          id: 'CRU1',
-          name: 'Currant Creek',
-          elevation: 7900,
-          role: 'East side reference',
+          id: 'DSTU1',
+          name: 'Daniels-Strawberry SNOTEL',
+          elevation: 8007,
+          role: 'High-elevation snow/wind reference',
           priority: 2,
         },
       ],
 
       reference: [
-        { id: 'DANU1', name: 'Daniels Summit', elevation: 8000 },
+        { id: 'UWCU1', name: 'Provo 22E AgriMet', elevation: 7812 },
+        { id: 'UTDAN', name: 'US-40 Daniels Summit (UDOT)', elevation: 8000 },
       ],
     },
 
@@ -1016,61 +1032,252 @@ export const LAKE_CONFIGS = {
           role: 'Regional pressure reference',
         },
         low: {
-          id: 'KHCR',
-          name: 'Heber Valley Airport',
-          elevation: 5637,
-          role: 'Valley pressure reference',
+          id: 'UTCOP',
+          name: 'US-40 at Co-Op Creek (UDOT)',
+          elevation: 7637,
+          role: 'Reservoir-level pressure reference',
         },
         bustThreshold: 2.5,
       },
 
       ridge: [
         {
-          id: 'SBDU1',
-          name: 'Strawberry Divide',
-          elevation: 8100,
-          role: 'Primary ridge reference',
+          id: 'CCPUT',
+          name: 'Currant Creek Peak (USFS)',
+          elevation: 10547,
+          role: 'Primary high ridge reference',
           priority: 1,
         },
         {
-          id: 'CRU1',
-          name: 'Currant Creek',
-          elevation: 7900,
-          role: 'East reference',
+          id: 'DSTU1',
+          name: 'Daniels-Strawberry SNOTEL',
+          elevation: 8007,
+          role: 'Pass-level ridge reference',
           priority: 2,
         },
       ],
 
       groundTruth: {
-        id: 'CRU1',
-        name: 'Currant Creek',
-        role: 'Ground Truth — closest to south end',
+        id: 'RVZU1',
+        name: 'Rays Valley RAWS',
+        role: 'Ground Truth — south side closest station',
       },
 
       lakeshore: [
         {
-          id: 'CRU1',
-          name: 'Currant Creek',
-          elevation: 7900,
-          role: 'Primary — nearest to Soldier Creek',
+          id: 'RVZU1',
+          name: 'Rays Valley RAWS',
+          elevation: 7273,
+          role: 'Primary — south side nearest station',
           priority: 1,
         },
         {
-          id: 'KHCR',
-          name: 'Heber Valley Airport',
-          elevation: 5637,
-          role: 'Valley reference',
+          id: 'UTCOP',
+          name: 'US-40 at Co-Op Creek (UDOT)',
+          elevation: 7637,
+          role: 'Reservoir NW reference',
           priority: 2,
         },
       ],
 
       reference: [
-        { id: 'SBDU1', name: 'Strawberry Divide', elevation: 8100 },
+        { id: 'UWCU1', name: 'Provo 22E AgriMet', elevation: 7812 },
+        { id: 'DSTU1', name: 'Daniels-Strawberry SNOTEL', elevation: 8007 },
       ],
     },
 
     thermal: {
       optimalDirection: { min: 180, max: 240, ideal: 210 },
+      optimalSpeed: { min: 8, max: 25, average: 14 },
+      peakHours: { start: 10, end: 16, peak: 13 },
+      buildTime: { start: 8, usable: 10 },
+      fadeTime: { start: 16, end: 18 },
+    },
+
+    snowkite: true,
+    waterTempEstimate: 34,
+  },
+
+  'strawberry-view': {
+    id: 'strawberry-view',
+    name: 'The View',
+    shortName: 'The View',
+    region: 'Strawberry Reservoir',
+    coordinates: { lat: 40.1650, lng: -111.1100 },
+    elevation: 7650,
+
+    primaryWindType: 'W/NW Open Fetch',
+    thermalDirection: 'W to NW (260-330°)',
+    description: 'East-side overlook — long open fetch, exposed to full reservoir wind',
+
+    shoreOrientation: 270, // Shore faces West toward open water
+    kiting: {
+      onshore: { min: 225, max: 315 },       // SW to NW — wind from water
+      sideOn: { min: 315, max: 360, min2: 180, max2: 225 },
+      sideOffshore: { min: 45, max: 90 },    // NE to E — side-off
+      offshore: { min: 90, max: 180 },        // E to S — offshore
+    },
+
+    stations: {
+      pressure: {
+        high: {
+          id: 'KSLC',
+          name: 'Salt Lake City Intl',
+          elevation: 4226,
+          role: 'Regional pressure reference',
+        },
+        low: {
+          id: 'UTCOP',
+          name: 'US-40 at Co-Op Creek (UDOT)',
+          elevation: 7637,
+          role: 'Reservoir-level pressure reference',
+        },
+        bustThreshold: 2.5,
+      },
+
+      ridge: [
+        {
+          id: 'CCPUT',
+          name: 'Currant Creek Peak (USFS)',
+          elevation: 10547,
+          role: 'Primary high ridge reference',
+          priority: 1,
+        },
+        {
+          id: 'DSTU1',
+          name: 'Daniels-Strawberry SNOTEL',
+          elevation: 8007,
+          role: 'Pass-level ridge reference',
+          priority: 2,
+        },
+      ],
+
+      groundTruth: {
+        id: 'RVZU1',
+        name: 'Rays Valley RAWS',
+        role: 'Ground Truth — east/south side reference',
+      },
+
+      lakeshore: [
+        {
+          id: 'RVZU1',
+          name: 'Rays Valley RAWS',
+          elevation: 7273,
+          role: 'Primary — south side nearest station',
+          priority: 1,
+        },
+        {
+          id: 'UTCOP',
+          name: 'US-40 at Co-Op Creek (UDOT)',
+          elevation: 7637,
+          role: 'Reservoir NW reference',
+          priority: 2,
+        },
+      ],
+
+      reference: [
+        { id: 'UWCU1', name: 'Provo 22E AgriMet', elevation: 7812 },
+        { id: 'DSTU1', name: 'Daniels-Strawberry SNOTEL', elevation: 8007 },
+      ],
+    },
+
+    thermal: {
+      optimalDirection: { min: 260, max: 330, ideal: 290 },
+      optimalSpeed: { min: 8, max: 25, average: 14 },
+      peakHours: { start: 10, end: 16, peak: 13 },
+      buildTime: { start: 8, usable: 10 },
+      fadeTime: { start: 16, end: 18 },
+    },
+
+    snowkite: true,
+    waterTempEstimate: 34,
+  },
+
+  'strawberry-river': {
+    id: 'strawberry-river',
+    name: 'The River',
+    shortName: 'The River',
+    region: 'Strawberry Reservoir',
+    coordinates: { lat: 40.1450, lng: -111.1350 },
+    elevation: 7600,
+
+    primaryWindType: 'S/SW Channeled',
+    thermalDirection: 'S to W (190-270°)',
+    description: 'Strawberry River inlet — channeled wind along river corridor, sheltered terrain',
+
+    shoreOrientation: 225, // Shore faces SW along river channel
+    kiting: {
+      onshore: { min: 180, max: 270 },       // S to W — wind up river channel
+      sideOn: { min: 270, max: 315, min2: 135, max2: 180 },
+      sideOffshore: { min: 0, max: 45 },     // N to NE — side-off
+      offshore: { min: 45, max: 135 },        // NE to SE — offshore
+    },
+
+    stations: {
+      pressure: {
+        high: {
+          id: 'KSLC',
+          name: 'Salt Lake City Intl',
+          elevation: 4226,
+          role: 'Regional pressure reference',
+        },
+        low: {
+          id: 'UTCOP',
+          name: 'US-40 at Co-Op Creek (UDOT)',
+          elevation: 7637,
+          role: 'Reservoir-level pressure reference',
+        },
+        bustThreshold: 2.5,
+      },
+
+      ridge: [
+        {
+          id: 'CCPUT',
+          name: 'Currant Creek Peak (USFS)',
+          elevation: 10547,
+          role: 'Primary high ridge reference',
+          priority: 1,
+        },
+        {
+          id: 'DSTU1',
+          name: 'Daniels-Strawberry SNOTEL',
+          elevation: 8007,
+          role: 'Pass-level ridge reference',
+          priority: 2,
+        },
+      ],
+
+      groundTruth: {
+        id: 'RVZU1',
+        name: 'Rays Valley RAWS',
+        role: 'Ground Truth — nearest to river inlet',
+      },
+
+      lakeshore: [
+        {
+          id: 'RVZU1',
+          name: 'Rays Valley RAWS',
+          elevation: 7273,
+          role: 'Primary — south side nearest station',
+          priority: 1,
+        },
+        {
+          id: 'UTCOP',
+          name: 'US-40 at Co-Op Creek (UDOT)',
+          elevation: 7637,
+          role: 'Reservoir NW reference',
+          priority: 2,
+        },
+      ],
+
+      reference: [
+        { id: 'UWCU1', name: 'Provo 22E AgriMet', elevation: 7812 },
+        { id: 'UTDAN', name: 'US-40 Daniels Summit (UDOT)', elevation: 8000 },
+      ],
+    },
+
+    thermal: {
+      optimalDirection: { min: 190, max: 270, ideal: 230 },
       optimalSpeed: { min: 8, max: 25, average: 14 },
       peakHours: { start: 10, end: 16, peak: 13 },
       buildTime: { start: 8, usable: 10 },
@@ -1114,9 +1321,9 @@ export const LAKE_CONFIGS = {
           role: 'Regional pressure reference',
         },
         low: {
-          id: 'EPHU1',
-          name: 'Ephraim',
-          elevation: 5540,
+          id: 'EPMU1',
+          name: 'Ephraim NWS',
+          elevation: 5530,
           role: 'Sanpete Valley pressure reference',
         },
         bustThreshold: 3.0,
@@ -1124,39 +1331,53 @@ export const LAKE_CONFIGS = {
 
       ridge: [
         {
-          id: 'UFCU1',
-          name: 'Fairview Canyon UDOT',
-          elevation: 9200,
-          role: 'PRIMARY — UDOT station minutes from Big Drift',
+          id: 'SKY',
+          name: 'Skyline UDOT',
+          elevation: 9330,
+          role: 'PRIMARY — UDOT station 1.89 mi from Big Drift',
           priority: 1,
+        },
+        {
+          id: 'UTESU',
+          name: 'SR-264 Eccles Summit (UDOT)',
+          elevation: 9443,
+          role: 'Same ridge — Eccles Summit reference',
+          priority: 2,
+        },
+        {
+          id: 'UTMPK',
+          name: 'Monument Peak (USFS)',
+          elevation: 10390,
+          role: 'High-elevation ridge reference',
+          priority: 3,
         },
       ],
 
       groundTruth: {
-        id: 'UFCU1',
-        name: 'Fairview Canyon UDOT',
-        role: 'Ground Truth — nearest station to Big Drift',
+        id: 'SKY',
+        name: 'Skyline UDOT',
+        role: 'Ground Truth — nearest station to Big Drift (1.89 mi)',
       },
 
       lakeshore: [
         {
-          id: 'UFCU1',
-          name: 'Fairview Canyon UDOT',
-          elevation: 9200,
+          id: 'SKY',
+          name: 'Skyline UDOT',
+          elevation: 9330,
           role: 'Primary — closest to kite area',
           priority: 1,
         },
         {
-          id: 'EPHU1',
-          name: 'Ephraim',
-          elevation: 5540,
+          id: 'EPMU1',
+          name: 'Ephraim NWS',
+          elevation: 5530,
           role: 'Valley floor reference',
           priority: 2,
         },
       ],
 
       reference: [
-        { id: 'MNTU1', name: 'Manti', elevation: 5620 },
+        { id: 'UTHTP', name: 'US-89 Hilltop (UDOT)', elevation: 6446 },
       ],
     },
 

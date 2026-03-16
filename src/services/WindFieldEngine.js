@@ -103,10 +103,12 @@ const LOCATION_STATIONS = {
   'utah-lake-mm19':     { primary: 'QSF',  secondary: ['KPVU','FPS'], upstreamNorth: ['KSLC', 'UTALP'], upstreamThermal: ['QSF'] },
   'deer-creek':         { primary: 'KHCR', secondary: ['SND'],        upstreamNorth: ['KSLC'],           upstreamThermal: ['KPVU', 'SND'] },
   'willard-bay':        { primary: 'KHIF', secondary: [],             upstreamNorth: ['KSLC'],           upstreamThermal: ['KHIF'] },
-  'strawberry-ladders': { primary: 'KHCR', secondary: ['CRU1'],       upstreamNorth: ['KSLC'],           upstreamThermal: ['KHCR', 'SBDU1'] },
-  'strawberry-bay':     { primary: 'KHCR', secondary: ['CRU1'],       upstreamNorth: ['KSLC'],           upstreamThermal: ['KHCR'] },
-  'strawberry-soldier': { primary: 'CRU1', secondary: ['KHCR'],       upstreamNorth: ['KSLC'],           upstreamThermal: ['CRU1'] },
-  'skyline-drive':      { primary: 'UFCU1', secondary: ['EPHU1'],     upstreamNorth: ['KSLC'],           upstreamThermal: ['UFCU1'] },
+  'strawberry-ladders': { primary: 'UTCOP', secondary: ['UTDAN', 'DSTU1'], upstreamNorth: ['KSLC', 'CCPUT'], upstreamThermal: ['UTCOP', 'DSTU1'] },
+  'strawberry-bay':     { primary: 'UTCOP', secondary: ['UTDAN', 'UWCU1'], upstreamNorth: ['KSLC', 'CCPUT'], upstreamThermal: ['UTCOP', 'UTDAN'] },
+  'strawberry-soldier': { primary: 'RVZU1', secondary: ['UTCOP', 'CCPUT'], upstreamNorth: ['KSLC', 'CCPUT'], upstreamThermal: ['RVZU1', 'UTCOP'] },
+  'strawberry-view':    { primary: 'UTCOP', secondary: ['RVZU1', 'CCPUT'], upstreamNorth: ['KSLC', 'CCPUT'], upstreamThermal: ['UTCOP', 'DSTU1'] },
+  'strawberry-river':   { primary: 'UTCOP', secondary: ['RVZU1', 'DSTU1'], upstreamNorth: ['KSLC', 'CCPUT'], upstreamThermal: ['UTCOP', 'RVZU1'] },
+  'skyline-drive':      { primary: 'SKY',   secondary: ['UTESU', 'UTMPK'], upstreamNorth: ['KSLC', 'UTMPK'], upstreamThermal: ['SKY', 'UTESU'] },
 };
 
 // ─── DAYLIGHT ─────────────────────────────────────────────────────

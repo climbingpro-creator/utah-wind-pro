@@ -43,6 +43,7 @@ import PropagationBanner from './PropagationBanner';
 import SessionFeedback from './SessionFeedback';
 import SessionReplay from './SessionReplay';
 import TodayHero from './TodayHero';
+import SnowkiteForecast from './SnowkiteForecast';
 
 function windDirectionToCardinal(degrees) {
   if (degrees == null) return 'N/A';
@@ -756,6 +757,17 @@ export function Dashboard() {
                 onSelectSpot={setSelectedLake}
               />
             </SafeComponent>
+
+            {/* SNOWKITE AI FORECAST — shows for snowkite locations */}
+            {(selectedLake?.startsWith('strawberry-') || selectedLake === 'skyline-drive') && (
+              <SafeComponent name="Snowkite Forecast">
+                <SnowkiteForecast
+                  selectedLake={selectedLake}
+                  mesoData={mesoData}
+                  onSelectLocation={setSelectedLake}
+                />
+              </SafeComponent>
+            )}
 
             {/* Smart Hourly Forecast — powered by WindFieldEngine */}
             <SmartTimeline
