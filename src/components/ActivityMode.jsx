@@ -1,6 +1,7 @@
 import React from 'react';
 import { Wind, Sailboat, Ship, Waves, Mountain, Anchor, Navigation, Cloud, Snowflake } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import { getRotatingImage } from '../config/imagePool';
 
 // Activity configurations with thresholds and preferences
 export const ACTIVITY_CONFIGS = {
@@ -9,6 +10,7 @@ export const ACTIVITY_CONFIGS = {
     name: 'Kiting',
     icon: <Navigation className="w-4 h-4" />,
     description: 'Kiteboarding & Foiling',
+    heroImage: '/images/kiting-utah-lake.png',
     thresholds: {
       tooLight: 8,
       ideal: { min: 12, max: 22 },
@@ -27,6 +29,7 @@ export const ACTIVITY_CONFIGS = {
     name: 'Snowkiting',
     icon: <Snowflake className="w-4 h-4" />,
     description: 'Snowkiting & Big Drifts',
+    heroImage: '/images/snowkite-strawberry.png',
     thresholds: {
       tooLight: 8,
       ideal: { min: 12, max: 22 },
@@ -45,6 +48,7 @@ export const ACTIVITY_CONFIGS = {
     name: 'Sailing',
     icon: <Sailboat className="w-4 h-4" />,
     description: 'Dinghy & Keelboat',
+    heroImage: '/images/storm-clouds.png',
     thresholds: {
       tooLight: 4,
       ideal: { min: 8, max: 18 },
@@ -63,6 +67,7 @@ export const ACTIVITY_CONFIGS = {
     name: 'Boating',
     icon: <Ship className="w-4 h-4" />,
     description: 'Powerboats & Cruising',
+    heroImage: '/images/wake-wave-sunset.png',
     thresholds: {
       ideal: { min: 0, max: 8 },
       choppy: 10,
@@ -79,6 +84,7 @@ export const ACTIVITY_CONFIGS = {
     name: 'Paddling',
     icon: <Waves className="w-4 h-4" />,
     description: 'SUP, Kayak, Canoe',
+    heroImage: '/images/paddling-utah-lake.png',
     thresholds: {
       ideal: { min: 0, max: 6 },
       manageable: 10,
@@ -95,6 +101,7 @@ export const ACTIVITY_CONFIGS = {
     name: 'Paragliding',
     icon: <Mountain className="w-4 h-4" />,
     description: 'Point of the Mountain',
+    heroImage: '/images/storm-clouds.png',
     thresholds: {
       tooLight: 5,
       ideal: { min: 10, max: 16 },
@@ -113,6 +120,7 @@ export const ACTIVITY_CONFIGS = {
     name: 'Fishing',
     icon: <Anchor className="w-4 h-4" />,
     description: 'Lakes & Rivers',
+    heroImage: '/images/fishing-casting.png',
     thresholds: {
       ideal: { min: 0, max: 10 },
       choppy: 15,
@@ -130,6 +138,7 @@ export const ACTIVITY_CONFIGS = {
     name: 'Windsurfing',
     icon: <Wind className="w-4 h-4" />,
     description: 'Windsurfing & Winging',
+    heroImage: '/images/foilboard-sunset.png',
     thresholds: {
       tooLight: 6,
       ideal: { min: 10, max: 20 },
@@ -167,8 +176,8 @@ const ActivityMode = ({ selectedActivity, onActivityChange, windSpeed, windGust 
   
   return (
     <div className={`
-      flex items-center gap-1.5 p-1.5 rounded-xl border backdrop-blur-xl overflow-x-auto hide-scrollbar
-      ${isDark ? 'bg-slate-900/50 border-slate-800' : 'bg-white border-slate-200 shadow-sm'}
+      flex items-center gap-1 p-1 rounded-xl border overflow-x-auto hide-scrollbar
+      ${isDark ? 'bg-[var(--bg-card)] border-[var(--border-color)]' : 'bg-white border-slate-200'}
     `}>
       {activities.map(activityId => {
         const activity = ACTIVITY_CONFIGS[activityId];
@@ -176,44 +185,31 @@ const ActivityMode = ({ selectedActivity, onActivityChange, windSpeed, windGust 
         const status = getActivityStatus(activityId, windSpeed, windGust);
         const isActive = status === 'active';
         const isMarginal = status === 'marginal';
+
+        const statusDotColor = isActive ? 'bg-emerald-500' : isMarginal ? 'bg-amber-500' : null;
         
         return (
           <button
             key={activityId}
             onClick={() => onActivityChange(activityId)}
             className={`
-              relative flex flex-col sm:flex-row items-center gap-1.5 px-4 py-2 sm:py-2.5 rounded-lg text-sm font-bold tracking-wide
-              transition-all duration-300 ease-out whitespace-nowrap outline-none
+              relative flex items-center gap-1.5 px-3 py-2 rounded-lg text-[13px] font-semibold
+              transition-all duration-200 whitespace-nowrap outline-none
               ${isSelected 
-                ? (isActive
-                    ? 'bg-green-500 text-white shadow-[0_0_15px_-3px_rgba(34,197,94,0.4)] ring-1 ring-green-400/50'
-                    : isMarginal
-                      ? 'bg-amber-500 text-white shadow-[0_0_15px_-3px_rgba(245,158,11,0.4)] ring-1 ring-amber-400/50'
-                      : 'bg-primary text-white shadow-[0_0_15px_-3px_rgba(14,165,233,0.4)] ring-1 ring-sky-400/50')
-                : isActive
-                  ? (isDark
-                      ? 'text-green-400 bg-green-500/10 hover:bg-green-500/20 ring-1 ring-green-500/30'
-                      : 'text-green-700 bg-green-50 hover:bg-green-100 ring-1 ring-green-400/40')
-                  : isMarginal
-                    ? (isDark
-                        ? 'text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 ring-1 ring-amber-500/30'
-                        : 'text-amber-700 bg-amber-50 hover:bg-amber-100 ring-1 ring-amber-400/40')
-                    : (isDark 
-                        ? 'text-slate-400 hover:text-white hover:bg-slate-800/80'
-                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100')
+                ? 'bg-sky-500 text-white shadow-sm'
+                : (isDark 
+                    ? 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/[0.04]'
+                    : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50')
               }
             `}
             title={activity.description}
           >
-            <span className={`transition-transform duration-300 ${isSelected ? 'scale-110' : ''}`}>
-              {activity.icon}
-            </span>
+            <span className="flex-shrink-0">{activity.icon}</span>
             <span className="hidden sm:inline">{activity.name}</span>
-            {isActive && !isSelected && (
-              <span className="absolute top-1 sm:-top-1 right-1 sm:-right-1 w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse ring-2 ring-transparent" />
-            )}
-            {isMarginal && !isSelected && !isActive && (
-              <span className="absolute top-1 sm:-top-1 right-1 sm:-right-1 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-transparent" />
+            {statusDotColor && !isSelected && (
+              <span className={`absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full ${statusDotColor} ring-2 ${
+                isDark ? 'ring-[var(--bg-card)]' : 'ring-white'
+              }`} />
             )}
           </button>
         );
@@ -397,6 +393,12 @@ export function getBestActivity(windSpeed, windGust, windDirection) {
     scores,
     recommendation: best ? `Best for ${ACTIVITY_CONFIGS[best].name}` : 'Conditions unclear',
   };
+}
+
+export function getActivityHeroImage(activityId) {
+  const config = ACTIVITY_CONFIGS[activityId];
+  if (!config) return null;
+  return getRotatingImage(activityId, 'activity') || config.heroImage;
 }
 
 export default ActivityMode;

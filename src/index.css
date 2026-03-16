@@ -1,73 +1,122 @@
 @import "tailwindcss";
 @import "leaflet/dist/leaflet.css";
 
-@layer base {
-  :root {
-    --color-primary: #0ea5e9; /* Sky 500 */
-    --color-primary-dark: #0284c7; /* Sky 600 */
-    --color-success: #10b981; /* Emerald 500 */
-    --color-warning: #f59e0b; /* Amber 500 */
-    --color-danger: #ef4444; /* Red 500 */
-    --color-thermal: #06b6d4; /* Cyan 500 */
-    
-    /* Light mode colors - Sleeker */
-    --bg-primary: #f8fafc; /* Slate 50 */
-    --bg-secondary: #f1f5f9; /* Slate 100 */
-    --bg-card: #ffffff;
-    --text-primary: #0f172a; /* Slate 900 */
-    --text-secondary: #475569; /* Slate 600 */
-    --border-color: #e2e8f0; /* Slate 200 */
-  }
-  
-  .dark {
-    /* Dark mode colors - Deep and premium */
-    --bg-primary: #020617; /* Slate 950 */
-    --bg-secondary: #0f172a; /* Slate 900 */
-    --bg-card: #0f172a;
-    --text-primary: #f8fafc; /* Slate 50 */
-    --text-secondary: #94a3b8; /* Slate 400 */
-    --border-color: #1e293b; /* Slate 800 */
-  }
+@theme {
+  --color-primary: #0ea5e9;
+  --color-primary-dark: #0284c7;
+  --color-primary-light: #38bdf8;
+}
+
+:root {
+  --color-success: #22c55e;
+  --color-warning: #eab308;
+  --color-danger: #ef4444;
+
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f8fafc;
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+  --text-tertiary: #94a3b8;
+  --border-color: #e2e8f0;
+  --border-subtle: #f1f5f9;
+
+  --section-gap: 2rem;
+  --card-padding: 1.5rem;
+  --card-radius: 0.75rem;
+}
+
+.dark {
+  --bg-primary: #0b1120;
+  --bg-secondary: #0f172a;
+  --bg-card: #131c2e;
+  --bg-card-hover: #1a2540;
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-tertiary: #64748b;
+  --border-color: #1e293b;
+  --border-subtle: #162032;
 }
 
 body {
-  @apply antialiased;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   background: var(--bg-primary);
   color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
   overscroll-behavior: none;
-  transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-.dark body {
-  @apply bg-slate-950 text-slate-50;
+/* ─── Card primitives ─── */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--card-radius);
+  padding: var(--card-padding);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 }
 
-.light body {
-  @apply bg-slate-50 text-slate-900;
+.card:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 4px 24px -4px rgba(14, 165, 233, 0.08);
 }
 
-@supports (padding: env(safe-area-inset-top)) {
-  body {
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
+.dark .card:hover {
+  box-shadow: 0 4px 24px -4px rgba(14, 165, 233, 0.12);
+}
+
+/* ─── Section spacing ─── */
+.section-stack > * + * {
+  margin-top: var(--section-gap);
+}
+
+/* ─── Data number — large hero metric ─── */
+.data-number {
+  font-size: 2.25rem;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  font-variant-numeric: tabular-nums;
+}
+
+.data-number-sm {
+  font-size: 1.5rem;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  font-variant-numeric: tabular-nums;
+}
+
+.data-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.075em;
+  color: var(--text-tertiary);
+}
+
+/* ─── Subtle animations ─── */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-.gauge-gradient {
-  background: conic-gradient(
-    from 180deg,
-    #ef4444 0deg,
-    #f59e0b 90deg,
-    #22c55e 180deg,
-    #22c55e 270deg,
-    #f59e0b 315deg,
-    #ef4444 360deg
-  );
+.animate-fade-in {
+  animation: fade-in-up 0.4s ease-out both;
+}
+
+.animate-fade-in-delay {
+  animation: fade-in-up 0.4s ease-out 0.1s both;
 }
 
 @keyframes slide-in {
@@ -98,7 +147,20 @@ body {
   animation: pulse-glow 2s ease-in-out infinite;
 }
 
-/* Leaflet map customizations - Dark mode */
+/* ─── Gauge ─── */
+.gauge-gradient {
+  background: conic-gradient(
+    from 180deg,
+    #ef4444 0deg,
+    #f59e0b 90deg,
+    #22c55e 180deg,
+    #22c55e 270deg,
+    #f59e0b 315deg,
+    #ef4444 360deg
+  );
+}
+
+/* ─── Leaflet — Dark mode ─── */
 .dark .leaflet-container {
   background: #0f172a;
   font-family: inherit;
@@ -134,7 +196,7 @@ body {
   color: #94a3b8 !important;
 }
 
-/* Leaflet map customizations - Light mode */
+/* ─── Leaflet — Light mode ─── */
 .light .leaflet-container {
   background: #f1f5f9;
   font-family: inherit;
@@ -182,4 +244,83 @@ body {
 .custom-marker {
   background: transparent;
   border: none;
+}
+
+/* ─── Hero image banners ─── */
+.hero-banner {
+  position: relative;
+  border-radius: var(--card-radius);
+  overflow: hidden;
+  height: 13rem;
+}
+
+@media (min-width: 640px) {
+  .hero-banner {
+    height: 16rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .hero-banner {
+    height: 18rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .hero-banner {
+    height: 20rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .hero-banner {
+    height: 22rem;
+  }
+}
+
+.hero-banner img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 40%;
+}
+
+.hero-mood {
+  position: relative;
+  border-radius: var(--card-radius);
+  overflow: hidden;
+  min-height: 14rem;
+}
+
+@media (min-width: 640px) {
+  .hero-mood {
+    min-height: 16rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .hero-mood {
+    min-height: 18rem;
+  }
+}
+
+.hero-mood > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 35%;
+}
+
+/* ─── Safe area insets ─── */
+@supports (padding: env(safe-area-inset-top)) {
+  body {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
 }

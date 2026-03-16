@@ -375,6 +375,32 @@ export class LakeState {
     }
 
     // =========================================
+    // EVENT PERSISTENCE — count recent consecutive north-flow hours
+    // =========================================
+    let recentNorthFlowHours = 0;
+    if (historyData?.length > 0) {
+      const sorted = [...historyData]
+        .filter(r => r.windDirection != null && r.windSpeed != null)
+        .sort((a, b) => new Date(b.timestamp || b.dateTime) - new Date(a.timestamp || a.dateTime));
+      for (const reading of sorted) {
+        const dir = reading.windDirection;
+        const spd = reading.windSpeed;
+        const isNorth = (dir >= 315 || dir <= 45) && spd >= 8;
+        if (isNorth) {
+          recentNorthFlowHours++;
+        } else {
+          break;
+        }
+      }
+    } else {
+      const currentDir = state.pws?.windDirection || state.wind.stations?.[0]?.direction;
+      const currentSpd = state.pws?.windSpeed || state.wind.stations?.[0]?.speed;
+      if (currentDir != null && currentSpd != null && (currentDir >= 315 || currentDir <= 45) && currentSpd >= 8) {
+        recentNorthFlowHours = 1;
+      }
+    }
+
+    // =========================================
     // FINAL PREDICTION - Combine all 3 steps
     // =========================================
     const thermalPrediction = predictThermal(lakeId, {
@@ -385,34 +411,30 @@ export class LakeState {
       thermalDelta: state.thermal.delta,
       pumpActive: state.thermal.pumpActive,
       inversionTrapped: state.thermal.inversionTrapped,
-      // Ridge station data for Arrowhead trigger (Deer Creek)
       ridgeWindSpeed: state.thermal.ridgeStation?.windSpeed,
       ridgeWindDirection: state.thermal.ridgeStation?.windDirection,
       ridgeStationName: state.thermal.ridgeStation?.name,
-      // Spanish Fork early indicator (Utah Lake SE thermal)
       spanishForkWind: state.earlyIndicator ? {
         speed: state.earlyIndicator.windSpeed,
         direction: state.earlyIndicator.windDirection,
         temperature: state.earlyIndicator.temperature,
       } : null,
-      // KSLC wind for north flow indicator (Utah Lake north flow locations)
       kslcWind: state.kslcStation ? {
         speed: state.kslcStation.windSpeed,
         direction: state.kslcStation.windDirection,
         temperature: state.kslcStation.temperature,
       } : null,
-      // KPVU wind for southern launches (Lincoln Beach, Sandy Beach)
       kpvuWind: state.kpvuStation ? {
         speed: state.kpvuStation.windSpeed,
         direction: state.kpvuStation.windDirection,
         temperature: state.kpvuStation.temperature,
       } : null,
-      // UTALP wind for gap wind indicator
       utalpWind: state.utalpStation ? {
         speed: state.utalpStation.windSpeed,
         direction: state.utalpStation.windDirection,
         temperature: state.utalpStation.temperature,
       } : null,
+      recentNorthFlowHours,
     });
     
     state.probability = thermalPrediction?.probability || 0;

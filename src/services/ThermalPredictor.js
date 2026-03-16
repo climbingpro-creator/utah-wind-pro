@@ -1179,11 +1179,12 @@ export function predictThermal(lakeId, currentConditions) {
     }
   }
   
-  // NORTH FLOW EARLY INDICATOR (Utah Lake north flow locations)
+  // NORTH FLOW INDICATOR (ALL Utah Lake locations)
   // VALIDATED: When KSLC shows N/NW wind, expect these speeds at Zig Zag 1hr later:
   // - KSLC 8-10 mph → ~13 mph at Zig Zag (56% foil kiteable)
   // - KSLC 10-15 mph → ~15.5 mph at Zig Zag (81% foil kiteable)
   // - KSLC 15+ mph → ~23 mph at Zig Zag (100% kiteable)
+  // North flow is a real wind source for all Utah Lake locations, not just a thermal buster.
   let northFlowScore = 50;
   let northFlowStatus = 'unknown';
   let northFlowMessage = '';
@@ -1192,7 +1193,7 @@ export function predictThermal(lakeId, currentConditions) {
   let foilKiteablePct = null;
   let twinTipKiteablePct = null;
   
-  if (lakeId.startsWith('utah-lake') && requiresNorthFlow && currentConditions?.kslcWind) {
+  if (lakeId.startsWith('utah-lake') && currentConditions?.kslcWind) {
     const kslcWind = currentConditions.kslcWind;
     const kslcSpeed = kslcWind.speed;
     const kslcDir = kslcWind.direction;
@@ -1263,6 +1264,33 @@ export function predictThermal(lakeId, currentConditions) {
     }
   }
   
+  // EVENT PERSISTENCE — If north flow has been sustained for hours, boost confidence.
+  // A 6+ hour north wind event is far more likely to continue than a 1-hour gust.
+  let persistenceBoost = 1.0;
+  let persistenceMessage = null;
+
+  if (lakeId.startsWith('utah-lake') && currentConditions?.recentNorthFlowHours != null) {
+    const hrs = currentConditions.recentNorthFlowHours;
+    if (hrs >= 6) {
+      persistenceBoost = 1.5;
+      persistenceMessage = `Sustained north flow (${hrs}h+) — high confidence it continues`;
+    } else if (hrs >= 3) {
+      persistenceBoost = 1.25;
+      persistenceMessage = `North flow building (${hrs}h) — likely to persist`;
+    } else if (hrs >= 1) {
+      persistenceBoost = 1.1;
+      persistenceMessage = `North flow active (${hrs}h)`;
+    }
+
+    if (persistenceBoost > 1.0) {
+      probability *= persistenceBoost;
+      if (northFlowStatus === 'unknown' || northFlowStatus === 'no-signal') {
+        northFlowStatus = 'sustained';
+        northFlowScore = Math.max(northFlowScore, 70);
+      }
+    }
+  }
+
   // PROVO AIRPORT INDICATOR (Best for Lincoln Beach & Sandy Beach)
   // VALIDATED: KPVU 8-10 mph N → 78% foil kiteable (better than KSLC's 56%)
   let provoIndicator = null;
@@ -1543,8 +1571,8 @@ export function predictThermal(lakeId, currentConditions) {
       },
     } : null,
     
-    // North Flow early indicator (Utah Lake north flow locations)
-    northFlow: (lakeId.startsWith('utah-lake') && requiresNorthFlow) ? {
+    // North Flow indicator (all Utah Lake locations)
+    northFlow: lakeId.startsWith('utah-lake') ? {
       status: northFlowStatus,
       score: northFlowScore,
       message: northFlowMessage,
@@ -1552,10 +1580,12 @@ export function predictThermal(lakeId, currentConditions) {
       windSpeed: currentConditions?.kslcWind?.speed,
       windDirection: currentConditions?.kslcWind?.direction,
       pressureGradient: currentConditions?.pressureGradient,
-      // Validated expected speed at Zig Zag
       expectedZigZagSpeed,
       foilKiteablePct,
       twinTipKiteablePct,
+      persistenceHours: currentConditions?.recentNorthFlowHours || 0,
+      persistenceBoost: persistenceBoost > 1.0 ? persistenceBoost : null,
+      persistenceMessage,
       stationName: 'Salt Lake City (KSLC)',
       triggerConditions: {
         directionNeeded: 'N/NW (315-45°)',
@@ -1563,7 +1593,6 @@ export function predictThermal(lakeId, currentConditions) {
         gradientNeeded: 'Positive (SLC > Provo)',
         leadTime: '~1 hour',
       },
-      // Validated correlation data
       correlation: {
         'KSLC 8-10 mph': '→ ~13 mph at Zig Zag (56% foil)',
         'KSLC 10-15 mph': '→ ~15 mph at Zig Zag (81% foil)',

@@ -200,16 +200,21 @@ function scoreSpot(spot, activity, currentWind, lakeState, mesoData) {
       if (!reason) reason = `${dirLabel(dir)} wind — cross/off direction`;
     }
 
-    // Speed scoring
-    const { ideal } = config.thresholds;
-    if (ideal && speed >= ideal.min && speed <= ideal.max) {
+    // Speed scoring — wind must actually exist for wind sports
+    const { ideal, tooLight, tooStrong } = config.thresholds;
+    if (speed < (tooLight ?? 0)) {
+      // Below minimum: cap the entire score. Direction is irrelevant without wind.
+      const fraction = speed / (tooLight || 1);
+      score = Math.round(fraction * 30);
+      reason = `Too light (${speed.toFixed(0)} mph) — need ${tooLight}+ mph`;
+    } else if (ideal && speed >= ideal.min && speed <= ideal.max) {
       score += 15;
-    } else if (speed < (config.thresholds.tooLight ?? 0)) {
-      score -= 15;
-      reason = reason || 'Too light';
-    } else if (speed > (config.thresholds.tooStrong ?? 999)) {
+    } else if (speed > (tooStrong ?? 999)) {
       score -= 20;
       reason = 'Too strong — unsafe';
+    } else if (speed >= (tooLight ?? 0) && ideal && speed < ideal.min) {
+      // Between tooLight and ideal — usable but not perfect
+      score += 5;
     }
 
     // Gust factor penalty
@@ -336,13 +341,16 @@ function SpotRanker({ activity, currentWind, lakeState, mesoData, onSelectSpot }
   };
 
   return (
-    <div className={`rounded-2xl p-5 border shadow-sm ${isDark ? 'bg-slate-900/40 border-slate-800' : 'bg-white border-slate-200'}`}>
-      <h3 className={`font-bold mb-4 flex items-center gap-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>
-        <MapPin className="w-5 h-5 text-sky-500" />
-        Where to Go
-      </h3>
+    <div className="card">
+      <div className="flex items-center justify-between mb-5">
+        <h3 className="flex items-center gap-2 text-base font-bold text-[var(--text-primary)]">
+          <MapPin className="w-4 h-4 text-sky-500" />
+          Where to Go
+        </h3>
+        <span className="data-label">{ranked.length} spots ranked</span>
+      </div>
 
-      <div className="space-y-2.5">
+      <div className="space-y-2">
         {visible.map((spot, idx) => {
           const rank = idx + 1;
           const colors = getScoreColor(spot.score);
@@ -353,46 +361,46 @@ function SpotRanker({ activity, currentWind, lakeState, mesoData, onSelectSpot }
               key={spot.id}
               onClick={() => handleClick(spot.id)}
               className={`
-                w-full flex items-center gap-3.5 rounded-xl px-3.5 py-3 transition-all duration-300 text-left group outline-none
+                w-full flex items-center gap-3 rounded-lg px-3 py-3 transition-all duration-200 text-left group outline-none
+                border
                 ${isTop
                   ? (isDark
-                    ? 'bg-gradient-to-r from-green-500/10 to-emerald-500/5 border border-green-500/30 hover:border-green-400/50 shadow-[0_0_15px_-3px_rgba(34,197,94,0.15)]'
-                    : 'bg-gradient-to-r from-green-50 to-emerald-50/50 border border-green-200 hover:border-green-300 shadow-sm')
+                    ? 'bg-emerald-500/[0.06] border-emerald-500/20 hover:border-emerald-500/40'
+                    : 'bg-emerald-50/50 border-emerald-200 hover:border-emerald-300')
                   : (isDark
-                    ? 'bg-slate-800/40 border border-slate-700/50 hover:bg-slate-800 hover:border-slate-600'
-                    : 'bg-slate-50 border border-transparent hover:bg-white hover:border-slate-200 hover:shadow-sm')
+                    ? 'bg-white/[0.02] border-[var(--border-subtle)] hover:border-[var(--border-color)] hover:bg-white/[0.04]'
+                    : 'bg-slate-50/50 border-slate-100 hover:border-slate-200 hover:bg-white')
                 }
               `}
             >
               <div className={`
-                w-8 h-8 rounded-full flex items-center justify-center text-sm font-black shrink-0 transition-transform group-hover:scale-110
+                w-7 h-7 rounded-lg flex items-center justify-center text-xs font-extrabold shrink-0
                 ${isTop
-                  ? 'bg-green-500 text-white shadow-md shadow-green-500/20'
-                  : (isDark ? 'bg-slate-700 text-slate-400' : 'bg-slate-200 text-slate-500')
+                  ? 'bg-emerald-500 text-white'
+                  : (isDark ? 'bg-white/[0.06] text-[var(--text-tertiary)]' : 'bg-slate-100 text-slate-400')
                 }
               `}>
-                {rank === 1 ? <Trophy className="w-4 h-4" /> : rank}
+                {rank === 1 ? <Trophy className="w-3.5 h-3.5" /> : rank}
               </div>
 
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-0.5">
-                  <span className={`text-sm font-bold truncate ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
+                  <span className="text-sm font-semibold truncate text-[var(--text-primary)]">
                     {spot.name}
                   </span>
-                  <span className={`text-[11px] font-medium px-1.5 py-0.5 rounded-md ${isDark ? 'bg-slate-800 text-slate-400' : 'bg-slate-200/50 text-slate-500'}`}>
+                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded text-[var(--text-tertiary)] bg-[var(--border-subtle)]">
                     {spot.lake}
                   </span>
                 </div>
 
-                {/* Reference meter + live wind reading */}
                 {spot.meterName && (
-                  <div className={`flex items-center gap-1.5 text-[11px] font-medium ${isDark ? 'text-sky-400/80' : 'text-sky-600/80'}`}>
-                    <Radio className="w-3 h-3" />
+                  <div className="flex items-center gap-1.5 text-[11px] font-medium text-[var(--text-tertiary)]">
+                    <Radio className="w-3 h-3 opacity-60" />
                     <span className="truncate">{spot.meterName}</span>
                     {spot.wind && (
                       <>
-                        <span className="opacity-50 mx-0.5">•</span>
-                        <span className={`font-bold ${spot.wind.speed >= 8 ? (isDark ? 'text-emerald-400' : 'text-emerald-600') : ''}`}>
+                        <span className="opacity-40 mx-0.5">·</span>
+                        <span className={`font-bold ${spot.wind.speed >= 8 ? 'text-emerald-500' : ''}`}>
                           {spot.wind.speed.toFixed(0)} mph {spot.wind.dir != null ? dirLabel(spot.wind.dir) : ''}
                           {spot.wind.gust > spot.wind.speed * 1.3 ? ` G${spot.wind.gust.toFixed(0)}` : ''}
                         </span>
@@ -401,31 +409,31 @@ function SpotRanker({ activity, currentWind, lakeState, mesoData, onSelectSpot }
                   </div>
                 )}
 
-                <div className="flex items-center gap-2.5 mt-2">
-                  <div className={`h-2 rounded-full flex-1 overflow-hidden ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`}>
+                <div className="flex items-center gap-2 mt-2">
+                  <div className={`h-1.5 rounded-full flex-1 overflow-hidden ${isDark ? 'bg-white/[0.06]' : 'bg-slate-100'}`}>
                     <div
-                      className="h-full rounded-full transition-all duration-700 ease-out shadow-sm"
+                      className="h-full rounded-full transition-all duration-700 ease-out"
                       style={{ width: `${spot.score}%`, backgroundColor: colors.bar }}
                     />
                   </div>
-                  <span className={`text-xs font-black w-8 text-right tabular-nums ${colors.text}`}>
-                    {spot.score}%
+                  <span className={`text-xs font-bold w-8 text-right tabular-nums ${colors.text}`}>
+                    {spot.score}
                   </span>
                 </div>
 
                 <div className="flex items-center gap-2 mt-1">
-                  <p className={`text-[11px] font-medium truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                  <p className="text-[11px] font-medium truncate text-[var(--text-tertiary)]">
                     {spot.reason}
                   </p>
                   {spot.shoreZone && (
-                    <span className={`shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase tracking-wider ${
+                    <span className={`shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider ${
                       spot.shoreZone === 'onshore'
-                        ? (isDark ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-700')
+                        ? (isDark ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-700')
                         : spot.shoreZone === 'side-on'
-                          ? (isDark ? 'bg-cyan-500/20 text-cyan-400' : 'bg-cyan-100 text-cyan-700')
+                          ? (isDark ? 'bg-sky-500/10 text-sky-400' : 'bg-sky-50 text-sky-700')
                           : spot.shoreZone === 'side-offshore'
-                            ? (isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-100 text-yellow-700')
-                            : (isDark ? 'bg-red-500/20 text-red-400' : 'bg-red-100 text-red-700')
+                            ? (isDark ? 'bg-amber-500/10 text-amber-400' : 'bg-amber-50 text-amber-700')
+                            : (isDark ? 'bg-red-500/10 text-red-400' : 'bg-red-50 text-red-700')
                     }`}>
                       {spot.shoreZone === 'onshore' && 'Onshore'}
                       {spot.shoreZone === 'side-on' && 'Side-on'}
@@ -447,14 +455,7 @@ function SpotRanker({ activity, currentWind, lakeState, mesoData, onSelectSpot }
       {ranked.length > DEFAULT_VISIBLE && (
         <button
           onClick={() => setExpanded(prev => !prev)}
-          className={`
-            w-full mt-3 flex items-center justify-center gap-1 text-xs font-medium py-1.5 rounded-lg
-            transition-colors
-            ${isDark
-              ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
-              : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
-            }
-          `}
+          className="w-full mt-4 flex items-center justify-center gap-1 text-xs font-semibold py-2 rounded-lg transition-colors text-sky-500 hover:bg-sky-500/5"
         >
           {expanded ? (
             <>Show Less <ChevronUp className="w-3.5 h-3.5" /></>

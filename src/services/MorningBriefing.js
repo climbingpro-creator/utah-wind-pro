@@ -163,12 +163,26 @@ function briefWind(activity, params) {
   const thermalSnip = buildThermalSnippet(thermal);
   if (thermalSnip) bodyParts.push(thermalSnip + '.');
 
+  // Sustained north flow awareness
+  const nf = thermal.northFlow;
+  if (nf?.persistenceHours >= 6) {
+    bodyParts.push(`All-day north flow event (${nf.persistenceHours}h+) — sustained and reliable. High confidence it continues.`);
+  } else if (nf?.persistenceHours >= 3) {
+    bodyParts.push(`North flow building (${nf.persistenceHours}h) — likely to persist through the window.`);
+  } else if (nf?.status === 'strong') {
+    bodyParts.push(`Strong north signal from KSLC — expect ${nf.expectedZigZagSpeed?.toFixed(0) || '15'}+ mph at the lake in ~1 hour.`);
+  }
+
   const upstreamSnip = buildUpstreamSnippet(upstream);
   if (upstreamSnip) bodyParts.push(`Upstream: ${upstreamSnip}.`);
 
   if (smartForecast?.translation) bodyParts.push(smartForecast.translation);
 
   const bullets = [];
+
+  if (nf?.persistenceHours >= 3) {
+    bullets.push({ icon: '🔁', text: `Sustained north flow: ${nf.persistenceHours}h and counting` });
+  }
 
   if (thermal.startHour && prob >= 0.5) {
     const windowStart = formatHour(thermal.startHour);

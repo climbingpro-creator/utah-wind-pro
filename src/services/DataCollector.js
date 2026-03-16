@@ -56,15 +56,17 @@ class DataCollector {
     await learningSystem.initialize();
     this.isRunning = true;
 
-    // Subscribe all predictors to weight updates — closes the learning loop
+    // Subscribe all predictors to weight updates — closes the learning loop.
+    // Filter by activity field so each predictor only receives its own weights.
     this._unsubWeights = learningSystem.onWeightsUpdated((weights) => {
-      if (weights?.activity === 'paragliding') {
+      if (!weights) return;
+      if (weights.activity === 'paragliding') {
         setParaglidingLearnedWeights(weights);
-      } else if (weights?.activity === 'boating') {
+      } else if (weights.activity === 'boating') {
         setBoatingLearnedWeights(weights);
-      } else if (weights?.activity === 'fishing') {
+      } else if (weights.activity === 'fishing') {
         setFishingLearnedWeights(weights);
-      } else {
+      } else if (!weights.activity) {
         setLearnedWeights(weights);
         setWindFieldLearnedWeights(weights);
       }
@@ -91,14 +93,24 @@ class DataCollector {
     );
 
     // On startup: run the FULL cycle immediately
-    // 1. Backfill 24hr history (fills gaps from when app was closed)
-    // 2. Collect current actuals
-    // 3. Record predictions for all locations
-    // 4. Verify past predictions against actuals
-    // 5. Trigger learning if enough data
     scheduleIdle(() => this.runFullCycle());
+
+    // When the tab regains focus after being hidden, catch up on missed collections
+    this._visibilityHandler = () => {
+      if (document.visibilityState === 'visible' && this.isRunning) {
+        const now = Date.now();
+        const lastActual = this.lastCollection.actuals
+          ? new Date(this.lastCollection.actuals).getTime() : 0;
+        if (now - lastActual > 15 * 60 * 1000) {
+          console.log('Tab regained focus — catching up on collections');
+          scheduleIdle(() => this.collectActuals());
+          scheduleIdle(() => this.recordAndVerify());
+        }
+      }
+    };
+    document.addEventListener('visibilitychange', this._visibilityHandler);
     
-    console.log('Data Collector started — full cycle on startup + recurring timers');
+    console.log('Data Collector started — full cycle on startup + recurring timers + visibility catch-up');
   }
 
   /**
@@ -112,6 +124,10 @@ class DataCollector {
     if (this._unsubWeights) {
       this._unsubWeights();
       this._unsubWeights = null;
+    }
+    if (this._visibilityHandler) {
+      document.removeEventListener('visibilitychange', this._visibilityHandler);
+      this._visibilityHandler = null;
     }
   }
 
@@ -183,8 +199,12 @@ class DataCollector {
 
     // SOURCE 2: Synoptic 24hr history (always works, fills remaining gaps)
     try {
-      const lakes = ['utah-lake-zigzag', 'utah-lake-lincoln', 'utah-lake-sandy',
-                     'utah-lake-vineyard', 'utah-lake-mm19', 'deer-creek', 'willard-bay'];
+      const lakes = [
+        'utah-lake-zigzag', 'utah-lake-lincoln', 'utah-lake-sandy',
+        'utah-lake-vineyard', 'utah-lake-mm19', 'deer-creek', 'willard-bay',
+        'strawberry-ladders', 'strawberry-bay', 'strawberry-soldier',
+        'strawberry-view', 'strawberry-river', 'skyline-drive',
+      ];
 
       const allStationIds = new Set();
       const stationToLakes = {};
@@ -240,11 +260,11 @@ class DataCollector {
       console.error('Backfill error (non-fatal):', error.message);
     }
 
-    // After backfill, trigger verification and learning immediately
+    // After backfill, verify predictions and conditionally learn (requires >=10 accuracy records)
     try {
       await learningSystem.verifyPredictions();
-      await learningSystem.learnFromData();
-      console.log('Post-backfill learning cycle completed');
+      await learningSystem.checkAndLearn();
+      console.log('Post-backfill verification and conditional learning completed');
     } catch (e) {
       console.log('Post-backfill learning skipped:', e.message);
     }
@@ -259,9 +279,12 @@ class DataCollector {
     console.log('📊 Collecting actual weather data...');
 
     try {
-      // Collect for each lake
-      const lakes = ['utah-lake-zigzag', 'utah-lake-lincoln', 'utah-lake-sandy', 
-                     'utah-lake-vineyard', 'utah-lake-mm19', 'deer-creek', 'willard-bay'];
+      const lakes = [
+        'utah-lake-zigzag', 'utah-lake-lincoln', 'utah-lake-sandy',
+        'utah-lake-vineyard', 'utah-lake-mm19', 'deer-creek', 'willard-bay',
+        'strawberry-ladders', 'strawberry-bay', 'strawberry-soldier',
+        'strawberry-view', 'strawberry-river', 'skyline-drive',
+      ];
 
       for (const lakeId of lakes) {
         const stationIds = getAllStationIds(lakeId);
@@ -302,15 +325,31 @@ class DataCollector {
         }
       }
 
-      // Also collect PWS data
+      // Also collect PWS data (with activity scores)
       const ambientData = await weatherService.getAmbientWeatherData();
       if (ambientData) {
+        const pwsWind = {
+          speed: ambientData.windSpeed,
+          gust: ambientData.windGust,
+          direction: ambientData.windDirection,
+        };
+        const pwsConditions = {
+          temperature: ambientData.temperature,
+          pressure: ambientData.pressure,
+        };
         await learningSystem.recordActual('utah-lake-zigzag', 'PWS', {
           windSpeed: ambientData.windSpeed,
           windGust: ambientData.windGust,
           windDirection: ambientData.windDirection,
           temperature: ambientData.temperature,
           pressure: ambientData.pressure,
+          activityScores: {
+            kiting: scoreSessionForActivity('kiting', pwsWind, pwsConditions),
+            sailing: scoreSessionForActivity('sailing', pwsWind, pwsConditions),
+            paragliding: scoreSessionForActivity('paragliding', pwsWind, pwsConditions),
+            fishing: scoreSessionForActivity('fishing', pwsWind, pwsConditions),
+            boating: scoreSessionForActivity('boating', pwsWind),
+          },
         });
         this.collectionStats.actualsCollected++;
       }
@@ -333,11 +372,12 @@ class DataCollector {
     console.log('🔮 Recording predictions and verifying past ones...');
 
     try {
-      // Record predictions for ALL locations, not just Utah Lake
       const lakes = [
         'utah-lake-zigzag', 'utah-lake-lincoln', 'utah-lake-sandy',
         'utah-lake-vineyard', 'utah-lake-mm19',
         'deer-creek', 'willard-bay',
+        'strawberry-ladders', 'strawberry-bay', 'strawberry-soldier',
+        'strawberry-view', 'strawberry-river', 'skyline-drive',
       ];
 
       for (const lakeId of lakes) {
@@ -400,7 +440,10 @@ class DataCollector {
   }
 
   /**
-   * Collect indicator correlation data
+   * Collect indicator correlation data.
+   * For each indicator→target pair, we compare the indicator reading from
+   * `leadTime` minutes ago (from stored actuals) against the current target
+   * reading. This measures genuine predictive value, not co-occurrence.
    */
   async collectIndicatorData() {
     if (!this.isRunning) return;
@@ -408,19 +451,17 @@ class DataCollector {
     console.log('📈 Collecting indicator correlation data...');
 
     try {
-      // Get data from all indicator and target stations
       const indicatorStations = ['KSLC', 'KPVU', 'QSF', 'UTALP', 'UID28'];
       const targetStations = ['FPS', 'PWS', 'KHCR'];
       
       const allStations = [...indicatorStations, ...targetStations];
       const synopticData = await weatherService.getSynopticStationData(allStations);
       
-      const stationMap = new Map(synopticData.map(s => [s.stationId, s]));
+      const currentReadings = new Map(synopticData.map(s => [s.stationId, s]));
       
-      // Also get PWS
       const ambientData = await weatherService.getAmbientWeatherData();
       if (ambientData) {
-        stationMap.set('PWS', {
+        currentReadings.set('PWS', {
           stationId: 'PWS',
           windSpeed: ambientData.windSpeed,
           windDirection: ambientData.windDirection,
@@ -428,9 +469,7 @@ class DataCollector {
         });
       }
 
-      // Record correlations for all location indicator→target pairs
       const indicatorConfigs = [
-        // Utah Lake: KSLC/KPVU/QSF/UTALP → FPS/PWS
         { indicator: 'KSLC', target: 'FPS', leadTime: 60 },
         { indicator: 'KSLC', target: 'PWS', leadTime: 60 },
         { indicator: 'KPVU', target: 'FPS', leadTime: 60 },
@@ -439,33 +478,52 @@ class DataCollector {
         { indicator: 'QSF', target: 'PWS', leadTime: 120 },
         { indicator: 'UTALP', target: 'FPS', leadTime: 30 },
         { indicator: 'UTALP', target: 'PWS', leadTime: 30 },
-        // Deer Creek: Arrowhead → Heber / Dam
         { indicator: 'UID28', target: 'KHCR', leadTime: 60 },
         { indicator: 'KPVU', target: 'KHCR', leadTime: 90 },
-        // Willard Bay: Hill AFB → Willard
         { indicator: 'KSLC', target: 'KSLC', leadTime: 0 },
-        // Paragliding: KSLC → FPS (north side), KPVU → UTALP
         { indicator: 'KSLC', target: 'UTALP', leadTime: 45 },
         { indicator: 'KPVU', target: 'UTALP', leadTime: 45 },
       ];
 
       for (const config of indicatorConfigs) {
-        const indicator = stationMap.get(config.indicator);
-        const target = stationMap.get(config.target);
-        
-        if (indicator && target) {
+        const currentTarget = currentReadings.get(config.target);
+        if (!currentTarget) continue;
+
+        let indicatorData;
+        if (config.leadTime === 0) {
+          indicatorData = currentReadings.get(config.indicator);
+        } else {
+          const now = new Date();
+          const pastTime = new Date(now.getTime() - config.leadTime * 60 * 1000);
+          const pastActuals = await learningSystem.getActualsForStationNear(
+            config.indicator, pastTime, 15
+          );
+          if (pastActuals) {
+            indicatorData = {
+              windSpeed: pastActuals.windSpeed,
+              windDirection: pastActuals.windDirection,
+              temperature: pastActuals.temperature,
+            };
+          }
+        }
+
+        if (!indicatorData) {
+          indicatorData = currentReadings.get(config.indicator);
+        }
+
+        if (indicatorData) {
           await learningSystem.recordIndicator(
             config.indicator,
             config.target,
             {
-              speed: indicator.windSpeed,
-              direction: indicator.windDirection,
-              temperature: indicator.temperature,
+              speed: indicatorData.windSpeed,
+              direction: indicatorData.windDirection,
+              temperature: indicatorData.temperature,
             },
             {
-              speed: target.windSpeed,
-              direction: target.windDirection,
-              temperature: target.temperature,
+              speed: currentTarget.windSpeed,
+              direction: currentTarget.windDirection,
+              temperature: currentTarget.temperature,
             },
             config.leadTime
           );

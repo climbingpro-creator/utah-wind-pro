@@ -160,45 +160,45 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
     <div className="space-y-3">
       {/* Utah Lake Section */}
       {activity !== 'snowkiting' && (
-        <div className={`rounded-xl border overflow-hidden transition-all duration-300 ${
+        <div className={`card !p-0 overflow-hidden ${
           anyUtahHot && !isUtahLakeSelected
-            ? (isDark ? 'bg-green-900/10 border-green-500/40' : 'bg-green-50 border-green-400')
-            : (isDark ? 'bg-slate-800/30 border-slate-700' : 'bg-white border-slate-200 shadow-sm')
+            ? (isDark ? '!border-emerald-500/30' : '!border-emerald-300')
+            : ''
         }`}>
           <button
           onClick={() => setUtahLakeExpanded(!utahLakeExpanded)}
-          className={`w-full flex items-center justify-between px-4 py-3 transition-colors ${
+          className={`w-full flex items-center justify-between px-4 py-3.5 transition-colors ${
             isUtahLakeSelected 
-              ? (isDark ? 'bg-cyan-500/10' : 'bg-cyan-50') 
-              : (isDark ? 'hover:bg-slate-800/50' : 'hover:bg-slate-50')
+              ? (isDark ? 'bg-sky-500/[0.06]' : 'bg-sky-50/50') 
+              : 'hover:bg-[var(--bg-card-hover)]'
           }`}
         >
           <div className="flex items-center gap-3">
-            <MapPin className={`w-5 h-5 ${isUtahLakeSelected ? (isDark ? 'text-cyan-400' : 'text-cyan-600') : (isDark ? 'text-slate-400' : 'text-slate-500')}`} />
+            <MapPin className={`w-4 h-4 ${isUtahLakeSelected ? 'text-sky-500' : 'text-[var(--text-tertiary)]'}`} />
             <div className="text-left">
-              <span className={`font-semibold ${isUtahLakeSelected ? (isDark ? 'text-cyan-400' : 'text-cyan-600') : (isDark ? 'text-slate-300' : 'text-slate-700')}`}>
+              <span className={`font-semibold text-sm ${isUtahLakeSelected ? 'text-sky-500' : 'text-[var(--text-primary)]'}`}>
                 Utah Lake
               </span>
               {selectedUtahLaunch && (
-                <span className={`ml-2 ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}>• {selectedUtahLaunch.name}</span>
+                <span className="ml-2 text-sky-500">· {selectedUtahLaunch.name}</span>
               )}
-              <div className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>5 launch locations</div>
+              <div className="text-[11px] text-[var(--text-tertiary)]">5 launch locations</div>
             </div>
           </div>
           <div className="flex items-center gap-2">
             {anyUtahHot && (
-              <span className="animate-pulse text-xs font-bold text-green-400">WIND ON</span>
+              <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider">Live</span>
             )}
             {utahLakeExpanded ? (
-              <ChevronUp className={`w-5 h-5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`} />
+              <ChevronUp className="w-4 h-4 text-[var(--text-tertiary)]" />
             ) : (
-              <ChevronDown className={`w-5 h-5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`} />
+              <ChevronDown className="w-4 h-4 text-[var(--text-tertiary)]" />
             )}
           </div>
         </button>
         
         {utahLakeExpanded && (
-          <div className={`border-t p-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 ${isDark ? 'border-slate-800 bg-slate-900/50' : 'border-slate-200 bg-slate-50/50'}`}>
+          <div className={`border-t p-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 ${isDark ? 'border-[var(--border-color)]' : 'border-slate-100'}`}>
             {UTAH_LAKE_LAUNCHES.map((launch) => {
               const ws = windStatuses[launch.id];
               const isHot = ws?.level === 'hot';
@@ -209,28 +209,26 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
                   key={launch.id}
                   onClick={() => onSelectLake(launch.id)}
                   className={`
-                    relative flex flex-col items-center justify-center p-3 rounded-xl transition-all duration-300 group
+                    relative flex flex-col items-center justify-center p-3 rounded-lg transition-all duration-200 group border
                     ${isSelected
-                      ? (isDark 
-                          ? 'bg-cyan-500/10 border-cyan-500 text-cyan-400 border-2 shadow-[0_0_15px_-3px_rgba(6,182,212,0.3)]' 
-                          : 'bg-cyan-50 border-cyan-400 text-cyan-700 border-2 shadow-sm')
+                      ? 'bg-sky-500/[0.08] border-sky-500 text-sky-500'
                       : isHot
                         ? (isDark
-                            ? 'bg-green-500/10 border-green-500/50 text-green-300 border-2 shadow-[0_0_15px_-3px_rgba(34,197,94,0.3)] hover:bg-green-500/20'
-                            : 'bg-green-50 border-green-400 text-green-700 border-2 shadow-sm hover:bg-green-100')
+                            ? 'bg-emerald-500/[0.06] border-emerald-500/30 text-emerald-400 hover:border-emerald-500/50'
+                            : 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:border-emerald-300')
                         : (isDark 
-                            ? 'bg-slate-800/80 border-slate-700 text-slate-300 border hover:border-slate-500 hover:bg-slate-800'
-                            : 'bg-white border-slate-200 text-slate-700 border shadow-sm hover:border-slate-300 hover:bg-slate-50')
+                            ? 'bg-white/[0.02] border-[var(--border-subtle)] text-[var(--text-secondary)] hover:border-[var(--border-color)]'
+                            : 'bg-white border-slate-100 text-slate-600 hover:border-slate-200')
                     }
                   `}
                 >
-                  <span className={`text-[10px] font-bold uppercase tracking-widest mb-1.5 opacity-70`}>{launch.position}</span>
-                  <span className="font-bold text-sm text-center leading-tight">{launch.name}</span>
-                  <span className={`text-xs mt-1.5 font-medium flex items-center gap-1 ${isSelected ? (isDark ? 'text-cyan-300' : 'text-cyan-600') : (isDark ? 'text-slate-400' : 'text-slate-500')}`}>
+                  <span className="data-label mb-1">{launch.position}</span>
+                  <span className="font-semibold text-sm text-center leading-tight text-[var(--text-primary)]">{launch.name}</span>
+                  <span className="text-[11px] mt-1.5 font-medium flex items-center gap-1 text-[var(--text-tertiary)]">
                     <Wind className="w-3 h-3" /> {launch.wind} {launch.direction}
                   </span>
                   {launch.meterName && (
-                    <span className={`text-[10px] mt-1 uppercase tracking-wide opacity-50`}>
+                    <span className="data-label mt-1 opacity-50">
                       {launch.meterName}
                     </span>
                   )}
@@ -245,58 +243,53 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
 
       {/* ─── SNOWKITE SECTION ─── */}
       {(activity === 'snowkiting' || isSnowSelected) && (
-      <div className={`rounded-xl border overflow-hidden transition-all duration-300 ${
-        anySnowHot
-          ? (isDark ? 'bg-gradient-to-br from-sky-900/30 via-indigo-900/20 to-slate-900/40 border-sky-400/50' : 'bg-gradient-to-br from-sky-50 via-indigo-50 to-white border-sky-400')
-          : (isDark ? 'bg-gradient-to-br from-slate-800/60 via-indigo-900/10 to-slate-800/40 border-indigo-500/20' : 'bg-gradient-to-br from-slate-50 via-blue-50/30 to-white border-slate-200 shadow-sm')
+      <div className={`card !p-0 overflow-hidden ${
+        anySnowHot ? (isDark ? '!border-sky-500/30' : '!border-sky-300') : ''
       }`}>
         <button
           onClick={() => setSnowExpanded(!snowExpanded)}
-          className={`w-full flex items-center justify-between px-4 py-3 transition-colors ${
+          className={`w-full flex items-center justify-between px-4 py-3.5 transition-colors ${
             isSnowSelected
-              ? (isDark ? 'bg-sky-500/10' : 'bg-sky-50')
-              : (isDark ? 'hover:bg-indigo-900/20' : 'hover:bg-sky-50/50')
+              ? (isDark ? 'bg-sky-500/[0.06]' : 'bg-sky-50/50')
+              : 'hover:bg-[var(--bg-card-hover)]'
           }`}
         >
           <div className="flex items-center gap-3">
-            <Snowflake className={`w-5 h-5 ${isSnowSelected ? (isDark ? 'text-sky-400' : 'text-sky-600') : (isDark ? 'text-indigo-400' : 'text-sky-500')}`} />
+            <Snowflake className={`w-4 h-4 ${isSnowSelected ? 'text-sky-500' : 'text-[var(--text-tertiary)]'}`} />
             <div className="text-left">
               <div className="flex items-center gap-2">
-                <span className={`font-semibold ${isSnowSelected ? (isDark ? 'text-sky-400' : 'text-sky-600') : (isDark ? 'text-slate-200' : 'text-slate-700')}`}>
+                <span className={`font-semibold text-sm ${isSnowSelected ? 'text-sky-500' : 'text-[var(--text-primary)]'}`}>
                   Snowkite Utah
                 </span>
-                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider ${
-                  isDark ? 'bg-indigo-500/20 text-indigo-300' : 'bg-sky-100 text-sky-700'
-                }`}>
+                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider bg-sky-500/10 text-sky-500">
                   Snow Only
                 </span>
               </div>
               {selectedSnowLaunch && (
-                <span className={`text-sm ${isDark ? 'text-sky-400' : 'text-sky-600'}`}>• {selectedSnowLaunch.name}</span>
+                <span className="text-sm text-sky-500">· {selectedSnowLaunch.name}</span>
               )}
-              <div className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>Strawberry Reservoir · Skyline Drive · 7,600–9,680 ft</div>
+              <div className="text-[11px] text-[var(--text-tertiary)]">Strawberry Reservoir · Skyline Drive · 7,600–9,680 ft</div>
             </div>
           </div>
           <div className="flex items-center gap-2">
             {anySnowHot && (
-              <span className={`animate-pulse text-xs font-bold ${isDark ? 'text-sky-400' : 'text-sky-600'}`}>WIND ON</span>
+              <span className="text-[10px] font-bold text-sky-500 uppercase tracking-wider">Live</span>
             )}
             {snowExpanded ? (
-              <ChevronUp className={`w-5 h-5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`} />
+              <ChevronUp className="w-4 h-4 text-[var(--text-tertiary)]" />
             ) : (
-              <ChevronDown className={`w-5 h-5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`} />
+              <ChevronDown className="w-4 h-4 text-[var(--text-tertiary)]" />
             )}
           </div>
         </button>
 
         {snowExpanded && (
-          <div className={`border-t ${isDark ? 'border-indigo-500/20' : 'border-sky-200'}`}>
-            {/* Strawberry Reservoir sub-header */}
-            <div className={`px-4 pt-3 pb-1 flex items-center gap-2 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-              <span className="text-xs font-bold uppercase tracking-wider">Strawberry Reservoir</span>
-              <span className={`text-[10px] ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>· 7,600 ft · 5 spots</span>
+          <div className={`border-t ${isDark ? 'border-[var(--border-color)]' : 'border-slate-100'}`}>
+            <div className="px-4 pt-3 pb-1 flex items-center gap-2">
+              <span className="data-label">Strawberry Reservoir</span>
+              <span className="text-[10px] text-[var(--text-tertiary)]">· 7,600 ft · 5 spots</span>
             </div>
-            <div className="px-4 pb-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            <div className="px-4 pb-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
               {STRAWBERRY_LAUNCHES.map((launch) => {
                 const ws = windStatuses[launch.id];
                 const isHot = ws?.level === 'hot';
@@ -307,28 +300,26 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
                     key={launch.id}
                     onClick={() => onSelectLake(launch.id)}
                     className={`
-                      relative flex flex-col items-center justify-center p-3 rounded-xl transition-all duration-300 group
+                      relative flex flex-col items-center justify-center p-3 rounded-lg transition-all duration-200 group border
                       ${isSelected
-                        ? (isDark
-                            ? 'bg-sky-500/15 border-sky-400 text-sky-300 border-2 shadow-[0_0_15px_-3px_rgba(56,189,248,0.3)]'
-                            : 'bg-sky-50 border-sky-400 text-sky-700 border-2 shadow-sm')
+                        ? 'bg-sky-500/[0.08] border-sky-500 text-sky-500'
                         : isHot
                           ? (isDark
-                              ? 'bg-indigo-500/20 border-indigo-400/50 text-indigo-300 border-2 shadow-[0_0_15px_-3px_rgba(99,102,241,0.3)] hover:bg-indigo-500/30'
-                              : 'bg-indigo-50 border-indigo-400 text-indigo-700 border-2 shadow-sm hover:bg-indigo-100')
+                              ? 'bg-sky-500/[0.06] border-sky-500/30 text-sky-400 hover:border-sky-500/50'
+                              : 'bg-sky-50 border-sky-200 text-sky-700 hover:border-sky-300')
                           : (isDark
-                              ? 'bg-slate-800/60 border-slate-700/50 text-slate-300 border hover:border-slate-500 hover:bg-slate-800'
-                              : 'bg-white/80 border-slate-200 text-slate-700 border shadow-sm hover:border-slate-300 hover:bg-white')
+                              ? 'bg-white/[0.02] border-[var(--border-subtle)] text-[var(--text-secondary)] hover:border-[var(--border-color)]'
+                              : 'bg-white border-slate-100 text-slate-600 hover:border-slate-200')
                       }
                     `}
                   >
-                    <span className={`text-[10px] font-bold uppercase tracking-widest mb-1.5 opacity-70`}>{launch.position}</span>
-                    <span className="font-bold text-sm text-center leading-tight">{launch.name}</span>
-                    <span className={`text-xs mt-1.5 font-medium flex items-center gap-1 ${isSelected ? (isDark ? 'text-sky-300' : 'text-sky-600') : (isDark ? 'text-slate-400' : 'text-slate-500')}`}>
+                    <span className="data-label mb-1">{launch.position}</span>
+                    <span className="font-semibold text-sm text-center leading-tight text-[var(--text-primary)]">{launch.name}</span>
+                    <span className="text-[11px] mt-1.5 font-medium flex items-center gap-1 text-[var(--text-tertiary)]">
                       <Wind className="w-3 h-3" /> {launch.wind} {launch.direction}
                     </span>
                     {launch.desc && (
-                      <span className={`text-[9px] mt-1 uppercase tracking-wide opacity-50 text-center leading-tight line-clamp-1`}>
+                      <span className="text-[9px] mt-1 text-[var(--text-tertiary)] text-center leading-tight line-clamp-1">
                         {launch.desc}
                       </span>
                     )}
@@ -338,11 +329,10 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
               })}
             </div>
 
-            {/* Skyline Drive sub-header */}
-            <div className={`px-4 pt-2 pb-1 flex items-center gap-2 border-t ${isDark ? 'border-indigo-500/15 text-slate-400' : 'border-sky-100 text-slate-500'}`}>
-              <Mountain className={`w-3.5 h-3.5 ${isDark ? 'text-indigo-400' : 'text-sky-500'}`} />
-              <span className="text-xs font-bold uppercase tracking-wider">Skyline Drive</span>
-              <span className={`text-[10px] ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>· Sanpete County · 9,680 ft</span>
+            <div className={`px-4 pt-2 pb-1 flex items-center gap-2 border-t ${isDark ? 'border-[var(--border-color)]' : 'border-slate-100'}`}>
+              <Mountain className="w-3.5 h-3.5 text-sky-500" />
+              <span className="data-label">Skyline Drive</span>
+              <span className="text-[10px] text-[var(--text-tertiary)]">· Sanpete County · 9,680 ft</span>
             </div>
             <div className="px-4 pb-4">
               {(() => {
@@ -354,35 +344,33 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
                   <button
                     onClick={() => onSelectLake(SKYLINE_SPOT.id)}
                     className={`
-                      w-full flex items-center gap-4 p-4 rounded-xl transition-all duration-300 group
+                      w-full flex items-center gap-4 p-4 rounded-lg transition-all duration-200 group border
                       ${isSelected
-                        ? (isDark
-                            ? 'bg-sky-500/15 border-sky-400 text-sky-300 border-2 shadow-[0_0_15px_-3px_rgba(56,189,248,0.3)]'
-                            : 'bg-sky-50 border-sky-400 text-sky-700 border-2 shadow-sm')
+                        ? 'bg-sky-500/[0.08] border-sky-500 text-sky-500'
                         : isHot
                           ? (isDark
-                              ? 'bg-indigo-500/20 border-indigo-400/50 text-indigo-300 border-2 shadow-[0_0_15px_-3px_rgba(99,102,241,0.3)] hover:bg-indigo-500/30'
-                              : 'bg-indigo-50 border-indigo-400 text-indigo-700 border-2 shadow-sm hover:bg-indigo-100')
+                              ? 'bg-sky-500/[0.06] border-sky-500/30 text-sky-400 hover:border-sky-500/50'
+                              : 'bg-sky-50 border-sky-200 text-sky-700 hover:border-sky-300')
                           : (isDark
-                              ? 'bg-slate-800/60 border-slate-700/50 text-slate-300 border hover:border-slate-500 hover:bg-slate-800'
-                              : 'bg-white/80 border-slate-200 text-slate-700 border shadow-sm hover:border-slate-300 hover:bg-white')
+                              ? 'bg-white/[0.02] border-[var(--border-subtle)] text-[var(--text-secondary)] hover:border-[var(--border-color)]'
+                              : 'bg-white border-slate-100 text-slate-600 hover:border-slate-200')
                       }
                     `}
                   >
                     <div className="flex-1 text-left">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="font-bold text-base">Big Drift Complex</span>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${isDark ? 'bg-indigo-500/20 text-indigo-300' : 'bg-sky-100 text-sky-700'}`}>
+                        <span className="font-semibold text-base text-[var(--text-primary)]">Big Drift Complex</span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider bg-sky-500/10 text-sky-500">
                           {SKYLINE_SPOT.position}
                         </span>
                       </div>
-                      <span className={`text-[11px] font-medium flex items-center gap-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                      <span className="text-[11px] font-medium flex items-center gap-1 text-[var(--text-tertiary)]">
                         <Wind className="w-3 h-3" /> {SKYLINE_SPOT.wind} {SKYLINE_SPOT.direction}
-                        <span className="opacity-50 mx-1">·</span> 
-                        <span className="italic">{SKYLINE_SPOT.desc}</span>
+                        <span className="opacity-40 mx-1">·</span> 
+                        <span>{SKYLINE_SPOT.desc}</span>
                       </span>
                     </div>
-                    {ws && <div className="shrink-0 scale-110"><WindBadge status={ws} isDark={isDark} /></div>}
+                    {ws && <div className="shrink-0"><WindBadge status={ws} isDark={isDark} /></div>}
                   </button>
                 );
               })()}
@@ -408,27 +396,25 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
                 setUtahLakeExpanded(false);
               }}
               className={`
-                flex flex-col items-start px-4 py-2 rounded-lg transition-all duration-300
+                flex flex-col items-start px-3.5 py-2.5 rounded-lg transition-all duration-200 border
                 ${isSelected
-                  ? (isDark 
-                      ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400 border' 
-                      : 'bg-cyan-100 border-cyan-500 text-cyan-700 border')
+                  ? 'bg-sky-500/[0.08] border-sky-500 text-sky-500'
                   : isHot
                     ? (isDark
-                        ? 'bg-green-500/15 border-green-500/60 text-green-300 border shadow-[0_0_12px_rgba(34,197,94,0.3)]'
-                        : 'bg-green-50 border-green-500 text-green-700 border shadow-[0_0_12px_rgba(34,197,94,0.2)]')
+                        ? 'bg-emerald-500/[0.06] border-emerald-500/30 text-emerald-400'
+                        : 'bg-emerald-50 border-emerald-200 text-emerald-700')
                     : (isDark 
-                        ? 'bg-slate-800/50 border-slate-700 text-slate-400 border hover:border-slate-600'
-                        : 'bg-white border-slate-200 text-slate-600 border hover:border-slate-400 shadow-sm')
+                        ? 'bg-[var(--bg-card)] border-[var(--border-color)] text-[var(--text-secondary)] hover:border-sky-500/30'
+                        : 'bg-white border-slate-200 text-slate-600 hover:border-sky-300')
                 }
               `}
             >
               <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4" />
-                <span className="font-medium">{lake.name}</span>
+                <MapPin className="w-3.5 h-3.5 opacity-60" />
+                <span className="font-semibold text-sm">{lake.name}</span>
                 {ws && <WindBadge status={ws} isDark={isDark} />}
               </div>
-              <span className={`text-xs ml-6 ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>{lake.wind}</span>
+              <span className="text-[11px] ml-5.5 text-[var(--text-tertiary)]">{lake.wind}</span>
             </button>
           );
         })}

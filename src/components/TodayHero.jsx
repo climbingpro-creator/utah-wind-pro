@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
-import { Sun, Wind, Clock, ChevronRight } from 'lucide-react';
+import { Wind, Clock, ChevronRight, ArrowUpRight, Zap } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { ACTIVITY_CONFIGS } from './ActivityMode';
+import { getRotatingImage } from '../config/imagePool';
 
 const ALL_ACTIVITIES = ['kiting', 'sailing', 'paragliding', 'boating', 'paddling', 'fishing'];
 
@@ -66,10 +67,9 @@ function buildOutlook(windSpeed, windGust, thermalPrediction, boatingPrediction)
     }
   }
 
-  // Headline logic
   let headline = '';
   let subline = '';
-  let mood = 'neutral'; // 'epic', 'good', 'mixed', 'calm', 'neutral'
+  let mood = 'neutral';
 
   if (activeNow.length >= 4) {
     mood = 'epic';
@@ -102,7 +102,6 @@ function buildOutlook(windSpeed, windGust, thermalPrediction, boatingPrediction)
     subline = 'No strong signals for wind or glass — check back later';
   }
 
-  // Best action
   let bestAction = null;
   if (activeNow.some(a => a.wantsWind) && speed >= 10) {
     bestAction = { text: 'Get to the water NOW — wind is here', urgency: 'high' };
@@ -116,42 +115,28 @@ function buildOutlook(windSpeed, windGust, thermalPrediction, boatingPrediction)
   return { headline, subline, mood, activeNow, comingLater, notToday, bestAction, speed, gust };
 }
 
-const MOOD_STYLES = {
-  epic: {
-    dark: 'from-green-900/50 via-emerald-800/40 to-slate-900/80 border-green-500/30 shadow-[0_0_30px_-10px_rgba(34,197,94,0.3)]',
-    light: 'from-green-100 via-emerald-50 to-white border-green-300 shadow-green-500/10',
-    accent: 'text-green-400',
-    accentLight: 'text-green-700',
-    badge: 'bg-green-500',
-  },
-  good: {
-    dark: 'from-cyan-900/50 via-blue-800/40 to-slate-900/80 border-cyan-500/30 shadow-[0_0_30px_-10px_rgba(6,182,212,0.3)]',
-    light: 'from-cyan-100 via-blue-50 to-white border-cyan-300 shadow-cyan-500/10',
-    accent: 'text-cyan-400',
-    accentLight: 'text-cyan-700',
-    badge: 'bg-cyan-500',
-  },
-  calm: {
-    dark: 'from-indigo-900/50 via-blue-800/30 to-slate-900/80 border-indigo-500/30 shadow-[0_0_30px_-10px_rgba(99,102,241,0.2)]',
-    light: 'from-indigo-100 via-blue-50 to-white border-indigo-300 shadow-indigo-500/10',
-    accent: 'text-indigo-400',
-    accentLight: 'text-indigo-700',
-    badge: 'bg-indigo-500',
-  },
-  mixed: {
-    dark: 'from-amber-900/40 via-yellow-800/30 to-slate-900/80 border-amber-500/30 shadow-[0_0_30px_-10px_rgba(245,158,11,0.2)]',
-    light: 'from-amber-100 via-yellow-50 to-white border-amber-300 shadow-amber-500/10',
-    accent: 'text-amber-400',
-    accentLight: 'text-amber-700',
-    badge: 'bg-amber-500',
-  },
-  neutral: {
-    dark: 'from-slate-800/80 via-slate-800/50 to-slate-900/80 border-slate-700 shadow-xl',
-    light: 'from-slate-100 via-slate-50 to-white border-slate-200 shadow-sm',
-    accent: 'text-slate-300',
-    accentLight: 'text-slate-700',
-    badge: 'bg-slate-500',
-  },
+const MOOD_ACCENT = {
+  epic: 'text-emerald-500',
+  good: 'text-sky-500',
+  calm: 'text-indigo-500',
+  mixed: 'text-amber-500',
+  neutral: 'text-slate-400',
+};
+
+const MOOD_DOT = {
+  epic: 'bg-emerald-500',
+  good: 'bg-sky-500',
+  calm: 'bg-indigo-500',
+  mixed: 'bg-amber-500',
+  neutral: 'bg-slate-400',
+};
+
+const MOOD_IMAGE_FALLBACK = {
+  epic: '/images/kite-beach-epic.png',
+  good: '/images/river-canyon-green.png',
+  calm: '/images/glass-water-mirror.png',
+  mixed: '/images/wake-wave-sun.png',
+  neutral: '/images/utah-lake-ice-sunset.png',
 };
 
 export default function TodayHero({ windSpeed, windGust, thermalPrediction, boatingPrediction, onSelectActivity }) {
@@ -163,111 +148,145 @@ export default function TodayHero({ windSpeed, windGust, thermalPrediction, boat
     [windSpeed, windGust, thermalPrediction, boatingPrediction]
   );
 
-  const style = MOOD_STYLES[outlook.mood] || MOOD_STYLES.neutral;
+  const accent = MOOD_ACCENT[outlook.mood] || MOOD_ACCENT.neutral;
+
+  const bgImage = getRotatingImage(outlook.mood, 'mood') || MOOD_IMAGE_FALLBACK[outlook.mood];
 
   return (
-    <div className={`
-      relative overflow-hidden rounded-2xl border p-6 bg-gradient-to-br transition-all duration-500
-      backdrop-blur-xl
-      ${isDark ? style.dark : style.light}
-    `}>
-      {/* Decorative background glow */}
-      <div className="absolute -top-24 -right-24 w-64 h-64 bg-white/5 rounded-full blur-3xl pointer-events-none" />
+    <div className={`animate-fade-in hero-mood ${bgImage ? '' : ''}`}>
+      {/* Background photo */}
+      {bgImage && (
+        <>
+          <img 
+            src={bgImage} 
+            alt=""
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-black/30" />
+        </>
+      )}
 
-      {/* Greeting + headline */}
-      <div className="relative z-10 mb-6">
-        <p className={`text-xs font-bold uppercase tracking-widest mb-2 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-          {getGreeting()} — Today's Outlook
-        </p>
-        <h2 className={`text-2xl sm:text-3xl font-black leading-tight tracking-tight ${isDark ? style.accent : style.accentLight}`}>
-          {outlook.headline}
-        </h2>
-        {outlook.subline && (
-          <p className={`text-sm sm:text-base mt-2 font-medium ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
-            {outlook.subline}
-          </p>
+      <div className={`relative z-10 p-5 sm:p-6 lg:p-8 ${bgImage ? '' : 'card'}`}>
+        {/* Top row: greeting + wind metric */}
+        <div className="flex items-start justify-between gap-6 mb-6">
+          <div className="min-w-0 flex-1">
+            <p className={`text-[11px] font-semibold uppercase tracking-widest mb-3 flex items-center gap-2 ${bgImage ? 'text-white/50' : 'data-label'}`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${MOOD_DOT[outlook.mood]}`} />
+              {getGreeting()} — Today's Outlook
+            </p>
+            <h2 className={`text-xl sm:text-2xl lg:text-3xl font-extrabold leading-snug tracking-tight ${bgImage ? 'text-white' : accent}`}>
+              {outlook.headline}
+            </h2>
+            {outlook.subline && (
+              <p className={`text-sm sm:text-base mt-2 font-medium leading-relaxed ${bgImage ? 'text-white/70' : 'text-[var(--text-secondary)]'}`}>
+                {outlook.subline}
+              </p>
+            )}
+          </div>
+
+          {/* Hero wind number */}
+          <div className="text-right flex-shrink-0">
+            <div className={`data-number ${bgImage ? 'text-white' : accent}`}>
+              {outlook.speed > 0 ? Math.round(outlook.speed) : '--'}
+            </div>
+            <p className={`text-[11px] font-semibold uppercase tracking-widest mt-1 ${bgImage ? 'text-white/50' : 'text-[var(--text-tertiary)]'}`}>mph</p>
+            {outlook.gust > outlook.speed * 1.2 && (
+              <p className={`text-xs mt-1 font-medium ${bgImage ? 'text-white/40' : 'text-[var(--text-tertiary)]'}`}>
+                G{Math.round(outlook.gust)}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Active now */}
+        {outlook.activeNow.length > 0 && (
+          <div className="mb-5 animate-fade-in-delay">
+            <div className="flex items-center gap-2 mb-3">
+              <Wind className={`w-3.5 h-3.5 ${bgImage ? 'text-emerald-400' : 'text-emerald-500'}`} />
+              <span className={`text-[11px] font-semibold uppercase tracking-widest ${bgImage ? 'text-emerald-400' : 'text-emerald-500'}`}>Active Now</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {outlook.activeNow.map(a => (
+                <button
+                  key={a.id}
+                  onClick={() => onSelectActivity?.(a.id)}
+                  className={`
+                    group flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold
+                    transition-all duration-200 cursor-pointer
+                    ${bgImage
+                      ? 'bg-white/10 text-white border border-white/10 hover:bg-white/20 backdrop-blur-sm'
+                      : isDark
+                        ? 'bg-white/[0.04] text-[var(--text-primary)] border border-[var(--border-color)] hover:border-emerald-500/40 hover:bg-emerald-500/5'
+                        : 'bg-slate-50 text-slate-800 border border-slate-200 hover:border-emerald-400 hover:bg-emerald-50'}
+                  `}
+                >
+                  <span className="text-sm">{a.icon}</span>
+                  <span>{a.name}</span>
+                  <ChevronRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-60 transition-opacity -ml-0.5" />
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Coming later */}
+        {outlook.comingLater.length > 0 && (
+          <div className="mb-5 animate-fade-in-delay">
+            <div className="flex items-center gap-2 mb-3">
+              <Clock className={`w-3.5 h-3.5 ${bgImage ? 'text-amber-400' : 'text-amber-500'}`} />
+              <span className={`text-[11px] font-semibold uppercase tracking-widest ${bgImage ? 'text-amber-400' : 'text-amber-500'}`}>Coming Up</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {outlook.comingLater.map(a => (
+                <button
+                  key={a.id}
+                  onClick={() => onSelectActivity?.(a.id)}
+                  className={`
+                    group flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium
+                    transition-all duration-200 cursor-pointer
+                    ${bgImage
+                      ? 'bg-white/5 text-white/80 border border-white/5 hover:bg-white/10 backdrop-blur-sm'
+                      : isDark
+                        ? 'bg-white/[0.02] text-[var(--text-secondary)] border border-[var(--border-subtle)] hover:border-amber-500/30 hover:bg-amber-500/5'
+                        : 'bg-slate-50/60 text-slate-600 border border-slate-150 hover:border-amber-400 hover:bg-amber-50'}
+                  `}
+                >
+                  <span className="text-sm opacity-60">{a.icon}</span>
+                  <span>{a.name}</span>
+                  {a.window && (
+                    <span className={`text-[10px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded ${
+                      bgImage ? 'bg-white/10 text-amber-300' : isDark ? 'bg-amber-500/10 text-amber-400' : 'bg-amber-50 text-amber-600'
+                    }`}>
+                      {a.window}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Best action CTA */}
+        {outlook.bestAction && (
+          <div className={`pt-4 mt-2 border-t ${bgImage ? 'border-white/10' : isDark ? 'border-[var(--border-color)]' : 'border-slate-100'}`}>
+            <div className={`
+              inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200
+              ${outlook.bestAction.urgency === 'high'
+                ? 'bg-sky-500 text-white shadow-sm shadow-sky-500/20'
+                : bgImage
+                  ? 'bg-white/10 text-white border border-white/10 backdrop-blur-sm'
+                  : isDark 
+                    ? 'bg-white/[0.04] text-[var(--text-primary)] border border-[var(--border-color)]'
+                    : 'bg-white text-slate-800 border border-slate-200 shadow-sm'}
+            `}>
+              {outlook.bestAction.urgency === 'high'
+                ? <Zap className="w-4 h-4" />
+                : <ArrowUpRight className="w-4 h-4" />
+              }
+              {outlook.bestAction.text}
+            </div>
+          </div>
         )}
       </div>
-
-      {/* Active now row */}
-      {outlook.activeNow.length > 0 && (
-        <div className="relative z-10 mb-5">
-          <div className={`flex items-center gap-2 mb-3 ${isDark ? 'text-green-400' : 'text-green-700'}`}>
-            <Wind className="w-4 h-4" />
-            <span className="text-xs font-black uppercase tracking-widest">Active Now</span>
-          </div>
-          <div className="flex flex-wrap gap-2.5">
-            {outlook.activeNow.map(a => (
-              <button
-                key={a.id}
-                onClick={() => onSelectActivity?.(a.id)}
-                className={`
-                  flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-bold
-                  transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] cursor-pointer shadow-sm
-                  ${isDark
-                    ? 'bg-white/10 text-white border border-white/10 hover:bg-white/20 hover:border-white/20'
-                    : 'bg-white text-slate-900 border border-slate-200 hover:bg-slate-50 hover:border-slate-300'}
-                `}
-              >
-                <span className="text-base">{a.icon}</span>
-                <span>{a.name}</span>
-                <ChevronRight className="w-4 h-4 opacity-40 ml-1" />
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Coming later row */}
-      {outlook.comingLater.length > 0 && (
-        <div className="relative z-10 mb-5">
-          <div className={`flex items-center gap-2 mb-3 ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>
-            <Clock className="w-4 h-4" />
-            <span className="text-xs font-black uppercase tracking-widest">Coming Up</span>
-          </div>
-          <div className="flex flex-wrap gap-2.5">
-            {outlook.comingLater.map(a => (
-              <button
-                key={a.id}
-                onClick={() => onSelectActivity?.(a.id)}
-                className={`
-                  flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold
-                  transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] cursor-pointer
-                  ${isDark
-                    ? 'bg-slate-800/50 text-slate-200 border border-slate-700/50 hover:bg-slate-800'
-                    : 'bg-white/60 text-slate-700 border border-slate-200 hover:bg-white'}
-                `}
-              >
-                <span className="text-base grayscale opacity-80">{a.icon}</span>
-                <span>{a.name}</span>
-                {a.window && (
-                  <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md ml-1 ${isDark ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
-                    {a.window}
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Best Action callout */}
-      {outlook.bestAction && (
-        <div className={`
-          relative z-10 mt-6 pt-5 border-t 
-          ${isDark ? 'border-white/10' : 'border-black/5'}
-        `}>
-          <div className={`
-            inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold shadow-sm
-            ${outlook.bestAction.urgency === 'high'
-              ? (isDark ? 'bg-white text-slate-900' : 'bg-slate-900 text-white')
-              : (isDark ? 'bg-white/10 text-white' : 'bg-white text-slate-900 border border-slate-200')}
-          `}>
-            <Sun className={`w-4 h-4 ${outlook.bestAction.urgency === 'high' ? 'animate-pulse' : ''}`} />
-            {outlook.bestAction.text}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

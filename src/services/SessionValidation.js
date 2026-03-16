@@ -118,17 +118,25 @@ class SessionValidationService {
 
   /**
    * Check if we should prompt the user for a session report.
-   * Returns the predicted window if one ended recently.
+   * Returns the predicted window if one ended 1-3 hours ago.
+   * Uses absolute timestamps to handle cross-midnight windows correctly.
    */
   shouldPromptForFeedback(forecast) {
     if (!forecast?.windows?.length) return null;
     const now = new Date();
-    const currentHour = now.getHours();
+    const nowMs = now.getTime();
 
     for (const window of forecast.windows) {
       const windowEnd = window.endHour;
-      const hoursSinceEnd = (currentHour - windowEnd + 24) % 24;
-      if (hoursSinceEnd >= 1 && hoursSinceEnd <= 3 && window.isToday) {
+      const today = new Date(now);
+      today.setHours(windowEnd, 0, 0, 0);
+
+      if (today.getTime() > nowMs) {
+        today.setDate(today.getDate() - 1);
+      }
+
+      const hoursSinceEnd = (nowMs - today.getTime()) / (1000 * 60 * 60);
+      if (hoursSinceEnd >= 1 && hoursSinceEnd <= 3) {
         return window;
       }
     }

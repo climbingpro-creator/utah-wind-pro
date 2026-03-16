@@ -18,7 +18,7 @@ import { NotificationSettings } from './NotificationSettings';
 import { checkAndNotify } from '../services/NotificationService';
 import { getFullForecast } from '../services/ForecastService';
 import LearningDashboard from './LearningDashboard';
-import ActivityMode, { ACTIVITY_CONFIGS, calculateActivityScore, calculateGlassScore } from './ActivityMode';
+import ActivityMode, { ACTIVITY_CONFIGS, calculateActivityScore, calculateGlassScore, getActivityHeroImage } from './ActivityMode';
 import GlassScore from './GlassScore';
 import { predictGlass } from '../services/BoatingPredictor';
 import WaterForecast from './WaterForecast';
@@ -44,6 +44,9 @@ import SessionFeedback from './SessionFeedback';
 import SessionReplay from './SessionReplay';
 import TodayHero from './TodayHero';
 import SnowkiteForecast from './SnowkiteForecast';
+import PhotoSubmit from './PhotoSubmit';
+import SMSAlertSettings from './SMSAlertSettings';
+import { getSMSPrefs, processConditions } from '../services/SMSNotificationService';
 
 function windDirectionToCardinal(degrees) {
   if (degrees == null) return 'N/A';
@@ -57,6 +60,8 @@ export function Dashboard() {
   const [showNotificationSettings, setShowNotificationSettings] = useState(false);
   const [showLearningDashboard, setShowLearningDashboard] = useState(false);
   const [selectedActivity, setSelectedActivity] = useState('kiting');
+  const [showPhotoSubmit, setShowPhotoSubmit] = useState(false);
+  const [showSMSSettings, setShowSMSSettings] = useState(false);
   const { lakeState, history, status, isLoading, error, lastUpdated, refresh } = useLakeData(selectedLake);
   const { theme } = useTheme();
   
@@ -224,8 +229,21 @@ export function Dashboard() {
       };
       const forecast = getFullForecast(selectedLake, conditions);
       checkAndNotify(forecast, lakeState.config?.name || 'Utah Lake');
+
+      // SMS text alerts
+      const smsPrefs = getSMSPrefs();
+      if (smsPrefs.enabled && smsPrefs.phone) {
+        const gs = calculateGlassScore(currentWindSpeed, currentWindGust);
+        processConditions({
+          windSpeed: currentWindSpeed,
+          windGust: currentWindGust,
+          windDirection: currentWindDirection,
+          glassScore: gs?.score,
+          thermalProbability: lakeState?.probability,
+        }, smsPrefs);
+      }
     }
-  }, [lakeState, selectedLake]);
+  }, [lakeState, selectedLake, currentWindSpeed, currentWindGust, currentWindDirection]);
 
   const formatTime = (date) => {
     if (!date) return '--:--';
@@ -246,69 +264,113 @@ export function Dashboard() {
   } : null;
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 ${
+    <div className={`min-h-screen transition-colors duration-200 ${
       theme === 'dark' 
-        ? 'bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 text-white' 
-        : 'bg-gradient-to-br from-slate-100 via-white to-slate-50 text-slate-900'
+        ? 'bg-[var(--bg-primary)] text-[var(--text-primary)]' 
+        : 'bg-[var(--bg-secondary)] text-[var(--text-primary)]'
     }`}>
       <ToastContainer />
       
-      <header className={`border-b backdrop-blur-sm sticky top-0 z-40 transition-colors duration-300 ${
+      <header className={`border-b sticky top-0 z-40 transition-colors duration-200 ${
         theme === 'dark' 
-          ? 'border-slate-800 bg-slate-900/80' 
-          : 'border-slate-200 bg-white/80'
+          ? 'border-slate-800 bg-slate-950/95 backdrop-blur-md' 
+          : 'border-slate-200 bg-white/95 backdrop-blur-md'
       }`}>
-        <div className="max-w-7xl mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-black bg-gradient-to-r from-sky-400 to-blue-500 bg-clip-text text-transparent tracking-tight">
+        <div className="max-w-6xl mx-auto px-5 sm:px-8">
+          <div className="flex items-center justify-between h-14">
+            <div className="flex items-center gap-3">
+              <h1 className="text-lg font-extrabold tracking-tight text-sky-500">
                 Utah Wind Pro
               </h1>
-              <p className={`text-[10px] font-bold uppercase tracking-widest ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
-                {activityConfig?.description || 'AI Wind Forecasting'}
-              </p>
+              <span className={`hidden sm:inline text-[11px] font-medium px-2 py-0.5 rounded-full ${
+                theme === 'dark' ? 'bg-sky-500/10 text-sky-400' : 'bg-sky-50 text-sky-600'
+              }`}>
+                {activityConfig?.description || 'AI Forecasting'}
+              </span>
             </div>
 
-            <div className="flex items-center gap-3">
-              <div className="hidden sm:flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-md bg-slate-500/10">
+            <div className="flex items-center gap-1.5">
+              <div className={`hidden sm:flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1.5 rounded-lg ${
+                theme === 'dark' ? 'text-[var(--text-tertiary)]' : 'text-[var(--text-secondary)]'
+              }`}>
                 {error ? (
                   <WifiOff className="w-3.5 h-3.5 text-red-500" />
                 ) : (
                   <Wifi className="w-3.5 h-3.5 text-emerald-500" />
                 )}
-                <span className={theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}>
-                  {formatTime(lastUpdated)}
-                </span>
+                <span>{formatTime(lastUpdated)}</span>
               </div>
 
               <button
+                onClick={() => setShowSMSSettings(true)}
+                className={`p-2 rounded-lg transition-colors relative ${
+                  theme === 'dark'
+                    ? 'hover:bg-white/5 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
+                    : 'hover:bg-slate-100 text-slate-400 hover:text-slate-600'
+                }`}
+                title="Text Alerts"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+                {getSMSPrefs().enabled && (
+                  <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 bg-emerald-400 rounded-full" />
+                )}
+              </button>
+
+              <button
+                onClick={() => setShowPhotoSubmit(true)}
+                className={`p-2 rounded-lg transition-colors ${
+                  theme === 'dark'
+                    ? 'hover:bg-white/5 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
+                    : 'hover:bg-slate-100 text-slate-400 hover:text-slate-600'
+                }`}
+                title="Submit Photo"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                  <circle cx="12" cy="13" r="4"/>
+                </svg>
+              </button>
+
+              <button
                 onClick={() => setShowNotificationSettings(true)}
-                className={`p-2 rounded-full transition-colors ${theme === 'dark' ? 'bg-slate-800 hover:bg-slate-700 text-slate-300' : 'bg-slate-100 hover:bg-slate-200 text-slate-600'}`}
-                title="Notification Settings"
+                className={`p-2 rounded-lg transition-colors ${
+                  theme === 'dark' 
+                    ? 'hover:bg-white/5 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]' 
+                    : 'hover:bg-slate-100 text-slate-400 hover:text-slate-600'
+                }`}
+                title="Notifications"
               >
                 <Bell className="w-4 h-4" />
               </button>
 
               <button
                 onClick={() => setShowLearningDashboard(!showLearningDashboard)}
-                className={`p-2 rounded-full transition-colors relative ${showLearningDashboard ? 'bg-purple-600 text-white' : (theme === 'dark' ? 'bg-slate-800 hover:bg-slate-700 text-purple-400' : 'bg-slate-100 hover:bg-slate-200 text-purple-600')}`}
+                className={`p-2 rounded-lg transition-colors relative ${
+                  showLearningDashboard 
+                    ? 'bg-sky-500 text-white' 
+                    : (theme === 'dark' 
+                      ? 'hover:bg-white/5 text-[var(--text-tertiary)] hover:text-sky-400' 
+                      : 'hover:bg-slate-100 text-slate-400 hover:text-sky-600')
+                }`}
                 title={lakeState?.thermalPrediction?.isUsingLearnedWeights
                   ? `Learning Active (v${lakeState.thermalPrediction.weightsVersion})`
                   : 'Learning System — collecting data'}
               >
                 <Brain className="w-4 h-4" />
                 {lakeState?.thermalPrediction?.isUsingLearnedWeights && (
-                  <span className="absolute top-0 right-0 w-2 h-2 bg-green-500 rounded-full border border-slate-900 animate-pulse" />
+                  <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 bg-emerald-400 rounded-full" />
                 )}
               </button>
 
               <button
                 onClick={refresh}
                 disabled={isLoading}
-                className={`p-2 rounded-full transition-colors disabled:opacity-50 ${
+                className={`p-2 rounded-lg transition-colors disabled:opacity-40 ${
                   theme === 'dark' 
-                    ? 'bg-slate-800 hover:bg-slate-700 text-slate-300' 
-                    : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+                    ? 'hover:bg-white/5 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]' 
+                    : 'hover:bg-slate-100 text-slate-400 hover:text-slate-600'
                 }`}
               >
                 <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
@@ -323,6 +385,14 @@ export function Dashboard() {
       <NotificationSettings 
         isOpen={showNotificationSettings} 
         onClose={() => setShowNotificationSettings(false)} 
+      />
+      <PhotoSubmit
+        isOpen={showPhotoSubmit}
+        onClose={() => setShowPhotoSubmit(false)}
+      />
+      <SMSAlertSettings
+        isOpen={showSMSSettings}
+        onClose={() => setShowSMSSettings(false)}
       />
 
       {/* Learning Dashboard Modal/Panel */}
@@ -345,7 +415,7 @@ export function Dashboard() {
         </div>
       )}
 
-      <main className="max-w-7xl mx-auto px-4 py-6 space-y-6">
+      <main className="max-w-6xl mx-auto px-5 sm:px-8 py-8 section-stack">
         <TodayHero
           windSpeed={currentWindSpeed}
           windGust={currentWindGust}
@@ -363,6 +433,37 @@ export function Dashboard() {
             windGust={currentWindGust}
           />
         </div>
+
+        {/* Activity Hero Photo — rotates daily from image pool + user submissions */}
+        {activityConfig?.heroImage && (
+          <div className="hero-banner">
+            <img 
+              src={getActivityHeroImage(selectedActivity)} 
+              alt={activityConfig.name}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6 lg:p-8">
+              <div className="flex items-end justify-between">
+                <div>
+                  <p className="text-white/60 text-xs sm:text-sm font-semibold uppercase tracking-wider mb-1">
+                    {activityConfig.description}
+                  </p>
+                  <h3 className="text-white text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight">
+                    {activityConfig.name}
+                  </h3>
+                </div>
+                {currentWindSpeed != null && (
+                  <div className="text-right">
+                    <div className="text-white text-2xl sm:text-3xl lg:text-4xl font-extrabold tabular-nums">
+                      {Math.round(currentWindSpeed)}
+                    </div>
+                    <div className="text-white/60 text-xs font-semibold uppercase">mph now</div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* SNOWKITE AI FORECAST — shows for snowkite locations */}
         {(selectedLake?.startsWith('strawberry-') || selectedLake === 'skyline-drive') && (
@@ -473,37 +574,36 @@ export function Dashboard() {
           };
 
           return (
-            <div className={`rounded-xl p-4 border ${colorMap[bannerColor]}`}>
+            <div className="card">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <span className="text-2xl">{activityConfig?.icon}</span>
+                  <span className="text-xl">{activityConfig?.icon}</span>
                   <div className="min-w-0">
-                    <div className={`font-bold text-lg ${textColorMap[bannerColor]}`}>
+                    <div className={`font-bold text-base ${textColorMap[bannerColor]}`}>
                       {headline}
                     </div>
                     {subline && (
-                      <div className={`text-sm mt-0.5 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-600'}`}>{subline}</div>
+                      <div className="text-sm mt-0.5 text-[var(--text-secondary)]">{subline}</div>
                     )}
                     {arriveTime && (
-                      <div className="mt-1.5 inline-flex items-center gap-1 bg-green-500/20 text-green-400 text-xs font-medium px-2 py-0.5 rounded-full">
-                        🕐 Be there by {arriveTime}
+                      <div className="mt-1.5 inline-flex items-center gap-1 text-emerald-500 text-xs font-semibold">
+                        Be there by {arriveTime}
                       </div>
                     )}
                   </div>
                 </div>
                 <div className="text-right ml-3 flex-shrink-0">
-                  <div className={`text-4xl font-black ${textColorMap[bannerColor]}`}>
-                    {displayScore}%
+                  <div className={`data-number ${textColorMap[bannerColor]}`}>
+                    {displayScore}
                   </div>
+                  <div className="data-label mt-1">score</div>
                   {badge && (
                     <div className={`text-[10px] font-bold px-2 py-0.5 rounded-full mt-1 ${badge.color}`}>
                       {badge.text}
                     </div>
                   )}
                   {!badge && activityScore.gustFactor > 1.3 && (
-                    <div className={`text-[10px] px-2 py-0.5 rounded mt-1 flex items-center justify-center gap-1 ${
-                      theme === 'dark' ? 'text-orange-400 bg-orange-500/20' : 'text-orange-700 bg-orange-100'
-                    }`}>
+                    <div className="text-[10px] px-2 py-0.5 rounded mt-1 flex items-center justify-center gap-1 text-amber-500 bg-amber-500/10">
                       <AlertTriangle className="w-3 h-3" /> Gusty
                     </div>
                   )}
@@ -515,33 +615,31 @@ export function Dashboard() {
 
         {/* AI Morning Briefing */}
         {briefing && !activityConfig?.specialMode && (
-          <div className={`rounded-xl p-4 border ${theme === 'dark' ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`}>
-            <div className="flex items-center gap-2 mb-2">
-              <Brain className={`w-5 h-5 ${theme === 'dark' ? 'text-purple-400' : 'text-purple-600'}`} />
-              <span className={`text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>
+          <div className="card">
+            <div className="flex items-center gap-2 mb-3">
+              <Brain className="w-4 h-4 text-sky-500" />
+              <span className="text-sm font-semibold text-[var(--text-primary)]">
                 {briefing.headline}
               </span>
               {briefing.excitement >= 4 && (
-                <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${theme === 'dark' ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-700'}`}>
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500">
                   {briefing.excitement >= 5 ? 'EPIC' : 'HOT'}
                 </span>
               )}
             </div>
             {briefing.body && (
-              <p className={`text-sm mb-3 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-600'}`}>{briefing.body}</p>
+              <p className="text-sm mb-3 text-[var(--text-secondary)] leading-relaxed">{briefing.body}</p>
             )}
             <div className="space-y-1.5">
               {briefing.bullets?.map((b, i) => (
-                <div key={i} className={`flex items-start gap-2 text-xs ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
-                  <span className="flex-shrink-0">{b.icon || '•'}</span>
+                <div key={i} className="flex items-start gap-2 text-xs text-[var(--text-tertiary)]">
+                  <span className="flex-shrink-0">{b.icon || '·'}</span>
                   <span>{b.text}</span>
                 </div>
               ))}
             </div>
             {briefing.bestAction && (
-              <div className={`mt-3 px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-2 ${
-                theme === 'dark' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/30' : 'bg-blue-50 text-blue-700 border border-blue-200'
-              }`}>
+              <div className="mt-3 px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 bg-sky-500/[0.06] text-sky-500 border border-sky-500/20">
                 <Lightbulb className="w-4 h-4 shrink-0" /> {briefing.bestAction}
               </div>
             )}
@@ -549,13 +647,9 @@ export function Dashboard() {
         )}
 
         {error && (
-          <div className={`rounded-xl p-4 border ${
-            theme === 'dark' 
-              ? 'bg-red-900/30 border-red-500/50 text-red-400' 
-              : 'bg-red-100 border-red-300 text-red-700'
-          }`}>
-            <p className="font-medium">Connection Error</p>
-            <p className={`text-sm ${theme === 'dark' ? 'text-red-400/80' : 'text-red-600'}`}>{error}</p>
+          <div className="card !border-red-500/30">
+            <p className="font-semibold text-red-500 text-sm">Connection Error</p>
+            <p className="text-sm text-[var(--text-secondary)] mt-1">{error}</p>
           </div>
         )}
 
@@ -597,20 +691,14 @@ export function Dashboard() {
           </SafeComponent>
         ) : (
         <>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           {/* Left Column - Gauges */}
           <div className="lg:col-span-1 space-y-4">
-            {/* Activity-Specific Primary Gauge */}
             {activityConfig?.wantsWind ? (
-              /* Wind-seeking activities: Show Thermal Confidence */
-              <div className={`flex flex-col items-center rounded-2xl p-6 border ${
-                theme === 'dark' 
-                  ? 'bg-slate-800/30 border-slate-700' 
-                  : 'bg-white border-slate-200 shadow-sm'
-              }`}>
-                <div className={`text-xs mb-2 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-500'}`}>
+              <div className="card flex flex-col items-center">
+                <span className="data-label mb-3">
                   {selectedActivity === 'sailing' ? 'Racing Wind Probability' : 'Thermal Probability'}
-                </div>
+                </span>
                 <ConfidenceGauge value={lakeState?.probability || 0} size={180} />
                 
                 {status && (
@@ -631,37 +719,35 @@ export function Dashboard() {
               />
             )}
 
-            {/* Boating AI Prediction — shown for calm-seeking activities */}
             {boatingPrediction && (selectedActivity === 'boating' || selectedActivity === 'paddling') && (
-              <div className="bg-slate-800/30 rounded-2xl p-4 border border-slate-700">
-                <div className="flex items-center gap-2 mb-2">
-                  <Ship className="w-4 h-4 text-cyan-400" />
-                  <span className="text-xs font-medium text-white">Glass Forecast</span>
-                  <span className="text-[10px] bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded ml-auto">AI</span>
+              <div className="card">
+                <div className="flex items-center gap-2 mb-3">
+                  <Ship className="w-4 h-4 text-sky-500" />
+                  <span className="text-sm font-semibold text-[var(--text-primary)]">Glass Forecast</span>
+                  <span className="text-[9px] font-bold bg-sky-500/10 text-sky-500 px-1.5 py-0.5 rounded ml-auto">AI</span>
                 </div>
                 <div className="text-center mb-2">
-                  <div className={`text-2xl font-bold ${
-                    boatingPrediction.probability >= 60 ? 'text-green-400' :
-                    boatingPrediction.probability >= 40 ? 'text-yellow-400' : 'text-red-400'
+                  <div className={`data-number ${
+                    boatingPrediction.probability >= 60 ? 'text-emerald-500' :
+                    boatingPrediction.probability >= 40 ? 'text-amber-500' : 'text-red-500'
                   }`}>
-                    {boatingPrediction.probability}%
+                    {boatingPrediction.probability}
                   </div>
-                  <div className="text-xs text-slate-400">{boatingPrediction.waveLabel}</div>
+                  <div className="data-label mt-1">{boatingPrediction.waveLabel}</div>
                 </div>
                 {boatingPrediction.glassWindow?.start && (
-                  <div className="text-xs text-cyan-400 text-center">
+                  <div className="text-xs text-sky-500 text-center font-medium">
                     Glass window: {boatingPrediction.glassWindow.start} – {boatingPrediction.glassWindow.end}
                   </div>
                 )}
-                <div className="text-[10px] text-slate-500 text-center mt-1">
+                <div className="text-[11px] text-[var(--text-tertiary)] text-center mt-1">
                   {boatingPrediction.recommendation}
                 </div>
               </div>
             )}
 
-            {/* North Flow / Prefrontal Gauge */}
-            <div className="flex flex-col items-center bg-slate-800/30 rounded-2xl p-4 border border-slate-700">
-              <div className="text-xs text-slate-500 mb-2">Pressure Gradient (N↔S Flow)</div>
+            <div className="card flex flex-col items-center">
+              <span className="data-label mb-3">Pressure Gradient (N↔S Flow)</span>
               <NorthFlowGauge gradient={lakeState?.pressure?.gradient} size={160} />
             </div>
 
@@ -683,10 +769,9 @@ export function Dashboard() {
               />
             )}
 
-            {/* 3-Step Model Bars */}
             {lakeState?.thermalPrediction && (
-              <div className="bg-slate-800/30 rounded-xl p-4 border border-slate-700">
-                <div className="text-xs text-slate-500 mb-3 text-center">3-Step Prediction Model</div>
+              <div className="card">
+                <span className="data-label block text-center mb-3">3-Step Prediction Model</span>
                 <div className="space-y-2">
                   <FactorBar 
                     label="Step A: Gradient" 
@@ -710,25 +795,20 @@ export function Dashboard() {
               </div>
             )}
 
-            {/* Spatial Correlation Triggers */}
             {correlation?.activeTriggers?.length > 0 && (
-              <div className={`rounded-xl p-4 border ${
-                theme === 'dark'
-                  ? 'bg-blue-500/10 border-blue-500/30'
-                  : 'bg-blue-50 border-blue-200'
-              }`}>
+              <div className="card">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <TrendingUp className={`w-4 h-4 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
-                    <span className={`text-xs font-medium ${theme === 'dark' ? 'text-blue-300' : 'text-blue-700'}`}>
+                    <TrendingUp className="w-4 h-4 text-sky-500" />
+                    <span className="text-xs font-semibold text-[var(--text-primary)]">
                       Spatial Correlation
                     </span>
                   </div>
                   {correlation.multiplier !== 1.0 && (
                     <span className={`text-xs font-mono px-2 py-0.5 rounded ${
                       correlation.multiplier > 1
-                        ? (theme === 'dark' ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-700')
-                        : (theme === 'dark' ? 'bg-red-500/20 text-red-400' : 'bg-red-100 text-red-700')
+                        ? 'bg-emerald-500/10 text-emerald-500'
+                        : 'bg-red-500/10 text-red-500'
                     }`}>
                       {correlation.multiplier > 1 ? '+' : ''}{Math.round((correlation.multiplier - 1) * 100)}% bias
                     </span>
@@ -848,52 +928,43 @@ export function Dashboard() {
             {/* Legacy Weekly Best Days */}
             <WeeklyBestDays selectedActivity={selectedActivity} />
 
-            {/* Frontal Swing Alerts — Real-time rapid changes */}
             {swingAlerts.length > 0 && (
               <div className="space-y-2">
                 {swingAlerts.map(alert => (
                   <div
                     key={alert.id}
-                    className={`rounded-xl p-4 border flex items-start gap-3 ${
+                    className={`card flex items-start gap-3 ${
                       alert.severity === 'critical'
-                        ? (theme === 'dark'
-                          ? 'bg-red-500/15 border-red-500/40 animate-pulse'
-                          : 'bg-red-50 border-red-300 animate-pulse')
+                        ? '!border-red-500/40'
                         : alert.severity === 'warning'
-                          ? (theme === 'dark'
-                            ? 'bg-orange-500/10 border-orange-500/30'
-                            : 'bg-orange-50 border-orange-200')
-                          : (theme === 'dark'
-                            ? 'bg-blue-500/10 border-blue-500/30'
-                            : 'bg-blue-50 border-blue-200')
+                          ? '!border-amber-500/30'
+                          : '!border-sky-500/30'
                     }`}
                   >
-                    <span className="text-xl flex-shrink-0">{alert.icon}</span>
+                    <span className="text-lg flex-shrink-0">{alert.icon}</span>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className={`text-sm font-bold ${
-                          alert.severity === 'critical'
-                            ? (theme === 'dark' ? 'text-red-300' : 'text-red-700')
-                            : alert.severity === 'warning'
-                              ? (theme === 'dark' ? 'text-orange-300' : 'text-orange-700')
-                              : (theme === 'dark' ? 'text-blue-300' : 'text-blue-700')
+                        <span className={`text-sm font-semibold ${
+                          alert.severity === 'critical' ? 'text-red-500'
+                            : alert.severity === 'warning' ? 'text-amber-500'
+                              : 'text-sky-500'
                         }`}>
                           {alert.label}
                         </span>
-                        <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${
+                        <span className={`text-[9px] uppercase font-bold px-1.5 py-0.5 rounded ${
                           alert.severity === 'critical'
                             ? 'bg-red-500 text-white'
                             : alert.severity === 'warning'
-                              ? (theme === 'dark' ? 'bg-orange-500/30 text-orange-300' : 'bg-orange-200 text-orange-800')
-                              : (theme === 'dark' ? 'bg-blue-500/30 text-blue-300' : 'bg-blue-200 text-blue-800')
+                              ? 'bg-amber-500/10 text-amber-500'
+                              : 'bg-sky-500/10 text-sky-500'
                         }`}>
                           {alert.severity}
                         </span>
                       </div>
-                      <p className={`text-xs ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>
+                      <p className="text-xs text-[var(--text-secondary)]">
                         {alert.detail}
                       </p>
-                      <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-500'}`}>
+                      <p className="text-xs mt-1 text-[var(--text-tertiary)]">
                         Wind: {alert.windExpectation}
                       </p>
                     </div>
@@ -934,15 +1005,12 @@ export function Dashboard() {
               refreshInterval={3}
             />
 
-            {/* Learning Status */}
             {lakeState?.thermalPrediction && (
-              <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] ${
-                theme === 'dark' ? 'bg-slate-800/50 text-slate-500' : 'bg-slate-100 text-slate-500'
-              }`}>
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg text-[10px] bg-[var(--bg-card)] border border-[var(--border-subtle)] text-[var(--text-tertiary)]">
                 <Brain className="w-3 h-3" />
                 {lakeState.thermalPrediction.isUsingLearnedWeights ? (
                   <span>
-                    Model: <span className={theme === 'dark' ? 'text-green-400' : 'text-green-600'}>Learned</span>
+                    Model: <span className="text-emerald-500 font-semibold">Learned</span>
                     {' '}(v{String(lakeState.thermalPrediction.weightsVersion).slice(-6)})
                     {lakeState.thermalPrediction.speedBiasCorrection !== 0 && (
                       <span className="ml-1 opacity-60">
@@ -1021,13 +1089,12 @@ export function Dashboard() {
           </div>
         </div>
 
-        {/* Live Wind Vectors */}
         <div>
-          <h2 className="text-lg font-semibold text-slate-200 mb-4 flex items-center gap-2">
-            <Wind className="w-5 h-5 text-cyan-400" />
+          <h2 className="text-base font-bold text-[var(--text-primary)] mb-4 flex items-center gap-2">
+            <Wind className="w-4 h-4 text-sky-500" />
             Live Wind Vectors
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {lakeState?.wind?.stations?.map((station, index) => (
               <WindVector
                 key={station.id || index}
@@ -1061,10 +1128,9 @@ export function Dashboard() {
         </>
         )}
 
-        {/* Only show 3-Step Model for non-paragliding activities */}
         {selectedActivity !== 'paragliding' && (
-        <div className="bg-slate-800/30 rounded-xl p-4 border border-slate-700">
-          <h3 className="text-sm font-medium text-slate-400 mb-3">3-Step Prediction Model</h3>
+        <div className="card">
+          <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-4">3-Step Prediction Model</h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
             <ModelStepCard
               step="A"
@@ -1126,11 +1192,11 @@ export function Dashboard() {
         )}
       </main>
 
-      <footer className="border-t border-slate-800 mt-8">
-        <div className="max-w-7xl mx-auto px-4 py-4 text-center text-slate-500 text-sm">
-          <p>Utah Wind Pro • Professional Thermal Forecasting</p>
-          <p className="text-xs mt-1">
-            Model: Step A (Gradient) 40% • Step B (Elevation Δ) 30% • Step C (Ground Truth) 30%
+      <footer className="border-t border-[var(--border-color)] mt-12">
+        <div className="max-w-6xl mx-auto px-5 sm:px-8 py-6 text-center">
+          <p className="text-sm font-semibold text-[var(--text-tertiary)]">Utah Wind Pro</p>
+          <p className="text-[11px] mt-1 text-[var(--text-tertiary)] opacity-60">
+            AI-driven thermal forecasting for Utah's lakes and mountains
           </p>
         </div>
       </footer>
@@ -1141,12 +1207,12 @@ export function Dashboard() {
 function PrimaryWindDisplay({ station, optimalDirection, isLoading, pwsUnavailable }) {
   if (isLoading || !station) {
     return (
-      <div className="mt-4 w-full bg-slate-800/50 rounded-xl p-4 border border-slate-700 animate-pulse">
+      <div className="card animate-pulse">
         <div className="flex items-center justify-center gap-4">
-          <div className="w-16 h-16 bg-slate-700 rounded-full" />
+          <div className="w-14 h-14 bg-[var(--border-color)] rounded-full" />
           <div className="space-y-2">
-            <div className="h-8 bg-slate-700 rounded w-24" />
-            <div className="h-4 bg-slate-700 rounded w-16" />
+            <div className="h-8 bg-[var(--border-color)] rounded w-24" />
+            <div className="h-4 bg-[var(--border-color)] rounded w-16" />
           </div>
         </div>
       </div>
@@ -1162,73 +1228,67 @@ function PrimaryWindDisplay({ station, optimalDirection, isLoading, pwsUnavailab
   const isOptimal = optimalDirection?.status === 'optimal';
   const isWrong = optimalDirection?.status === 'wrong';
   
-  const speedColor = speed >= 8 ? 'text-green-400' : speed >= 4 ? 'text-yellow-400' : 'text-slate-400';
-  const directionColor = isOptimal ? 'text-green-400' : isWrong ? 'text-red-400' : 'text-cyan-400';
+  const speedColor = speed >= 8 ? 'text-emerald-500' : speed >= 4 ? 'text-amber-500' : 'text-[var(--text-tertiary)]';
+  const directionColor = isOptimal ? 'text-emerald-500' : isWrong ? 'text-red-500' : 'text-sky-500';
 
   return (
-    <div className={`mt-4 w-full rounded-xl p-4 border ${
-      isOptimal ? 'bg-green-900/20 border-green-500/30' : 
-      isWrong ? 'bg-red-900/20 border-red-500/30' : 
-      'bg-slate-800/50 border-slate-700'
+    <div className={`card ${
+      isOptimal ? '!border-emerald-500/30' : isWrong ? '!border-red-500/30' : ''
     }`}>
-      {/* PWS unavailable warning */}
       {pwsUnavailable && (
-        <div className="text-xs text-yellow-500 font-medium text-center mb-2 flex items-center justify-center gap-1.5">
+        <div className="text-xs text-amber-500 font-medium text-center mb-2 flex items-center justify-center gap-1.5">
           <AlertTriangle className="w-3.5 h-3.5" />
-          <span>Zig Zag PWS unavailable - showing nearest station</span>
+          <span>PWS unavailable — showing nearest station</span>
         </div>
       )}
-      <div className="text-xs text-center mb-2 flex items-center justify-center gap-1">
-        {isYourStation && <span className="text-cyan-400">📍</span>}
-        <span className={isYourStation ? 'text-cyan-400 font-medium' : 'text-slate-500'}>
+      <div className="text-center mb-2 flex items-center justify-center gap-1">
+        {isYourStation && <span className="text-sky-500">📍</span>}
+        <span className={`text-xs ${isYourStation ? 'text-sky-500 font-medium' : 'text-[var(--text-tertiary)]'}`}>
           {stationName}
         </span>
-        {!isYourStation && !pwsUnavailable && <span className="text-slate-600 text-[10px]">(MesoWest)</span>}
+        {!isYourStation && !pwsUnavailable && <span className="text-[var(--text-tertiary)] text-[10px]">(MesoWest)</span>}
       </div>
       
       <div className="flex items-center justify-center gap-6">
-        {/* Wind Direction Compass */}
-        <div className="relative w-16 h-16">
-          <div className="absolute inset-0 rounded-full border-2 border-slate-600 bg-slate-800/80" />
+        <div className="relative w-14 h-14">
+          <div className="absolute inset-0 rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)]" />
           <div className="absolute inset-0 flex items-center justify-center">
             {direction != null ? (
               <Navigation 
-                className={`w-8 h-8 ${directionColor} transition-transform duration-500`}
+                className={`w-7 h-7 ${directionColor} transition-transform duration-500`}
                 style={{ transform: `rotate(${direction + 180}deg)` }}
               />
             ) : (
-              <span className="text-slate-500 text-xs">--</span>
+              <span className="text-[var(--text-tertiary)] text-xs">--</span>
             )}
           </div>
-          <div className="absolute -top-1 left-1/2 -translate-x-1/2 text-[10px] text-slate-500">N</div>
-          <div className="absolute top-1/2 -right-1 -translate-y-1/2 text-[10px] text-slate-500">E</div>
-          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-[10px] text-slate-500">S</div>
-          <div className="absolute top-1/2 -left-1 -translate-y-1/2 text-[10px] text-slate-500">W</div>
+          <div className="absolute -top-1 left-1/2 -translate-x-1/2 text-[9px] text-[var(--text-tertiary)]">N</div>
+          <div className="absolute top-1/2 -right-1.5 -translate-y-1/2 text-[9px] text-[var(--text-tertiary)]">E</div>
+          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-[9px] text-[var(--text-tertiary)]">S</div>
+          <div className="absolute top-1/2 -left-1.5 -translate-y-1/2 text-[9px] text-[var(--text-tertiary)]">W</div>
         </div>
 
-        {/* Speed and Direction Values */}
         <div className="text-center">
-          <div className={`text-3xl font-bold ${speedColor}`}>
+          <div className={`data-number ${speedColor}`}>
             {speed != null ? speed.toFixed(1) : '--'}
-            <span className="text-lg text-slate-500 ml-1">mph</span>
           </div>
-          <div className={`text-lg font-medium ${directionColor}`}>
+          <div className="data-label mt-0.5">mph</div>
+          <div className={`text-sm font-semibold mt-1 ${directionColor}`}>
             {cardinal} 
-            <span className="text-slate-500 text-sm ml-1">
+            <span className="text-[var(--text-tertiary)] text-xs ml-1">
               {direction != null ? `${Math.round(direction)}°` : ''}
             </span>
           </div>
           {optimalDirection?.expected && (
-            <div className="text-xs text-slate-500 mt-1">
+            <div className="text-[11px] text-[var(--text-tertiary)] mt-1">
               Need: {optimalDirection.expected}
             </div>
           )}
         </div>
       </div>
 
-      {/* Gust indicator */}
       {(station.windGust ?? station.gust) > (speed || 0) * 1.3 && (
-        <div className="mt-2 text-center text-xs text-orange-400">
+        <div className="mt-2 text-center text-xs text-amber-500 font-medium">
           Gusts to {(station.windGust ?? station.gust).toFixed(1)} mph
         </div>
       )}
@@ -1238,8 +1298,8 @@ function PrimaryWindDisplay({ station, optimalDirection, isLoading, pwsUnavailab
 
 function FactorBar({ label, value, detail, icon: Icon }) {
   const getColor = (v) => {
-    if (v >= 70) return 'bg-green-500';
-    if (v >= 50) return 'bg-yellow-500';
+    if (v >= 70) return 'bg-emerald-500';
+    if (v >= 50) return 'bg-amber-500';
     if (v >= 30) return 'bg-orange-500';
     return 'bg-red-500';
   };
@@ -1247,16 +1307,16 @@ function FactorBar({ label, value, detail, icon: Icon }) {
   return (
     <div className="space-y-1">
       <div className="flex items-center justify-between text-xs">
-        <div className="flex items-center gap-1.5 text-slate-400">
+        <div className="flex items-center gap-1.5 text-[var(--text-tertiary)]">
           <Icon className="w-3 h-3" />
           <span>{label}</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-slate-500 capitalize">{detail || ''}</span>
-          <span className="text-slate-300 font-medium w-8 text-right">{value}</span>
+          <span className="text-[var(--text-tertiary)] capitalize">{detail || ''}</span>
+          <span className="text-[var(--text-primary)] font-semibold w-8 text-right">{value}</span>
         </div>
       </div>
-      <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden">
+      <div className="h-1 bg-[var(--border-subtle)] rounded-full overflow-hidden">
         <div 
           className={`h-full ${getColor(value)} transition-all duration-500`}
           style={{ width: `${value}%` }}
@@ -1268,25 +1328,25 @@ function FactorBar({ label, value, detail, icon: Icon }) {
 
 function ModelStepCard({ step, label, description, value, explanation, isGood, isBad, threshold }) {
   return (
-    <div className={`bg-slate-800/50 rounded-lg p-3 border ${
-      isGood ? 'border-green-500/30' : isBad ? 'border-red-500/30' : 'border-slate-700'
+    <div className={`rounded-lg p-3 border bg-[var(--bg-card)] ${
+      isGood ? 'border-emerald-500/30' : isBad ? 'border-red-500/30' : 'border-[var(--border-color)]'
     }`}>
       <div className="flex items-center gap-2 mb-1">
-        <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-          isGood ? 'bg-green-500/20 text-green-400' : isBad ? 'bg-red-500/20 text-red-400' : 'bg-slate-700 text-slate-400'
+        <span className={`w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-bold ${
+          isGood ? 'bg-emerald-500/10 text-emerald-500' : isBad ? 'bg-red-500/10 text-red-500' : 'bg-[var(--border-subtle)] text-[var(--text-tertiary)]'
         }`}>
           {step}
         </span>
-        <span className="text-slate-400 font-medium">{label}</span>
+        <span className="text-[var(--text-secondary)] font-medium text-xs">{label}</span>
       </div>
-      <div className="font-mono text-sm text-slate-500 mb-2">{description}</div>
-      <div className={`text-xl font-bold ${
-        isGood ? 'text-green-400' : isBad ? 'text-red-400' : 'text-yellow-400'
+      <div className="font-mono text-xs text-[var(--text-tertiary)] mb-2">{description}</div>
+      <div className={`data-number-sm ${
+        isGood ? 'text-emerald-500' : isBad ? 'text-red-500' : 'text-amber-500'
       }`}>
         {value}
       </div>
-      <div className="text-xs text-slate-500 mt-1">{explanation}</div>
-      <div className="text-xs text-slate-600 mt-1 italic">{threshold}</div>
+      <div className="text-[11px] text-[var(--text-secondary)] mt-1">{explanation}</div>
+      <div className="text-[10px] text-[var(--text-tertiary)] mt-1">{threshold}</div>
     </div>
   );
 }

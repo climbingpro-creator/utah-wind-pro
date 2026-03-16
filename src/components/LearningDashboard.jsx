@@ -301,8 +301,8 @@ const LearningDashboard = () => {
           <li>• Model improves as more data is collected over days/weeks</li>
         </ul>
         <div className="mt-3 text-xs text-purple-300">
-          {stats?.totalPredictions < 50 
-            ? `Need ${50 - (stats?.totalPredictions || 0)} more predictions before first learning cycle`
+          {stats?.totalPredictions < 10 
+            ? `Need ${10 - (stats?.totalPredictions || 0)} more verified predictions before first learning cycle`
             : 'Model is actively learning from your data!'}
         </div>
       </div>

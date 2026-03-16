@@ -18,6 +18,7 @@
  */
 
 import trainedWeightsData from '../config/trainedWeights.json';
+import { sessionService } from './SessionValidation';
 
 const DB_NAME = 'UtahWindProLearning';
 const DB_VERSION = 2;
@@ -38,6 +39,7 @@ class LearningSystem {
     this.isInitialized = false;
     this.currentWeights = null;
     this._weightListeners = [];
+    this._recentActualKeys = new Set();
   }
 
   /**
@@ -191,12 +193,23 @@ class LearningSystem {
   }
 
   /**
-   * Record actual weather data (called every 15 minutes)
+   * Record actual weather data (called every 15 minutes).
+   * Includes dedup to prevent duplicate records on repeated backfills.
    */
-  async recordActual(lakeId, stationId, data) {
+  async recordActual(lakeId, stationId, data, timestamp) {
     await this.initialize();
 
-    const now = new Date();
+    const now = timestamp ? new Date(timestamp) : new Date();
+    const roundedMinute = Math.floor(now.getMinutes() / 15) * 15;
+    const dedupKey = `${lakeId}-${stationId}-${now.toISOString().split('T')[0]}-${now.getHours()}-${roundedMinute}`;
+    if (this._recentActualKeys.has(dedupKey)) return null;
+    this._recentActualKeys.add(dedupKey);
+
+    if (this._recentActualKeys.size > 10000) {
+      const keys = [...this._recentActualKeys];
+      this._recentActualKeys = new Set(keys.slice(keys.length - 5000));
+    }
+
     const record = {
       timestamp: now.toISOString(),
       date: now.toISOString().split('T')[0],
@@ -465,16 +478,140 @@ class LearningSystem {
     
     // 3. Discover new patterns
     const patterns = await this.discoverPatterns();
+
+    // 4. Incorporate user feedback (session reports)
+    const feedbackInsights = await this.incorporateUserFeedback(errorAnalysis);
     
-    // 4. Calculate new weights
-    const newWeights = this.calculateNewWeights(indicatorLearning, errorAnalysis, patterns);
+    // 5. Calculate new weights
+    const newWeights = this.calculateNewWeights(indicatorLearning, errorAnalysis, patterns, feedbackInsights);
     
-    // 5. Save new weights
+    // 6. Save new weights
     await this.saveWeights(newWeights);
+
+    // 7. Prune old data to prevent unbounded DB growth
+    await this.pruneOldData();
     
     console.log('Learning cycle complete. New weights:', newWeights);
     
     return newWeights;
+  }
+
+  /**
+   * Incorporate user session feedback into learning.
+   * Compares user-reported wind quality against our predictions to find
+   * systematic biases the station data alone can't reveal.
+   */
+  async incorporateUserFeedback(errorAnalysis) {
+    const insights = {
+      totalReports: 0,
+      avgRating: 0,
+      userSpeedBias: 0,
+      qualityCalibration: { epic: 0, good: 0, ok: 0, poor: 0, bust: 0 },
+      locationFeedback: {},
+    };
+
+    try {
+      const stats = await sessionService.getValidationStats(null, 30);
+      if (!stats || stats.total === 0) return insights;
+
+      insights.totalReports = stats.total;
+      insights.avgRating = stats.avgRating;
+
+      for (const session of stats.sessions) {
+        insights.qualityCalibration[session.windQuality] =
+          (insights.qualityCalibration[session.windQuality] || 0) + 1;
+
+        if (session.estimatedSpeed != null) {
+          const loc = session.locationId || 'unknown';
+          if (!insights.locationFeedback[loc]) {
+            insights.locationFeedback[loc] = { speeds: [], ratings: [], count: 0 };
+          }
+          insights.locationFeedback[loc].speeds.push(session.estimatedSpeed);
+          insights.locationFeedback[loc].ratings.push(session.rating);
+          insights.locationFeedback[loc].count++;
+        }
+      }
+
+      const epicGood = (insights.qualityCalibration.epic || 0) + (insights.qualityCalibration.good || 0);
+      const poorBust = (insights.qualityCalibration.poor || 0) + (insights.qualityCalibration.bust || 0);
+      if (epicGood + poorBust > 5) {
+        const goodRatio = epicGood / (epicGood + poorBust);
+        if (goodRatio < 0.3) {
+          insights.userSpeedBias = 2;
+        } else if (goodRatio > 0.7) {
+          insights.userSpeedBias = -1;
+        }
+      }
+
+      console.log(`User feedback: ${stats.total} reports, avg rating ${stats.avgRating.toFixed(1)}/5`);
+    } catch (e) {
+      console.warn('Could not load user feedback:', e.message);
+    }
+
+    return insights;
+  }
+
+  /**
+   * Remove data older than 90 days to prevent unbounded DB growth.
+   */
+  async pruneOldData() {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 90);
+    const cutoffISO = cutoff.toISOString();
+
+    const storesToPrune = [STORES.PREDICTIONS, STORES.ACTUALS, STORES.ACCURACY, STORES.INDICATORS];
+
+    for (const storeName of storesToPrune) {
+      try {
+        const tx = this.db.transaction(storeName, 'readwrite');
+        const store = tx.objectStore(storeName);
+        const index = store.index('timestamp');
+        const range = IDBKeyRange.upperBound(cutoffISO);
+
+        await new Promise((resolve) => {
+          const request = index.openCursor(range);
+          let deleted = 0;
+          request.onsuccess = (event) => {
+            const cursor = event.target.result;
+            if (cursor) {
+              cursor.delete();
+              deleted++;
+              cursor.continue();
+            } else {
+              if (deleted > 0) console.log(`Pruned ${deleted} old records from ${storeName}`);
+              resolve();
+            }
+          };
+          request.onerror = () => resolve();
+        });
+      } catch (e) {
+        // ACCURACY and INDICATORS use 'date' index, not 'timestamp'
+        try {
+          const tx = this.db.transaction(storeName, 'readwrite');
+          const store = tx.objectStore(storeName);
+          const index = store.index('date');
+          const cutoffDate = cutoff.toISOString().split('T')[0];
+          const range = IDBKeyRange.upperBound(cutoffDate);
+
+          await new Promise((resolve) => {
+            const request = index.openCursor(range);
+            let deleted = 0;
+            request.onsuccess = (event) => {
+              const cursor = event.target.result;
+              if (cursor) {
+                cursor.delete();
+                deleted++;
+                cursor.continue();
+              } else {
+                if (deleted > 0) console.log(`Pruned ${deleted} old records from ${storeName}`);
+                resolve();
+              }
+            };
+            request.onerror = () => resolve();
+          });
+        } catch (e2) { /* ignore stores without date index */ }
+      }
+    }
   }
 
   /**
@@ -726,6 +863,63 @@ class LearningSystem {
       }
     }
     
+    // Sustained event analysis — find multi-hour consecutive wind events
+    for (const date of dates) {
+      const dayActuals = actuals
+        .filter(a => a.date === date)
+        .sort((a, b) => a.hour - b.hour);
+
+      let consecutiveNorth = 0;
+      let maxConsecutiveNorth = 0;
+      let northStartHour = null;
+      let consecutiveThermal = 0;
+      let maxConsecutiveThermal = 0;
+
+      const hoursSeen = new Set();
+      for (const a of dayActuals) {
+        if (hoursSeen.has(a.hour)) continue;
+        hoursSeen.add(a.hour);
+
+        if (a.isNorthFlow && a.isKiteable) {
+          if (consecutiveNorth === 0) northStartHour = a.hour;
+          consecutiveNorth++;
+          consecutiveThermal = 0;
+          maxConsecutiveNorth = Math.max(maxConsecutiveNorth, consecutiveNorth);
+        } else if (a.isSEThermal && a.isKiteable) {
+          consecutiveThermal++;
+          consecutiveNorth = 0;
+          maxConsecutiveThermal = Math.max(maxConsecutiveThermal, consecutiveThermal);
+        } else {
+          consecutiveNorth = 0;
+          consecutiveThermal = 0;
+        }
+      }
+
+      if (maxConsecutiveNorth >= 4) {
+        patterns.push({
+          type: 'sustained_north_flow',
+          value: maxConsecutiveNorth,
+          date,
+          startHour: northStartHour,
+          avgSpeed: dayActuals
+            .filter(a => a.isNorthFlow && a.isKiteable)
+            .reduce((s, a) => s + (a.windSpeed || 0), 0) /
+            Math.max(1, dayActuals.filter(a => a.isNorthFlow && a.isKiteable).length),
+          confidence: Math.min(1, maxConsecutiveNorth / 8),
+          description: `${maxConsecutiveNorth}h sustained north flow on ${date}`,
+        });
+      }
+      if (maxConsecutiveThermal >= 4) {
+        patterns.push({
+          type: 'sustained_thermal',
+          value: maxConsecutiveThermal,
+          date,
+          confidence: Math.min(1, maxConsecutiveThermal / 8),
+          description: `${maxConsecutiveThermal}h sustained thermal on ${date}`,
+        });
+      }
+    }
+
     // Save discovered patterns
     for (const pattern of patterns) {
       await this.addRecord(STORES.PATTERNS, {
@@ -742,20 +936,23 @@ class LearningSystem {
    * Returns the base thermal weights AND emits activity-specific weight sets
    * to close the loop for paragliding, boating, and fishing predictors.
    */
-  calculateNewWeights(indicatorLearning, errorAnalysis, patterns) {
+  calculateNewWeights(indicatorLearning, errorAnalysis, patterns, feedbackInsights) {
     const currentWeights = this.currentWeights || this.getDefaultWeights();
     
+    const userBias = feedbackInsights?.userSpeedBias || 0;
+
     const newWeights = {
       version: Date.now(),
       createdAt: new Date().toISOString(),
       basedOnSamples: errorAnalysis.totalPredictions,
+      userFeedbackSamples: feedbackInsights?.totalReports || 0,
       
       pressureWeight: currentWeights.pressureWeight,
       thermalWeight: currentWeights.thermalWeight,
       convergenceWeight: currentWeights.convergenceWeight,
       
       indicators: {},
-      speedBiasCorrection: -errorAnalysis.speedBias,
+      speedBiasCorrection: -errorAnalysis.speedBias + userBias,
       probabilityCalibration: {},
       hourlyMultipliers: {},
     };
@@ -885,22 +1082,22 @@ class LearningSystem {
   }
 
   async saveWeights(weights) {
-    const tx = this.db.transaction(STORES.MODEL_WEIGHTS, 'readwrite');
-    const store = tx.objectStore(STORES.MODEL_WEIGHTS);
-    
-    // Save as current
-    await store.put({ ...weights, id: 'current' });
-    
-    // Also save historical version
-    await store.put({ ...weights, id: `v${weights.version}` });
+    await new Promise((resolve, reject) => {
+      const tx = this.db.transaction(STORES.MODEL_WEIGHTS, 'readwrite');
+      const store = tx.objectStore(STORES.MODEL_WEIGHTS);
+
+      store.put({ ...weights, id: 'current' });
+      store.put({ ...weights, id: `v${weights.version}` });
+
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
     
     this.currentWeights = weights;
 
-    // Push base weights to ThermalPredictor / DataNormalizer
     this._pushWeightsToPredictor();
     console.log('Weights v' + weights.version + ' pushed to thermal prediction engine');
 
-    // Push activity-specific weights so paragliding/boating/fishing predictors receive them
     if (this._activityWeights) {
       for (const [activity, actWeights] of Object.entries(this._activityWeights)) {
         for (const cb of this._weightListeners) {
@@ -952,10 +1149,12 @@ class LearningSystem {
     const tx = this.db.transaction(STORES.PREDICTIONS, 'readonly');
     const store = tx.objectStore(STORES.PREDICTIONS);
     const index = store.index('timestamp');
+
+    const lowerBound = new Date(olderThan.getTime() - 24 * 60 * 60 * 1000);
     
     return new Promise((resolve) => {
       const results = [];
-      const range = IDBKeyRange.upperBound(olderThan.toISOString());
+      const range = IDBKeyRange.bound(lowerBound.toISOString(), olderThan.toISOString());
       const request = index.openCursor(range);
       
       request.onsuccess = (event) => {
@@ -1098,6 +1297,45 @@ class LearningSystem {
         }
       };
       request.onerror = () => resolve([]);
+    });
+  }
+
+  /**
+   * Find the closest actual reading for a given station near a target time.
+   * Used by DataCollector to look up historical indicator data for lead-time correlation.
+   */
+  async getActualsForStationNear(stationId, targetTime, toleranceMinutes = 15) {
+    const tx = this.db.transaction(STORES.ACTUALS, 'readonly');
+    const store = tx.objectStore(STORES.ACTUALS);
+    const index = store.index('timestamp');
+
+    const lower = new Date(targetTime.getTime() - toleranceMinutes * 60 * 1000);
+    const upper = new Date(targetTime.getTime() + toleranceMinutes * 60 * 1000);
+    const range = IDBKeyRange.bound(lower.toISOString(), upper.toISOString());
+
+    return new Promise((resolve) => {
+      let best = null;
+      let bestDiff = Infinity;
+      const targetMs = targetTime.getTime();
+
+      const request = index.openCursor(range);
+      request.onsuccess = (event) => {
+        const cursor = event.target.result;
+        if (cursor) {
+          const rec = cursor.value;
+          if (rec.stationId === stationId) {
+            const diff = Math.abs(new Date(rec.timestamp).getTime() - targetMs);
+            if (diff < bestDiff) {
+              bestDiff = diff;
+              best = rec;
+            }
+          }
+          cursor.continue();
+        } else {
+          resolve(best);
+        }
+      };
+      request.onerror = () => resolve(null);
     });
   }
 

@@ -212,8 +212,8 @@ async function getPredictionAccuracy(dateStr) {
         getAll.onsuccess = () => {
           const all = getAll.result || [];
           const dayPredictions = all.filter(p => {
-            const pDate = new Date(p.timestamp).toISOString().split('T')[0];
-            return pDate === dateStr && p.actual != null;
+            const pDate = p.date || new Date(p.timestamp).toISOString().split('T')[0];
+            return pDate === dateStr && p.verified && p.actual != null;
           });
 
           const predictions = dayPredictions.length;
@@ -221,8 +221,8 @@ async function getPredictionAccuracy(dateStr) {
           let missed = 0;
 
           for (const p of dayPredictions) {
-            const predicted = p.predictedSpeed ?? p.probability;
-            const actual = p.actual?.speed ?? p.actual?.windSpeed;
+            const predicted = p.prediction?.expectedSpeed ?? p.predictedSpeed ?? p.probability;
+            const actual = p.actual?.avgSpeed ?? p.actual?.speed ?? p.actual?.windSpeed;
             if (predicted == null || actual == null) continue;
             const error = Math.abs(predicted - actual);
             if (error <= 5) correct++;

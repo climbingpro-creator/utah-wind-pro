@@ -83,63 +83,49 @@ export function WindVector({
   }
 
   return (
-    <div className={`
-      rounded-xl p-4 
-      ${isPersonalStation 
-        ? (isDark 
-            ? 'bg-gradient-to-br from-cyan-900/50 to-slate-800 border border-cyan-500/30' 
-            : 'bg-gradient-to-br from-cyan-50 to-white border border-cyan-200 shadow-sm')
-        : (isDark 
-            ? 'bg-slate-800/50 border border-slate-700'
-            : 'bg-white border border-slate-200 shadow-sm')
-      }
-    `}>
+    <div className={`card ${isPersonalStation ? '!border-sky-500/30' : ''}`}>
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <Wind className={`w-5 h-5 ${isPersonalStation ? (isDark ? 'text-cyan-400' : 'text-cyan-600') : (isDark ? 'text-slate-400' : 'text-slate-500')}`} />
-          <h3 className={`font-semibold truncate max-w-[150px] ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
+          <Wind className={`w-4 h-4 ${isPersonalStation ? 'text-sky-500' : 'text-[var(--text-tertiary)]'}`} />
+          <h3 className="font-semibold text-sm truncate max-w-[150px] text-[var(--text-primary)]">
             {name}
           </h3>
         </div>
         {isPersonalStation && (
-          <span className={`text-xs px-2 py-0.5 rounded-full ${isDark ? 'bg-cyan-500/20 text-cyan-400' : 'bg-cyan-100 text-cyan-700'}`}>
-            PWS
-          </span>
+          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-500">PWS</span>
         )}
       </div>
 
       <div className="flex items-center gap-4">
-        <div className="relative w-16 h-16 flex items-center justify-center">
-          <div className={`absolute inset-0 rounded-full border-2 ${isDark ? 'border-slate-600' : 'border-slate-300'}`} />
+        <div className="relative w-14 h-14 flex items-center justify-center">
+          <div className="absolute inset-0 rounded-full border border-[var(--border-color)]" />
           <Navigation 
-            className={`w-8 h-8 ${windColor} transition-transform duration-500`}
-            style={{ 
-              transform: `rotate(${(direction || 0) + 180}deg)` 
-            }}
+            className={`w-7 h-7 ${windColor} transition-transform duration-500`}
+            style={{ transform: `rotate(${(direction || 0) + 180}deg)` }}
           />
         </div>
 
-        <div className="flex-1 space-y-1">
-          <div className="flex items-baseline gap-2">
-            <span className={`text-2xl font-bold ${windColor}`}>
+        <div className="flex-1 space-y-0.5">
+          <div className="flex items-baseline gap-1">
+            <span className={`data-number-sm ${windColor}`}>
               {speed?.toFixed(1) ?? '--'}
             </span>
-            <span className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>mph</span>
+            <span className="data-label">mph</span>
           </div>
           
-          <div className={`flex items-center gap-3 text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+          <div className="flex items-center gap-3 text-sm text-[var(--text-secondary)]">
             <span>
               {windDirectionToCardinal(direction)} ({direction ?? '--'}°)
             </span>
             {gust != null && gust > speed && (
-              <span className={isDark ? 'text-orange-400' : 'text-orange-600'}>
+              <span className="text-amber-500 font-medium">
                 G {gust.toFixed(0)}
               </span>
             )}
           </div>
 
           {temperature != null && (
-            <div className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+            <div className="text-sm text-[var(--text-tertiary)]">
               {temperature.toFixed(1)}°F
             </div>
           )}
@@ -147,9 +133,9 @@ export function WindVector({
       </div>
 
       {history && history.length > 0 && (
-        <div className={`mt-3 pt-3 border-t ${isDark ? 'border-slate-700/50' : 'border-slate-200'}`}>
+        <div className="mt-3 pt-3 border-t border-[var(--border-subtle)]">
           <div className="flex items-center justify-between">
-            <span className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>3hr trend</span>
+            <span className="data-label">3hr trend</span>
             <WindSparkline history={history} stationId={station?.id} />
           </div>
         </div>
