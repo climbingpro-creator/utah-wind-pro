@@ -159,12 +159,13 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
   return (
     <div className="space-y-3">
       {/* Utah Lake Section */}
-      <div className={`rounded-xl border overflow-hidden transition-all duration-300 ${
-        anyUtahHot && !isUtahLakeSelected
-          ? (isDark ? 'bg-green-900/10 border-green-500/40' : 'bg-green-50 border-green-400')
-          : (isDark ? 'bg-slate-800/30 border-slate-700' : 'bg-white border-slate-200 shadow-sm')
-      }`}>
-        <button
+      {activity !== 'snowkiting' && (
+        <div className={`rounded-xl border overflow-hidden transition-all duration-300 ${
+          anyUtahHot && !isUtahLakeSelected
+            ? (isDark ? 'bg-green-900/10 border-green-500/40' : 'bg-green-50 border-green-400')
+            : (isDark ? 'bg-slate-800/30 border-slate-700' : 'bg-white border-slate-200 shadow-sm')
+        }`}>
+          <button
           onClick={() => setUtahLakeExpanded(!utahLakeExpanded)}
           className={`w-full flex items-center justify-between px-4 py-3 transition-colors ${
             isUtahLakeSelected 
@@ -240,8 +241,10 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
           </div>
         )}
       </div>
+      )}
 
       {/* ─── SNOWKITE SECTION ─── */}
+      {(activity === 'snowkiting' || isSnowSelected) && (
       <div className={`rounded-xl border overflow-hidden transition-all duration-300 ${
         anySnowHot
           ? (isDark ? 'bg-gradient-to-br from-sky-900/30 via-indigo-900/20 to-slate-900/40 border-sky-400/50' : 'bg-gradient-to-br from-sky-50 via-indigo-50 to-white border-sky-400')
@@ -387,8 +390,10 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
           </div>
         )}
       </div>
+      )}
 
       {/* Other Lakes */}
+      {activity !== 'snowkiting' && (
       <div className="flex gap-2 flex-wrap">
         {OTHER_LAKES.map((lake) => {
           const ws = windStatuses[lake.id];
@@ -428,6 +433,7 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
           );
         })}
       </div>
+      )}
     </div>
   );
 }

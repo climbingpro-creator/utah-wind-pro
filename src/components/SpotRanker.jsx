@@ -47,7 +47,7 @@ const SPOTS = [
           ? [cfg.thermal.northFlow.min, cfg.thermal.northFlow.max] : null,
         kiting: cfg.kiting || null,
         bestFor: cfg.snowkite
-          ? ['kiting', 'windsurfing']
+          ? ['snowkiting', 'windsurfing']
           : id.startsWith('utah-lake')
             ? ['kiting', 'sailing', 'windsurfing', 'boating', 'fishing']
             : ['kiting', 'sailing', 'boating', 'fishing'],
@@ -164,7 +164,7 @@ function scoreSpot(spot, activity, currentWind, lakeState, mesoData) {
   const inNorth = isDirectionInRange(dir, spot.northDir);
 
   // Kiting/sailing use the detailed shore safety zones from lakeStations
-  const hasKitingZones = spot.kiting && (activity === 'kiting' || activity === 'sailing' || activity === 'windsurfing');
+  const hasKitingZones = spot.kiting && (activity === 'kiting' || activity === 'snowkiting' || activity === 'sailing' || activity === 'windsurfing');
   let shoreZone = null;
   if (hasKitingZones && dir != null) {
     if (isInKitingZone(dir, spot.kiting.onshore)) shoreZone = 'onshore';

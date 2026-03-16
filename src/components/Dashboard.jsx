@@ -60,6 +60,16 @@ export function Dashboard() {
   const { lakeState, history, status, isLoading, error, lastUpdated, refresh } = useLakeData(selectedLake);
   const { theme } = useTheme();
   
+  // Auto-switch lakes when moving between snow and water sports
+  React.useEffect(() => {
+    const isSnowSpot = selectedLake?.startsWith('strawberry') || selectedLake === 'skyline-drive';
+    if (selectedActivity === 'snowkiting' && !isSnowSpot) {
+      setSelectedLake('strawberry-ladders');
+    } else if (selectedActivity !== 'snowkiting' && isSnowSpot) {
+      setSelectedLake('utah-lake');
+    }
+  }, [selectedActivity, selectedLake]);
+
   // Get activity-specific data
   const activityConfig = ACTIVITY_CONFIGS[selectedActivity];
   const currentWindSpeed = lakeState?.pws?.windSpeed || lakeState?.wind?.stations?.[0]?.speed;

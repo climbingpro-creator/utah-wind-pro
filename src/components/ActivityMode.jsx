@@ -1,5 +1,5 @@
 import React from 'react';
-import { Wind, Sailboat, Ship, Waves, Mountain, Anchor, Navigation, Cloud } from 'lucide-react';
+import { Wind, Sailboat, Ship, Waves, Mountain, Anchor, Navigation, Cloud, Snowflake } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 
 // Activity configurations with thresholds and preferences
@@ -15,6 +15,24 @@ export const ACTIVITY_CONFIGS = {
       foilMin: 10,
       twinTipMin: 15,
       tooStrong: 30,
+      gustFactor: 1.5,
+    },
+    wantsWind: true,
+    primaryMetric: 'windProbability',
+    goodCondition: (speed, gust) => speed >= 10 && speed <= 25 && (!gust || gust/speed < 1.8),
+  },
+
+  snowkiting: {
+    id: 'snowkiting',
+    name: 'Snowkiting',
+    icon: <Snowflake className="w-4 h-4" />,
+    description: 'Snowkiting & Big Drifts',
+    thresholds: {
+      tooLight: 8,
+      ideal: { min: 12, max: 22 },
+      foilMin: 10,
+      twinTipMin: 12,
+      tooStrong: 35,
       gustFactor: 1.5,
     },
     wantsWind: true,
@@ -145,7 +163,7 @@ function getActivityStatus(activityId, windSpeed, windGust) {
 const ActivityMode = ({ selectedActivity, onActivityChange, windSpeed, windGust }) => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
-  const activities = ['kiting', 'sailing', 'fishing', 'boating', 'paddling', 'paragliding'];
+  const activities = ['kiting', 'snowkiting', 'sailing', 'fishing', 'boating', 'paddling', 'paragliding'];
   
   return (
     <div className={`

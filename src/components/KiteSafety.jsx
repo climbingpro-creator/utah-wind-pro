@@ -79,7 +79,16 @@ export function getKiteSpeedStatus(windSpeed) {
 export function getKiteSafety(lakeId, windDirection) {
   const config = LAKE_CONFIGS[lakeId];
   if (!config?.kiting || windDirection == null) {
-    return { status: 'unknown', message: 'No data', safe: null };
+    return { 
+      status: 'unknown', 
+      message: 'No safety data', 
+      safe: null,
+      color: 'text-slate-400',
+      bgColor: 'bg-slate-800/50',
+      borderColor: 'border-slate-700',
+      icon: AlertCircle,
+      description: 'Shore orientation not mapped for this location.'
+    };
   }
 
   const { kiting, shoreOrientation } = config;
@@ -152,8 +161,23 @@ export function getKiteSafety(lakeId, windDirection) {
   };
 }
 
-export function KiteSafetyIndicator({ lakeId, windDirection, windSpeed, compact = false }) {
-  const safety = getKiteSafety(lakeId, windDirection);
+export function KiteSafetyIndicator({ lakeId, windDirection, windSpeed, compact = false, activity = 'kiting' }) {
+  const isSnowkite = activity === 'snowkiting';
+  
+  let safety = getKiteSafety(lakeId, windDirection);
+  if (isSnowkite) {
+    safety = {
+      status: 'snowkite',
+      message: 'Snowkite Mode',
+      safe: true,
+      color: 'text-cyan-400',
+      bgColor: 'bg-cyan-500/10',
+      borderColor: 'border-cyan-500/30',
+      icon: CheckCircle,
+      description: 'Wind direction matters less on snow/ice. Focus on wind speed, snow condition, and terrain.',
+    };
+  }
+  
   const speedStatus = getKiteSpeedStatus(windSpeed);
   const Icon = safety.icon || AlertCircle;
 
