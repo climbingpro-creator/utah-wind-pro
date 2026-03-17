@@ -99,15 +99,26 @@ function normalizeSynoptic(data, requestedStids) {
 // ── Ambient ─────────────────────────────────────────────────────────
 
 async function fetchAmbient() {
-  const apiKey = process.env.VITE_AMBIENT_API_KEY;
-  const appKey = process.env.VITE_AMBIENT_APP_KEY;
-  if (!apiKey || !appKey) return null;
+  const apiKey = process.env.AMBIENT_API_KEY || process.env.VITE_AMBIENT_API_KEY;
+  const appKey = process.env.AMBIENT_APP_KEY || process.env.VITE_AMBIENT_APP_KEY;
+  if (!apiKey || !appKey) {
+    console.warn('[current-conditions] Ambient keys missing — AMBIENT_API_KEY:', !!apiKey, 'AMBIENT_APP_KEY:', !!appKey);
+    return null;
+  }
 
-  const resp = await fetch(
-    `https://rt.ambientweather.net/v1/devices?apiKey=${apiKey}&applicationKey=${appKey}`
-  );
-  if (!resp.ok) return null;
-  return resp.json();
+  try {
+    const resp = await fetch(
+      `https://rt.ambientweather.net/v1/devices?apiKey=${apiKey}&applicationKey=${appKey}`
+    );
+    if (!resp.ok) {
+      console.error('[current-conditions] Ambient HTTP', resp.status, await resp.text().catch(() => ''));
+      return null;
+    }
+    return resp.json();
+  } catch (err) {
+    console.error('[current-conditions] Ambient fetch error:', err.message);
+    return null;
+  }
 }
 
 function normalizeAmbient(devices) {
