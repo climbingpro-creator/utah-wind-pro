@@ -1,65 +1,110 @@
-// Service Worker for Utah Wind Pro
-const CACHE_NAME = 'utah-wind-pro-v1';
+// Service Worker for Utah Wind Pro — v2 with offline API caching
+const CACHE_NAME = 'utah-wind-pro-v2';
+const API_CACHE = 'utah-wind-api-v1';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
 ];
 
-// Install event - cache static assets
+// Condition endpoints that benefit from stale-while-revalidate offline
+const CACHEABLE_API = [
+  '/api/current-conditions',
+  '/api/thermal-forecast',
+];
+
+// Install — cache static assets
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(STATIC_ASSETS);
-    })
+    caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_ASSETS))
   );
   self.skipWaiting();
 });
 
-// Activate event - clean up old caches
+// Activate — clean old caches
 self.addEventListener('activate', (event) => {
+  const keep = new Set([CACHE_NAME, API_CACHE]);
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames
-          .filter((name) => name !== CACHE_NAME)
-          .map((name) => caches.delete(name))
-      );
-    })
+    caches.keys().then(names =>
+      Promise.all(names.filter(n => !keep.has(n)).map(n => caches.delete(n)))
+    )
   );
   self.clients.claim();
 });
 
-// Fetch event - network first, fallback to cache
+// Fetch
 self.addEventListener('fetch', (event) => {
-  // Skip non-GET requests
   if (event.request.method !== 'GET') return;
-  
-  // Skip API requests (always fetch fresh)
+
   const url = new URL(event.request.url);
-  if (url.pathname.includes('/api/') || 
+
+  // Cacheable API endpoints: network-first, cache fallback for offline
+  if (CACHEABLE_API.some(path => url.pathname.startsWith(path))) {
+    event.respondWith(networkFirstApi(event.request));
+    return;
+  }
+
+  // Skip all other API / external requests
+  if (url.pathname.includes('/api/') ||
       url.hostname.includes('api.synopticdata.com') ||
       url.hostname.includes('rt.ambientweather.net') ||
       url.hostname.includes('api.weather.gov')) {
     return;
   }
-  
+
+  // Static assets: network-first, cache fallback
   event.respondWith(
     fetch(event.request)
-      .then((response) => {
-        // Clone the response before caching
-        const responseClone = response.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseClone);
-        });
+      .then(response => {
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
         return response;
       })
-      .catch(() => {
-        // Fallback to cache if network fails
-        return caches.match(event.request);
-      })
+      .catch(() => caches.match(event.request))
   );
 });
+
+const API_TIMEOUT_MS = 3000;
+
+async function networkFirstApi(request) {
+  // Race the network against a timeout.  At Lincoln Point with 1 bar of LTE,
+  // this prevents hanging — after 3s we serve the last cached forecast.
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(request, { signal: controller.signal });
+    clearTimeout(timer);
+    const clone = response.clone();
+    const cache = await caches.open(API_CACHE);
+    cache.put(request, clone);
+    return response;
+  } catch (err) {
+    clearTimeout(timer);
+
+    // Network failed or timed out — serve cached version
+    const cached = await caches.match(request);
+    if (cached) {
+      // Inject a header so the UI knows this is stale data
+      const headers = new Headers(cached.headers);
+      headers.set('X-Wind-Cache', 'stale');
+      return new Response(cached.body, {
+        status: cached.status,
+        statusText: cached.statusText,
+        headers,
+      });
+    }
+
+    return new Response(JSON.stringify({
+      error: 'Offline',
+      message: 'No network and no cached data available. Head to a spot with signal!',
+      offline: true,
+    }), {
+      status: 503,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+}
 
 // Handle push notifications
 self.addEventListener('push', (event) => {

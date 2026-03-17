@@ -43,3 +43,6 @@ ios/
 # Misc
 *.local
 .cache/
+.cursor/  
+src/tests/  
+scripts/data/ 

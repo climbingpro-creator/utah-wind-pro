@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Wind, Mountain, Sun, Sunset, AlertTriangle, CheckCircle, XCircle, Clock, Users, Radio, Brain, TrendingUp, TrendingDown, Zap } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 import { predictParagliding } from '../services/ParaglidingPredictor';
 
 // Paragliding site configurations
@@ -157,6 +158,8 @@ export function calculateParaglidingScore(site, windSpeed, windDirection, windGu
 
 // Site Card Component
 const SiteCard = ({ site, windData, isLoading }) => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const config = PARAGLIDING_SITES[site];
   const stationData = windData?.[config.stationId];
   
@@ -168,36 +171,42 @@ const SiteCard = ({ site, windData, isLoading }) => {
   
   const getStatusColor = (status) => {
     switch (status) {
-      case 'excellent': return 'bg-green-500/20 border-green-500/50 text-green-400';
-      case 'good': return 'bg-lime-500/20 border-lime-500/50 text-lime-400';
-      case 'marginal': return 'bg-yellow-500/20 border-yellow-500/50 text-yellow-400';
-      default: return 'bg-red-500/20 border-red-500/50 text-red-400';
+      case 'excellent': return isDark ? 'bg-green-500/15 border-green-500/40' : 'bg-green-50 border-green-300';
+      case 'good': return isDark ? 'bg-lime-500/15 border-lime-500/40' : 'bg-lime-50 border-lime-300';
+      case 'marginal': return isDark ? 'bg-yellow-500/15 border-yellow-500/40' : 'bg-yellow-50 border-yellow-300';
+      default: return isDark ? 'bg-red-500/15 border-red-500/40' : 'bg-red-50 border-red-300';
     }
   };
   
   const getStatusIcon = (status) => {
+    const cls = {
+      excellent: isDark ? 'text-green-400' : 'text-green-600',
+      good: isDark ? 'text-lime-400' : 'text-lime-600',
+      marginal: isDark ? 'text-yellow-400' : 'text-yellow-600',
+    };
     switch (status) {
-      case 'excellent': return <CheckCircle className="w-5 h-5 text-green-400" />;
-      case 'good': return <CheckCircle className="w-5 h-5 text-lime-400" />;
-      case 'marginal': return <AlertTriangle className="w-5 h-5 text-yellow-400" />;
-      default: return <XCircle className="w-5 h-5 text-red-400" />;
+      case 'excellent': return <CheckCircle className={`w-5 h-5 ${cls.excellent}`} />;
+      case 'good': return <CheckCircle className={`w-5 h-5 ${cls.good}`} />;
+      case 'marginal': return <AlertTriangle className={`w-5 h-5 ${cls.marginal}`} />;
+      default: return <XCircle className={`w-5 h-5 ${isDark ? 'text-red-400' : 'text-red-600'}`} />;
     }
   };
   
   const currentHour = new Date().getHours();
   const isBestTime = config.bestTime === 'morning' ? currentHour < 12 : currentHour >= 15;
+  const okColor = isDark ? 'text-green-400' : 'text-green-600';
+  const errColor = isDark ? 'text-red-400' : 'text-red-600';
   
   return (
     <div className={`rounded-xl border p-4 ${getStatusColor(assessment?.status || 'unflyable')}`}>
-      {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div>
-          <h3 className="font-bold text-white text-lg">{config.name}</h3>
-          <p className="text-xs text-slate-400">{config.location}</p>
+          <h3 className={`font-bold text-lg ${isDark ? 'text-white' : 'text-slate-900'}`}>{config.name}</h3>
+          <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{config.location}</p>
         </div>
         <div className="flex items-center gap-2">
           {isBestTime && (
-            <span className="text-xs bg-cyan-500/20 text-cyan-400 px-2 py-1 rounded">
+            <span className={`text-xs px-2 py-1 rounded ${isDark ? 'bg-cyan-500/20 text-cyan-400' : 'bg-cyan-100 text-cyan-700'}`}>
               {config.bestTime === 'morning' ? '☀️ Best AM' : '🌅 Best PM'}
             </span>
           )}
@@ -205,72 +214,69 @@ const SiteCard = ({ site, windData, isLoading }) => {
         </div>
       </div>
       
-      {/* Current Conditions */}
       <div className="grid grid-cols-3 gap-3 mb-4">
         <div className="text-center">
-          <div className="text-xs text-slate-500">Wind</div>
-          <div className={`text-xl font-bold ${assessment?.speedOk ? 'text-white' : 'text-red-400'}`}>
+          <div className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Wind</div>
+          <div className={`text-xl font-bold ${assessment?.speedOk ? (isDark ? 'text-white' : 'text-slate-900') : errColor}`}>
             {windSpeed?.toFixed(0) || '--'}
-            <span className="text-xs text-slate-400"> mph</span>
+            <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}> mph</span>
           </div>
         </div>
         <div className="text-center">
-          <div className="text-xs text-slate-500">Direction</div>
-          <div className={`text-xl font-bold ${assessment?.directionOk ? 'text-white' : 'text-red-400'}`}>
+          <div className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Direction</div>
+          <div className={`text-xl font-bold ${assessment?.directionOk ? (isDark ? 'text-white' : 'text-slate-900') : errColor}`}>
             {windDirection?.toFixed(0) || '--'}°
           </div>
         </div>
         <div className="text-center">
-          <div className="text-xs text-slate-500">Gusts</div>
-          <div className={`text-xl font-bold ${assessment?.gustOk ? 'text-white' : 'text-red-400'}`}>
+          <div className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Gusts</div>
+          <div className={`text-xl font-bold ${assessment?.gustOk ? (isDark ? 'text-white' : 'text-slate-900') : errColor}`}>
             {windGust?.toFixed(0) || '--'}
-            <span className="text-xs text-slate-400"> mph</span>
+            <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}> mph</span>
           </div>
         </div>
       </div>
       
-      {/* Requirements */}
-      <div className="bg-slate-800/50 rounded-lg p-3 mb-3">
-        <div className="text-xs text-slate-500 mb-2">P2 Requirements</div>
+      <div className={`rounded-lg p-3 mb-3 ${isDark ? 'bg-slate-800/80 border border-slate-700' : 'bg-white/60 border border-slate-200'}`}>
+        <div className={`text-xs mb-2 font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>P2 Requirements</div>
         <div className="grid grid-cols-2 gap-2 text-xs">
           <div>
-            <span className="text-slate-400">Direction:</span>
-            <span className={`ml-1 ${assessment?.directionOk ? 'text-green-400' : 'text-red-400'}`}>
+            <span className={isDark ? 'text-slate-400' : 'text-slate-500'}>Direction:</span>
+            <span className={`ml-1 font-medium ${assessment?.directionOk ? okColor : errColor}`}>
               {config.wind.direction.label}
             </span>
           </div>
           <div>
-            <span className="text-slate-400">Speed:</span>
-            <span className={`ml-1 ${assessment?.speedOk ? 'text-green-400' : 'text-red-400'}`}>
+            <span className={isDark ? 'text-slate-400' : 'text-slate-500'}>Speed:</span>
+            <span className={`ml-1 font-medium ${assessment?.speedOk ? okColor : errColor}`}>
               {config.wind.speed.min}-{config.wind.speed.max} mph
             </span>
           </div>
           <div>
-            <span className="text-slate-400">Ideal:</span>
-            <span className="ml-1 text-cyan-400">
+            <span className={isDark ? 'text-slate-400' : 'text-slate-500'}>Ideal:</span>
+            <span className={`ml-1 font-medium ${isDark ? 'text-cyan-400' : 'text-cyan-700'}`}>
               {config.wind.speed.ideal.min}-{config.wind.speed.ideal.max} mph
             </span>
           </div>
           <div>
-            <span className="text-slate-400">Max Gust:</span>
-            <span className={`ml-1 ${assessment?.gustOk ? 'text-green-400' : 'text-red-400'}`}>
+            <span className={isDark ? 'text-slate-400' : 'text-slate-500'}>Max Gust:</span>
+            <span className={`ml-1 font-medium ${assessment?.gustOk ? okColor : errColor}`}>
               +{config.wind.gustLimit} mph
             </span>
           </div>
         </div>
       </div>
       
-      {/* Status Messages */}
       {assessment && (
         <div className="space-y-1">
           {assessment.positives.slice(0, 2).map((msg, i) => (
-            <div key={i} className="flex items-center gap-2 text-xs text-green-400">
+            <div key={i} className={`flex items-center gap-2 text-xs ${okColor}`}>
               <CheckCircle className="w-3 h-3" />
               <span>{msg}</span>
             </div>
           ))}
           {assessment.issues.slice(0, 2).map((msg, i) => (
-            <div key={i} className="flex items-center gap-2 text-xs text-red-400">
+            <div key={i} className={`flex items-center gap-2 text-xs ${errColor}`}>
               <XCircle className="w-3 h-3" />
               <span>{msg}</span>
             </div>
@@ -278,19 +284,18 @@ const SiteCard = ({ site, windData, isLoading }) => {
         </div>
       )}
       
-      {/* Flyability Score */}
-      <div className="mt-3 pt-3 border-t border-slate-700">
+      <div className={`mt-3 pt-3 border-t ${isDark ? 'border-slate-700' : 'border-slate-200'}`}>
         <div className="flex items-center justify-between">
-          <span className="text-xs text-slate-400">Flyability Score</span>
+          <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Flyability Score</span>
           <span className={`text-lg font-bold ${
-            assessment?.score >= 80 ? 'text-green-400' :
-            assessment?.score >= 60 ? 'text-lime-400' :
-            assessment?.score >= 40 ? 'text-yellow-400' : 'text-red-400'
+            assessment?.score >= 80 ? (isDark ? 'text-green-400' : 'text-green-600') :
+            assessment?.score >= 60 ? (isDark ? 'text-lime-400' : 'text-lime-600') :
+            assessment?.score >= 40 ? (isDark ? 'text-yellow-400' : 'text-yellow-600') : errColor
           }`}>
             {assessment?.score || 0}%
           </span>
         </div>
-        <div className="h-2 bg-slate-700 rounded-full mt-1 overflow-hidden">
+        <div className={`h-2 rounded-full mt-1 overflow-hidden ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`}>
           <div 
             className={`h-full transition-all duration-500 ${
               assessment?.score >= 80 ? 'bg-green-500' :
@@ -419,6 +424,8 @@ function predictWindSwitch(windData, currentHour) {
 
 // Wind Switch Predictor Component
 const WindSwitchPredictor = ({ windData }) => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const currentHour = new Date().getHours();
   const prediction = predictWindSwitch(windData, currentHour);
   
@@ -426,42 +433,46 @@ const WindSwitchPredictor = ({ windData }) => {
   
   if (isMorning) {
     return (
-      <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+      <div className="card">
         <div className="flex items-center gap-2 mb-2">
-          <Clock className="w-4 h-4 text-yellow-400" />
-          <span className="text-sm font-medium text-white">Evening Outlook</span>
+          <Clock className={`w-4 h-4 ${isDark ? 'text-yellow-400' : 'text-yellow-600'}`} />
+          <span className="text-sm font-semibold text-[var(--text-primary)]">Evening Outlook</span>
         </div>
-        <p className="text-xs text-slate-400">
+        <p className="text-xs text-[var(--text-secondary)]">
           North side typically activates 3-5 PM. Check back in the afternoon for early indicators from KSLC and UTALP.
         </p>
       </div>
     );
   }
   
+  const cardBg = prediction.isConfirmed
+    ? (isDark ? 'bg-green-500/10 border-green-500/30' : 'bg-green-50 border-green-300')
+    : prediction.likelihood >= 60
+      ? (isDark ? 'bg-yellow-500/10 border-yellow-500/30' : 'bg-yellow-50 border-yellow-300')
+      : prediction.likelihood >= 30
+        ? (isDark ? 'bg-blue-500/10 border-blue-500/30' : 'bg-blue-50 border-blue-200')
+        : (isDark ? 'bg-[var(--card-bg)] border-[var(--border-color)]' : 'bg-white border-slate-200');
+
   return (
-    <div className={`rounded-xl p-4 border ${
-      prediction.isConfirmed ? 'bg-green-500/10 border-green-500/30' :
-      prediction.likelihood >= 60 ? 'bg-yellow-500/10 border-yellow-500/30' :
-      prediction.likelihood >= 30 ? 'bg-blue-500/10 border-blue-500/30' :
-      'bg-slate-800/50 border-slate-700'
-    }`}>
+    <div className={`rounded-xl p-4 border ${cardBg}`}>
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <Wind className={`w-4 h-4 ${prediction.isConfirmed ? 'text-green-400' : 'text-cyan-400'}`} />
-          <span className="text-sm font-medium text-white">
+          <Wind className={`w-4 h-4 ${prediction.isConfirmed ? (isDark ? 'text-green-400' : 'text-green-600') : (isDark ? 'text-cyan-400' : 'text-cyan-600')}`} />
+          <span className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>
             {prediction.isConfirmed ? '✅ North Side Active' : '🔮 Wind Switch Predictor'}
           </span>
         </div>
         <div className={`text-lg font-bold ${
-          prediction.likelihood >= 70 ? 'text-green-400' :
-          prediction.likelihood >= 40 ? 'text-yellow-400' : 'text-slate-400'
+          prediction.likelihood >= 70 ? (isDark ? 'text-green-400' : 'text-green-600') :
+          prediction.likelihood >= 40 ? (isDark ? 'text-yellow-400' : 'text-yellow-600') :
+          (isDark ? 'text-slate-400' : 'text-slate-500')
         }`}>
           {prediction.likelihood}%
         </div>
       </div>
       
       {prediction.estimatedSwitchTime && (
-        <div className="bg-yellow-500/20 rounded px-3 py-1.5 mb-3 text-xs text-yellow-400">
+        <div className={`rounded px-3 py-1.5 mb-3 text-xs font-medium ${isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-100 text-yellow-700'}`}>
           ⏱️ Estimated switch in: {prediction.estimatedSwitchTime}
         </div>
       )}
@@ -470,14 +481,15 @@ const WindSwitchPredictor = ({ windData }) => {
         {prediction.indicators.map((ind, i) => (
           <div key={i} className="flex items-start gap-2 text-xs">
             <span className={`mt-0.5 w-2 h-2 rounded-full flex-shrink-0 ${
-              ind.signal === 'positive' ? 'bg-green-400' :
-              ind.signal === 'developing' ? 'bg-yellow-400' : 'bg-red-400'
+              ind.signal === 'positive' ? 'bg-green-500' :
+              ind.signal === 'developing' ? 'bg-yellow-500' : 'bg-red-500'
             }`} />
             <div>
-              <span className="text-slate-500">{ind.station}:</span>
-              <span className={`ml-1 ${
-                ind.signal === 'positive' ? 'text-green-400' :
-                ind.signal === 'developing' ? 'text-yellow-400' : 'text-red-400'
+              <span className={isDark ? 'text-slate-400' : 'text-slate-500'}>{ind.station}:</span>
+              <span className={`ml-1 font-medium ${
+                ind.signal === 'positive' ? (isDark ? 'text-green-400' : 'text-green-700') :
+                ind.signal === 'developing' ? (isDark ? 'text-yellow-400' : 'text-yellow-700') :
+                (isDark ? 'text-red-400' : 'text-red-700')
               }`}>
                 {ind.message}
               </span>
@@ -491,6 +503,8 @@ const WindSwitchPredictor = ({ windData }) => {
 
 // Upstream Station Indicators
 const UpstreamIndicators = ({ windData }) => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const stations = [
     { id: 'KSLC', name: 'SLC Airport', role: 'North Flow Origin', leadTime: '30-60 min', 
       getNorthSignal: (d, s) => ((d >= 280 || d <= 30) && s >= 5) },
@@ -501,15 +515,15 @@ const UpstreamIndicators = ({ windData }) => {
     { id: 'UTALP', name: 'Point of Mtn N', role: 'Ground Truth', leadTime: 'Active',
       getNorthSignal: (d, s) => ((d >= 315 || d <= 45) && s >= 5) },
     { id: 'KPVU', name: 'Provo Airport', role: 'South Flow Blocker', leadTime: 'Opposing',
-      getNorthSignal: (d, s) => s < 8 }, // Light provo = good for north switch
+      getNorthSignal: (d, s) => s < 8 },
   ];
   
   return (
-    <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+    <div className="card">
       <div className="flex items-center gap-2 mb-3">
-        <Radio className="w-4 h-4 text-cyan-400" />
-        <span className="text-sm font-medium text-white">Upstream Indicators</span>
-        <span className="text-xs text-slate-500 ml-auto">N → S flow path</span>
+        <Radio className={`w-4 h-4 ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`} />
+        <span className="text-sm font-semibold text-[var(--text-primary)]">Upstream Indicators</span>
+        <span className="text-xs text-[var(--text-tertiary)] ml-auto">N → S flow path</span>
       </div>
       
       <div className="space-y-2">
@@ -524,18 +538,20 @@ const UpstreamIndicators = ({ windData }) => {
           return (
             <div key={station.id} className="flex items-center gap-3 text-xs">
               <span className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                isNorthSignal ? 'bg-green-400 animate-pulse' : 'bg-slate-600'
+                isNorthSignal ? 'bg-green-500 animate-pulse' : (isDark ? 'bg-slate-600' : 'bg-slate-300')
               }`} />
-              <span className="text-slate-400 w-20 truncate">{station.name}</span>
-              <span className={`w-16 font-mono ${speed > 0 ? 'text-white' : 'text-slate-600'}`}>
+              <span className={`w-20 truncate ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>{station.name}</span>
+              <span className={`w-16 font-mono font-medium ${speed > 0 ? (isDark ? 'text-white' : 'text-slate-900') : 'text-[var(--text-tertiary)]'}`}>
                 {speed > 0 ? `${speed.toFixed(0)} mph` : '--'}
               </span>
-              <span className={`w-10 font-mono ${isNorthSignal ? 'text-green-400' : 'text-slate-500'}`}>
+              <span className={`w-10 font-mono font-medium ${isNorthSignal ? (isDark ? 'text-green-400' : 'text-green-700') : 'text-[var(--text-tertiary)]'}`}>
                 {dir > 0 ? `${cardinal}` : '--'}
               </span>
-              <span className="text-slate-600 hidden sm:inline">{station.leadTime}</span>
-              <span className={`ml-auto text-xs px-1.5 py-0.5 rounded ${
-                isNorthSignal ? 'bg-green-500/20 text-green-400' : 'bg-slate-700 text-slate-500'
+              <span className="text-[var(--text-tertiary)] hidden sm:inline">{station.leadTime}</span>
+              <span className={`ml-auto text-xs px-1.5 py-0.5 rounded font-medium ${
+                isNorthSignal
+                  ? (isDark ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-700')
+                  : (isDark ? 'bg-slate-700 text-slate-500' : 'bg-slate-100 text-slate-400')
               }`}>
                 {isNorthSignal ? '✓' : '—'}
               </span>
@@ -544,7 +560,7 @@ const UpstreamIndicators = ({ windData }) => {
         })}
       </div>
       
-      <div className="mt-3 pt-2 border-t border-slate-700/50 text-xs text-slate-500">
+      <div className="mt-3 pt-2 border-t border-[var(--border-color)] text-xs text-[var(--text-tertiary)]">
         Green = supporting north flow. KSLC leads UTALP by ~30-60 min.
       </div>
     </div>
@@ -760,30 +776,42 @@ const ParaglidingMode = ({ windData, isLoading }) => {
     };
   }, [southScore, northScore, learnedPrediction, switchPrediction, currentHour, bestSite, bestSiteConfig, bestScore, stationWindData]);
 
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+
   const bannerColors = {
-    green: 'bg-gradient-to-r from-green-900/60 to-emerald-900/60 border-green-500/50',
-    yellow: 'bg-gradient-to-r from-yellow-900/40 to-amber-900/40 border-yellow-500/40',
-    slate: 'bg-gradient-to-r from-slate-800/60 to-slate-700/60 border-slate-600/40',
+    green: isDark ? 'bg-gradient-to-r from-green-900/50 to-emerald-900/50 border-green-500/40' : 'bg-gradient-to-r from-green-100 to-emerald-100 border-green-300',
+    yellow: isDark ? 'bg-gradient-to-r from-yellow-900/30 to-amber-900/30 border-yellow-500/30' : 'bg-gradient-to-r from-yellow-100 to-amber-100 border-yellow-300',
+    slate: isDark ? 'bg-[var(--card-bg)] border-[var(--border-color)]' : 'bg-white border-slate-200',
   };
   const scoreColors = {
-    green: 'text-green-400',
-    yellow: 'text-yellow-400',
-    slate: 'text-slate-400',
+    green: isDark ? 'text-green-400' : 'text-green-600',
+    yellow: isDark ? 'text-yellow-400' : 'text-yellow-600',
+    slate: isDark ? 'text-slate-400' : 'text-slate-500',
   };
   
+  const predStatusColor = (status) => {
+    if (status === 'epic' || status === 'excellent') return isDark ? 'bg-green-500/10 border-green-500/30' : 'bg-green-50 border-green-300';
+    if (status === 'good') return isDark ? 'bg-lime-500/10 border-lime-500/30' : 'bg-lime-50 border-lime-300';
+    if (status === 'marginal') return isDark ? 'bg-yellow-500/10 border-yellow-500/30' : 'bg-yellow-50 border-yellow-300';
+    return isDark ? 'bg-slate-700/50 border-slate-600' : 'bg-slate-50 border-slate-200';
+  };
+
+  const probColor = (p) => p >= 60 ? (isDark ? 'text-green-400' : 'text-green-600') : p >= 35 ? (isDark ? 'text-yellow-400' : 'text-yellow-600') : (isDark ? 'text-red-400' : 'text-red-600');
+
   return (
     <div className="space-y-6">
-      {/* Header — Forecast-driven, not just current conditions */}
+      {/* Header */}
       <div className={`rounded-xl p-4 border ${bannerColors[opportunity.color]}`}>
         <div className="flex items-center gap-3 mb-3">
           <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-            opportunity.color === 'green' ? 'bg-green-500/30' : opportunity.color === 'yellow' ? 'bg-yellow-500/20' : 'bg-purple-500/20'
+            opportunity.color === 'green' ? (isDark ? 'bg-green-500/30' : 'bg-green-200') : opportunity.color === 'yellow' ? (isDark ? 'bg-yellow-500/20' : 'bg-yellow-200') : (isDark ? 'bg-purple-500/20' : 'bg-purple-100')
           }`}>
             <span className="text-2xl">🪂</span>
           </div>
           <div className="flex-1">
-            <h2 className="text-lg font-bold text-white">Point of the Mountain</h2>
-            <p className="text-xs text-purple-300">Paragliding Forecast</p>
+            <h2 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>Point of the Mountain</h2>
+            <p className={`text-xs ${isDark ? 'text-purple-300' : 'text-purple-600'}`}>Paragliding Forecast</p>
           </div>
           {opportunity.urgency === 'go' && (
             <div className="bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full animate-pulse">
@@ -791,52 +819,51 @@ const ParaglidingMode = ({ windData, isLoading }) => {
             </div>
           )}
           {opportunity.urgency === 'plan' && (
-            <div className="bg-green-500/20 text-green-400 text-xs font-bold px-3 py-1 rounded-full border border-green-500/50">
+            <div className={`text-xs font-bold px-3 py-1 rounded-full border ${isDark ? 'bg-green-500/20 text-green-400 border-green-500/50' : 'bg-green-100 text-green-700 border-green-300'}`}>
               GET READY
             </div>
           )}
           {opportunity.urgency === 'watch' && opportunity.mode === 'now' && (
-            <div className="bg-yellow-500/20 text-yellow-400 text-xs font-bold px-3 py-1 rounded-full border border-yellow-500/50">
+            <div className={`text-xs font-bold px-3 py-1 rounded-full border ${isDark ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50' : 'bg-yellow-100 text-yellow-700 border-yellow-300'}`}>
               HEADS UP
             </div>
           )}
         </div>
         
-        {/* The Big Opportunity Card */}
-        <div className={`rounded-lg p-4 ${
-          opportunity.color === 'green' ? 'bg-green-500/15 border border-green-500/40' :
-          opportunity.color === 'yellow' ? 'bg-yellow-500/10 border border-yellow-500/30' :
-          'bg-slate-700/30 border border-slate-600/30'
+        <div className={`rounded-lg p-4 border ${
+          opportunity.color === 'green' ? (isDark ? 'bg-green-500/15 border-green-500/40' : 'bg-green-50 border-green-300') :
+          opportunity.color === 'yellow' ? (isDark ? 'bg-yellow-500/10 border-yellow-500/30' : 'bg-yellow-50 border-yellow-300') :
+          (isDark ? 'bg-slate-700/30 border-slate-600/30' : 'bg-white border-slate-200')
         }`}>
           <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <div className={`text-xs font-medium ${
-                opportunity.mode === 'now' && opportunity.color === 'green' ? 'text-green-400' :
-                opportunity.mode === 'now' && opportunity.color === 'yellow' ? 'text-yellow-400' :
-                opportunity.mode === 'predicted' ? 'text-cyan-400' : 'text-slate-500'
+            <div className="flex-1 min-w-0">
+              <div className={`text-xs font-semibold ${
+                opportunity.mode === 'now' && opportunity.color === 'green' ? (isDark ? 'text-green-400' : 'text-green-600') :
+                opportunity.mode === 'now' && opportunity.color === 'yellow' ? (isDark ? 'text-yellow-400' : 'text-yellow-600') :
+                opportunity.mode === 'predicted' ? (isDark ? 'text-cyan-400' : 'text-cyan-600') : 'text-[var(--text-tertiary)]'
               }`}>
                 {opportunity.mode === 'now' && opportunity.color === 'green' ? '🟢 FLYING NOW' :
                  opportunity.mode === 'now' && opportunity.color === 'yellow' ? '🟡 BORDERLINE' :
                  opportunity.mode === 'predicted' ? '🔮 PREDICTED' : 'MONITORING'}
               </div>
-              <div className={`text-xl font-bold mt-1 ${opportunity.color === 'green' ? 'text-white' : opportunity.color === 'yellow' ? 'text-yellow-100' : 'text-slate-200'}`}>
+              <div className={`text-xl font-bold mt-1 ${isDark ? 'text-white' : 'text-slate-900'}`}>
                 {opportunity.headline}
               </div>
-              <div className="text-sm text-slate-300 mt-1">
+              <div className={`text-sm mt-1 ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
                 {opportunity.subline}
               </div>
               {opportunity.arriveBy && opportunity.urgency === 'plan' && (
-                <div className="mt-2 inline-flex items-center gap-1.5 bg-green-500/20 text-green-400 text-xs font-medium px-2.5 py-1 rounded-full">
+                <div className={`mt-2 inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ${isDark ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-700'}`}>
                   <Clock className="w-3 h-3" />
                   Arrive by {opportunity.arriveBy}
                 </div>
               )}
             </div>
-            <div className="text-right ml-4">
+            <div className="text-right ml-4 flex-shrink-0">
               <div className={`text-4xl font-black ${scoreColors[opportunity.color]}`}>
                 {opportunity.score}%
               </div>
-              <div className="text-xs text-slate-400 capitalize">
+              <div className="text-xs text-[var(--text-tertiary)] capitalize">
                 {opportunity.mode === 'now' ? opportunity.status : 
                  opportunity.mode === 'predicted' ? 'forecast' : 'chance'}
               </div>
@@ -847,121 +874,101 @@ const ParaglidingMode = ({ windData, isLoading }) => {
       
       {/* Learned Model Prediction */}
       {learnedPrediction && (
-        <div className="bg-slate-800/50 rounded-xl p-4 border border-purple-500/30">
+        <div className={`rounded-xl p-4 border ${isDark ? 'bg-slate-800/80 border-purple-500/30' : 'bg-purple-50 border-purple-200 shadow-sm'}`}>
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <Brain className="w-4 h-4 text-purple-400" />
-              <span className="text-sm font-medium text-white">AI Prediction</span>
+              <Brain className={`w-4 h-4 ${isDark ? 'text-purple-400' : 'text-purple-600'}`} />
+              <span className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>AI Prediction</span>
               {learnedPrediction.south?.isUsingLearnedWeights && (
-                <span className="text-[10px] bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded">
+                <span className={`text-[10px] px-1.5 py-0.5 rounded ${isDark ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-700'}`}>
                   {learnedPrediction.south.weightsVersion}
                 </span>
               )}
             </div>
-            <span className="text-xs text-slate-500">Trained on 7,624 observations</span>
+            <span className="text-xs text-[var(--text-tertiary)]">Trained on 7,624 observations</span>
           </div>
 
           <div className="grid grid-cols-2 gap-3 mb-3">
-            {/* South prediction */}
-            <div className={`rounded-lg p-3 border ${
-              learnedPrediction.south?.status === 'epic' || learnedPrediction.south?.status === 'excellent' ? 'bg-green-500/10 border-green-500/30' :
-              learnedPrediction.south?.status === 'good' ? 'bg-lime-500/10 border-lime-500/30' :
-              learnedPrediction.south?.status === 'marginal' ? 'bg-yellow-500/10 border-yellow-500/30' :
-              'bg-slate-700/50 border-slate-600'
-            }`}>
-              <div className="text-xs text-slate-400 mb-1">South Side</div>
+            <div className={`rounded-lg p-3 border ${predStatusColor(learnedPrediction.south?.status)}`}>
+              <div className={`text-xs mb-1 ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>South Side</div>
               <div className="flex items-center justify-between">
-                <div className={`text-2xl font-bold ${
-                  learnedPrediction.south?.probability >= 60 ? 'text-green-400' :
-                  learnedPrediction.south?.probability >= 35 ? 'text-yellow-400' : 'text-red-400'
-                }`}>
+                <div className={`text-2xl font-bold ${probColor(learnedPrediction.south?.probability || 0)}`}>
                   {learnedPrediction.south?.probability || 0}%
                 </div>
                 <div className="text-right">
-                  <div className="text-xs text-slate-400 capitalize">{learnedPrediction.south?.status}</div>
-                  <div className="text-xs text-slate-500">{learnedPrediction.south?.gustQuality}</div>
+                  <div className={`text-xs capitalize ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>{learnedPrediction.south?.status}</div>
+                  <div className="text-xs text-[var(--text-tertiary)]">{learnedPrediction.south?.gustQuality}</div>
                 </div>
               </div>
               {learnedPrediction.south?.expectedSpeed > 0 && (
-                <div className="text-xs text-slate-400 mt-1">
+                <div className="text-xs text-[var(--text-secondary)] mt-1">
                   Expected: {learnedPrediction.south.expectedSpeed} mph
                 </div>
               )}
               {learnedPrediction.south?.indicators?.kpvu?.signal === 'south_active' && (
-                <div className="text-xs text-green-400 mt-1 flex items-center gap-1">
+                <div className={`text-xs mt-1 flex items-center gap-1 ${isDark ? 'text-green-400' : 'text-green-600'}`}>
                   <TrendingUp className="w-3 h-3" /> KPVU thermal active
                 </div>
               )}
               {learnedPrediction.south?.indicators?.kslc?.signal === 'north_threat' && (
-                <div className="text-xs text-red-400 mt-1 flex items-center gap-1">
+                <div className={`text-xs mt-1 flex items-center gap-1 ${isDark ? 'text-red-400' : 'text-red-600'}`}>
                   <TrendingDown className="w-3 h-3" /> KSLC north threat
                 </div>
               )}
             </div>
 
-            {/* North prediction */}
-            <div className={`rounded-lg p-3 border ${
-              learnedPrediction.north?.status === 'epic' || learnedPrediction.north?.status === 'excellent' ? 'bg-green-500/10 border-green-500/30' :
-              learnedPrediction.north?.status === 'good' ? 'bg-lime-500/10 border-lime-500/30' :
-              learnedPrediction.north?.status === 'marginal' ? 'bg-yellow-500/10 border-yellow-500/30' :
-              'bg-slate-700/50 border-slate-600'
-            }`}>
-              <div className="text-xs text-slate-400 mb-1">North Side</div>
+            <div className={`rounded-lg p-3 border ${predStatusColor(learnedPrediction.north?.status)}`}>
+              <div className={`text-xs mb-1 ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>North Side</div>
               <div className="flex items-center justify-between">
-                <div className={`text-2xl font-bold ${
-                  learnedPrediction.north?.probability >= 60 ? 'text-green-400' :
-                  learnedPrediction.north?.probability >= 35 ? 'text-yellow-400' : 'text-red-400'
-                }`}>
+                <div className={`text-2xl font-bold ${probColor(learnedPrediction.north?.probability || 0)}`}>
                   {learnedPrediction.north?.probability || 0}%
                 </div>
                 <div className="text-right">
-                  <div className="text-xs text-slate-400 capitalize">{learnedPrediction.north?.status}</div>
-                  <div className="text-xs text-slate-500">{learnedPrediction.north?.gustQuality}</div>
+                  <div className={`text-xs capitalize ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>{learnedPrediction.north?.status}</div>
+                  <div className="text-xs text-[var(--text-tertiary)]">{learnedPrediction.north?.gustQuality}</div>
                 </div>
               </div>
               {learnedPrediction.north?.isGlassOff && (
-                <div className="text-xs text-purple-400 mt-1 flex items-center gap-1">
+                <div className={`text-xs mt-1 flex items-center gap-1 ${isDark ? 'text-purple-400' : 'text-purple-600'}`}>
                   <Zap className="w-3 h-3" /> Glass-off in progress!
                 </div>
               )}
               {learnedPrediction.north?.indicators?.kslc?.signal === 'north_active' && (
-                <div className="text-xs text-green-400 mt-1 flex items-center gap-1">
+                <div className={`text-xs mt-1 flex items-center gap-1 ${isDark ? 'text-green-400' : 'text-green-600'}`}>
                   <TrendingUp className="w-3 h-3" /> KSLC north active ({learnedPrediction.north.indicators.kslc.leadTimeMin} min lead)
                 </div>
               )}
               {learnedPrediction.north?.indicators?.fps?.signal === 'switched_north' && (
-                <div className="text-xs text-green-400 mt-1 flex items-center gap-1">
+                <div className={`text-xs mt-1 flex items-center gap-1 ${isDark ? 'text-green-400' : 'text-green-600'}`}>
                   <CheckCircle className="w-3 h-3" /> FPS confirmed north
                 </div>
               )}
               {learnedPrediction.north?.indicators?.kpvu?.signal === 'thermal_blocking' && (
-                <div className="text-xs text-orange-400 mt-1 flex items-center gap-1">
+                <div className={`text-xs mt-1 flex items-center gap-1 ${isDark ? 'text-orange-400' : 'text-orange-600'}`}>
                   <TrendingDown className="w-3 h-3" /> KPVU thermal still blocking
                 </div>
               )}
             </div>
           </div>
 
-          {/* Wind switch prediction from learned model */}
           {learnedPrediction.windSwitch?.likelihood > 0 && (
-            <div className={`rounded-lg p-2 text-xs ${
-              learnedPrediction.windSwitch.likelihood >= 65 ? 'bg-green-500/10 text-green-400' :
-              learnedPrediction.windSwitch.likelihood >= 35 ? 'bg-yellow-500/10 text-yellow-400' :
-              'bg-slate-700/50 text-slate-400'
+            <div className={`rounded-lg p-2 text-xs font-medium ${
+              learnedPrediction.windSwitch.likelihood >= 65 ? (isDark ? 'bg-green-500/10 text-green-400' : 'bg-green-100 text-green-700') :
+              learnedPrediction.windSwitch.likelihood >= 35 ? (isDark ? 'bg-yellow-500/10 text-yellow-400' : 'bg-yellow-100 text-yellow-700') :
+              (isDark ? 'bg-slate-700/50 text-slate-400' : 'bg-slate-100 text-slate-500')
             }`}>
               S→N Switch: {learnedPrediction.windSwitch.likelihood}% likely
               {learnedPrediction.windSwitch.timeframe && ` (${learnedPrediction.windSwitch.timeframe})`}
             </div>
           )}
 
-          {/* Recommendation */}
           {learnedPrediction.recommendation && (
-            <div className="mt-2 text-xs text-purple-300 italic">
+            <div className={`mt-2 text-xs italic ${isDark ? 'text-purple-300' : 'text-purple-600'}`}>
               {learnedPrediction.recommendation}
             </div>
           )}
 
-          <div className="mt-2 text-[10px] text-slate-600 flex items-center gap-2">
+          <div className="mt-2 text-[10px] text-[var(--text-tertiary)] flex items-center gap-2">
             <span>Seasonal adj: ×{learnedPrediction.south?.seasonalAdj}</span>
             <span>Hourly: ×{learnedPrediction.south?.hourlyMult}</span>
           </div>
@@ -969,34 +976,31 @@ const ParaglidingMode = ({ windData, isLoading }) => {
       )}
 
       {/* Time of Day Indicator */}
-      <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+      <div className="card">
         <div className="flex items-center gap-2 mb-3">
-          <Clock className="w-4 h-4 text-slate-400" />
-          <span className="text-sm font-medium text-white">Daily Pattern</span>
+          <Clock className={`w-4 h-4 ${isDark ? 'text-slate-400' : 'text-slate-500'}`} />
+          <span className="text-sm font-semibold text-[var(--text-primary)]">Daily Pattern</span>
         </div>
         <div className="grid grid-cols-3 gap-2 text-center text-xs">
-          <div className={`p-2 rounded ${currentHour < 12 ? 'bg-yellow-500/20 border border-yellow-500/30' : 'bg-slate-700/50'}`}>
-            <Sun className={`w-4 h-4 mx-auto mb-1 ${currentHour < 12 ? 'text-yellow-400' : 'text-slate-500'}`} />
-            <div className={currentHour < 12 ? 'text-yellow-400 font-medium' : 'text-slate-500'}>Morning</div>
-            <div className="text-slate-400">South Side</div>
+          <div className={`p-3 rounded-lg ${currentHour < 12 ? (isDark ? 'bg-yellow-500/15 border border-yellow-500/30' : 'bg-yellow-50 border border-yellow-300') : (isDark ? 'bg-slate-700/50' : 'bg-slate-50')}`}>
+            <Sun className={`w-4 h-4 mx-auto mb-1 ${currentHour < 12 ? (isDark ? 'text-yellow-400' : 'text-yellow-600') : 'text-[var(--text-tertiary)]'}`} />
+            <div className={`font-medium ${currentHour < 12 ? (isDark ? 'text-yellow-400' : 'text-yellow-700') : 'text-[var(--text-tertiary)]'}`}>Morning</div>
+            <div className="text-[var(--text-secondary)]">South Side</div>
           </div>
-          <div className={`p-2 rounded ${currentHour >= 12 && currentHour < 15 ? 'bg-orange-500/20 border border-orange-500/30' : 'bg-slate-700/50'}`}>
-            <AlertTriangle className={`w-4 h-4 mx-auto mb-1 ${currentHour >= 12 && currentHour < 15 ? 'text-orange-400' : 'text-slate-500'}`} />
-            <div className={currentHour >= 12 && currentHour < 15 ? 'text-orange-400 font-medium' : 'text-slate-500'}>Midday</div>
-            <div className="text-slate-400">Caution</div>
+          <div className={`p-3 rounded-lg ${currentHour >= 12 && currentHour < 15 ? (isDark ? 'bg-orange-500/15 border border-orange-500/30' : 'bg-orange-50 border border-orange-300') : (isDark ? 'bg-slate-700/50' : 'bg-slate-50')}`}>
+            <AlertTriangle className={`w-4 h-4 mx-auto mb-1 ${currentHour >= 12 && currentHour < 15 ? (isDark ? 'text-orange-400' : 'text-orange-600') : 'text-[var(--text-tertiary)]'}`} />
+            <div className={`font-medium ${currentHour >= 12 && currentHour < 15 ? (isDark ? 'text-orange-400' : 'text-orange-700') : 'text-[var(--text-tertiary)]'}`}>Midday</div>
+            <div className="text-[var(--text-secondary)]">Caution</div>
           </div>
-          <div className={`p-2 rounded ${currentHour >= 15 ? 'bg-purple-500/20 border border-purple-500/30' : 'bg-slate-700/50'}`}>
-            <Sunset className={`w-4 h-4 mx-auto mb-1 ${currentHour >= 15 ? 'text-purple-400' : 'text-slate-500'}`} />
-            <div className={currentHour >= 15 ? 'text-purple-400 font-medium' : 'text-slate-500'}>Evening</div>
-            <div className="text-slate-400">North Side</div>
+          <div className={`p-3 rounded-lg ${currentHour >= 15 ? (isDark ? 'bg-purple-500/15 border border-purple-500/30' : 'bg-purple-50 border border-purple-300') : (isDark ? 'bg-slate-700/50' : 'bg-slate-50')}`}>
+            <Sunset className={`w-4 h-4 mx-auto mb-1 ${currentHour >= 15 ? (isDark ? 'text-purple-400' : 'text-purple-600') : 'text-[var(--text-tertiary)]'}`} />
+            <div className={`font-medium ${currentHour >= 15 ? (isDark ? 'text-purple-400' : 'text-purple-700') : 'text-[var(--text-tertiary)]'}`}>Evening</div>
+            <div className="text-[var(--text-secondary)]">North Side</div>
           </div>
         </div>
       </div>
       
-      {/* Wind Switch Predictor - Key new feature */}
       <WindSwitchPredictor windData={windData} />
-      
-      {/* Upstream Indicators Panel */}
       <UpstreamIndicators windData={windData} />
       
       {/* Site Cards */}
@@ -1014,31 +1018,31 @@ const ParaglidingMode = ({ windData, isLoading }) => {
       </div>
       
       {/* Safety Info */}
-      <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+      <div className="card">
         <div className="flex items-center gap-2 mb-3">
-          <AlertTriangle className="w-4 h-4 text-yellow-400" />
-          <span className="text-sm font-medium text-white">P2 Safety Limits</span>
+          <AlertTriangle className={`w-4 h-4 ${isDark ? 'text-yellow-400' : 'text-yellow-600'}`} />
+          <span className="text-sm font-semibold text-[var(--text-primary)]">P2 Safety Limits</span>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-          <div className="bg-slate-700/50 rounded p-2">
-            <div className="text-slate-400">Max Wind</div>
-            <div className="text-white font-medium">18 mph</div>
+          <div className={`rounded-lg p-2.5 ${isDark ? 'bg-slate-700/50' : 'bg-slate-50'}`}>
+            <div className="text-[var(--text-tertiary)]">Max Wind</div>
+            <div className="text-[var(--text-primary)] font-semibold">18 mph</div>
           </div>
-          <div className="bg-slate-700/50 rounded p-2">
-            <div className="text-slate-400">Max Gust Over</div>
-            <div className="text-white font-medium">+5 mph</div>
+          <div className={`rounded-lg p-2.5 ${isDark ? 'bg-slate-700/50' : 'bg-slate-50'}`}>
+            <div className="text-[var(--text-tertiary)]">Max Gust Over</div>
+            <div className="text-[var(--text-primary)] font-semibold">+5 mph</div>
           </div>
-          <div className="bg-slate-700/50 rounded p-2">
-            <div className="text-slate-400">Ideal Range</div>
-            <div className="text-white font-medium">10-16 mph</div>
+          <div className={`rounded-lg p-2.5 ${isDark ? 'bg-slate-700/50' : 'bg-slate-50'}`}>
+            <div className="text-[var(--text-tertiary)]">Ideal Range</div>
+            <div className="text-[var(--text-primary)] font-semibold">10-16 mph</div>
           </div>
-          <div className="bg-slate-700/50 rounded p-2">
-            <div className="text-slate-400">Radio Freq</div>
-            <div className="text-white font-medium">146.560</div>
+          <div className={`rounded-lg p-2.5 ${isDark ? 'bg-slate-700/50' : 'bg-slate-50'}`}>
+            <div className="text-[var(--text-tertiary)]">Radio Freq</div>
+            <div className="text-[var(--text-primary)] font-semibold">146.560</div>
           </div>
         </div>
         
-        <div className="mt-3 pt-3 border-t border-slate-700 text-xs text-slate-400">
+        <div className="mt-3 pt-3 border-t border-[var(--border-color)] text-xs text-[var(--text-secondary)]">
           <p className="flex items-center gap-1">
             <Users className="w-3 h-3" />
             <span><strong>15/15 Rule:</strong> Max 15 pilots in pattern. If flying 15 min with others waiting, land or leave.</span>
@@ -1046,13 +1050,12 @@ const ParaglidingMode = ({ windData, isLoading }) => {
         </div>
       </div>
       
-      {/* UHGPGA Link */}
-      <div className="text-center text-xs text-slate-500">
+      <div className="text-center text-xs text-[var(--text-tertiary)]">
         <a 
           href="https://uhgpga.org" 
           target="_blank" 
           rel="noopener noreferrer"
-          className="hover:text-cyan-400 transition-colors"
+          className={`transition-colors ${isDark ? 'hover:text-cyan-400' : 'hover:text-cyan-600'}`}
         >
           Utah Hang Gliding & Paragliding Association (UHGPGA)
         </a>

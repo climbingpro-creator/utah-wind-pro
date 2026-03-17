@@ -153,15 +153,12 @@ export default function TodayHero({ windSpeed, windGust, thermalPrediction, boat
   const bgImage = getRotatingImage(outlook.mood, 'mood') || MOOD_IMAGE_FALLBACK[outlook.mood];
 
   return (
-    <div className={`animate-fade-in hero-mood ${bgImage ? '' : ''}`}>
+    <div className={`animate-fade-in ${bgImage ? 'hero-mood' : ''}`}>
       {/* Background photo */}
       {bgImage && (
         <>
-          <img 
-            src={bgImage} 
-            alt=""
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-black/30" />
+          <img src={bgImage} alt="" />
+          <div className="hero-overlay bg-gradient-to-r from-black/80 via-black/50 to-black/30" />
         </>
       )}
 

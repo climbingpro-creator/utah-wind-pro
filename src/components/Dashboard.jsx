@@ -441,7 +441,7 @@ export function Dashboard() {
               src={getActivityHeroImage(selectedActivity)} 
               alt={activityConfig.name}
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+            <div className="hero-overlay bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6 lg:p-8">
               <div className="flex items-end justify-between">
                 <div>

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { MessageSquare, X, Phone, Bell, BellOff, Clock, MapPin, Zap, Waves, Wind, Shield, Check, ChevronRight } from 'lucide-react';
+import { MessageSquare, X, Phone, Bell, BellOff, Clock, MapPin, Zap, Waves, Wind, Shield, Check, ChevronRight, Smartphone } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { getSMSPrefs, saveSMSPrefs, formatPhone, isValidPhone } from '../services/SMSNotificationService';
+import { getPushStatus, subscribeToPush, unsubscribeFromPush } from '../services/PushService';
 
 const ALERT_TYPES = [
   { id: 'windThreshold', label: 'Wind Threshold Reached', desc: 'Alert when wind hits your target speed', icon: Wind, color: 'text-emerald-500' },
@@ -37,6 +38,8 @@ export default function SMSAlertSettings({ isOpen, onClose }) {
   const [phoneInput, setPhoneInput] = useState(prefs.phone);
   const [saved, setSaved] = useState(false);
   const [step, setStep] = useState(prefs.phone ? 'settings' : 'setup');
+  const [pushStatus, setPushStatus] = useState('loading');
+  const [pushBusy, setPushBusy] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -44,8 +47,35 @@ export default function SMSAlertSettings({ isOpen, onClose }) {
       setPrefs(loaded);
       setPhoneInput(loaded.phone);
       setStep(loaded.phone ? 'settings' : 'setup');
+      getPushStatus().then(setPushStatus);
     }
   }, [isOpen]);
+
+  const handlePushToggle = async () => {
+    setPushBusy(true);
+    try {
+      if (pushStatus === 'subscribed') {
+        await unsubscribeFromPush();
+        setPushStatus('unsubscribed');
+      } else {
+        // Try to get auth token if user is logged in
+        let token = null;
+        try {
+          const { supabase } = await import('../lib/supabase');
+          if (supabase) {
+            const { data } = await supabase.auth.getSession();
+            token = data?.session?.access_token;
+          }
+        } catch {}
+        await subscribeToPush(token);
+        setPushStatus('subscribed');
+      }
+    } catch (err) {
+      if (err.message?.includes('denied')) setPushStatus('denied');
+      console.error('[push-toggle]', err.message);
+    }
+    setPushBusy(false);
+  };
 
   const handleSave = () => {
     const updated = { ...prefs, phone: phoneInput };
@@ -198,6 +228,40 @@ export default function SMSAlertSettings({ isOpen, onClose }) {
                     }`} />
                   </button>
                 </div>
+
+                {/* Push Notifications Toggle */}
+                {pushStatus !== 'unsupported' && (
+                  <div className={`flex items-center justify-between p-4 rounded-lg border ${
+                    pushStatus === 'subscribed'
+                      ? (isDark ? 'border-violet-500/30 bg-violet-500/5' : 'border-violet-200 bg-violet-50')
+                      : (isDark ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-50')
+                  }`}>
+                    <div className="flex items-center gap-3">
+                      <Smartphone className={`w-5 h-5 ${pushStatus === 'subscribed' ? 'text-violet-500' : 'text-[var(--text-tertiary)]'}`} />
+                      <div>
+                        <p className="text-sm font-semibold text-[var(--text-primary)]">Push Notifications</p>
+                        <p className="text-[11px] text-[var(--text-tertiary)]">
+                          {pushStatus === 'subscribed' ? 'Receiving browser push alerts' :
+                           pushStatus === 'denied' ? 'Permission denied — check browser settings' :
+                           'Get instant alerts even when the app is closed'}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={handlePushToggle}
+                      disabled={pushBusy || pushStatus === 'denied'}
+                      className={`relative w-12 h-6 rounded-full transition-colors ${
+                        pushStatus === 'subscribed' ? 'bg-violet-500' :
+                        pushStatus === 'denied' ? (isDark ? 'bg-slate-700' : 'bg-slate-200') :
+                        isDark ? 'bg-slate-600' : 'bg-slate-300'
+                      } ${pushBusy ? 'opacity-50' : ''}`}
+                    >
+                      <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
+                        pushStatus === 'subscribed' ? 'translate-x-6' : 'translate-x-0.5'
+                      }`} />
+                    </button>
+                  </div>
+                )}
 
                 {/* Alert Types */}
                 <div>
