@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 
 const TRIAL_KEY = 'uwf_trial_start';
 const TRIAL_DAYS = 30;
+const ADMIN_EMAILS = ['climbingpro@gmail.com'];
 
 const AuthContext = createContext({
   user: null, session: null, tier: 'free', loading: true,
@@ -35,15 +36,20 @@ export function AuthProvider({ children }) {
     supabase.auth.getSession().then(({ data: { session: s } }) => {
       setSession(s);
       setUser(s?.user ?? null);
-      if (s?.user) fetchTier(s.access_token);
+      if (s?.user) {
+        if (ADMIN_EMAILS.includes(s.user.email?.toLowerCase())) setTier('pro');
+        else fetchTier(s.access_token);
+      }
       setLoading(false);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
       setSession(s);
       setUser(s?.user ?? null);
-      if (s?.user) fetchTier(s.access_token);
-      else setTier('free');
+      if (s?.user) {
+        if (ADMIN_EMAILS.includes(s.user.email?.toLowerCase())) setTier('pro');
+        else fetchTier(s.access_token);
+      } else setTier('free');
     });
 
     return () => subscription.unsubscribe();

@@ -1,6 +1,4 @@
-Fix paragliding activity dot using FPS station data instead of generic wind
+Add admin email override for full pro access
 
-The paragliding indicator in the activity bar was showing orange/marginal
-because it was reading the selected lake's wind speed (e.g. 3 mph at a
-fishing lake) instead of the FPS on-site sensor. Now the paragliding dot
-always evaluates against FPS data regardless of which lake tab is selected.
+climbingpro@gmail.com gets automatic pro tier on login,
+bypassing subscription/API check.
