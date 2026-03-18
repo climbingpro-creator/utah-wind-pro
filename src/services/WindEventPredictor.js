@@ -34,10 +34,35 @@
 import { LAKE_CONFIGS } from '../config/lakeStations';
 
 let learnedPatterns = null;
+let cachedUpstreamSignals = null;
+let upstreamFetchedAt = 0;
 
 export function setWindEventLearnedPatterns(patterns) {
   learnedPatterns = patterns;
 }
+
+/**
+ * Fetch upstream detection signals from the server.
+ * Cached for 5 minutes to avoid excessive API calls.
+ */
+async function getUpstreamSignals() {
+  const now = Date.now();
+  if (cachedUpstreamSignals && now - upstreamFetchedAt < 5 * 60000) {
+    return cachedUpstreamSignals;
+  }
+  try {
+    const resp = await fetch('/api/cron/collect?action=upstream');
+    if (!resp.ok) return [];
+    const data = await resp.json();
+    cachedUpstreamSignals = data.signals || [];
+    upstreamFetchedAt = now;
+    return cachedUpstreamSignals;
+  } catch {
+    return cachedUpstreamSignals || [];
+  }
+}
+
+export { getUpstreamSignals };
 
 const WIND_EVENT_TYPES = {
   FRONTAL_PASSAGE: {
@@ -117,7 +142,7 @@ const WIND_EVENT_TYPES = {
  * @param {object} nwsForecast - NWS 7-day forecast periods (optional)
  * @returns {Array} Predicted wind events sorted by confidence
  */
-export function predictWindEvents(lakeId, currentConditions, pressureData, stationHistory = [], nwsForecast = null) {
+export function predictWindEvents(lakeId, currentConditions, pressureData, stationHistory = [], nwsForecast = null, upstreamSignals = null) {
   const config = LAKE_CONFIGS[lakeId];
   if (!config) return [];
 
@@ -138,15 +163,35 @@ export function predictWindEvents(lakeId, currentConditions, pressureData, stati
 
   // ─── FRONTAL PASSAGE DETECTION ──────────────────────────────
   const frontalScore = scoreFrontalPassage(wind, pressure, stationHistory, hour);
+
+  // Boost with upstream detection network
+  const coldFrontUpstream = (upstreamSignals || []).filter(s => s.type === 'cold_front');
+  if (coldFrontUpstream.length > 0) {
+    const best = coldFrontUpstream[0];
+    frontalScore.probability += Math.min(35, best.strength * 0.4);
+    if (coldFrontUpstream.length >= 2) frontalScore.probability += 10;
+    frontalScore.confidence = Math.min(1, frontalScore.confidence + 0.2);
+    frontalScore.details.push(`UPSTREAM: ${best.name} — ${best.details?.[0] || 'front detected'}`);
+    if (best.consensusEta || best.etaHours) {
+      frontalScore.timing = `ETA ~${(best.consensusEta || best.etaHours).toFixed(1)} hours (${best.name})`;
+    }
+    frontalScore.upstreamDetection = {
+      stations: coldFrontUpstream.map(s => s.name),
+      eta: best.consensusEta || best.etaHours,
+      strength: best.strength,
+    };
+  }
+
   if (frontalScore.probability > 25) {
     events.push({
       ...WIND_EVENT_TYPES.FRONTAL_PASSAGE,
-      probability: frontalScore.probability,
+      probability: Math.min(100, frontalScore.probability),
       confidence: frontalScore.confidence,
       timing: frontalScore.timing,
       details: frontalScore.details,
       expectedSpeed: { min: 15, max: 35 },
       expectedDirection: { min: 300, max: 30 },
+      upstreamDetection: frontalScore.upstreamDetection || null,
     });
   }
 
@@ -200,6 +245,22 @@ export function predictWindEvents(lakeId, currentConditions, pressureData, stati
 
   // ─── PRE-FRONTAL RAMP ──────────────────────────────────────
   const preFrontalScore = scorePreFrontal(wind, pressure, stationHistory, hour, nwsForecast);
+
+  // Boost with upstream SW/W flow detection
+  const preFrontalUpstream = (upstreamSignals || []).filter(s => s.type === 'pre_frontal_flow');
+  if (preFrontalUpstream.length > 0) {
+    const best = preFrontalUpstream[0];
+    preFrontalScore.probability += Math.min(30, best.strength * 0.35);
+    if (preFrontalUpstream.length >= 2) preFrontalScore.probability += 10;
+    preFrontalScore.confidence = Math.min(1, preFrontalScore.confidence + 0.15);
+    preFrontalScore.details.push(`UPSTREAM: ${best.name} — ${best.details?.[0] || 'SW flow detected'}`);
+  }
+  // If a cold front is detected upstream with ETA > 2hr, pre-frontal ramp is likely
+  if (coldFrontUpstream.length > 0 && (coldFrontUpstream[0].consensusEta || coldFrontUpstream[0].etaHours) > 2) {
+    preFrontalScore.probability += 15;
+    preFrontalScore.details.push(`Cold front ETA ~${(coldFrontUpstream[0].consensusEta || coldFrontUpstream[0].etaHours).toFixed(1)}hr — expect ramp-up`);
+  }
+
   if (preFrontalScore.probability > 20) {
     events.push({
       ...WIND_EVENT_TYPES.PRE_FRONTAL,

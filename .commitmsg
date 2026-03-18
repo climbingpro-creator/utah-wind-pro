@@ -1,6 +1,22 @@
-Add historical backfill endpoint for model bootstrapping
+Add upstream front detection network for hours-ahead prediction
 
-New ?action=backfill&days=3 endpoint replays N days of Synoptic
-timeseries data through the predict->verify->learn loop to bootstrap
-model weights from historical patterns. Increases function timeout
-to 60s for the heavy processing.
+Monitors 7 upstream stations across 3 corridors to detect approaching
+weather systems before they reach activity locations:
+
+North corridor (cold front early warning):
+  - KPIH Pocatello, ID (230mi, 3-6hr lead)
+  - KTWF Twin Falls, ID (280mi, 4-7hr lead)
+  - KOGD Ogden, UT (60mi, 1-2hr lead)
+
+West corridor (system approach):
+  - KELY Ely, NV (250mi, 4-8hr lead)
+  - KENV Wendover, UT (120mi, 2-4hr lead)
+
+Southwest corridor (pre-frontal warm flow):
+  - KDTA Delta, UT (100mi, 2-3hr lead)
+  - KMLF Milford, UT (150mi, 3-4hr lead)
+
+Detection scores cold fronts, pre-frontal SW flow, and approaching
+systems. Multi-station triangulation refines ETA. Signals boost
+frontal and pre-frontal probability in both server and client
+predictors. New ?action=upstream endpoint for client display.

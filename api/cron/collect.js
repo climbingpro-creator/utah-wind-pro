@@ -38,6 +38,7 @@ function getEnv() {
 }
 
 // Every unique MesoWest/Synoptic station ID used across all 35 lakes
+// PLUS upstream detection stations for frontal early warning
 const ALL_STATIONS = [
   // Wasatch Front
   'KSLC', 'KPVU', 'QSF', 'FPS', 'UTALP', 'UTOLY', 'UID28', 'CSC',
@@ -53,6 +54,17 @@ const ALL_STATIONS = [
   'KSGU',
   // Lake Powell / Page AZ
   'KPGA',
+  // ── UPSTREAM DETECTION NETWORK ──
+  // North corridor (cold front early warning)
+  'KOGD',   // Ogden, UT — 60mi N, 1-2hr warning
+  'KPIH',   // Pocatello, ID — 230mi N, 3-6hr warning
+  'KTWF',   // Twin Falls, ID — 280mi NW, 4-7hr warning
+  // West corridor (system approach from W/SW)
+  'KENV',   // Wendover, UT — 120mi W, 2-4hr warning
+  'KELY',   // Ely, NV — 250mi W, 4-8hr warning
+  // Southwest corridor (pre-frontal warm flow)
+  'KDTA',   // Delta, UT — 100mi SW, 2-3hr warning
+  'KMLF',   // Milford, UT — 150mi SW, 3-4hr warning
 ];
 
 // Complete lake-to-station mapping for all 35 lakes
@@ -156,6 +168,7 @@ export default async function handler(req, res) {
   if (action === 'sync') return await handleSync(res);
   if (action === 'weights') return await handleWeights(res);
   if (action === 'backfill') return await handleBackfill(req, res);
+  if (action === 'upstream') return await handleUpstream(res);
 
   const env = getEnv();
   if (!env.synopticToken) {
@@ -217,6 +230,22 @@ export default async function handler(req, res) {
     });
   } catch (error) {
     console.error('Cron collect error:', error);
+    return res.status(500).json({ error: error.message });
+  }
+}
+
+async function handleUpstream(res) {
+  const { upstashUrl, upstashToken } = getEnv();
+  if (!upstashUrl || !upstashToken) {
+    return res.status(200).json({ signals: [], message: 'Redis not configured' });
+  }
+  try {
+    const raw = await redisCommand('GET', 'upstream:latest');
+    if (!raw) return res.status(200).json({ signals: [], message: 'No upstream data yet' });
+    const data = JSON.parse(raw);
+    res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
+    return res.status(200).json(data);
+  } catch (error) {
     return res.status(500).json({ error: error.message });
   }
 }

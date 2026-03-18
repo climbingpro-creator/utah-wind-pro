@@ -59,9 +59,279 @@ function getCardinal(deg) {
   return dirs[Math.round(deg / 22.5) % 16];
 }
 
+// ══════════════════════════════════════════════════════════════
+// UPSTREAM FRONT DETECTION NETWORK
+//
+// Monitors stations far north, west, and southwest of the activity
+// zone to detect approaching weather systems hours in advance.
+//
+// A cold front hitting Pocatello ID at 2 PM with 30mph NW wind
+// tells us it will arrive at Utah Lake ~5 hours later.
+// A warm SW flow hitting Delta/Wendover tells us pre-frontal
+// ramp-up is coming 2-4 hours before it reaches the Wasatch.
+// ══════════════════════════════════════════════════════════════
+
+const UPSTREAM_NETWORK = {
+  north: [
+    { id: 'KPIH', name: 'Pocatello, ID', distMi: 230, bearing: 0,   leadHoursTypical: [4, 7] },
+    { id: 'KTWF', name: 'Twin Falls, ID', distMi: 280, bearing: 335, leadHoursTypical: [5, 8] },
+    { id: 'KLGU', name: 'Logan, UT',      distMi: 130, bearing: 5,   leadHoursTypical: [2, 4] },
+    { id: 'KOGD', name: 'Ogden, UT',      distMi: 60,  bearing: 5,   leadHoursTypical: [1, 2] },
+  ],
+  west: [
+    { id: 'KELY', name: 'Ely, NV',        distMi: 250, bearing: 260, leadHoursTypical: [4, 8] },
+    { id: 'KENV', name: 'Wendover, UT',   distMi: 120, bearing: 280, leadHoursTypical: [2, 4] },
+  ],
+  south: [
+    { id: 'KMLF', name: 'Milford, UT',    distMi: 150, bearing: 200, leadHoursTypical: [3, 5] },
+    { id: 'KDTA', name: 'Delta, UT',      distMi: 100, bearing: 210, leadHoursTypical: [2, 3] },
+    { id: 'KCDC', name: 'Cedar City, UT', distMi: 250, bearing: 190, leadHoursTypical: [4, 6] },
+  ],
+};
+
+/**
+ * Detect frontal signatures at upstream stations.
+ * Returns an array of upstream signals with estimated arrival times.
+ *
+ * Each signal: { stationId, corridor, type, strength, etaHours, details }
+ */
+function detectUpstreamSignals(currentStations, recentSnapshots) {
+  const signals = [];
+
+  for (const [corridor, stations] of Object.entries(UPSTREAM_NETWORK)) {
+    for (const upDef of stations) {
+      const current = currentStations.find(s => s.stationId === upDef.id);
+      if (!current || current.windSpeed == null) continue;
+
+      const history = buildStationHistory(upDef.id, recentSnapshots);
+      if (history.length < 2) continue;
+
+      const oldest = history[0];
+      const signal = {
+        stationId: upDef.id,
+        name: upDef.name,
+        corridor,
+        distMi: upDef.distMi,
+        current: {
+          speed: current.windSpeed,
+          direction: current.windDirection,
+          gust: current.windGust,
+          temp: current.temperature,
+          pressure: current.pressure,
+        },
+      };
+
+      // ── COLD FRONT DETECTION (north corridor) ──
+      if (corridor === 'north') {
+        let strength = 0;
+        const details = [];
+
+        // Wind shifted to N/NW?
+        if (current.windDirection != null && isNortherly(current.windDirection)) {
+          strength += 25;
+          details.push(`${getCardinal(current.windDirection)} wind at ${current.windSpeed?.toFixed(0)}mph`);
+        }
+
+        // Strong wind?
+        if (current.windSpeed > 15) {
+          strength += 20;
+          details.push(`Strong: ${current.windSpeed.toFixed(0)}mph gusting ${current.windGust?.toFixed(0) || '?'}`);
+        } else if (current.windSpeed > 10) {
+          strength += 10;
+        }
+
+        // Temperature drop in recent history?
+        if (oldest.temperature != null && current.temperature != null) {
+          const tempDrop = oldest.temperature - current.temperature;
+          if (tempDrop > 10) {
+            strength += 30;
+            details.push(`${tempDrop.toFixed(0)}°F temp crash — cold air mass`);
+          } else if (tempDrop > 5) {
+            strength += 15;
+            details.push(`${tempDrop.toFixed(0)}°F cooling`);
+          }
+        }
+
+        // Pressure dropping?
+        if (oldest.pressure != null && current.pressure != null) {
+          const pDrop = oldest.pressure - current.pressure;
+          if (pDrop > 2) {
+            strength += 20;
+            details.push(`Pressure fell ${pDrop.toFixed(1)}mb`);
+          } else if (pDrop > 1) {
+            strength += 10;
+            details.push(`Pressure falling ${pDrop.toFixed(1)}mb`);
+          }
+        }
+
+        // Wind direction shift?
+        if (oldest.windDirection != null && current.windDirection != null) {
+          const shift = angleDiff(oldest.windDirection, current.windDirection);
+          if (shift > 90) {
+            strength += 15;
+            details.push(`${shift}° wind shift — frontal boundary`);
+          }
+        }
+
+        if (strength >= 25) {
+          // Estimate propagation speed from wind speed + typical front speed
+          const frontSpeed = Math.max(20, current.windSpeed * 0.8 + 10);
+          const etaHours = upDef.distMi / frontSpeed;
+
+          signals.push({
+            ...signal,
+            type: 'cold_front',
+            strength: Math.min(100, strength),
+            etaHours: Math.round(etaHours * 10) / 10,
+            etaRange: [
+              Math.round(upDef.leadHoursTypical[0] * 10) / 10,
+              Math.round(upDef.leadHoursTypical[1] * 10) / 10,
+            ],
+            frontSpeedMph: Math.round(frontSpeed),
+            details,
+          });
+        }
+      }
+
+      // ── PRE-FRONTAL WARM FLOW (south/west corridor) ──
+      if (corridor === 'south' || corridor === 'west') {
+        let strength = 0;
+        const details = [];
+
+        // S/SW/W wind increasing?
+        if (current.windDirection != null && current.windDirection >= 160 && current.windDirection <= 280) {
+          strength += 20;
+          details.push(`${getCardinal(current.windDirection)} flow at ${current.windSpeed?.toFixed(0)}mph`);
+        }
+
+        if (current.windSpeed > 12) {
+          strength += 15;
+          details.push(`Strengthening: ${current.windSpeed.toFixed(0)}mph`);
+        }
+
+        // Wind speed increasing in recent history?
+        if (oldest.windSpeed != null && current.windSpeed != null) {
+          const speedInc = current.windSpeed - oldest.windSpeed;
+          if (speedInc > 5) {
+            strength += 20;
+            details.push(`Wind ramping +${speedInc.toFixed(0)}mph`);
+          }
+        }
+
+        // Pressure falling? (system approaching)
+        if (oldest.pressure != null && current.pressure != null) {
+          const pDrop = oldest.pressure - current.pressure;
+          if (pDrop > 1) {
+            strength += 20;
+            details.push(`Pressure falling ${pDrop.toFixed(1)}mb`);
+          }
+        }
+
+        // Temperature rising? (warm advection ahead of front)
+        if (oldest.temperature != null && current.temperature != null) {
+          const tempRise = current.temperature - oldest.temperature;
+          if (tempRise > 5) {
+            strength += 10;
+            details.push(`Warming ${tempRise.toFixed(0)}°F — warm advection`);
+          }
+        }
+
+        if (strength >= 25) {
+          const flowSpeed = Math.max(15, current.windSpeed * 0.6 + 10);
+          const etaHours = upDef.distMi / flowSpeed;
+
+          signals.push({
+            ...signal,
+            type: 'pre_frontal_flow',
+            strength: Math.min(100, strength),
+            etaHours: Math.round(etaHours * 10) / 10,
+            etaRange: upDef.leadHoursTypical,
+            flowSpeedMph: Math.round(flowSpeed),
+            details,
+          });
+        }
+      }
+
+      // ── WEST SYSTEM APPROACH (west corridor specific) ──
+      if (corridor === 'west') {
+        let strength = 0;
+        const details = [];
+
+        // Pressure dropping significantly?
+        if (oldest.pressure != null && current.pressure != null) {
+          const pDrop = oldest.pressure - current.pressure;
+          if (pDrop > 3) {
+            strength += 35;
+            details.push(`Major pressure drop ${pDrop.toFixed(1)}mb — system approaching`);
+          } else if (pDrop > 1.5) {
+            strength += 20;
+            details.push(`Pressure falling ${pDrop.toFixed(1)}mb`);
+          }
+        }
+
+        // Wind increasing and gusty?
+        if (current.windSpeed > 15 && current.windGust > 20) {
+          strength += 20;
+          details.push(`Strong gusty wind: ${current.windSpeed.toFixed(0)}G${current.windGust.toFixed(0)}`);
+        }
+
+        // Any direction shift?
+        if (oldest.windDirection != null && current.windDirection != null) {
+          const shift = angleDiff(oldest.windDirection, current.windDirection);
+          if (shift > 60) {
+            strength += 15;
+            details.push(`${shift}° direction shift`);
+          }
+        }
+
+        if (strength >= 25) {
+          const systemSpeed = Math.max(25, current.windSpeed * 0.5 + 15);
+          const etaHours = upDef.distMi / systemSpeed;
+
+          signals.push({
+            ...signal,
+            type: 'approaching_system',
+            strength: Math.min(100, strength),
+            etaHours: Math.round(etaHours * 10) / 10,
+            etaRange: upDef.leadHoursTypical,
+            systemSpeedMph: Math.round(systemSpeed),
+            details,
+          });
+        }
+      }
+    }
+  }
+
+  // Calculate consensus ETA if multiple stations agree
+  const coldFrontSignals = signals.filter(s => s.type === 'cold_front');
+  if (coldFrontSignals.length >= 2) {
+    // Triangulate: use distance between triggered stations to refine speed
+    const sorted = coldFrontSignals.sort((a, b) => b.distMi - a.distMi);
+    const farthest = sorted[0];
+    const nearest = sorted[sorted.length - 1];
+
+    if (farthest.distMi > nearest.distMi + 30) {
+      const distBetween = farthest.distMi - nearest.distMi;
+      // Both detecting = front is between them or past nearest
+      // If nearest has stronger signal, front is closer
+      const etaConsensus = nearest.strength > farthest.strength
+        ? nearest.etaHours * 0.7
+        : (nearest.etaHours + farthest.etaHours) / 2;
+
+      for (const s of coldFrontSignals) {
+        s.consensusEta = Math.round(etaConsensus * 10) / 10;
+        s.multiStationConfirm = true;
+        s.details.push(`${coldFrontSignals.length} stations confirm — refined ETA`);
+      }
+    }
+  }
+
+  return signals.sort((a, b) => b.strength - a.strength);
+}
+
 // ── Wind Event Scoring (mirrors client WindEventPredictor.js) ──
 
-function scoreFrontal(station, pressure, history) {
+function scoreFrontal(station, pressure, history, upstreamSignals) {
   let score = 0;
   const pTrend = pressure.trend;
   if (pTrend === 'falling') score += 25;
@@ -86,7 +356,26 @@ function scoreFrontal(station, pressure, history) {
   if (station.windDirection != null && isNortherly(station.windDirection) && station.windSpeed > 15) {
     score += 20;
   }
-  return Math.min(95, score);
+
+  // UPSTREAM BOOST: if north stations detect an approaching cold front,
+  // this is the strongest early signal we have
+  const coldFrontSignals = (upstreamSignals || []).filter(s => s.type === 'cold_front');
+  if (coldFrontSignals.length > 0) {
+    const strongest = coldFrontSignals[0];
+    const upstreamBoost = Math.min(35, strongest.strength * 0.4);
+    score += upstreamBoost;
+
+    if (coldFrontSignals.length >= 2) score += 10;
+    if (strongest.multiStationConfirm) score += 5;
+  }
+
+  // West system approaching = front will follow
+  const westSignals = (upstreamSignals || []).filter(s => s.type === 'approaching_system');
+  if (westSignals.length > 0) {
+    score += Math.min(15, westSignals[0].strength * 0.2);
+  }
+
+  return { score: Math.min(100, score), upstreamSignals: coldFrontSignals };
 }
 
 function scoreNorthFlow(station, pressure) {
@@ -144,7 +433,7 @@ function scoreThermal(station, pressure, hour, lakeId) {
   return Math.max(0, Math.min(95, score));
 }
 
-function scorePreFrontal(station, pressure, history) {
+function scorePreFrontal(station, pressure, history, upstreamSignals) {
   let score = 0;
   if (pressure.trend === 'falling') score += 20;
   if (station.windDirection != null && station.windDirection >= 180 && station.windDirection <= 250) {
@@ -158,7 +447,22 @@ function scorePreFrontal(station, pressure, history) {
       score += 15;
     }
   }
-  return Math.min(90, score);
+
+  // UPSTREAM BOOST: SW/W flow detected at Delta, Wendover, Milford
+  const preFrontalFlow = (upstreamSignals || []).filter(s => s.type === 'pre_frontal_flow');
+  if (preFrontalFlow.length > 0) {
+    const strongest = preFrontalFlow[0];
+    score += Math.min(30, strongest.strength * 0.35);
+    if (preFrontalFlow.length >= 2) score += 10;
+  }
+
+  // If a cold front is detected upstream, pre-frontal ramp is likely
+  const coldFronts = (upstreamSignals || []).filter(s => s.type === 'cold_front');
+  if (coldFronts.length > 0 && coldFronts[0].etaHours > 2) {
+    score += 15;
+  }
+
+  return { score: Math.min(100, score), upstreamSignals: preFrontalFlow };
 }
 
 function scoreGlass(station, pressure, hour) {
@@ -188,20 +492,23 @@ function scorePostFrontal(station, pressure, history) {
 
 // ── Main Prediction Function ──
 
-function predictForLake(lakeId, primaryStation, pressure, history, hour, learnedWeights) {
+function predictForLake(lakeId, primaryStation, pressure, history, hour, learnedWeights, upstreamSignals) {
   const events = [];
   const types = [
-    { id: 'frontal_passage', fn: () => scoreFrontal(primaryStation, pressure, history), expSpeed: [15, 35], expDir: [300, 30] },
+    { id: 'frontal_passage', fn: () => scoreFrontal(primaryStation, pressure, history, upstreamSignals), expSpeed: [15, 35], expDir: [300, 30] },
     { id: 'north_flow',      fn: () => scoreNorthFlow(primaryStation, pressure), expSpeed: [10, 25], expDir: [315, 45] },
     { id: 'clearing_wind',   fn: () => scoreClearing(primaryStation, pressure, history, hour), expSpeed: [5, 15], expDir: [160, 230] },
     { id: 'thermal_cycle',   fn: () => scoreThermal(primaryStation, pressure, hour, lakeId), expSpeed: [6, 18], expDir: LAKE_THERMAL[lakeId]?.dir || [135, 165] },
-    { id: 'pre_frontal',     fn: () => scorePreFrontal(primaryStation, pressure, history), expSpeed: [10, 20], expDir: [180, 250] },
+    { id: 'pre_frontal',     fn: () => scorePreFrontal(primaryStation, pressure, history, upstreamSignals), expSpeed: [10, 20], expDir: [180, 250] },
     { id: 'glass',           fn: () => scoreGlass(primaryStation, pressure, hour), expSpeed: [0, 5], expDir: null },
     { id: 'post_frontal',    fn: () => scorePostFrontal(primaryStation, pressure, history), expSpeed: [8, 15], expDir: [290, 340] },
   ];
 
   for (const t of types) {
-    let prob = t.fn();
+    let result = t.fn();
+    // Handle both old number return and new {score, upstreamSignals} return
+    let prob = typeof result === 'number' ? result : result.score;
+    const eventUpstream = typeof result === 'object' ? result.upstreamSignals : null;
 
     // Apply learned weight adjustments
     if (learnedWeights?.eventWeights?.[t.id]) {
@@ -213,7 +520,7 @@ function predictForLake(lakeId, primaryStation, pressure, history, hour, learned
     }
 
     if (prob > 20) {
-      events.push({
+      const evt = {
         eventType: t.id,
         probability: prob,
         expectedSpeed: t.expSpeed,
@@ -222,7 +529,23 @@ function predictForLake(lakeId, primaryStation, pressure, history, hour, learned
         windSpeed: primaryStation.windSpeed,
         windDirection: primaryStation.windDirection,
         temperature: primaryStation.temperature,
-      });
+      };
+
+      // Attach upstream intelligence to frontal/pre-frontal predictions
+      if (eventUpstream && eventUpstream.length > 0) {
+        const best = eventUpstream[0];
+        evt.upstreamDetection = {
+          stationId: best.stationId,
+          stationName: best.name,
+          corridor: best.corridor,
+          strength: best.strength,
+          etaHours: best.consensusEta || best.etaHours,
+          details: best.details,
+          confirmedBy: eventUpstream.length,
+        };
+      }
+
+      events.push(evt);
     }
   }
   return events;
@@ -455,7 +778,20 @@ async function runServerLearningCycle(redisCmd, currentStations, recentSnapshots
   // 1. Load current weights
   const weights = await loadWeights(redisCmd) || { eventWeights: {}, lakeWeights: {}, meta: {} };
 
-  // 2. Make predictions for every lake
+  // 1.5 Detect upstream signals for frontal early warning
+  const upstreamSignals = detectUpstreamSignals(currentStations, recentSnapshots);
+
+  // Store upstream signals in Redis for client display
+  if (upstreamSignals.length > 0) {
+    try {
+      await redisCmd('SET', 'upstream:latest', JSON.stringify({
+        timestamp: now.toISOString(),
+        signals: upstreamSignals,
+      }), 'EX', '3600');
+    } catch {}
+  }
+
+  // 2. Make predictions for every lake (with upstream intelligence)
   const allPredictions = [];
   for (const [lakeId, stationIds] of Object.entries(lakeStationMap)) {
     const lakeStations = currentStations.filter(s => stationIds.includes(s.stationId));
@@ -465,7 +801,7 @@ async function runServerLearningCycle(redisCmd, currentStations, recentSnapshots
     const primary = lakeStations.find(s => s.stationId === primaryId) || lakeStations[0];
     const history = buildStationHistory(primary.stationId, recentSnapshots);
 
-    const events = predictForLake(lakeId, primary, pressure, history, hour, weights);
+    const events = predictForLake(lakeId, primary, pressure, history, hour, weights, upstreamSignals);
     for (const evt of events) {
       allPredictions.push({ ...evt, lakeId });
     }
@@ -510,6 +846,7 @@ async function runServerLearningCycle(redisCmd, currentStations, recentSnapshots
     predictionsMade: allPredictions.length,
     verificationsRun: accuracyRecords.length,
     weightsUpdated: accuracyRecords.length > 0,
+    upstreamSignals: upstreamSignals.length > 0 ? upstreamSignals.slice(0, 5) : null,
     meta,
     pressure,
   };
