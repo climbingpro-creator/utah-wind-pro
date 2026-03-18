@@ -1,12 +1,14 @@
-Fix PotM South timing — thermal starts 7 AM not 10 AM
+Redesign activity presentation — each mode shows only relevant spots
 
-The trained weights had bestHours [10,11,12] causing "Be There by
-10 AM" — but PotM South thermal regularly starts by 7-7:30 AM.
+Problem: SpotRanker showed paragliding sites to kiters, fishing lakes
+to paragliders, etc. TodayHero was a vague "Active Now" button list.
 
-- bestHours updated to [7,8,9,10,11]
-- Direction range in trained weights: 160-200 -> 110-250
-- Speed range: 6-18 -> 5-20
-- Headline now says "Flying NOW — Get Airborne!" when conditions
-  are active (hour >= 7), not "Be There by 10 AM"
-- Before 7 AM: "Thermal by 7 AM"
-- Prediction window extended to currentHour <= 14 (was 12)
+Fixes:
+- SpotRanker: hard filter by activity — kiting only sees kite spots,
+  paragliding only sees PG sites, fishing only sees lakes
+- LakeSelector: kiting/windsurfing no longer see 35 fishing lakes
+- TodayHero: completely rebuilt as Activity Recommender grid showing
+  every activity with GO/WAIT/OFF status, the WHY (conditions),
+  and window timing — tap any card to jump into that activity
+- Dashboard: PotM direction ranges updated to match widened 110-250
+- Footer trial text: removed hardcoded "7 Days"

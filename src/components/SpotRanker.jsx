@@ -5,7 +5,29 @@ import { ACTIVITY_CONFIGS } from './ActivityMode';
 import { LAKE_CONFIGS } from '../config/lakeStations';
 import { STATION_NODES, PROPAGATION_EDGES, LOCATION_STATIONS } from '../services/WindFieldEngine';
 
-// Build SPOTS dynamically from the authoritative lakeStations config + WindFieldEngine topology
+const KITE_SPOT_IDS = new Set([
+  'utah-lake-lincoln', 'utah-lake-sandy', 'utah-lake-vineyard',
+  'utah-lake-zigzag', 'utah-lake-mm19',
+  'rush-lake', 'grantsville', 'deer-creek', 'willard-bay',
+]);
+
+const PARAGLIDING_IDS = new Set([
+  'potm-south', 'potm-north', 'inspo', 'west-mountain', 'stockton-bar',
+]);
+
+const SNOWKITE_IDS = new Set([
+  'strawberry-ladders', 'strawberry-bay', 'strawberry-soldier',
+  'strawberry-view', 'strawberry-river', 'skyline-drive',
+  'powder-mountain', 'monte-cristo',
+]);
+
+function deriveActivities(id, cfg) {
+  if (PARAGLIDING_IDS.has(id)) return ['paragliding'];
+  if (SNOWKITE_IDS.has(id) || cfg.snowkite) return ['snowkiting'];
+  if (KITE_SPOT_IDS.has(id)) return ['kiting', 'sailing', 'windsurfing', 'boating', 'paddling', 'fishing'];
+  return ['fishing', 'boating', 'paddling'];
+}
+
 const SPOTS = [
   ...Object.entries(LAKE_CONFIGS)
     .filter(([id]) => id !== 'utah-lake') // skip the overview entry
@@ -46,11 +68,7 @@ const SPOTS = [
         northDir: cfg.thermal?.northFlow
           ? [cfg.thermal.northFlow.min, cfg.thermal.northFlow.max] : null,
         kiting: cfg.kiting || null,
-        bestFor: cfg.snowkite
-          ? ['snowkiting', 'windsurfing']
-          : id.startsWith('utah-lake')
-            ? ['kiting', 'sailing', 'windsurfing', 'boating', 'fishing']
-            : ['kiting', 'sailing', 'boating', 'fishing'],
+        bestFor: deriveActivities(id, cfg),
         description: cfg.description || '',
         upstream: loc ? [...(loc.upstreamNorth || []), ...(loc.upstreamThermal || [])] : [],
       };
@@ -155,10 +173,6 @@ function scoreSpot(spot, activity, currentWind, lakeState, mesoData) {
   let reason = '';
 
   const isBestFor = spot.bestFor.includes(activity);
-  if (!isBestFor) {
-    score -= 30;
-    reason = 'Not ideal for this activity';
-  }
 
   const inThermal = isDirectionInRange(dir, spot.thermalDir);
   const inNorth = isDirectionInRange(dir, spot.northDir);
@@ -327,6 +341,7 @@ function SpotRanker({ activity, currentWind, lakeState, mesoData, onSelectSpot }
 
   const ranked = useMemo(() => {
     return SPOTS
+      .filter(spot => spot.bestFor.includes(activity))
       .map(spot => {
         const { score, reason, wind, shoreZone } = scoreSpot(spot, activity, currentWind, lakeState, stableData);
         return { ...spot, score, reason, wind, shoreZone };

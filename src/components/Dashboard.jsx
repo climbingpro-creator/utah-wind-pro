@@ -135,28 +135,26 @@ export function Dashboard() {
     const utalpDir = utalpStation?.direction || utalpStation?.windDirection;
     const utalpGust = utalpStation?.gust || utalpStation?.windGust;
     
-    // Check Flight Park South (SSE to SSW: 160-200°)
-    const fpsDirectionOk = fpsDir >= 160 && fpsDir <= 200;
-    const fpsSpeedOk = fpsSpeed >= 5 && fpsSpeed <= 18;
-    const fpsGustOk = !fpsGust || (fpsGust - fpsSpeed) <= 5;
-    
-    // Check Flight Park North (N to NW: 315-360 or 0-45)
+    const fpsDirectionOk = fpsDir >= 110 && fpsDir <= 250;
+    const fpsSpeedOk = fpsSpeed >= 5 && fpsSpeed <= 20;
+    const fpsGustOk = !fpsGust || (fpsGust / Math.max(fpsSpeed, 1)) <= 1.4;
+
     const utalpDirectionOk = utalpDir >= 315 || utalpDir <= 45;
     const utalpSpeedOk = utalpSpeed >= 5 && utalpSpeed <= 18;
     const utalpGustOk = !utalpGust || (utalpGust - utalpSpeed) <= 5;
-    
-    // Calculate scores
+
     let fpsScore = 0;
     if (fpsDirectionOk) fpsScore += 50;
+    if (fpsDir >= 135 && fpsDir <= 210) fpsScore += 10;
     if (fpsSpeedOk) fpsScore += 30;
     if (fpsGustOk) fpsScore += 20;
-    if (fpsSpeed >= 10 && fpsSpeed <= 16) fpsScore += 10; // Ideal range bonus
-    
+    if (fpsSpeed >= 8 && fpsSpeed <= 16) fpsScore += 10;
+
     let utalpScore = 0;
     if (utalpDirectionOk) utalpScore += 50;
     if (utalpSpeedOk) utalpScore += 30;
     if (utalpGustOk) utalpScore += 20;
-    if (utalpSpeed >= 12 && utalpSpeed <= 16) utalpScore += 10; // Ideal range bonus
+    if (utalpSpeed >= 12 && utalpSpeed <= 16) utalpScore += 10;
     
     // Use the better site
     const bestScore = Math.max(fpsScore, utalpScore);
@@ -1252,7 +1250,7 @@ export function Dashboard() {
               onClick={openPaywall}
               className={`mb-4 w-full max-w-sm mx-auto flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-bold transition-all hover:scale-[1.02] active:scale-[0.98] bg-gradient-to-r from-sky-500 to-cyan-500 text-white shadow-lg shadow-sky-500/20`}
             >
-              Unlock All Features — Try Pro Free for 7 Days
+              Unlock All Features — Try Pro Free
             </button>
           )}
           <p className="text-sm font-semibold text-[var(--text-tertiary)]">UtahWindFinder</p>

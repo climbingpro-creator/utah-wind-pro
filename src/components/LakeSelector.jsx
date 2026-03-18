@@ -263,8 +263,8 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
 
   return (
     <div className="space-y-3">
-      {/* Utah Lake Section */}
-      {activity !== 'snowkiting' && (
+      {/* Utah Lake Section — visible for kiting, sailing, windsurfing, boating, paddling, fishing */}
+      {!['snowkiting', 'paragliding'].includes(activity) && (
         <div className={`card !p-0 overflow-hidden ${
           anyUtahHot && !isUtahLakeSelected
             ? (isDark ? '!border-emerald-500/30' : '!border-emerald-300')
@@ -635,8 +635,8 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
         </div>
       )}
 
-      {/* All Utah Lakes — organized by region (fishing, boating, paddling only) */}
-      {!['snowkiting', 'paragliding'].includes(activity) && (
+      {/* All Utah Lakes — organized by region (fishing, boating, paddling, sailing) */}
+      {['fishing', 'boating', 'paddling', 'sailing'].includes(activity) && (
       <div className="space-y-2">
         {LAKE_REGIONS.map((region) => {
           const hasSelectedLake = region.lakes.some(l => l.id === selectedLake);
