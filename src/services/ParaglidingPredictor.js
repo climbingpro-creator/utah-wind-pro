@@ -185,7 +185,7 @@ export function predictSouth(windData, conditions = {}) {
       : currentGF <= gustThresholds.excellent ? 'smooth'
       : currentGF <= gustThresholds.acceptable ? 'acceptable'
       : 'gusty',
-    bestHours: profile.bestHours || [8, 9, 10],
+    bestHours: profile.bestHours || [7, 8, 9, 10, 11],
     isUsingLearnedWeights: !!learnedWeights || !!pgWeightsData?.weights,
     weightsVersion: w.version || 'default',
     seasonalAdj: +seasonalAdj.toFixed(2),

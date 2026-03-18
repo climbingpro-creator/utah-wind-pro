@@ -1,18 +1,12 @@
-Fix PotM South paragliding predictor — widen soarable direction window
+Fix PotM South timing — thermal starts 7 AM not 10 AM
 
-The direction window was 140-220 deg (80 deg range) which was too
-narrow. PotM South ridge faces SSW and is soarable in any wind with
-a southerly component: 110-250 deg (140 deg range).
+The trained weights had bestHours [10,11,12] causing "Be There by
+10 AM" — but PotM South thermal regularly starts by 7-7:30 AM.
 
-Key fixes:
-- FPS ground truth is now the PRIMARY signal (was secondary to KPVU)
-- KPVU demoted to secondary — it's 10mi south and often lags/misses
-  the PotM thermal. Calm KPVU no longer kills the prediction.
-- UTOLY confirmation window widened to 90-270 deg
-- directionOK: 140-220 -> 110-250 (soarable range)
-- directionIdeal: 135-210 (sweet spot for epic/excellent status)
-- Speed range: 6-18 -> 5-20 mph (paragliders fly in wider range)
-- Gust factor threshold: 1.35 -> 1.40 (PG pilots tolerate moderate)
-- Peak hours widened: 8-14 -> 7-15
-- Graduated scoring: ideal direction > good > marginal
-- Config optimalDirection updated to match: 110-250 deg
+- bestHours updated to [7,8,9,10,11]
+- Direction range in trained weights: 160-200 -> 110-250
+- Speed range: 6-18 -> 5-20
+- Headline now says "Flying NOW — Get Airborne!" when conditions
+  are active (hour >= 7), not "Be There by 10 AM"
+- Before 7 AM: "Thermal by 7 AM"
+- Prediction window extended to currentHour <= 14 (was 12)

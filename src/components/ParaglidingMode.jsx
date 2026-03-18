@@ -748,17 +748,19 @@ const ParaglidingMode = ({ windData, isLoading }) => {
       };
     }
 
-    // South predicted for morning
-    if (southPred && southPred.probability >= 30 && currentHour <= 12) {
-      const bestHours = southPred.bestHours || [8, 9, 10];
-      const arriveBy = bestHours[0] > 12 ? `${bestHours[0] - 12} PM` : `${bestHours[0]} AM`;
+    // South predicted for morning — thermal often starts by 7-7:30 AM
+    if (southPred && southPred.probability >= 30 && currentHour <= 14) {
+      const arriveBy = currentHour < 7 ? '7 AM' : 'now';
+      const isNow = currentHour >= 7;
       return {
         mode: 'predicted', site: 'south', siteName: 'Flight Park South',
         score: southPred.probability, status: southPred.probability >= 55 ? 'likely' : 'possible',
-        headline: southPred.probability >= 55 ? `South Side This Morning — Be There by ${arriveBy}` : `South Side Possible — Check by ${arriveBy}`,
+        headline: isNow
+          ? (southPred.probability >= 55 ? 'South Side Flying NOW — Get Airborne!' : 'South Side Possible — Check FPS Wind')
+          : (southPred.probability >= 55 ? `South Side This Morning — Thermal by ${arriveBy}` : `South Side Possible — Check by ${arriveBy}`),
         subline: learnedPrediction?.recommendation || `${southPred.probability}% chance of thermal soaring`,
         color: southPred.probability >= 55 ? 'green' : southPred.probability >= 35 ? 'yellow' : 'slate',
-        urgency: southPred.probability >= 55 ? 'plan' : 'watch',
+        urgency: isNow && southPred.probability >= 55 ? 'go' : southPred.probability >= 55 ? 'plan' : 'watch',
         arriveBy,
       };
     }
