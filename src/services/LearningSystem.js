@@ -1495,6 +1495,10 @@ class LearningSystem {
     return this.currentWeights || this.getDefaultWeights();
   }
 
+  async getCurrentWeights() {
+    return this.getLearnedWeights();
+  }
+
   /**
    * Get accuracy stats broken down by location.
    * This is how we track whether Deer Creek and Willard Bay

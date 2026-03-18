@@ -1,22 +1,33 @@
 /**
- * Vercel Cron Job — Server-Side Data Collection
+ * Vercel Cron Job — Server-Side Data Collection + Learning
  * 
  * Runs every 15 minutes (configured in vercel.json).
- * Fetches ALL station data from Synoptic and stores it in Upstash Redis.
- * This ensures learning data is collected 24/7 even when no user has the app open.
  * 
- * Covers ALL 35 Utah lakes, 19 unique weather stations across the state.
+ * FULL 24/7 LEARNING LOOP:
+ *   1. COLLECT — Fetch all station data from Synoptic → Redis
+ *   2. PREDICT — Run wind event predictions for every lake
+ *   3. VERIFY  — Compare predictions from 2-4 hrs ago against actuals
+ *   4. LEARN   — Update model weights based on accuracy
  * 
- * Storage: Upstash Redis (free tier — 10k commands/day is plenty for 96 daily collections)
+ * This ensures the model learns continuously, even when no user has the app open.
  * 
- * Data format in Redis:
- *   Key: "obs:{date}:{hour}:{minute}" 
- *   Value: JSON array of station readings
- *   TTL: 7 days (auto-cleanup)
+ * Covers ALL 35 Utah lakes, 22 unique weather stations across the state.
  * 
- * The client reads these on startup via GET /api/cron/collect?action=sync
- * to backfill its IndexedDB learning system.
+ * Storage: Upstash Redis (free tier — 10k commands/day)
+ * 
+ * Redis keys:
+ *   obs:{date}:{HH}:{mm}   — raw station observations (TTL 7d)
+ *   pred:{date}:{HH}:{mm}  — predictions made at this time (TTL 7d)
+ *   weights:server          — latest server-computed model weights
+ *   accuracy:log            — recent accuracy records (capped 500)
+ *   learning:meta           — cycle count, stats
+ * 
+ * Client endpoints:
+ *   GET ?action=sync     — returns last 24hr of raw observations
+ *   GET ?action=weights  — returns server-learned weights + accuracy stats
  */
+
+import { runServerLearningCycle, loadWeights, loadMeta } from '../lib/serverLearning.js';
 
 function getEnv() {
   return {
@@ -140,41 +151,59 @@ async function fetchSynopticLatest() {
 }
 
 export default async function handler(req, res) {
-  // Client sync endpoint: return last 24hr of server-collected data
-  if (req.query?.action === 'sync') {
-    return await handleSync(res);
-  }
+  const action = req.query?.action;
+
+  if (action === 'sync') return await handleSync(res);
+  if (action === 'weights') return await handleWeights(res);
 
   const env = getEnv();
-
-  // Cron collection: called by Vercel every 15 min
   if (!env.synopticToken) {
     return res.status(500).json({ error: 'SYNOPTIC_TOKEN not set' });
   }
 
   try {
+    // ── STEP 1: COLLECT ──
     const stations = await fetchSynopticLatest();
     const now = new Date();
     const key = `obs:${now.toISOString().split('T')[0]}:${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
-    // Build per-lake observations
     const observations = {};
     for (const [lakeId, stationIds] of Object.entries(LAKE_STATION_MAP)) {
       observations[lakeId] = stations.filter(s => stationIds.includes(s.stationId));
     }
 
-    const record = {
-      timestamp: now.toISOString(),
-      stations,
-      observations,
-    };
+    const record = { timestamp: now.toISOString(), stations, observations };
 
-    // Store in Redis with 7-day TTL (604800 seconds)
-    if (env.upstashUrl && env.upstashToken) {
+    const hasRedis = !!(env.upstashUrl && env.upstashToken);
+    if (hasRedis) {
       await redisCommand('SET', key, JSON.stringify(record), 'EX', '604800');
-      // Also maintain an index of recent keys
       await redisCommand('LPUSH', 'obs:index', key);
-      await redisCommand('LTRIM', 'obs:index', '0', '672'); // Keep ~7 days (96 per day * 7)
+      await redisCommand('LTRIM', 'obs:index', '0', '672');
+    }
+
+    // ── STEPS 2-4: PREDICT → VERIFY → LEARN ──
+    let learningResult = null;
+    if (hasRedis) {
+      try {
+        const recentKeys = await redisCommand('LRANGE', 'obs:index', '0', '15');
+        const recentSnapshots = [];
+        if (recentKeys?.length > 0) {
+          for (const rk of recentKeys.slice(1, 16)) {
+            const raw = await redisCommand('GET', rk);
+            if (raw) try { recentSnapshots.push(JSON.parse(raw)); } catch {}
+          }
+        }
+
+        learningResult = await runServerLearningCycle(
+          redisCommand,
+          stations,
+          recentSnapshots,
+          LAKE_STATION_MAP
+        );
+      } catch (learnErr) {
+        console.error('Learning cycle error (non-fatal):', learnErr.message);
+        learningResult = { error: learnErr.message };
+      }
     }
 
     return res.status(200).json({
@@ -182,10 +211,29 @@ export default async function handler(req, res) {
       timestamp: now.toISOString(),
       stationsCollected: stations.length,
       storedAs: key,
-      hasRedis: !!(env.upstashUrl && env.upstashToken),
+      hasRedis,
+      learning: learningResult,
     });
   } catch (error) {
     console.error('Cron collect error:', error);
+    return res.status(500).json({ error: error.message });
+  }
+}
+
+async function handleWeights(res) {
+  const { upstashUrl, upstashToken } = getEnv();
+  if (!upstashUrl || !upstashToken) {
+    return res.status(200).json({ weights: null, message: 'Redis not configured' });
+  }
+
+  try {
+    const weights = await loadWeights(redisCommand);
+    const meta = await loadMeta(redisCommand);
+
+    res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
+    return res.status(200).json({ weights, meta });
+  } catch (error) {
+    console.error('Weights fetch error:', error);
     return res.status(500).json({ error: error.message });
   }
 }

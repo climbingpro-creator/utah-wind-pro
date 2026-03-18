@@ -390,6 +390,50 @@ const LearningDashboard = () => {
         )}
       </div>
 
+      {/* Server-Side 24/7 Learning */}
+      {weights?.serverMeta && (
+        <div className="mt-4 p-4 bg-blue-900/20 border border-blue-500/30 rounded-lg">
+          <div className="flex items-center gap-2 mb-2">
+            <Activity className="w-4 h-4 text-blue-400" />
+            <span className="text-sm font-medium text-blue-300">24/7 Server Learning</span>
+            <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300">ALWAYS ON</span>
+          </div>
+          <div className="grid grid-cols-3 gap-2 text-xs">
+            <div>
+              <span className="text-gray-400">Server Predictions</span>
+              <div className="text-white font-bold">{weights.serverMeta.totalPredictions?.toLocaleString() || 0}</div>
+            </div>
+            <div>
+              <span className="text-gray-400">Server Accuracy</span>
+              <div className="text-white font-bold">
+                {weights.serverMeta.overallAccuracy ? `${(weights.serverMeta.overallAccuracy * 100).toFixed(1)}%` : '—'}
+              </div>
+            </div>
+            <div>
+              <span className="text-gray-400">Learning Cycles</span>
+              <div className="text-white font-bold">{weights.serverMeta.totalCycles || 0}</div>
+            </div>
+          </div>
+          {weights.serverMeta.eventAccuracy && (
+            <div className="mt-2 space-y-1">
+              {Object.entries(weights.serverMeta.eventAccuracy).filter(([,v]) => v).map(([key, val]) => (
+                <div key={key} className="flex items-center gap-2 text-[10px]">
+                  <span className="text-gray-400 w-24 truncate">{key.replace(/_/g, ' ')}</span>
+                  <div className="flex-1 h-1.5 bg-gray-600 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${val.accuracy > 0.6 ? 'bg-green-500' : val.accuracy > 0.4 ? 'bg-yellow-500' : 'bg-red-500'}`}
+                      style={{ width: `${Math.min(100, val.accuracy * 100)}%` }}
+                    />
+                  </div>
+                  <span className="text-gray-300 w-10 text-right">{(val.accuracy * 100).toFixed(0)}%</span>
+                  <span className="text-gray-500 w-8 text-right">n={val.count}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Learning Progress */}
       <div className="mt-4 p-4 bg-purple-900/20 border border-purple-500/30 rounded-lg">
         <div className="flex items-center gap-2 mb-2">
@@ -397,17 +441,19 @@ const LearningDashboard = () => {
           <span className="text-sm font-medium text-purple-300">Learning Pipeline</span>
         </div>
         <ul className="text-xs text-gray-400 space-y-1">
-          <li>• Collects data from <span className="text-white">25+ lakes</span> across all of Utah</li>
+          <li>• <span className="text-blue-300">Server runs 24/7</span> — predict, verify, learn every 15 min</li>
+          <li>• Collects data from <span className="text-white">35+ locations</span> across all of Utah</li>
           <li>• Records thermal, frontal, north flow, glass, and clearing wind predictions</li>
           <li>• Verifies predictions against actual station readings</li>
-          <li>• Discovers patterns: peak hours, sustained events, wind type dominance</li>
-          <li>• Adjusts model weights using confidence-scaled learning</li>
+          <li>• Server weights merge with local weights on app open</li>
           <li>• User session feedback refines location-specific speed bias</li>
         </ul>
         <div className="mt-3 text-xs text-purple-300">
-          {(stats?.totalPredictions || 0) < 5
-            ? `Need ${5 - (stats?.totalPredictions || 0)} more verified predictions before first learning cycle`
-            : 'Model is actively learning from your data!'}
+          {weights?.serverMeta
+            ? 'Server model is learning around the clock — weights sync on every app open'
+            : (stats?.totalPredictions || 0) < 5
+              ? `Need ${5 - (stats?.totalPredictions || 0)} more verified predictions before first learning cycle`
+              : 'Model is actively learning from your data!'}
         </div>
       </div>
     </div>

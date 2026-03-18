@@ -148,6 +148,7 @@ class DataCollector {
     if (!this.isRunning) return;
 
     try {
+      await this.syncServerWeights();
       await this.backfillFromHistory();
       await this.collectActuals();
       await this.recordAndVerify();
@@ -157,6 +158,83 @@ class DataCollector {
     } catch (e) {
       console.error('Startup cycle error (non-fatal):', e.message);
     }
+  }
+
+  /**
+   * Pull server-learned weights and merge with local weights.
+   * The server runs predict→verify→learn 24/7 via cron, so its weights
+   * reflect patterns discovered while the app was closed.
+   */
+  async syncServerWeights() {
+    try {
+      const resp = await fetch('/api/cron/collect?action=weights');
+      if (!resp.ok) return;
+      const { weights, meta } = await resp.json();
+      if (!weights) return;
+
+      // Merge server weights into the local learning system
+      const localWeights = await learningSystem.getCurrentWeights();
+      const merged = this._mergeWeights(localWeights, weights);
+
+      // Push merged weights to all predictors
+      if (merged) {
+        setLearnedWeights(merged);
+        setWindFieldLearnedWeights(merged);
+        if (merged.windEventPatterns || merged.eventWeights) {
+          setWindEventLearnedPatterns(merged.windEventPatterns || merged.eventWeights);
+        }
+      }
+
+      const totalServerPredictions = meta?.totalPredictions ?? 0;
+      const cycles = meta?.totalCycles ?? 0;
+      console.log(`Server weights synced — ${totalServerPredictions} predictions across ${cycles} cycles, accuracy: ${(weights.meta?.overallAccuracy * 100 || 0).toFixed(1)}%`);
+    } catch (e) {
+      console.log('Server weights unavailable (expected if not deployed):', e.message);
+    }
+  }
+
+  /**
+   * Merge server-learned weights with local (client-side) weights.
+   * Uses the source with more data for each event type.
+   */
+  _mergeWeights(local, server) {
+    if (!server && !local) return null;
+    if (!server) return local;
+    if (!local) return server;
+
+    const merged = { ...local };
+
+    // Merge event-level weights: prefer whichever has more data
+    if (server.eventWeights) {
+      if (!merged.windEventPatterns) merged.windEventPatterns = {};
+      for (const [eventType, serverData] of Object.entries(server.eventWeights)) {
+        const localCount = merged.windEventPatterns?.[eventType]?.count ?? 0;
+        const serverCount = serverData.count ?? 0;
+        if (serverCount > localCount) {
+          merged.windEventPatterns[eventType] = {
+            ...serverData,
+            bias: serverData.baseProbMod ? serverData.baseProbMod / 100 : 0,
+            confidenceBoost: serverCount > 50 ? 0.1 : 0,
+          };
+        }
+      }
+    }
+
+    // Merge per-lake weights
+    if (server.lakeWeights) {
+      if (!merged.lakeWeights) merged.lakeWeights = {};
+      for (const [lakeId, serverLake] of Object.entries(server.lakeWeights)) {
+        const localCount = merged.lakeWeights?.[lakeId]?.count ?? 0;
+        if ((serverLake.count ?? 0) > localCount) {
+          merged.lakeWeights[lakeId] = serverLake;
+        }
+      }
+    }
+
+    // Carry over server accuracy metadata
+    merged.serverMeta = server.meta;
+
+    return merged;
   }
 
   /**

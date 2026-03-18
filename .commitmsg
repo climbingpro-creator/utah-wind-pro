@@ -1,10 +1,14 @@
-Add verified activity spots, historical analysis, and activity-filtered location selector
+Add 24/7 server-side learning engine
 
-- Add verified kiting spots: Rush Lake, Grantsville Reservoir (Utah Windriders confirmed)
-- Add paragliding sites: PotM South/North, Inspiration Point, West Mountain, Stockton Bar (UHGPGA verified)
-- Add snowkite terrain: Powder Mountain, Monte Cristo (Utah Kite Addiction verified)
-- LakeSelector now filters by activity: kiting sees kite spots, paragliding sees launch sites, fishing/boating sees lakes
-- Historical spot analysis script pulls 365 days of Synoptic data for all verified spots
-- Zig Zag confirmed: 198 SE thermal days/year, 340 total kiteable days from FPS station data
-- Historical baseline data saved to src/config/historicalSpotData.json for prediction calibration
-- Server cron expanded to collect data for all new activity-specific locations
+The prediction→verify→learn loop now runs server-side every 15 min
+via the Vercel cron, independent of whether any client has the app open.
+
+- New api/lib/serverLearning.js: full wind event prediction engine
+  with scoring for all 7 event types, verification against actuals,
+  and weight updates stored in Redis
+- Cron collect.js now runs COLLECT → PREDICT → VERIFY → LEARN
+- New ?action=weights endpoint returns server-learned model weights
+- Client DataCollector syncs server weights on startup and merges
+  with local IndexedDB weights (prefers source with more data)
+- LearningDashboard shows server learning stats and per-event accuracy
+- Free trial extended to 30 days for testing

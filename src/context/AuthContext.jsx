@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { supabase } from '../lib/supabase';
 
 const TRIAL_KEY = 'uwf_trial_start';
-const TRIAL_DAYS = 7;
+const TRIAL_DAYS = 30;
 
 const AuthContext = createContext({
   user: null, session: null, tier: 'free', loading: true,
