@@ -27,7 +27,7 @@
  *   GET ?action=weights  — returns server-learned weights + accuracy stats
  */
 
-import { runServerLearningCycle, loadWeights, loadMeta } from '../lib/serverLearning.js';
+import { runServerLearningCycle, backfillHistorical, loadWeights, loadMeta } from '../lib/serverLearning.js';
 
 function getEnv() {
   return {
@@ -155,6 +155,7 @@ export default async function handler(req, res) {
 
   if (action === 'sync') return await handleSync(res);
   if (action === 'weights') return await handleWeights(res);
+  if (action === 'backfill') return await handleBackfill(req, res);
 
   const env = getEnv();
   if (!env.synopticToken) {
@@ -216,6 +217,28 @@ export default async function handler(req, res) {
     });
   } catch (error) {
     console.error('Cron collect error:', error);
+    return res.status(500).json({ error: error.message });
+  }
+}
+
+async function handleBackfill(req, res) {
+  const env = getEnv();
+  if (!env.synopticToken) return res.status(500).json({ error: 'SYNOPTIC_TOKEN not set' });
+  if (!env.upstashUrl || !env.upstashToken) return res.status(500).json({ error: 'Redis not configured' });
+
+  const days = Math.min(parseInt(req.query?.days || '3', 10), 7);
+
+  try {
+    const result = await backfillHistorical(
+      redisCommand,
+      env.synopticToken,
+      ALL_STATIONS,
+      LAKE_STATION_MAP,
+      days
+    );
+    return res.status(200).json({ ok: true, ...result });
+  } catch (error) {
+    console.error('Backfill error:', error);
     return res.status(500).json({ error: error.message });
   }
 }

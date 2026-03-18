@@ -515,8 +515,155 @@ async function runServerLearningCycle(redisCmd, currentStations, recentSnapshots
   };
 }
 
+// ══════════════════════════════════════════════════════════════
+// HISTORICAL BACKFILL — replays N days of data through the
+// predict→verify→learn loop to bootstrap model weights
+// ══════════════════════════════════════════════════════════════
+
+function binToInterval(readings, intervalMinutes = 15) {
+  const bins = {};
+  for (const r of readings) {
+    const t = new Date(r.time);
+    const minute = Math.floor(t.getMinutes() / intervalMinutes) * intervalMinutes;
+    const key = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}T${String(t.getHours()).padStart(2,'0')}:${String(minute).padStart(2,'0')}`;
+    if (!bins[key]) bins[key] = {};
+    if (!bins[key][r.stationId]) bins[key][r.stationId] = r;
+  }
+  return bins;
+}
+
+async function backfillHistorical(redisCmd, synopticToken, allStations, lakeStationMap, days = 3) {
+  const end = new Date();
+  const start = new Date(end.getTime() - days * 24 * 3600000);
+  const startStr = start.toISOString().replace(/[-:T]/g, '').slice(0, 12);
+  const endStr = end.toISOString().replace(/[-:T]/g, '').slice(0, 12);
+
+  const url = `https://api.synopticdata.com/v2/stations/timeseries?token=${synopticToken}&stids=${allStations.join(',')}&start=${startStr}&end=${endStr}&vars=wind_speed,wind_direction,wind_gust,air_temp,pressure&units=english&obtimezone=utc`;
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error(`Synoptic timeseries ${resp.status}`);
+  const json = await resp.json();
+
+  const allReadings = [];
+  for (const s of (json.STATION || [])) {
+    const obs = s.OBSERVATIONS || {};
+    const times = obs.date_time || [];
+    const speeds = obs.wind_speed_set_1 || [];
+    const dirs = obs.wind_direction_set_1 || [];
+    const gusts = obs.wind_gust_set_1 || [];
+    const temps = obs.air_temp_set_1 || [];
+    const pressures = obs.pressure_set_1d || obs.pressure_set_1 || [];
+
+    for (let i = 0; i < times.length; i++) {
+      allReadings.push({
+        stationId: s.STID,
+        time: times[i],
+        windSpeed: speeds[i] ?? null,
+        windDirection: dirs[i] ?? null,
+        windGust: gusts[i] ?? null,
+        temperature: temps[i] ?? null,
+        pressure: pressures[i] ?? null,
+      });
+    }
+  }
+
+  const bins = binToInterval(allReadings, 15);
+  const sortedKeys = Object.keys(bins).sort();
+
+  let weights = await loadWeights(redisCmd) || { eventWeights: {}, lakeWeights: {}, meta: {} };
+  let totalPredictions = 0;
+  let totalVerifications = 0;
+  let totalAccuracyRecords = 0;
+  const predictionBuffer = [];
+
+  for (let i = 0; i < sortedKeys.length; i++) {
+    const timeKey = sortedKeys[i];
+    const stationMap = bins[timeKey];
+    const stations = Object.values(stationMap).filter(s => s.windSpeed != null);
+    if (stations.length === 0) continue;
+
+    const ts = new Date(timeKey + ':00Z');
+    const hour = ts.getUTCHours();
+
+    const recentHistory = [];
+    for (let j = Math.max(0, i - 12); j < i; j++) {
+      const histStations = Object.values(bins[sortedKeys[j]] || {});
+      if (histStations.length > 0) recentHistory.push({ stations: histStations });
+    }
+
+    const pressure = analyzePressure(stations, recentHistory);
+
+    // Make predictions for this time step
+    const stepPredictions = [];
+    for (const [lakeId, stationIds] of Object.entries(lakeStationMap)) {
+      const lakeStations = stations.filter(s => stationIds.includes(s.stationId));
+      if (lakeStations.length === 0) continue;
+
+      const primaryId = LAKE_THERMAL[lakeId]?.station || stationIds[0];
+      const primary = lakeStations.find(s => s.stationId === primaryId) || lakeStations[0];
+      const history = buildStationHistory(primary.stationId, recentHistory);
+      const events = predictForLake(lakeId, primary, pressure, history, hour, weights);
+
+      for (const evt of events) {
+        stepPredictions.push({ ...evt, lakeId, timestamp: ts.toISOString() });
+      }
+    }
+    totalPredictions += stepPredictions.length;
+    predictionBuffer.push({ timestamp: ts, predictions: stepPredictions });
+
+    // Verify predictions from 2-4 hours ago
+    const verifyWindow = predictionBuffer.filter(p => {
+      const age = ts.getTime() - p.timestamp.getTime();
+      return age > 90 * 60000 && age < 300 * 60000;
+    });
+
+    if (verifyWindow.length > 0) {
+      const toVerify = verifyWindow.flatMap(p => p.predictions);
+      const accuracy = verifyPredictions(toVerify, stations, lakeStationMap);
+      totalAccuracyRecords += accuracy.length;
+
+      if (accuracy.length > 0) {
+        totalVerifications++;
+        weights = updateWeights(weights, accuracy);
+      }
+    }
+
+    // Prune old predictions from buffer (older than 5 hours)
+    while (predictionBuffer.length > 0 && (ts.getTime() - predictionBuffer[0].timestamp.getTime()) > 5 * 3600000) {
+      predictionBuffer.shift();
+    }
+  }
+
+  // Save final weights to Redis
+  weights.meta = weights.meta || {};
+  weights.meta.lastUpdated = new Date().toISOString();
+  weights.meta.backfillDays = days;
+  weights.meta.backfillTimeSteps = sortedKeys.length;
+  weights.meta.totalPredictions = (weights.meta.totalPredictions || 0) + totalPredictions;
+  await saveWeights(redisCmd, weights);
+
+  // Update meta
+  const meta = await loadMeta(redisCmd);
+  meta.totalPredictions += totalPredictions;
+  meta.totalVerified += totalAccuracyRecords;
+  meta.totalCycles += sortedKeys.length;
+  meta.lastBackfill = new Date().toISOString();
+  meta.backfillDays = days;
+  await saveMeta(redisCmd, meta);
+
+  return {
+    timeSteps: sortedKeys.length,
+    totalPredictions,
+    totalVerifications,
+    totalAccuracyRecords,
+    finalAccuracy: weights.meta?.overallAccuracy,
+    eventAccuracy: weights.meta?.eventAccuracy,
+    weights,
+  };
+}
+
 export {
   runServerLearningCycle,
+  backfillHistorical,
   loadWeights,
   loadMeta,
   LAKE_THERMAL,

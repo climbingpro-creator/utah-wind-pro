@@ -1,5 +1,6 @@
-Fix pressure gradient baseline offset in server predictor
+Add historical backfill endpoint for model bootstrapping
 
-KSLC and KPVU report station pressure (not SLP), creating a ~7.5mb
-baseline difference from altitude alone. Subtract this so the weather-
-forcing gradient matches the 0-3mb range the scoring functions expect.
+New ?action=backfill&days=3 endpoint replays N days of Synoptic
+timeseries data through the predict->verify->learn loop to bootstrap
+model weights from historical patterns. Increases function timeout
+to 60s for the heavy processing.
