@@ -35,7 +35,7 @@ export function ToastContainer() {
       }
 
       if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification('Utah Wind Pro', {
+        new Notification('UtahWindFinder', {
           body: message,
           icon: '/vite.svg',
           tag: 'thermal-alert',

@@ -1,13 +1,30 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 
-const AuthContext = createContext({ user: null, session: null, tier: 'free', loading: true });
+const TRIAL_KEY = 'uwf_trial_start';
+const TRIAL_DAYS = 7;
+
+const AuthContext = createContext({
+  user: null, session: null, tier: 'free', loading: true,
+  trialActive: false, trialDaysLeft: 0, showPaywall: false,
+});
 
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
   const [user, setUser] = useState(null);
   const [tier, setTier] = useState('free');
   const [loading, setLoading] = useState(true);
+  const [showPaywall, setShowPaywall] = useState(false);
+  const [trialStart, setTrialStart] = useState(() => {
+    const stored = localStorage.getItem(TRIAL_KEY);
+    return stored ? parseInt(stored, 10) : null;
+  });
+
+  const trialDaysLeft = trialStart
+    ? Math.max(0, TRIAL_DAYS - Math.floor((Date.now() - trialStart) / 86400000))
+    : TRIAL_DAYS;
+  const trialActive = trialStart !== null && trialDaysLeft > 0;
+  const effectiveTier = tier === 'pro' ? 'pro' : (trialActive ? 'pro' : 'free');
 
   useEffect(() => {
     if (!supabase) {
@@ -33,6 +50,17 @@ export function AuthProvider({ children }) {
   }, []);
 
   async function fetchTier(token) {
+    try {
+      const resp = await fetch('/api/user-preferences', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        setTier(data.tier || 'free');
+        return;
+      }
+    } catch { /* fall through */ }
+
     try {
       const resp = await fetch('/api/thermal-forecast?lake=utah-lake-zigzag', {
         headers: { Authorization: `Bearer ${token}` },
@@ -64,8 +92,17 @@ export function AuthProvider({ children }) {
     setTier('free');
   }
 
+  function startTrial() {
+    const now = Date.now();
+    localStorage.setItem(TRIAL_KEY, String(now));
+    setTrialStart(now);
+  }
+
   async function upgradeToPro() {
-    if (!session) throw new Error('Must be signed in');
+    if (!session) {
+      setShowPaywall(true);
+      return;
+    }
     const resp = await fetch('/api/subscribe', {
       method: 'POST',
       headers: {
@@ -88,12 +125,17 @@ export function AuthProvider({ children }) {
     window.location.href = url;
   }
 
+  const openPaywall = useCallback(() => setShowPaywall(true), []);
+  const closePaywall = useCallback(() => setShowPaywall(false), []);
+
   return (
     <AuthContext.Provider value={{
-      user, session, tier, loading,
+      user, session, tier: effectiveTier, loading,
       signIn, signUp, signOut,
       upgradeToPro, manageSubscription,
-      isPro: tier === 'pro',
+      isPro: effectiveTier === 'pro',
+      trialActive, trialDaysLeft, startTrial,
+      showPaywall, openPaywall, closePaywall,
     }}>
       {children}
     </AuthContext.Provider>

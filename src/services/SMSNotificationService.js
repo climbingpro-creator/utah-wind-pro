@@ -146,7 +146,7 @@ export async function sendSMSAlert(alert, prefs) {
   const digits = prefs.phone.replace(/\D/g, '');
   const to = digits.length === 10 ? `+1${digits}` : `+${digits}`;
 
-  const message = `[Utah Wind Pro] ${alert.title}\n${alert.message}`;
+  const message = `[UtahWindFinder] ${alert.title}\n${alert.message}`;
 
   try {
     const endpoint = import.meta.env.VITE_SMS_ENDPOINT;

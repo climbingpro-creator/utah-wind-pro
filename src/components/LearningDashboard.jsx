@@ -61,7 +61,7 @@ const LearningDashboard = () => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `utah-wind-pro-learning-data-${new Date().toISOString().split('T')[0]}.json`;
+      a.download = `utahwindfinder-learning-data-${new Date().toISOString().split('T')[0]}.json`;
       a.click();
       URL.revokeObjectURL(url);
     } catch (error) {

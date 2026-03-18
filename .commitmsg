@@ -1,0 +1,9 @@
+Add 20+ Utah lakes statewide, rebrand to UtahWindFinder, implement Pro paywall
+
+- Rebrand from Utah Wind Pro to UtahWindFinder across all configs, metadata, and UI
+- Add Pro upgrade paywall (ProUpgrade.jsx), feature gating (ProGate.jsx), 7-day trial flow
+- Expand lake coverage from 4 to 25+ lakes across 6 regions statewide
+- Each lake includes wind stations, thermal patterns, glass windows, fish species from UT DWR
+- New regional LakeSelector UI with collapsible sections, Blue Ribbon badges, hazard warnings
+- Add 8 new FishingMode location configs with hotspots and species intelligence
+- Add 9 new fish species to predictor (Wiper, Pike, Tiger Trout, Striped Bass, etc.)

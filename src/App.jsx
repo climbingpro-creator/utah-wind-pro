@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Dashboard } from './components/Dashboard';
 import { dataCollector } from './services/DataCollector';
 import { ThemeProvider } from './context/ThemeContext';
+import { AuthProvider } from './context/AuthContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
 function App() {
@@ -13,10 +14,12 @@ function App() {
   }, []);
 
   return (
-    <ErrorBoundary name="Utah Wind Pro">
-      <ThemeProvider>
-        <Dashboard />
-      </ThemeProvider>
+    <ErrorBoundary name="UtahWindFinder">
+      <AuthProvider>
+        <ThemeProvider>
+          <Dashboard />
+        </ThemeProvider>
+      </AuthProvider>
     </ErrorBoundary>
   );
 }

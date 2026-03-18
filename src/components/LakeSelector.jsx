@@ -1,4 +1,4 @@
-import { MapPin, ChevronDown, ChevronUp, Wind, Snowflake, Mountain } from 'lucide-react';
+import { MapPin, ChevronDown, ChevronUp, Wind, Snowflake, Mountain, Fish, Anchor, Crown } from 'lucide-react';
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { LAKE_CONFIGS } from '../config/lakeStations';
@@ -25,6 +25,74 @@ const OTHER_LAKES = [
   { id: 'deer-creek', name: 'Deer Creek', region: 'Wasatch', wind: 'SW Canyon', meter: 'KHCR', meterName: 'Heber Airport' },
   { id: 'willard-bay', name: 'Willard Bay', region: 'Box Elder', wind: 'N "Gap"', meter: 'KHIF', meterName: 'Hill AFB' },
   { id: 'pineview', name: 'Pineview', region: 'Weber', wind: 'E/W Canyon', meter: null, meterName: null },
+];
+
+const LAKE_REGIONS = [
+  {
+    id: 'wasatch',
+    label: 'Wasatch Front & Back',
+    icon: '⛰️',
+    lakes: [
+      { id: 'jordanelle', name: 'Jordanelle', wind: 'Canyon/Thermal', meter: 'KHCR', fish: '🐟 Kokanee, SMB, Trout' },
+      { id: 'deer-creek', name: 'Deer Creek', wind: 'SW Canyon', meter: 'KHCR', fish: '🐟 Walleye, SMB, Trout', blueRibbon: true },
+      { id: 'east-canyon', name: 'East Canyon', wind: 'Canyon', meter: 'KSLC', fish: '🐟 Brown Trout, SMB, Kokanee' },
+      { id: 'echo', name: 'Echo', wind: 'I-80 Corridor', meter: 'KSLC', fish: '🐟 Wiper, SMB, Trout' },
+      { id: 'rockport', name: 'Rockport', wind: 'Valley', meter: 'KSLC', fish: '🐟 Rainbow, SMB, Brown' },
+    ],
+  },
+  {
+    id: 'northern',
+    label: 'Northern Utah',
+    icon: '🏔️',
+    lakes: [
+      { id: 'willard-bay', name: 'Willard Bay', wind: 'N Gap', meter: 'KHIF', fish: '🐟 Wiper, Walleye, Catfish' },
+      { id: 'pineview', name: 'Pineview', wind: 'E/W Canyon', meter: null, fish: '🐟 LMB, SMB, Tiger Muskie' },
+      { id: 'bear-lake', name: 'Bear Lake', wind: 'Strong W', meter: 'BERU1', fish: '🐟 Cutthroat, Lake Trout, Cisco', hazard: 'HIGH WIND' },
+      { id: 'hyrum', name: 'Hyrum', wind: 'Valley', meter: 'KLGU', fish: '🐟 Rainbow, Perch, Bluegill' },
+    ],
+  },
+  {
+    id: 'northeast',
+    label: 'Uinta Basin / Northeast',
+    icon: '🦌',
+    lakes: [
+      { id: 'starvation', name: 'Starvation', wind: 'Valley', meter: 'KVEL', fish: '🐟 Walleye, SMB, Rainbow' },
+      { id: 'flaming-gorge', name: 'Flaming Gorge', wind: 'Canyon/SE', meter: 'KFGR', fish: '🐟 Lake Trout (51 lb record!), Kokanee' },
+      { id: 'steinaker', name: 'Steinaker', wind: 'Basin', meter: 'KVEL', fish: '🐟 Rainbow, LMB' },
+      { id: 'red-fleet', name: 'Red Fleet', wind: 'Basin', meter: 'KVEL', fish: '🐟 Rainbow, Brown' },
+    ],
+  },
+  {
+    id: 'southeast',
+    label: 'Castle Country / Plateau',
+    icon: '🏜️',
+    lakes: [
+      { id: 'scofield', name: 'Scofield', wind: 'Plateau', meter: 'KPUC', fish: '🐟 Cutthroat, Tiger Trout', blueRibbon: true },
+    ],
+  },
+  {
+    id: 'southern',
+    label: 'Southern Utah',
+    icon: '☀️',
+    lakes: [
+      { id: 'yuba', name: 'Yuba', wind: 'Valley', meter: 'KPVU', fish: '🐟 Walleye, N.Pike, Wiper', hazard: '22-mi fetch' },
+      { id: 'otter-creek', name: 'Otter Creek', wind: 'Plateau', meter: 'KCDC', fish: '🐟 Trout Factory!', blueRibbon: true },
+      { id: 'fish-lake', name: 'Fish Lake', wind: 'Mountain', meter: 'KCDC', fish: '🐟 Trophy Mackinaw, Splake' },
+      { id: 'minersville', name: 'Minersville', wind: 'Desert', meter: 'KCDC', fish: '🐟 Trophy Trout (lures only)' },
+      { id: 'piute', name: 'Piute', wind: 'Valley', meter: 'KCDC', fish: '🐟 Trout, Crappie, White Bass' },
+      { id: 'panguitch', name: 'Panguitch', wind: 'Plateau', meter: 'KCDC', fish: '🐟 Rainbow, Brown' },
+      { id: 'lake-powell', name: 'Lake Powell', wind: 'Canyon/Desert', meter: 'KPGA', fish: '🐟 Stripers, LMB, Walleye', hazard: 'EXTREME' },
+    ],
+  },
+  {
+    id: 'dixie',
+    label: 'Dixie / St. George',
+    icon: '🌵',
+    lakes: [
+      { id: 'sand-hollow', name: 'Sand Hollow', wind: 'Desert', meter: 'KSGU', fish: '🐟 LMB, Bluegill, Rainbow' },
+      { id: 'quail-creek', name: 'Quail Creek', wind: 'Desert', meter: 'KSGU', fish: '🐟 LMB, Rainbow (warmest!)' },
+    ],
+  },
 ];
 
 function isDirectionFavorable(dir, lakeId) {
@@ -140,13 +208,15 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
     [stationReadings]
   );
 
+  const allRegionLakes = useMemo(() => LAKE_REGIONS.flatMap(r => r.lakes), []);
+
   const windStatuses = useMemo(() => {
     const out = {};
-    [...UTAH_LAKE_LAUNCHES, ...STRAWBERRY_LAUNCHES, SKYLINE_SPOT, ...OTHER_LAKES].forEach(loc => {
+    [...UTAH_LAKE_LAUNCHES, ...STRAWBERRY_LAUNCHES, SKYLINE_SPOT, ...OTHER_LAKES, ...allRegionLakes].forEach(loc => {
       out[loc.id] = getWindStatus(loc, stationCache, activity);
     });
     return out;
-  }, [stationCache, activity]);
+  }, [stationCache, activity, allRegionLakes]);
 
   const isUtahLakeSelected = selectedLake?.startsWith('utah-lake');
   const selectedUtahLaunch = UTAH_LAKE_LAUNCHES.find(l => l.id === selectedLake);
@@ -380,42 +450,25 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
       </div>
       )}
 
-      {/* Other Lakes */}
+      {/* All Utah Lakes — organized by region */}
       {activity !== 'snowkiting' && (
-      <div className="flex gap-2 flex-wrap">
-        {OTHER_LAKES.map((lake) => {
-          const ws = windStatuses[lake.id];
-          const isHot = ws?.level === 'hot';
-          const isSelected = selectedLake === lake.id;
+      <div className="space-y-2">
+        {LAKE_REGIONS.map((region) => {
+          const hasSelectedLake = region.lakes.some(l => l.id === selectedLake);
+          const hasHotLake = region.lakes.some(l => windStatuses[l.id]?.level === 'hot');
 
           return (
-            <button
-              key={lake.id}
-              onClick={() => {
-                onSelectLake(lake.id);
-                setUtahLakeExpanded(false);
-              }}
-              className={`
-                flex flex-col items-start px-3.5 py-2.5 rounded-lg transition-all duration-200 border
-                ${isSelected
-                  ? 'bg-sky-500/[0.08] border-sky-500 text-sky-500'
-                  : isHot
-                    ? (isDark
-                        ? 'bg-emerald-500/[0.06] border-emerald-500/30 text-emerald-400'
-                        : 'bg-emerald-50 border-emerald-200 text-emerald-700')
-                    : (isDark 
-                        ? 'bg-[var(--bg-card)] border-[var(--border-color)] text-[var(--text-secondary)] hover:border-sky-500/30'
-                        : 'bg-white border-slate-200 text-slate-600 hover:border-sky-300')
-                }
-              `}
-            >
-              <div className="flex items-center gap-2">
-                <MapPin className="w-3.5 h-3.5 opacity-60" />
-                <span className="font-semibold text-sm">{lake.name}</span>
-                {ws && <WindBadge status={ws} isDark={isDark} />}
-              </div>
-              <span className="text-[11px] ml-5.5 text-[var(--text-tertiary)]">{lake.wind}</span>
-            </button>
+            <RegionSection
+              key={region.id}
+              region={region}
+              selectedLake={selectedLake}
+              onSelectLake={(id) => { onSelectLake(id); setUtahLakeExpanded(false); }}
+              windStatuses={windStatuses}
+              isDark={isDark}
+              hasSelectedLake={hasSelectedLake}
+              hasHotLake={hasHotLake}
+              activity={activity}
+            />
           );
         })}
       </div>
@@ -424,4 +477,93 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
   );
 }
 
-export { UTAH_LAKE_LAUNCHES, STRAWBERRY_LAUNCHES, SKYLINE_SPOT, OTHER_LAKES };
+function RegionSection({ region, selectedLake, onSelectLake, windStatuses, isDark, hasSelectedLake, hasHotLake, activity }) {
+  const [expanded, setExpanded] = useState(hasSelectedLake);
+
+  useEffect(() => {
+    if (hasSelectedLake) setExpanded(true);
+  }, [hasSelectedLake]);
+
+  const isFishingOrBoating = ['fishing', 'boating', 'paddling'].includes(activity);
+
+  return (
+    <div className={`card !p-0 overflow-hidden ${hasHotLake && !hasSelectedLake ? (isDark ? '!border-emerald-500/20' : '!border-emerald-200') : ''}`}>
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className={`w-full flex items-center justify-between px-4 py-2.5 transition-colors ${
+          hasSelectedLake ? (isDark ? 'bg-sky-500/[0.04]' : 'bg-sky-50/30') : 'hover:bg-[var(--bg-card-hover)]'
+        }`}
+      >
+        <div className="flex items-center gap-2.5">
+          <span className="text-base">{region.icon}</span>
+          <div className="text-left">
+            <span className={`font-semibold text-sm ${hasSelectedLake ? 'text-sky-500' : 'text-[var(--text-primary)]'}`}>
+              {region.label}
+            </span>
+            <span className={`ml-2 text-[11px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+              {region.lakes.length} lake{region.lakes.length !== 1 ? 's' : ''}
+            </span>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {hasHotLake && <span className="text-[10px] font-bold text-emerald-500 uppercase">Live</span>}
+          {expanded ? <ChevronUp className="w-4 h-4 text-[var(--text-tertiary)]" /> : <ChevronDown className="w-4 h-4 text-[var(--text-tertiary)]" />}
+        </div>
+      </button>
+
+      {expanded && (
+        <div className={`border-t p-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5 ${isDark ? 'border-[var(--border-color)]' : 'border-slate-100'}`}>
+          {region.lakes.map((lake) => {
+            const ws = windStatuses[lake.id];
+            const isSelected = selectedLake === lake.id;
+            const cfg = LAKE_CONFIGS[lake.id];
+
+            return (
+              <button
+                key={lake.id}
+                onClick={() => onSelectLake(lake.id)}
+                className={`flex items-start gap-3 p-3 rounded-lg transition-all border text-left ${
+                  isSelected
+                    ? 'bg-sky-500/[0.08] border-sky-500'
+                    : ws?.level === 'hot'
+                      ? (isDark ? 'bg-emerald-500/[0.04] border-emerald-500/20' : 'bg-emerald-50/50 border-emerald-200')
+                      : (isDark ? 'bg-white/[0.02] border-[var(--border-subtle)] hover:border-[var(--border-color)]' : 'bg-white border-slate-100 hover:border-slate-200')
+                }`}
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className={`font-semibold text-sm ${isSelected ? 'text-sky-500' : 'text-[var(--text-primary)]'}`}>
+                      {lake.name}
+                    </span>
+                    {lake.blueRibbon && (
+                      <span className="text-[8px] font-bold px-1 py-0.5 rounded bg-blue-500/10 text-blue-500 uppercase">Blue Ribbon</span>
+                    )}
+                    {lake.hazard && (
+                      <span className="text-[8px] font-bold px-1 py-0.5 rounded bg-red-500/10 text-red-500 uppercase">{lake.hazard}</span>
+                    )}
+                  </div>
+                  {isFishingOrBoating && lake.fish && (
+                    <div className={`text-[10px] mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{lake.fish}</div>
+                  )}
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className={`text-[10px] flex items-center gap-0.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                      <Wind className="w-2.5 h-2.5" /> {lake.wind}
+                    </span>
+                    {cfg?.elevation && (
+                      <span className={`text-[10px] ${isDark ? 'text-slate-600' : 'text-slate-300'}`}>
+                        {cfg.elevation.toLocaleString()} ft
+                      </span>
+                    )}
+                  </div>
+                </div>
+                {ws && <div className="shrink-0 mt-0.5"><WindBadge status={ws} isDark={isDark} /></div>}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export { UTAH_LAKE_LAUNCHES, STRAWBERRY_LAUNCHES, SKYLINE_SPOT, OTHER_LAKES, LAKE_REGIONS };

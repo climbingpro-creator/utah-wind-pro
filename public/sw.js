@@ -1,5 +1,5 @@
-// Service Worker for Utah Wind Pro — v2 with offline API caching
-const CACHE_NAME = 'utah-wind-pro-v2';
+// Service Worker for UtahWindFinder — v3 with offline API caching
+const CACHE_NAME = 'utahwindfinder-v3';
 const API_CACHE = 'utah-wind-api-v1';
 const STATIC_ASSETS = [
   '/',
@@ -109,7 +109,7 @@ async function networkFirstApi(request) {
 // Handle push notifications
 self.addEventListener('push', (event) => {
   const data = event.data?.json() || {};
-  const title = data.title || 'Utah Wind Pro';
+  const title = data.title || 'UtahWindFinder';
   const options = {
     body: data.body || 'Wind conditions update',
     icon: '/icons/icon-192x192.png',

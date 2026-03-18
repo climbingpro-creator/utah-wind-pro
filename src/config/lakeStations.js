@@ -137,6 +137,20 @@ export const LAKE_CONFIGS = {
     },
     
     waterTempEstimate: 58,
+    fishSpecies: {
+      primary: ['channel catfish', 'walleye', 'white bass', 'largemouth bass', 'black crappie'],
+      secondary: ['yellow perch', 'bluegill', 'common carp'],
+      native: ['June sucker (threatened — must release)'],
+      blueRibbon: false,
+      bestSeasons: {
+        walleye: 'Mar–May, Oct–Nov',
+        whiteBass: 'May–Jun (spawning run)',
+        catfish: 'Jun–Sep',
+        iceFishing: 'Dec–Feb (rare — shallow)',
+      },
+    },
+    boating: { marina: true, ramp: true, statePark: 'Utah Lake State Park' },
+    glassWindow: { typicalStart: 5, typicalEnd: 9, confidence: 'high' },
   },
 
   'utah-lake-sandy': {
@@ -226,6 +240,20 @@ export const LAKE_CONFIGS = {
     },
     
     waterTempEstimate: 58,
+    fishSpecies: {
+      primary: ['channel catfish', 'walleye', 'white bass', 'largemouth bass', 'black crappie'],
+      secondary: ['yellow perch', 'bluegill', 'common carp'],
+      native: ['June sucker (threatened — must release)'],
+      blueRibbon: false,
+      bestSeasons: {
+        walleye: 'Mar–May, Oct–Nov',
+        whiteBass: 'May–Jun (spawning run)',
+        catfish: 'Jun–Sep',
+        iceFishing: 'Dec–Feb (rare — shallow)',
+      },
+    },
+    boating: { marina: true, ramp: true, statePark: 'Utah Lake State Park' },
+    glassWindow: { typicalStart: 5, typicalEnd: 9, confidence: 'high' },
   },
 
   'utah-lake-vineyard': {
@@ -316,6 +344,20 @@ export const LAKE_CONFIGS = {
     },
     
     waterTempEstimate: 58,
+    fishSpecies: {
+      primary: ['channel catfish', 'walleye', 'white bass', 'largemouth bass', 'black crappie'],
+      secondary: ['yellow perch', 'bluegill', 'common carp'],
+      native: ['June sucker (threatened — must release)'],
+      blueRibbon: false,
+      bestSeasons: {
+        walleye: 'Mar–May, Oct–Nov',
+        whiteBass: 'May–Jun (spawning run)',
+        catfish: 'Jun–Sep',
+        iceFishing: 'Dec–Feb (rare — shallow)',
+      },
+    },
+    boating: { marina: true, ramp: true, statePark: 'Utah Lake State Park' },
+    glassWindow: { typicalStart: 5, typicalEnd: 9, confidence: 'high' },
   },
 
   'utah-lake-zigzag': {
@@ -410,6 +452,20 @@ export const LAKE_CONFIGS = {
     },
     
     waterTempEstimate: 58,
+    fishSpecies: {
+      primary: ['channel catfish', 'walleye', 'white bass', 'largemouth bass', 'black crappie'],
+      secondary: ['yellow perch', 'bluegill', 'common carp'],
+      native: ['June sucker (threatened — must release)'],
+      blueRibbon: false,
+      bestSeasons: {
+        walleye: 'Mar–May, Oct–Nov',
+        whiteBass: 'May–Jun (spawning run)',
+        catfish: 'Jun–Sep',
+        iceFishing: 'Dec–Feb (rare — shallow)',
+      },
+    },
+    boating: { marina: true, ramp: true, statePark: 'Utah Lake State Park' },
+    glassWindow: { typicalStart: 5, typicalEnd: 9, confidence: 'high' },
   },
 
   'utah-lake-mm19': {
@@ -496,6 +552,20 @@ export const LAKE_CONFIGS = {
     },
     
     waterTempEstimate: 58,
+    fishSpecies: {
+      primary: ['channel catfish', 'walleye', 'white bass', 'largemouth bass', 'black crappie'],
+      secondary: ['yellow perch', 'bluegill', 'common carp'],
+      native: ['June sucker (threatened — must release)'],
+      blueRibbon: false,
+      bestSeasons: {
+        walleye: 'Mar–May, Oct–Nov',
+        whiteBass: 'May–Jun (spawning run)',
+        catfish: 'Jun–Sep',
+        iceFishing: 'Dec–Feb (rare — shallow)',
+      },
+    },
+    boating: { marina: true, ramp: true, statePark: 'Utah Lake State Park' },
+    glassWindow: { typicalStart: 5, typicalEnd: 9, confidence: 'high' },
   },
 
   // Legacy ID for backwards compatibility
@@ -589,6 +659,20 @@ export const LAKE_CONFIGS = {
     },
     
     waterTempEstimate: 58,
+    fishSpecies: {
+      primary: ['channel catfish', 'walleye', 'white bass', 'largemouth bass', 'black crappie'],
+      secondary: ['yellow perch', 'bluegill', 'common carp'],
+      native: ['June sucker (threatened — must release)'],
+      blueRibbon: false,
+      bestSeasons: {
+        walleye: 'Mar–May, Oct–Nov',
+        whiteBass: 'May–Jun (spawning run)',
+        catfish: 'Jun–Sep',
+        iceFishing: 'Dec–Feb (rare — shallow)',
+      },
+    },
+    boating: { marina: true, ramp: true, statePark: 'Utah Lake State Park' },
+    glassWindow: { typicalStart: 5, typicalEnd: 9, confidence: 'high' },
   },
 
   'deer-creek': {
@@ -693,6 +777,19 @@ export const LAKE_CONFIGS = {
     requirement: 'MUST have South wind (170-210°) - canyon only works with S flow',
     
     waterTempEstimate: 52,
+    fishSpecies: {
+      primary: ['rainbow trout', 'smallmouth bass', 'largemouth bass', 'walleye', 'brown trout'],
+      secondary: ['yellow perch', 'bluegill', 'channel catfish'],
+      blueRibbon: true,
+      bestSeasons: {
+        trout: 'Apr–Jun, Sep–Nov',
+        walleye: 'Mar–May, Oct–Nov',
+        bass: 'Jun–Sep',
+        iceFishing: 'Dec–Feb (trout, perch)',
+      },
+    },
+    boating: { marina: true, ramp: true, statePark: 'Deer Creek State Park' },
+    glassWindow: { typicalStart: 5, typicalEnd: 10, confidence: 'high' },
   },
 
   'willard-bay': {
@@ -800,6 +897,20 @@ export const LAKE_CONFIGS = {
     },
     
     waterTempEstimate: 55,
+    fishSpecies: {
+      primary: ['wiper', 'walleye', 'channel catfish', 'crappie'],
+      secondary: ['smallmouth bass', 'largemouth bass', 'bluegill', 'yellow perch'],
+      blueRibbon: false,
+      bestSeasons: {
+        wiper: 'May–Sep (surface feeding)',
+        walleye: 'Mar–May, Oct',
+        catfish: 'Jun–Sep',
+        crappie: 'Apr–May, Oct',
+        iceFishing: 'Jan–Feb (walleye, crappie)',
+      },
+    },
+    boating: { marina: true, ramp: true, statePark: 'Willard Bay State Park' },
+    glassWindow: { typicalStart: 5, typicalEnd: 10, confidence: 'medium' },
   },
 
   // =====================================================
@@ -906,6 +1017,19 @@ export const LAKE_CONFIGS = {
 
     snowkite: true,
     waterTempEstimate: 34,
+    fishSpecies: {
+      primary: ['cutthroat trout (Bear Lake strain)', 'rainbow trout (sterile)', 'kokanee salmon'],
+      secondary: [],
+      blueRibbon: true,
+      bestSeasons: {
+        cutthroat: 'May–Jun, Sep–Oct',
+        rainbow: 'Year-round',
+        kokanee: 'Jul–Sep (trolling)',
+        iceFishing: 'Dec–Mar (popular — thick ice at 7,600 ft)',
+      },
+    },
+    boating: { marina: true, ramp: true },
+    glassWindow: { typicalStart: 5, typicalEnd: 9, confidence: 'medium' },
   },
 
   'strawberry-bay': {
@@ -1001,6 +1125,19 @@ export const LAKE_CONFIGS = {
 
     snowkite: true,
     waterTempEstimate: 34,
+    fishSpecies: {
+      primary: ['cutthroat trout (Bear Lake strain)', 'rainbow trout (sterile)', 'kokanee salmon'],
+      secondary: [],
+      blueRibbon: true,
+      bestSeasons: {
+        cutthroat: 'May–Jun, Sep–Oct',
+        rainbow: 'Year-round',
+        kokanee: 'Jul–Sep (trolling)',
+        iceFishing: 'Dec–Mar (popular — thick ice at 7,600 ft)',
+      },
+    },
+    boating: { marina: true, ramp: true },
+    glassWindow: { typicalStart: 5, typicalEnd: 9, confidence: 'medium' },
   },
 
   'strawberry-soldier': {
@@ -1096,6 +1233,19 @@ export const LAKE_CONFIGS = {
 
     snowkite: true,
     waterTempEstimate: 34,
+    fishSpecies: {
+      primary: ['cutthroat trout (Bear Lake strain)', 'rainbow trout (sterile)', 'kokanee salmon'],
+      secondary: [],
+      blueRibbon: true,
+      bestSeasons: {
+        cutthroat: 'May–Jun, Sep–Oct',
+        rainbow: 'Year-round',
+        kokanee: 'Jul–Sep (trolling)',
+        iceFishing: 'Dec–Mar (popular — thick ice at 7,600 ft)',
+      },
+    },
+    boating: { marina: true, ramp: true },
+    glassWindow: { typicalStart: 5, typicalEnd: 9, confidence: 'medium' },
   },
 
   'strawberry-view': {
@@ -1191,6 +1341,19 @@ export const LAKE_CONFIGS = {
 
     snowkite: true,
     waterTempEstimate: 34,
+    fishSpecies: {
+      primary: ['cutthroat trout (Bear Lake strain)', 'rainbow trout (sterile)', 'kokanee salmon'],
+      secondary: [],
+      blueRibbon: true,
+      bestSeasons: {
+        cutthroat: 'May–Jun, Sep–Oct',
+        rainbow: 'Year-round',
+        kokanee: 'Jul–Sep (trolling)',
+        iceFishing: 'Dec–Mar (popular — thick ice at 7,600 ft)',
+      },
+    },
+    boating: { marina: true, ramp: true },
+    glassWindow: { typicalStart: 5, typicalEnd: 9, confidence: 'medium' },
   },
 
   'strawberry-river': {
@@ -1286,6 +1449,19 @@ export const LAKE_CONFIGS = {
 
     snowkite: true,
     waterTempEstimate: 34,
+    fishSpecies: {
+      primary: ['cutthroat trout (Bear Lake strain)', 'rainbow trout (sterile)', 'kokanee salmon'],
+      secondary: [],
+      blueRibbon: true,
+      bestSeasons: {
+        cutthroat: 'May–Jun, Sep–Oct',
+        rainbow: 'Year-round',
+        kokanee: 'Jul–Sep (trolling)',
+        iceFishing: 'Dec–Mar (popular — thick ice at 7,600 ft)',
+      },
+    },
+    boating: { marina: true, ramp: true },
+    glassWindow: { typicalStart: 5, typicalEnd: 9, confidence: 'medium' },
   },
 
   // =====================================================
@@ -1477,6 +1653,1081 @@ export const LAKE_CONFIGS = {
     },
     
     waterTempEstimate: 50,
+    fishSpecies: {
+      primary: ['largemouth bass', 'smallmouth bass', 'yellow perch', 'black crappie'],
+      secondary: ['channel catfish', 'bluegill', 'tiger muskie'],
+      blueRibbon: false,
+      bestSeasons: {
+        bass: 'May–Sep',
+        crappie: 'Apr–May, Oct',
+        perch: 'Year-round, best through ice',
+        iceFishing: 'Dec–Feb (perch, crappie)',
+      },
+    },
+    boating: { marina: true, ramp: true },
+    glassWindow: { typicalStart: 5, typicalEnd: 10, confidence: 'medium' },
+  },
+
+  // =====================================================
+  // JORDANELLE RESERVOIR
+  // =====================================================
+  'jordanelle': {
+    id: 'jordanelle',
+    name: 'Jordanelle Reservoir',
+    shortName: 'Jordanelle',
+    region: 'Wasatch County',
+    coordinates: { lat: 40.600, lng: -111.420 },
+    elevation: 6166,
+    surfaceAcres: 3050,
+    maxDepth: 292,
+    primaryWindType: 'Canyon/Thermal',
+    thermalDirection: 'S to SW (180-230°)',
+    description: 'Deep mountain reservoir — Heber Valley thermal, Provo River corridor winds',
+    stations: {
+      pressure: {
+        high: { id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226, role: 'Regional pressure reference' },
+        low: { id: 'KHCR', name: 'Heber Valley Airport', elevation: 5597, role: 'Local valley pressure' },
+        bustThreshold: 2.0,
+      },
+      ridge: [
+        { id: 'SND', name: 'Arrowhead Summit', elevation: 8252, role: 'High-elevation trigger', priority: 1 },
+        { id: 'TIMU1', name: 'Timpanogos Divide', elevation: 8170, role: 'Backup ridge reference', priority: 2 },
+      ],
+      groundTruth: { id: 'KHCR', name: 'Heber Valley Airport', role: 'Ground Truth — closest ASOS' },
+      lakeshore: [
+        { id: 'KHCR', name: 'Heber Valley Airport', elevation: 5597, role: 'Primary — Heber Valley', priority: 1 },
+        { id: 'DCC', name: 'Deer Creek Dam', elevation: 6675, role: 'Secondary — shared corridor', priority: 2 },
+      ],
+      reference: [{ id: 'MDAU1', name: 'Midway', elevation: 5758 }],
+    },
+    thermal: {
+      optimalDirection: { min: 180, max: 230, ideal: 205 },
+      optimalSpeed: { min: 4, max: 14, average: 7 },
+      peakHours: { start: 12, end: 16, peak: 14 },
+      buildTime: { start: 10, usable: 12 },
+      fadeTime: { start: 17, end: 19 },
+    },
+    waterTempEstimate: 50,
+    fishSpecies: {
+      primary: ['rainbow trout', 'smallmouth bass', 'yellow perch', 'kokanee salmon'],
+      secondary: ['wiper', 'tiger muskie', 'brown trout'],
+      blueRibbon: false,
+      bestSeasons: {
+        trout: 'Apr–Jun, Sep–Nov',
+        smallmouthBass: 'Jun–Sep',
+        kokanee: 'Jul–Sep (trolling mid-depth)',
+        iceFishing: 'Dec–Mar (perch, trout)',
+      },
+    },
+    boating: { marina: true, ramp: true, statePark: 'Jordanelle State Park' },
+    glassWindow: { typicalStart: 6, typicalEnd: 10, confidence: 'high' },
+  },
+
+  // =====================================================
+  // BEAR LAKE
+  // =====================================================
+  'bear-lake': {
+    id: 'bear-lake',
+    name: 'Bear Lake',
+    shortName: 'Bear Lake',
+    region: 'Rich County',
+    coordinates: { lat: 41.950, lng: -111.330 },
+    elevation: 5924,
+    surfaceAcres: 69000,
+    maxDepth: 208,
+    primaryWindType: 'Strong Westerly / Thermal',
+    thermalDirection: 'W to NW (250-320°)',
+    description: 'The Caribbean of the Rockies — HIGH WIND HAZARD, strong afternoon thermals',
+    stations: {
+      pressure: {
+        high: { id: 'KLGU', name: 'Logan-Cache Airport', elevation: 4457, role: 'Western pressure reference' },
+        low: { id: 'KLGU', name: 'Logan-Cache Airport', elevation: 4457, role: 'Nearest ASOS (45+ mi)' },
+        bustThreshold: 3.0,
+      },
+      ridge: [
+        { id: 'BERU1', name: 'Bear River RAWS', elevation: 6200, role: 'Closest automated station', priority: 1 },
+      ],
+      groundTruth: { id: 'BERU1', name: 'Bear River RAWS', role: 'Ground Truth — nearest to lake' },
+      lakeshore: [
+        { id: 'BERU1', name: 'Bear River RAWS', elevation: 6200, role: 'Primary — Bear River drainage', priority: 1 },
+        { id: 'KLGU', name: 'Logan-Cache Airport', elevation: 4457, role: 'Regional ASOS (distant)', priority: 2 },
+      ],
+      reference: [{ id: 'KLGU', name: 'Logan-Cache Airport', elevation: 4457 }],
+    },
+    thermal: {
+      optimalDirection: { min: 250, max: 320, ideal: 280 },
+      optimalSpeed: { min: 5, max: 20, average: 10 },
+      peakHours: { start: 11, end: 16, peak: 14 },
+      buildTime: { start: 9, usable: 11 },
+      fadeTime: { start: 17, end: 19 },
+    },
+    waterTempEstimate: 48,
+    fishSpecies: {
+      primary: ['cutthroat trout (Bear Lake strain)', 'lake trout (mackinaw)', 'rainbow trout'],
+      secondary: ['mountain whitefish', 'yellow perch'],
+      endemic: ['Bonneville cisco', 'Bonneville whitefish', 'Bear Lake whitefish', 'Bear Lake sculpin'],
+      blueRibbon: false,
+      bestSeasons: {
+        cutthroat: 'May–Jun, Sep–Oct',
+        lakeTrout: 'Year-round (deep jigging), best Nov–Mar',
+        cisco: 'January (dipnetting — special season)',
+        iceFishing: 'Jan–Mar (cutthroat, lake trout)',
+      },
+    },
+    boating: { marina: true, ramp: true, statePark: 'Bear Lake State Park' },
+    glassWindow: { typicalStart: 5, typicalEnd: 10, confidence: 'medium' },
+    windHazard: 'HIGH — sudden afternoon thermals, 20+ mile fetch creates dangerous swells',
+  },
+
+  // =====================================================
+  // STARVATION RESERVOIR
+  // =====================================================
+  'starvation': {
+    id: 'starvation',
+    name: 'Starvation Reservoir',
+    shortName: 'Starvation',
+    region: 'Duchesne County',
+    coordinates: { lat: 40.190, lng: -110.450 },
+    elevation: 5710,
+    surfaceAcres: 3500,
+    maxDepth: 165,
+    primaryWindType: 'Valley Thermal',
+    thermalDirection: 'S to SW (180-230°)',
+    description: 'Uinta Basin reservoir — top walleye fishery, afternoon thermals',
+    stations: {
+      pressure: {
+        high: { id: 'KVEL', name: 'Vernal Regional Airport', elevation: 5280, role: 'Nearest ASOS' },
+        low: { id: 'KVEL', name: 'Vernal Regional Airport', elevation: 5280, role: 'Basin pressure reference' },
+        bustThreshold: 2.5,
+      },
+      ridge: [
+        { id: 'KVEL', name: 'Vernal Regional Airport', elevation: 5280, role: 'Primary reference', priority: 1 },
+      ],
+      groundTruth: { id: 'KVEL', name: 'Vernal Regional Airport', role: 'Ground Truth — nearest ASOS' },
+      lakeshore: [
+        { id: 'KVEL', name: 'Vernal Regional Airport', elevation: 5280, role: 'Primary (~30 mi east)', priority: 1 },
+      ],
+      reference: [{ id: 'KVEL', name: 'Vernal Regional Airport', elevation: 5280 }],
+    },
+    thermal: {
+      optimalDirection: { min: 180, max: 230, ideal: 200 },
+      optimalSpeed: { min: 3, max: 12, average: 6 },
+      peakHours: { start: 12, end: 16, peak: 14 },
+      buildTime: { start: 10, usable: 12 },
+      fadeTime: { start: 17, end: 19 },
+    },
+    waterTempEstimate: 55,
+    fishSpecies: {
+      primary: ['walleye', 'rainbow trout', 'smallmouth bass', 'brown trout'],
+      secondary: ['yellow perch', 'kokanee salmon', 'black crappie', 'bluegill'],
+      blueRibbon: false,
+      bestSeasons: {
+        walleye: 'Mar–May (pre-spawn), Oct–Nov',
+        trout: 'Apr–Jun, Sep–Nov',
+        bass: 'Jun–Aug',
+        iceFishing: 'Dec–Feb (walleye through ice)',
+      },
+    },
+    boating: { marina: true, ramp: true, statePark: 'Starvation State Park' },
+    glassWindow: { typicalStart: 5, typicalEnd: 10, confidence: 'medium' },
+  },
+
+  // =====================================================
+  // FLAMING GORGE RESERVOIR
+  // =====================================================
+  'flaming-gorge': {
+    id: 'flaming-gorge',
+    name: 'Flaming Gorge',
+    shortName: 'Flaming Gorge',
+    region: 'Daggett County',
+    coordinates: { lat: 41.050, lng: -109.600 },
+    elevation: 6040,
+    surfaceAcres: 42020,
+    maxDepth: 436,
+    primaryWindType: 'Canyon/SE Prevailing',
+    thermalDirection: 'SE to S (130-200°)',
+    description: 'Trophy lake trout — canyon-sheltered sections, SE prevailing',
+    stations: {
+      pressure: {
+        high: { id: 'KFGR', name: 'Flaming Gorge AWOS', elevation: 5955, role: 'Nearest ASOS' },
+        low: { id: 'KFGR', name: 'Flaming Gorge AWOS', elevation: 5955, role: 'Dam-level reference' },
+        bustThreshold: 2.5,
+      },
+      ridge: [
+        { id: 'KFGR', name: 'Flaming Gorge AWOS', elevation: 5955, role: 'Primary reference', priority: 1 },
+      ],
+      groundTruth: { id: 'KFGR', name: 'Flaming Gorge AWOS', role: 'Ground Truth — nearest station' },
+      lakeshore: [
+        { id: 'KFGR', name: 'Flaming Gorge AWOS', elevation: 5955, role: 'Primary — near dam', priority: 1 },
+      ],
+      reference: [{ id: 'KFGR', name: 'Flaming Gorge AWOS', elevation: 5955 }],
+    },
+    thermal: {
+      optimalDirection: { min: 130, max: 200, ideal: 160 },
+      optimalSpeed: { min: 3, max: 12, average: 6 },
+      peakHours: { start: 12, end: 16, peak: 14 },
+      buildTime: { start: 10, usable: 12 },
+      fadeTime: { start: 17, end: 19 },
+    },
+    waterTempEstimate: 48,
+    fishSpecies: {
+      primary: ['lake trout (trophy — UT record 51 lb 8 oz)', 'kokanee salmon', 'rainbow trout', 'smallmouth bass'],
+      secondary: ['brown trout', 'cutthroat trout', 'channel catfish', 'burbot'],
+      blueRibbon: false,
+      bestSeasons: {
+        lakeTrout: 'Year-round, best Oct–Apr (deep jigging)',
+        kokanee: 'Jul–Sep (trolling at 30-60 ft)',
+        rainbow: 'Apr–Jun, Sep–Oct',
+        smallmouth: 'Jun–Aug (rocky points)',
+        iceFishing: 'Jan–Mar (lake trout, burbot)',
+      },
+    },
+    boating: { marina: true, ramp: true, nra: 'Flaming Gorge NRA' },
+    glassWindow: { typicalStart: 5, typicalEnd: 11, confidence: 'high' },
+  },
+
+  // =====================================================
+  // LAKE POWELL
+  // =====================================================
+  'lake-powell': {
+    id: 'lake-powell',
+    name: 'Lake Powell',
+    shortName: 'Powell',
+    region: 'Kane/San Juan County',
+    coordinates: { lat: 37.070, lng: -111.240 },
+    elevation: 3700,
+    surfaceAcres: 161390,
+    maxDepth: 583,
+    primaryWindType: 'Canyon/Desert Thermal',
+    thermalDirection: 'Variable — canyon dependent',
+    description: 'EXTREME — 186-mile reservoir, canyon microbursts, legendary striper boils',
+    stations: {
+      pressure: {
+        high: { id: 'KPGA', name: 'Page AZ Airport', elevation: 4316, role: 'Nearest ASOS — at dam' },
+        low: { id: 'KPGA', name: 'Page AZ Airport', elevation: 4316, role: 'Dam-level reference' },
+        bustThreshold: 3.0,
+      },
+      ridge: [
+        { id: 'KPGA', name: 'Page AZ Airport', elevation: 4316, role: 'Primary reference', priority: 1 },
+      ],
+      groundTruth: { id: 'KPGA', name: 'Page AZ Airport', role: 'Ground Truth — only station at dam' },
+      lakeshore: [
+        { id: 'KPGA', name: 'Page AZ Airport', elevation: 4316, role: 'Primary — near Wahweap', priority: 1 },
+      ],
+      reference: [{ id: 'KPGA', name: 'Page AZ Airport', elevation: 4316 }],
+    },
+    thermal: {
+      optimalDirection: { min: 150, max: 250, ideal: 200 },
+      optimalSpeed: { min: 3, max: 15, average: 7 },
+      peakHours: { start: 11, end: 17, peak: 14 },
+      buildTime: { start: 9, usable: 11 },
+      fadeTime: { start: 18, end: 20 },
+    },
+    waterTempEstimate: 65,
+    fishSpecies: {
+      primary: ['striped bass', 'largemouth bass', 'smallmouth bass', 'walleye'],
+      secondary: ['channel catfish', 'black crappie', 'white crappie'],
+      blueRibbon: false,
+      bestSeasons: {
+        stripedBass: 'Mar–Jun (spring run), Oct–Nov (boils)',
+        largemouth: 'Apr–Oct',
+        smallmouth: 'May–Sep',
+        walleye: 'Mar–May, Sep–Nov',
+        catfish: 'Jun–Sep',
+      },
+    },
+    boating: { marina: true, ramp: true, nra: 'Glen Canyon NRA' },
+    glassWindow: { typicalStart: 5, typicalEnd: 10, confidence: 'medium' },
+    windHazard: 'EXTREME — microbursts 56+ mph, canyon funneling, monsoon thunderstorms Jul–Sep',
+  },
+
+  // =====================================================
+  // EAST CANYON RESERVOIR
+  // =====================================================
+  'east-canyon': {
+    id: 'east-canyon',
+    name: 'East Canyon Reservoir',
+    shortName: 'East Canyon',
+    region: 'Morgan County',
+    coordinates: { lat: 40.890, lng: -111.590 },
+    elevation: 5700,
+    surfaceAcres: 680,
+    maxDepth: 120,
+    primaryWindType: 'Canyon Channeled',
+    thermalDirection: 'Variable — canyon corridor',
+    description: 'Mountain canyon reservoir — diverse trout and warmwater fishery',
+    stations: {
+      pressure: {
+        high: { id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226, role: 'Regional reference' },
+        low: { id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226, role: 'Nearest ASOS (25+ mi)' },
+        bustThreshold: 2.5,
+      },
+      ridge: [
+        { id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226, role: 'Regional reference', priority: 1 },
+      ],
+      groundTruth: { id: 'KSLC', name: 'Salt Lake City Intl', role: 'Ground Truth — distant' },
+      lakeshore: [
+        { id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226, role: 'Primary (distant)', priority: 1 },
+      ],
+      reference: [{ id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226 }],
+    },
+    thermal: {
+      optimalDirection: { min: 180, max: 270, ideal: 225 },
+      optimalSpeed: { min: 3, max: 12, average: 5 },
+      peakHours: { start: 12, end: 16, peak: 14 },
+      buildTime: { start: 10, usable: 12 },
+      fadeTime: { start: 17, end: 19 },
+    },
+    waterTempEstimate: 50,
+    fishSpecies: {
+      primary: ['rainbow trout', 'cutthroat trout', 'brown trout', 'smallmouth bass'],
+      secondary: ['kokanee salmon', 'black crappie', 'wiper', 'tiger trout'],
+      blueRibbon: false,
+      bestSeasons: {
+        trout: 'Apr–Jun, Sep–Nov',
+        kokanee: 'Jul–Aug',
+        bass: 'Jun–Sep',
+        iceFishing: 'Dec–Feb',
+      },
+    },
+    boating: { marina: false, ramp: true, statePark: 'East Canyon State Park' },
+    glassWindow: { typicalStart: 5, typicalEnd: 10, confidence: 'medium' },
+  },
+
+  // =====================================================
+  // ECHO RESERVOIR
+  // =====================================================
+  'echo': {
+    id: 'echo',
+    name: 'Echo Reservoir',
+    shortName: 'Echo',
+    region: 'Summit County',
+    coordinates: { lat: 40.970, lng: -111.440 },
+    elevation: 5560,
+    surfaceAcres: 1450,
+    maxDepth: 126,
+    primaryWindType: 'Valley/I-80 Corridor',
+    thermalDirection: 'W to SW (240-270°)',
+    description: 'Weber River reservoir — wiper surface action, I-80 corridor winds',
+    stations: {
+      pressure: {
+        high: { id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226, role: 'Regional reference' },
+        low: { id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226, role: 'Nearest major ASOS' },
+        bustThreshold: 2.5,
+      },
+      ridge: [
+        { id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226, role: 'Regional reference', priority: 1 },
+      ],
+      groundTruth: { id: 'KSLC', name: 'Salt Lake City Intl', role: 'Ground Truth — distant' },
+      lakeshore: [
+        { id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226, role: 'Primary (distant)', priority: 1 },
+      ],
+      reference: [{ id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226 }],
+    },
+    thermal: {
+      optimalDirection: { min: 240, max: 270, ideal: 255 },
+      optimalSpeed: { min: 3, max: 12, average: 6 },
+      peakHours: { start: 12, end: 16, peak: 14 },
+      buildTime: { start: 10, usable: 12 },
+      fadeTime: { start: 17, end: 19 },
+    },
+    waterTempEstimate: 52,
+    fishSpecies: {
+      primary: ['rainbow trout', 'smallmouth bass', 'wiper'],
+      secondary: ['yellow perch', 'brown trout', 'channel catfish'],
+      blueRibbon: false,
+      bestSeasons: {
+        trout: 'Apr–Jun, Sep–Nov',
+        smallmouth: 'Jun–Sep',
+        wiper: 'May–Sep (surface feeding)',
+        iceFishing: 'Dec–Feb (trout, perch)',
+      },
+    },
+    boating: { marina: false, ramp: true, statePark: 'Echo State Park' },
+    glassWindow: { typicalStart: 5, typicalEnd: 10, confidence: 'medium' },
+  },
+
+  // =====================================================
+  // ROCKPORT RESERVOIR
+  // =====================================================
+  'rockport': {
+    id: 'rockport',
+    name: 'Rockport Reservoir',
+    shortName: 'Rockport',
+    region: 'Summit County',
+    coordinates: { lat: 40.780, lng: -111.400 },
+    elevation: 5955,
+    surfaceAcres: 1080,
+    maxDepth: 150,
+    primaryWindType: 'Valley Thermal',
+    thermalDirection: 'SW (200-250°)',
+    description: 'Weber River canyon reservoir — rainbow trout and smallmouth bass',
+    stations: {
+      pressure: {
+        high: { id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226, role: 'Regional reference' },
+        low: { id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226, role: 'Nearest major ASOS' },
+        bustThreshold: 2.5,
+      },
+      ridge: [
+        { id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226, role: 'Regional reference', priority: 1 },
+      ],
+      groundTruth: { id: 'KSLC', name: 'Salt Lake City Intl', role: 'Ground Truth — distant' },
+      lakeshore: [
+        { id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226, role: 'Primary (distant)', priority: 1 },
+      ],
+      reference: [{ id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226 }],
+    },
+    thermal: {
+      optimalDirection: { min: 200, max: 250, ideal: 225 },
+      optimalSpeed: { min: 3, max: 12, average: 5 },
+      peakHours: { start: 12, end: 16, peak: 14 },
+      buildTime: { start: 10, usable: 12 },
+      fadeTime: { start: 17, end: 19 },
+    },
+    waterTempEstimate: 50,
+    fishSpecies: {
+      primary: ['rainbow trout', 'smallmouth bass', 'brown trout'],
+      secondary: ['kokanee salmon', 'yellow perch'],
+      blueRibbon: false,
+      bestSeasons: {
+        trout: 'Apr–Jun, Sep–Nov',
+        bass: 'Jun–Sep',
+        kokanee: 'Jul–Sep',
+        iceFishing: 'Dec–Feb',
+      },
+    },
+    boating: { marina: false, ramp: true, statePark: 'Rockport State Park' },
+    glassWindow: { typicalStart: 5, typicalEnd: 10, confidence: 'medium' },
+  },
+
+  // =====================================================
+  // YUBA RESERVOIR
+  // =====================================================
+  'yuba': {
+    id: 'yuba',
+    name: 'Yuba Reservoir',
+    shortName: 'Yuba',
+    region: 'Juab/Sanpete County',
+    coordinates: { lat: 39.430, lng: -111.920 },
+    elevation: 5100,
+    surfaceAcres: 10500,
+    maxDepth: 80,
+    primaryWindType: 'Valley/Frontal',
+    thermalDirection: 'S to SW (170-230°)',
+    description: '22-mile warmwater monster — walleye, northern pike, tiger muskie',
+    stations: {
+      pressure: {
+        high: { id: 'KPVU', name: 'Provo Municipal', elevation: 4495, role: 'Regional reference' },
+        low: { id: 'KPVU', name: 'Provo Municipal', elevation: 4495, role: 'Nearest major ASOS (50+ mi)' },
+        bustThreshold: 3.0,
+      },
+      ridge: [
+        { id: 'KPVU', name: 'Provo Municipal', elevation: 4495, role: 'Regional reference', priority: 1 },
+      ],
+      groundTruth: { id: 'KPVU', name: 'Provo Municipal', role: 'Ground Truth — distant' },
+      lakeshore: [
+        { id: 'KPVU', name: 'Provo Municipal', elevation: 4495, role: 'Primary (distant)', priority: 1 },
+      ],
+      reference: [{ id: 'KPVU', name: 'Provo Municipal', elevation: 4495 }],
+    },
+    thermal: {
+      optimalDirection: { min: 170, max: 230, ideal: 200 },
+      optimalSpeed: { min: 3, max: 14, average: 7 },
+      peakHours: { start: 11, end: 16, peak: 13 },
+      buildTime: { start: 9, usable: 11 },
+      fadeTime: { start: 17, end: 19 },
+    },
+    waterTempEstimate: 58,
+    fishSpecies: {
+      primary: ['walleye', 'channel catfish', 'wiper', 'northern pike'],
+      secondary: ['rainbow trout', 'yellow perch', 'tiger trout', 'tiger muskie'],
+      blueRibbon: false,
+      bestSeasons: {
+        walleye: 'Mar–May, Oct–Nov',
+        northernPike: 'Mar–Apr (pre-spawn), Sep–Oct',
+        catfish: 'Jun–Sep',
+        wiper: 'May–Sep (surface feeding)',
+        iceFishing: 'Jan–Feb (walleye, perch)',
+      },
+    },
+    boating: { marina: false, ramp: true, statePark: 'Yuba State Park' },
+    glassWindow: { typicalStart: 5, typicalEnd: 10, confidence: 'low' },
+    windHazard: 'MODERATE — 22-mile fetch allows significant wave buildup',
+  },
+
+  // =====================================================
+  // SCOFIELD RESERVOIR (Blue Ribbon)
+  // =====================================================
+  'scofield': {
+    id: 'scofield',
+    name: 'Scofield Reservoir',
+    shortName: 'Scofield',
+    region: 'Carbon County',
+    coordinates: { lat: 39.790, lng: -111.150 },
+    elevation: 7618,
+    surfaceAcres: 2815,
+    maxDepth: 50,
+    primaryWindType: 'Plateau/Frontal',
+    thermalDirection: 'W to NW (250-320°)',
+    description: 'Blue Ribbon fishery — highest-elevation state park, slot-limit cutthroat',
+    stations: {
+      pressure: {
+        high: { id: 'KPUC', name: 'Price/Carbon Airport', elevation: 5951, role: 'Nearest ASOS' },
+        low: { id: 'KPUC', name: 'Price/Carbon Airport', elevation: 5951, role: 'Regional reference' },
+        bustThreshold: 2.5,
+      },
+      ridge: [
+        { id: 'KPUC', name: 'Price/Carbon Airport', elevation: 5951, role: 'Primary reference', priority: 1 },
+      ],
+      groundTruth: { id: 'KPUC', name: 'Price/Carbon Airport', role: 'Ground Truth — 25 mi east' },
+      lakeshore: [
+        { id: 'KPUC', name: 'Price/Carbon Airport', elevation: 5951, role: 'Primary (25 mi)', priority: 1 },
+      ],
+      reference: [{ id: 'KPUC', name: 'Price/Carbon Airport', elevation: 5951 }],
+    },
+    thermal: {
+      optimalDirection: { min: 250, max: 320, ideal: 280 },
+      optimalSpeed: { min: 4, max: 15, average: 8 },
+      peakHours: { start: 11, end: 16, peak: 13 },
+      buildTime: { start: 9, usable: 11 },
+      fadeTime: { start: 17, end: 19 },
+    },
+    waterTempEstimate: 45,
+    fishSpecies: {
+      primary: ['cutthroat trout', 'rainbow trout', 'tiger trout'],
+      secondary: [],
+      blueRibbon: true,
+      specialRegs: 'Cutthroat/tiger trout 15-22 inches must be released. Combined trout limit 4.',
+      bestSeasons: {
+        cutthroat: 'May–Jun (post ice-off), Sep–Oct',
+        rainbow: 'Year-round (stocked)',
+        iceFishing: 'Dec–Mar (very popular — thick reliable ice)',
+      },
+    },
+    boating: { marina: false, ramp: true, statePark: 'Scofield State Park' },
+    glassWindow: { typicalStart: 5, typicalEnd: 10, confidence: 'medium' },
+  },
+
+  // =====================================================
+  // OTTER CREEK RESERVOIR (Blue Ribbon)
+  // =====================================================
+  'otter-creek': {
+    id: 'otter-creek',
+    name: 'Otter Creek Reservoir',
+    shortName: 'Otter Creek',
+    region: 'Piute County',
+    coordinates: { lat: 38.350, lng: -111.990 },
+    elevation: 6372,
+    surfaceAcres: 2520,
+    maxDepth: 70,
+    primaryWindType: 'Valley/Plateau',
+    thermalDirection: 'S to SW (180-230°)',
+    description: 'Blue Ribbon trout factory — stocked fish grow fast, productive year-round',
+    stations: {
+      pressure: {
+        high: { id: 'KCDC', name: 'Cedar City Regional', elevation: 5622, role: 'Nearest ASOS' },
+        low: { id: 'KCDC', name: 'Cedar City Regional', elevation: 5622, role: 'Regional reference' },
+        bustThreshold: 2.5,
+      },
+      ridge: [
+        { id: 'KCDC', name: 'Cedar City Regional', elevation: 5622, role: 'Primary reference', priority: 1 },
+      ],
+      groundTruth: { id: 'KCDC', name: 'Cedar City Regional', role: 'Ground Truth — distant' },
+      lakeshore: [
+        { id: 'KCDC', name: 'Cedar City Regional', elevation: 5622, role: 'Primary (60 mi)', priority: 1 },
+      ],
+      reference: [{ id: 'KCDC', name: 'Cedar City Regional', elevation: 5622 }],
+    },
+    thermal: {
+      optimalDirection: { min: 180, max: 230, ideal: 205 },
+      optimalSpeed: { min: 3, max: 12, average: 5 },
+      peakHours: { start: 12, end: 16, peak: 14 },
+      buildTime: { start: 10, usable: 12 },
+      fadeTime: { start: 17, end: 19 },
+    },
+    waterTempEstimate: 50,
+    fishSpecies: {
+      primary: ['rainbow trout', 'cutthroat trout', 'brown trout'],
+      secondary: ['tiger trout', 'smallmouth bass', 'wiper'],
+      blueRibbon: true,
+      bestSeasons: {
+        trout: 'Apr–Jun (post ice-off), Sep–Nov (pre-ice)',
+        iceFishing: 'Dec–Mar (very productive)',
+      },
+    },
+    boating: { marina: false, ramp: true, statePark: 'Otter Creek State Park' },
+    glassWindow: { typicalStart: 5, typicalEnd: 10, confidence: 'medium' },
+  },
+
+  // =====================================================
+  // FISH LAKE
+  // =====================================================
+  'fish-lake': {
+    id: 'fish-lake',
+    name: 'Fish Lake',
+    shortName: 'Fish Lake',
+    region: 'Sevier County',
+    coordinates: { lat: 38.549, lng: -111.711 },
+    elevation: 8848,
+    surfaceAcres: 2500,
+    maxDepth: 175,
+    primaryWindType: 'Mountain Thermal',
+    thermalDirection: 'SW (200-250°)',
+    description: 'Utah\'s largest natural mountain lake — trophy mackinaw at depth',
+    stations: {
+      pressure: {
+        high: { id: 'KCDC', name: 'Cedar City Regional', elevation: 5622, role: 'Nearest ASOS (70+ mi)' },
+        low: { id: 'KCDC', name: 'Cedar City Regional', elevation: 5622, role: 'Regional reference' },
+        bustThreshold: 3.0,
+      },
+      ridge: [
+        { id: 'KCDC', name: 'Cedar City Regional', elevation: 5622, role: 'Primary reference', priority: 1 },
+      ],
+      groundTruth: { id: 'KCDC', name: 'Cedar City Regional', role: 'Ground Truth — very distant' },
+      lakeshore: [
+        { id: 'KCDC', name: 'Cedar City Regional', elevation: 5622, role: 'Primary (70+ mi)', priority: 1 },
+      ],
+      reference: [{ id: 'KCDC', name: 'Cedar City Regional', elevation: 5622 }],
+    },
+    thermal: {
+      optimalDirection: { min: 200, max: 250, ideal: 225 },
+      optimalSpeed: { min: 3, max: 12, average: 5 },
+      peakHours: { start: 12, end: 16, peak: 14 },
+      buildTime: { start: 10, usable: 12 },
+      fadeTime: { start: 17, end: 19 },
+    },
+    waterTempEstimate: 42,
+    fishSpecies: {
+      primary: ['lake trout (mackinaw)', 'rainbow trout', 'splake'],
+      secondary: ['yellow perch', 'tiger trout'],
+      blueRibbon: false,
+      bestSeasons: {
+        lakeTrout: 'Year-round, best May–Jun and Oct–Nov',
+        rainbow: 'Jun–Sep',
+        iceFishing: 'Dec–Mar (mackinaw jigging at depth)',
+      },
+    },
+    boating: { marina: true, ramp: true },
+    glassWindow: { typicalStart: 5, typicalEnd: 10, confidence: 'medium' },
+  },
+
+  // =====================================================
+  // STEINAKER RESERVOIR
+  // =====================================================
+  'steinaker': {
+    id: 'steinaker',
+    name: 'Steinaker Reservoir',
+    shortName: 'Steinaker',
+    region: 'Uintah County',
+    coordinates: { lat: 40.530, lng: -109.530 },
+    elevation: 5500,
+    surfaceAcres: 820,
+    maxDepth: 100,
+    primaryWindType: 'Basin Thermal',
+    thermalDirection: 'S to SW (180-230°)',
+    description: 'Vernal-area reservoir — rainbow trout and bass with sandy beach',
+    stations: {
+      pressure: {
+        high: { id: 'KVEL', name: 'Vernal Regional Airport', elevation: 5280, role: 'Nearest ASOS (7 mi)' },
+        low: { id: 'KVEL', name: 'Vernal Regional Airport', elevation: 5280, role: 'Local reference' },
+        bustThreshold: 2.0,
+      },
+      ridge: [
+        { id: 'KVEL', name: 'Vernal Regional Airport', elevation: 5280, role: 'Primary reference', priority: 1 },
+      ],
+      groundTruth: { id: 'KVEL', name: 'Vernal Regional Airport', role: 'Ground Truth — 7 miles' },
+      lakeshore: [
+        { id: 'KVEL', name: 'Vernal Regional Airport', elevation: 5280, role: 'Primary — close', priority: 1 },
+      ],
+      reference: [{ id: 'KVEL', name: 'Vernal Regional Airport', elevation: 5280 }],
+    },
+    thermal: {
+      optimalDirection: { min: 180, max: 230, ideal: 200 },
+      optimalSpeed: { min: 3, max: 12, average: 5 },
+      peakHours: { start: 12, end: 16, peak: 14 },
+      buildTime: { start: 10, usable: 12 },
+      fadeTime: { start: 17, end: 19 },
+    },
+    waterTempEstimate: 55,
+    fishSpecies: {
+      primary: ['rainbow trout', 'largemouth bass'],
+      secondary: ['brown trout', 'bluegill'],
+      blueRibbon: false,
+      bestSeasons: {
+        trout: 'Apr–Jun, Sep–Nov',
+        bass: 'Jun–Sep',
+        iceFishing: 'Dec–Feb',
+      },
+    },
+    boating: { marina: false, ramp: true, statePark: 'Steinaker State Park' },
+    glassWindow: { typicalStart: 5, typicalEnd: 11, confidence: 'high' },
+  },
+
+  // =====================================================
+  // RED FLEET RESERVOIR
+  // =====================================================
+  'red-fleet': {
+    id: 'red-fleet',
+    name: 'Red Fleet Reservoir',
+    shortName: 'Red Fleet',
+    region: 'Uintah County',
+    coordinates: { lat: 40.580, lng: -109.460 },
+    elevation: 5500,
+    surfaceAcres: 520,
+    maxDepth: 120,
+    primaryWindType: 'Basin Thermal',
+    thermalDirection: 'S to SW (180-230°)',
+    description: 'Red-rock reservoir near Vernal — scenic trout fishing, dinosaur trackway',
+    stations: {
+      pressure: {
+        high: { id: 'KVEL', name: 'Vernal Regional Airport', elevation: 5280, role: 'Nearest ASOS (10 mi)' },
+        low: { id: 'KVEL', name: 'Vernal Regional Airport', elevation: 5280, role: 'Local reference' },
+        bustThreshold: 2.0,
+      },
+      ridge: [
+        { id: 'KVEL', name: 'Vernal Regional Airport', elevation: 5280, role: 'Primary reference', priority: 1 },
+      ],
+      groundTruth: { id: 'KVEL', name: 'Vernal Regional Airport', role: 'Ground Truth — 10 miles' },
+      lakeshore: [
+        { id: 'KVEL', name: 'Vernal Regional Airport', elevation: 5280, role: 'Primary — close', priority: 1 },
+      ],
+      reference: [{ id: 'KVEL', name: 'Vernal Regional Airport', elevation: 5280 }],
+    },
+    thermal: {
+      optimalDirection: { min: 180, max: 230, ideal: 200 },
+      optimalSpeed: { min: 3, max: 12, average: 5 },
+      peakHours: { start: 12, end: 16, peak: 14 },
+      buildTime: { start: 10, usable: 12 },
+      fadeTime: { start: 17, end: 19 },
+    },
+    waterTempEstimate: 52,
+    fishSpecies: {
+      primary: ['rainbow trout', 'brown trout'],
+      secondary: ['yellow perch', 'smallmouth bass', 'bluegill', 'largemouth bass'],
+      blueRibbon: false,
+      bestSeasons: {
+        trout: 'Apr–Jun, Sep–Nov',
+        bass: 'Jun–Aug',
+        iceFishing: 'Dec–Feb',
+      },
+    },
+    boating: { marina: false, ramp: true, statePark: 'Red Fleet State Park' },
+    glassWindow: { typicalStart: 5, typicalEnd: 11, confidence: 'high' },
+  },
+
+  // =====================================================
+  // HYRUM RESERVOIR
+  // =====================================================
+  'hyrum': {
+    id: 'hyrum',
+    name: 'Hyrum Reservoir',
+    shortName: 'Hyrum',
+    region: 'Cache County',
+    coordinates: { lat: 41.620, lng: -111.870 },
+    elevation: 4670,
+    surfaceAcres: 480,
+    maxDepth: 50,
+    primaryWindType: 'Valley Drainage',
+    thermalDirection: 'S (170-210°)',
+    description: 'Family fishing reservoir — stocked rainbow trout, panfish',
+    stations: {
+      pressure: {
+        high: { id: 'KLGU', name: 'Logan-Cache Airport', elevation: 4457, role: 'Nearest ASOS (10 mi)' },
+        low: { id: 'KLGU', name: 'Logan-Cache Airport', elevation: 4457, role: 'Cache Valley reference' },
+        bustThreshold: 2.0,
+      },
+      ridge: [
+        { id: 'KLGU', name: 'Logan-Cache Airport', elevation: 4457, role: 'Primary reference', priority: 1 },
+      ],
+      groundTruth: { id: 'KLGU', name: 'Logan-Cache Airport', role: 'Ground Truth — 10 miles' },
+      lakeshore: [
+        { id: 'KLGU', name: 'Logan-Cache Airport', elevation: 4457, role: 'Primary — close', priority: 1 },
+      ],
+      reference: [{ id: 'KLGU', name: 'Logan-Cache Airport', elevation: 4457 }],
+    },
+    thermal: {
+      optimalDirection: { min: 170, max: 210, ideal: 190 },
+      optimalSpeed: { min: 3, max: 10, average: 5 },
+      peakHours: { start: 12, end: 16, peak: 14 },
+      buildTime: { start: 10, usable: 12 },
+      fadeTime: { start: 17, end: 19 },
+    },
+    waterTempEstimate: 55,
+    fishSpecies: {
+      primary: ['rainbow trout', 'yellow perch', 'bluegill'],
+      secondary: ['green sunfish'],
+      blueRibbon: false,
+      bestSeasons: {
+        trout: 'Apr–Jun, Sep–Oct',
+        panfish: 'May–Aug',
+        iceFishing: 'Dec–Feb',
+      },
+    },
+    boating: { marina: false, ramp: true, statePark: 'Hyrum State Park' },
+    glassWindow: { typicalStart: 5, typicalEnd: 11, confidence: 'high' },
+  },
+
+  // =====================================================
+  // MINERSVILLE RESERVOIR
+  // =====================================================
+  'minersville': {
+    id: 'minersville',
+    name: 'Minersville Reservoir',
+    shortName: 'Minersville',
+    region: 'Beaver County',
+    coordinates: { lat: 38.210, lng: -112.870 },
+    elevation: 5530,
+    surfaceAcres: 900,
+    maxDepth: 60,
+    primaryWindType: 'Desert Valley',
+    thermalDirection: 'SW (200-250°)',
+    description: 'Flies & lures only — trophy trout water, quality over quantity',
+    stations: {
+      pressure: {
+        high: { id: 'KCDC', name: 'Cedar City Regional', elevation: 5622, role: 'Nearest ASOS (35 mi)' },
+        low: { id: 'KCDC', name: 'Cedar City Regional', elevation: 5622, role: 'Regional reference' },
+        bustThreshold: 2.5,
+      },
+      ridge: [
+        { id: 'KCDC', name: 'Cedar City Regional', elevation: 5622, role: 'Primary reference', priority: 1 },
+      ],
+      groundTruth: { id: 'KCDC', name: 'Cedar City Regional', role: 'Ground Truth — 35 miles' },
+      lakeshore: [
+        { id: 'KCDC', name: 'Cedar City Regional', elevation: 5622, role: 'Primary (35 mi)', priority: 1 },
+      ],
+      reference: [{ id: 'KCDC', name: 'Cedar City Regional', elevation: 5622 }],
+    },
+    thermal: {
+      optimalDirection: { min: 200, max: 250, ideal: 225 },
+      optimalSpeed: { min: 3, max: 12, average: 5 },
+      peakHours: { start: 12, end: 16, peak: 14 },
+      buildTime: { start: 10, usable: 12 },
+      fadeTime: { start: 17, end: 19 },
+    },
+    waterTempEstimate: 50,
+    fishSpecies: {
+      primary: ['rainbow trout', 'brown trout', 'smallmouth bass'],
+      secondary: ['cutthroat trout', 'tiger trout', 'largemouth bass', 'wiper'],
+      blueRibbon: false,
+      specialRegs: 'Artificial flies and lures only (no bait)',
+      bestSeasons: {
+        trout: 'Apr–Jun, Sep–Nov',
+        bass: 'Jun–Aug',
+        iceFishing: 'Dec–Feb (trout)',
+      },
+    },
+    boating: { marina: false, ramp: true, statePark: 'Minersville State Park' },
+    glassWindow: { typicalStart: 5, typicalEnd: 10, confidence: 'medium' },
+  },
+
+  // =====================================================
+  // PIUTE RESERVOIR
+  // =====================================================
+  'piute': {
+    id: 'piute',
+    name: 'Piute Reservoir',
+    shortName: 'Piute',
+    region: 'Piute County',
+    coordinates: { lat: 38.330, lng: -112.160 },
+    elevation: 5900,
+    surfaceAcres: 3360,
+    maxDepth: 65,
+    primaryWindType: 'Valley/Plateau',
+    thermalDirection: 'S to SW (180-230°)',
+    description: 'Multi-species fishery — expanding with crappie and white bass introductions',
+    stations: {
+      pressure: {
+        high: { id: 'KCDC', name: 'Cedar City Regional', elevation: 5622, role: 'Nearest ASOS (60 mi)' },
+        low: { id: 'KCDC', name: 'Cedar City Regional', elevation: 5622, role: 'Regional reference' },
+        bustThreshold: 2.5,
+      },
+      ridge: [
+        { id: 'KCDC', name: 'Cedar City Regional', elevation: 5622, role: 'Primary reference', priority: 1 },
+      ],
+      groundTruth: { id: 'KCDC', name: 'Cedar City Regional', role: 'Ground Truth — distant' },
+      lakeshore: [
+        { id: 'KCDC', name: 'Cedar City Regional', elevation: 5622, role: 'Primary (60 mi)', priority: 1 },
+      ],
+      reference: [{ id: 'KCDC', name: 'Cedar City Regional', elevation: 5622 }],
+    },
+    thermal: {
+      optimalDirection: { min: 180, max: 230, ideal: 200 },
+      optimalSpeed: { min: 3, max: 12, average: 5 },
+      peakHours: { start: 12, end: 16, peak: 14 },
+      buildTime: { start: 10, usable: 12 },
+      fadeTime: { start: 17, end: 19 },
+    },
+    waterTempEstimate: 52,
+    fishSpecies: {
+      primary: ['rainbow trout', 'cutthroat trout', 'brown trout'],
+      secondary: ['tiger trout', 'smallmouth bass', 'white crappie', 'black crappie', 'white bass', 'bluegill'],
+      blueRibbon: false,
+      bestSeasons: {
+        trout: 'Apr–Jun, Sep–Nov',
+        bass: 'Jun–Sep',
+        crappie: 'Apr–May, Oct',
+        iceFishing: 'Dec–Feb',
+      },
+    },
+    boating: { marina: false, ramp: true, statePark: 'Piute State Park' },
+    glassWindow: { typicalStart: 5, typicalEnd: 10, confidence: 'medium' },
+  },
+
+  // =====================================================
+  // PANGUITCH LAKE
+  // =====================================================
+  'panguitch': {
+    id: 'panguitch',
+    name: 'Panguitch Lake',
+    shortName: 'Panguitch',
+    region: 'Garfield County',
+    coordinates: { lat: 37.710, lng: -112.650 },
+    elevation: 8215,
+    surfaceAcres: 1248,
+    maxDepth: 50,
+    primaryWindType: 'Mountain Plateau',
+    thermalDirection: 'W to SW (230-280°)',
+    description: 'High-mountain lake near Cedar Breaks — reliable ice, stocked trout',
+    stations: {
+      pressure: {
+        high: { id: 'KCDC', name: 'Cedar City Regional', elevation: 5622, role: 'Nearest ASOS (25 mi)' },
+        low: { id: 'KCDC', name: 'Cedar City Regional', elevation: 5622, role: 'Regional reference' },
+        bustThreshold: 2.5,
+      },
+      ridge: [
+        { id: 'KCDC', name: 'Cedar City Regional', elevation: 5622, role: 'Primary reference', priority: 1 },
+      ],
+      groundTruth: { id: 'KCDC', name: 'Cedar City Regional', role: 'Ground Truth — 25 miles' },
+      lakeshore: [
+        { id: 'KCDC', name: 'Cedar City Regional', elevation: 5622, role: 'Primary (25 mi)', priority: 1 },
+      ],
+      reference: [{ id: 'KCDC', name: 'Cedar City Regional', elevation: 5622 }],
+    },
+    thermal: {
+      optimalDirection: { min: 230, max: 280, ideal: 255 },
+      optimalSpeed: { min: 3, max: 12, average: 5 },
+      peakHours: { start: 12, end: 16, peak: 14 },
+      buildTime: { start: 10, usable: 12 },
+      fadeTime: { start: 17, end: 19 },
+    },
+    waterTempEstimate: 45,
+    fishSpecies: {
+      primary: ['rainbow trout', 'brown trout'],
+      secondary: ['brook trout'],
+      blueRibbon: false,
+      bestSeasons: {
+        trout: 'May–Jun, Sep–Oct',
+        iceFishing: 'Dec–Mar (popular — reliable ice at 8,215 ft)',
+      },
+    },
+    boating: { marina: true, ramp: true },
+    glassWindow: { typicalStart: 5, typicalEnd: 10, confidence: 'medium' },
+  },
+
+  // =====================================================
+  // SAND HOLLOW RESERVOIR (Dixie)
+  // =====================================================
+  'sand-hollow': {
+    id: 'sand-hollow',
+    name: 'Sand Hollow Reservoir',
+    shortName: 'Sand Hollow',
+    region: 'Washington County',
+    coordinates: { lat: 37.105, lng: -113.380 },
+    elevation: 3000,
+    surfaceAcres: 1322,
+    maxDepth: 80,
+    primaryWindType: 'Desert Thermal',
+    thermalDirection: 'SW (200-250°)',
+    description: 'Dixie warm-water paradise — largemouth bass and bluegill in red rock',
+    stations: {
+      pressure: {
+        high: { id: 'KSGU', name: 'St George Regional', elevation: 2941, role: 'Nearest ASOS' },
+        low: { id: 'KSGU', name: 'St George Regional', elevation: 2941, role: 'Local reference' },
+        bustThreshold: 2.0,
+      },
+      ridge: [
+        { id: 'KSGU', name: 'St George Regional', elevation: 2941, role: 'Primary reference', priority: 1 },
+      ],
+      groundTruth: { id: 'KSGU', name: 'St George Regional', role: 'Ground Truth — close' },
+      lakeshore: [
+        { id: 'KSGU', name: 'St George Regional', elevation: 2941, role: 'Primary — close', priority: 1 },
+      ],
+      reference: [{ id: 'KSGU', name: 'St George Regional', elevation: 2941 }],
+    },
+    thermal: {
+      optimalDirection: { min: 200, max: 250, ideal: 225 },
+      optimalSpeed: { min: 3, max: 12, average: 5 },
+      peakHours: { start: 11, end: 16, peak: 13 },
+      buildTime: { start: 9, usable: 11 },
+      fadeTime: { start: 17, end: 19 },
+    },
+    waterTempEstimate: 68,
+    fishSpecies: {
+      primary: ['largemouth bass', 'bluegill', 'rainbow trout (winter stocked)'],
+      secondary: ['channel catfish', 'black crappie', 'green sunfish'],
+      blueRibbon: false,
+      bestSeasons: {
+        largemouth: 'Mar–Nov (year-round in mild Dixie climate)',
+        bluegill: 'Apr–Oct',
+        trout: 'Nov–Apr (cool season stocking)',
+        catfish: 'Jun–Sep',
+      },
+    },
+    boating: { marina: false, ramp: true, statePark: 'Sand Hollow State Park' },
+    glassWindow: { typicalStart: 5, typicalEnd: 10, confidence: 'medium' },
+  },
+
+  // =====================================================
+  // QUAIL CREEK RESERVOIR (Dixie)
+  // =====================================================
+  'quail-creek': {
+    id: 'quail-creek',
+    name: 'Quail Creek Reservoir',
+    shortName: 'Quail Creek',
+    region: 'Washington County',
+    coordinates: { lat: 37.190, lng: -113.380 },
+    elevation: 3300,
+    surfaceAcres: 590,
+    maxDepth: 90,
+    primaryWindType: 'Desert Thermal',
+    thermalDirection: 'SW (200-250°)',
+    description: 'Dixie warmwater gem — Utah\'s warmest reservoir, year-round bass',
+    stations: {
+      pressure: {
+        high: { id: 'KSGU', name: 'St George Regional', elevation: 2941, role: 'Nearest ASOS' },
+        low: { id: 'KSGU', name: 'St George Regional', elevation: 2941, role: 'Local reference' },
+        bustThreshold: 2.0,
+      },
+      ridge: [
+        { id: 'KSGU', name: 'St George Regional', elevation: 2941, role: 'Primary reference', priority: 1 },
+      ],
+      groundTruth: { id: 'KSGU', name: 'St George Regional', role: 'Ground Truth — close' },
+      lakeshore: [
+        { id: 'KSGU', name: 'St George Regional', elevation: 2941, role: 'Primary — close', priority: 1 },
+      ],
+      reference: [{ id: 'KSGU', name: 'St George Regional', elevation: 2941 }],
+    },
+    thermal: {
+      optimalDirection: { min: 200, max: 250, ideal: 225 },
+      optimalSpeed: { min: 3, max: 12, average: 5 },
+      peakHours: { start: 11, end: 16, peak: 13 },
+      buildTime: { start: 9, usable: 11 },
+      fadeTime: { start: 17, end: 19 },
+    },
+    waterTempEstimate: 72,
+    fishSpecies: {
+      primary: ['largemouth bass', 'rainbow trout (winter stocked)', 'bluegill'],
+      secondary: ['black crappie', 'channel catfish', 'green sunfish'],
+      blueRibbon: false,
+      bestSeasons: {
+        largemouth: 'Year-round (Utah\'s warmest reservoir)',
+        trout: 'Nov–Apr (cool season stocking)',
+        bluegill: 'Apr–Oct',
+        crappie: 'Mar–May, Oct–Nov',
+      },
+    },
+    boating: { marina: false, ramp: true, statePark: 'Quail Creek State Park' },
+    glassWindow: { typicalStart: 5, typicalEnd: 10, confidence: 'medium' },
   },
 };
 

@@ -34,7 +34,10 @@ import ParaglidingMode from './ParaglidingMode';
 import FishingMode from './FishingMode';
 import ThemeToggle from './ThemeToggle';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
 import { SafeComponent } from './ErrorBoundary';
+import ProGate from './ProGate';
+import ProUpgrade from './ProUpgrade';
 import { calculateCorrelatedWind } from '../services/CorrelationEngine';
 import { monitorSwings } from '../services/FrontalTrendPredictor';
 import { generateBriefing } from '../services/MorningBriefing';
@@ -64,6 +67,7 @@ export function Dashboard() {
   const [showSMSSettings, setShowSMSSettings] = useState(false);
   const { lakeState, history, status, isLoading, error, lastUpdated, refresh } = useLakeData(selectedLake);
   const { theme } = useTheme();
+  const { isPro, trialActive, trialDaysLeft, openPaywall, showPaywall } = useAuth();
   
   // Auto-switch lakes when moving between snow and water sports
   React.useEffect(() => {
@@ -280,7 +284,7 @@ export function Dashboard() {
           <div className="flex items-center justify-between h-14">
             <div className="flex items-center gap-3">
               <h1 className="text-lg font-extrabold tracking-tight text-sky-500">
-                Utah Wind Pro
+                UtahWindFinder
               </h1>
               <span className={`hidden sm:inline text-[11px] font-medium px-2 py-0.5 rounded-full ${
                 theme === 'dark' ? 'bg-sky-500/10 text-sky-400' : 'bg-sky-50 text-sky-600'
@@ -377,6 +381,20 @@ export function Dashboard() {
               </button>
 
               <ThemeToggle />
+
+              {!isPro && (
+                <button
+                  onClick={openPaywall}
+                  className="ml-1 px-3 py-1.5 rounded-lg text-[11px] font-bold bg-gradient-to-r from-sky-500 to-cyan-500 text-white shadow-sm hover:shadow-lg hover:shadow-sky-500/25 transition-all hover:scale-105 active:scale-95"
+                >
+                  Upgrade
+                </button>
+              )}
+              {isPro && trialActive && (
+                <span className="ml-1 px-2 py-1 rounded-lg text-[10px] font-semibold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                  Trial: {trialDaysLeft}d
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -411,6 +429,27 @@ export function Dashboard() {
                 <LearningDashboard />
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {showPaywall && <ProUpgrade />}
+
+      {/* Trial active banner */}
+      {trialActive && !isPro && (
+        <div className="max-w-6xl mx-auto px-5 sm:px-8 mt-4">
+          <div className={`flex items-center justify-between px-4 py-2.5 rounded-xl text-sm ${
+            theme === 'dark' ? 'bg-sky-500/10 border border-sky-500/20' : 'bg-sky-50 border border-sky-100'
+          }`}>
+            <span className={theme === 'dark' ? 'text-sky-300' : 'text-sky-700'}>
+              <span className="font-bold">Pro trial active</span> — {trialDaysLeft} day{trialDaysLeft !== 1 ? 's' : ''} remaining. All features unlocked.
+            </span>
+            <button
+              onClick={openPaywall}
+              className="text-xs font-bold text-sky-500 hover:text-sky-400 transition-colors"
+            >
+              Subscribe
+            </button>
           </div>
         </div>
       )}
@@ -673,22 +712,24 @@ export function Dashboard() {
             />
           </SafeComponent>
         ) : selectedActivity === 'fishing' ? (
-          <SafeComponent name="Fishing Mode">
-            <FishingMode 
-              windData={{
-                stations: lakeState?.wind?.stations,
-                speed: currentWindSpeed,
-              }}
-              pressureData={pressureData}
-              isLoading={isLoading}
-              upstreamData={{
-                kslcSpeed: lakeState?.kslcStation?.speed,
-                kslcDirection: lakeState?.kslcStation?.direction,
-                kpvuSpeed: lakeState?.kpvuStation?.speed,
-                kpvuDirection: lakeState?.kpvuStation?.direction,
-              }}
-            />
-          </SafeComponent>
+          <ProGate feature="Fishing Intelligence" preview="Bite rating, moon phase & more">
+            <SafeComponent name="Fishing Mode">
+              <FishingMode 
+                windData={{
+                  stations: lakeState?.wind?.stations,
+                  speed: currentWindSpeed,
+                }}
+                pressureData={pressureData}
+                isLoading={isLoading}
+                upstreamData={{
+                  kslcSpeed: lakeState?.kslcStation?.speed,
+                  kslcDirection: lakeState?.kslcStation?.direction,
+                  kpvuSpeed: lakeState?.kpvuStation?.speed,
+                  kpvuDirection: lakeState?.kpvuStation?.direction,
+                }}
+              />
+            </SafeComponent>
+          </ProGate>
         ) : (
         <>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
@@ -770,29 +811,31 @@ export function Dashboard() {
             )}
 
             {lakeState?.thermalPrediction && (
-              <div className="card">
-                <span className="data-label block text-center mb-3">3-Step Prediction Model</span>
-                <div className="space-y-2">
-                  <FactorBar 
-                    label="Step A: Gradient" 
-                    value={lakeState.thermalPrediction.pressure?.score || 50} 
-                    detail={lakeState.thermalPrediction.pressure?.status}
-                    icon={ArrowUpDown}
-                  />
-                  <FactorBar 
-                    label="Step B: Elevation Δ" 
-                    value={lakeState.thermalPrediction.elevation?.score || 50} 
-                    detail={lakeState.thermalPrediction.elevation?.status}
-                    icon={Thermometer}
-                  />
-                  <FactorBar 
-                    label="Step C: Ground Truth" 
-                    value={lakeState.thermalPrediction.direction?.score || 50} 
-                    detail={lakeState.thermalPrediction.direction?.status}
-                    icon={MapPin}
-                  />
+              <ProGate feature="3-Step Prediction Model" preview="See what's driving today's wind">
+                <div className="card">
+                  <span className="data-label block text-center mb-3">3-Step Prediction Model</span>
+                  <div className="space-y-2">
+                    <FactorBar 
+                      label="Step A: Gradient" 
+                      value={lakeState.thermalPrediction.pressure?.score || 50} 
+                      detail={lakeState.thermalPrediction.pressure?.status}
+                      icon={ArrowUpDown}
+                    />
+                    <FactorBar 
+                      label="Step B: Elevation Δ" 
+                      value={lakeState.thermalPrediction.elevation?.score || 50} 
+                      detail={lakeState.thermalPrediction.elevation?.status}
+                      icon={Thermometer}
+                    />
+                    <FactorBar 
+                      label="Step C: Ground Truth" 
+                      value={lakeState.thermalPrediction.direction?.score || 50} 
+                      detail={lakeState.thermalPrediction.direction?.status}
+                      icon={MapPin}
+                    />
+                  </div>
                 </div>
-              </div>
+              </ProGate>
             )}
 
             {correlation?.activeTriggers?.length > 0 && (
@@ -865,19 +908,21 @@ export function Dashboard() {
             </SafeComponent>
 
             {/* Smart Hourly Forecast — powered by WindFieldEngine */}
-            <SmartTimeline
-              activity={selectedActivity}
-              locationId={selectedLake}
-              currentWind={{ speed: currentWindSpeed, gust: currentWindGust, direction: currentWindDirection }}
-              upstreamData={{
-                kslcSpeed: lakeState?.kslcStation?.speed,
-                kslcDirection: lakeState?.kslcStation?.direction,
-                kpvuSpeed: lakeState?.kpvuStation?.speed,
-                kpvuDirection: lakeState?.kpvuStation?.direction,
-              }}
-              lakeState={lakeState}
-              mesoData={mesoData}
-            />
+            <ProGate feature="Smart Hourly Forecast" preview="Hour-by-hour wind predictions">
+              <SmartTimeline
+                activity={selectedActivity}
+                locationId={selectedLake}
+                currentWind={{ speed: currentWindSpeed, gust: currentWindGust, direction: currentWindDirection }}
+                upstreamData={{
+                  kslcSpeed: lakeState?.kslcStation?.speed,
+                  kslcDirection: lakeState?.kslcStation?.direction,
+                  kpvuSpeed: lakeState?.kpvuStation?.speed,
+                  kpvuDirection: lakeState?.kpvuStation?.direction,
+                }}
+                lakeState={lakeState}
+                mesoData={mesoData}
+              />
+            </ProGate>
 
             {/* SESSION FEEDBACK — post-session "How was it?" prompt */}
             <SafeComponent name="Session Feedback">
@@ -904,9 +949,11 @@ export function Dashboard() {
             </SafeComponent>
 
             {/* Smart Week Planner — best day this week per activity */}
-            <SafeComponent name="Week Planner">
-              <WeekPlanner activity={selectedActivity} locationId={selectedLake} />
-            </SafeComponent>
+            <ProGate feature="Weekly Planner" preview="Find the best day this week">
+              <SafeComponent name="Week Planner">
+                <WeekPlanner activity={selectedActivity} locationId={selectedLake} />
+              </SafeComponent>
+            </ProGate>
 
             {/* Sailing-specific: Race Day Mode */}
             {selectedActivity === 'sailing' && (
@@ -975,22 +1022,24 @@ export function Dashboard() {
 
             {/* Water Forecast — for boating, paddling, fishing */}
             {(selectedActivity === 'boating' || selectedActivity === 'paddling' || selectedActivity === 'fishing') && (
-              <SafeComponent name="Water Forecast">
-                <WaterForecast
-                  locationId={selectedLake}
-                  currentWind={{ speed: currentWindSpeed, gust: currentWindGust }}
-                  pressureData={lakeState?.pressure}
-                  activity={selectedActivity}
-                  upstreamData={{
-                    kslcSpeed: lakeState?.kslcStation?.speed,
-                    kslcDirection: lakeState?.kslcStation?.direction,
-                    kpvuSpeed: lakeState?.kpvuStation?.speed,
-                    kpvuDirection: lakeState?.kpvuStation?.direction,
-                  }}
-                  lakeState={lakeState}
-                  mesoData={lakeState?.wind}
-                />
-              </SafeComponent>
+              <ProGate feature="Water Conditions" preview="Wave data, safety scores & more">
+                <SafeComponent name="Water Forecast">
+                  <WaterForecast
+                    locationId={selectedLake}
+                    currentWind={{ speed: currentWindSpeed, gust: currentWindGust }}
+                    pressureData={lakeState?.pressure}
+                    activity={selectedActivity}
+                    upstreamData={{
+                      kslcSpeed: lakeState?.kslcStation?.speed,
+                      kslcDirection: lakeState?.kslcStation?.direction,
+                      kpvuSpeed: lakeState?.kpvuStation?.speed,
+                      kpvuDirection: lakeState?.kpvuStation?.direction,
+                    }}
+                    lakeState={lakeState}
+                    mesoData={lakeState?.wind}
+                  />
+                </SafeComponent>
+              </ProGate>
             )}
 
             {/* Severe Weather Alerts - Always visible */}
@@ -1039,14 +1088,16 @@ export function Dashboard() {
               onSelectLaunch={setSelectedLake}
             />
 
-            <FiveDayForecast
-              conditions={{
-                pressure: lakeState?.pws?.pressure || lakeState?.pressure?.high?.value,
-                temperature: lakeState?.pws?.temperature,
-                pressureGradient: lakeState?.pressure?.gradient,
-              }}
-              isLoading={isLoading}
-            />
+            <ProGate feature="5-Day Forecast" preview="Plan your week ahead">
+              <FiveDayForecast
+                conditions={{
+                  pressure: lakeState?.pws?.pressure || lakeState?.pressure?.high?.value,
+                  temperature: lakeState?.pws?.temperature,
+                  pressureGradient: lakeState?.pressure?.gradient,
+                }}
+                isLoading={isLoading}
+              />
+            </ProGate>
 
             <ForecastPanel
               lakeId={selectedLake}
@@ -1060,19 +1111,21 @@ export function Dashboard() {
               isLoading={isLoading}
             />
 
-            <ThermalForecast
-              lakeId={selectedLake}
-              currentConditions={{
-                windSpeed: lakeState?.pws?.windSpeed || lakeState?.wind?.stations?.[0]?.speed,
-                windDirection: lakeState?.pws?.windDirection || lakeState?.wind?.stations?.[0]?.direction,
-                temperature: lakeState?.pws?.temperature,
-              }}
-              pressureGradient={lakeState?.pressure?.gradient}
-              thermalDelta={lakeState?.thermal?.delta}
-              pumpActive={lakeState?.thermal?.pumpActive}
-              inversionTrapped={lakeState?.thermal?.inversionTrapped}
-              isLoading={isLoading}
-            />
+            <ProGate feature="Thermal Forecast" preview="Detailed thermal wind predictions">
+              <ThermalForecast
+                lakeId={selectedLake}
+                currentConditions={{
+                  windSpeed: lakeState?.pws?.windSpeed || lakeState?.wind?.stations?.[0]?.speed,
+                  windDirection: lakeState?.pws?.windDirection || lakeState?.wind?.stations?.[0]?.direction,
+                  temperature: lakeState?.pws?.temperature,
+                }}
+                pressureGradient={lakeState?.pressure?.gradient}
+                thermalDelta={lakeState?.thermal?.delta}
+                pumpActive={lakeState?.thermal?.pumpActive}
+                inversionTrapped={lakeState?.thermal?.inversionTrapped}
+                isLoading={isLoading}
+              />
+            </ProGate>
 
             <BustAlert 
               pressureData={pressureData} 
@@ -1194,7 +1247,15 @@ export function Dashboard() {
 
       <footer className="border-t border-[var(--border-color)] mt-12">
         <div className="max-w-6xl mx-auto px-5 sm:px-8 py-6 text-center">
-          <p className="text-sm font-semibold text-[var(--text-tertiary)]">Utah Wind Pro</p>
+          {!isPro && (
+            <button
+              onClick={openPaywall}
+              className={`mb-4 w-full max-w-sm mx-auto flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-bold transition-all hover:scale-[1.02] active:scale-[0.98] bg-gradient-to-r from-sky-500 to-cyan-500 text-white shadow-lg shadow-sky-500/20`}
+            >
+              Unlock All Features — Try Pro Free for 7 Days
+            </button>
+          )}
+          <p className="text-sm font-semibold text-[var(--text-tertiary)]">UtahWindFinder</p>
           <p className="text-[11px] mt-1 text-[var(--text-tertiary)] opacity-60">
             AI-driven thermal forecasting for Utah's lakes and mountains
           </p>
