@@ -163,6 +163,9 @@ class LearningSystem {
         foilKiteablePct: prediction.foilKiteablePct,
         twinTipKiteablePct: prediction.twinTipKiteablePct,
         phase: prediction.phase,
+        windEventType: prediction.windEventType || null,
+        windEventDetails: prediction.windEventDetails || null,
+        timing: prediction.timing || null,
       },
       
       // Conditions at time of prediction
@@ -287,36 +290,44 @@ class LearningSystem {
     await this.initialize();
 
     const now = new Date();
-    const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000);
+    // Look back up to 48 hours for unverified predictions — this covers
+    // cases where the app was closed and predictions couldn't be verified
+    // at the ideal 1-2 hour mark. Redis backfill provides the actuals.
+    const lookbackStart = new Date(now.getTime() - 48 * 60 * 60 * 1000);
+    // Only verify predictions at least 1 hour old (need time for actuals to exist)
+    const minimumAge = new Date(now.getTime() - 1 * 60 * 60 * 1000);
 
-    // Get unverified predictions from 1-2 hours ago
-    const predictions = await this.getUnverifiedPredictions(twoHoursAgo);
+    const predictions = await this.getUnverifiedPredictions(minimumAge, lookbackStart);
+    let verified = 0;
     
     for (const prediction of predictions) {
-      // Get actual data for the prediction time window
+      const predTime = new Date(prediction.timestamp);
+      // Look for actuals in a 2-hour window after the prediction was made
+      const windowEnd = new Date(predTime.getTime() + 2 * 60 * 60 * 1000);
       const actuals = await this.getActualsForTimeRange(
         prediction.lakeId,
-        new Date(prediction.timestamp),
-        new Date(new Date(prediction.timestamp).getTime() + 60 * 60 * 1000) // 1 hour window
+        predTime,
+        windowEnd,
       );
 
       if (actuals.length === 0) continue;
 
-      // Calculate accuracy
       const accuracy = this.calculateAccuracy(prediction, actuals);
       
-      // Update prediction with verification
       await this.updatePrediction(prediction.id, {
         verified: true,
         actual: this.summarizeActuals(actuals),
         accuracy,
       });
 
-      // Record accuracy for trending
       await this.recordAccuracy(prediction.lakeId, prediction.date, accuracy);
+      verified++;
     }
 
-    // Trigger learning if we have enough new data
+    if (verified > 0) {
+      console.log(`Verified ${verified} predictions (${predictions.length - verified} still pending actuals)`);
+    }
+
     await this.checkAndLearn();
   }
 
@@ -440,17 +451,16 @@ class LearningSystem {
   async checkAndLearn() {
     const recentAccuracy = await this.getRecentAccuracy(7); // Last 7 days
     
-    if (recentAccuracy.length < 10) {
-      console.log('Not enough data for learning yet:', recentAccuracy.length, 'records (need 10)');
+    if (recentAccuracy.length < 5) {
+      console.log('Not enough data for learning yet:', recentAccuracy.length, 'records (need 5)');
       return;
     }
 
     const avgAccuracy = recentAccuracy.reduce((sum, r) => sum + (r.overallScore || 0), 0) / recentAccuracy.length;
+    const confidenceScalar = Math.min(1, recentAccuracy.length / 50);
     
-    console.log('Current model accuracy:', avgAccuracy.toFixed(1) + '% across', recentAccuracy.length, 'records');
+    console.log(`Model accuracy: ${avgAccuracy.toFixed(1)}% across ${recentAccuracy.length} records (confidence: ${(confidenceScalar * 100).toFixed(0)}%)`);
 
-    // Always recalibrate — even high accuracy benefits from refinement.
-    // More aggressive learning when accuracy is low, fine-tuning when high.
     if (avgAccuracy < 70) {
       console.log('Accuracy below 70% — aggressive recalibration...');
     } else if (avgAccuracy < 85) {
@@ -459,13 +469,13 @@ class LearningSystem {
       console.log('Accuracy good — fine-tuning weights...');
     }
 
-    await this.learnFromData();
+    await this.learnFromData(confidenceScalar);
   }
 
   /**
    * Learn from accumulated data and adjust model weights
    */
-  async learnFromData() {
+  async learnFromData(confidenceScalar = 1) {
     await this.initialize();
 
     console.log('Starting learning cycle...');
@@ -482,8 +492,8 @@ class LearningSystem {
     // 4. Incorporate user feedback (session reports)
     const feedbackInsights = await this.incorporateUserFeedback(errorAnalysis);
     
-    // 5. Calculate new weights
-    const newWeights = this.calculateNewWeights(indicatorLearning, errorAnalysis, patterns, feedbackInsights);
+    // 5. Calculate new weights (patterns now actively used!)
+    const newWeights = this.calculateNewWeights(indicatorLearning, errorAnalysis, patterns, feedbackInsights, confidenceScalar);
     
     // 6. Save new weights
     await this.saveWeights(newWeights);
@@ -558,15 +568,19 @@ class LearningSystem {
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - 90);
     const cutoffISO = cutoff.toISOString();
+    const cutoffDate = cutoff.toISOString().split('T')[0];
 
     const storesToPrune = [STORES.PREDICTIONS, STORES.ACTUALS, STORES.ACCURACY, STORES.INDICATORS];
 
     for (const storeName of storesToPrune) {
+      const indexName = (storeName === STORES.ACCURACY || storeName === STORES.INDICATORS) ? 'date' : 'timestamp';
+      const cutoffVal = indexName === 'date' ? cutoffDate : cutoffISO;
+
       try {
         const tx = this.db.transaction(storeName, 'readwrite');
         const store = tx.objectStore(storeName);
-        const index = store.index('timestamp');
-        const range = IDBKeyRange.upperBound(cutoffISO);
+        const index = store.index(indexName);
+        const range = IDBKeyRange.upperBound(cutoffVal);
 
         await new Promise((resolve) => {
           const request = index.openCursor(range);
@@ -585,31 +599,7 @@ class LearningSystem {
           request.onerror = () => resolve();
         });
       } catch (e) {
-        // ACCURACY and INDICATORS use 'date' index, not 'timestamp'
-        try {
-          const tx = this.db.transaction(storeName, 'readwrite');
-          const store = tx.objectStore(storeName);
-          const index = store.index('date');
-          const cutoffDate = cutoff.toISOString().split('T')[0];
-          const range = IDBKeyRange.upperBound(cutoffDate);
-
-          await new Promise((resolve) => {
-            const request = index.openCursor(range);
-            let deleted = 0;
-            request.onsuccess = (event) => {
-              const cursor = event.target.result;
-              if (cursor) {
-                cursor.delete();
-                deleted++;
-                cursor.continue();
-              } else {
-                if (deleted > 0) console.log(`Pruned ${deleted} old records from ${storeName}`);
-                resolve();
-              }
-            };
-            request.onerror = () => resolve();
-          });
-        } catch (e2) { /* ignore stores without date index */ }
+        console.log(`Prune skipped for ${storeName}: ${e.message}`);
       }
     }
   }
@@ -936,16 +926,18 @@ class LearningSystem {
    * Returns the base thermal weights AND emits activity-specific weight sets
    * to close the loop for paragliding, boating, and fishing predictors.
    */
-  calculateNewWeights(indicatorLearning, errorAnalysis, patterns, feedbackInsights) {
+  calculateNewWeights(indicatorLearning, errorAnalysis, patterns, feedbackInsights, confidenceScalar = 1) {
     const currentWeights = this.currentWeights || this.getDefaultWeights();
     
     const userBias = feedbackInsights?.userSpeedBias || 0;
+    const lerpRate = 0.3 * confidenceScalar;
 
     const newWeights = {
       version: Date.now(),
       createdAt: new Date().toISOString(),
       basedOnSamples: errorAnalysis.totalPredictions,
       userFeedbackSamples: feedbackInsights?.totalReports || 0,
+      confidenceScalar,
       
       pressureWeight: currentWeights.pressureWeight,
       thermalWeight: currentWeights.thermalWeight,
@@ -955,6 +947,8 @@ class LearningSystem {
       speedBiasCorrection: -errorAnalysis.speedBias + userBias,
       probabilityCalibration: {},
       hourlyMultipliers: {},
+      patternInsights: {},
+      windEventPatterns: {},
     };
     
     for (const [key, correlation] of Object.entries(indicatorLearning)) {
@@ -966,31 +960,76 @@ class LearningSystem {
     }
     
     for (const [bucket, data] of Object.entries(errorAnalysis.probabilityBuckets)) {
-      if (data.predicted > 10) {
+      if (data.predicted > 5) {
         const expectedRate = (parseInt(bucket.split('-')[0]) + parseInt(bucket.split('-')[1])) / 200;
         const actualRate = data.actualRate;
-        newWeights.probabilityCalibration[bucket] = actualRate / expectedRate;
+        newWeights.probabilityCalibration[bucket] = actualRate / (expectedRate || 0.01);
       }
     }
     
     for (const [hour, data] of Object.entries(errorAnalysis.hourlyAccuracy)) {
-      if (data.total > 5) {
+      if (data.total > 3) {
         const avgAccuracy = data.sumAccuracy / data.total;
         newWeights.hourlyMultipliers[hour] = avgAccuracy / 100;
       }
     }
     
+    // ─── USE DISCOVERED PATTERNS (previously ignored!) ─────────
+    if (patterns && patterns.length > 0) {
+      const peakHourPattern = patterns.find(p => p.type === 'peak_hour');
+      if (peakHourPattern && peakHourPattern.confidence > 0.3) {
+        newWeights.patternInsights.peakHour = peakHourPattern.value;
+        newWeights.patternInsights.peakHourConfidence = peakHourPattern.confidence;
+        const ph = String(peakHourPattern.value);
+        newWeights.hourlyMultipliers[ph] = Math.max(
+          newWeights.hourlyMultipliers[ph] || 0.5,
+          0.7 + peakHourPattern.confidence * 0.3
+        );
+      }
+
+      const windTypePattern = patterns.find(p => p.type === 'dominant_wind_type');
+      if (windTypePattern && windTypePattern.confidence > 0.3) {
+        newWeights.patternInsights.dominantWindType = windTypePattern.value;
+        newWeights.patternInsights.dominantWindTypeConfidence = windTypePattern.confidence;
+      }
+
+      const sustainedNorth = patterns.filter(p => p.type === 'sustained_north_flow');
+      const sustainedThermal = patterns.filter(p => p.type === 'sustained_thermal');
+      if (sustainedNorth.length > 0) {
+        const avgDuration = sustainedNorth.reduce((s, p) => s + p.value, 0) / sustainedNorth.length;
+        const avgSpeed = sustainedNorth.reduce((s, p) => s + (p.avgSpeed || 12), 0) / sustainedNorth.length;
+        newWeights.windEventPatterns.north_flow = {
+          avgDuration,
+          avgSpeed,
+          eventCount: sustainedNorth.length,
+          typicalStartHour: sustainedNorth[0]?.startHour ?? 8,
+        };
+      }
+      if (sustainedThermal.length > 0) {
+        const avgDuration = sustainedThermal.reduce((s, p) => s + p.value, 0) / sustainedThermal.length;
+        newWeights.windEventPatterns.thermal = {
+          avgDuration,
+          eventCount: sustainedThermal.length,
+        };
+      }
+
+      console.log(`Patterns applied: ${patterns.length} discovered, peak hour: ${peakHourPattern?.value ?? '?'}, dominant: ${windTypePattern?.value ?? '?'}`);
+    }
+
+    // ─── WIND TYPE WEIGHT ADJUSTMENT ──────────────────────────
     const thermalAccuracy = errorAnalysis.windTypeAccuracy.thermal;
     const northFlowAccuracy = errorAnalysis.windTypeAccuracy.north_flow;
     
-    if (thermalAccuracy.total > 10) {
+    if (thermalAccuracy.total > 5) {
       const rate = thermalAccuracy.correct / thermalAccuracy.total;
-      newWeights.thermalWeight = currentWeights.thermalWeight * (0.5 + rate * 0.5);
+      const target = currentWeights.thermalWeight * (0.5 + rate * 0.5);
+      newWeights.thermalWeight = currentWeights.thermalWeight + (target - currentWeights.thermalWeight) * lerpRate;
     }
     
-    if (northFlowAccuracy.total > 10) {
+    if (northFlowAccuracy.total > 5) {
       const rate = northFlowAccuracy.correct / northFlowAccuracy.total;
-      newWeights.pressureWeight = currentWeights.pressureWeight * (0.5 + rate * 0.5);
+      const target = currentWeights.pressureWeight * (0.5 + rate * 0.5);
+      newWeights.pressureWeight = currentWeights.pressureWeight + (target - currentWeights.pressureWeight) * lerpRate;
     }
 
     // Derive activity-specific weight sets from the same learning data.
@@ -1145,12 +1184,12 @@ class LearningSystem {
     });
   }
 
-  async getUnverifiedPredictions(olderThan) {
+  async getUnverifiedPredictions(olderThan, lookbackStart = null) {
     const tx = this.db.transaction(STORES.PREDICTIONS, 'readonly');
     const store = tx.objectStore(STORES.PREDICTIONS);
     const index = store.index('timestamp');
 
-    const lowerBound = new Date(olderThan.getTime() - 24 * 60 * 60 * 1000);
+    const lowerBound = lookbackStart || new Date(olderThan.getTime() - 24 * 60 * 60 * 1000);
     
     return new Promise((resolve) => {
       const results = [];

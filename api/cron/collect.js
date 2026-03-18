@@ -2,8 +2,10 @@
  * Vercel Cron Job — Server-Side Data Collection
  * 
  * Runs every 15 minutes (configured in vercel.json).
- * Fetches all station data from Synoptic and stores it in Upstash Redis.
+ * Fetches ALL station data from Synoptic and stores it in Upstash Redis.
  * This ensures learning data is collected 24/7 even when no user has the app open.
+ * 
+ * Covers ALL 35 Utah lakes, 19 unique weather stations across the state.
  * 
  * Storage: Upstash Redis (free tier — 10k commands/day is plenty for 96 daily collections)
  * 
@@ -16,7 +18,6 @@
  * to backfill its IndexedDB learning system.
  */
 
-// Read env vars at invocation time (not module init) to ensure fresh values
 function getEnv() {
   return {
     synopticToken: process.env.SYNOPTIC_TOKEN || process.env.VITE_SYNOPTIC_TOKEN,
@@ -25,19 +26,69 @@ function getEnv() {
   };
 }
 
+// Every unique MesoWest/Synoptic station ID used across all 35 lakes
 const ALL_STATIONS = [
-  'KSLC', 'KPVU', 'QSF', 'FPS', 'UTALP', 'UTOLY', 'UID28',
+  // Wasatch Front
+  'KSLC', 'KPVU', 'QSF', 'FPS', 'UTALP', 'UTOLY', 'UID28', 'CSC',
+  // Wasatch Back / Heber Valley
   'DCC', 'KHCR', 'TIMU1', 'SND', 'MDAU1', 'UTPCY',
+  // Northern Utah
+  'KLGU', 'BERU1',
+  // Uinta Basin / NE Utah
+  'KVEL', 'KFGR',
+  // Central / Southern Utah
+  'KPUC', 'KCDC',
+  // Dixie / St. George
+  'KSGU',
+  // Lake Powell / Page AZ
+  'KPGA',
 ];
 
+// Complete lake-to-station mapping for all 35 lakes
 const LAKE_STATION_MAP = {
-  'utah-lake-zigzag': ['KSLC', 'KPVU', 'QSF', 'FPS', 'UTALP', 'UTOLY', 'UID28'],
-  'utah-lake-lincoln': ['KSLC', 'KPVU', 'QSF', 'FPS', 'UTALP'],
-  'utah-lake-sandy': ['KSLC', 'KPVU', 'QSF', 'FPS', 'UTALP'],
-  'utah-lake-vineyard': ['KSLC', 'KPVU', 'QSF', 'FPS', 'UTALP'],
-  'utah-lake-mm19': ['KSLC', 'KPVU', 'QSF', 'FPS', 'UTALP', 'UID28'],
+  // Utah Lake variants
+  'utah-lake-lincoln': ['KSLC', 'KPVU', 'QSF', 'FPS', 'UTALP', 'CSC', 'TIMU1'],
+  'utah-lake-sandy': ['KSLC', 'KPVU', 'QSF', 'FPS', 'UTALP', 'CSC', 'TIMU1'],
+  'utah-lake-vineyard': ['KSLC', 'KPVU', 'QSF', 'FPS', 'UTALP', 'CSC', 'TIMU1'],
+  'utah-lake-zigzag': ['KSLC', 'KPVU', 'QSF', 'FPS', 'UTALP', 'UTOLY', 'UID28', 'CSC'],
+  'utah-lake-mm19': ['KSLC', 'KPVU', 'QSF', 'FPS', 'UTALP', 'UID28', 'CSC'],
+  // Wasatch Back
   'deer-creek': ['KSLC', 'DCC', 'KHCR', 'SND', 'TIMU1', 'MDAU1', 'UTPCY'],
+  'jordanelle': ['KSLC', 'KHCR', 'SND', 'TIMU1', 'DCC', 'MDAU1'],
+  'east-canyon': ['KSLC'],
+  'echo': ['KSLC'],
+  'rockport': ['KSLC'],
+  // Northern Utah
   'willard-bay': ['KSLC'],
+  'pineview': ['KSLC'],
+  'hyrum': ['KLGU'],
+  'bear-lake': ['KLGU', 'BERU1'],
+  // Strawberry variants
+  'strawberry-ladders': ['KSLC', 'KPVU', 'KHCR', 'SND', 'DCC', 'TIMU1'],
+  'strawberry-bay': ['KSLC', 'KPVU', 'KHCR', 'SND', 'DCC', 'TIMU1'],
+  'strawberry-soldier': ['KSLC', 'KPVU', 'KHCR', 'SND', 'DCC', 'TIMU1'],
+  'strawberry-view': ['KSLC', 'KPVU', 'KHCR', 'SND', 'DCC', 'TIMU1'],
+  'strawberry-river': ['KSLC', 'KPVU', 'KHCR', 'SND', 'DCC', 'TIMU1'],
+  'skyline-drive': ['KSLC', 'KPVU', 'KHCR', 'SND', 'DCC', 'TIMU1'],
+  // Uinta Basin / NE Utah
+  'starvation': ['KVEL'],
+  'steinaker': ['KVEL'],
+  'red-fleet': ['KVEL'],
+  'flaming-gorge': ['KFGR'],
+  // Central Utah
+  'yuba': ['KPVU'],
+  'scofield': ['KPUC'],
+  // Southern Utah
+  'otter-creek': ['KCDC'],
+  'fish-lake': ['KCDC'],
+  'minersville': ['KCDC'],
+  'piute': ['KCDC'],
+  'panguitch': ['KCDC'],
+  // Dixie / Washington County
+  'sand-hollow': ['KSGU'],
+  'quail-creek': ['KSGU'],
+  // Lake Powell
+  'lake-powell': ['KPGA'],
 };
 
 async function redisCommand(command, ...args) {

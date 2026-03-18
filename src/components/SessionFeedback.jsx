@@ -31,6 +31,7 @@ export default function SessionFeedback({ activity, locationId, locationName, fo
   const [rating, setRating] = useState(0);
   const [startHour, setStartHour] = useState(null);
   const [endHour, setEndHour] = useState(null);
+  const [estimatedSpeed, setEstimatedSpeed] = useState(null);
   const [submitted, setSubmitted] = useState(false);
 
   const [smartForecast, setSmartForecast] = useState(forecast);
@@ -69,7 +70,7 @@ export default function SessionFeedback({ activity, locationId, locationName, fo
         windQuality: quality,
         startHour,
         endHour,
-        estimatedSpeed: null,
+        estimatedSpeed,
       });
       setSubmitted(true);
       setStep('done');
@@ -212,13 +213,33 @@ export default function SessionFeedback({ activity, locationId, locationName, fo
           )}
 
           {startHour != null && endHour != null && (
-            <button
-              onClick={submit}
-              className="w-full py-2 rounded-lg text-sm font-medium bg-green-500 text-white hover:bg-green-600 transition flex items-center justify-center gap-2"
-            >
-              <Send className="w-4 h-4" />
-              Submit Feedback
-            </button>
+            <>
+              <div>
+                <div className={`text-xs mb-1.5 ${textSecondary}`}>Estimated wind speed (mph):</div>
+                <div className="flex gap-1.5 flex-wrap">
+                  {[5, 8, 10, 12, 15, 18, 20, 25].map(s => (
+                    <button
+                      key={`speed-${s}`}
+                      onClick={() => setEstimatedSpeed(s)}
+                      className={`px-2.5 py-1 rounded text-xs font-medium transition ${
+                        estimatedSpeed === s
+                          ? 'bg-blue-500 text-white'
+                          : isDark ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'
+                      }`}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <button
+                onClick={submit}
+                className="w-full py-2 rounded-lg text-sm font-medium bg-green-500 text-white hover:bg-green-600 transition flex items-center justify-center gap-2"
+              >
+                <Send className="w-4 h-4" />
+                Submit Feedback
+              </button>
+            </>
           )}
         </div>
       )}

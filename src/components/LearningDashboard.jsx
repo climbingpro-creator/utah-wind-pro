@@ -287,22 +287,126 @@ const LearningDashboard = () => {
         </div>
       )}
 
+      {/* Pattern Insights */}
+      {weights?.patternInsights && Object.keys(weights.patternInsights).length > 0 && (
+        <div className="bg-gray-700/30 rounded-lg p-4 mt-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Brain className="w-4 h-4 text-cyan-400" />
+            <span className="text-sm font-medium text-white">Discovered Patterns</span>
+          </div>
+          <div className="grid grid-cols-2 gap-3 text-xs">
+            {weights.patternInsights.peakHour != null && (
+              <div className="bg-gray-600/30 p-2 rounded">
+                <span className="text-gray-400">Peak Wind Hour:</span>
+                <span className="text-cyan-400 font-bold ml-2">
+                  {weights.patternInsights.peakHour > 12 
+                    ? `${weights.patternInsights.peakHour - 12} PM` 
+                    : `${weights.patternInsights.peakHour} AM`}
+                </span>
+                <span className="text-gray-500 ml-1">
+                  ({(weights.patternInsights.peakHourConfidence * 100).toFixed(0)}% conf)
+                </span>
+              </div>
+            )}
+            {weights.patternInsights.dominantWindType && (
+              <div className="bg-gray-600/30 p-2 rounded">
+                <span className="text-gray-400">Dominant Type:</span>
+                <span className="text-cyan-400 font-bold ml-2 capitalize">
+                  {weights.patternInsights.dominantWindType.replace('_', ' ')}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Wind Event Patterns */}
+      {weights?.windEventPatterns && Object.keys(weights.windEventPatterns).length > 0 && (
+        <div className="bg-gray-700/30 rounded-lg p-4 mt-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Zap className="w-4 h-4 text-yellow-400" />
+            <span className="text-sm font-medium text-white">Wind Event Intelligence</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            {weights.windEventPatterns.north_flow && (
+              <div className="bg-blue-900/20 border border-blue-500/20 p-3 rounded">
+                <div className="text-blue-400 font-bold mb-1">⬇️ North Flow Events</div>
+                <div className="text-gray-300">
+                  Avg duration: {weights.windEventPatterns.north_flow.avgDuration.toFixed(1)} hrs
+                </div>
+                <div className="text-gray-300">
+                  Avg speed: {weights.windEventPatterns.north_flow.avgSpeed.toFixed(0)} mph
+                </div>
+                <div className="text-gray-400">
+                  {weights.windEventPatterns.north_flow.eventCount} events recorded
+                </div>
+              </div>
+            )}
+            {weights.windEventPatterns.thermal && (
+              <div className="bg-orange-900/20 border border-orange-500/20 p-3 rounded">
+                <div className="text-orange-400 font-bold mb-1">🔥 Thermal Events</div>
+                <div className="text-gray-300">
+                  Avg duration: {weights.windEventPatterns.thermal.avgDuration.toFixed(1)} hrs
+                </div>
+                <div className="text-gray-400">
+                  {weights.windEventPatterns.thermal.eventCount} events recorded
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Confidence & Data Health */}
+      <div className="bg-gray-700/30 rounded-lg p-4 mt-4">
+        <div className="flex items-center gap-2 mb-3">
+          <Activity className="w-4 h-4 text-green-400" />
+          <span className="text-sm font-medium text-white">Data Health</span>
+        </div>
+        <div className="grid grid-cols-2 gap-3 text-xs">
+          <div>
+            <span className="text-gray-400">Confidence Level:</span>
+            <div className="mt-1 h-2 bg-gray-600 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-green-500 rounded-full transition-all" 
+                style={{ width: `${Math.min(100, (weights?.confidenceScalar || 0) * 100)}%` }} 
+              />
+            </div>
+            <span className="text-gray-500 mt-0.5 block">
+              {weights?.confidenceScalar ? `${(weights.confidenceScalar * 100).toFixed(0)}%` : 'Building...'}
+            </span>
+          </div>
+          <div>
+            <span className="text-gray-400">Learning Threshold:</span>
+            <span className={`ml-2 font-bold ${(stats?.totalPredictions || 0) >= 5 ? 'text-green-400' : 'text-yellow-400'}`}>
+              {stats?.totalPredictions || 0} / 5 min
+            </span>
+          </div>
+        </div>
+        {weights?.userFeedbackSamples > 0 && (
+          <div className="mt-2 text-xs text-gray-400">
+            User session reports: <span className="text-white">{weights.userFeedbackSamples}</span>
+          </div>
+        )}
+      </div>
+
       {/* Learning Progress */}
       <div className="mt-4 p-4 bg-purple-900/20 border border-purple-500/30 rounded-lg">
         <div className="flex items-center gap-2 mb-2">
           <Zap className="w-4 h-4 text-purple-400" />
-          <span className="text-sm font-medium text-purple-300">How Learning Works</span>
+          <span className="text-sm font-medium text-purple-300">Learning Pipeline</span>
         </div>
         <ul className="text-xs text-gray-400 space-y-1">
-          <li>• Every 15 min: Collects actual weather data from all stations</li>
-          <li>• Every hour: Records predictions and verifies past ones</li>
-          <li>• Every 6 hours: Analyzes indicator correlations</li>
-          <li>• Every 24 hours: Runs learning cycle to improve model</li>
-          <li>• Model improves as more data is collected over days/weeks</li>
+          <li>• Collects data from <span className="text-white">25+ lakes</span> across all of Utah</li>
+          <li>• Records thermal, frontal, north flow, glass, and clearing wind predictions</li>
+          <li>• Verifies predictions against actual station readings</li>
+          <li>• Discovers patterns: peak hours, sustained events, wind type dominance</li>
+          <li>• Adjusts model weights using confidence-scaled learning</li>
+          <li>• User session feedback refines location-specific speed bias</li>
         </ul>
         <div className="mt-3 text-xs text-purple-300">
-          {stats?.totalPredictions < 10 
-            ? `Need ${10 - (stats?.totalPredictions || 0)} more verified predictions before first learning cycle`
+          {(stats?.totalPredictions || 0) < 5
+            ? `Need ${5 - (stats?.totalPredictions || 0)} more verified predictions before first learning cycle`
             : 'Model is actively learning from your data!'}
         </div>
       </div>

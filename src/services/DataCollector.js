@@ -21,6 +21,11 @@ import { setBoatingLearnedWeights } from './BoatingPredictor';
 import { setFishingLearnedWeights } from './FishingPredictor';
 import { setWindFieldLearnedWeights } from './WindFieldEngine';
 import { scoreSessionForActivity } from './ActivityScoring';
+import { predictWindEvents, setWindEventLearnedPatterns } from './WindEventPredictor';
+
+function getAllLakeIds() {
+  return Object.keys(LAKE_CONFIGS).filter(id => id !== 'utah-lake');
+}
 
 // Schedule work during idle periods to avoid blocking the UI thread
 function scheduleIdle(fn) {
@@ -69,6 +74,9 @@ class DataCollector {
       } else if (!weights.activity) {
         setLearnedWeights(weights);
         setWindFieldLearnedWeights(weights);
+        if (weights.windEventPatterns) {
+          setWindEventLearnedPatterns(weights.windEventPatterns);
+        }
       }
     });
 
@@ -199,12 +207,7 @@ class DataCollector {
 
     // SOURCE 2: Synoptic 24hr history (always works, fills remaining gaps)
     try {
-      const lakes = [
-        'utah-lake-zigzag', 'utah-lake-lincoln', 'utah-lake-sandy',
-        'utah-lake-vineyard', 'utah-lake-mm19', 'deer-creek', 'willard-bay',
-        'strawberry-ladders', 'strawberry-bay', 'strawberry-soldier',
-        'strawberry-view', 'strawberry-river', 'skyline-drive',
-      ];
+      const lakes = getAllLakeIds();
 
       const allStationIds = new Set();
       const stationToLakes = {};
@@ -279,12 +282,7 @@ class DataCollector {
     console.log('📊 Collecting actual weather data...');
 
     try {
-      const lakes = [
-        'utah-lake-zigzag', 'utah-lake-lincoln', 'utah-lake-sandy',
-        'utah-lake-vineyard', 'utah-lake-mm19', 'deer-creek', 'willard-bay',
-        'strawberry-ladders', 'strawberry-bay', 'strawberry-soldier',
-        'strawberry-view', 'strawberry-river', 'skyline-drive',
-      ];
+      const lakes = getAllLakeIds();
 
       for (const lakeId of lakes) {
         const stationIds = getAllStationIds(lakeId);
@@ -372,13 +370,7 @@ class DataCollector {
     console.log('🔮 Recording predictions and verifying past ones...');
 
     try {
-      const lakes = [
-        'utah-lake-zigzag', 'utah-lake-lincoln', 'utah-lake-sandy',
-        'utah-lake-vineyard', 'utah-lake-mm19',
-        'deer-creek', 'willard-bay',
-        'strawberry-ladders', 'strawberry-bay', 'strawberry-soldier',
-        'strawberry-view', 'strawberry-river', 'skyline-drive',
-      ];
+      const lakes = getAllLakeIds();
 
       for (const lakeId of lakes) {
         // Get current data
@@ -423,6 +415,37 @@ class DataCollector {
           });
           
           this.collectionStats.predictionsRecorded++;
+        }
+
+        // Record wind event predictions for this lake
+        try {
+          const currentConditions = lakeState.pws || lakeState.groundTruth || {};
+          const pressureInfo = {
+            slcPressure: lakeState.pressure?.slc,
+            pvuPressure: lakeState.pressure?.pvu,
+            gradient: lakeState.pressure?.gradient ?? 0,
+            trend: lakeState.pressure?.trend ?? 'stable',
+          };
+          const windEvents = predictWindEvents(lakeId, currentConditions, pressureInfo);
+          for (const event of windEvents) {
+            if (event.probability > 30) {
+              await learningSystem.recordPrediction(lakeId, {
+                probability: event.probability,
+                windType: event.id,
+                expectedSpeed: event.expectedSpeed?.max ?? 15,
+                expectedDirection: event.expectedDirection?.min,
+                windEventType: event.id,
+                windEventDetails: event.details,
+                timing: event.timing,
+              }, {
+                pressureGradient: pressureInfo.gradient,
+                temperature: currentConditions.temperature,
+              });
+              this.collectionStats.predictionsRecorded++;
+            }
+          }
+        } catch (e) {
+          // Wind event prediction is non-critical
         }
       }
 
