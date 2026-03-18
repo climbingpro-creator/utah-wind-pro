@@ -27,6 +27,32 @@ const OTHER_LAKES = [
   { id: 'pineview', name: 'Pineview', region: 'Weber', wind: 'E/W Canyon', meter: null, meterName: null },
 ];
 
+// ─── VERIFIED KITING SPOTS ────────────────────────────────────
+// Only locations confirmed by Utah Windriders Association, KiteForum, or local community
+const KITE_SPOTS = [
+  { id: 'rush-lake', name: 'Rush Lake', wind: 'S Frontal', meter: 'KSLC', desc: 'Most kitable days in UT — shallow flat water, storm-front driven', hazard: 'EXTREME WIND' },
+  { id: 'grantsville', name: 'Grantsville Reservoir', wind: 'S/SW', meter: 'KSLC', desc: 'Alternative to Rush — deeper water for larger skegs' },
+  { id: 'deer-creek', name: 'Deer Creek', wind: 'SW Canyon', meter: 'KHCR', desc: 'Canyon thermal kiting — afternoon SW wind' },
+  { id: 'willard-bay', name: 'Willard Bay', wind: 'N Gap', meter: 'KSLC', desc: 'North wind — "The Gap" thermal', hazard: 'OFFSHORE N WIND' },
+];
+
+// ─── VERIFIED SNOWKITE SPOTS ──────────────────────────────────
+// Utah Kite Addiction, Visit Utah, Sanpete County verified
+const SNOWKITE_EXTRA = [
+  { id: 'powder-mountain', name: 'Powder Mountain', wind: 'S/W', meter: 'KSLC', desc: 'Hidden Lake to Towers — high elevation, wind exposure', position: '8,900 ft' },
+  { id: 'monte-cristo', name: 'Monte Cristo', wind: 'W/NW', meter: 'KLGU', desc: 'Backcountry bowls — hike/snowmobile access, expert', position: '8,900 ft' },
+];
+
+// ─── VERIFIED PARAGLIDING SITES ───────────────────────────────
+// UHGPGA, Point of the Mountain Paragliding, twocanfly.com verified
+const PARAGLIDING_SITES = [
+  { id: 'potm-south', name: 'PotM — South Side', wind: 'S/SE', direction: '150-200°', meter: 'FPS', desc: '#1 US training site — 300 ft vertical, morning south', position: '4,900 ft', rating: 'P2+' },
+  { id: 'potm-north', name: 'PotM — North Side', wind: 'N/NW', direction: '320-360°', meter: 'FPS', desc: '900-1200 ft vertical, two ridges, afternoon north', position: '5,200 ft', rating: 'P2+' },
+  { id: 'inspo', name: 'Inspiration Point', wind: 'W/SW', direction: '220-280°', meter: 'KPVU', desc: 'P3+ — mountain thermals, restricted LZs, midday turbulence', position: '6,667 ft', rating: 'P3+' },
+  { id: 'west-mountain', name: 'West Mountain', wind: 'W/NW', direction: '260-330°', meter: 'KPVU', desc: 'Large LZs, 7-10 min flights, good XC intro', position: '5,500 ft', rating: 'P2+' },
+  { id: 'stockton-bar', name: 'Stockton Bar', wind: 'N', direction: '340-20°', meter: 'KSLC', desc: 'Bonneville ridge soaring — afternoon north wind', position: '5,100 ft', rating: 'P2+' },
+];
+
 const LAKE_REGIONS = [
   {
     id: 'wasatch',
@@ -196,6 +222,15 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
   const [snowExpanded, setSnowExpanded] = useState(
     selectedLake?.startsWith('strawberry') || selectedLake === 'skyline-drive'
   );
+  const [kiteSpotsExpanded, setKiteSpotsExpanded] = useState(
+    KITE_SPOTS.some(s => s.id === selectedLake)
+  );
+  const [paraglidingExpanded, setParaglidingExpanded] = useState(
+    PARAGLIDING_SITES.some(s => s.id === selectedLake)
+  );
+  const [snowExtraExpanded, setSnowExtraExpanded] = useState(
+    selectedLake === 'powder-mountain' || selectedLake === 'monte-cristo'
+  );
 
   // Persistent station cache — survives tab switches
   const cacheRef = useRef({});
@@ -212,7 +247,7 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
 
   const windStatuses = useMemo(() => {
     const out = {};
-    [...UTAH_LAKE_LAUNCHES, ...STRAWBERRY_LAUNCHES, SKYLINE_SPOT, ...OTHER_LAKES, ...allRegionLakes].forEach(loc => {
+    [...UTAH_LAKE_LAUNCHES, ...STRAWBERRY_LAUNCHES, SKYLINE_SPOT, ...OTHER_LAKES, ...allRegionLakes, ...KITE_SPOTS, ...SNOWKITE_EXTRA, ...PARAGLIDING_SITES].forEach(loc => {
       out[loc.id] = getWindStatus(loc, stationCache, activity);
     });
     return out;
@@ -450,8 +485,158 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
       </div>
       )}
 
-      {/* All Utah Lakes — organized by region */}
-      {activity !== 'snowkiting' && (
+      {/* ─── KITE SPOTS (kiting & sailing only) ─── */}
+      {(activity === 'kiting' || activity === 'sailing') && (
+        <div className="card !p-0 overflow-hidden">
+          <button
+            onClick={() => setKiteSpotsExpanded(!kiteSpotsExpanded)}
+            className={`w-full flex items-center justify-between px-4 py-3 transition-colors hover:bg-[var(--bg-card-hover)]`}
+          >
+            <div className="flex items-center gap-3">
+              <Wind className={`w-4 h-4 text-[var(--text-tertiary)]`} />
+              <div className="text-left">
+                <span className="font-semibold text-sm text-[var(--text-primary)]">Kite Spots</span>
+                <div className="text-[11px] text-[var(--text-tertiary)]">Verified kiting locations · Rush Lake, Grantsville, Deer Creek, Willard Bay</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {KITE_SPOTS.some(s => windStatuses[s.id]?.level === 'hot') && (
+                <span className="text-[10px] font-bold text-emerald-500 uppercase">Live</span>
+              )}
+              {kiteSpotsExpanded ? <ChevronUp className="w-4 h-4 text-[var(--text-tertiary)]" /> : <ChevronDown className="w-4 h-4 text-[var(--text-tertiary)]" />}
+            </div>
+          </button>
+          {kiteSpotsExpanded && (
+            <div className={`border-t p-3 grid grid-cols-1 sm:grid-cols-2 gap-2 ${isDark ? 'border-[var(--border-color)]' : 'border-slate-100'}`}>
+              {KITE_SPOTS.map((spot) => {
+                const ws = windStatuses[spot.id];
+                const isSelected = selectedLake === spot.id;
+                return (
+                  <button key={spot.id} onClick={() => onSelectLake(spot.id)} className={`flex items-start gap-3 p-3 rounded-lg transition-all border text-left ${
+                    isSelected ? 'bg-sky-500/[0.08] border-sky-500'
+                    : ws?.level === 'hot' ? (isDark ? 'bg-emerald-500/[0.04] border-emerald-500/20' : 'bg-emerald-50/50 border-emerald-200')
+                    : (isDark ? 'bg-white/[0.02] border-[var(--border-subtle)] hover:border-[var(--border-color)]' : 'bg-white border-slate-100 hover:border-slate-200')
+                  }`}>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className={`font-semibold text-sm ${isSelected ? 'text-sky-500' : 'text-[var(--text-primary)]'}`}>{spot.name}</span>
+                        {spot.hazard && <span className="text-[8px] font-bold px-1 py-0.5 rounded bg-red-500/10 text-red-500 uppercase">{spot.hazard}</span>}
+                      </div>
+                      <div className={`text-[10px] mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{spot.desc}</div>
+                      <span className={`text-[10px] flex items-center gap-0.5 mt-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                        <Wind className="w-2.5 h-2.5" /> {spot.wind}
+                      </span>
+                    </div>
+                    {ws && <div className="shrink-0 mt-0.5"><WindBadge status={ws} isDark={isDark} /></div>}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ─── PARAGLIDING SITES ─── */}
+      {activity === 'paragliding' && (
+        <div className="card !p-0 overflow-hidden">
+          <button
+            onClick={() => setParaglidingExpanded(!paraglidingExpanded)}
+            className={`w-full flex items-center justify-between px-4 py-3 transition-colors hover:bg-[var(--bg-card-hover)]`}
+          >
+            <div className="flex items-center gap-3">
+              <Mountain className={`w-4 h-4 text-[var(--text-tertiary)]`} />
+              <div className="text-left">
+                <span className="font-semibold text-sm text-[var(--text-primary)]">Paragliding Sites</span>
+                <div className="text-[11px] text-[var(--text-tertiary)]">UHGPGA verified · Point of the Mountain, Inspo, West Mtn, Stockton</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {PARAGLIDING_SITES.some(s => windStatuses[s.id]?.level === 'hot') && (
+                <span className="text-[10px] font-bold text-emerald-500 uppercase">Live</span>
+              )}
+              {paraglidingExpanded ? <ChevronUp className="w-4 h-4 text-[var(--text-tertiary)]" /> : <ChevronDown className="w-4 h-4 text-[var(--text-tertiary)]" />}
+            </div>
+          </button>
+          {paraglidingExpanded && (
+            <div className={`border-t p-3 grid grid-cols-1 sm:grid-cols-2 gap-2 ${isDark ? 'border-[var(--border-color)]' : 'border-slate-100'}`}>
+              {PARAGLIDING_SITES.map((site) => {
+                const ws = windStatuses[site.id];
+                const isSelected = selectedLake === site.id;
+                return (
+                  <button key={site.id} onClick={() => onSelectLake(site.id)} className={`flex items-start gap-3 p-3 rounded-lg transition-all border text-left ${
+                    isSelected ? 'bg-sky-500/[0.08] border-sky-500'
+                    : ws?.level === 'hot' ? (isDark ? 'bg-emerald-500/[0.04] border-emerald-500/20' : 'bg-emerald-50/50 border-emerald-200')
+                    : (isDark ? 'bg-white/[0.02] border-[var(--border-subtle)] hover:border-[var(--border-color)]' : 'bg-white border-slate-100 hover:border-slate-200')
+                  }`}>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className={`font-semibold text-sm ${isSelected ? 'text-sky-500' : 'text-[var(--text-primary)]'}`}>{site.name}</span>
+                        {site.rating && <span className="text-[8px] font-bold px-1 py-0.5 rounded bg-purple-500/10 text-purple-500 uppercase">{site.rating}</span>}
+                      </div>
+                      <div className={`text-[10px] mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{site.desc}</div>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className={`text-[10px] flex items-center gap-0.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                          <Wind className="w-2.5 h-2.5" /> {site.wind} {site.direction}
+                        </span>
+                        {site.position && <span className={`text-[10px] ${isDark ? 'text-slate-600' : 'text-slate-300'}`}>{site.position}</span>}
+                      </div>
+                    </div>
+                    {ws && <div className="shrink-0 mt-0.5"><WindBadge status={ws} isDark={isDark} /></div>}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ─── ADDITIONAL SNOWKITE SPOTS ─── */}
+      {(activity === 'snowkiting' || selectedLake === 'powder-mountain' || selectedLake === 'monte-cristo') && (
+        <div className="card !p-0 overflow-hidden">
+          <button
+            onClick={() => setSnowExtraExpanded(!snowExtraExpanded)}
+            className={`w-full flex items-center justify-between px-4 py-3 transition-colors hover:bg-[var(--bg-card-hover)]`}
+          >
+            <div className="flex items-center gap-3">
+              <Mountain className={`w-4 h-4 text-[var(--text-tertiary)]`} />
+              <div className="text-left">
+                <span className="font-semibold text-sm text-[var(--text-primary)]">More Snowkite Terrain</span>
+                <div className="text-[11px] text-[var(--text-tertiary)]">Powder Mountain · Monte Cristo · Backcountry bowls</div>
+              </div>
+            </div>
+            {snowExtraExpanded ? <ChevronUp className="w-4 h-4 text-[var(--text-tertiary)]" /> : <ChevronDown className="w-4 h-4 text-[var(--text-tertiary)]" />}
+          </button>
+          {snowExtraExpanded && (
+            <div className={`border-t p-3 grid grid-cols-1 sm:grid-cols-2 gap-2 ${isDark ? 'border-[var(--border-color)]' : 'border-slate-100'}`}>
+              {[...SNOWKITE_EXTRA, { id: 'pineview', name: 'Pineview Reservoir', wind: 'E/W Light', meter: null, desc: 'Beginner-friendly — light consistent winds 5-12 mph from spillway', position: '4,900 ft' }].map((spot) => {
+                const ws = windStatuses[spot.id];
+                const isSelected = selectedLake === spot.id;
+                return (
+                  <button key={spot.id} onClick={() => onSelectLake(spot.id)} className={`flex items-start gap-3 p-3 rounded-lg transition-all border text-left ${
+                    isSelected ? 'bg-sky-500/[0.08] border-sky-500'
+                    : (isDark ? 'bg-white/[0.02] border-[var(--border-subtle)] hover:border-[var(--border-color)]' : 'bg-white border-slate-100 hover:border-slate-200')
+                  }`}>
+                    <div className="flex-1 min-w-0">
+                      <span className={`font-semibold text-sm ${isSelected ? 'text-sky-500' : 'text-[var(--text-primary)]'}`}>{spot.name}</span>
+                      {spot.desc && <div className={`text-[10px] mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{spot.desc}</div>}
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className={`text-[10px] flex items-center gap-0.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                          <Wind className="w-2.5 h-2.5" /> {spot.wind}
+                        </span>
+                        {spot.position && <span className={`text-[10px] ${isDark ? 'text-slate-600' : 'text-slate-300'}`}>{spot.position}</span>}
+                      </div>
+                    </div>
+                    {ws && <div className="shrink-0 mt-0.5"><WindBadge status={ws} isDark={isDark} /></div>}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* All Utah Lakes — organized by region (fishing, boating, paddling only) */}
+      {!['snowkiting', 'paragliding'].includes(activity) && (
       <div className="space-y-2">
         {LAKE_REGIONS.map((region) => {
           const hasSelectedLake = region.lakes.some(l => l.id === selectedLake);
@@ -566,4 +751,4 @@ function RegionSection({ region, selectedLake, onSelectLake, windStatuses, isDar
   );
 }
 
-export { UTAH_LAKE_LAUNCHES, STRAWBERRY_LAUNCHES, SKYLINE_SPOT, OTHER_LAKES, LAKE_REGIONS };
+export { UTAH_LAKE_LAUNCHES, STRAWBERRY_LAUNCHES, SKYLINE_SPOT, OTHER_LAKES, LAKE_REGIONS, KITE_SPOTS, SNOWKITE_EXTRA, PARAGLIDING_SITES };

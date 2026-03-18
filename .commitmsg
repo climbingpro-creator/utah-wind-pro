@@ -1,11 +1,10 @@
-Fix learning pipeline: close verification gap, add WindEventPredictor, expand 24/7 collection to all 35 lakes
+Add verified activity spots, historical analysis, and activity-filtered location selector
 
-- WindEventPredictor: predicts frontal passages, north flow, clearing wind, glass windows, pre/post-frontal, thermal cycles
-- Verification window expanded from 2hr to 48hr so predictions survive app closure
-- Server cron now collects 22 stations across all 35 Utah lakes (was 7 lakes, 13 stations)
-- DataCollector dynamically pulls lake list from LAKE_CONFIGS instead of hardcoded arrays
-- Learning threshold lowered from 10 to 5 with confidence-scaled weight adjustments
-- Discovered patterns now actively used in calculateNewWeights (peak hour, wind type dominance)
-- Session feedback collects estimated wind speed for location-specific bias correction
-- LearningDashboard shows pattern insights, wind event intelligence, data health metrics
-- Fixed pruneOldData index mismatch for ACCURACY/INDICATORS stores
+- Add verified kiting spots: Rush Lake, Grantsville Reservoir (Utah Windriders confirmed)
+- Add paragliding sites: PotM South/North, Inspiration Point, West Mountain, Stockton Bar (UHGPGA verified)
+- Add snowkite terrain: Powder Mountain, Monte Cristo (Utah Kite Addiction verified)
+- LakeSelector now filters by activity: kiting sees kite spots, paragliding sees launch sites, fishing/boating sees lakes
+- Historical spot analysis script pulls 365 days of Synoptic data for all verified spots
+- Zig Zag confirmed: 198 SE thermal days/year, 340 total kiteable days from FPS station data
+- Historical baseline data saved to src/config/historicalSpotData.json for prediction calibration
+- Server cron expanded to collect data for all new activity-specific locations

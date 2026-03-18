@@ -89,6 +89,18 @@ const LAKE_STATION_MAP = {
   'quail-creek': ['KSGU'],
   // Lake Powell
   'lake-powell': ['KPGA'],
+  // Kite spots
+  'rush-lake': ['KSLC'],
+  'grantsville': ['KSLC'],
+  // Paragliding sites
+  'potm-south': ['FPS', 'KSLC', 'KPVU'],
+  'potm-north': ['FPS', 'KSLC', 'KPVU'],
+  'inspo': ['KPVU'],
+  'west-mountain': ['KPVU'],
+  'stockton-bar': ['KSLC'],
+  // Snowkite spots
+  'powder-mountain': ['KSLC'],
+  'monte-cristo': ['KLGU'],
 };
 
 async function redisCommand(command, ...args) {

@@ -2729,6 +2729,349 @@ export const LAKE_CONFIGS = {
     boating: { marina: false, ramp: true, statePark: 'Quail Creek State Park' },
     glassWindow: { typicalStart: 5, typicalEnd: 10, confidence: 'medium' },
   },
+
+  // =====================================================
+  // RUSH LAKE — Premier Kite Spot (Tooele County)
+  // =====================================================
+  'rush-lake': {
+    id: 'rush-lake',
+    name: 'Rush Lake',
+    shortName: 'Rush Lake',
+    region: 'Tooele County',
+    coordinates: { lat: 40.500, lng: -112.370 },
+    elevation: 4950,
+    surfaceAcres: 300,
+    maxDepth: 4,
+    primaryWindType: 'Storm Front / South Thermal',
+    thermalDirection: 'S (170-210°)',
+    description: 'Hardcore kite spot — most kitable days in Utah, shallow flat water, storm-front driven',
+    stations: {
+      pressure: {
+        high: { id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226, role: 'Regional pressure reference' },
+        low: { id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226, role: 'Basin reference' },
+        bustThreshold: 2.0,
+      },
+      ridge: [
+        { id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226, role: 'Regional reference', priority: 1 },
+      ],
+      groundTruth: { id: 'KSLC', name: 'Salt Lake City Intl', role: 'Ground Truth — 50 min drive' },
+      lakeshore: [
+        { id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226, role: 'Primary (distant)', priority: 1 },
+      ],
+      reference: [{ id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226 }],
+    },
+    thermal: {
+      optimalDirection: { min: 170, max: 210, ideal: 190 },
+      optimalSpeed: { min: 12, max: 30, average: 18 },
+      peakHours: { start: 11, end: 17, peak: 14 },
+      buildTime: { start: 10, usable: 11 },
+      fadeTime: { start: 18, end: 20 },
+    },
+    waterTempEstimate: 55,
+    glassWindow: { typicalStart: 6, typicalEnd: 10, confidence: 'low' },
+    windHazard: 'HIGH — extreme storm-front winds possible, 3-foot depth only',
+  },
+
+  // =====================================================
+  // GRANTSVILLE RESERVOIR — Kite/Windsurf Spot
+  // =====================================================
+  'grantsville': {
+    id: 'grantsville',
+    name: 'Grantsville Reservoir',
+    shortName: 'Grantsville',
+    region: 'Tooele County',
+    coordinates: { lat: 40.590, lng: -112.440 },
+    elevation: 4850,
+    surfaceAcres: 160,
+    maxDepth: 12,
+    primaryWindType: 'Valley Thermal / Frontal',
+    thermalDirection: 'S to SW (180-230°)',
+    description: 'Alternative to Rush Lake — deeper water for larger skegs, windsurf-friendly',
+    stations: {
+      pressure: {
+        high: { id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226, role: 'Regional pressure reference' },
+        low: { id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226, role: 'Basin reference' },
+        bustThreshold: 2.0,
+      },
+      ridge: [
+        { id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226, role: 'Regional reference', priority: 1 },
+      ],
+      groundTruth: { id: 'KSLC', name: 'Salt Lake City Intl', role: 'Ground Truth — distant' },
+      lakeshore: [
+        { id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226, role: 'Primary (distant)', priority: 1 },
+      ],
+      reference: [{ id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226 }],
+    },
+    thermal: {
+      optimalDirection: { min: 180, max: 230, ideal: 200 },
+      optimalSpeed: { min: 10, max: 25, average: 15 },
+      peakHours: { start: 11, end: 17, peak: 14 },
+      buildTime: { start: 10, usable: 11 },
+      fadeTime: { start: 18, end: 20 },
+    },
+    waterTempEstimate: 55,
+    glassWindow: { typicalStart: 6, typicalEnd: 10, confidence: 'low' },
+  },
+
+  // =====================================================
+  // POINT OF THE MOUNTAIN — Paragliding (South Side)
+  // =====================================================
+  'potm-south': {
+    id: 'potm-south',
+    name: 'Point of the Mountain — South',
+    shortName: 'PotM South',
+    region: 'Utah County',
+    coordinates: { lat: 40.445, lng: -111.915 },
+    elevation: 4900,
+    primaryWindType: 'South Thermal / Ridge Soaring',
+    thermalDirection: 'S to SE (150-200°)',
+    description: '#1 US training site — 300 ft vertical, south side flies morning south winds',
+    stations: {
+      pressure: {
+        high: { id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226, role: 'Regional reference' },
+        low: { id: 'KPVU', name: 'Provo Municipal', elevation: 4495, role: 'Local valley reference' },
+        bustThreshold: 2.0,
+      },
+      ridge: [
+        { id: 'FPS', name: 'Flight Park South', elevation: 4970, role: 'ON-SITE wind station', priority: 1 },
+      ],
+      groundTruth: { id: 'FPS', name: 'Flight Park South', role: 'Ground Truth — on-site' },
+      lakeshore: [
+        { id: 'FPS', name: 'Flight Park South', elevation: 4970, role: 'Primary — on-site', priority: 1 },
+      ],
+      reference: [{ id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226 }],
+    },
+    thermal: {
+      optimalDirection: { min: 150, max: 200, ideal: 175 },
+      optimalSpeed: { min: 5, max: 18, average: 10 },
+      peakHours: { start: 8, end: 14, peak: 11 },
+      buildTime: { start: 7, usable: 8 },
+      fadeTime: { start: 15, end: 17 },
+    },
+  },
+
+  // =====================================================
+  // POINT OF THE MOUNTAIN — Paragliding (North Side)
+  // =====================================================
+  'potm-north': {
+    id: 'potm-north',
+    name: 'Point of the Mountain — North',
+    shortName: 'PotM North',
+    region: 'Salt Lake County',
+    coordinates: { lat: 40.460, lng: -111.900 },
+    elevation: 5200,
+    primaryWindType: 'North Wind Ridge Soaring',
+    thermalDirection: 'N to NW (320-360°)',
+    description: '900-1200 ft vertical, two parallel ridges, flies afternoon north winds',
+    stations: {
+      pressure: {
+        high: { id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226, role: 'Regional reference' },
+        low: { id: 'KPVU', name: 'Provo Municipal', elevation: 4495, role: 'Local valley reference' },
+        bustThreshold: 2.0,
+      },
+      ridge: [
+        { id: 'FPS', name: 'Flight Park South', elevation: 4970, role: 'Nearby wind station', priority: 1 },
+      ],
+      groundTruth: { id: 'FPS', name: 'Flight Park South', role: 'Ground Truth — adjacent' },
+      lakeshore: [
+        { id: 'FPS', name: 'Flight Park South', elevation: 4970, role: 'Primary — adjacent', priority: 1 },
+        { id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226, role: 'North flow indicator', priority: 2 },
+      ],
+      reference: [{ id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226 }],
+    },
+    thermal: {
+      optimalDirection: { min: 320, max: 360, ideal: 340 },
+      optimalSpeed: { min: 8, max: 20, average: 12 },
+      peakHours: { start: 12, end: 18, peak: 15 },
+      buildTime: { start: 11, usable: 12 },
+      fadeTime: { start: 18, end: 20 },
+    },
+  },
+
+  // =====================================================
+  // INSPIRATION POINT — Paragliding (Uintah NF)
+  // =====================================================
+  'inspo': {
+    id: 'inspo',
+    name: 'Inspiration Point',
+    shortName: 'Inspo',
+    region: 'Utah County',
+    coordinates: { lat: 40.300, lng: -111.640 },
+    elevation: 6667,
+    primaryWindType: 'Mountain Thermal',
+    thermalDirection: 'W to SW (220-280°)',
+    description: 'P3/H3+ required — high-altitude mountain thermals, restricted LZs',
+    stations: {
+      pressure: {
+        high: { id: 'KPVU', name: 'Provo Municipal', elevation: 4495, role: 'Valley reference' },
+        low: { id: 'KPVU', name: 'Provo Municipal', elevation: 4495, role: 'Nearest ASOS' },
+        bustThreshold: 2.5,
+      },
+      ridge: [
+        { id: 'KPVU', name: 'Provo Municipal', elevation: 4495, role: 'Regional reference', priority: 1 },
+      ],
+      groundTruth: { id: 'KPVU', name: 'Provo Municipal', role: 'Ground Truth — distant valley' },
+      lakeshore: [
+        { id: 'KPVU', name: 'Provo Municipal', elevation: 4495, role: 'Primary (valley)', priority: 1 },
+      ],
+      reference: [{ id: 'KPVU', name: 'Provo Municipal', elevation: 4495 }],
+    },
+    thermal: {
+      optimalDirection: { min: 220, max: 280, ideal: 250 },
+      optimalSpeed: { min: 5, max: 15, average: 8 },
+      peakHours: { start: 11, end: 16, peak: 13 },
+      buildTime: { start: 10, usable: 11 },
+      fadeTime: { start: 16, end: 18 },
+    },
+  },
+
+  // =====================================================
+  // WEST MOUNTAIN — Paragliding
+  // =====================================================
+  'west-mountain': {
+    id: 'west-mountain',
+    name: 'West Mountain',
+    shortName: 'West Mtn',
+    region: 'Utah County',
+    coordinates: { lat: 40.100, lng: -111.800 },
+    elevation: 5500,
+    primaryWindType: 'Lake Thermal / Ridge Soaring',
+    thermalDirection: 'W to NW (260-330°)',
+    description: 'South of Utah Lake — large open LZs, 7-10 min flights, good for XC intro',
+    stations: {
+      pressure: {
+        high: { id: 'KPVU', name: 'Provo Municipal', elevation: 4495, role: 'Valley reference' },
+        low: { id: 'KPVU', name: 'Provo Municipal', elevation: 4495, role: 'Nearest ASOS' },
+        bustThreshold: 2.5,
+      },
+      ridge: [
+        { id: 'KPVU', name: 'Provo Municipal', elevation: 4495, role: 'Regional reference', priority: 1 },
+      ],
+      groundTruth: { id: 'KPVU', name: 'Provo Municipal', role: 'Ground Truth — valley' },
+      lakeshore: [
+        { id: 'KPVU', name: 'Provo Municipal', elevation: 4495, role: 'Primary (valley)', priority: 1 },
+      ],
+      reference: [{ id: 'KPVU', name: 'Provo Municipal', elevation: 4495 }],
+    },
+    thermal: {
+      optimalDirection: { min: 260, max: 330, ideal: 290 },
+      optimalSpeed: { min: 5, max: 15, average: 8 },
+      peakHours: { start: 11, end: 16, peak: 14 },
+      buildTime: { start: 10, usable: 11 },
+      fadeTime: { start: 17, end: 19 },
+    },
+  },
+
+  // =====================================================
+  // STOCKTON BAR — Paragliding Ridge Soaring
+  // =====================================================
+  'stockton-bar': {
+    id: 'stockton-bar',
+    name: 'Stockton Bar',
+    shortName: 'Stockton',
+    region: 'Tooele County',
+    coordinates: { lat: 40.440, lng: -112.370 },
+    elevation: 5100,
+    primaryWindType: 'North Wind Ridge Soaring',
+    thermalDirection: 'N (340-20°)',
+    description: 'Lake Bonneville ridge — faces north, best in afternoon north wind',
+    stations: {
+      pressure: {
+        high: { id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226, role: 'Regional reference' },
+        low: { id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226, role: 'Basin reference' },
+        bustThreshold: 2.0,
+      },
+      ridge: [
+        { id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226, role: 'Regional reference', priority: 1 },
+      ],
+      groundTruth: { id: 'KSLC', name: 'Salt Lake City Intl', role: 'Ground Truth — distant' },
+      lakeshore: [
+        { id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226, role: 'Primary (distant)', priority: 1 },
+      ],
+      reference: [{ id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226 }],
+    },
+    thermal: {
+      optimalDirection: { min: 340, max: 20, ideal: 0 },
+      optimalSpeed: { min: 8, max: 18, average: 12 },
+      peakHours: { start: 12, end: 18, peak: 15 },
+      buildTime: { start: 11, usable: 12 },
+      fadeTime: { start: 18, end: 20 },
+    },
+  },
+
+  // =====================================================
+  // POWDER MOUNTAIN — Snowkiting
+  // =====================================================
+  'powder-mountain': {
+    id: 'powder-mountain',
+    name: 'Powder Mountain',
+    shortName: 'Pow Mow',
+    region: 'Weber County',
+    coordinates: { lat: 41.380, lng: -111.780 },
+    elevation: 8900,
+    primaryWindType: 'Mountain Thermal / Frontal',
+    thermalDirection: 'S to W (180-270°)',
+    description: 'High elevation snowkite — wind exposure from Hidden Lake to the Towers',
+    stations: {
+      pressure: {
+        high: { id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226, role: 'Regional reference' },
+        low: { id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226, role: 'Basin reference' },
+        bustThreshold: 2.5,
+      },
+      ridge: [
+        { id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226, role: 'Regional reference', priority: 1 },
+      ],
+      groundTruth: { id: 'KSLC', name: 'Salt Lake City Intl', role: 'Ground Truth — distant' },
+      lakeshore: [
+        { id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226, role: 'Primary (distant)', priority: 1 },
+      ],
+      reference: [{ id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226 }],
+    },
+    thermal: {
+      optimalDirection: { min: 180, max: 270, ideal: 225 },
+      optimalSpeed: { min: 5, max: 20, average: 10 },
+      peakHours: { start: 10, end: 16, peak: 13 },
+      buildTime: { start: 9, usable: 10 },
+      fadeTime: { start: 17, end: 19 },
+    },
+  },
+
+  // =====================================================
+  // MONTE CRISTO — Snowkiting
+  // =====================================================
+  'monte-cristo': {
+    id: 'monte-cristo',
+    name: 'Monte Cristo',
+    shortName: 'Monte Cristo',
+    region: 'Weber County',
+    coordinates: { lat: 41.450, lng: -111.500 },
+    elevation: 8900,
+    primaryWindType: 'Mountain Pass / Frontal',
+    thermalDirection: 'W to NW (250-320°)',
+    description: 'Backcountry bowls — requires hike/snowmobile 1/4+ mile in, expert terrain',
+    stations: {
+      pressure: {
+        high: { id: 'KLGU', name: 'Logan-Cache Airport', elevation: 4457, role: 'Regional reference' },
+        low: { id: 'KLGU', name: 'Logan-Cache Airport', elevation: 4457, role: 'Nearest ASOS' },
+        bustThreshold: 2.5,
+      },
+      ridge: [
+        { id: 'KLGU', name: 'Logan-Cache Airport', elevation: 4457, role: 'Primary reference', priority: 1 },
+      ],
+      groundTruth: { id: 'KLGU', name: 'Logan-Cache Airport', role: 'Ground Truth — distant' },
+      lakeshore: [
+        { id: 'KLGU', name: 'Logan-Cache Airport', elevation: 4457, role: 'Primary (distant)', priority: 1 },
+      ],
+      reference: [{ id: 'KLGU', name: 'Logan-Cache Airport', elevation: 4457 }],
+    },
+    thermal: {
+      optimalDirection: { min: 250, max: 320, ideal: 280 },
+      optimalSpeed: { min: 8, max: 25, average: 14 },
+      peakHours: { start: 10, end: 16, peak: 13 },
+      buildTime: { start: 9, usable: 10 },
+      fadeTime: { start: 17, end: 19 },
+    },
+  },
 };
 
 /**
