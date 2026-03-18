@@ -229,11 +229,16 @@ function predictForLake(lakeId, primaryStation, pressure, history, hour, learned
 }
 
 // ── Pressure Analysis ──
+// KSLC (4226 ft) and KPVU (4495 ft) report station pressure (not SLP).
+// The ~7.5 mb baseline difference is purely altitude, not weather.
+// We subtract this to get the actual weather-forcing gradient.
+const PRESSURE_ALTITUDE_BASELINE = 7.5;
 
 function analyzePressure(currentStations, recentSnapshots) {
   const slc = currentStations.find(s => s.stationId === 'KSLC');
   const pvu = currentStations.find(s => s.stationId === 'KPVU');
-  const gradient = (slc?.pressure && pvu?.pressure) ? slc.pressure - pvu.pressure : 0;
+  const rawGradient = (slc?.pressure && pvu?.pressure) ? slc.pressure - pvu.pressure : null;
+  const gradient = rawGradient != null ? rawGradient - PRESSURE_ALTITUDE_BASELINE : 0;
 
   let trend = 'stable';
   if (recentSnapshots.length >= 4) {
@@ -245,7 +250,7 @@ function analyzePressure(currentStations, recentSnapshots) {
     }
   }
 
-  return { slcPressure: slc?.pressure, pvuPressure: pvu?.pressure, gradient, trend };
+  return { slcPressure: slc?.pressure, pvuPressure: pvu?.pressure, gradient, rawGradient, trend };
 }
 
 // ── Build station history from recent snapshots ──

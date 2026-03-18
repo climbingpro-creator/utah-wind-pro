@@ -1,14 +1,5 @@
-Add 24/7 server-side learning engine
+Fix pressure gradient baseline offset in server predictor
 
-The prediction→verify→learn loop now runs server-side every 15 min
-via the Vercel cron, independent of whether any client has the app open.
-
-- New api/lib/serverLearning.js: full wind event prediction engine
-  with scoring for all 7 event types, verification against actuals,
-  and weight updates stored in Redis
-- Cron collect.js now runs COLLECT → PREDICT → VERIFY → LEARN
-- New ?action=weights endpoint returns server-learned model weights
-- Client DataCollector syncs server weights on startup and merges
-  with local IndexedDB weights (prefers source with more data)
-- LearningDashboard shows server learning stats and per-event accuracy
-- Free trial extended to 30 days for testing
+KSLC and KPVU report station pressure (not SLP), creating a ~7.5mb
+baseline difference from altitude alone. Subtract this so the weather-
+forcing gradient matches the 0-3mb range the scoring functions expect.
