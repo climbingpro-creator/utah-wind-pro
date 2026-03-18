@@ -106,6 +106,55 @@ CREATE POLICY "Users can manage own push subscriptions"
   ON push_subscriptions FOR ALL
   USING (auth.uid() = user_id);
 
+-- ── Garmin Device Links ───────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS garmin_devices (
+  id            BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  user_id       UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  device_id     TEXT NOT NULL,
+  device_name   TEXT DEFAULT 'Garmin Watch',
+  linked_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(device_id)
+);
+
+ALTER TABLE garmin_devices ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can read own devices"
+  ON garmin_devices FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can link devices"
+  ON garmin_devices FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can unlink devices"
+  ON garmin_devices FOR DELETE
+  USING (auth.uid() = user_id);
+
+CREATE INDEX IF NOT EXISTS idx_garmin_devices_device_id
+  ON garmin_devices(device_id);
+
+CREATE INDEX IF NOT EXISTS idx_garmin_devices_user
+  ON garmin_devices(user_id);
+
+-- Server-side helper: check if a Garmin device_id has Pro access
+CREATE OR REPLACE FUNCTION public.get_device_tier(did TEXT)
+RETURNS TEXT
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+AS $$
+  SELECT COALESCE(
+    (SELECT s.tier FROM garmin_devices g
+     JOIN subscriptions s ON s.user_id = g.user_id
+     WHERE g.device_id = did
+       AND s.status = 'active'
+       AND (s.current_period_end IS NULL OR s.current_period_end > NOW())
+    ),
+    'free'
+  );
+$$;
+
 -- ── Indexes ─────────────────────────────────────────────────────
 
 CREATE INDEX IF NOT EXISTS idx_subscriptions_stripe_customer

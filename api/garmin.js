@@ -4,8 +4,14 @@
  * Premium endpoint for Garmin Connect IQ watch app.
  * Fuses Synoptic + Ambient Weather (PWS) data with fishing,
  * boating, and activity intelligence.
+ *
+ * Freemium model:
+ *   FREE  → wind speed, direction, temp, basic go/no-go
+ *   PRO   → fishing intelligence, boating safety, arc gauges,
+ *            multi-lake, alerts, full forecast
  */
 import { getLakeConfig } from './lib/stations.js';
+import { createClient } from '@supabase/supabase-js';
 
 const CARDINAL = ['N','NNE','NE','ENE','E','ESE','SE','SSE',
                    'S','SSW','SW','WSW','W','WNW','NW','NNW'];
@@ -20,18 +26,46 @@ const SHORT_NAMES = {
   'willard-bay': 'Willard',
 };
 
+const FREE_LAKES = ['utah-lake-zigzag'];
+
 const HOURLY_PROB = [0,0,0,0,0,0,5,10,20,35,50,65,75,80,80,70,55,40,25,10,5,0,0,0];
 const MONTHLY_MULT = [.3,.4,.6,.8,1,1,.9,.95,.85,.65,.4,.3];
+
+async function getDeviceTier(deviceId) {
+  if (!deviceId || deviceId === 'unknown') return 'free';
+  try {
+    const url = process.env.SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!url || !key) return 'free';
+    const sb = createClient(url, key);
+    const { data } = await sb.rpc('get_device_tier', { did: deviceId });
+    return data || 'free';
+  } catch { return 'free'; }
+}
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   if (req.method !== 'GET') return res.status(405).end();
 
   const lakeId = req.query.lake || 'utah-lake-zigzag';
+  const deviceId = req.query.device_id || 'unknown';
   const config = getLakeConfig(lakeId);
   if (!config) return res.status(400).json({ error: 'bad lake' });
 
   try {
+    const tier = await getDeviceTier(deviceId);
+    const isPro = tier === 'pro';
+
+    // Free users can only query the default lake
+    if (!isPro && !FREE_LAKES.includes(lakeId)) {
+      return res.status(200).json({
+        error: null,
+        pro: false,
+        msg: 'PRO required for this lake',
+        l: SHORT_NAMES[lakeId] || lakeId,
+      });
+    }
+
     const token = process.env.SYNOPTIC_TOKEN || process.env.VITE_SYNOPTIC_TOKEN;
 
     const [synRaw, ambientData] = await Promise.all([
@@ -56,140 +90,128 @@ export default async function handler(req, res) {
     const hour = now.getHours();
     const month = now.getMonth();
 
-    // ── Thermal probability ────────────────────────────
+    // Thermal probability
     let thermPr = Math.round(HOURLY_PROB[hour] * MONTHLY_MULT[month]);
     if (speed >= 8 && dir >= 140 && dir <= 220) thermPr = Math.max(thermPr, 75);
     else if (speed >= 8) thermPr = Math.max(thermPr, 50);
 
-    // ── Glass probability ──────────────────────────────
+    // Glass probability
     let glassPr = speed < 2 ? 90 : speed < 4 ? 65 : speed < 6 ? 35 : 10;
     if (gust >= 8) glassPr = Math.min(glassPr, 20);
     if (hour < 8 || hour > 19) glassPr = Math.min(100, glassPr + 15);
 
-    // ── Gradient ───────────────────────────────────────
+    // Gradient
     const slcP = slc.pressure || 0;
     const pvuP = provo.pressure || 0;
     const gradient = slcP && pvuP ? round1(slcP - pvuP) : null;
 
-    // ── Wind type ──────────────────────────────────────
+    // Wind type
     const windType = (dir >= 140 && dir <= 220) ? 'thermal'
       : ((dir >= 315 || dir <= 45) ? 'north' : 'gradient');
 
-    // ── ETA ────────────────────────────────────────────
+    // ETA
     const peakHour = 14;
     const etaStr = (hour >= 8 && hour < peakHour && windType !== 'thermal')
       ? `${peakHour - 12} PM` : null;
 
-    // ── Activity scores (0-100) ────────────────────────
-    const kiteScore  = clamp(
+    // Activity scores
+    const kiteScore = clamp(
       speed >= 12 && speed <= 25 ? 80 + (gust - speed < 10 ? 20 : 0) :
       speed >= 8 ? 50 : speed > 25 ? 30 : 10);
-    const sailScore  = clamp(
+    const sailScore = clamp(
       speed >= 6 && speed <= 20 ? 85 : speed >= 4 ? 60 : 30);
-    const paraScore  = clamp(
+    const paraScore = clamp(
       speed >= 5 && speed <= 15 && gust < 20 ? 80 + (dir >= 140 && dir <= 220 ? 15 : 0) :
       speed < 5 ? 40 : 15);
 
-    // ── Moon phase (0-7) ───────────────────────────────
-    const moonPhase = getMoonPhase(now);
-    const moonNames = ['New','Wax Cres','1st Qtr','Wax Gib','Full','Wan Gib','3rd Qtr','Wan Cres'];
-
-    // ── Fishing intelligence ───────────────────────────
-    const isDawnDusk = (hour >= 5 && hour <= 7) || (hour >= 18 && hour <= 20);
-    const isMajorFeed = (moonPhase === 0 || moonPhase === 4);
-    const isMinorFeed = (moonPhase === 2 || moonPhase === 6);
-    let biteRating = glassPr * 0.4;
-    if (isDawnDusk) biteRating += 25;
-    if (isMajorFeed) biteRating += 20;
-    else if (isMinorFeed) biteRating += 10;
-    if (pres != null && pres >= 29.8 && pres <= 30.2) biteRating += 10;
-    if (speed < 8) biteRating += 5;
-    biteRating = clamp(Math.round(biteRating));
-
-    // Best fishing window today
-    const bestFishHour = (month >= 4 && month <= 8) ? 6 : 7;
-    const bestFishEnd = (month >= 4 && month <= 8) ? 9 : 10;
-    const bestFishEvening = (month >= 4 && month <= 8) ? 18 : 17;
-    const bestFishEveEnd = (month >= 4 && month <= 8) ? 21 : 19;
-    const fishWindowAM = `${fmtHour(bestFishHour)}-${fmtHour(bestFishEnd)}`;
-    const fishWindowPM = `${fmtHour(bestFishEvening)}-${fmtHour(bestFishEveEnd)}`;
-
-    // Barometric trend indicator
-    let baroTrend = 'steady';
-    if (gradient !== null) {
-      if (gradient > 0.03) baroTrend = 'falling';
-      else if (gradient < -0.03) baroTrend = 'rising';
-    }
-
-    // ── Boating intelligence ───────────────────────────
-    // Wave estimate (simplified for Utah lakes — fetch-limited)
-    let waveEst = 0;
-    if (speed < 5) waveEst = 0;
-    else if (speed < 10) waveEst = 0.5;
-    else if (speed < 15) waveEst = 1.0;
-    else if (speed < 20) waveEst = 2.0;
-    else if (speed < 25) waveEst = 3.0;
-    else waveEst = 4.0;
-
-    // Safety level (100 = safe, 0 = danger)
-    let boatSafety = 100;
-    if (speed >= 25) boatSafety = 10;
-    else if (speed >= 20) boatSafety = 25;
-    else if (speed >= 15) boatSafety = 45;
-    else if (gust >= 20) boatSafety = 35;
-    else if (speed >= 10) boatSafety = 65;
-    else if (speed >= 6) boatSafety = 80;
-    if (gust - speed > 12) boatSafety = Math.min(boatSafety, 30);
-
-    // Boat score (good conditions for casual boating)
-    const boatScore = clamp(Math.round(boatSafety * 0.6 + (100 - speed * 4) * 0.4));
-
-    // Advisory level
-    const advisory = speed >= 25 ? 'DANGER' : speed >= 18 || gust >= 25 ? 'WARNING' :
-      speed >= 12 || gust >= 18 ? 'CAUTION' : 'CLEAR';
-
-    // ── Alert flags ────────────────────────────────────
-    let alerts = 0;
-    if (thermPr >= 70) alerts |= 1;          // bit 0: thermal active
-    if (glassPr >= 80) alerts |= 2;          // bit 1: glass conditions
-    if (speed >= 20 || gust >= 25) alerts |= 4; // bit 2: high wind danger
-    if (biteRating >= 70) alerts |= 8;       // bit 3: prime fishing
-
+    // ── Base response (FREE tier) ──────────────────────
     const body = {
       s:   round1(speed),
       g:   round1(gust),
       d:   Math.round(dir),
       dn:  CARDINAL[Math.round(dir / 22.5) % 16] || '--',
       t:   temp != null ? Math.round(temp) : null,
-      h:   hum != null ? Math.round(hum) : null,
-      bp:  pres != null ? round1(pres) : null,
-      gr:  gradient,
-      p:   thermPr,
-      gl:  glassPr,
       w:   windType,
-      eta: etaStr,
       src: src,
       l:   SHORT_NAMES[lakeId] || lakeId,
       ts:  Math.floor(Date.now() / 1000),
+      pro: isPro,
       ak:  kiteScore,
       as:  sailScore,
       ap:  paraScore,
-      af:  glassPr,
-      // Fishing
-      br:  biteRating,
-      mn:  moonPhase,
-      mns: moonNames[moonPhase],
-      fam: fishWindowAM,
-      fpm: fishWindowPM,
-      bt:  baroTrend,
-      // Boating
-      wv:  round1(waveEst),
-      bs:  boatSafety,
-      ab:  boatScore,
-      adv: advisory,
-      // Alerts bitmask
-      al:  alerts,
     };
+
+    // ── PRO-only fields ────────────────────────────────
+    if (isPro) {
+      body.h   = hum != null ? Math.round(hum) : null;
+      body.bp  = pres != null ? round1(pres) : null;
+      body.gr  = gradient;
+      body.p   = thermPr;
+      body.gl  = glassPr;
+      body.eta = etaStr;
+      body.af  = glassPr;
+
+      // Fishing intelligence
+      const moonPhase = getMoonPhase(now);
+      const moonNames = ['New','Wax Cres','1st Qtr','Wax Gib','Full','Wan Gib','3rd Qtr','Wan Cres'];
+      const isDawnDusk = (hour >= 5 && hour <= 7) || (hour >= 18 && hour <= 20);
+      const isMajorFeed = (moonPhase === 0 || moonPhase === 4);
+      const isMinorFeed = (moonPhase === 2 || moonPhase === 6);
+      let biteRating = glassPr * 0.4;
+      if (isDawnDusk) biteRating += 25;
+      if (isMajorFeed) biteRating += 20;
+      else if (isMinorFeed) biteRating += 10;
+      if (pres != null && pres >= 29.8 && pres <= 30.2) biteRating += 10;
+      if (speed < 8) biteRating += 5;
+      biteRating = clamp(Math.round(biteRating));
+
+      const bestFishHour = (month >= 4 && month <= 8) ? 6 : 7;
+      const bestFishEnd = (month >= 4 && month <= 8) ? 9 : 10;
+      const bestFishEvening = (month >= 4 && month <= 8) ? 18 : 17;
+      const bestFishEveEnd = (month >= 4 && month <= 8) ? 21 : 19;
+
+      let baroTrend = 'steady';
+      if (gradient !== null) {
+        if (gradient > 0.03) baroTrend = 'falling';
+        else if (gradient < -0.03) baroTrend = 'rising';
+      }
+
+      body.br  = biteRating;
+      body.mn  = moonPhase;
+      body.mns = moonNames[moonPhase];
+      body.fam = `${fmtHour(bestFishHour)}-${fmtHour(bestFishEnd)}`;
+      body.fpm = `${fmtHour(bestFishEvening)}-${fmtHour(bestFishEveEnd)}`;
+      body.bt  = baroTrend;
+
+      // Boating intelligence
+      let waveEst = speed < 5 ? 0 : speed < 10 ? 0.5 : speed < 15 ? 1.0 :
+        speed < 20 ? 2.0 : speed < 25 ? 3.0 : 4.0;
+
+      let boatSafety = 100;
+      if (speed >= 25) boatSafety = 10;
+      else if (speed >= 20) boatSafety = 25;
+      else if (speed >= 15) boatSafety = 45;
+      else if (gust >= 20) boatSafety = 35;
+      else if (speed >= 10) boatSafety = 65;
+      else if (speed >= 6) boatSafety = 80;
+      if (gust - speed > 12) boatSafety = Math.min(boatSafety, 30);
+
+      const advisory = speed >= 25 ? 'DANGER' : speed >= 18 || gust >= 25 ? 'WARNING' :
+        speed >= 12 || gust >= 18 ? 'CAUTION' : 'CLEAR';
+
+      body.wv  = round1(waveEst);
+      body.bs  = boatSafety;
+      body.ab  = clamp(Math.round(boatSafety * 0.6 + (100 - speed * 4) * 0.4));
+      body.adv = advisory;
+
+      // Alerts bitmask
+      let alerts = 0;
+      if (thermPr >= 70) alerts |= 1;
+      if (glassPr >= 80) alerts |= 2;
+      if (speed >= 20 || gust >= 25) alerts |= 4;
+      if (biteRating >= 70) alerts |= 8;
+      body.al = alerts;
+    }
 
     res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
     res.setHeader('Content-Type', 'application/json');
@@ -200,7 +222,6 @@ export default async function handler(req, res) {
   }
 }
 
-// ── Moon phase calculation (simplified lunation) ────────
 function getMoonPhase(date) {
   const year = date.getFullYear();
   const month = date.getMonth() + 1;
