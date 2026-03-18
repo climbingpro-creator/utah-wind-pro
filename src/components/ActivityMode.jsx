@@ -169,10 +169,13 @@ function getActivityStatus(activityId, windSpeed, windGust) {
   return 'active';
 }
 
-const ActivityMode = ({ selectedActivity, onActivityChange, windSpeed, windGust }) => {
+const ActivityMode = ({ selectedActivity, onActivityChange, windSpeed, windGust, fpsStation }) => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const activities = ['kiting', 'snowkiting', 'sailing', 'fishing', 'boating', 'paddling', 'paragliding'];
+
+  const fpsSpeed = fpsStation?.speed ?? fpsStation?.windSpeed;
+  const fpsGust = fpsStation?.gust ?? fpsStation?.windGust;
   
   return (
     <div className={`
@@ -182,7 +185,9 @@ const ActivityMode = ({ selectedActivity, onActivityChange, windSpeed, windGust 
       {activities.map(activityId => {
         const activity = ACTIVITY_CONFIGS[activityId];
         const isSelected = selectedActivity === activityId;
-        const status = getActivityStatus(activityId, windSpeed, windGust);
+        const useSpeed = activityId === 'paragliding' && fpsSpeed != null ? fpsSpeed : windSpeed;
+        const useGust = activityId === 'paragliding' && fpsGust != null ? fpsGust : windGust;
+        const status = getActivityStatus(activityId, useSpeed, useGust);
         const isActive = status === 'active';
         const isMarginal = status === 'marginal';
 

@@ -1,14 +1,6 @@
-Redesign activity presentation — each mode shows only relevant spots
+Fix paragliding activity dot using FPS station data instead of generic wind
 
-Problem: SpotRanker showed paragliding sites to kiters, fishing lakes
-to paragliders, etc. TodayHero was a vague "Active Now" button list.
-
-Fixes:
-- SpotRanker: hard filter by activity — kiting only sees kite spots,
-  paragliding only sees PG sites, fishing only sees lakes
-- LakeSelector: kiting/windsurfing no longer see 35 fishing lakes
-- TodayHero: completely rebuilt as Activity Recommender grid showing
-  every activity with GO/WAIT/OFF status, the WHY (conditions),
-  and window timing — tap any card to jump into that activity
-- Dashboard: PotM direction ranges updated to match widened 110-250
-- Footer trial text: removed hardcoded "7 Days"
+The paragliding indicator in the activity bar was showing orange/marginal
+because it was reading the selected lake's wind speed (e.g. 3 mph at a
+fishing lake) instead of the FPS on-site sensor. Now the paragliding dot
+always evaluates against FPS data regardless of which lake tab is selected.

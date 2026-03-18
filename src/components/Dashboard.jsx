@@ -468,6 +468,7 @@ export function Dashboard() {
             onActivityChange={setSelectedActivity}
             windSpeed={currentWindSpeed}
             windGust={currentWindGust}
+            fpsStation={fpsStation}
           />
         </div>
 
