@@ -32,7 +32,7 @@ const LAKE_THERMAL = {
   'sand-hollow':          { dir: [200, 250], peak: [10, 17], station: 'KSGU' },
   'lake-powell':          { dir: [180, 270], peak: [10, 18], station: 'KPGA' },
   'rush-lake':            { dir: [170, 210], peak: [10, 18], station: 'KSLC' },
-  'potm-south':           { dir: [150, 200], peak: [8, 14],  station: 'FPS' },
+  'potm-south':           { dir: [110, 250], peak: [7, 15],  station: 'FPS' },
   'potm-north':           { dir: [320, 360], peak: [12, 18], station: 'FPS' },
   'powder-mountain':      { dir: [180, 270], peak: [10, 18], station: 'KSLC' },
 };

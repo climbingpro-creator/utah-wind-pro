@@ -39,34 +39,67 @@ export function predictSouth(windData, conditions = {}) {
 
   let probability = 30;
 
-  // Primary indicator: KPVU S wind = thermal cycle active
-  const kpvuWeight = w.indicatorWeights?.kpvu_south || 1.0;
-  if (kpvu.windDirection != null && kpvu.windSpeed != null) {
-    if (kpvu.windDirection >= 140 && kpvu.windDirection <= 220) {
-      if (kpvu.windSpeed >= 5 && kpvu.windSpeed <= 15) probability += 25 * kpvuWeight;
-      else if (kpvu.windSpeed >= 3) probability += 15 * kpvuWeight;
-    } else if (kpvu.windDirection >= 315 || kpvu.windDirection <= 45) {
-      probability -= 20;
+  // PotM South ridge faces ~SSW. Soarable window is wide:
+  //   110-250° = any wind with a southerly component hitting the ridge
+  //   Sweet spot: 140-200° (SSE to SSW)
+  //   Marginal but flyable: 110-140° and 200-250°
+
+  // ── FPS GROUND TRUTH — the #1 signal (this IS the on-site sensor) ──
+  const fpsWeight = w.indicatorWeights?.fps_ground || 1.3;
+  if (fps.windSpeed != null && fps.windDirection != null) {
+    const fpsDir = fps.windDirection;
+    const fpsSpd = fps.windSpeed;
+
+    // Sweet spot: 135-210° and 5-18 mph = textbook soaring
+    if (fpsDir >= 135 && fpsDir <= 210 && fpsSpd >= 5 && fpsSpd <= 18) {
+      probability += 30 * fpsWeight;
     }
+    // Good: 110-135° or 210-250° still flyable
+    else if (fpsDir >= 110 && fpsDir <= 250 && fpsSpd >= 4 && fpsSpd <= 20) {
+      probability += 20 * fpsWeight;
+    }
+    // Marginal: 90-110° or 250-270° (cross-wind)
+    else if (fpsDir >= 90 && fpsDir <= 270 && fpsSpd >= 3 && fpsSpd <= 15) {
+      probability += 5 * fpsWeight;
+    }
+
+    // Low gust factor = smooth air = more flyable
+    const gf = fpsSpd > 0 ? (fps.windGust || fpsSpd) / fpsSpd : 2;
+    if (gf <= 1.2) probability += 8;
+    else if (gf <= 1.35) probability += 3;
+    else if (gf > 1.6) probability -= 10;
   }
 
-  // Negative: KSLC strong N = front overriding thermal
+  // ── KPVU — secondary indicator (thermal cycle in the valley) ──
+  const kpvuWeight = w.indicatorWeights?.kpvu_south || 0.8;
+  if (kpvu.windDirection != null && kpvu.windSpeed != null) {
+    if (kpvu.windDirection >= 120 && kpvu.windDirection <= 250) {
+      if (kpvu.windSpeed >= 4 && kpvu.windSpeed <= 15) probability += 15 * kpvuWeight;
+      else if (kpvu.windSpeed >= 2) probability += 8 * kpvuWeight;
+    } else if (kpvu.windDirection >= 315 || kpvu.windDirection <= 45) {
+      probability -= 15;
+    }
+    // KPVU calm is NOT a negative — PotM thermal is locally driven,
+    // KPVU airport is 10 miles south and often lags or misses it
+  }
+
+  // ── KSLC — front override detector ──
   const kslcWeight = w.indicatorWeights?.kslc_north || 1.0;
   if (kslc.windDirection != null && kslc.windSpeed != null) {
     if ((kslc.windDirection >= 315 || kslc.windDirection <= 45) && kslc.windSpeed >= 12) {
       probability -= 25 * kslcWeight;
     } else if ((kslc.windDirection >= 315 || kslc.windDirection <= 45) && kslc.windSpeed >= 8) {
       probability -= 10 * kslcWeight;
-    } else if (kslc.windDirection >= 140 && kslc.windDirection <= 220 && kslc.windSpeed >= 5) {
-      probability += 10;
+    } else if (kslc.windDirection >= 120 && kslc.windDirection <= 240 && kslc.windSpeed >= 4) {
+      probability += 8;
     }
   }
 
-  // UTOLY valley confirmation
-  const utolyWeight = w.indicatorWeights?.utoly_confirm || 0.8;
+  // ── UTOLY — valley floor confirmation (wider window) ──
+  const utolyWeight = w.indicatorWeights?.utoly_confirm || 0.7;
   if (utoly.windDirection != null && utoly.windSpeed != null) {
-    if (utoly.windDirection >= 140 && utoly.windDirection <= 220 && utoly.windSpeed >= 3) {
-      probability += 10 * utolyWeight;
+    if (utoly.windDirection >= 90 && utoly.windDirection <= 270 && utoly.windSpeed >= 2) {
+      probability += 8 * utolyWeight;
     }
   }
 
@@ -82,11 +115,12 @@ export function predictSouth(windData, conditions = {}) {
   const temp = fps.temperature || conditions.temperature;
   if (temp != null && temp >= 75) probability += 10;
   else if (temp != null && temp >= 60) probability += 5;
+  else if (temp != null && temp >= 45) probability += 2;
 
-  // Time of day: south side best 8-11 AM (from backtest)
-  if (hour >= 8 && hour <= 10) probability += 12;
-  else if (hour >= 10 && hour <= 12) probability += 8;
-  else if (hour >= 12 && hour <= 15) probability += 3;
+  // Time of day: south side best 7 AM - 2 PM local (wider window)
+  if (hour >= 8 && hour <= 11) probability += 12;
+  else if (hour >= 7 || (hour >= 11 && hour <= 14)) probability += 8;
+  else if (hour >= 14 && hour <= 16) probability += 3;
 
   // Apply learned hourly multiplier
   const hourlyMult = w.hourlyMultipliers?.[hour] || 1.0;
@@ -121,22 +155,24 @@ export function predictSouth(windData, conditions = {}) {
   const profile = w.siteProfiles?.south || {};
   const gustThresholds = w.gustFactorThresholds || {};
 
-  // Current conditions assessment
+  // Current conditions assessment — wide soarable window
   const currentSpeed = fps.windSpeed || 0;
   const currentGust = fps.windGust || currentSpeed;
   const currentGF = currentSpeed > 0 ? currentGust / currentSpeed : 1.0;
   const currentDir = fps.windDirection;
 
-  const directionOK = currentDir != null && currentDir >= 140 && currentDir <= 220;
-  const speedOK = currentSpeed >= (profile.speedRange?.min || 6) && currentSpeed <= (profile.speedRange?.max || 18);
-  const gustOK = currentGF <= (gustThresholds.acceptable || 1.35);
+  // PotM South soarable: 110-250° (any southerly component on the ridge)
+  const directionIdeal = currentDir != null && currentDir >= 135 && currentDir <= 210;
+  const directionOK = currentDir != null && currentDir >= 110 && currentDir <= 250;
+  const speedOK = currentSpeed >= (profile.speedRange?.min || 5) && currentSpeed <= (profile.speedRange?.max || 20);
+  const gustOK = currentGF <= (gustThresholds.acceptable || 1.4);
   const flyable = directionOK && speedOK && gustOK;
 
   let status = 'grounded';
-  if (flyable && currentGF <= (gustThresholds.glass || 1.15) && probability >= 60) status = 'epic';
-  else if (flyable && currentGF <= (gustThresholds.excellent || 1.25) && probability >= 45) status = 'excellent';
-  else if (flyable && probability >= 35) status = 'good';
-  else if (directionOK && currentSpeed >= 3 && currentSpeed <= 20) status = 'marginal';
+  if (flyable && directionIdeal && currentGF <= (gustThresholds.glass || 1.15) && probability >= 55) status = 'epic';
+  else if (flyable && directionIdeal && currentGF <= (gustThresholds.excellent || 1.25) && probability >= 40) status = 'excellent';
+  else if (flyable && probability >= 30) status = 'good';
+  else if (directionOK && currentSpeed >= 3 && currentSpeed <= 22) status = 'marginal';
 
   return {
     site: 'south',

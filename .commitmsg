@@ -1,22 +1,18 @@
-Add upstream front detection network for hours-ahead prediction
+Fix PotM South paragliding predictor — widen soarable direction window
 
-Monitors 7 upstream stations across 3 corridors to detect approaching
-weather systems before they reach activity locations:
+The direction window was 140-220 deg (80 deg range) which was too
+narrow. PotM South ridge faces SSW and is soarable in any wind with
+a southerly component: 110-250 deg (140 deg range).
 
-North corridor (cold front early warning):
-  - KPIH Pocatello, ID (230mi, 3-6hr lead)
-  - KTWF Twin Falls, ID (280mi, 4-7hr lead)
-  - KOGD Ogden, UT (60mi, 1-2hr lead)
-
-West corridor (system approach):
-  - KELY Ely, NV (250mi, 4-8hr lead)
-  - KENV Wendover, UT (120mi, 2-4hr lead)
-
-Southwest corridor (pre-frontal warm flow):
-  - KDTA Delta, UT (100mi, 2-3hr lead)
-  - KMLF Milford, UT (150mi, 3-4hr lead)
-
-Detection scores cold fronts, pre-frontal SW flow, and approaching
-systems. Multi-station triangulation refines ETA. Signals boost
-frontal and pre-frontal probability in both server and client
-predictors. New ?action=upstream endpoint for client display.
+Key fixes:
+- FPS ground truth is now the PRIMARY signal (was secondary to KPVU)
+- KPVU demoted to secondary — it's 10mi south and often lags/misses
+  the PotM thermal. Calm KPVU no longer kills the prediction.
+- UTOLY confirmation window widened to 90-270 deg
+- directionOK: 140-220 -> 110-250 (soarable range)
+- directionIdeal: 135-210 (sweet spot for epic/excellent status)
+- Speed range: 6-18 -> 5-20 mph (paragliders fly in wider range)
+- Gust factor threshold: 1.35 -> 1.40 (PG pilots tolerate moderate)
+- Peak hours widened: 8-14 -> 7-15
+- Graduated scoring: ideal direction > good > marginal
+- Config optimalDirection updated to match: 110-250 deg

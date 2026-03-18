@@ -2824,8 +2824,8 @@ export const LAKE_CONFIGS = {
     coordinates: { lat: 40.445, lng: -111.915 },
     elevation: 4900,
     primaryWindType: 'South Thermal / Ridge Soaring',
-    thermalDirection: 'S to SE (150-200°)',
-    description: '#1 US training site — 300 ft vertical, south side flies morning south winds',
+    thermalDirection: 'ESE to WSW (110-250°)',
+    description: '#1 US training site — 300 ft vertical, south-facing ridge flies any southerly wind',
     stations: {
       pressure: {
         high: { id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226, role: 'Regional reference' },
@@ -2842,11 +2842,11 @@ export const LAKE_CONFIGS = {
       reference: [{ id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226 }],
     },
     thermal: {
-      optimalDirection: { min: 150, max: 200, ideal: 175 },
-      optimalSpeed: { min: 5, max: 18, average: 10 },
-      peakHours: { start: 8, end: 14, peak: 11 },
-      buildTime: { start: 7, usable: 8 },
-      fadeTime: { start: 15, end: 17 },
+      optimalDirection: { min: 110, max: 250, ideal: 170 },
+      optimalSpeed: { min: 5, max: 20, average: 10 },
+      peakHours: { start: 7, end: 15, peak: 10 },
+      buildTime: { start: 6, usable: 7 },
+      fadeTime: { start: 15, end: 18 },
     },
   },
 
