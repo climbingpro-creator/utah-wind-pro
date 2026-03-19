@@ -19,7 +19,7 @@
  *   obs:{date}:{HH}:{mm}   — raw station observations (TTL 7d)
  *   pred:{date}:{HH}:{mm}  — predictions made at this time (TTL 7d)
  *   weights:server          — latest server-computed model weights
- *   accuracy:log            — recent accuracy records (capped 500)
+ *   accuracy:log            — recent accuracy records (capped 5000)
  *   learning:meta           — cycle count, stats
  * 
  * Client endpoints:
@@ -127,6 +127,15 @@ async function fetchSynopticLatest() {
 
 export default async function handler(req, res) {
   const action = req.query?.action;
+  const READ_ACTIONS = ['sync', 'weights', 'predictions', 'upstream', 'nws', 'ahead', 'analogs'];
+
+  if (!READ_ACTIONS.includes(action)) {
+    const authHeader = req.headers['authorization'];
+    const cronSecret = process.env.CRON_SECRET;
+    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+  }
 
   if (action === 'sync') return await handleSync(res);
   if (action === 'weights') return await handleWeights(res);

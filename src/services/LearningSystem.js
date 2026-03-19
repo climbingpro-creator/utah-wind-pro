@@ -701,6 +701,9 @@ class LearningSystem {
       
       // Speed prediction bias
       speedBias: 0, // Positive = we over-predict, negative = under-predict
+      avgPredictedSpeed: 0,
+      _predictedSpeedSum: 0,
+      _predictedSpeedCount: 0,
       speedErrors: [],
       
       // Direction prediction bias
@@ -748,6 +751,13 @@ class LearningSystem {
         analysis.speedBias += bias;
         analysis.speedErrors.push(bias);
       }
+
+      // Track predicted speeds for locationBias calculation
+      const predSpeed = pred.prediction.expectedSpeed;
+      if (predSpeed != null) {
+        analysis._predictedSpeedSum += predSpeed;
+        analysis._predictedSpeedCount++;
+      }
       
       // Probability calibration
       const prob = pred.prediction.probability;
@@ -793,6 +803,11 @@ class LearningSystem {
       analysis.avgOverallAccuracy /= predictions.length;
       analysis.speedBias /= predictions.length;
     }
+    if (analysis._predictedSpeedCount > 0) {
+      analysis.avgPredictedSpeed = analysis._predictedSpeedSum / analysis._predictedSpeedCount;
+    }
+    delete analysis._predictedSpeedSum;
+    delete analysis._predictedSpeedCount;
     
     // Calculate probability calibration
     for (const [bucket, data] of Object.entries(analysis.probabilityBuckets)) {
@@ -1020,20 +1035,34 @@ class LearningSystem {
       const sustainedNorth = patterns.filter(p => p.type === 'sustained_north_flow');
       const sustainedThermal = patterns.filter(p => p.type === 'sustained_thermal');
       if (sustainedNorth.length > 0) {
-        const avgDuration = sustainedNorth.reduce((s, p) => s + p.value, 0) / sustainedNorth.length;
-        const avgSpeed = sustainedNorth.reduce((s, p) => s + (p.avgSpeed || 12), 0) / sustainedNorth.length;
+        const nfAvgDuration = sustainedNorth.reduce((s, p) => s + p.value, 0) / sustainedNorth.length;
+        const nfCount = sustainedNorth.length;
+        const nfStartHour = sustainedNorth[0]?.startHour ?? 8;
+        const nfBias = Math.min(15, (nfCount - 3) * 2);
+        const nfConfidence = Math.min(1, nfCount / 10);
+        const nfHourlyBias = {};
+        for (let h = Math.max(0, nfStartHour - 1); h <= Math.min(23, nfStartHour + Math.round(nfAvgDuration)); h++) {
+          nfHourlyBias[h] = nfBias * 0.5;
+        }
         newWeights.windEventPatterns.north_flow = {
-          avgDuration,
-          avgSpeed,
-          eventCount: sustainedNorth.length,
-          typicalStartHour: sustainedNorth[0]?.startHour ?? 8,
+          bias: nfBias,
+          confidenceBoost: nfConfidence,
+          hourlyBias: nfHourlyBias,
         };
       }
       if (sustainedThermal.length > 0) {
-        const avgDuration = sustainedThermal.reduce((s, p) => s + p.value, 0) / sustainedThermal.length;
+        const thAvgDuration = sustainedThermal.reduce((s, p) => s + p.value, 0) / sustainedThermal.length;
+        const thCount = sustainedThermal.length;
+        const thBias = Math.min(15, (thCount - 3) * 2);
+        const thConfidence = Math.min(1, thCount / 10);
+        const thHourlyBias = {};
+        for (let h = 10; h <= Math.min(23, 10 + Math.round(thAvgDuration)); h++) {
+          thHourlyBias[h] = thBias * 0.5;
+        }
         newWeights.windEventPatterns.thermal = {
-          avgDuration,
-          eventCount: sustainedThermal.length,
+          bias: thBias,
+          confidenceBoost: thConfidence,
+          hourlyBias: thHourlyBias,
         };
       }
 

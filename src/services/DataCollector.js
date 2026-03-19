@@ -21,7 +21,7 @@ import { setBoatingLearnedWeights } from './BoatingPredictor';
 import { setFishingLearnedWeights } from './FishingPredictor';
 import { setWindFieldLearnedWeights } from './WindFieldEngine';
 import { scoreSessionForActivity } from './ActivityScoring';
-import { predictWindEvents, setWindEventLearnedPatterns } from './WindEventPredictor';
+import { predictWindEvents, setWindEventLearnedPatterns, getUpstreamSignals } from './WindEventPredictor';
 
 function getAllLakeIds() {
   return Object.keys(LAKE_CONFIGS).filter(id => id !== 'utah-lake');
@@ -41,6 +41,7 @@ class DataCollector {
     this.isRunning = false;
     this.intervals = [];
     this.lastCollection = {};
+    this.recentHistory = {};
     this.collectionStats = {
       actualsCollected: 0,
       predictionsRecorded: 0,
@@ -404,6 +405,29 @@ class DataCollector {
           
           this.collectionStats.actualsCollected++;
         }
+
+        // Buffer the latest aggregate reading for wind event prediction
+        if (!this.recentHistory[lakeId]) this.recentHistory[lakeId] = [];
+        const lakeConfig = LAKE_CONFIGS?.[lakeId];
+        const groundTruthId = lakeConfig?.stations?.groundTruth?.id;
+        const primaryId = lakeConfig?.stations?.lakeshore?.[0]?.id;
+        const preferredId = groundTruthId || primaryId;
+        const latestStation = preferredId
+          ? synopticData.find(s => s.stationId === preferredId) || synopticData[0]
+          : synopticData[0];
+        if (latestStation) {
+          this.recentHistory[lakeId].push({
+            timestamp: Date.now(),
+            windSpeed: latestStation.windSpeed,
+            windGust: latestStation.windGust,
+            windDirection: latestStation.windDirection,
+            temperature: latestStation.temperature,
+            pressure: latestStation.pressure,
+          });
+          if (this.recentHistory[lakeId].length > 12) {
+            this.recentHistory[lakeId] = this.recentHistory[lakeId].slice(-12);
+          }
+        }
       }
 
       // Also collect PWS data (with activity scores)
@@ -509,7 +533,9 @@ class DataCollector {
             gradient: lakeState.pressure?.gradient ?? 0,
             trend: lakeState.pressure?.trend ?? 'stable',
           };
-          const windEvents = predictWindEvents(lakeId, currentConditions, pressureInfo);
+          const stationHistory = this.recentHistory[lakeId] || [];
+          const upstreamSignals = await getUpstreamSignals();
+          const windEvents = predictWindEvents(lakeId, currentConditions, pressureInfo, stationHistory, null, upstreamSignals);
           for (const event of windEvents) {
             if (event.probability > 30) {
               await learningSystem.recordPrediction(lakeId, {
@@ -528,7 +554,7 @@ class DataCollector {
             }
           }
         } catch (e) {
-          // Wind event prediction is non-critical
+          console.warn('[DataCollector] Wind event prediction error:', e.message);
         }
 
         // Record paragliding predictions for PotM spots
@@ -557,7 +583,9 @@ class DataCollector {
               });
               this.collectionStats.predictionsRecorded++;
             }
-          } catch (e) { /* non-critical */ }
+          } catch (e) {
+            console.warn('[DataCollector] Paragliding prediction error:', e.message);
+          }
         }
       }
 
@@ -648,8 +676,8 @@ class DataCollector {
 
         if (indicatorData) {
           await learningSystem.recordIndicator(
-            config.indicator,
-            config.target,
+            config.indicator.toLowerCase(),
+            config.target.toLowerCase(),
             {
               speed: indicatorData.windSpeed,
               direction: indicatorData.windDirection,

@@ -74,7 +74,7 @@ const SPOTS = [
       };
     }),
   {
-    id: 'point-of-mountain-south', name: 'Flight Park South', lake: 'Point of Mountain',
+    id: 'potm-south', name: 'Flight Park South', lake: 'Point of Mountain',
     meterId: 'FPS', meterName: 'Flight Park South',
     thermalDir: [150, 210], northDir: null,
     kiting: null,
@@ -83,7 +83,7 @@ const SPOTS = [
     upstream: ['KPVU', 'QSF'],
   },
   {
-    id: 'point-of-mountain-north', name: 'Flight Park North', lake: 'Point of Mountain',
+    id: 'potm-north', name: 'Flight Park North', lake: 'Point of Mountain',
     meterId: 'UTALP', meterName: 'Pt of Mountain N',
     thermalDir: null, northDir: [300, 60],
     kiting: null,

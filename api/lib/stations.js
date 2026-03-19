@@ -71,7 +71,7 @@ export const LAKE_STATIONS = {
   // ── Northern Utah ──
   'willard-bay': {
     name: 'Willard Bay',
-    synoptic: ['KOGD', 'KSLC'],
+    synoptic: ['KOGD', 'KHIF', 'KSLC'],
     primary: 'KOGD',
     hasAmbient: false,
   },
@@ -96,38 +96,38 @@ export const LAKE_STATIONS = {
   // ── Strawberry variants ──
   'strawberry-ladders': {
     name: 'Strawberry — Ladders',
-    synoptic: ['KHCR', 'SND', 'DCC', 'TIMU1', 'KPVU', 'KSLC'],
-    primary: 'KHCR',
+    synoptic: ['KHCR', 'SND', 'DCC', 'TIMU1', 'KPVU', 'KSLC', 'UTCOP', 'UTDAN', 'DSTU1', 'CCPUT'],
+    primary: 'UTCOP',
     hasAmbient: false,
   },
   'strawberry-bay': {
     name: 'Strawberry — Bay',
-    synoptic: ['KHCR', 'SND', 'DCC', 'TIMU1', 'KPVU', 'KSLC'],
-    primary: 'KHCR',
+    synoptic: ['KHCR', 'SND', 'DCC', 'TIMU1', 'KPVU', 'KSLC', 'UTCOP', 'UTDAN', 'UWCU1', 'CCPUT'],
+    primary: 'UTCOP',
     hasAmbient: false,
   },
   'strawberry-soldier': {
     name: 'Strawberry — Soldier Creek',
-    synoptic: ['KHCR', 'SND', 'DCC', 'TIMU1', 'KPVU', 'KSLC'],
-    primary: 'KHCR',
+    synoptic: ['KHCR', 'SND', 'DCC', 'TIMU1', 'KPVU', 'KSLC', 'RVZU1', 'UTCOP', 'CCPUT'],
+    primary: 'RVZU1',
     hasAmbient: false,
   },
   'strawberry-view': {
     name: 'Strawberry — View',
-    synoptic: ['KHCR', 'SND', 'DCC', 'TIMU1', 'KPVU', 'KSLC'],
-    primary: 'KHCR',
+    synoptic: ['KHCR', 'SND', 'DCC', 'TIMU1', 'KPVU', 'KSLC', 'UTCOP', 'RVZU1', 'CCPUT', 'DSTU1'],
+    primary: 'UTCOP',
     hasAmbient: false,
   },
   'strawberry-river': {
     name: 'Strawberry — River',
-    synoptic: ['KHCR', 'SND', 'DCC', 'TIMU1', 'KPVU', 'KSLC'],
-    primary: 'KHCR',
+    synoptic: ['KHCR', 'SND', 'DCC', 'TIMU1', 'KPVU', 'KSLC', 'UTCOP', 'RVZU1', 'DSTU1', 'CCPUT'],
+    primary: 'UTCOP',
     hasAmbient: false,
   },
   'skyline-drive': {
     name: 'Skyline Drive',
-    synoptic: ['KHCR', 'SND', 'DCC', 'TIMU1', 'KPVU', 'KSLC'],
-    primary: 'KHCR',
+    synoptic: ['KHCR', 'SND', 'DCC', 'TIMU1', 'KPVU', 'KSLC', 'SKY', 'UTESU', 'UTMPK'],
+    primary: 'SKY',
     hasAmbient: false,
   },
   // ── Uinta Basin / NE Utah ──

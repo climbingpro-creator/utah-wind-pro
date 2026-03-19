@@ -257,7 +257,9 @@ function getNWSFrontMentions(nwsData) {
   for (const [gridId, grid] of Object.entries(nwsData.grids)) {
     for (const p of (grid.sevenDay || []).slice(0, 6)) {
       const text = `${p.text || ''} ${p.detail || ''}`.toLowerCase();
-      const hasFront = text.includes('front') || text.includes('cold');
+      const hasFront = text.includes('cold front') || text.includes('warm front') || 
+                       text.includes('frontal') || 
+                       (text.includes('front') && !text.includes('waterfront') && !text.includes('in front'));
       const hasWind = text.includes('windy') || text.includes('gusty') || text.includes('breezy');
       const hasStorm = text.includes('storm') || text.includes('thunder');
 

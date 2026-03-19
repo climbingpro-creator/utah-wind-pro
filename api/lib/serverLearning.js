@@ -8,7 +8,7 @@
  * Redis keys used:
  *   pred:{date}:{HH}:{mm}    — predictions made at this timestamp
  *   weights:server            — latest server-computed model weights
- *   accuracy:log              — recent accuracy records (list, capped at 500)
+ *   accuracy:log              — recent accuracy records (list, capped at 5000)
  *   learning:meta             — metadata: total predictions, cycles, last update
  */
 
@@ -16,18 +16,18 @@ import { getNWSForLake, getNWSFrontMentions } from './nwsForecast.js';
 
 // ── Lake thermal configurations (server-side subset of lakeStations.js) ──
 const LAKE_THERMAL = {
-  'utah-lake-lincoln':    { dir: [135, 165], peak: [10, 16], station: 'FPS' },
+  'utah-lake-lincoln':    { dir: [135, 165], peak: [10, 16], station: 'KPVU' },
   'utah-lake-sandy':      { dir: [130, 160], peak: [10, 16], station: 'QSF' },
   'utah-lake-vineyard':   { dir: [180, 270], peak: [10, 16], station: 'QSF' },
   'utah-lake-zigzag':     { dir: [135, 165], peak: [10, 16], station: 'FPS' },
   'utah-lake-mm19':       { dir: [120, 160], peak: [10, 16], station: 'FPS' },
-  'deer-creek':           { dir: [170, 210], peak: [11, 17], station: 'DCC' },
+  'deer-creek':           { dir: [170, 210], peak: [11, 17], station: 'KHCR' },
   'jordanelle':           { dir: [180, 230], peak: [11, 17], station: 'KHCR' },
-  'willard-bay':          { dir: [170, 220], peak: [11, 17], station: 'KSLC' },
+  'willard-bay':          { dir: [170, 220], peak: [11, 17], station: 'KHIF' },
   'bear-lake':            { dir: [250, 320], peak: [12, 18], station: 'BERU1' },
-  'strawberry-ladders':   { dir: [260, 340], peak: [10, 16], station: 'KHCR' },
-  'strawberry-bay':       { dir: [220, 280], peak: [10, 16], station: 'KHCR' },
-  'skyline-drive':        { dir: [250, 340], peak: [10, 16], station: 'KHCR' },
+  'strawberry-ladders':   { dir: [260, 340], peak: [10, 16], station: 'UTCOP' },
+  'strawberry-bay':       { dir: [220, 280], peak: [10, 16], station: 'UTCOP' },
+  'skyline-drive':        { dir: [250, 340], peak: [10, 16], station: 'SKY' },
   'starvation':           { dir: [180, 230], peak: [11, 17], station: 'KVEL' },
   'flaming-gorge':        { dir: [130, 200], peak: [11, 17], station: 'KFGR' },
   'scofield':             { dir: [250, 320], peak: [11, 17], station: 'KPUC' },
@@ -37,6 +37,33 @@ const LAKE_THERMAL = {
   'potm-south':           { dir: [110, 250], peak: [7, 15],  station: 'FPS' },
   'potm-north':           { dir: [320, 360], peak: [12, 18], station: 'FPS' },
   'powder-mountain':      { dir: [180, 270], peak: [10, 18], station: 'KSLC' },
+  // ── Northern Utah (missing) ──
+  'east-canyon':          { dir: [180, 270], peak: [11, 17], station: 'KSLC' },
+  'echo':                 { dir: [180, 270], peak: [11, 17], station: 'KSLC' },
+  'rockport':             { dir: [180, 270], peak: [11, 17], station: 'KSLC' },
+  'pineview':             { dir: [180, 270], peak: [11, 17], station: 'KOGD' },
+  'hyrum':                { dir: [180, 270], peak: [11, 17], station: 'KLGU' },
+  'monte-cristo':         { dir: [180, 270], peak: [11, 17], station: 'KLGU' },
+  // ── Strawberry variants (missing) ──
+  'strawberry-soldier':   { dir: [260, 340], peak: [10, 16], station: 'RVZU1' },
+  'strawberry-view':      { dir: [220, 280], peak: [10, 16], station: 'UTCOP' },
+  'strawberry-river':     { dir: [220, 280], peak: [10, 16], station: 'UTCOP' },
+  // ── Central/Eastern (missing) ──
+  'steinaker':            { dir: [180, 270], peak: [11, 17], station: 'KVEL' },
+  'red-fleet':            { dir: [180, 270], peak: [11, 17], station: 'KVEL' },
+  // ── Southern (missing) ──
+  'yuba':                 { dir: [150, 240], peak: [10, 16], station: 'KPVU' },
+  'otter-creek':          { dir: [150, 240], peak: [10, 16], station: 'KCDC' },
+  'fish-lake':            { dir: [150, 240], peak: [10, 16], station: 'KCDC' },
+  'minersville':          { dir: [150, 240], peak: [10, 16], station: 'KCDC' },
+  'piute':                { dir: [150, 240], peak: [10, 16], station: 'KCDC' },
+  'panguitch':            { dir: [150, 240], peak: [10, 16], station: 'KCDC' },
+  'quail-creek':          { dir: [150, 240], peak: [10, 16], station: 'KSGU' },
+  // ── Kite / Paragliding spots (missing) ──
+  'grantsville':          { dir: [170, 210], peak: [10, 18], station: 'KSLC' },
+  'inspo':                { dir: [110, 250], peak: [7, 15],  station: 'KPVU' },
+  'west-mountain':        { dir: [110, 250], peak: [7, 15],  station: 'KPVU' },
+  'stockton-bar':         { dir: [170, 210], peak: [10, 18], station: 'KSLC' },
 };
 
 // ── Timezone ──
@@ -730,11 +757,25 @@ function predictForLake(lakeId, primaryStation, pressure, history, hour, learned
       }
     }
 
+    // Apply learned lake-specific weight as a probability multiplier
+    const lw = learnedWeights?.lakeWeights?.[lakeId];
+    if (lw && lw.count > 0) {
+      const avgAcc = lw.totalScore / lw.count;
+      prob = Math.max(0, Math.min(100, prob * (0.5 + avgAcc)));
+    }
+
+    // Apply learned speedBias as additive correction to expected speed
+    const speedBias = learnedWeights?.eventWeights?.[t.id]?.speedBias || 0;
+    const adjSpeed = [
+      Math.max(0, t.expSpeed[0] + speedBias),
+      Math.max(0, t.expSpeed[1] + speedBias),
+    ];
+
     if (prob > 20) {
       const evt = {
         eventType: t.id,
         probability: prob,
-        expectedSpeed: t.expSpeed,
+        expectedSpeed: adjSpeed,
         expectedDirection: t.expDir,
         primaryStation: primaryStation.stationId,
         windSpeed: primaryStation.windSpeed,
@@ -814,6 +855,20 @@ function buildStationHistory(stationId, recentSnapshots) {
   }
   return history;
 }
+
+// ── Event-type-specific verification windows ──
+// Short-lived events (glass/thermal) are verified sooner;
+// longer events (post-frontal/clearing) need more time to mature.
+const VERIFY_WINDOWS = {
+  glass:            { min: 60,  max: 180 },
+  thermal_cycle:    { min: 60,  max: 180 },
+  pre_frontal:      { min: 60,  max: 240 },
+  frontal_passage:  { min: 90,  max: 300 },
+  north_flow:       { min: 90,  max: 300 },
+  clearing_wind:    { min: 120, max: 360 },
+  post_frontal:     { min: 120, max: 360 },
+};
+const DEFAULT_VERIFY_WINDOW = { min: 90, max: 300 };
 
 // ── Verification: compare old predictions against what actually happened ──
 
@@ -1049,7 +1104,7 @@ async function appendAccuracyLog(redisCmd, records) {
   // Batch LPUSH: single command pushes all records (saves N-1 Redis calls)
   const serialized = records.map(r => JSON.stringify(r));
   await redisCmd('LPUSH', 'accuracy:log', ...serialized);
-  await redisCmd('LTRIM', 'accuracy:log', '0', '499');
+  await redisCmd('LTRIM', 'accuracy:log', '0', '4999');
 }
 
 async function loadMeta(redisCmd) {
@@ -1400,16 +1455,36 @@ async function runServerLearningCycle(redisCmd, currentStations, recentSnapshots
     console.error('Pattern match error:', e.message);
   }
 
-  // 4. Verify old predictions (2-4 hours ago) against current actuals
-  const oldPredictions = await loadRecentPredictions(redisCmd, 310);
+  // 4. Verify old predictions against current actuals using per-event-type windows
+  const VERIFIED_SET_KEY = 'verified:predictions';
+  const oldPredictions = await loadRecentPredictions(redisCmd, 370);
   const verificationsNeeded = oldPredictions.filter(p => {
     const age = now.getTime() - new Date(p.timestamp || 0).getTime();
-    return age > 90 * 60000 && age < 300 * 60000;
+    const w = VERIFY_WINDOWS[p.eventType] || DEFAULT_VERIFY_WINDOW;
+    return age > w.min * 60000 && age < w.max * 60000;
   });
 
+  // Deduplicate: skip predictions already verified in a previous cycle
+  const deduped = [];
+  for (const p of verificationsNeeded) {
+    const dedupKey = `${p.lakeId}:${p.eventType}:${p.timestamp}`;
+    const alreadyVerified = await redisCmd('SISMEMBER', VERIFIED_SET_KEY, dedupKey);
+    if (alreadyVerified) continue;
+    deduped.push(p);
+  }
+
   let accuracyRecords = [];
-  if (verificationsNeeded.length > 0) {
-    accuracyRecords = verifyPredictions(verificationsNeeded, currentStations, lakeStationMap);
+  if (deduped.length > 0) {
+    accuracyRecords = verifyPredictions(deduped, currentStations, lakeStationMap);
+  }
+
+  // Mark successfully verified predictions so they aren't re-verified
+  for (const p of deduped) {
+    const dedupKey = `${p.lakeId}:${p.eventType}:${p.timestamp}`;
+    await redisCmd('SADD', VERIFIED_SET_KEY, dedupKey);
+  }
+  if (deduped.length > 0) {
+    await redisCmd('EXPIRE', VERIFIED_SET_KEY, 86400);
   }
 
   // 5. Update weights from accuracy
@@ -1551,14 +1626,20 @@ async function backfillHistorical(redisCmd, synopticToken, allStations, lakeStat
     totalPredictions += stepPredictions.length;
     predictionBuffer.push({ timestamp: ts, predictions: stepPredictions });
 
-    // Verify predictions from 2-4 hours ago
-    const verifyWindow = predictionBuffer.filter(p => {
+    // Verify predictions using per-event-type windows
+    const verifyBuffer = predictionBuffer.filter(p => {
       const age = ts.getTime() - p.timestamp.getTime();
-      return age > 90 * 60000 && age < 300 * 60000;
+      return age > 60 * 60000 && age < 360 * 60000;
     });
 
-    if (verifyWindow.length > 0) {
-      const toVerify = verifyWindow.flatMap(p => p.predictions);
+    if (verifyBuffer.length > 0) {
+      const toVerify = verifyBuffer.flatMap(p => {
+        const age = ts.getTime() - p.timestamp.getTime();
+        return p.predictions.filter(pred => {
+          const w = VERIFY_WINDOWS[pred.eventType] || DEFAULT_VERIFY_WINDOW;
+          return age > w.min * 60000 && age < w.max * 60000;
+        });
+      });
       const accuracy = verifyPredictions(toVerify, stations, lakeStationMap);
       totalAccuracyRecords += accuracy.length;
 

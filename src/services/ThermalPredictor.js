@@ -78,6 +78,7 @@ function getWeights() {
       monthlyQualityRates: learnedWeights.monthlyQualityRates || {},
       windTypeScores: learnedWeights.windTypeScores || {},
       consistencyProfile: learnedWeights.consistencyProfile || {},
+      locationBias: learnedWeights.locationBias || {},
     };
   }
   
@@ -92,6 +93,7 @@ function getWeights() {
     monthlyQualityRates: {},
     windTypeScores: {},
     consistencyProfile: {},
+    locationBias: {},
   };
 }
 
@@ -1095,6 +1097,11 @@ export function predictThermal(lakeId, currentConditions) {
   
   // ─── Apply learned weights ──────────────────────────────────────
   const weights = getWeights();
+
+  const locBias = weights?.locationBias?.[lakeId];
+  if (locBias && locBias.samples >= 3) {
+    expectedPeakSpeed += locBias.speedBias || 0;
+  }
   
   // Pressure/thermal/convergence weights from learning (default: 0.40, 0.40, 0.20)
   const pW = weights.pressure;
@@ -1147,6 +1154,7 @@ export function predictThermal(lakeId, currentConditions) {
     const sfSpeed = sfWind.speed;
     const sfDir = sfWind.direction;
     const trigger = SPANISH_FORK_INDICATOR.trigger;
+    const sfLearnedWeight = weights.indicators?.['qsf-fps']?.weight ?? 1.0;
     
     // Check if direction is SE (100-180°)
     const isSEDirection = sfDir >= trigger.direction.min && sfDir <= trigger.direction.max;
@@ -1157,14 +1165,14 @@ export function predictThermal(lakeId, currentConditions) {
       spanishForkStatus = 'strong';
       spanishForkMessage = `EARLY WARNING: Spanish Fork ${sfSpeed.toFixed(1)} mph from ${sfDir}° - thermal expected in ~2 hours`;
       spanishForkETA = 120; // minutes
-      probability *= 1.4; // 40% boost
+      probability *= 1.0 + (0.4 * sfLearnedWeight);
     } else if (isSEDirection && sfSpeed >= trigger.speed.min) {
       // Moderate indicator
       spanishForkScore = 70;
       spanishForkStatus = 'moderate';
       spanishForkMessage = `Building: Spanish Fork ${sfSpeed.toFixed(1)} mph SE - thermal developing`;
       spanishForkETA = 150; // minutes
-      probability *= 1.2; // 20% boost
+      probability *= 1.0 + (0.2 * sfLearnedWeight);
     } else if (isSEDirection) {
       // Weak SE
       spanishForkScore = 40;
@@ -1175,7 +1183,7 @@ export function predictThermal(lakeId, currentConditions) {
       spanishForkScore = 20;
       spanishForkStatus = 'no-signal';
       spanishForkMessage = `No signal: Spanish Fork ${sfDir}° (need SE 100-180°)`;
-      probability *= 0.9; // 10% reduction
+      probability *= 1.0 + (-0.1 * sfLearnedWeight);
     }
   }
   
@@ -1200,6 +1208,7 @@ export function predictThermal(lakeId, currentConditions) {
     const trigger = NORTH_FLOW_INDICATOR.trigger;
     const correlation = NORTH_FLOW_INDICATOR.speedCorrelation;
     const gradient = currentConditions?.pressureGradient;
+    const nfLearnedWeight = weights.indicators?.['kslc-fps']?.weight ?? 1.0;
     
     // Check if direction is N/NW/NE (315-360 or 0-45)
     const isNorthDirection = kslcDir >= trigger.direction.min || kslcDir <= trigger.direction.max;
@@ -1230,21 +1239,21 @@ export function predictThermal(lakeId, currentConditions) {
       northFlowStatus = 'strong';
       northFlowMessage = `NORTH FLOW: KSLC ${kslcSpeed.toFixed(0)} mph N → expect ~${expectedZigZagSpeed?.toFixed(0)} mph at Zig Zag (${foilKiteablePct}% foil kiteable)`;
       northFlowETA = 60;
-      probability *= 1.6;
+      probability *= 1.0 + (0.6 * nfLearnedWeight);
     } else if (isNorthDirection && kslcSpeed >= 8) {
       // Moderate indicator - 56% foil kiteable, ~13 mph at Zig Zag
       northFlowScore = 75;
       northFlowStatus = 'moderate';
       northFlowMessage = `Building: KSLC ${kslcSpeed.toFixed(0)} mph N → expect ~${expectedZigZagSpeed?.toFixed(0)} mph at Zig Zag (${foilKiteablePct}% foil kiteable)`;
       northFlowETA = 60;
-      probability *= 1.3;
+      probability *= 1.0 + (0.3 * nfLearnedWeight);
     } else if (isNorthDirection && kslcSpeed >= 5) {
       // Marginal indicator - 45% foil kiteable, ~9 mph at Zig Zag
       northFlowScore = 50;
       northFlowStatus = 'marginal';
       northFlowMessage = `Marginal: KSLC ${kslcSpeed.toFixed(0)} mph N → expect ~${expectedZigZagSpeed?.toFixed(0)} mph at Zig Zag (${foilKiteablePct}% foil kiteable)`;
       northFlowETA = 60;
-      probability *= 1.1;
+      probability *= 1.0 + (0.1 * nfLearnedWeight);
     } else if (isNorthDirection) {
       // Weak north wind
       northFlowScore = 30;
@@ -1260,7 +1269,7 @@ export function predictThermal(lakeId, currentConditions) {
       northFlowScore = 20;
       northFlowStatus = 'no-signal';
       northFlowMessage = `No north signal: KSLC ${kslcDir}° (need N/NW 315-45°)`;
-      probability *= 0.8;
+      probability *= 1.0 + (-0.2 * nfLearnedWeight);
     }
   }
   
@@ -1300,6 +1309,7 @@ export function predictThermal(lakeId, currentConditions) {
     const kpvuSpeed = kpvuWind.speed;
     const kpvuDir = kpvuWind.direction;
     const correlation = PROVO_AIRPORT_INDICATOR.speedCorrelation;
+    const pvuLearnedWeight = weights.indicators?.['kpvu-fps']?.weight ?? 1.0;
     
     const isNorthDirection = kpvuDir >= 315 || kpvuDir <= 45;
     
@@ -1331,11 +1341,11 @@ export function predictThermal(lakeId, currentConditions) {
     if (isNorthDirection && kpvuSpeed >= 10) {
       status = 'strong';
       message = `PROVO: ${kpvuSpeed.toFixed(0)} mph N → expect ~${expectedSpeed?.toFixed(0)} mph (${foilPct}% foil)`;
-      probability *= 1.4;
+      probability *= 1.0 + (0.4 * pvuLearnedWeight);
     } else if (isNorthDirection && kpvuSpeed >= 8) {
       status = 'good';
       message = `PROVO: ${kpvuSpeed.toFixed(0)} mph N → expect ~${expectedSpeed?.toFixed(0)} mph (${foilPct}% foil)`;
-      probability *= 1.2;
+      probability *= 1.0 + (0.2 * pvuLearnedWeight);
     } else if (isNorthDirection && kpvuSpeed >= 5) {
       status = 'possible';
       message = `PROVO: ${kpvuSpeed.toFixed(0)} mph N → expect ~${expectedSpeed?.toFixed(0)} mph (${foilPct}% foil)`;
