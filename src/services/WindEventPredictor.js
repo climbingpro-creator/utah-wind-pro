@@ -37,6 +37,11 @@ let learnedPatterns = null;
 let cachedUpstreamSignals = null;
 let upstreamFetchedAt = 0;
 
+let statisticalModels = null;
+export function setStatisticalModels(models) {
+  statisticalModels = models;
+}
+
 export function setWindEventLearnedPatterns(patterns) {
   learnedPatterns = patterns;
 }
@@ -314,6 +319,27 @@ export function predictWindEvents(lakeId, currentConditions, pressureData, stati
           event.probability + bias + hourlyBias
         ));
         event.confidence = Math.min(1, event.confidence + boost);
+      }
+    }
+  }
+
+  // Apply statistical model fingerprints and climatology
+  if (statisticalModels) {
+    const stationId = config?.stations?.groundTruth?.id || config?.stations?.lakeshore?.[0]?.id;
+    const month = now.getMonth();
+
+    for (const event of events) {
+      const fpKey = `${lakeId}:${event.id}`;
+      const fp = statisticalModels?.fingerprints?.[fpKey];
+      if (fp?.speedStats && fp.count >= 5) {
+        event.expectedSpeed = [fp.speedStats.p25, fp.speedStats.p75];
+      }
+
+      if (stationId) {
+        const clim = statisticalModels?.climatology?.[stationId]?.[month]?.[hour];
+        if (clim?.speedMean && speed > clim.speedP90) {
+          event.probability = Math.min(100, event.probability + 10);
+        }
       }
     }
   }

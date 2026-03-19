@@ -15,13 +15,13 @@ import { learningSystem } from './LearningSystem';
 import { weatherService } from './WeatherService';
 import { LakeState } from './DataNormalizer';
 import { LAKE_CONFIGS, getAllStationIds } from '../config/lakeStations';
-import { setLearnedWeights } from './ThermalPredictor';
+import { setLearnedWeights, setStatisticalModels as setThermalStatisticalModels } from './ThermalPredictor';
 import { setParaglidingLearnedWeights, predictParagliding } from './ParaglidingPredictor';
 import { setBoatingLearnedWeights } from './BoatingPredictor';
 import { setFishingLearnedWeights } from './FishingPredictor';
 import { setWindFieldLearnedWeights } from './WindFieldEngine';
 import { scoreSessionForActivity } from './ActivityScoring';
-import { predictWindEvents, setWindEventLearnedPatterns, getUpstreamSignals } from './WindEventPredictor';
+import { predictWindEvents, setWindEventLearnedPatterns, getUpstreamSignals, setStatisticalModels as setWindEventStatisticalModels } from './WindEventPredictor';
 
 function getAllLakeIds() {
   return Object.keys(LAKE_CONFIGS).filter(id => id !== 'utah-lake');
@@ -42,6 +42,7 @@ class DataCollector {
     this.intervals = [];
     this.lastCollection = {};
     this.recentHistory = {};
+    this.statisticalModels = null;
     this.collectionStats = {
       actualsCollected: 0,
       predictionsRecorded: 0,
@@ -194,6 +195,20 @@ class DataCollector {
       console.log(`Server weights synced — ${totalServerPredictions} predictions across ${cycles} cycles, accuracy: ${(weights.meta?.overallAccuracy * 100 || 0).toFixed(1)}%`);
     } catch (e) {
       console.log('Server weights unavailable (expected if not deployed):', e.message);
+    }
+
+    try {
+      const modelsResp = await fetch('/api/cron/collect?action=models');
+      if (modelsResp.ok) {
+        const modelsData = await modelsResp.json();
+        if (modelsData?.thermalProfiles || modelsData?.lagCorrelations) {
+          this.statisticalModels = modelsData;
+          setThermalStatisticalModels(modelsData);
+          setWindEventStatisticalModels(modelsData);
+        }
+      }
+    } catch (e) {
+      console.warn('[DataCollector] Statistical models fetch failed:', e.message);
     }
   }
 

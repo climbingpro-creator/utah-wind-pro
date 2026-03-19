@@ -30,6 +30,7 @@
 import { runServerLearningCycle, backfillHistorical, loadWeights, loadMeta } from '../lib/serverLearning.js';
 import { fetchNWSForecasts } from '../lib/nwsForecast.js';
 import { LAKE_STATION_MAP, ALL_STATION_IDS } from '../lib/stations.js';
+import { buildStatisticalModels } from '../lib/historicalAnalysis.js';
 
 function getEnv() {
   return {
@@ -127,7 +128,7 @@ async function fetchSynopticLatest() {
 
 export default async function handler(req, res) {
   const action = req.query?.action;
-  const READ_ACTIONS = ['sync', 'weights', 'predictions', 'upstream', 'nws', 'ahead', 'analogs'];
+  const READ_ACTIONS = ['sync', 'weights', 'predictions', 'upstream', 'nws', 'ahead', 'analogs', 'models'];
 
   if (!READ_ACTIONS.includes(action)) {
     const authHeader = req.headers['authorization'];
@@ -145,6 +146,8 @@ export default async function handler(req, res) {
   if (action === 'ahead') return await handleAhead(res);
   if (action === 'predictions') return await handlePredictions(req, res);
   if (action === 'analogs') return await handleAnalogs(res);
+  if (action === 'models') return await handleModels(res);
+  if (action === 'build-models') return await handleBuildModels(req, res);
 
   const env = getEnv();
   if (!env.synopticToken) {
@@ -415,6 +418,60 @@ async function handleWeights(res) {
     return res.status(200).json({ weights, meta });
   } catch (error) {
     console.error('Weights fetch error:', error);
+    return res.status(500).json({ error: error.message });
+  }
+}
+
+async function handleModels(res) {
+  const { upstashUrl, upstashToken } = getEnv();
+  if (!upstashUrl || !upstashToken) {
+    return res.status(200).json({ models: null, message: 'Redis not configured' });
+  }
+  try {
+    const raw = await redisCommand('GET', 'models:statistical');
+    if (!raw) return res.status(200).json({ models: null, message: 'No statistical models built yet — trigger with ?action=build-models' });
+    const data = JSON.parse(raw);
+    res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=3600');
+    return res.status(200).json({
+      version: data.version,
+      builtAt: data.builtAt,
+      daysAnalyzed: data.daysAnalyzed,
+      stationCount: data.stationCount,
+      totalReadings: data.totalReadings,
+      eventCounts: data.eventCounts,
+      climatology: data.climatology,
+      lagCorrelations: data.lagCorrelations,
+      gradientThresholds: data.gradientThresholds,
+      thermalProfiles: data.thermalProfiles,
+      fingerprints: data.fingerprints,
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+}
+
+async function handleBuildModels(req, res) {
+  const env = getEnv();
+  if (!env.synopticToken) return res.status(500).json({ error: 'SYNOPTIC_TOKEN not set' });
+  if (!env.upstashUrl || !env.upstashToken) return res.status(500).json({ error: 'Redis not configured' });
+
+  const days = Math.min(parseInt(req.query?.days || '90', 10), 365);
+
+  try {
+    const { models, log } = await buildStatisticalModels(redisCommand, env.synopticToken, { days });
+    return res.status(200).json({
+      ok: true,
+      daysAnalyzed: models.daysAnalyzed,
+      stationCount: models.stationCount,
+      totalReadings: models.totalReadings,
+      eventCounts: models.eventCounts,
+      correlationCount: Object.keys(models.lagCorrelations).length,
+      thermalProfileCount: Object.keys(models.thermalProfiles).length,
+      fingerprintCount: Object.keys(models.fingerprints).length,
+      log,
+    });
+  } catch (error) {
+    console.error('Build models error:', error);
     return res.status(500).json({ error: error.message });
   }
 }

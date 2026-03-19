@@ -727,9 +727,62 @@ function generateExplanation(eventType, station, pressure, history, hour, nws, u
   return reasons;
 }
 
+// ── Statistical Model Integration ──
+// When available, replace hardcoded thresholds with data-driven values.
+
+let _cachedModels = null;
+let _modelsCacheTime = 0;
+
+async function loadStatisticalModels(redisCmd) {
+  if (_cachedModels && Date.now() - _modelsCacheTime < 15 * 60 * 1000) return _cachedModels;
+  try {
+    const raw = await redisCmd('GET', 'models:statistical');
+    if (raw) {
+      _cachedModels = JSON.parse(raw);
+      _modelsCacheTime = Date.now();
+    }
+  } catch { /* models are optional */ }
+  return _cachedModels;
+}
+
+function getModelExpSpeed(models, lakeId, eventType) {
+  const fpKey = `${lakeId}:${eventType}`;
+  const fp = models?.fingerprints?.[fpKey];
+  if (!fp || !fp.speedStats || fp.count < 5) return null;
+  return [
+    Math.round(fp.speedStats.p25 * 10) / 10,
+    Math.round(fp.speedStats.p75 * 10) / 10,
+  ];
+}
+
+function getModelThermalBoost(models, lakeId, hour, month) {
+  const profile = models?.thermalProfiles?.[lakeId];
+  if (!profile) return 0;
+  const hourData = profile.byHour?.[hour];
+  if (!hourData || hourData.totalObs < 20) return 0;
+  return hourData.rate > 0 ? Math.round(hourData.rate * 200) : 0;
+}
+
+function getModelClimatologyContext(models, stationId, hour, month) {
+  const clim = models?.climatology?.[stationId]?.[month]?.[hour];
+  if (!clim || clim.n < 10) return null;
+  return clim;
+}
+
+function getUpstreamLag(models, upstreamId, downstreamId) {
+  const key = `${upstreamId}→${downstreamId}`;
+  const corr = models?.lagCorrelations?.[key];
+  if (!corr || corr.peakCorrelation < 0.3) return null;
+  return {
+    lagMinutes: corr.optimalLagMinutes,
+    correlation: corr.peakCorrelation,
+    translationFactor: corr.translationFactor,
+  };
+}
+
 // ── Main Prediction Function ──
 
-function predictForLake(lakeId, primaryStation, pressure, history, hour, learnedWeights, upstreamSignals, nwsData) {
+function predictForLake(lakeId, primaryStation, pressure, history, hour, learnedWeights, upstreamSignals, nwsData, statisticalModels) {
   const nws = nwsData ? getNWSForLake(nwsData, lakeId, hour) : null;
   const events = [];
   const types = [
@@ -742,11 +795,41 @@ function predictForLake(lakeId, primaryStation, pressure, history, hour, learned
     { id: 'post_frontal',    fn: () => scorePostFrontal(primaryStation, pressure, history, nws), expSpeed: [8, 15], expDir: [290, 340] },
   ];
 
+  const month = new Date().getMonth();
+
   for (const t of types) {
     let result = t.fn();
-    // Handle both old number return and new {score, upstreamSignals} return
     let prob = typeof result === 'number' ? result : result.score;
     const eventUpstream = typeof result === 'object' ? result.upstreamSignals : null;
+
+    // ── Statistical model enhancements ──
+    if (statisticalModels) {
+      // Thermal timing from historical profile (replaces hardcoded peak hours)
+      if (t.id === 'thermal_cycle') {
+        const thermalBoost = getModelThermalBoost(statisticalModels, lakeId, hour, month);
+        if (thermalBoost > 0) prob += Math.min(20, thermalBoost);
+      }
+
+      // Climatology context: is current speed abnormal for this hour/month?
+      const clim = getModelClimatologyContext(statisticalModels, primaryStation.stationId, hour, month);
+      if (clim && primaryStation.windSpeed != null) {
+        const speedZ = (primaryStation.windSpeed - clim.speedMean) / Math.max(1, clim.speedP75 - clim.speedP25);
+        if (t.id === 'glass' && speedZ < -1) prob += 10;
+        if (t.id === 'frontal_passage' && speedZ > 1.5) prob += 10;
+        if (t.id === 'north_flow' && speedZ > 1) prob += 8;
+      }
+
+      // Upstream lag correction: use data-driven lead times for upstream signals
+      if ((t.id === 'frontal_passage' || t.id === 'pre_frontal') && upstreamSignals?.length > 0) {
+        for (const sig of upstreamSignals) {
+          const lag = getUpstreamLag(statisticalModels, sig.stationId, primaryStation.stationId);
+          if (lag && lag.correlation > 0.4) {
+            sig.dataEtaHours = lag.lagMinutes / 60;
+            sig.dataTranslationFactor = lag.translationFactor;
+          }
+        }
+      }
+    }
 
     // Apply learned weight adjustments
     if (learnedWeights?.eventWeights?.[t.id]) {
@@ -764,11 +847,15 @@ function predictForLake(lakeId, primaryStation, pressure, history, hour, learned
       prob = Math.max(0, Math.min(100, prob * (0.5 + avgAcc)));
     }
 
+    // Use data-driven expected speeds from historical fingerprints when available
+    const modelSpeed = statisticalModels ? getModelExpSpeed(statisticalModels, lakeId, t.id) : null;
+    const baseSpeed = modelSpeed || t.expSpeed;
+
     // Apply learned speedBias as additive correction to expected speed
     const speedBias = learnedWeights?.eventWeights?.[t.id]?.speedBias || 0;
     const adjSpeed = [
-      Math.max(0, t.expSpeed[0] + speedBias),
-      Math.max(0, t.expSpeed[1] + speedBias),
+      Math.max(0, baseSpeed[0] + speedBias),
+      Math.max(0, baseSpeed[1] + speedBias),
     ];
 
     if (prob > 20) {
@@ -1398,6 +1485,33 @@ async function runServerLearningCycle(redisCmd, currentStations, recentSnapshots
   // 1.5 Detect upstream signals for frontal early warning
   const upstreamSignals = detectUpstreamSignals(currentStations, recentSnapshots);
 
+  // 1.5. Load statistical models (built from historical analysis)
+  const statisticalModels = await loadStatisticalModels(redisCmd);
+
+  // Enrich upstream signals with data-driven lag times when models available
+  if (statisticalModels?.lagCorrelations && upstreamSignals.length > 0) {
+    const downstreamTargets = ['FPS', 'KPVU', 'KSLC', 'KHCR', 'KHIF'];
+    for (const sig of upstreamSignals) {
+      for (const downId of downstreamTargets) {
+        const lag = getUpstreamLag(statisticalModels, sig.stationId, downId);
+        if (lag && lag.correlation > 0.3) {
+          if (!sig.dataLags) sig.dataLags = {};
+          sig.dataLags[downId] = {
+            lagMinutes: lag.lagMinutes,
+            correlation: lag.correlation,
+            translationFactor: lag.translationFactor,
+          };
+        }
+      }
+      // Use best data-driven ETA if available and more precise than heuristic
+      const bestLag = sig.dataLags ? Object.values(sig.dataLags).sort((a, b) => b.correlation - a.correlation)[0] : null;
+      if (bestLag && bestLag.correlation > 0.5) {
+        sig.dataEtaHours = Math.round(bestLag.lagMinutes / 6) / 10;
+        sig.dataTranslationFactor = bestLag.translationFactor;
+      }
+    }
+  }
+
   // Store upstream signals in Redis for client display
   if (upstreamSignals.length > 0) {
     try {
@@ -1428,7 +1542,7 @@ async function runServerLearningCycle(redisCmd, currentStations, recentSnapshots
     const primary = lakeStations.find(s => s.stationId === primaryId) || lakeStations[0];
     const history = buildStationHistory(primary.stationId, recentSnapshots);
 
-    const events = predictForLake(lakeId, primary, pressure, history, hour, weights, upstreamSignals, nwsData);
+    const events = predictForLake(lakeId, primary, pressure, history, hour, weights, upstreamSignals, nwsData, statisticalModels);
     for (const evt of events) {
       allPredictions.push({ ...evt, lakeId });
     }

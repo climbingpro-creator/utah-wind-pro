@@ -53,6 +53,12 @@
 // Learned weights cache (loaded from LearningSystem)
 let learnedWeights = null;
 
+// Statistical models from server (historical thermal profiles, lag correlations)
+let statisticalModels = null;
+export function setStatisticalModels(models) {
+  statisticalModels = models;
+}
+
 /**
  * Set learned weights from the learning system
  * Called by LearningSystem when new weights are available
@@ -1118,6 +1124,12 @@ export function predictThermal(lakeId, currentConditions) {
   
   // Calculate final probability using learned weighted 3-step model
   let probability = baseProbability * monthlyMultiplier * hourlyMult * seasonalAdj;
+
+  // Blend with statistical model's hourly probability if available
+  const modelProb = statisticalModels?.thermalProfiles?.[lakeId]?.hourlyProbability?.[currentHour];
+  if (modelProb != null && modelProb > 0) {
+    probability = Math.round(probability * 0.6 + modelProb * 0.4);
+  }
   
   // STEP A: Gradient Check (learned pressure weight)
   const pressureImpact = pressureStatus === 'bust' || pressureStatus === 'marginal-bust'
