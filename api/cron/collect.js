@@ -29,6 +29,7 @@
 
 import { runServerLearningCycle, backfillHistorical, loadWeights, loadMeta } from '../lib/serverLearning.js';
 import { fetchNWSForecasts } from '../lib/nwsForecast.js';
+import { LAKE_STATION_MAP, ALL_STATION_IDS } from '../lib/stations.js';
 
 function getEnv() {
   return {
@@ -38,94 +39,9 @@ function getEnv() {
   };
 }
 
-// Every unique MesoWest/Synoptic station ID used across all 35 lakes
-// PLUS upstream detection stations for frontal early warning
-const ALL_STATIONS = [
-  // Wasatch Front
-  'KSLC', 'KPVU', 'QSF', 'FPS', 'UTALP', 'UTOLY', 'UID28', 'CSC',
-  // Wasatch Back / Heber Valley
-  'DCC', 'KHCR', 'TIMU1', 'SND', 'MDAU1', 'UTPCY',
-  // Northern Utah
-  'KLGU', 'BERU1',
-  // Uinta Basin / NE Utah
-  'KVEL', 'KFGR',
-  // Central / Southern Utah
-  'KPUC', 'KCDC',
-  // Dixie / St. George
-  'KSGU',
-  // Lake Powell / Page AZ
-  'KPGA',
-  // ── UPSTREAM DETECTION NETWORK ──
-  // North corridor (cold front early warning)
-  'KOGD',   // Ogden, UT — 60mi N, 1-2hr warning
-  'KPIH',   // Pocatello, ID — 230mi N, 3-6hr warning
-  'KTWF',   // Twin Falls, ID — 280mi NW, 4-7hr warning
-  // West corridor (system approach from W/SW)
-  'KENV',   // Wendover, UT — 120mi W, 2-4hr warning
-  'KELY',   // Ely, NV — 250mi W, 4-8hr warning
-  // Southwest corridor (pre-frontal warm flow)
-  'KDTA',   // Delta, UT — 100mi SW, 2-3hr warning
-  'KMLF',   // Milford, UT — 150mi SW, 3-4hr warning
-];
+const ALL_STATIONS = ALL_STATION_IDS;
 
-// Complete lake-to-station mapping for all 35 lakes
-const LAKE_STATION_MAP = {
-  // Utah Lake variants
-  'utah-lake-lincoln': ['KSLC', 'KPVU', 'QSF', 'FPS', 'UTALP', 'CSC', 'TIMU1'],
-  'utah-lake-sandy': ['KSLC', 'KPVU', 'QSF', 'FPS', 'UTALP', 'CSC', 'TIMU1'],
-  'utah-lake-vineyard': ['KSLC', 'KPVU', 'QSF', 'FPS', 'UTALP', 'CSC', 'TIMU1'],
-  'utah-lake-zigzag': ['KSLC', 'KPVU', 'QSF', 'FPS', 'UTALP', 'UTOLY', 'UID28', 'CSC'],
-  'utah-lake-mm19': ['KSLC', 'KPVU', 'QSF', 'FPS', 'UTALP', 'UID28', 'CSC'],
-  // Wasatch Back
-  'deer-creek': ['KSLC', 'DCC', 'KHCR', 'SND', 'TIMU1', 'MDAU1', 'UTPCY'],
-  'jordanelle': ['KSLC', 'KHCR', 'SND', 'TIMU1', 'DCC', 'MDAU1'],
-  'east-canyon': ['KSLC'],
-  'echo': ['KSLC'],
-  'rockport': ['KSLC'],
-  // Northern Utah
-  'willard-bay': ['KSLC'],
-  'pineview': ['KSLC'],
-  'hyrum': ['KLGU'],
-  'bear-lake': ['KLGU', 'BERU1'],
-  // Strawberry variants
-  'strawberry-ladders': ['KSLC', 'KPVU', 'KHCR', 'SND', 'DCC', 'TIMU1'],
-  'strawberry-bay': ['KSLC', 'KPVU', 'KHCR', 'SND', 'DCC', 'TIMU1'],
-  'strawberry-soldier': ['KSLC', 'KPVU', 'KHCR', 'SND', 'DCC', 'TIMU1'],
-  'strawberry-view': ['KSLC', 'KPVU', 'KHCR', 'SND', 'DCC', 'TIMU1'],
-  'strawberry-river': ['KSLC', 'KPVU', 'KHCR', 'SND', 'DCC', 'TIMU1'],
-  'skyline-drive': ['KSLC', 'KPVU', 'KHCR', 'SND', 'DCC', 'TIMU1'],
-  // Uinta Basin / NE Utah
-  'starvation': ['KVEL'],
-  'steinaker': ['KVEL'],
-  'red-fleet': ['KVEL'],
-  'flaming-gorge': ['KFGR'],
-  // Central Utah
-  'yuba': ['KPVU'],
-  'scofield': ['KPUC'],
-  // Southern Utah
-  'otter-creek': ['KCDC'],
-  'fish-lake': ['KCDC'],
-  'minersville': ['KCDC'],
-  'piute': ['KCDC'],
-  'panguitch': ['KCDC'],
-  // Dixie / Washington County
-  'sand-hollow': ['KSGU'],
-  'quail-creek': ['KSGU'],
-  // Lake Powell
-  'lake-powell': ['KPGA'],
-  // Kite spots
-  'rush-lake': ['KSLC'],
-  'grantsville': ['KSLC'],
-  // Paragliding sites
-  'potm-south': ['FPS', 'KSLC', 'KPVU'],
-  'potm-north': ['FPS', 'KSLC', 'KPVU'],
-  'inspo': ['KPVU'],
-  'west-mountain': ['KPVU'],
-  'stockton-bar': ['KSLC'],
-  // Snowkite spots
-  'powder-mountain': ['KSLC'],
-  'monte-cristo': ['KLGU'],
-};
+// LAKE_STATION_MAP imported from ../lib/stations.js (single source of truth)
 
 async function redisCommand(command, ...args) {
   const { upstashUrl, upstashToken } = getEnv();
@@ -152,6 +68,28 @@ async function redisCommand(command, ...args) {
   } catch (err) {
     console.error(`Redis ${command} failed: ${err.message}`);
     return null;
+  }
+}
+
+async function redisMGet(keys) {
+  if (!keys || keys.length === 0) return [];
+  const { upstashUrl, upstashToken } = getEnv();
+  if (!upstashUrl || !upstashToken) return keys.map(() => null);
+  try {
+    const resp = await fetch(upstashUrl, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${upstashToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(['MGET', ...keys]),
+    });
+    if (!resp.ok) return keys.map(() => null);
+    const json = await resp.json();
+    if (json.error) return keys.map(() => null);
+    return json.result || keys.map(() => null);
+  } catch {
+    return keys.map(() => null);
   }
 }
 
@@ -249,9 +187,10 @@ export default async function handler(req, res) {
       try {
         const recentKeys = await redisCommand('LRANGE', 'obs:index', '0', '15');
         const recentSnapshots = [];
-        if (recentKeys?.length > 0) {
-          for (const rk of recentKeys.slice(1, 16)) {
-            const raw = await redisCommand('GET', rk);
+        if (recentKeys?.length > 1) {
+          const keysToFetch = recentKeys.slice(1, 16);
+          const values = await redisMGet(keysToFetch);
+          for (const raw of values) {
             if (raw) try { recentSnapshots.push(JSON.parse(raw)); } catch {}
           }
         }
@@ -484,12 +423,12 @@ async function handleSync(res) {
       return res.status(200).json({ records: [], message: 'No server-collected data yet' });
     }
 
-    // Fetch the actual data (batch — up to 96 records)
+    const keysToFetch = keys.slice(0, 96);
+    const values = await redisMGet(keysToFetch);
     const records = [];
-    for (const key of keys.slice(0, 96)) {
-      const data = await redisCommand('GET', key);
+    for (const data of values) {
       if (data) {
-        try { records.push(JSON.parse(data)); } catch (e) { /* skip bad data */ }
+        try { records.push(JSON.parse(data)); } catch { /* skip bad data */ }
       }
     }
 

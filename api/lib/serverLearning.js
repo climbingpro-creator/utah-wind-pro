@@ -398,7 +398,7 @@ function scoreFrontal(station, pressure, history, upstreamSignals, nws) {
 
   // NWS CROSS-CHECK: if NWS mentions front/cold/storm, strong confirmation
   if (nws?.keywords) {
-    if (nws.keywords.front || nws.keywords.cold) score += 15;
+    if (nws.keywords.front || nws.keywords['cold front']) score += 15;
     if (nws.keywords.storm) score += 10;
     if (nws.keywords.advisory || nws.keywords.warning) score += 10;
     // NWS shows N/NW wind in next 12h? 
@@ -433,7 +433,7 @@ function scoreNorthFlow(station, pressure, nws) {
       score += 12;
     }
   }
-  if (nws?.keywords?.cold || nws?.keywords?.arctic || nws?.keywords?.freeze) score += 8;
+  if (nws?.keywords?.['cold front'] || nws?.keywords?.arctic || nws?.keywords?.freeze) score += 8;
 
   return Math.min(95, score);
 }
@@ -617,7 +617,7 @@ function generateExplanation(eventType, station, pressure, history, hour, nws, u
         if (tempDrop > 5) reasons.push(`Temperature dropped ${tempDrop.toFixed(0)}°F in the last hour — cold air mass arriving`);
       }
       if (nws?.keywords?.front) reasons.push('NWS forecast mentions approaching front');
-      if (nws?.keywords?.cold) reasons.push('NWS forecasts cold air');
+      if (nws?.keywords?.['cold front']) reasons.push('NWS forecasts cold front');
       break;
     }
     case 'north_flow': {
@@ -625,7 +625,7 @@ function generateExplanation(eventType, station, pressure, history, hour, nws, u
       if (gradient > 2.0) reasons.push(`Strong north-south pressure gradient (${gradient.toFixed(1)} mb) — classic north flow setup`);
       else if (gradient > 1.0) reasons.push(`Moderate pressure gradient (${gradient.toFixed(1)} mb) favoring north flow`);
       if (dir != null && isNortherly(dir)) reasons.push(`Wind from the ${cardinal} at ${speed?.toFixed(0) || '?'} mph confirms north flow`);
-      if (nws?.keywords?.cold || nws?.keywords?.arctic) reasons.push('NWS shows cold air pattern');
+      if (nws?.keywords?.['cold front'] || nws?.keywords?.arctic) reasons.push('NWS shows cold air pattern');
       if (nws?.current?.dirDeg != null && (nws.current.dirDeg >= 300 || nws.current.dirDeg <= 60)) {
         reasons.push(`NWS hourly forecast also shows ${nws.current.dir} wind`);
       }
@@ -792,8 +792,8 @@ function analyzePressure(currentStations, recentSnapshots) {
   const gradient = rawGradient != null ? rawGradient - PRESSURE_ALTITUDE_BASELINE : 0;
 
   let trend = 'stable';
-  if (recentSnapshots.length >= 4) {
-    const oldSlc = recentSnapshots[recentSnapshots.length - 1]?.stations?.find(s => s.stationId === 'KSLC');
+  if (recentSnapshots.length >= 3) {
+    const oldSlc = recentSnapshots[0]?.stations?.find(s => s.stationId === 'KSLC');
     if (slc?.pressure && oldSlc?.pressure) {
       const delta = slc.pressure - oldSlc.pressure;
       if (delta < -0.5) trend = 'falling';
@@ -943,8 +943,7 @@ function updateWeights(currentWeights, newAccuracy) {
       ew.speedBias = ew.speedBias * 0.95 + speedErr * 0.05;
     }
 
-    // Hourly bias: learn which hours are better/worse for this event type
-    const hour = record.predictionHour ?? new Date(record.timestamp).getUTCHours();
+    const hour = record.predictionHour ?? toMountainHour(new Date(record.timestamp));
     if (!ew.hourlyBias[hour]) ew.hourlyBias[hour] = 0;
     const hourlyTarget = record.score > 0.6 ? 2 : record.score < 0.3 ? -2 : 0;
     ew.hourlyBias[hour] = ew.hourlyBias[hour] * 0.9 + hourlyTarget * 0.1;
@@ -1018,10 +1017,11 @@ async function loadRecentPredictions(redisCmd, lookbackMinutes = 240) {
   const keys = await redisCmd('LRANGE', 'pred:index', '0', '30');
   if (!keys || keys.length === 0) return [];
 
+  const values = await redisCmd('MGET', ...keys);
   const cutoff = Date.now() - lookbackMinutes * 60000;
   const all = [];
-  for (const key of keys) {
-    const raw = await redisCmd('GET', key);
+  const rawList = Array.isArray(values) ? values : [];
+  for (const raw of rawList) {
     if (!raw) continue;
     try {
       const record = JSON.parse(raw);
@@ -1401,7 +1401,7 @@ async function runServerLearningCycle(redisCmd, currentStations, recentSnapshots
   }
 
   // 4. Verify old predictions (2-4 hours ago) against current actuals
-  const oldPredictions = await loadRecentPredictions(redisCmd, 240);
+  const oldPredictions = await loadRecentPredictions(redisCmd, 310);
   const verificationsNeeded = oldPredictions.filter(p => {
     const age = now.getTime() - new Date(p.timestamp || 0).getTime();
     return age > 90 * 60000 && age < 300 * 60000;
@@ -1541,10 +1541,11 @@ async function backfillHistorical(redisCmd, synopticToken, allStations, lakeStat
       const primaryId = LAKE_THERMAL[lakeId]?.station || stationIds[0];
       const primary = lakeStations.find(s => s.stationId === primaryId) || lakeStations[0];
       const history = buildStationHistory(primary.stationId, recentHistory);
-      const events = predictForLake(lakeId, primary, pressure, history, hour, weights);
+      const upSig = detectUpstreamSignals ? detectUpstreamSignals(stations, recentHistory) : [];
+      const events = predictForLake(lakeId, primary, pressure, history, hour, weights, upSig, null);
 
       for (const evt of events) {
-        stepPredictions.push({ ...evt, lakeId, timestamp: ts.toISOString() });
+        stepPredictions.push({ ...evt, lakeId, timestamp: ts.toISOString(), predictionHour: hour });
       }
     }
     totalPredictions += stepPredictions.length;

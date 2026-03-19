@@ -260,7 +260,7 @@ export function Dashboard() {
     }).format(date);
   };
 
-  const pressureData = lakeState ? {
+  const pressureData = lakeState?.pressure ? {
     gradient: lakeState.pressure.gradient,
     isBustCondition: lakeState.pressure.gradient != null && Math.abs(lakeState.pressure.gradient) > 2.0,
     slcPressure: lakeState.pressure.high?.value,
@@ -1084,8 +1084,8 @@ export function Dashboard() {
                 {lakeState.thermalPrediction.isUsingLearnedWeights ? (
                   <span>
                     Model: <span className="text-emerald-500 font-semibold">Learned</span>
-                    {' '}(v{String(lakeState.thermalPrediction.weightsVersion).slice(-6)})
-                    {lakeState.thermalPrediction.speedBiasCorrection !== 0 && (
+                    {' '}(v{lakeState.thermalPrediction.weightsVersion ? String(lakeState.thermalPrediction.weightsVersion).slice(-6) : '—'})
+                    {lakeState.thermalPrediction.speedBiasCorrection != null && lakeState.thermalPrediction.speedBiasCorrection !== 0 && (
                       <span className="ml-1 opacity-60">
                         bias: {lakeState.thermalPrediction.speedBiasCorrection > 0 ? '+' : ''}
                         {lakeState.thermalPrediction.speedBiasCorrection.toFixed(1)} mph

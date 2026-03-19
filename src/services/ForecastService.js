@@ -609,11 +609,10 @@ export function getFullForecast(locationId, conditions = {}) {
     baseProbability -= 20; // North flow dominant
   }
   
-  // Thermal delta effect
-  if (thermalDelta > 5) {
-    baseProbability += 15;
-  } else if (thermalDelta > 10) {
+  if (thermalDelta > 10) {
     baseProbability += 25;
+  } else if (thermalDelta > 5) {
+    baseProbability += 15;
   }
   
   // Wind speed effect

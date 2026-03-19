@@ -133,7 +133,9 @@ async function getGridUrl(redisCmd, gridId, point) {
     hourly: json.properties.forecastHourly,
     sevenDay: json.properties.forecast,
   };
-  await redisCmd('SET', cacheKey, JSON.stringify(urls), 'EX', '86400');
+  if (!urls.hourly && !urls.sevenDay) return null;
+  const ttl = (urls.hourly && urls.sevenDay) ? '86400' : '900';
+  await redisCmd('SET', cacheKey, JSON.stringify(urls), 'EX', ttl);
   return urls;
 }
 
@@ -196,7 +198,7 @@ async function fetchNWSForecasts(redisCmd) {
 // ── Per-lake forecast lookup ──
 
 const WEATHER_KEYWORDS = [
-  'front', 'cold', 'storm', 'windy', 'gusty', 'breezy',
+  'front', 'cold front', 'storm', 'windy', 'gusty', 'breezy',
   'calm', 'rain', 'snow', 'clear', 'sunny', 'thunder',
   'advisory', 'warning', 'arctic', 'freeze',
 ];

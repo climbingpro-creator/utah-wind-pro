@@ -3,17 +3,32 @@ import { Clock, Navigation, Wind, CloudSun, ChevronDown, ChevronUp, Zap, Eye } f
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
-// NWS grid mapping (mirrors server-side LAKE_TO_GRID)
+// NWS grid mapping — must match server-side LAKE_TO_GRID in nwsForecast.js
 const LAKE_TO_GRID = {
   'utah-lake-lincoln': 'utah-lake', 'utah-lake-sandy': 'utah-lake',
   'utah-lake-vineyard': 'utah-lake', 'utah-lake-zigzag': 'utah-lake',
   'utah-lake-mm19': 'utah-lake', 'potm-south': 'utah-lake',
   'potm-north': 'utah-lake', 'rush-lake': 'utah-lake',
+  'grantsville': 'utah-lake', 'stockton-bar': 'utah-lake',
+  'inspo': 'utah-lake', 'west-mountain': 'utah-lake',
+  'yuba': 'utah-lake',
   'deer-creek': 'deer-creek', 'jordanelle': 'deer-creek',
+  'east-canyon': 'deer-creek', 'echo': 'deer-creek',
+  'rockport': 'deer-creek',
   'strawberry-ladders': 'deer-creek', 'strawberry-bay': 'deer-creek',
-  'willard-bay': 'willard-bay', 'bear-lake': 'bear-lake',
-  'sand-hollow': 'stgeorge', 'lake-powell': 'stgeorge',
-  'starvation': 'vernal', 'flaming-gorge': 'vernal',
+  'strawberry-soldier': 'deer-creek', 'strawberry-view': 'deer-creek',
+  'strawberry-river': 'deer-creek', 'skyline-drive': 'deer-creek',
+  'scofield': 'deer-creek',
+  'willard-bay': 'willard-bay', 'pineview': 'willard-bay',
+  'hyrum': 'willard-bay', 'powder-mountain': 'willard-bay',
+  'monte-cristo': 'willard-bay',
+  'bear-lake': 'bear-lake',
+  'sand-hollow': 'stgeorge', 'quail-creek': 'stgeorge',
+  'lake-powell': 'stgeorge', 'otter-creek': 'stgeorge',
+  'fish-lake': 'stgeorge', 'minersville': 'stgeorge',
+  'piute': 'stgeorge', 'panguitch': 'stgeorge',
+  'starvation': 'vernal', 'steinaker': 'vernal',
+  'red-fleet': 'vernal', 'flaming-gorge': 'vernal',
 };
 
 const DIR_ARROWS = {
@@ -53,7 +68,7 @@ function HourRow({ hour, nws, isNow, expanded }) {
       {/* Hour */}
       <div className="w-14 text-right">
         <span className={`text-sm font-mono ${isNow ? 'text-sky-400 font-bold' : 'text-slate-400'}`}>
-          {hour <= 12 ? (hour === 0 ? '12 AM' : `${hour} AM`) : (hour === 12 ? '12 PM' : `${hour - 12} PM`)}
+          {hour != null ? (hour <= 12 ? (hour === 0 ? '12 AM' : `${hour} AM`) : (hour === 12 ? '12 PM' : `${hour - 12} PM`)) : '—'}
         </span>
       </div>
 

@@ -109,7 +109,9 @@ export default function AccuracyScoreboard() {
         fetch(`${API_BASE}/api/cron/collect?action=weights`).then(r => r.json()),
         fetch(`${API_BASE}/api/cron/collect?action=ahead`).then(r => r.json()),
       ]);
-      setWeights(wResp.weights || wResp);
+      const w = wResp.weights || {};
+      if (wResp.meta) w.meta = wResp.meta;
+      setWeights(w);
       setAheadLog(aResp);
     } catch (e) {
       console.error('AccuracyScoreboard load error:', e);
@@ -132,7 +134,12 @@ export default function AccuracyScoreboard() {
   const nwsOverall = meta.nwsOverallAccuracy;
   const ourOverall = meta.overallAccuracy;
   const totalPreds = meta.totalPredictions || 0;
-  const aheadStats = aheadLog?.stats || {};
+  const rawStats = aheadLog?.stats || {};
+  const aheadStats = {
+    confirmedAhead: rawStats.confirmed ?? rawStats.confirmedAhead ?? 0,
+    avgLeadTimeHours: rawStats.avgLeadTimeHours ?? null,
+    totalAheadEvents: rawStats.aheadEvents ?? rawStats.total ?? 0,
+  };
   const recentAhead = (aheadLog?.log || []).filter(d => d.status === 'ahead' || d.status === 'confirmed_ahead').slice(-5).reverse();
 
   const weWinOverall = ourOverall != null && nwsOverall != null && ourOverall > nwsOverall;

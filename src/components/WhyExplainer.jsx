@@ -16,9 +16,11 @@ const EVENT_CONFIG = {
 function PredictionCard({ prediction, expanded, onToggle }) {
   const config = EVENT_CONFIG[prediction.eventType] || EVENT_CONFIG.thermal_cycle;
   const Icon = config.icon;
-  const prob = Math.round(prediction.probability);
+  const prob = prediction.probability != null ? Math.round(prediction.probability) : 0;
   const why = prediction.why || [];
-  const [expMin, expMax] = prediction.expectedSpeed || [0, 0];
+  const speeds = Array.isArray(prediction.expectedSpeed) && prediction.expectedSpeed.length >= 2
+    ? prediction.expectedSpeed : [0, 0];
+  const [expMin, expMax] = speeds;
   const isGo = prob >= 50;
 
   return (

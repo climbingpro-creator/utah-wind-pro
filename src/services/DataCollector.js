@@ -183,6 +183,9 @@ class DataCollector {
         if (merged.windEventPatterns || merged.eventWeights) {
           setWindEventLearnedPatterns(merged.windEventPatterns || merged.eventWeights);
         }
+        setParaglidingLearnedWeights(merged);
+        setBoatingLearnedWeights(merged);
+        setFishingLearnedWeights(merged);
       }
 
       const totalServerPredictions = meta?.totalPredictions ?? 0;
@@ -213,7 +216,7 @@ class DataCollector {
         if (serverCount > localCount) {
           merged.windEventPatterns[eventType] = {
             ...serverData,
-            bias: serverData.baseProbMod ? serverData.baseProbMod / 100 : 0,
+            bias: serverData.baseProbMod ?? 0,
             confidenceBoost: serverCount > 50 ? 0.1 : 0,
             hourlyBias: serverData.hourlyBias || {},
             speedBias: serverData.speedBias || 0,

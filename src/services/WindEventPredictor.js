@@ -309,10 +309,9 @@ export function predictWindEvents(lakeId, currentConditions, pressureData, stati
       if (adjustment) {
         const bias = adjustment.bias || 0;
         const boost = adjustment.confidenceBoost || 0;
-        // Apply hourly bias from server weights if available
         const hourlyBias = adjustment.hourlyBias?.[hour] || 0;
         event.probability = Math.max(0, Math.min(100,
-          event.probability * (1 + bias) + hourlyBias
+          event.probability + bias + hourlyBias
         ));
         event.confidence = Math.min(1, event.confidence + boost);
       }
@@ -623,7 +622,7 @@ function scorePreFrontal(wind, pressure, history, hour, nwsForecast) {
     const next24 = nwsForecast.periods.slice(0, 4);
     for (const period of next24) {
       const text = (period.detailedForecast || period.shortForecast || '').toLowerCase();
-      if (text.includes('front') || text.includes('cold') || text.includes('storm') || text.includes('breezy') || text.includes('windy')) {
+      if (text.includes('front') || text.includes('cold front') || text.includes('storm') || text.includes('breezy') || text.includes('windy')) {
         score += 20;
         details.push(`NWS: "${period.name}" mentions wind/front`);
         confidence += 0.15;
