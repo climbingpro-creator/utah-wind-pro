@@ -16,7 +16,7 @@ import { weatherService } from './WeatherService';
 import { LakeState } from './DataNormalizer';
 import { LAKE_CONFIGS, getAllStationIds } from '../config/lakeStations';
 import { setLearnedWeights } from './ThermalPredictor';
-import { setParaglidingLearnedWeights } from './ParaglidingPredictor';
+import { setParaglidingLearnedWeights, predictParagliding } from './ParaglidingPredictor';
 import { setBoatingLearnedWeights } from './BoatingPredictor';
 import { setFishingLearnedWeights } from './FishingPredictor';
 import { setWindFieldLearnedWeights } from './WindFieldEngine';
@@ -215,6 +215,8 @@ class DataCollector {
             ...serverData,
             bias: serverData.baseProbMod ? serverData.baseProbMod / 100 : 0,
             confidenceBoost: serverCount > 50 ? 0.1 : 0,
+            hourlyBias: serverData.hourlyBias || {},
+            speedBias: serverData.speedBias || 0,
           };
         }
       }
@@ -524,6 +526,35 @@ class DataCollector {
           }
         } catch (e) {
           // Wind event prediction is non-critical
+        }
+
+        // Record paragliding predictions for PotM spots
+        if (lakeId === 'potm-south' || lakeId === 'potm-north') {
+          try {
+            const pgData = {
+              stations: lakeState.wind?.stations || [],
+              FPS: lakeState.wind?.stations?.find(s => s.id === 'FPS'),
+              UTALP: lakeState.utalpStation || lakeState.wind?.stations?.find(s => s.id === 'UTALP'),
+              KSLC: lakeState.kslcStation,
+              KPVU: lakeState.kpvuStation,
+            };
+            const pgResult = predictParagliding(pgData, {});
+            const site = lakeId === 'potm-south' ? pgResult.south : pgResult.north;
+            if (site && site.probability != null) {
+              await learningSystem.recordPrediction(lakeId, {
+                probability: site.probability,
+                windType: 'paragliding',
+                expectedSpeed: site.expectedSpeed || 10,
+                expectedDirection: lakeId === 'potm-south' ? 170 : 340,
+                flyable: site.flyable,
+                status: site.status,
+              }, {
+                fpsSpeed: pgData.FPS?.speed ?? pgData.FPS?.windSpeed,
+                fpsDirection: pgData.FPS?.direction ?? pgData.FPS?.windDirection,
+              });
+              this.collectionStats.predictionsRecorded++;
+            }
+          } catch (e) { /* non-critical */ }
         }
       }
 

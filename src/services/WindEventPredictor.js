@@ -301,16 +301,20 @@ export function predictWindEvents(lakeId, currentConditions, pressureData, stati
     });
   }
 
-  // Apply learned pattern adjustments
+  // Apply learned pattern adjustments from both client and server weights
   if (learnedPatterns) {
     for (const event of events) {
-      const patternKey = `${event.id}_${hour}`;
-      const adjustment = learnedPatterns[patternKey];
+      // Try event-specific key first (from server merge), then event_hour key (legacy)
+      const adjustment = learnedPatterns[event.id] || learnedPatterns[`${event.id}_${hour}`];
       if (adjustment) {
+        const bias = adjustment.bias || 0;
+        const boost = adjustment.confidenceBoost || 0;
+        // Apply hourly bias from server weights if available
+        const hourlyBias = adjustment.hourlyBias?.[hour] || 0;
         event.probability = Math.max(0, Math.min(100,
-          event.probability * (1 + adjustment.bias)
+          event.probability * (1 + bias) + hourlyBias
         ));
-        event.confidence = Math.min(1, event.confidence + adjustment.confidenceBoost);
+        event.confidence = Math.min(1, event.confidence + boost);
       }
     }
   }

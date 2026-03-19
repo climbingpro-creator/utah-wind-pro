@@ -630,12 +630,15 @@ function verifyPredictions(predictions, actualStations, lakeStationMap) {
       score += actualSpeed < 5 ? 0.5 : Math.max(0, 0.5 - (actualSpeed - 5) * 0.05);
     }
 
+    const [sMin, sMax] = pred.expectedSpeed || [0, 100];
     results.push({
       lakeId,
       eventType: pred.eventType,
       predicted: pred.probability,
       actualSpeed,
       actualDirection: primary.windDirection,
+      expectedSpeedMid: (sMin + sMax) / 2,
+      predictionHour: pred.predictionHour ?? null,
       score: Math.round(score * 100) / 100,
       timestamp: new Date().toISOString(),
     });
@@ -676,7 +679,7 @@ function updateWeights(currentWeights, newAccuracy) {
     }
 
     // Hourly bias: learn which hours are better/worse for this event type
-    const hour = new Date(record.timestamp).getHours();
+    const hour = record.predictionHour ?? new Date(record.timestamp).getUTCHours();
     if (!ew.hourlyBias[hour]) ew.hourlyBias[hour] = 0;
     const hourlyTarget = record.score > 0.6 ? 2 : record.score < 0.3 ? -2 : 0;
     ew.hourlyBias[hour] = ew.hourlyBias[hour] * 0.9 + hourlyTarget * 0.1;
@@ -723,7 +726,7 @@ async function saveWeights(redisCmd, weights) {
 }
 
 async function loadRecentPredictions(redisCmd, lookbackMinutes = 240) {
-  const keys = await redisCmd('LRANGE', 'pred:index', '0', '15');
+  const keys = await redisCmd('LRANGE', 'pred:index', '0', '30');
   if (!keys || keys.length === 0) return [];
 
   const cutoff = Date.now() - lookbackMinutes * 60000;
@@ -733,8 +736,11 @@ async function loadRecentPredictions(redisCmd, lookbackMinutes = 240) {
     if (!raw) continue;
     try {
       const record = JSON.parse(raw);
-      if (new Date(record.timestamp).getTime() > cutoff) {
-        all.push(...(record.predictions || []));
+      const recordTs = new Date(record.timestamp).getTime();
+      if (recordTs > cutoff) {
+        for (const p of (record.predictions || [])) {
+          all.push({ ...p, timestamp: record.timestamp, predictionHour: new Date(record.timestamp).getUTCHours() });
+        }
       }
     } catch { /* skip */ }
   }

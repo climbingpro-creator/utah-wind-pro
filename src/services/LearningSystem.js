@@ -369,10 +369,11 @@ class LearningSystem {
         ? Math.abs(pred.foilKiteablePct - actual.foilKiteablePct)
         : null,
       
-      // Wind type accuracy
+      // Wind type accuracy (fuzzy: matches if predicted type is in the actual wind types set)
       predictedWindType: pred.windType,
       actualWindType: actual.dominantWindType,
-      windTypeCorrect: pred.windType === actual.dominantWindType,
+      windTypeCorrect: pred.windType === actual.dominantWindType
+        || (actual.windTypes && actual.windTypes.includes(pred.windType)),
       
       // Overall score (weighted average)
       overallScore: null,
@@ -418,26 +419,49 @@ class LearningSystem {
     const northFlowCount = actuals.filter(a => a.isNorthFlow).length;
     const seThermalCount = actuals.filter(a => a.isSEThermal).length;
 
-    // Determine dominant wind type
+    const avgSpeed = speeds.length > 0 ? speeds.reduce((a, b) => a + b, 0) / speeds.length : 0;
+    const avgDir = directions.length > 0 ? this.averageDirection(directions) : null;
+
+    // Classify wind types (extended to match wind event IDs)
     let dominantWindType = 'calm';
+    const windTypes = new Set();
     if (northFlowCount > actuals.length * 0.5) {
       dominantWindType = 'north_flow';
+      windTypes.add('north_flow');
+      windTypes.add('frontal_passage');
+      windTypes.add('post_frontal');
     } else if (seThermalCount > actuals.length * 0.5) {
       dominantWindType = 'thermal';
-    } else if (speeds.length > 0 && speeds.reduce((a, b) => a + b, 0) / speeds.length >= 8) {
+      windTypes.add('thermal');
+      windTypes.add('thermal_cycle');
+      windTypes.add('clearing_wind');
+    } else if (avgSpeed >= 8) {
       dominantWindType = 'other';
+      if (avgDir != null && avgDir >= 180 && avgDir <= 250) {
+        windTypes.add('pre_frontal');
+        windTypes.add('clearing_wind');
+      }
+    }
+    if (avgSpeed < 5) {
+      windTypes.add('glass');
+      windTypes.add('calm');
+    }
+    // Paragliding: flyable if south-facing wind in right speed range
+    if (avgDir != null && avgDir >= 110 && avgDir <= 250 && avgSpeed >= 5 && avgSpeed <= 20) {
+      windTypes.add('paragliding');
     }
 
     return {
       count: actuals.length,
-      avgSpeed: speeds.length > 0 ? speeds.reduce((a, b) => a + b, 0) / speeds.length : null,
+      avgSpeed: speeds.length > 0 ? avgSpeed : null,
       maxSpeed: speeds.length > 0 ? Math.max(...speeds) : null,
       minSpeed: speeds.length > 0 ? Math.min(...speeds) : null,
-      avgDirection: directions.length > 0 ? this.averageDirection(directions) : null,
+      avgDirection: avgDir,
       kiteablePct: Math.round(kiteableCount / actuals.length * 100),
       foilKiteablePct: Math.round(foilKiteableCount / actuals.length * 100),
       twinTipKiteablePct: Math.round(twinTipKiteableCount / actuals.length * 100),
       dominantWindType,
+      windTypes: [...windTypes],
     };
   }
 
@@ -1032,8 +1056,28 @@ class LearningSystem {
       newWeights.pressureWeight = currentWeights.pressureWeight + (target - currentWeights.pressureWeight) * lerpRate;
     }
 
+    // ─── PER-LOCATION BIAS from user feedback ─────────────────
+    // Users report actual wind speeds they experienced at each spot.
+    // Compare against what the model predicted to get per-spot corrections.
+    newWeights.locationBias = {};
+    const locFeedback = feedbackInsights?.locationFeedback;
+    if (locFeedback) {
+      for (const [locId, data] of Object.entries(locFeedback)) {
+        if (data.count >= 3 && data.speeds.length >= 3) {
+          const avgReported = data.speeds.reduce((a, b) => a + b, 0) / data.speeds.length;
+          const avgRating = data.ratings.reduce((a, b) => a + b, 0) / data.ratings.length;
+          // Positive bias = model underpredicts for this spot, negative = overpredicts
+          const spotBias = avgReported - (errorAnalysis.avgPredictedSpeed || avgReported);
+          newWeights.locationBias[locId] = {
+            speedBias: Math.round(spotBias * 10) / 10,
+            avgRating: Math.round(avgRating * 10) / 10,
+            samples: data.count,
+          };
+        }
+      }
+    }
+
     // Derive activity-specific weight sets from the same learning data.
-    // These get pushed through onWeightsUpdated and recognized by each predictor.
     this._activityWeights = {
       paragliding: {
         ...newWeights,

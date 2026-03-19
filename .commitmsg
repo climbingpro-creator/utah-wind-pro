@@ -1,4 +1,37 @@
-Add admin email override for full pro access
+Fix 7 critical learning system bugs — verification loop now works
 
-climbingpro@gmail.com gets automatic pro tier on login,
-bypassing subscription/API check.
+The learning system was collecting data but never actually learning
+from its mistakes. These fixes unlock the full predict-verify-learn
+loop on both server and client.
+
+1. SERVER VERIFICATION FIX: loadRecentPredictions now attaches
+   timestamp and predictionHour to each prediction when flattening.
+   Previously timestamp was undefined so age filter always failed
+   and zero predictions were ever verified.
+
+2. SPEED BIAS FIX: verifyPredictions now computes expectedSpeedMid
+   from the [min,max] range. Previously updateWeights could never
+   update speed bias because this field was missing.
+
+3. HOURLY BIAS FIX: Uses predictionHour (when the prediction was
+   made) instead of verification timestamp hour. A prediction made
+   at 8 AM should bias hour 8, not hour 12 when verified.
+
+4. WIND EVENT PATTERN KEYS: WindEventPredictor now looks up learned
+   patterns by event type (e.g. "north_flow") in addition to the
+   old event_hour format. Also passes through hourlyBias and
+   speedBias from server weights during merge.
+
+5. PARAGLIDING IN LEARNING LOOP: DataCollector now records paragliding
+   predictions for potm-south and potm-north using predictParagliding().
+   Previously paragliding was predicted but never recorded or verified.
+
+6. VERIFICATION VOCABULARY UNIFIED: summarizeActuals now produces a
+   windTypes set that maps to all event IDs (e.g. north_flow also
+   maps to frontal_passage, post_frontal). calculateAccuracy uses
+   fuzzy matching via this set instead of exact string comparison.
+
+7. PER-LOCATION USER FEEDBACK: calculateNewWeights now uses
+   locationFeedback data to compute per-spot speed bias corrections,
+   stored in locationBias. Previously only aggregate userSpeedBias
+   was used while per-location data was thrown away.
