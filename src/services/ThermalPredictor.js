@@ -718,7 +718,7 @@ export const THERMAL_PROFILES = {
       optimal: { min: 170, max: 220, ideal: 195 },
       acceptable: { min: 150, max: 240 },
       label: 'S to SW',
-      description: 'South to Southwest - "The Gap" thermal from Great Salt Lake',
+      description: 'South to Southwest flow — south beach near state park',
     },
     
     speed: {

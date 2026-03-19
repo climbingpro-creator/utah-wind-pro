@@ -23,7 +23,7 @@ const SKYLINE_SPOT = { id: 'skyline-drive', name: 'Skyline Drive', wind: 'W/NW',
 
 const OTHER_LAKES = [
   { id: 'deer-creek', name: 'Deer Creek', region: 'Wasatch', wind: 'SW Canyon', meter: 'KHCR', meterName: 'Heber Airport' },
-  { id: 'willard-bay', name: 'Willard Bay', region: 'Box Elder', wind: 'N "Gap"', meter: 'KHIF', meterName: 'Hill AFB' },
+  { id: 'willard-bay', name: 'Willard Bay', region: 'Box Elder', wind: 'S Flow', meter: 'KHIF', meterName: 'Hill AFB' },
   { id: 'pineview', name: 'Pineview', region: 'Weber', wind: 'E/W Canyon', meter: null, meterName: null },
 ];
 
@@ -33,7 +33,7 @@ const KITE_SPOTS = [
   { id: 'rush-lake', name: 'Rush Lake', wind: 'S Frontal', meter: 'KSLC', desc: 'Most kitable days in UT — shallow flat water, storm-front driven', hazard: 'EXTREME WIND' },
   { id: 'grantsville', name: 'Grantsville Reservoir', wind: 'S/SW', meter: 'KSLC', desc: 'Alternative to Rush — deeper water for larger skegs' },
   { id: 'deer-creek', name: 'Deer Creek', wind: 'SW Canyon', meter: 'KHCR', desc: 'Canyon thermal kiting — afternoon SW wind' },
-  { id: 'willard-bay', name: 'Willard Bay', wind: 'N Gap', meter: 'KSLC', desc: 'North wind — "The Gap" thermal', hazard: 'OFFSHORE N WIND' },
+  { id: 'willard-bay', name: 'Willard Bay', wind: 'S Flow', meter: 'KHIF', desc: 'South beach near state park — south wind under south flow' },
 ];
 
 // ─── VERIFIED SNOWKITE SPOTS ──────────────────────────────────
@@ -71,7 +71,7 @@ const LAKE_REGIONS = [
     label: 'Northern Utah',
     icon: '🏔️',
     lakes: [
-      { id: 'willard-bay', name: 'Willard Bay', wind: 'N Gap', meter: 'KHIF', fish: '🐟 Wiper, Walleye, Catfish' },
+      { id: 'willard-bay', name: 'Willard Bay', wind: 'S Flow', meter: 'KHIF', fish: '🐟 Wiper, Walleye, Catfish' },
       { id: 'pineview', name: 'Pineview', wind: 'E/W Canyon', meter: null, fish: '🐟 LMB, SMB, Tiger Muskie' },
       { id: 'bear-lake', name: 'Bear Lake', wind: 'Strong W', meter: 'BERU1', fish: '🐟 Cutthroat, Lake Trout, Cisco', hazard: 'HIGH WIND' },
       { id: 'hyrum', name: 'Hyrum', wind: 'Valley', meter: 'KLGU', fish: '🐟 Rainbow, Perch, Bluegill' },
@@ -496,7 +496,7 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
               <Wind className={`w-4 h-4 text-[var(--text-tertiary)]`} />
               <div className="text-left">
                 <span className="font-semibold text-sm text-[var(--text-primary)]">Kite Spots</span>
-                <div className="text-[11px] text-[var(--text-tertiary)]">Verified kiting locations · Rush Lake, Grantsville, Deer Creek, Willard Bay</div>
+                <div className="text-[11px] text-[var(--text-tertiary)]">Verified kiting locations · Rush Lake, Grantsville, Deer Creek, Willard Bay S Beach</div>
               </div>
             </div>
             <div className="flex items-center gap-2">

@@ -146,10 +146,10 @@
     "willard-bay": {
       "name": "Willard Bay",
       "thermal_engine": {
-        "generator": "GAP_WIND",
+        "generator": "SOUTH_FLOW",
         "upstream_gate": "KHIF",
-        "indicator_type": "HILL_AFB_PUSH",
-        "description": "Gap wind from north — Hill AFB confirms flow strength",
+        "indicator_type": "SOUTH_FLOW_PUSH",
+        "description": "South flow — south beach near state park, Hill AFB confirms strength",
         "heading": [170, 220],
         "min_speed": 8,
         "multiplier": 1.20

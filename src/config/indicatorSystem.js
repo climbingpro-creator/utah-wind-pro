@@ -355,14 +355,14 @@ export const WILLARD_BAY_INDICATORS = {
     coordinates: { lat: 41.1239, lng: -111.9731 },
     elevation: 4789,
     
-    windType: 'NORTH_FLOW',
-    role: 'North flow indicator for Willard Bay area',
-    bestFor: ['willard-bay-north', 'willard-bay-south'],
+    windType: 'SOUTH_FLOW',
+    role: 'South flow indicator for Willard Bay south beach',
+    bestFor: ['willard-bay-south'],
     
     leadTimeHours: 1,
     
     trigger: {
-      direction: { min: 315, max: 45, label: 'N (NW to NE)' },
+      direction: { min: 150, max: 225, label: 'S (SE to SW)' },
       speed: { min: 8, threshold: 12 },
     },
     

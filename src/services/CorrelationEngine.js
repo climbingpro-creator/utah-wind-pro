@@ -287,8 +287,8 @@ export function calculateCorrelatedWind(lakeId, baseForecast, mesoData, pws = nu
     }
   }
 
-  // ─── 11. GAP WIND (Willard Bay) ──────────────────────────────────
-  if (config.thermal_engine?.indicator_type === 'HILL_AFB_PUSH') {
+  // ─── 11. SOUTH FLOW (Willard Bay) ─────────────────────────────────
+  if (config.thermal_engine?.indicator_type === 'SOUTH_FLOW_PUSH' || config.thermal_engine?.indicator_type === 'HILL_AFB_PUSH') {
     const gate = getSensorData(mesoData, config.thermal_engine.upstream_gate);
     if (gate) {
       const isCorrectHeading = isInHeadingRange(gate.dir, config.thermal_engine.heading);
@@ -297,9 +297,9 @@ export function calculateCorrelatedWind(lakeId, baseForecast, mesoData, pws = nu
       if (isCorrectHeading && isStrong) {
         finalMultiplier *= config.thermal_engine.multiplier;
         activeTriggers.push({
-          id: 'gap-wind',
-          label: 'Gap Wind Active',
-          detail: `Hill AFB ${gate.speed.toFixed(0)} mph S — gap funneling confirmed`,
+          id: 'south-flow',
+          label: 'South Flow Active',
+          detail: `Hill AFB ${gate.speed.toFixed(0)} mph S — south flow confirmed`,
           impact: `+${Math.round((config.thermal_engine.multiplier - 1) * 100)}%`,
           type: 'boost',
         });

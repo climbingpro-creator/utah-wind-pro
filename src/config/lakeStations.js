@@ -7,7 +7,7 @@
  * |--------------|--------------------------|------------------------|-------------------------|
  * | Utah Lake    | Prefrontal / North Flow  | SLC Airport (Pressure) | Saratoga Springs PWS    |
  * | Deer Creek   | SW Thermal / Canyon      | Arrowhead (8,252 ft)   | Charleston or Dam Chute |
- * | Willard Bay  | North Thermal / "The Gap"| Hill AFB or Ben Lomond | Willard Bay North       |
+ * | Willard Bay  | South Flow (S Beach)     | Hill AFB or Ben Lomond | Willard Bay South       |
  * | Pineview     | East/West Canyon         | Ogden Peak             | Pineview Dam            |
  * 
  * PREDICTION MODEL:
@@ -800,15 +800,15 @@ export const LAKE_CONFIGS = {
     coordinates: { lat: 41.3686, lng: -112.0772 },
     elevation: 4200,
     
-    primaryWindType: 'North Thermal / "The Gap"',
+    primaryWindType: 'South Flow',
     thermalDirection: 'S to SW (170-220°)',
-    description: 'Gap wind from the north - watch for frontal passages',
+    description: 'South beach near state park — kitable under south flow',
     
-    shoreOrientation: 270, // Shore faces West
+    shoreOrientation: 180, // South beach faces south
     kiting: {
-      onshore: { min: 225, max: 315 },    // SW to NW - wind from water
-      sideOn: { min: 315, max: 360, min2: 180, max2: 225 },
-      offshore: { min: 45, max: 135 },     // NE to SE - DANGEROUS
+      onshore: { min: 135, max: 225 },    // SE to SW - onshore to south beach
+      sideOn: { min: 225, max: 270, min2: 90, max2: 135 },
+      offshore: { min: 315, max: 45 },     // NW to NE - offshore from south beach
     },
     
     stations: {
@@ -834,7 +834,7 @@ export const LAKE_CONFIGS = {
           id: 'BLPU1', 
           name: 'Ben Lomond Peak',
           elevation: 7688,
-          role: 'PRIMARY - High-elevation trigger for Willard thermal',
+          role: 'PRIMARY - High-elevation trigger for south flow',
           priority: 1
         },
         {
@@ -855,8 +855,8 @@ export const LAKE_CONFIGS = {
       
       groundTruth: {
         id: 'UR328',
-        name: 'Willard Bay North',
-        role: 'Ground Truth - North end thermal indicator',
+        name: 'Willard Bay South',
+        role: 'Ground Truth - South beach wind indicator',
       },
       
       lakeshore: [
