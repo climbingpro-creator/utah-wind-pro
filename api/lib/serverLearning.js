@@ -37,6 +37,28 @@ const LAKE_THERMAL = {
   'powder-mountain':      { dir: [180, 270], peak: [10, 18], station: 'KSLC' },
 };
 
+// ── Timezone ──
+
+function toMountainHour(date) {
+  try {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/Denver',
+      hour: 'numeric',
+      hour12: false,
+    }).formatToParts(date);
+    return parseInt(parts.find(p => p.type === 'hour')?.value || '0', 10) % 24;
+  } catch {
+    const month = date.getUTCMonth();
+    const offset = (month >= 2 && month <= 10) ? 6 : 7;
+    return (date.getUTCHours() - offset + 24) % 24;
+  }
+}
+
+function normalizeToMb(val) {
+  if (val == null) return null;
+  return val < 50 ? val * 33.864 : val;
+}
+
 // ── Helpers ──
 
 function isInRange(dir, min, max) {
@@ -552,10 +574,10 @@ function predictForLake(lakeId, primaryStation, pressure, history, hour, learned
 }
 
 // ── Pressure Analysis ──
-// KSLC (4226 ft) and KPVU (4495 ft) report station pressure (not SLP).
-// The ~7.5 mb baseline difference is purely altitude, not weather.
-// We subtract this to get the actual weather-forcing gradient.
-const PRESSURE_ALTITUDE_BASELINE = 7.5;
+// Both stations report altimeter setting (already altitude-corrected).
+// The difference IS the weather gradient — no altitude correction needed.
+// A positive gradient (SLC > PVU) indicates north-to-south pressure push.
+const PRESSURE_ALTITUDE_BASELINE = 0;
 
 function analyzePressure(currentStations, recentSnapshots) {
   const slc = currentStations.find(s => s.stationId === 'KSLC');
@@ -603,9 +625,10 @@ function verifyPredictions(predictions, actualStations, lakeStationMap) {
 
     let score = 0;
 
-    // Speed accuracy: how close was actual to predicted range?
     const [expMin, expMax] = pred.expectedSpeed || [0, 100];
     const actualSpeed = primary.windSpeed;
+
+    // Speed accuracy: how close was actual to predicted range?
     if (actualSpeed >= expMin && actualSpeed <= expMax) {
       score += 0.5;
     } else {
@@ -626,18 +649,16 @@ function verifyPredictions(predictions, actualStations, lakeStationMap) {
         score += Math.max(0, 0.5 - diff * 0.005);
       }
     } else {
-      // Glass/calm: award direction points for low speed
       score += actualSpeed < 5 ? 0.5 : Math.max(0, 0.5 - (actualSpeed - 5) * 0.05);
     }
 
-    const [sMin, sMax] = pred.expectedSpeed || [0, 100];
     results.push({
       lakeId,
       eventType: pred.eventType,
       predicted: pred.probability,
       actualSpeed,
       actualDirection: primary.windDirection,
-      expectedSpeedMid: (sMin + sMax) / 2,
+      expectedSpeedMid: (expMin + expMax) / 2,
       predictionHour: pred.predictionHour ?? null,
       score: Math.round(score * 100) / 100,
       timestamp: new Date().toISOString(),
@@ -739,7 +760,7 @@ async function loadRecentPredictions(redisCmd, lookbackMinutes = 240) {
       const recordTs = new Date(record.timestamp).getTime();
       if (recordTs > cutoff) {
         for (const p of (record.predictions || [])) {
-          all.push({ ...p, timestamp: record.timestamp, predictionHour: new Date(record.timestamp).getUTCHours() });
+          all.push({ ...p, timestamp: record.timestamp, predictionHour: toMountainHour(new Date(record.timestamp)) });
         }
       }
     } catch { /* skip */ }
@@ -756,9 +777,10 @@ async function savePredictions(redisCmd, predictions, timestamp) {
 }
 
 async function appendAccuracyLog(redisCmd, records) {
-  for (const r of records) {
-    await redisCmd('LPUSH', 'accuracy:log', JSON.stringify(r));
-  }
+  if (records.length === 0) return;
+  // Batch LPUSH: single command pushes all records (saves N-1 Redis calls)
+  const serialized = records.map(r => JSON.stringify(r));
+  await redisCmd('LPUSH', 'accuracy:log', ...serialized);
   await redisCmd('LTRIM', 'accuracy:log', '0', '499');
 }
 
@@ -778,7 +800,7 @@ async function saveMeta(redisCmd, meta) {
 
 async function runServerLearningCycle(redisCmd, currentStations, recentSnapshots, lakeStationMap) {
   const now = new Date();
-  const hour = now.getHours();
+  const hour = toMountainHour(now);
   const pressure = analyzePressure(currentStations, recentSnapshots);
 
   // 1. Load current weights
@@ -855,6 +877,16 @@ async function runServerLearningCycle(redisCmd, currentStations, recentSnapshots
     upstreamSignals: upstreamSignals.length > 0 ? upstreamSignals.slice(0, 5) : null,
     meta,
     pressure,
+    diagnostics: {
+      mountainTimeHour: hour,
+      utcHour: now.getUTCHours(),
+      snapshotCount: recentSnapshots.length,
+      snapshotOrder: recentSnapshots.length >= 2
+        ? (new Date(recentSnapshots[0].timestamp) < new Date(recentSnapshots[1].timestamp) ? 'chronological' : 'REVERSED')
+        : 'insufficient',
+      oldPredictionsFound: oldPredictions.length,
+      verificationsInWindow: verificationsNeeded.length,
+    },
   };
 }
 
@@ -881,7 +913,7 @@ async function backfillHistorical(redisCmd, synopticToken, allStations, lakeStat
   const startStr = start.toISOString().replace(/[-:T]/g, '').slice(0, 12);
   const endStr = end.toISOString().replace(/[-:T]/g, '').slice(0, 12);
 
-  const url = `https://api.synopticdata.com/v2/stations/timeseries?token=${synopticToken}&stids=${allStations.join(',')}&start=${startStr}&end=${endStr}&vars=wind_speed,wind_direction,wind_gust,air_temp,pressure&units=english&obtimezone=utc`;
+  const url = `https://api.synopticdata.com/v2/stations/timeseries?token=${synopticToken}&stids=${allStations.join(',')}&start=${startStr}&end=${endStr}&vars=wind_speed,wind_direction,wind_gust,air_temp,altimeter,sea_level_pressure&units=english&obtimezone=utc`;
   const resp = await fetch(url);
   if (!resp.ok) throw new Error(`Synoptic timeseries ${resp.status}`);
   const json = await resp.json();
@@ -894,7 +926,7 @@ async function backfillHistorical(redisCmd, synopticToken, allStations, lakeStat
     const dirs = obs.wind_direction_set_1 || [];
     const gusts = obs.wind_gust_set_1 || [];
     const temps = obs.air_temp_set_1 || [];
-    const pressures = obs.pressure_set_1d || obs.pressure_set_1 || [];
+    const pressures = obs.altimeter_set_1 || obs.sea_level_pressure_set_1 || obs.pressure_set_1d || obs.pressure_set_1 || [];
 
     for (let i = 0; i < times.length; i++) {
       allReadings.push({
@@ -904,7 +936,7 @@ async function backfillHistorical(redisCmd, synopticToken, allStations, lakeStat
         windDirection: dirs[i] ?? null,
         windGust: gusts[i] ?? null,
         temperature: temps[i] ?? null,
-        pressure: pressures[i] ?? null,
+        pressure: normalizeToMb(pressures[i] ?? null),
       });
     }
   }
@@ -925,7 +957,7 @@ async function backfillHistorical(redisCmd, synopticToken, allStations, lakeStat
     if (stations.length === 0) continue;
 
     const ts = new Date(timeKey + ':00Z');
-    const hour = ts.getUTCHours();
+    const hour = toMountainHour(ts);
 
     const recentHistory = [];
     for (let j = Math.max(0, i - 12); j < i; j++) {
@@ -1009,5 +1041,7 @@ export {
   backfillHistorical,
   loadWeights,
   loadMeta,
+  toMountainHour,
+  normalizeToMb,
   LAKE_THERMAL,
 };

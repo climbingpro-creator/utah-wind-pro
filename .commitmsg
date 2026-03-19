@@ -1,37 +1,49 @@
-Fix 7 critical learning system bugs — verification loop now works
+Fix 5 showstopper bugs — learning system was fundamentally broken
 
-The learning system was collecting data but never actually learning
-from its mistakes. These fixes unlock the full predict-verify-learn
-loop on both server and client.
+Honest post-mortem: the system was collecting data but every core
+meteorological signal path was broken. Predictions were essentially
+random, so the learning loop was training on garbage.
 
-1. SERVER VERIFICATION FIX: loadRecentPredictions now attaches
-   timestamp and predictionHour to each prediction when flattening.
-   Previously timestamp was undefined so age filter always failed
-   and zero predictions were ever verified.
+BUG 1 — PRESSURE DATA WAS NULL FOR EVERY STATION
+The cron requested vars=pressure and read pressure_value_1d, but
+every other endpoint in the codebase correctly requests altimeter
+and reads altimeter_value_1. Result: pressure was null for all 29
+stations, making the entire pressure gradient analysis return 0.
+North flow detection, frontal passage, thermal suppression — all
+non-functional. Fixed by matching the pattern used everywhere else
+and adding normalizeToMb() to convert inHg to mb.
 
-2. SPEED BIAS FIX: verifyPredictions now computes expectedSpeedMid
-   from the [min,max] range. Previously updateWeights could never
-   update speed bias because this field was missing.
+BUG 2 — HISTORY ARRAY WAS REVERSED
+Redis LPUSH stores newest-first. Scoring functions assumed oldest-
+first (history[0]=oldest). Result: tempDrop=newer-older was always
+negative during cold fronts. Wind shift detection was inverted.
+Speed ramp detection saw decreases as increases. Every trend-based
+indicator was backwards. Fixed by sorting recentSnapshots
+chronologically before passing to the learning cycle.
 
-3. HOURLY BIAS FIX: Uses predictionHour (when the prediction was
-   made) instead of verification timestamp hour. A prediction made
-   at 8 AM should bias hour 8, not hour 12 when verified.
+BUG 3 — UTC VS MOUNTAIN TIME IN THERMAL SCORING
+Vercel runs in UTC. now.getHours() returned UTC hours. But thermal
+peak windows [10,16] are 10AM-4PM Mountain Time. At noon MT (UTC
+18), scoreThermal gave NEGATIVE points. At 4AM MT (UTC 10), it
+gave BONUS points. Thermal predictions were inverted. Fixed by
+adding toMountainHour() using Intl.DateTimeFormat with fallback.
 
-4. WIND EVENT PATTERN KEYS: WindEventPredictor now looks up learned
-   patterns by event type (e.g. "north_flow") in addition to the
-   old event_hour format. Also passes through hourlyBias and
-   speedBias from server weights during merge.
+BUG 4 — PRESSURE ALTITUDE BASELINE WAS WRONG
+PRESSURE_ALTITUDE_BASELINE was 7.5 (designed for station pressure)
+but altimeter readings are already altitude-corrected. The baseline
+should be 0. Set to 0.
 
-5. PARAGLIDING IN LEARNING LOOP: DataCollector now records paragliding
-   predictions for potm-south and potm-north using predictParagliding().
-   Previously paragliding was predicted but never recorded or verified.
+BUG 5 — redisCommand SWALLOWED ALL ERRORS
+No error checking for HTTP failures, rate limits, or Upstash
+errors. If the free tier limit was hit, all operations silently
+returned null. Added HTTP status check, JSON error check, and
+try/catch with console.error logging.
 
-6. VERIFICATION VOCABULARY UNIFIED: summarizeActuals now produces a
-   windTypes set that maps to all event IDs (e.g. north_flow also
-   maps to frontal_passage, post_frontal). calculateAccuracy uses
-   fuzzy matching via this set instead of exact string comparison.
+Additional hardening:
+- Batch appendAccuracyLog into single LPUSH (saves N-1 commands)
+- Add diagnostic output (pressure check, MT hour, snapshot order)
+- Fix backfill to also request altimeter and use Mountain Time
+- Clean up duplicate expectedSpeed unpacking in verifyPredictions
 
-7. PER-LOCATION USER FEEDBACK: calculateNewWeights now uses
-   locationFeedback data to compute per-spot speed bias corrections,
-   stored in locationBias. Previously only aggregate userSpeedBias
-   was used while per-location data was thrown away.
+IMPORTANT: After deploying, re-run backfill to retrain weights
+with correct data: /api/cron/collect?action=backfill&days=3

@@ -129,34 +129,58 @@ const LAKE_STATION_MAP = {
 async function redisCommand(command, ...args) {
   const { upstashUrl, upstashToken } = getEnv();
   if (!upstashUrl || !upstashToken) return null;
-  const resp = await fetch(upstashUrl, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${upstashToken}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify([command, ...args]),
-  });
-  const json = await resp.json();
-  return json.result;
+  try {
+    const resp = await fetch(upstashUrl, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${upstashToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify([command, ...args]),
+    });
+    if (!resp.ok) {
+      console.error(`Redis ${command} HTTP ${resp.status}: ${resp.statusText}`);
+      return null;
+    }
+    const json = await resp.json();
+    if (json.error) {
+      console.error(`Redis ${command} error: ${json.error}`);
+      return null;
+    }
+    return json.result;
+  } catch (err) {
+    console.error(`Redis ${command} failed: ${err.message}`);
+    return null;
+  }
+}
+
+// Altimeter readings are inHg (~29.92), pressure/SLP are mb (~1013).
+// Normalize everything to mb for gradient math.
+function normalizeToMb(val) {
+  if (val == null) return null;
+  return val < 50 ? val * 33.864 : val;
 }
 
 async function fetchSynopticLatest() {
   const { synopticToken } = getEnv();
-  const url = `https://api.synopticdata.com/v2/stations/latest?token=${synopticToken}&stids=${ALL_STATIONS.join(',')}&vars=wind_speed,wind_direction,wind_gust,air_temp,pressure&units=english&obtimezone=local`;
+  const url = `https://api.synopticdata.com/v2/stations/latest?token=${synopticToken}&stids=${ALL_STATIONS.join(',')}&vars=wind_speed,wind_direction,wind_gust,air_temp,altimeter,sea_level_pressure&units=english&obtimezone=local`;
   const resp = await fetch(url);
   if (!resp.ok) throw new Error(`Synoptic ${resp.status}`);
   const json = await resp.json();
 
   return (json.STATION || []).map(s => {
     const o = s.OBSERVATIONS || {};
+    const rawP = o.altimeter_value_1?.value
+      ?? o.sea_level_pressure_value_1d?.value
+      ?? o.pressure_value_1d?.value
+      ?? null;
     return {
       stationId: s.STID,
       windSpeed: o.wind_speed_value_1?.value ?? null,
       windDirection: o.wind_direction_value_1?.value ?? null,
       windGust: o.wind_gust_value_1?.value ?? null,
       temperature: o.air_temp_value_1?.value ?? null,
-      pressure: (o.pressure_value_1d?.value || o.sea_level_pressure_value_1d?.value) ?? null,
+      pressure: normalizeToMb(rawP),
       observedAt: o.wind_speed_value_1?.date_time || new Date().toISOString(),
     };
   });
@@ -208,6 +232,12 @@ export default async function handler(req, res) {
           }
         }
 
+        // CRITICAL: Redis LPUSH stores newest-first, but scoring functions
+        // assume oldest-first (history[0]=oldest, history[last]=newest).
+        // Without this sort, temperature drops look like rises and wind
+        // shifts are inverted — making ALL trend-based scoring backwards.
+        recentSnapshots.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
         learningResult = await runServerLearningCycle(
           redisCommand,
           stations,
@@ -220,10 +250,21 @@ export default async function handler(req, res) {
       }
     }
 
+    // Diagnostic: verify we're actually getting pressure data
+    const slc = stations.find(s => s.stationId === 'KSLC');
+    const pvu = stations.find(s => s.stationId === 'KPVU');
+
     return res.status(200).json({
       ok: true,
       timestamp: now.toISOString(),
       stationsCollected: stations.length,
+      stationsWithWind: stations.filter(s => s.windSpeed != null).length,
+      stationsWithPressure: stations.filter(s => s.pressure != null).length,
+      pressureCheck: {
+        kslc: slc?.pressure ?? 'NULL',
+        kpvu: pvu?.pressure ?? 'NULL',
+        gradient: slc?.pressure && pvu?.pressure ? Math.round((slc.pressure - pvu.pressure) * 100) / 100 : 'NO DATA',
+      },
       storedAs: key,
       hasRedis,
       learning: learningResult,
