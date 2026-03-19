@@ -214,9 +214,24 @@ function computeDirSpread(dirs) {
 function detectHistoricalEvents(allStations, lakeStationMap) {
   const events = [];
 
+  // Use LAKE_STATIONS primary field, not array[0]
+  const primaryMap = {};
+  for (const [lakeId, config] of Object.entries(LAKE_STATIONS)) {
+    primaryMap[lakeId] = config.primary;
+  }
+
   for (const [lakeId, stationIds] of Object.entries(lakeStationMap)) {
-    const primaryId = stationIds[0];
-    const stationData = allStations[primaryId];
+    const primaryId = primaryMap[lakeId] || stationIds[0];
+    let stationData = allStations[primaryId];
+    // Fallback through synoptic list until we find one with data
+    if (!stationData || stationData.readings.length < 20) {
+      for (const sid of stationIds) {
+        if (allStations[sid]?.readings?.length >= 20) {
+          stationData = allStations[sid];
+          break;
+        }
+      }
+    }
     if (!stationData || stationData.readings.length < 20) continue;
 
     const readings = stationData.readings;
@@ -231,10 +246,10 @@ function detectHistoricalEvents(allStations, lakeStationMap) {
       const hour = toMountainHour(r.t);
       const month = getMonth(r.t);
 
-      // Look at recent history (previous 12 readings ≈ 1-3 hours)
+      // Look at recent history (previous 12 readings — varies by station reporting freq)
       const history = readings.slice(Math.max(0, i - 12), i);
       const validHistory = history.filter(h => h.speed != null);
-      if (validHistory.length < 4) continue;
+      if (validHistory.length < 2) continue;
 
       const olderSpeed = validHistory[0].speed;
       const olderDir = validHistory[0].dir;
@@ -256,14 +271,17 @@ function detectHistoricalEvents(allStations, lakeStationMap) {
       }
 
       // ─── Detect thermal cycle ───
-      if (hour >= 9 && hour <= 18 && r.speed >= 8 && r.speed <= 25) {
+      if (hour >= 9 && hour <= 18 && r.speed >= 6 && r.speed <= 30) {
         const windFrom = r.dir;
-        const prevHourReadings = readings.slice(Math.max(0, i - 24), i - 12);
+        // Compare to earlier readings (2-6 hours prior depending on reporting freq)
+        const prevStart = Math.max(0, i - Math.min(readings.length, 36));
+        const prevEnd = Math.max(0, i - 6);
+        const prevHourReadings = readings.slice(prevStart, prevEnd).filter(h => h.speed != null);
         const avgPrevSpeed = prevHourReadings.length > 0
-          ? prevHourReadings.reduce((s, h) => s + (h.speed || 0), 0) / prevHourReadings.length
+          ? prevHourReadings.reduce((s, h) => s + h.speed, 0) / prevHourReadings.length
           : 0;
 
-        if (r.speed > avgPrevSpeed + 4) {
+        if (r.speed > avgPrevSpeed + 3) {
           events.push({
             type: 'thermal_cycle',
             lakeId,
@@ -286,9 +304,9 @@ function detectHistoricalEvents(allStations, lakeStationMap) {
         const gustSpike = r.gust != null ? r.gust - r.speed : 0;
 
         if (
-          (dirShift > 60 && isNortherly(r.dir) && r.speed > 10) ||
-          (tempDrop > 8 && r.speed > 10) ||
-          (isNortherly(r.dir) && r.speed > 20 && (pressTrend != null && pressTrend < -0.5))
+          (dirShift > 45 && isNortherly(r.dir) && r.speed > 8) ||
+          (tempDrop > 5 && r.speed > 8) ||
+          (isNortherly(r.dir) && r.speed > 15 && pressTrend != null && pressTrend < -0.3)
         ) {
           events.push({
             type: 'frontal_passage',
@@ -308,9 +326,9 @@ function detectHistoricalEvents(allStations, lakeStationMap) {
       }
 
       // ─── Detect north flow ───
-      if (isNortherly(r.dir) && r.speed > 12 && (pressTrend == null || pressTrend > -0.3)) {
-        const sustained = validHistory.filter(h => h.dir != null && isNortherly(h.dir) && h.speed > 8);
-        if (sustained.length >= 6) {
+      if (isNortherly(r.dir) && r.speed > 10 && (pressTrend == null || pressTrend > -0.5)) {
+        const sustained = validHistory.filter(h => h.dir != null && isNortherly(h.dir) && h.speed > 6);
+        if (sustained.length >= 2) {
           events.push({
             type: 'north_flow',
             lakeId,
@@ -327,9 +345,9 @@ function detectHistoricalEvents(allStations, lakeStationMap) {
       }
 
       // ─── Detect glass window ───
-      if (r.speed < 4 && hour >= 4 && hour <= 11) {
-        const sustained = validHistory.filter(h => h.speed < 5);
-        if (sustained.length >= 6) {
+      if (r.speed < 5 && hour >= 4 && hour <= 11) {
+        const sustained = validHistory.filter(h => h.speed < 6);
+        if (sustained.length >= 2) {
           events.push({
             type: 'glass',
             lakeId,
@@ -348,15 +366,20 @@ function detectHistoricalEvents(allStations, lakeStationMap) {
 }
 
 function findNearestReading(readings, targetTime, maxDelta = 1800000) {
-  let best = null;
-  let bestDelta = Infinity;
-  for (const r of readings) {
-    const delta = Math.abs(r.t - targetTime);
-    if (delta < bestDelta) {
-      bestDelta = delta;
-      best = r;
-    }
-    if (r.t > targetTime + maxDelta) break;
+  if (!readings.length) return null;
+  // Binary search for closest reading (readings are sorted by .t)
+  let lo = 0, hi = readings.length - 1;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (readings[mid].t < targetTime) lo = mid + 1;
+    else hi = mid;
+  }
+  // Check lo and lo-1
+  let best = null, bestDelta = Infinity;
+  for (const idx of [lo - 1, lo, lo + 1]) {
+    if (idx < 0 || idx >= readings.length) continue;
+    const delta = Math.abs(readings[idx].t - targetTime);
+    if (delta < bestDelta) { bestDelta = delta; best = readings[idx]; }
   }
   return bestDelta <= maxDelta ? best : null;
 }
@@ -473,11 +496,13 @@ function buildLagCorrelations(allStations) {
         let upMean = 0, downMean = 0, n = 0;
         const speedPairs = [];
 
-        // First pass: find matching time pairs
-        for (const upR of upData.readings) {
+        // Sample every 6th reading for performance (still gives thousands of pairs)
+        const step = Math.max(1, Math.floor(upData.readings.length / 3000));
+        for (let ri = 0; ri < upData.readings.length; ri += step) {
+          const upR = upData.readings[ri];
           if (upR.speed == null) continue;
           const targetTime = upR.t + lagMs;
-          const downR = findNearestReading(downData.readings, targetTime, 600000);
+          const downR = findNearestReading(downData.readings, targetTime, 2700000);
           if (!downR || downR.speed == null) continue;
           speedPairs.push({ up: upR.speed, down: downR.speed, upDir: upR.dir, downDir: downR.dir });
         }
