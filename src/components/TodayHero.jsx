@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Wind, Clock, ChevronRight, ArrowUpRight, Zap, Snowflake, Mountain, Anchor, Sailboat, Ship, Waves, Navigation, CheckCircle, XCircle } from 'lucide-react';
+import { Clock, ChevronRight, ArrowUpRight, Zap, CheckCircle, XCircle } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { ACTIVITY_CONFIGS } from './ActivityMode';
 import { getRotatingImage } from '../config/imagePool';

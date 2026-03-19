@@ -1,5 +1,16 @@
 import React from 'react';
-import { Wind, Sailboat, Ship, Waves, Mountain, Anchor, Navigation, Cloud, Snowflake } from 'lucide-react';
+import { MdKitesurfing, MdParagliding, MdSailing, MdKayaking, MdSnowboarding, MdDirectionsBoat } from 'react-icons/md';
+import { GiBoatFishing } from 'react-icons/gi';
+
+const WindsurferIcon = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M11 2C17.5 9 18.5 15 18.5 17.5L11 17.5Z"/>
+    <path d="M11 5C7 10 6.5 15 6.5 17.5L11 17.5Z" opacity="0.6"/>
+    <circle cx="8.2" cy="15" r="1"/>
+    <path d="M8 16L6.8 18.5L11 18.5L9.2 16.2Z"/>
+    <rect x="4" y="19" width="16" height="2" rx="1"/>
+  </svg>
+);
 import { useTheme } from '../context/ThemeContext';
 import { getRotatingImage } from '../config/imagePool';
 
@@ -8,7 +19,7 @@ export const ACTIVITY_CONFIGS = {
   kiting: {
     id: 'kiting',
     name: 'Kiting',
-    icon: <Navigation className="w-4 h-4" />,
+    icon: <MdKitesurfing className="w-10 h-10" />,
     description: 'Kiteboarding & Foiling',
     heroImage: '/images/kiting-utah-lake.png',
     thresholds: {
@@ -27,7 +38,7 @@ export const ACTIVITY_CONFIGS = {
   snowkiting: {
     id: 'snowkiting',
     name: 'Snowkiting',
-    icon: <Snowflake className="w-4 h-4" />,
+    icon: <MdSnowboarding className="w-10 h-10" />,
     description: 'Snowkiting & Big Drifts',
     heroImage: '/images/snowkite-strawberry.png',
     thresholds: {
@@ -46,7 +57,7 @@ export const ACTIVITY_CONFIGS = {
   sailing: {
     id: 'sailing',
     name: 'Sailing',
-    icon: <Sailboat className="w-4 h-4" />,
+    icon: <MdSailing className="w-10 h-10" />,
     description: 'Dinghy & Keelboat',
     heroImage: '/images/storm-clouds.png',
     thresholds: {
@@ -65,7 +76,7 @@ export const ACTIVITY_CONFIGS = {
   boating: {
     id: 'boating',
     name: 'Boating',
-    icon: <Ship className="w-4 h-4" />,
+    icon: <MdDirectionsBoat className="w-10 h-10" />,
     description: 'Powerboats & Cruising',
     heroImage: '/images/wake-wave-sunset.png',
     thresholds: {
@@ -82,7 +93,7 @@ export const ACTIVITY_CONFIGS = {
   paddling: {
     id: 'paddling',
     name: 'Paddling',
-    icon: <Waves className="w-4 h-4" />,
+    icon: <MdKayaking className="w-10 h-10" />,
     description: 'SUP, Kayak, Canoe',
     heroImage: '/images/paddling-utah-lake.png',
     thresholds: {
@@ -99,7 +110,7 @@ export const ACTIVITY_CONFIGS = {
   paragliding: {
     id: 'paragliding',
     name: 'Paragliding',
-    icon: <Mountain className="w-4 h-4" />,
+    icon: <MdParagliding className="w-10 h-10" />,
     description: 'Point of the Mountain',
     heroImage: '/images/storm-clouds.png',
     thresholds: {
@@ -118,7 +129,7 @@ export const ACTIVITY_CONFIGS = {
   fishing: {
     id: 'fishing',
     name: 'Fishing',
-    icon: <Anchor className="w-4 h-4" />,
+    icon: <GiBoatFishing className="w-10 h-10" />,
     description: 'Lakes & Rivers',
     heroImage: '/images/fishing-casting.png',
     thresholds: {
@@ -136,7 +147,7 @@ export const ACTIVITY_CONFIGS = {
   windsurfing: {
     id: 'windsurfing',
     name: 'Windsurfing',
-    icon: <Wind className="w-4 h-4" />,
+    icon: <WindsurferIcon className="w-10 h-10" />,
     description: 'Windsurfing & Winging',
     heroImage: '/images/foilboard-sunset.png',
     thresholds: {
@@ -198,7 +209,7 @@ const ActivityMode = ({ selectedActivity, onActivityChange, windSpeed, windGust,
             key={activityId}
             onClick={() => onActivityChange(activityId)}
             className={`
-              relative flex items-center gap-1.5 px-3 py-2 rounded-lg text-[13px] font-semibold
+              relative flex flex-col items-center gap-1 px-3 py-2.5 rounded-xl text-[11px] font-semibold
               transition-all duration-200 whitespace-nowrap outline-none
               ${isSelected 
                 ? 'bg-sky-500 text-white shadow-sm'
@@ -210,7 +221,7 @@ const ActivityMode = ({ selectedActivity, onActivityChange, windSpeed, windGust,
             title={activity.description}
           >
             <span className="flex-shrink-0">{activity.icon}</span>
-            <span className="hidden sm:inline">{activity.name}</span>
+            <span className="text-center leading-tight">{activity.name}</span>
             {statusDotColor && !isSelected && (
               <span className={`absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full ${statusDotColor} ring-2 ${
                 isDark ? 'ring-[var(--bg-card)]' : 'ring-white'
