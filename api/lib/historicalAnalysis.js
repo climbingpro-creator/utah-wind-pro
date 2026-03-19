@@ -220,21 +220,31 @@ function detectHistoricalEvents(allStations, lakeStationMap) {
     primaryMap[lakeId] = config.primary;
   }
 
+  const _debugSkipped = [];
+  const _debugUsed = [];
+
   for (const [lakeId, stationIds] of Object.entries(lakeStationMap)) {
     const primaryId = primaryMap[lakeId] || stationIds[0];
     let stationData = allStations[primaryId];
+    let usedId = primaryId;
     // Fallback through synoptic list until we find one with data
     if (!stationData || stationData.readings.length < 20) {
       for (const sid of stationIds) {
         if (allStations[sid]?.readings?.length >= 20) {
           stationData = allStations[sid];
+          usedId = sid;
           break;
         }
       }
     }
-    if (!stationData || stationData.readings.length < 20) continue;
+    if (!stationData || stationData.readings.length < 20) {
+      _debugSkipped.push({ lakeId, primaryId, reason: 'no data' });
+      continue;
+    }
 
     const readings = stationData.readings;
+    const validSpeedDir = readings.filter(r => r.speed != null && r.dir != null).length;
+    _debugUsed.push({ lakeId, station: usedId, total: readings.length, validSpeedDir });
 
     // Get pressure station (KSLC or KPVU if available)
     const pressStation = allStations['KSLC'] || allStations['KPVU'];
@@ -362,6 +372,7 @@ function detectHistoricalEvents(allStations, lakeStationMap) {
     }
   }
 
+  events._debug = { skipped: _debugSkipped, used: _debugUsed };
   return events;
 }
 
@@ -673,6 +684,18 @@ export async function buildStatisticalModels(redisCmd, synopticToken, options = 
   const totalReadings = Object.values(allStations).reduce((s, st) => s + st.readings.length, 0);
   log.push(`Fetched ${stationCount} stations, ${totalReadings.toLocaleString()} total readings`);
 
+  // Diagnostics: sample data quality per station
+  const stationDiag = {};
+  for (const [stid, data] of Object.entries(allStations)) {
+    const total = data.readings.length;
+    const withSpeed = data.readings.filter(r => r.speed != null && !isNaN(r.speed)).length;
+    const withDir = data.readings.filter(r => r.dir != null && !isNaN(r.dir)).length;
+    const withTemp = data.readings.filter(r => r.temp != null && !isNaN(r.temp)).length;
+    const sample = data.readings.find(r => r.speed != null);
+    stationDiag[stid] = { total, withSpeed, withDir, withTemp, sample: sample ? { speed: sample.speed, dir: sample.dir, temp: sample.temp } : null };
+  }
+  log.push(`Station data quality: ${JSON.stringify(stationDiag)}`);
+
   // 2. Build station climatology
   log.push('Building station climatology (speed/dir/temp by hour × month)...');
   const climatology = buildStationClimatology(allStations);
@@ -706,6 +729,11 @@ export async function buildStatisticalModels(redisCmd, synopticToken, options = 
     eventCounts[e.type] = (eventCounts[e.type] || 0) + 1;
   }
   log.push(`Detected ${events.length} events: ${JSON.stringify(eventCounts)}`);
+  if (events._debug) {
+    log.push(`Event detection: ${events._debug.used.length} lakes scanned, ${events._debug.skipped.length} skipped`);
+    const topUsed = events._debug.used.slice(0, 5);
+    log.push(`Sample lakes: ${JSON.stringify(topUsed)}`);
+  }
 
   // 5. Build event fingerprints
   log.push('Building event fingerprint library...');
