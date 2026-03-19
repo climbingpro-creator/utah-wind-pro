@@ -28,6 +28,7 @@
  */
 
 import { runServerLearningCycle, backfillHistorical, loadWeights, loadMeta } from '../lib/serverLearning.js';
+import { fetchNWSForecasts } from '../lib/nwsForecast.js';
 
 function getEnv() {
   return {
@@ -193,6 +194,10 @@ export default async function handler(req, res) {
   if (action === 'weights') return await handleWeights(res);
   if (action === 'backfill') return await handleBackfill(req, res);
   if (action === 'upstream') return await handleUpstream(res);
+  if (action === 'nws') return await handleNWS(res);
+  if (action === 'ahead') return await handleAhead(res);
+  if (action === 'predictions') return await handlePredictions(req, res);
+  if (action === 'analogs') return await handleAnalogs(res);
 
   const env = getEnv();
   if (!env.synopticToken) {
@@ -219,6 +224,25 @@ export default async function handler(req, res) {
       await redisCommand('LTRIM', 'obs:index', '0', '672');
     }
 
+    // ── STEP 1.5: FETCH NWS FORECASTS (cached 90 min) ──
+    let nwsData = null;
+    let nwsDiag = { status: 'skipped' };
+    if (hasRedis) {
+      try {
+        nwsData = await fetchNWSForecasts(redisCommand);
+        const gridCount = Object.keys(nwsData?.grids || {}).length;
+        nwsDiag = {
+          status: 'ok',
+          grids: gridCount,
+          fetchedAt: nwsData?.fetchedAt,
+          cached: gridCount > 0,
+        };
+      } catch (nwsErr) {
+        console.error('NWS fetch error (non-fatal):', nwsErr.message);
+        nwsDiag = { status: 'error', message: nwsErr.message };
+      }
+    }
+
     // ── STEPS 2-4: PREDICT → VERIFY → LEARN ──
     let learningResult = null;
     if (hasRedis) {
@@ -242,7 +266,8 @@ export default async function handler(req, res) {
           redisCommand,
           stations,
           recentSnapshots,
-          LAKE_STATION_MAP
+          LAKE_STATION_MAP,
+          nwsData
         );
       } catch (learnErr) {
         console.error('Learning cycle error (non-fatal):', learnErr.message);
@@ -267,10 +292,125 @@ export default async function handler(req, res) {
       },
       storedAs: key,
       hasRedis,
+      nws: nwsDiag,
       learning: learningResult,
     });
   } catch (error) {
     console.error('Cron collect error:', error);
+    return res.status(500).json({ error: error.message });
+  }
+}
+
+async function handleAnalogs(res) {
+  const { upstashUrl, upstashToken } = getEnv();
+  if (!upstashUrl || !upstashToken) {
+    return res.status(200).json({ analogs: null, message: 'Redis not configured' });
+  }
+  try {
+    const raw = await redisCommand('GET', 'pattern:analogs');
+    if (!raw) return res.status(200).json({ analogs: null, message: 'No analog data yet — building after more learning cycles' });
+    const data = JSON.parse(raw);
+    res.setHeader('Cache-Control', 's-maxage=120, stale-while-revalidate=600');
+    return res.status(200).json(data);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+}
+
+async function handlePredictions(req, res) {
+  const { upstashUrl, upstashToken } = getEnv();
+  if (!upstashUrl || !upstashToken) {
+    return res.status(200).json({ predictions: [], message: 'Redis not configured' });
+  }
+  try {
+    const lakeId = req.query?.lake || null;
+    const keys = await redisCommand('LRANGE', 'pred:index', '0', '3');
+    if (!keys || keys.length === 0) {
+      return res.status(200).json({ predictions: [], message: 'No predictions yet' });
+    }
+
+    let allPredictions = [];
+    for (const key of keys) {
+      const raw = await redisCommand('GET', key);
+      if (!raw) continue;
+      try {
+        const record = JSON.parse(raw);
+        const preds = record.predictions || [];
+        for (const p of preds) {
+          allPredictions.push({ ...p, timestamp: record.timestamp });
+        }
+      } catch {}
+    }
+
+    // Filter by lake if requested
+    if (lakeId) {
+      allPredictions = allPredictions.filter(p => p.lakeId === lakeId);
+    }
+
+    // Deduplicate: keep only the latest prediction per lake+event
+    const seen = new Map();
+    for (const p of allPredictions) {
+      const key = `${p.lakeId}:${p.eventType}`;
+      const existing = seen.get(key);
+      if (!existing || new Date(p.timestamp) > new Date(existing.timestamp)) {
+        seen.set(key, p);
+      }
+    }
+
+    const deduplicated = Array.from(seen.values())
+      .sort((a, b) => b.probability - a.probability);
+
+    res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
+    return res.status(200).json({
+      predictions: deduplicated,
+      count: deduplicated.length,
+      lakes: [...new Set(deduplicated.map(p => p.lakeId))].length,
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+}
+
+async function handleAhead(res) {
+  const { upstashUrl, upstashToken } = getEnv();
+  if (!upstashUrl || !upstashToken) {
+    return res.status(200).json({ log: [], message: 'Redis not configured' });
+  }
+  try {
+    const raw = await redisCommand('GET', 'ahead:log');
+    if (!raw) return res.status(200).json({ log: [], message: 'No ahead-of-forecast events yet' });
+    const log = JSON.parse(raw);
+    const confirmed = log.filter(e => e.leadTimeHours != null);
+    const avgLeadTime = confirmed.length > 0
+      ? Math.round((confirmed.reduce((s, e) => s + e.leadTimeHours, 0) / confirmed.length) * 10) / 10
+      : null;
+    res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
+    return res.status(200).json({
+      log,
+      stats: {
+        total: log.length,
+        aheadEvents: log.filter(e => e.status === 'ahead').length,
+        confirmed: confirmed.length,
+        avgLeadTimeHours: avgLeadTime,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+}
+
+async function handleNWS(res) {
+  const { upstashUrl, upstashToken } = getEnv();
+  if (!upstashUrl || !upstashToken) {
+    return res.status(200).json({ forecasts: null, message: 'Redis not configured' });
+  }
+  try {
+    const raw = await redisCommand('GET', 'nws:forecasts');
+    if (!raw) return res.status(200).json({ forecasts: null, message: 'No NWS data cached yet — wait for next cron cycle' });
+    const data = JSON.parse(raw);
+    res.setHeader('Cache-Control', 's-maxage=120, stale-while-revalidate=600');
+    return res.status(200).json(data);
+  } catch (error) {
     return res.status(500).json({ error: error.message });
   }
 }

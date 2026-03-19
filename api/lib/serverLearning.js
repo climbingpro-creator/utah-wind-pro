@@ -12,6 +12,8 @@
  *   learning:meta             — metadata: total predictions, cycles, last update
  */
 
+import { getNWSForLake, getNWSFrontMentions } from './nwsForecast.js';
+
 // ── Lake thermal configurations (server-side subset of lakeStations.js) ──
 const LAKE_THERMAL = {
   'utah-lake-lincoln':    { dir: [135, 165], peak: [10, 16], station: 'FPS' },
@@ -353,7 +355,7 @@ function detectUpstreamSignals(currentStations, recentSnapshots) {
 
 // ── Wind Event Scoring (mirrors client WindEventPredictor.js) ──
 
-function scoreFrontal(station, pressure, history, upstreamSignals) {
+function scoreFrontal(station, pressure, history, upstreamSignals, nws) {
   let score = 0;
   const pTrend = pressure.trend;
   if (pTrend === 'falling') score += 25;
@@ -379,28 +381,37 @@ function scoreFrontal(station, pressure, history, upstreamSignals) {
     score += 20;
   }
 
-  // UPSTREAM BOOST: if north stations detect an approaching cold front,
-  // this is the strongest early signal we have
+  // UPSTREAM BOOST
   const coldFrontSignals = (upstreamSignals || []).filter(s => s.type === 'cold_front');
   if (coldFrontSignals.length > 0) {
     const strongest = coldFrontSignals[0];
     const upstreamBoost = Math.min(35, strongest.strength * 0.4);
     score += upstreamBoost;
-
     if (coldFrontSignals.length >= 2) score += 10;
     if (strongest.multiStationConfirm) score += 5;
   }
 
-  // West system approaching = front will follow
   const westSignals = (upstreamSignals || []).filter(s => s.type === 'approaching_system');
   if (westSignals.length > 0) {
     score += Math.min(15, westSignals[0].strength * 0.2);
   }
 
+  // NWS CROSS-CHECK: if NWS mentions front/cold/storm, strong confirmation
+  if (nws?.keywords) {
+    if (nws.keywords.front || nws.keywords.cold) score += 15;
+    if (nws.keywords.storm) score += 10;
+    if (nws.keywords.advisory || nws.keywords.warning) score += 10;
+    // NWS shows N/NW wind in next 12h? 
+    const nwsNorthWind = (nws.next12 || []).some(p =>
+      p.dirDeg != null && (p.dirDeg >= 300 || p.dirDeg <= 60) && (p.speed || 0) > 10
+    );
+    if (nwsNorthWind) score += 10;
+  }
+
   return { score: Math.min(100, score), upstreamSignals: coldFrontSignals };
 }
 
-function scoreNorthFlow(station, pressure) {
+function scoreNorthFlow(station, pressure, nws) {
   let score = 0;
   const gradient = pressure.gradient ?? 0;
   if (gradient > 2.0) score += 35;
@@ -414,10 +425,20 @@ function scoreNorthFlow(station, pressure) {
     const avg = [35,40,48,55,65,75,85,83,73,60,45,35][month];
     if (station.temperature < avg - 10) score += 15;
   }
+
+  // NWS: confirm if NWS shows N/NW wind and cold temps
+  if (nws?.current) {
+    const d = nws.current.dirDeg;
+    if (d != null && (d >= 300 || d <= 60) && (nws.current.speed || 0) >= 8) {
+      score += 12;
+    }
+  }
+  if (nws?.keywords?.cold || nws?.keywords?.arctic || nws?.keywords?.freeze) score += 8;
+
   return Math.min(95, score);
 }
 
-function scoreClearing(station, pressure, history, hour) {
+function scoreClearing(station, pressure, history, hour, nws) {
   let score = 0;
   if (pressure.trend === 'rising') score += 25;
   if (station.windSpeed != null && station.windSpeed < 8) score += 15;
@@ -430,10 +451,18 @@ function scoreClearing(station, pressure, history, hour) {
       score += 15;
     }
   }
-  return Math.min(90, score);
+
+  // NWS: forecast shifting to clear/sunny? Strong clearing indicator
+  if (nws?.keywords) {
+    if (nws.keywords.clear || nws.keywords.sunny) score += 12;
+    // Still stormy? Suppress clearing
+    if (nws.keywords.storm || nws.keywords.thunder || nws.keywords.rain) score -= 15;
+  }
+
+  return Math.max(0, Math.min(90, score));
 }
 
-function scoreThermal(station, pressure, hour, lakeId) {
+function scoreThermal(station, pressure, hour, lakeId, nws) {
   const config = LAKE_THERMAL[lakeId];
   if (!config) return 0;
   let score = 0;
@@ -452,10 +481,25 @@ function scoreThermal(station, pressure, hour, lakeId) {
   if (station.windSpeed != null && station.windSpeed >= 6 && station.windSpeed <= 18) {
     score += 15;
   }
+
+  // NWS: sunny + light synoptic wind = thermal-friendly day
+  if (nws?.keywords) {
+    if (nws.keywords.sunny || nws.keywords.clear) score += 10;
+    if (nws.keywords.calm || nws.keywords.breezy) score += 5;
+    // Strong synoptic wind kills thermals
+    if (nws.keywords.windy || nws.keywords.gusty) score -= 15;
+    // Rain/storm suppress thermals
+    if (nws.keywords.rain || nws.keywords.storm || nws.keywords.snow) score -= 20;
+  }
+  // NWS current: light synoptic speed confirms thermal-friendly conditions
+  if (nws?.current?.speed != null && nws.current.speed <= 8 && hour >= peakStart - 2) {
+    score += 8;
+  }
+
   return Math.max(0, Math.min(95, score));
 }
 
-function scorePreFrontal(station, pressure, history, upstreamSignals) {
+function scorePreFrontal(station, pressure, history, upstreamSignals, nws) {
   let score = 0;
   if (pressure.trend === 'falling') score += 20;
   if (station.windDirection != null && station.windDirection >= 180 && station.windDirection <= 250) {
@@ -470,7 +514,7 @@ function scorePreFrontal(station, pressure, history, upstreamSignals) {
     }
   }
 
-  // UPSTREAM BOOST: SW/W flow detected at Delta, Wendover, Milford
+  // UPSTREAM BOOST
   const preFrontalFlow = (upstreamSignals || []).filter(s => s.type === 'pre_frontal_flow');
   if (preFrontalFlow.length > 0) {
     const strongest = preFrontalFlow[0];
@@ -478,26 +522,48 @@ function scorePreFrontal(station, pressure, history, upstreamSignals) {
     if (preFrontalFlow.length >= 2) score += 10;
   }
 
-  // If a cold front is detected upstream, pre-frontal ramp is likely
   const coldFronts = (upstreamSignals || []).filter(s => s.type === 'cold_front');
   if (coldFronts.length > 0 && coldFronts[0].etaHours > 2) {
     score += 15;
   }
 
+  // NWS: mentions of upcoming front = pre-frontal wind is coming
+  if (nws?.keywords) {
+    if (nws.keywords.front) score += 12;
+    if (nws.keywords.breezy || nws.keywords.windy) score += 8;
+  }
+  // NWS shows S/SW wind ramping up in next 12 hours?
+  const nwsSWRamp = (nws?.next12 || []).filter(p =>
+    p.dirDeg != null && p.dirDeg >= 180 && p.dirDeg <= 260 && (p.speed || 0) >= 10
+  );
+  if (nwsSWRamp.length >= 3) score += 10;
+
   return { score: Math.min(100, score), upstreamSignals: preFrontalFlow };
 }
 
-function scoreGlass(station, pressure, hour) {
+function scoreGlass(station, pressure, hour, nws) {
   let score = 0;
   if (station.windSpeed != null && station.windSpeed < 5) score += 30;
   else if (station.windSpeed != null && station.windSpeed < 8) score += 10;
   if (hour >= 5 && hour <= 10) score += 20;
   if (Math.abs(pressure.gradient ?? 0) < 1.0) score += 15;
   if (pressure.trend === 'stable' || pressure.trend === 'rising') score += 10;
-  return Math.min(95, score);
+
+  // NWS: calm/clear forecast = glass-friendly
+  if (nws?.keywords) {
+    if (nws.keywords.calm) score += 12;
+    if (nws.keywords.clear || nws.keywords.sunny) score += 8;
+    // Any wind in the forecast kills glass
+    if (nws.keywords.windy || nws.keywords.gusty || nws.keywords.breezy) score -= 20;
+    if (nws.keywords.storm || nws.keywords.front) score -= 15;
+  }
+  // NWS shows under 5mph for current hour?
+  if (nws?.current?.speed != null && nws.current.speed < 5) score += 10;
+
+  return Math.max(0, Math.min(95, score));
 }
 
-function scorePostFrontal(station, pressure, history) {
+function scorePostFrontal(station, pressure, history, nws) {
   let score = 0;
   if (pressure.trend === 'rising') score += 20;
   if (station.windDirection != null && station.windDirection >= 280 && station.windDirection <= 340) score += 15;
@@ -509,21 +575,144 @@ function scorePostFrontal(station, pressure, history) {
       if (dec > 5 && recent.windSpeed > 5) score += 20;
     }
   }
-  return Math.min(90, score);
+
+  // NWS: clearing after front — wind decreasing, clearing skies
+  if (nws?.keywords) {
+    if (nws.keywords.clear || nws.keywords.sunny) score += 10;
+    // NWS still shows storm = not post-frontal yet
+    if (nws.keywords.storm || nws.keywords.rain) score -= 10;
+  }
+  // NWS shows wind speed dropping in the next few hours?
+  const next6 = (nws?.next12 || []).slice(0, 6);
+  if (next6.length >= 3) {
+    const first = next6[0]?.speed || 0;
+    const last = next6[next6.length - 1]?.speed || 0;
+    if (first > last + 5) score += 10;
+  }
+
+  return Math.max(0, Math.min(90, score));
+}
+
+// ── "Why" Explanation Generator ──
+// Produces plain-language reasons for each prediction using all available signals.
+
+function generateExplanation(eventType, station, pressure, history, hour, nws, upstreamSignals, lakeId) {
+  const reasons = [];
+  const dir = station.windDirection;
+  const speed = station.windSpeed;
+  const cardinal = dir != null ? getCardinal(dir) : null;
+
+  switch (eventType) {
+    case 'frontal_passage': {
+      if (pressure.trend === 'falling') reasons.push('Barometric pressure is dropping — storm system approaching');
+      if ((pressure.gradient ?? 0) < -1.5) reasons.push(`Strong pressure gradient (${(pressure.gradient).toFixed(1)} mb) pushing air mass south`);
+      if (dir != null && isNortherly(dir) && speed > 15) reasons.push(`Strong ${cardinal} wind at ${speed.toFixed(0)} mph — frontal boundary passing`);
+      const coldFronts = (upstreamSignals || []).filter(s => s.type === 'cold_front');
+      if (coldFronts.length > 0) {
+        const cf = coldFronts[0];
+        reasons.push(`${cf.name} detected cold front (${cf.strength}% signal) — ETA ${(cf.consensusEta || cf.etaHours).toFixed(1)} hours`);
+      }
+      if (history.length >= 3) {
+        const tempDrop = (history[0]?.temperature ?? 0) - (history[history.length - 1]?.temperature ?? 0);
+        if (tempDrop > 5) reasons.push(`Temperature dropped ${tempDrop.toFixed(0)}°F in the last hour — cold air mass arriving`);
+      }
+      if (nws?.keywords?.front) reasons.push('NWS forecast mentions approaching front');
+      if (nws?.keywords?.cold) reasons.push('NWS forecasts cold air');
+      break;
+    }
+    case 'north_flow': {
+      const gradient = pressure.gradient ?? 0;
+      if (gradient > 2.0) reasons.push(`Strong north-south pressure gradient (${gradient.toFixed(1)} mb) — classic north flow setup`);
+      else if (gradient > 1.0) reasons.push(`Moderate pressure gradient (${gradient.toFixed(1)} mb) favoring north flow`);
+      if (dir != null && isNortherly(dir)) reasons.push(`Wind from the ${cardinal} at ${speed?.toFixed(0) || '?'} mph confirms north flow`);
+      if (nws?.keywords?.cold || nws?.keywords?.arctic) reasons.push('NWS shows cold air pattern');
+      if (nws?.current?.dirDeg != null && (nws.current.dirDeg >= 300 || nws.current.dirDeg <= 60)) {
+        reasons.push(`NWS hourly forecast also shows ${nws.current.dir} wind`);
+      }
+      break;
+    }
+    case 'clearing_wind': {
+      if (pressure.trend === 'rising') reasons.push('Pressure is rising — high pressure building in behind the front');
+      if (speed != null && speed < 8) reasons.push(`Light wind (${speed.toFixed(0)} mph) — frontal energy dissipating`);
+      if (dir != null && dir >= 160 && dir <= 230) reasons.push(`Southerly flow (${cardinal}) — classic post-frontal clearing pattern`);
+      if (hour >= 10 && hour <= 16) reasons.push('Peak daytime heating will help establish clearing wind');
+      if (nws?.keywords?.clear || nws?.keywords?.sunny) reasons.push('NWS forecasts clearing skies');
+      break;
+    }
+    case 'thermal_cycle': {
+      const config = LAKE_THERMAL[lakeId];
+      if (config) {
+        const [peakStart, peakEnd] = config.peak;
+        if (hour >= peakStart && hour <= peakEnd) reasons.push(`Inside peak thermal window (${peakStart}:00–${peakEnd}:00)`);
+        else if (hour >= peakStart - 3 && hour < peakStart) reasons.push(`Thermal cycle building — peak window starts at ${peakStart}:00`);
+      }
+      const gradient = pressure.gradient ?? 0;
+      if (gradient < 0.5) reasons.push('Weak pressure gradient lets thermals develop freely');
+      if (gradient > 2.0) reasons.push('Strong gradient will suppress thermal development');
+      if (dir != null && config && isInRange(dir, config.dir[0], config.dir[1])) {
+        reasons.push(`Wind direction (${cardinal} / ${dir}°) matches thermal signature for this location`);
+      }
+      if (speed != null && speed >= 6 && speed <= 18) reasons.push(`Wind speed ${speed.toFixed(0)} mph is in the thermal sweet spot`);
+      if (nws?.keywords?.sunny || nws?.keywords?.clear) reasons.push('NWS shows sunny skies — solar heating will drive thermal');
+      if (nws?.keywords?.rain || nws?.keywords?.storm) reasons.push('NWS shows precipitation — thermal development unlikely');
+      break;
+    }
+    case 'pre_frontal': {
+      if (pressure.trend === 'falling') reasons.push('Pressure dropping — low approaching from the west');
+      if (dir != null && dir >= 180 && dir <= 250 && speed > 10) {
+        reasons.push(`SW flow at ${speed.toFixed(0)} mph — warm air pushed ahead of incoming front`);
+      }
+      const preFrontal = (upstreamSignals || []).filter(s => s.type === 'pre_frontal_flow');
+      if (preFrontal.length > 0) {
+        reasons.push(`${preFrontal[0].name} shows strengthening SW flow — front is on the way`);
+      }
+      const coldFronts = (upstreamSignals || []).filter(s => s.type === 'cold_front');
+      if (coldFronts.length > 0 && coldFronts[0].etaHours > 2) {
+        reasons.push(`Cold front detected ${coldFronts[0].etaHours.toFixed(0)}h out — pre-frontal wind will ramp before it arrives`);
+      }
+      if (nws?.keywords?.front) reasons.push('NWS mentions approaching front');
+      if (nws?.keywords?.breezy || nws?.keywords?.windy) reasons.push('NWS forecasts increasing wind');
+      break;
+    }
+    case 'glass': {
+      if (speed != null && speed < 5) reasons.push(`Near-calm conditions (${speed.toFixed(0)} mph) — perfect glass`);
+      else if (speed != null && speed < 8) reasons.push(`Light wind (${speed.toFixed(0)} mph) — possible glass with shelter`);
+      if (hour >= 5 && hour <= 10) reasons.push('Early morning — prime glass window before thermals start');
+      if (Math.abs(pressure.gradient ?? 0) < 1.0) reasons.push('Flat pressure gradient — no weather-forcing, glass conditions likely');
+      if (pressure.trend === 'stable' || pressure.trend === 'rising') reasons.push('Stable or rising pressure — no approaching systems');
+      if (nws?.keywords?.calm) reasons.push('NWS forecasts calm conditions');
+      if (nws?.keywords?.windy || nws?.keywords?.gusty) reasons.push('NWS forecasts wind — glass may not hold');
+      break;
+    }
+    case 'post_frontal': {
+      if (pressure.trend === 'rising') reasons.push('Pressure rising — high pressure settling in after front passage');
+      if (dir != null && dir >= 280 && dir <= 340) reasons.push(`NW flow (${cardinal}) — classic post-frontal wind`);
+      if (history.length >= 3) {
+        const dec = (history[0]?.windSpeed ?? 0) - (history[history.length - 1]?.windSpeed ?? 0);
+        if (dec > 5) reasons.push(`Wind dropped ${dec.toFixed(0)} mph — front has passed, conditions moderating`);
+      }
+      if (nws?.keywords?.clear || nws?.keywords?.sunny) reasons.push('NWS shows clearing — typical post-frontal pattern');
+      break;
+    }
+  }
+
+  if (reasons.length === 0) reasons.push('Multiple weak signals suggest this pattern');
+  return reasons;
 }
 
 // ── Main Prediction Function ──
 
-function predictForLake(lakeId, primaryStation, pressure, history, hour, learnedWeights, upstreamSignals) {
+function predictForLake(lakeId, primaryStation, pressure, history, hour, learnedWeights, upstreamSignals, nwsData) {
+  const nws = nwsData ? getNWSForLake(nwsData, lakeId, hour) : null;
   const events = [];
   const types = [
-    { id: 'frontal_passage', fn: () => scoreFrontal(primaryStation, pressure, history, upstreamSignals), expSpeed: [15, 35], expDir: [300, 30] },
-    { id: 'north_flow',      fn: () => scoreNorthFlow(primaryStation, pressure), expSpeed: [10, 25], expDir: [315, 45] },
-    { id: 'clearing_wind',   fn: () => scoreClearing(primaryStation, pressure, history, hour), expSpeed: [5, 15], expDir: [160, 230] },
-    { id: 'thermal_cycle',   fn: () => scoreThermal(primaryStation, pressure, hour, lakeId), expSpeed: [6, 18], expDir: LAKE_THERMAL[lakeId]?.dir || [135, 165] },
-    { id: 'pre_frontal',     fn: () => scorePreFrontal(primaryStation, pressure, history, upstreamSignals), expSpeed: [10, 20], expDir: [180, 250] },
-    { id: 'glass',           fn: () => scoreGlass(primaryStation, pressure, hour), expSpeed: [0, 5], expDir: null },
-    { id: 'post_frontal',    fn: () => scorePostFrontal(primaryStation, pressure, history), expSpeed: [8, 15], expDir: [290, 340] },
+    { id: 'frontal_passage', fn: () => scoreFrontal(primaryStation, pressure, history, upstreamSignals, nws), expSpeed: [15, 35], expDir: [300, 30] },
+    { id: 'north_flow',      fn: () => scoreNorthFlow(primaryStation, pressure, nws), expSpeed: [10, 25], expDir: [315, 45] },
+    { id: 'clearing_wind',   fn: () => scoreClearing(primaryStation, pressure, history, hour, nws), expSpeed: [5, 15], expDir: [160, 230] },
+    { id: 'thermal_cycle',   fn: () => scoreThermal(primaryStation, pressure, hour, lakeId, nws), expSpeed: [6, 18], expDir: LAKE_THERMAL[lakeId]?.dir || [135, 165] },
+    { id: 'pre_frontal',     fn: () => scorePreFrontal(primaryStation, pressure, history, upstreamSignals, nws), expSpeed: [10, 20], expDir: [180, 250] },
+    { id: 'glass',           fn: () => scoreGlass(primaryStation, pressure, hour, nws), expSpeed: [0, 5], expDir: null },
+    { id: 'post_frontal',    fn: () => scorePostFrontal(primaryStation, pressure, history, nws), expSpeed: [8, 15], expDir: [290, 340] },
   ];
 
   for (const t of types) {
@@ -552,6 +741,23 @@ function predictForLake(lakeId, primaryStation, pressure, history, hour, learned
         windDirection: primaryStation.windDirection,
         temperature: primaryStation.temperature,
       };
+
+      // Plain-language "Why" explanation
+      evt.why = generateExplanation(t.id, primaryStation, pressure, history, hour, nws, upstreamSignals, lakeId);
+
+      // Pressure context for fingerprinting in verification
+      evt.pressureGradient = pressure.gradient ?? null;
+      evt.pressureTrend = pressure.trend ?? null;
+
+      // Attach NWS cross-check for later verification
+      if (nws?.current) {
+        evt.nwsForecast = {
+          speed: nws.current.speed,
+          dir: nws.current.dir,
+          text: nws.current.text,
+          keywords: nws.keywords,
+        };
+      }
 
       // Attach upstream intelligence to frontal/pre-frontal predictions
       if (eventUpstream && eventUpstream.length > 0) {
@@ -652,6 +858,33 @@ function verifyPredictions(predictions, actualStations, lakeStationMap) {
       score += actualSpeed < 5 ? 0.5 : Math.max(0, 0.5 - (actualSpeed - 5) * 0.05);
     }
 
+    // ── NWS ACCURACY: score what NWS predicted for the same period ──
+    let nwsScore = null;
+    if (pred.nwsForecast) {
+      let nScore = 0;
+      const nwsSpeed = pred.nwsForecast.speed;
+      // NWS speed accuracy (same formula — fair comparison)
+      if (nwsSpeed != null) {
+        const nwsErr = Math.abs(actualSpeed - nwsSpeed);
+        nScore += Math.max(0, 0.5 - nwsErr * 0.04);
+      }
+      // NWS direction accuracy
+      if (pred.nwsForecast.dir && primary.windDirection != null) {
+        const nwsDirDeg = typeof pred.nwsForecast.dir === 'string'
+          ? { N: 0, NNE: 22, NE: 45, ENE: 67, E: 90, ESE: 112, SE: 135, SSE: 157, S: 180, SSW: 202, SW: 225, WSW: 247, W: 270, WNW: 292, NW: 315, NNW: 337 }[pred.nwsForecast.dir] ?? null
+          : pred.nwsForecast.dir;
+        if (nwsDirDeg != null) {
+          const nwsDirErr = angleDiff(primary.windDirection, nwsDirDeg);
+          nScore += Math.max(0, 0.5 - nwsDirErr * 0.005);
+        } else {
+          nScore += 0.25;
+        }
+      } else {
+        nScore += 0.25;
+      }
+      nwsScore = Math.round(nScore * 100) / 100;
+    }
+
     results.push({
       lakeId,
       eventType: pred.eventType,
@@ -661,7 +894,18 @@ function verifyPredictions(predictions, actualStations, lakeStationMap) {
       expectedSpeedMid: (expMin + expMax) / 2,
       predictionHour: pred.predictionHour ?? null,
       score: Math.round(score * 100) / 100,
+      nwsScore,
+      nwsSpeed: pred.nwsForecast?.speed ?? null,
       timestamp: new Date().toISOString(),
+      fingerprint: {
+        gradient: pred.pressureGradient ?? null,
+        trend: pred.pressureTrend === 'falling' ? -1 : pred.pressureTrend === 'rising' ? 1 : 0,
+        windDir: pred.windDirection ?? null,
+        windSpeed: pred.windSpeed ?? null,
+        temp: pred.temperature ?? null,
+        hour: pred.predictionHour ?? null,
+        month: new Date().getMonth(),
+      },
     });
   }
 
@@ -723,11 +967,35 @@ function updateWeights(currentWeights, newAccuracy) {
     ? Object.values(eventWeights).reduce((s, e) => s + (e.totalScore || 0), 0) / weights.meta.totalPredictions
     : 0;
 
-  // Per-event accuracy summary
+  // Track cumulative NWS accuracy for comparison
+  if (!weights.nwsAccuracy) weights.nwsAccuracy = { totalScore: 0, count: 0, byEvent: {} };
+  for (const record of newAccuracy) {
+    if (record.nwsScore != null) {
+      weights.nwsAccuracy.count++;
+      weights.nwsAccuracy.totalScore += record.nwsScore;
+      if (!weights.nwsAccuracy.byEvent[record.eventType]) {
+        weights.nwsAccuracy.byEvent[record.eventType] = { count: 0, totalScore: 0 };
+      }
+      weights.nwsAccuracy.byEvent[record.eventType].count++;
+      weights.nwsAccuracy.byEvent[record.eventType].totalScore += record.nwsScore;
+    }
+  }
+  weights.meta.nwsOverallAccuracy = weights.nwsAccuracy.count > 0
+    ? Math.round((weights.nwsAccuracy.totalScore / weights.nwsAccuracy.count) * 100) / 100
+    : null;
+
+  // Per-event accuracy summary (ours and NWS side by side)
   weights.meta.eventAccuracy = {};
   for (const [key, ew] of Object.entries(eventWeights)) {
+    const nwsEvent = weights.nwsAccuracy?.byEvent?.[key];
     weights.meta.eventAccuracy[key] = ew.count > 0
-      ? { accuracy: Math.round((ew.totalScore / ew.count) * 100) / 100, count: ew.count, probMod: Math.round(ew.baseProbMod * 10) / 10 }
+      ? {
+          accuracy: Math.round((ew.totalScore / ew.count) * 100) / 100,
+          count: ew.count,
+          probMod: Math.round(ew.baseProbMod * 10) / 10,
+          nwsAccuracy: nwsEvent?.count > 0 ? Math.round((nwsEvent.totalScore / nwsEvent.count) * 100) / 100 : null,
+          nwsCount: nwsEvent?.count || 0,
+        }
       : null;
   }
 
@@ -795,10 +1063,276 @@ async function saveMeta(redisCmd, meta) {
 }
 
 // ══════════════════════════════════════════════════════════════
+// "AHEAD OF FORECAST" DETECTION
+//
+// Compares our upstream sensor network against NWS forecast text.
+// When our stations detect a front/system but NWS hasn't mentioned
+// it yet, we log an "Ahead of Forecast" event with timestamp.
+// When NWS later catches up, we calculate and store our lead time.
+// ══════════════════════════════════════════════════════════════
+
+async function detectAheadOfForecast(redisCmd, upstreamSignals, nwsData) {
+  if (!upstreamSignals || upstreamSignals.length === 0 || !nwsData) return null;
+
+  const now = new Date();
+  const coldFronts = upstreamSignals.filter(s => s.type === 'cold_front' && s.strength >= 35);
+  const preFrontal = upstreamSignals.filter(s => s.type === 'pre_frontal_flow' && s.strength >= 30);
+  const systems = upstreamSignals.filter(s => s.type === 'approaching_system' && s.strength >= 30);
+
+  if (coldFronts.length === 0 && preFrontal.length === 0 && systems.length === 0) return null;
+
+  // Check what NWS is currently saying
+  const nwsMentions = getNWSFrontMentions(nwsData);
+  const nwsMentionsFront = nwsMentions.some(m => m.type === 'front');
+  const nwsMentionsStorm = nwsMentions.some(m => m.type === 'storm');
+  const nwsMentionsWind = nwsMentions.some(m => m.type === 'wind');
+
+  const result = {
+    timestamp: now.toISOString(),
+    detections: [],
+  };
+
+  // Cold front: we detect it but NWS hasn't mentioned it
+  if (coldFronts.length > 0 && !nwsMentionsFront) {
+    const strongest = coldFronts[0];
+    result.detections.push({
+      type: 'cold_front_ahead',
+      status: 'ahead',
+      message: `Upstream stations detect approaching cold front — NWS hasn't called it yet`,
+      station: strongest.stationId,
+      stationName: strongest.name,
+      strength: strongest.strength,
+      etaHours: strongest.consensusEta || strongest.etaHours,
+      confirmedBy: coldFronts.length,
+      nwsStatus: 'no_mention',
+    });
+  }
+
+  // Cold front detected AND NWS also mentions it — log confirmation
+  if (coldFronts.length > 0 && nwsMentionsFront) {
+    const strongest = coldFronts[0];
+    result.detections.push({
+      type: 'cold_front_confirmed',
+      status: 'confirmed',
+      message: `Both our stations and NWS detect cold front — high confidence`,
+      station: strongest.stationId,
+      stationName: strongest.name,
+      strength: strongest.strength,
+      etaHours: strongest.consensusEta || strongest.etaHours,
+      nwsStatus: 'mentions_front',
+    });
+  }
+
+  // Pre-frontal flow detected but NWS doesn't mention wind
+  if (preFrontal.length > 0 && !nwsMentionsWind && !nwsMentionsFront) {
+    const strongest = preFrontal[0];
+    result.detections.push({
+      type: 'prefrontal_ahead',
+      status: 'ahead',
+      message: `SW/W flow detected upstream — NWS not yet forecasting wind`,
+      station: strongest.stationId,
+      stationName: strongest.name,
+      strength: strongest.strength,
+      etaHours: strongest.etaHours,
+      nwsStatus: 'no_mention',
+    });
+  }
+
+  // System approach from west not in NWS yet
+  if (systems.length > 0 && !nwsMentionsStorm && !nwsMentionsFront) {
+    const strongest = systems[0];
+    result.detections.push({
+      type: 'system_ahead',
+      status: 'ahead',
+      message: `Weather system approaching from west — NWS hasn't updated`,
+      station: strongest.stationId,
+      stationName: strongest.name,
+      strength: strongest.strength,
+      etaHours: strongest.etaHours,
+      nwsStatus: 'no_mention',
+    });
+  }
+
+  if (result.detections.length === 0) return null;
+
+  // Calculate lead time vs previous NWS-confirmed events
+  const prevRaw = await redisCmd('GET', 'ahead:log');
+  let aheadLog = [];
+  try { aheadLog = prevRaw ? JSON.parse(prevRaw) : []; } catch { aheadLog = []; }
+
+  // Update lead time tracking: if we previously had an "ahead" detection
+  // and NWS now mentions it, compute the lead time
+  for (const prev of aheadLog) {
+    if (prev.status !== 'ahead') continue;
+    const aheadTime = new Date(prev.timestamp);
+    const ageHours = (now - aheadTime) / 3600000;
+    if (ageHours > 24) continue; // Only track within 24h
+
+    // Did NWS now catch up?
+    const type = prev.type;
+    const nwsCaughtUp =
+      (type === 'cold_front_ahead' && nwsMentionsFront) ||
+      (type === 'prefrontal_ahead' && (nwsMentionsWind || nwsMentionsFront)) ||
+      (type === 'system_ahead' && (nwsMentionsStorm || nwsMentionsFront));
+
+    if (nwsCaughtUp && !prev.leadTimeHours) {
+      prev.leadTimeHours = Math.round(ageHours * 10) / 10;
+      prev.status = 'confirmed_ahead';
+      prev.nwsConfirmedAt = now.toISOString();
+    }
+  }
+
+  // Append new detections and keep last 50 entries
+  aheadLog.push(...result.detections.map(d => ({ ...d, timestamp: now.toISOString() })));
+  aheadLog = aheadLog.slice(-50);
+
+  await redisCmd('SET', 'ahead:log', JSON.stringify(aheadLog), 'EX', '604800');
+
+  // Compute stats
+  const confirmed = aheadLog.filter(e => e.leadTimeHours != null);
+  const avgLeadTime = confirmed.length > 0
+    ? Math.round((confirmed.reduce((s, e) => s + e.leadTimeHours, 0) / confirmed.length) * 10) / 10
+    : null;
+
+  return {
+    detections: result.detections,
+    stats: {
+      totalAheadEvents: aheadLog.filter(e => e.status === 'ahead' || e.status === 'confirmed_ahead').length,
+      confirmedAhead: confirmed.length,
+      avgLeadTimeHours: avgLeadTime,
+      recentLeadTimes: confirmed.slice(-5).map(e => e.leadTimeHours),
+    },
+  };
+}
+
+// ══════════════════════════════════════════════════════════════
+// PATTERN MATCH ENGINE — Historical Analog Finder
+//
+// Creates a "fingerprint" of current conditions and searches
+// the accuracy log for past days with similar fingerprints.
+// Returns the top analogs with what actually happened.
+//
+// Fingerprint dimensions:
+//   - Pressure gradient (mb)
+//   - Pressure trend (encoded as -1/0/1)
+//   - Primary wind direction (degrees)
+//   - Primary wind speed (mph)
+//   - Temperature (°F)
+//   - Hour of day (Mountain Time)
+//   - Month (seasonal factor)
+// ══════════════════════════════════════════════════════════════
+
+function createFingerprint(station, pressure, hour) {
+  return {
+    gradient: pressure.gradient ?? 0,
+    trend: pressure.trend === 'falling' ? -1 : pressure.trend === 'rising' ? 1 : 0,
+    windDir: station.windDirection ?? 180,
+    windSpeed: station.windSpeed ?? 0,
+    temp: station.temperature ?? 50,
+    hour,
+    month: new Date().getMonth(),
+  };
+}
+
+function fingerprintDistance(a, b) {
+  // Weighted distance across dimensions (lower = more similar)
+  let dist = 0;
+
+  // Pressure gradient: critical signal (weight 3)
+  dist += Math.abs((a.gradient || 0) - (b.gradient || 0)) * 3;
+
+  // Pressure trend: same trend is important (weight 2)
+  dist += Math.abs((a.trend || 0) - (b.trend || 0)) * 2;
+
+  // Wind direction: use angular distance (weight 1.5)
+  if (a.windDir != null && b.windDir != null) {
+    dist += angleDiff(a.windDir, b.windDir) / 60 * 1.5;
+  }
+
+  // Wind speed: similar speeds (weight 1)
+  dist += Math.abs((a.windSpeed || 0) - (b.windSpeed || 0)) / 5;
+
+  // Temperature: similar temps (weight 0.5)
+  dist += Math.abs((a.temp || 50) - (b.temp || 50)) / 20 * 0.5;
+
+  // Hour: similar time of day (weight 1)
+  const hourDiff = Math.min(Math.abs((a.hour || 12) - (b.hour || 12)), 24 - Math.abs((a.hour || 12) - (b.hour || 12)));
+  dist += hourDiff / 4;
+
+  // Month: same season matters (weight 0.3)
+  const monthDiff = Math.min(Math.abs((a.month || 6) - (b.month || 6)), 12 - Math.abs((a.month || 6) - (b.month || 6)));
+  dist += monthDiff / 3 * 0.3;
+
+  return dist;
+}
+
+async function findAnalogDays(redisCmd, currentFingerprint, lakeId, maxResults = 5) {
+  const raw = await redisCmd('LRANGE', 'accuracy:log', '0', '499');
+  if (!raw || raw.length === 0) return [];
+
+  const records = [];
+  for (const item of raw) {
+    try {
+      const r = typeof item === 'string' ? JSON.parse(item) : item;
+      if (r.fingerprint && (!lakeId || r.lakeId === lakeId)) {
+        records.push(r);
+      }
+    } catch {}
+  }
+
+  if (records.length === 0) return [];
+
+  // Score each record by fingerprint similarity
+  const scored = records.map(r => ({
+    ...r,
+    distance: fingerprintDistance(currentFingerprint, r.fingerprint),
+  }));
+
+  // Sort by distance (most similar first), take top N
+  scored.sort((a, b) => a.distance - b.distance);
+
+  // Group by date to get daily analogs
+  const dayMap = new Map();
+  for (const s of scored.slice(0, 50)) {
+    const date = (s.timestamp || '').split('T')[0];
+    if (!date) continue;
+    if (!dayMap.has(date)) {
+      dayMap.set(date, {
+        date,
+        distance: s.distance,
+        events: [],
+        avgAccuracy: 0,
+        totalScore: 0,
+        count: 0,
+      });
+    }
+    const day = dayMap.get(date);
+    day.events.push({
+      eventType: s.eventType,
+      actualSpeed: s.actualSpeed,
+      actualDirection: s.actualDirection,
+      predicted: s.predicted,
+      score: s.score,
+      hour: s.fingerprint?.hour,
+    });
+    day.totalScore += s.score || 0;
+    day.count++;
+  }
+
+  // Compute avg accuracy per day and sort by distance
+  const analogs = Array.from(dayMap.values())
+    .map(d => ({ ...d, avgAccuracy: d.count > 0 ? Math.round((d.totalScore / d.count) * 100) / 100 : 0 }))
+    .sort((a, b) => a.distance - b.distance)
+    .slice(0, maxResults);
+
+  return analogs;
+}
+
+// ══════════════════════════════════════════════════════════════
 // MAIN ENTRY POINT — called by cron after data collection
 // ══════════════════════════════════════════════════════════════
 
-async function runServerLearningCycle(redisCmd, currentStations, recentSnapshots, lakeStationMap) {
+async function runServerLearningCycle(redisCmd, currentStations, recentSnapshots, lakeStationMap, nwsData = null) {
   const now = new Date();
   const hour = toMountainHour(now);
   const pressure = analyzePressure(currentStations, recentSnapshots);
@@ -819,6 +1353,16 @@ async function runServerLearningCycle(redisCmd, currentStations, recentSnapshots
     } catch {}
   }
 
+  // 1.6 "Ahead of Forecast" detection: compare upstream vs NWS
+  let aheadOfForecast = null;
+  if (nwsData) {
+    try {
+      aheadOfForecast = await detectAheadOfForecast(redisCmd, upstreamSignals, nwsData);
+    } catch (e) {
+      console.error('Ahead-of-forecast detection error:', e.message);
+    }
+  }
+
   // 2. Make predictions for every lake (with upstream intelligence)
   const allPredictions = [];
   for (const [lakeId, stationIds] of Object.entries(lakeStationMap)) {
@@ -829,7 +1373,7 @@ async function runServerLearningCycle(redisCmd, currentStations, recentSnapshots
     const primary = lakeStations.find(s => s.stationId === primaryId) || lakeStations[0];
     const history = buildStationHistory(primary.stationId, recentSnapshots);
 
-    const events = predictForLake(lakeId, primary, pressure, history, hour, weights, upstreamSignals);
+    const events = predictForLake(lakeId, primary, pressure, history, hour, weights, upstreamSignals, nwsData);
     for (const evt of events) {
       allPredictions.push({ ...evt, lakeId });
     }
@@ -838,6 +1382,22 @@ async function runServerLearningCycle(redisCmd, currentStations, recentSnapshots
   // 3. Store predictions
   if (allPredictions.length > 0) {
     await savePredictions(redisCmd, allPredictions, now);
+  }
+
+  // 3.5 Find analog days (pattern matching)
+  let analogDays = null;
+  try {
+    const slc = currentStations.find(s => s.stationId === 'KSLC') || currentStations[0];
+    if (slc) {
+      const fingerprint = createFingerprint(slc, pressure, hour);
+      const analogs = await findAnalogDays(redisCmd, fingerprint, null, 5);
+      if (analogs.length > 0) {
+        analogDays = { fingerprint, analogs };
+        await redisCmd('SET', 'pattern:analogs', JSON.stringify(analogDays), 'EX', '3600');
+      }
+    }
+  } catch (e) {
+    console.error('Pattern match error:', e.message);
   }
 
   // 4. Verify old predictions (2-4 hours ago) against current actuals
@@ -875,6 +1435,8 @@ async function runServerLearningCycle(redisCmd, currentStations, recentSnapshots
     verificationsRun: accuracyRecords.length,
     weightsUpdated: accuracyRecords.length > 0,
     upstreamSignals: upstreamSignals.length > 0 ? upstreamSignals.slice(0, 5) : null,
+    aheadOfForecast,
+    analogDays: analogDays ? { count: analogDays.analogs.length, topMatch: analogDays.analogs[0]?.date || null } : null,
     meta,
     pressure,
     diagnostics: {
@@ -886,6 +1448,9 @@ async function runServerLearningCycle(redisCmd, currentStations, recentSnapshots
         : 'insufficient',
       oldPredictionsFound: oldPredictions.length,
       verificationsInWindow: verificationsNeeded.length,
+      nwsAvailable: !!(nwsData?.grids && Object.keys(nwsData.grids).length > 0),
+      nwsGrids: nwsData?.grids ? Object.keys(nwsData.grids) : [],
+      nwsFetchedAt: nwsData?.fetchedAt || null,
     },
   };
 }

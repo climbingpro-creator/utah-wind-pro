@@ -18,6 +18,10 @@ import { NotificationSettings } from './NotificationSettings';
 import { checkAndNotify } from '../services/NotificationService';
 import { getFullForecast } from '../services/ForecastService';
 import LearningDashboard from './LearningDashboard';
+import AccuracyScoreboard from './AccuracyScoreboard';
+import SpotTimeline from './SpotTimeline';
+import WhyExplainer from './WhyExplainer';
+import PatternMatch from './PatternMatch';
 import ActivityMode, { ACTIVITY_CONFIGS, calculateActivityScore, calculateGlassScore, getActivityHeroImage } from './ActivityMode';
 import GlassScore from './GlassScore';
 import { predictGlass } from '../services/BoatingPredictor';
@@ -423,7 +427,8 @@ export function Dashboard() {
               >
                 ✕
               </button>
-              <div className="p-2">
+              <div className="p-2 space-y-4">
+                <AccuracyScoreboard />
                 <LearningDashboard />
               </div>
             </div>
@@ -923,6 +928,16 @@ export function Dashboard() {
               />
             </ProGate>
 
+            {/* NWS Hour-by-Hour Timeline — merged with our predictions */}
+            <SafeComponent name="Spot Timeline">
+              <SpotTimeline locationId={selectedLake} activity={selectedActivity} />
+            </SafeComponent>
+
+            {/* Wind Prediction with "Why" explanations */}
+            <SafeComponent name="Why Explainer">
+              <WhyExplainer locationId={selectedLake} />
+            </SafeComponent>
+
             {/* SESSION FEEDBACK — post-session "How was it?" prompt */}
             <SafeComponent name="Session Feedback">
               <SessionFeedback
@@ -945,6 +960,16 @@ export function Dashboard() {
             {/* Indicator Cascade — live wind flow visualization */}
             <SafeComponent name="Indicator Cascade">
               <IndicatorCascade lakeState={lakeState} activity={selectedActivity} locationId={selectedLake} />
+            </SafeComponent>
+
+            {/* Pattern Match — similar past days */}
+            <SafeComponent name="Pattern Match">
+              <PatternMatch />
+            </SafeComponent>
+
+            {/* Accuracy Scoreboard — us vs NWS */}
+            <SafeComponent name="Accuracy Scoreboard">
+              <AccuracyScoreboard />
             </SafeComponent>
 
             {/* Smart Week Planner — best day this week per activity */}
