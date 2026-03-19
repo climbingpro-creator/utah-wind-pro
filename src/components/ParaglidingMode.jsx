@@ -16,9 +16,9 @@ export const PARAGLIDING_SITES = {
     
     // Wind requirements for P2 paragliders
     wind: {
-      direction: { min: 160, max: 200, ideal: 180, label: 'SSE to SSW' },
-      speed: { min: 6, ideal: { min: 10, max: 16 }, max: 18 },
-      gustLimit: 5,
+      direction: { min: 110, max: 250, ideal: 180, label: 'ESE to WSW' },
+      speed: { min: 5, ideal: { min: 8, max: 16 }, max: 20 },
+      gustLimit: 7,
     },
     
     // Best flying times
