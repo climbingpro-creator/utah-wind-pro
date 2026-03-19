@@ -40,8 +40,8 @@ export default async function handler(req, res) {
 }
 
 async function handleAmbient(res) {
-  const apiKey = process.env.VITE_AMBIENT_API_KEY;
-  const appKey = process.env.VITE_AMBIENT_APP_KEY;
+  const apiKey = process.env.AMBIENT_API_KEY || process.env.VITE_AMBIENT_API_KEY;
+  const appKey = process.env.AMBIENT_APP_KEY || process.env.VITE_AMBIENT_APP_KEY;
 
   if (!apiKey || !appKey) {
     return res.status(500).json({ error: 'Ambient Weather API keys not configured' });
