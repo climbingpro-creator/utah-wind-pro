@@ -56,12 +56,13 @@ async function fetchFullHistory(token, stationIds, days = 90) {
         }
         const obs = s.OBSERVATIONS || {};
         const times = obs.date_time || [];
-        const speeds = obs.wind_speed_value_1?.values || obs.wind_speed_value_1 || [];
-        const dirs = obs.wind_direction_value_1?.values || obs.wind_direction_value_1 || [];
-        const gusts = obs.wind_gust_value_1?.values || obs.wind_gust_value_1 || [];
-        const temps = obs.air_temp_value_1?.values || obs.air_temp_value_1 || [];
-        const altims = obs.altimeter_value_1?.values || obs.altimeter_value_1 || [];
-        const slps = obs.sea_level_pressure_value_1?.values || obs.sea_level_pressure_value_1 || [];
+        // Timeseries API uses _set_1 keys; latest API uses _value_1
+        const speeds = obs.wind_speed_set_1 || obs.wind_speed_value_1 || [];
+        const dirs = obs.wind_direction_set_1 || obs.wind_direction_value_1 || [];
+        const gusts = obs.wind_gust_set_1 || obs.wind_gust_value_1 || [];
+        const temps = obs.air_temp_set_1 || obs.air_temp_value_1 || [];
+        const altims = obs.altimeter_set_1 || obs.altimeter_value_1 || [];
+        const slps = obs.sea_level_pressure_set_1 || obs.sea_level_pressure_value_1 || [];
 
         for (let i = 0; i < times.length; i++) {
           allStations[s.STID].readings.push({
