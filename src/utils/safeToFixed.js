@@ -1,5 +1,6 @@
 export function safeToFixed(value, digits = 0) {
+  if (value == null) return '--';
   const num = Number(value);
-  if (num == null || Number.isNaN(num)) return '--';
+  if (Number.isNaN(num)) return '--';
   return num.toFixed(digits);
 }

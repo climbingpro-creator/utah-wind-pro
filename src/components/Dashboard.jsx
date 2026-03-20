@@ -63,6 +63,8 @@ const SMSAlertSettings = lazy(() => import('./SMSAlertSettings'));
 import { getSMSPrefs, processConditions } from '../services/SMSNotificationService';
 import { windDirectionToCardinal } from '../utils/wind';
 import { getParaglidingScore } from '../utils/paraglidingScore';
+import { synthesize } from '../services/WindIntelligence';
+import SignalConvergence from './SignalConvergence';
 
 export function Dashboard() {
   const [selectedLake, setSelectedLake] = useState('utah-lake');
@@ -155,6 +157,20 @@ export function Dashboard() {
       );
     } catch (e) { return null; }
   }, [currentWindSpeed, currentWindGust, lakeState?.pressure]);
+
+  // Wind Intelligence — unified signal synthesis
+  const intelligence = React.useMemo(() => {
+    try {
+      return synthesize({
+        lakeState,
+        correlation,
+        boatingPrediction,
+        swingAlerts,
+        mesoData,
+        lakeId: selectedLake,
+      });
+    } catch (e) { return null; }
+  }, [lakeState, correlation, boatingPrediction, swingAlerts, mesoData, selectedLake]);
 
   // AI Morning Briefing
   const briefing = React.useMemo(() => {
@@ -318,6 +334,9 @@ export function Dashboard() {
           boatingPrediction={boatingPrediction}
           onSelectActivity={setSelectedActivity}
         />
+
+        {/* Wind Intelligence — unified signal convergence */}
+        <SignalConvergence intelligence={intelligence} />
 
         {/* Global Activity Selector */}
         <div className="w-full">

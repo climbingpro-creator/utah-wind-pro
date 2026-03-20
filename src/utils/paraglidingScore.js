@@ -1,4 +1,13 @@
 export function getParaglidingScore(fpsStation, utalpStation) {
+  if (fpsStation == null && utalpStation == null) {
+    return {
+      score: 0,
+      message: 'No data from Flight Park stations',
+      gustFactor: 1,
+      bestSite: 'Flight Park South',
+    };
+  }
+
   const fpsSpeed = fpsStation?.speed || fpsStation?.windSpeed;
   const fpsDir = fpsStation?.direction || fpsStation?.windDirection;
   const fpsGust = fpsStation?.gust || fpsStation?.windGust;
