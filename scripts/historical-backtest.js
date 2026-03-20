@@ -61,7 +61,7 @@ function fmt(dateStr) {
   return dateStr.replace(/[-:T]/g, '').slice(0, 12);
 }
 
-async function fetchStationHistory(stationId, startDate, endDate) {
+async function _fetchStationHistory(stationId, startDate, endDate) {
   const startUTC = fmt(new Date(startDate + 'T00:00:00-06:00').toISOString());
   const endUTC = fmt(new Date(endDate + 'T23:59:00-06:00').toISOString());
   
@@ -128,7 +128,7 @@ function parseStationData(station) {
 
 // ─── PREDICTION SIMULATION ───────────────────────────────────────
 
-function simulatePrediction(hourData, stationData) {
+function simulatePrediction(hourData, _stationData) {
   // Reconstruct what our model would have predicted at this hour
   const fps = hourData.FPS || {};
   const kslc = hourData.KSLC || {};

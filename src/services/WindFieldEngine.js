@@ -25,7 +25,6 @@
 import { getHourlyForecast } from './ForecastService';
 import { monitorSwings } from './FrontalTrendPredictor';
 import { calculateCorrelatedWind } from './CorrelationEngine';
-import registry from '../config/mesoRegistry.json';
 import trainedWeightsStatic from '../config/trainedWeights.json';
 import boatWeightsStatic from '../config/trainedWeights-boating.json';
 import { safeToFixed } from '../utils/safeToFixed';
@@ -332,7 +331,7 @@ export async function generateWindField(locationId, currentWind = {}, upstreamDa
 
   // 3. Get NWS hourly forecast (regional model, needs translation)
   let nwsHourly = null;
-  try { nwsHourly = await getHourlyForecast(locationId); } catch (e) { /* fallback */ }
+  try { nwsHourly = await getHourlyForecast(locationId); } catch (_e) { /* fallback */ }
 
   // 4. Get thermal prediction from lakeState
   const thermalPred = lakeState?.thermalPrediction;
@@ -357,7 +356,7 @@ export async function generateWindField(locationId, currentWind = {}, upstreamDa
     );
     correlationMultiplier = result?.multiplier || 1.0;
     activeTriggers = result?.activeTriggers || [];
-  } catch (e) { /* fallback */ }
+  } catch (_e) { /* fallback */ }
 
   // 7. Frontal/swing detection
   let swingAlerts = [];
@@ -366,7 +365,7 @@ export async function generateWindField(locationId, currentWind = {}, upstreamDa
     if (kslcHistory.length >= 4) {
       swingAlerts = monitorSwings(kslcHistory);
     }
-  } catch (e) { /* ignore */ }
+  } catch (_e) { /* ignore */ }
   const frontalActive = swingAlerts.some(a => a.id === 'frontal-hit' || a.id === 'wind-shift');
 
   // 8. Generate unified 24-hour wind field

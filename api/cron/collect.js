@@ -218,7 +218,13 @@ export default async function handler(req, res) {
           const keysToFetch = recentKeys.slice(1, 16);
           const values = await redisMGet(keysToFetch);
           for (const raw of values) {
-            if (raw) try { recentSnapshots.push(JSON.parse(raw)); } catch {}
+            if (raw) {
+              try {
+                recentSnapshots.push(JSON.parse(raw));
+              } catch {
+                // intentionally empty: skip malformed snapshot JSON
+              }
+            }
           }
         }
 
@@ -323,7 +329,9 @@ async function handlePredictions(req, res) {
         for (const p of preds) {
           allPredictions.push({ ...p, timestamp: record.timestamp });
         }
-      } catch {}
+      } catch {
+        // intentionally empty: skip malformed prediction record
+      }
     }
 
     // Filter by lake if requested

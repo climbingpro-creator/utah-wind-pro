@@ -186,7 +186,7 @@ function computeEta(nodes, stationMap) {
   return null;
 }
 
-function CascadeNode({ node, station, active, isDark, speedPct }) {
+function CascadeNode({ node, station, active, isDark }) {
   const speed = station?.speed;
   const dir = station?.direction;
 

@@ -110,7 +110,7 @@ async function analyze() {
         if (obs.length > 0) {
           allData[stid] = allData[stid].concat(obs);
         }
-      } catch (e) {}
+      } catch (_e) {}
     }
     
     console.log(`${stid}: ${allData[stid].length} observations`);
@@ -221,7 +221,6 @@ async function analyze() {
     
     let bestLead = 0;
     let bestNorthPct = 0;
-    let bestAvgSpeed = 0;
     
     for (let lead = 1; lead <= 4; lead++) {
       const samples = leadResults[lead];
@@ -238,7 +237,6 @@ async function analyze() {
       if (northPct > bestNorthPct) {
         bestNorthPct = northPct;
         bestLead = lead;
-        bestAvgSpeed = avgSpeed;
       }
     }
     

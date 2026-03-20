@@ -53,7 +53,7 @@ function getHour(date) {
   return date.getHours();
 }
 
-function getDateKey(date) {
+function _getDateKey(date) {
   return date.toISOString().slice(0, 10);
 }
 
@@ -190,7 +190,7 @@ async function analyze() {
     '15+': { fpsSpeeds: [], fpsNorthSpeeds: [] },
   };
   
-  kslcHourly.forEach((kslcObs, key) => {
+  kslcHourly.forEach((kslcObs, _key) => {
     const hour = getHour(kslcObs.time);
     // Look at morning KSLC readings (8 AM - 4 PM)
     if (hour < 8 || hour > 16) return;
@@ -289,22 +289,6 @@ async function analyze() {
   console.log('\n' + '='.repeat(70));
   console.log('VALIDATION SUMMARY');
   console.log('='.repeat(70));
-  
-  // Calculate recommended threshold
-  let recommendedThreshold = 5;
-  let bestKiteablePct = 0;
-  
-  Object.entries(leadBuckets).forEach(([range, data]) => {
-    if (data.fpsSpeeds.length < 10) return;
-    const kiteablePct = data.fpsSpeeds.filter(s => s >= 10).length / data.fpsSpeeds.length * 100;
-    
-    if (range === '5-8' || range === '8-10' || range === '10-15') {
-      if (kiteablePct > bestKiteablePct) {
-        bestKiteablePct = kiteablePct;
-        recommendedThreshold = range === '5-8' ? 5 : range === '8-10' ? 8 : 10;
-      }
-    }
-  });
   
   const bucket5to8 = leadBuckets['5-8'];
   const bucket8to10 = leadBuckets['8-10'];

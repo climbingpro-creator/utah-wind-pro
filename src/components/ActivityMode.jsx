@@ -237,7 +237,7 @@ const ActivityMode = ({ selectedActivity, onActivityChange, windSpeed, windGust,
 /**
  * Calculate activity-specific scores
  */
-export function calculateActivityScore(activity, windSpeed, windGust, windDirection) {
+export function calculateActivityScore(activity, windSpeed, windGust, _windDirection) {
   const config = ACTIVITY_CONFIGS[activity];
   if (!config) return null;
   
@@ -289,7 +289,7 @@ export function calculateActivityScore(activity, windSpeed, windGust, windDirect
 /**
  * Calculate Glass Score for calm-seeking activities
  */
-export function calculateGlassScore(windSpeed, windGust, config = ACTIVITY_CONFIGS.boating) {
+export function calculateGlassScore(windSpeed, windGust, _config = ACTIVITY_CONFIGS.boating) {
   if (windSpeed == null) {
     return { score: null, status: 'unknown', message: 'No wind data' };
   }
@@ -385,7 +385,7 @@ export function calculateCalmWindow(currentHour, thermalStartHour = 10, currentS
 export function getBestActivity(windSpeed, windGust, windDirection) {
   const scores = {};
   
-  for (const [activityId, config] of Object.entries(ACTIVITY_CONFIGS)) {
+  for (const [activityId, _config] of Object.entries(ACTIVITY_CONFIGS)) {
     const result = calculateActivityScore(activityId, windSpeed, windGust, windDirection);
     if (result) {
       scores[activityId] = result;

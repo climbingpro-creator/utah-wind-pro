@@ -70,11 +70,6 @@ export default function ActivityScoreBanner({
     headline = `${activityConfig?.name}: ${activityScore.message}`;
   }
 
-  const colorMap = {
-    green: theme === 'dark' ? 'bg-green-500/10 border-green-500/30' : 'bg-green-100 border-green-300',
-    yellow: theme === 'dark' ? 'bg-yellow-500/10 border-yellow-500/30' : 'bg-yellow-100 border-yellow-300',
-    red: theme === 'dark' ? 'bg-red-500/10 border-red-500/30' : 'bg-red-100 border-red-300',
-  };
   const textColorMap = {
     green: theme === 'dark' ? 'text-green-400' : 'text-green-700',
     yellow: theme === 'dark' ? 'text-yellow-400' : 'text-yellow-700',

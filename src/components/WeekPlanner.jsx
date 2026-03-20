@@ -109,16 +109,6 @@ function scoreBarColor(score) {
   return 'bg-red-500';
 }
 
-function scoreBadge(score, isDark) {
-  if (score >= 80)
-    return { text: 'Great', fg: 'text-green-400', bg: isDark ? 'bg-green-500/20' : 'bg-green-100' };
-  if (score >= 60)
-    return { text: 'Good', fg: 'text-lime-500', bg: isDark ? 'bg-lime-500/20' : 'bg-lime-100' };
-  if (score >= 40)
-    return { text: 'Fair', fg: 'text-yellow-500', bg: isDark ? 'bg-yellow-500/20' : 'bg-yellow-100' };
-  return { text: 'Avoid', fg: 'text-red-400', bg: isDark ? 'bg-red-500/20' : 'bg-red-100' };
-}
-
 function bestDayDescription(dayName, pattern, preFrontalDays) {
   if (pattern === 'PRE_FRONTAL') {
     const pf = preFrontalDays.find(d => d.day.name === dayName);
@@ -228,7 +218,6 @@ const WeekPlanner = ({ activity = 'kiting', locationId = 'utah-lake' }) => {
       <div className="grid grid-cols-7 gap-1.5">
         {scored.map((day) => {
           const isBest = best && day.name === best.name;
-          const badge = scoreBadge(day.activityScore, isDark);
           const patternIcon = PATTERN_ICONS[day.resolvedPattern] || '☀️';
 
           return (

@@ -240,7 +240,7 @@ function briefWind(activity, params) {
 }
 
 function briefCalm(activity, params) {
-  const { currentWind, smartForecast, upstream, thermalPrediction, boatingPrediction, swingAlerts } = params;
+  const { currentWind, smartForecast: _smartForecast, upstream, thermalPrediction, boatingPrediction, swingAlerts } = params;
   const speed = currentWind?.speed || 0;
   const gust = currentWind?.gust || speed;
   const excitement = computeExcitement(activity, params);

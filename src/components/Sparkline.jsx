@@ -92,7 +92,7 @@ export function Sparkline({
   );
 }
 
-export function WindSparkline({ history, stationId }) {
+export function WindSparkline({ history, stationId: _stationId }) {
   const data = useMemo(() => {
     if (!history || !Array.isArray(history)) return [];
     

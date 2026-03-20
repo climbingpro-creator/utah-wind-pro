@@ -148,7 +148,11 @@ async function getGridUrl(redisCmd, gridId, point) {
 async function fetchNWSForecasts(redisCmd) {
   const cached = await redisCmd('GET', 'nws:forecasts');
   if (cached) {
-    try { return JSON.parse(cached); } catch {}
+    try {
+      return JSON.parse(cached);
+    } catch {
+      // intentionally empty: fall through to refetch on bad cache JSON
+    }
   }
 
   const result = { fetchedAt: new Date().toISOString(), grids: {} };

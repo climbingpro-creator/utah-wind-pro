@@ -126,7 +126,7 @@ function scoreGlassSession(hourData) {
 // ─── FISHING SESSION SCORING ────────────────────────────────────
 
 function scoreFishingSession(hourData, conditions) {
-  const { speed, gust, temp, pressure, direction } = hourData;
+  const { speed, gust: _gust, temp, pressure, direction: _direction } = hourData;
   const { moonPhase, hour, pressureChange3h } = conditions;
   
   if (speed == null && pressure == null) return { score: 0, label: 'no-data', quality: false };
@@ -194,7 +194,7 @@ function scoreFishingSession(hourData, conditions) {
   // Temperature as water temp proxy (0-20 pts)
   // Fish are most active in moderate temps
   if (temp != null) {
-    const month = new Date().getMonth() + 1;
+    const _month = new Date().getMonth() + 1;
     // Estimate water temp lag from air temp (water lags ~2 weeks)
     const estWaterTemp = temp * 0.7 + 20; // rough approximation
     
@@ -272,7 +272,7 @@ function predictGlass(hourSnap, hour) {
 function predictFishing(hourSnap, hour, dateStr) {
   const fps = hourSnap.FPS || {};
   const kslc = hourSnap.KSLC || {};
-  const kpvu = hourSnap.KPVU || {};
+  const _kpvu = hourSnap.KPVU || {};
   const moonPhase = getMoonPhase(dateStr);
   
   let prob = 35; // base
@@ -877,7 +877,7 @@ function hourlyMults(results, qualityFn) {
     byHour[r.hour].n++;
     if (qualityFn(r)) byHour[r.hour].q++;
   }
-  const rates = Object.entries(byHour).map(([h, d]) => d.n > 0 ? d.q / d.n : 0);
+  const rates = Object.entries(byHour).map(([_h, d]) => d.n > 0 ? d.q / d.n : 0);
   const avg = rates.length > 0 ? rates.reduce((a, b) => a + b, 0) / rates.length : 1;
   const mults = {};
   for (const [h, d] of Object.entries(byHour)) {

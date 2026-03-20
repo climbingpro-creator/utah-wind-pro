@@ -52,7 +52,7 @@ export default async function handler(req, res) {
     if (req.method === 'POST') {
       const deviceName = body?.device_name || 'Garmin Watch';
 
-      const { data, error } = await getSupabase()
+      const { error } = await getSupabase()
         .from('garmin_devices')
         .upsert({
           user_id: user.id,

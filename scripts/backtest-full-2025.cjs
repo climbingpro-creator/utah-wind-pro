@@ -538,7 +538,7 @@ async function main() {
         } else {
           process.stdout.write('x');
         }
-      } catch (e) {
+      } catch (_e) {
         process.stdout.write('!');
       }
       await sleep(250);

@@ -66,7 +66,9 @@ export default function SMSAlertSettings({ isOpen, onClose }) {
             const { data } = await supabase.auth.getSession();
             token = data?.session?.access_token;
           }
-        } catch {}
+        } catch {
+          /* optional session — ignore */
+        }
         await subscribeToPush(token);
         setPushStatus('subscribed');
       }

@@ -11,14 +11,6 @@ const LearningDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [learningInProgress, setLearningInProgress] = useState(false);
 
-  useEffect(() => {
-    loadData();
-    
-    // Refresh every minute
-    const interval = setInterval(loadData, 60000);
-    return () => clearInterval(interval);
-  }, []);
-
   const loadData = async () => {
     try {
       const [accuracyStats, learnedWeights] = await Promise.all([
@@ -34,6 +26,14 @@ const LearningDashboard = () => {
     }
     setLoading(false);
   };
+
+  useEffect(() => {
+    loadData();
+
+    // Refresh every minute
+    const interval = setInterval(loadData, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleForceLearning = async () => {
     setLearningInProgress(true);

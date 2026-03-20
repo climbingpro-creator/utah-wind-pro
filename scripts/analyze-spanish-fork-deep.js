@@ -75,12 +75,11 @@ async function analyze() {
   console.log('='.repeat(70));
   
   // Load Zig Zag historical data
-  let zigzagData;
   try {
     const zigzagPath = './src/data/zigzag-historical.json';
-    zigzagData = JSON.parse(fs.readFileSync(zigzagPath, 'utf8'));
+    JSON.parse(fs.readFileSync(zigzagPath, 'utf8'));
     console.log('Loaded Zig Zag historical data');
-  } catch (e) {
+  } catch (_e) {
     console.log('Could not load Zig Zag data, continuing with MesoWest only');
   }
   
@@ -252,7 +251,7 @@ async function analyze() {
   }
   
   const goodKitePatterns = analyzeLeadPatterns(goodKiteDays, 'GOOD KITE DAYS');
-  const thermalPatterns = analyzeLeadPatterns(thermalDays, 'THERMAL DAYS');
+  const _thermalPatterns = analyzeLeadPatterns(thermalDays, 'THERMAL DAYS');
   const bustPatterns = analyzeLeadPatterns(bustDays, 'BUST DAYS');
   
   // Find the best predictor thresholds

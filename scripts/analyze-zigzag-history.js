@@ -90,7 +90,7 @@ function getHour(date) {
 }
 
 // Fetch MesoWest data
-async function fetchMesoWest(stid, start, end) {
+async function _fetchMesoWest(stid, start, end) {
   return new Promise((resolve, reject) => {
     const url = `https://api.synopticdata.com/v2/stations/timeseries?stid=${stid}&start=${start}&end=${end}&vars=wind_speed,wind_direction,air_temp,altimeter&units=english&token=${TOKEN}`;
     
@@ -228,7 +228,6 @@ async function analyze() {
     const ms = monthlyStats[m];
     const seRate = ms.total > 0 ? (ms.seThermal / ms.total * 100).toFixed(1) : '0.0';
     const nRate = ms.total > 0 ? (ms.northFlow / ms.total * 100).toFixed(1) : '0.0';
-    const avgSpeed = ms.seThermal > 0 ? (ms.avgMaxSpeed / ms.seThermal).toFixed(1) : '--';
     const avgPeak = ms.peakHours.length > 0 
       ? (ms.peakHours.reduce((a,b) => a+b, 0) / ms.peakHours.length).toFixed(0) + ':00'
       : '--';
@@ -459,7 +458,6 @@ async function analyze() {
   
   bestDays.forEach(day => {
     const type = day.windType || 'Other';
-    const dirLabel = day.peakDirection < 180 ? 'SE' : day.peakDirection > 270 ? 'N' : 'SW';
     console.log(`${day.date} | ${day.maxSpeed.toFixed(1).padStart(9)} | ${day.maxGust.toFixed(1).padStart(8)} | ${String(day.peakHour).padStart(9)}:00 | ${String(Math.round(day.peakDirection)).padStart(9)}° | ${type}`);
   });
   

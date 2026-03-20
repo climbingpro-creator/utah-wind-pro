@@ -11,7 +11,6 @@
  * - Compare with FPS (Flight Park) and your Zig Zag data
  */
 
-import fs from 'fs';
 import https from 'https';
 
 const TOKEN = process.env.SYNOPTIC_TOKEN || process.env.VITE_SYNOPTIC_TOKEN;
@@ -28,7 +27,7 @@ const STATIONS_TO_CHECK = [
   'FPS',    // Flight Park South (known good indicator)
 ];
 
-async function fetchStationInfo(stid) {
+async function _fetchStationInfo(stid) {
   return new Promise((resolve, reject) => {
     const url = `https://api.synopticdata.com/v2/stations/metadata?stid=${stid}&token=${TOKEN}`;
     
@@ -199,7 +198,7 @@ async function analyze() {
       });
       
       const thermalDays = Array.from(fpsDays.entries())
-        .filter(([_, d]) => d.thermalHours.size >= 2)
+        .filter(([_unused, d]) => d.thermalHours.size >= 2)
         .map(([date, d]) => ({ date, ...d }));
       
       console.log(`\nThermal days at FPS: ${thermalDays.length}`);

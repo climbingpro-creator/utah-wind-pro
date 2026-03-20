@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, createElement } from 'react';
 import { Bell, BellOff, Calendar, Sun, Clock, TrendingUp, AlertCircle, CheckCircle } from 'lucide-react';
 import { getFullForecast, FORECAST_STAGES } from '../services/ForecastService';
 
@@ -215,7 +215,7 @@ export function ForecastPanel({ lakeId, conditions, isLoading }) {
   );
 }
 
-function ForecastStageCard({ label, sublabel, probability, isActive, icon: Icon }) {
+function ForecastStageCard({ label, sublabel, probability, isActive, icon }) {
   const getProbColor = (prob) => {
     if (prob >= 70) return 'text-green-400';
     if (prob >= 50) return 'text-yellow-400';
@@ -226,7 +226,7 @@ function ForecastStageCard({ label, sublabel, probability, isActive, icon: Icon 
     <div className={`rounded-lg p-2 text-center ${
       isActive ? 'bg-cyan-500/20 border border-cyan-500/30' : 'bg-slate-800/50'
     }`}>
-      <Icon className={`w-4 h-4 mx-auto mb-1 ${isActive ? 'text-cyan-400' : 'text-slate-500'}`} />
+      {icon ? createElement(icon, { className: `w-4 h-4 mx-auto mb-1 ${isActive ? 'text-cyan-400' : 'text-slate-500'}` }) : null}
       <p className={`text-xs font-medium ${isActive ? 'text-cyan-400' : 'text-slate-400'}`}>{label}</p>
       <p className="text-[10px] text-slate-500">{sublabel}</p>
       <p className={`text-lg font-bold ${getProbColor(probability)}`}>{probability}%</p>

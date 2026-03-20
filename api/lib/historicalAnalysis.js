@@ -265,7 +265,6 @@ function detectHistoricalEvents(allStations, lakeStationMap) {
       const olderTemp = validHistory[0].temp;
 
       // Compute pressure if available
-      let pressGradient = null;
       let pressTrend = null;
       if (pressStation) {
         const nearbyPress = findNearestReading(pressStation.readings, r.t);

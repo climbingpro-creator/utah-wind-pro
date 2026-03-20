@@ -30,7 +30,7 @@ try {
       process.env[key.trim()] = valueParts.join('=').trim();
     }
   });
-} catch (e) {
+} catch (_e) {
   console.log('Note: Could not load .env file');
 }
 
@@ -557,7 +557,7 @@ async function buildForecastModel() {
     },
   };
   
-  for (const [key, model] of Object.entries(forecastModel)) {
+  for (const [_key, model] of Object.entries(forecastModel)) {
     console.log(`\n${model.name.toUpperCase()}`);
     console.log('-'.repeat(50));
     console.log(`NWS Keywords: ${model.nwsKeywords.join(', ')}`);

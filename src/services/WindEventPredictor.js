@@ -159,14 +159,7 @@ export function predictWindEvents(lakeId, currentConditions, pressureData, stati
 
   const wind = currentConditions || {};
   const speed = wind.windSpeed ?? 0;
-  const dir = wind.windDirection;
-  const gust = wind.windGust ?? speed;
-  const temp = wind.temperature;
   const pressure = pressureData || {};
-  const gradient = pressure.gradient ?? 0;
-  const pTrend = pressure.trend ?? 'stable';
-  const slcP = pressure.slcPressure;
-  const pvuP = pressure.pvuPressure;
 
   // Upstream signals used by both frontal and pre-frontal blocks
   const coldFrontUpstream = (upstreamSignals || []).filter(s => s.type === 'cold_front');
@@ -353,7 +346,7 @@ export function predictWindEvents(lakeId, currentConditions, pressureData, stati
 
 // ─── SCORING FUNCTIONS ────────────────────────────────────────
 
-function scoreFrontalPassage(wind, pressure, history, hour) {
+function scoreFrontalPassage(wind, pressure, history, _hour) {
   let score = 0;
   let confidence = 0.3;
   const details = [];
@@ -431,7 +424,7 @@ function scoreFrontalPassage(wind, pressure, history, hour) {
   };
 }
 
-function scoreNorthFlow(wind, pressure, history, hour) {
+function scoreNorthFlow(wind, pressure, history, _hour) {
   let score = 0;
   let confidence = 0.3;
   const details = [];
@@ -729,7 +722,7 @@ function scoreGlassWindow(wind, pressure, history, hour, config) {
   };
 }
 
-function scorePostFrontal(wind, pressure, history, hour) {
+function scorePostFrontal(wind, pressure, history, _hour) {
   let score = 0;
   let confidence = 0.3;
   const details = [];

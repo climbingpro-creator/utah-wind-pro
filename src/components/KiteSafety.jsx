@@ -92,7 +92,7 @@ export function getKiteSafety(lakeId, windDirection) {
     };
   }
 
-  const { kiting, shoreOrientation } = config;
+  const { kiting } = config;
   const dir = windDirection;
 
   // Normalize direction check for ranges that cross 0°

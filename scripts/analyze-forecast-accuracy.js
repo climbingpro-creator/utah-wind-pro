@@ -23,7 +23,7 @@ try {
       process.env[key.trim()] = valueParts.join('=').trim();
     }
   });
-} catch (e) {
+} catch (_e) {
   console.log('Note: Could not load .env file');
 }
 

@@ -1043,8 +1043,7 @@ export function predictThermal(lakeId, currentConditions) {
     // can shut down smooth surface thermals in the canyon.
     if (lakeId === 'deer-creek') {
       const { min: optMin, max: optMax } = DEER_CREEK_TEMP_DELTA.optimal;
-      const center = (optMin + optMax) / 2; // 10°F
-      
+
       if (delta < 0) {
         elevationScore = 10;
         elevationStatus = 'inverted';

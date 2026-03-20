@@ -105,7 +105,7 @@ function hasRecentlyNotified(type) {
     }
     
     return false;
-  } catch (e) {
+  } catch (_e) {
     return false;
   }
 }

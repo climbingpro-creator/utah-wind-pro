@@ -13,7 +13,7 @@
  * This engine just interprets what that wind means for each activity.
  */
 
-import { generateWindField, isDaylightHour } from './WindFieldEngine';
+import { generateWindField } from './WindFieldEngine';
 import { safeToFixed } from '../utils/safeToFixed';
 
 // ─── ACTIVITY PROFILES ────────────────────────────────────────────

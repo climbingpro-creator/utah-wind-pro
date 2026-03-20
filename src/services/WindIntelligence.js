@@ -17,8 +17,6 @@
  * The truth is in the agreement between independent systems.
  */
 
-import { monitorSwings } from './FrontalTrendPredictor';
-import { predictWindEvents } from './WindEventPredictor';
 import { safeToFixed } from '../utils/safeToFixed';
 
 /**
@@ -39,9 +37,9 @@ export function synthesize({
   correlation,
   boatingPrediction,
   swingAlerts = [],
-  mesoData,
-  lakeId,
-  pressureHistory,
+  mesoData: _mesoData,
+  lakeId: _lakeId,
+  pressureHistory: _pressureHistory,
 }) {
   const thermal = lakeState?.thermalPrediction || {};
   const pressure = lakeState?.pressure || {};

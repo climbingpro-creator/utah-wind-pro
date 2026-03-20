@@ -15,7 +15,7 @@
 
 // ─── KITING QUALITY ──────────────────────────────────────────────
 
-export function scoreKitingSession(wind, conditions = {}) {
+export function scoreKitingSession(wind, _conditions = {}) {
   const { speed = 0, gust, direction } = wind;
   if (speed < 5) return { score: 0, label: 'no-wind', quality: false };
 
@@ -61,7 +61,7 @@ export function scoreKitingSession(wind, conditions = {}) {
 
 // ─── SAILING QUALITY ─────────────────────────────────────────────
 
-export function scoreSailingSession(wind, conditions = {}) {
+export function scoreSailingSession(wind, _conditions = {}) {
   const { speed = 0, gust, direction } = wind;
   if (speed < 5) return { score: 0, label: 'no-wind', quality: false };
 
@@ -151,7 +151,7 @@ export function scoreParaglidingSession(wind, site = 'south', conditions = {}) {
 // ─── FISHING QUALITY ─────────────────────────────────────────────
 
 export function scoreFishingSession(wind, conditions = {}) {
-  const { speed = 0, gust, direction } = wind;
+  const { speed = 0, gust: _gust, direction } = wind;
   const { pressure, pressureChange, moonPhase, waterTemp } = conditions;
 
   let score = 0;

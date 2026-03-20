@@ -131,7 +131,7 @@ export function predictFishing(windData = {}, pressureData = {}, options = {}) {
   const month = now.getMonth() + 1;
 
   const windSpeed = windData?.speed ?? windData?.windSpeed ?? null;
-  const windGust = windData?.gust ?? windData?.windGust ?? null;
+  const _windGust = windData?.gust ?? windData?.windGust ?? null;
   const temperature = windData?.temperature ?? windData?.temp ?? options.temperature ?? null;
 
   const pressure = pressureData?.slcPressure ?? pressureData?.pressure ?? null;

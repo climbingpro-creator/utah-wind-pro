@@ -1,4 +1,4 @@
-import { LAKE_CONFIGS, WIND_DIRECTION_OPTIMAL, getPrimaryRidgeStation, STATION_INFO } from '../config/lakeStations';
+import { LAKE_CONFIGS, WIND_DIRECTION_OPTIMAL, STATION_INFO } from '../config/lakeStations';
 import { safeToFixed } from '../utils/safeToFixed';
 import { predictThermal } from './ThermalPredictor';
 import { learningSystem } from './LearningSystem';

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Wind, Clock, Shield, TrendingUp, TrendingDown, ChevronDown, ChevronUp, Zap, AlertTriangle } from 'lucide-react';
 import { generateSmartForecast, ACTIVITY_PROFILES } from '../services/SmartForecastEngine';
 import { useTheme } from '../context/ThemeContext';
@@ -85,7 +85,6 @@ const SmartTimeline = ({
 
   const displayHours = expanded ? forecast.hours : forecast.hours.slice(0, 12);
   const bestWindow = forecast.windows[0];
-  const rec = forecast.recommendation;
 
   return (
     <div className={`rounded-xl p-4 border space-y-3 ${isDark ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`}>

@@ -97,12 +97,6 @@ export default function AccuracyScoreboard() {
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState(false);
 
-  useEffect(() => {
-    loadData();
-    const interval = setInterval(loadData, 120000);
-    return () => clearInterval(interval);
-  }, []);
-
   const loadData = async () => {
     try {
       const [wResp, aResp] = await Promise.all([
@@ -117,6 +111,12 @@ export default function AccuracyScoreboard() {
     }
     setLoading(false);
   };
+
+  useEffect(() => {
+    loadData();
+    const interval = setInterval(loadData, 120000);
+    return () => clearInterval(interval);
+  }, []);
 
   if (loading) {
     return (

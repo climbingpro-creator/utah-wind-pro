@@ -10,7 +10,6 @@
  * - Compare timing with FPS thermal onset
  */
 
-import fs from 'fs';
 import https from 'https';
 
 const TOKEN = process.env.SYNOPTIC_TOKEN || process.env.VITE_SYNOPTIC_TOKEN;
@@ -83,7 +82,7 @@ function isSEThermal(obs, minSpeed = 8) {
 }
 
 // Canyon wind often comes from the east (down-canyon drainage) or west (up-canyon thermal)
-function isCanyonWind(obs) {
+function _isCanyonWind(obs) {
   if (obs.speed == null || obs.direction == null) return false;
   // East wind (down-canyon) or West wind (up-canyon)
   return (obs.direction >= 60 && obs.direction <= 120) || (obs.direction >= 240 && obs.direction <= 300);
@@ -187,7 +186,7 @@ async function analyze() {
   });
   
   const thermalDays = Array.from(fpsDays.entries())
-    .filter(([_, d]) => d.firstThermalHour !== null && d.peakSpeed >= 10)
+    .filter(([_unused, d]) => d.firstThermalHour !== null && d.peakSpeed >= 10)
     .map(([date, d]) => ({ date, ...d }));
   
   console.log(`\nGood thermal days at FPS: ${thermalDays.length}`);

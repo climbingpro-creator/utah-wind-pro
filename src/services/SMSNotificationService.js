@@ -79,7 +79,7 @@ export function evaluateAlerts(conditions, prefs) {
   if (!prefs?.enabled || !prefs?.phone || isQuietHour(prefs)) return [];
 
   const alerts = [];
-  const { windSpeed, windGust, windDirection, glassScore, thermalProbability, severeAlert } = conditions;
+  const { windSpeed, windGust, windDirection: _windDirection, glassScore, thermalProbability, severeAlert } = conditions;
 
   if (prefs.alerts.windThreshold && windSpeed != null) {
     if (windSpeed >= prefs.thresholds.windMin && windSpeed <= prefs.thresholds.windMax) {

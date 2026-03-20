@@ -132,7 +132,7 @@ const createStationIcon = (type, isRidge, hasData, isEarlyIndicator, isNorthFlow
 };
 
 // Wind arrow component that updates on the map
-function WindArrow({ position, direction, speed, color = '#22d3ee', label }) {
+function WindArrow({ position, direction, speed, color = '#22d3ee', label: _label }) {
   const map = useMap();
   const arrowRef = useRef(null);
   
@@ -164,21 +164,6 @@ function WindArrow({ position, direction, speed, color = '#22d3ee', label }) {
         opacity: 0.9,
       }
     );
-    
-    // Add arrowhead using a decorator pattern
-    const arrowHead = L.polylineDecorator(arrow, {
-      patterns: [
-        {
-          offset: '100%',
-          repeat: 0,
-          symbol: L.Symbol.arrowHead({
-            pixelSize: 12,
-            polygon: false,
-            pathOptions: { color, weight: 3, opacity: 0.9 }
-          })
-        }
-      ]
-    });
     
     // Since polylineDecorator might not be available, use simple approach
     // Just add the line
@@ -217,7 +202,7 @@ function calculateOffset(bearing, distance) {
 }
 
 // Animated wind flow lines
-function WindFlowOverlay({ direction, speed, bounds }) {
+function WindFlowOverlay({ direction, speed, bounds: _bounds }) {
   const map = useMap();
   
   if (direction == null) return null;

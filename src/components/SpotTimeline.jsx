@@ -45,15 +45,7 @@ function speedColor(mph) {
   return 'text-slate-400';
 }
 
-function agreementBadge(ourSpeed, nwsSpeed) {
-  if (ourSpeed == null || nwsSpeed == null) return null;
-  const diff = Math.abs(ourSpeed - nwsSpeed);
-  if (diff <= 3) return { label: 'Agree', color: 'text-green-400', bg: 'bg-green-500/10' };
-  if (diff <= 7) return { label: 'Close', color: 'text-yellow-400', bg: 'bg-yellow-500/10' };
-  return { label: 'Differ', color: 'text-orange-400', bg: 'bg-orange-500/10' };
-}
-
-function HourRow({ hour, nws, isNow, expanded }) {
+function HourRow({ hour, nws, isNow, expanded: _expanded }) {
   const nwsSpeed = nws?.speed;
   const nwsDir = nws?.dir;
   const nwsText = nws?.text;
@@ -97,17 +89,11 @@ function HourRow({ hour, nws, isNow, expanded }) {
   );
 }
 
-export default function SpotTimeline({ locationId = 'utah-lake', activity = 'kiting' }) {
+export default function SpotTimeline({ locationId = 'utah-lake', activity: _activity = 'kiting' }) {
   const [nwsData, setNwsData] = useState(null);
   const [aheadData, setAheadData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState(false);
-
-  useEffect(() => {
-    loadData();
-    const interval = setInterval(loadData, 300000);
-    return () => clearInterval(interval);
-  }, [locationId]);
 
   const loadData = async () => {
     try {
@@ -122,6 +108,12 @@ export default function SpotTimeline({ locationId = 'utah-lake', activity = 'kit
     }
     setLoading(false);
   };
+
+  useEffect(() => {
+    loadData();
+    const interval = setInterval(loadData, 300000);
+    return () => clearInterval(interval);
+  }, [locationId]);
 
   const gridId = LAKE_TO_GRID[locationId] || 'utah-lake';
   const hourly = nwsData?.grids?.[gridId]?.hourly || [];

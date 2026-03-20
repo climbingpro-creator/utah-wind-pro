@@ -115,11 +115,6 @@ export function Dashboard() {
     [selectedActivity, currentWindSpeed, currentWindGust, currentWindDirection, lakeState]
   );
   
-  const glassScore = React.useMemo(
-    () => calculateGlassScore(currentWindSpeed, currentWindGust),
-    [currentWindSpeed, currentWindGust]
-  );
-
   // Boating AI prediction (trained on 4,984 observations)
   const boatingPrediction = React.useMemo(() => {
     try {
@@ -127,7 +122,7 @@ export function Dashboard() {
         { speed: currentWindSpeed, gust: currentWindGust },
         { slcPressure: lakeState?.pressure?.slc, provoPressure: lakeState?.pressure?.provo, gradient: lakeState?.pressure?.gradient },
       );
-    } catch (e) { return null; }
+    } catch (_e) { return null; }
   }, [currentWindSpeed, currentWindGust, lakeState?.pressure]);
 
   // Wind Intelligence — unified signal synthesis
@@ -141,7 +136,7 @@ export function Dashboard() {
         mesoData,
         lakeId: selectedLake,
       });
-    } catch (e) { return null; }
+    } catch (_e) { return null; }
   }, [lakeState, correlation, boatingPrediction, swingAlerts, mesoData, selectedLake]);
 
   // AI Morning Briefing
@@ -158,7 +153,7 @@ export function Dashboard() {
         thermalPrediction: lakeState?.thermalPrediction,
         boatingPrediction,
       });
-    } catch (e) { return null; }
+    } catch (_e) { return null; }
   }, [selectedActivity, currentWindSpeed, currentWindGust, currentWindDirection, lakeState?.thermalPrediction, boatingPrediction]);
 
   // Check for notifications when data updates

@@ -35,7 +35,7 @@ export function analyzeDailyTrends(forecastPeriods) {
   }
 
   // Annotate each period with trend data
-  return forecastPeriods.map((period, index) => {
+  return forecastPeriods.map((period, _index) => {
     if (!period.isDaytime) {
       return { ...period, trendPattern: null };
     }

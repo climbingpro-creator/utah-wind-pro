@@ -159,7 +159,7 @@ export default function WhyExplainer({ locationId = 'utah-lake' }) {
 
       {/* Prediction Cards */}
       <div className="p-3">
-        {display.map((pred, i) => (
+        {display.map((pred) => (
           <PredictionCard
             key={`${pred.lakeId}-${pred.eventType}`}
             prediction={pred}

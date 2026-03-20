@@ -118,11 +118,11 @@ for (const [locId, cfg] of Object.entries(locations)) {
   }
 }
 
-const kslcHourly = model.stations.KSLC?.byHour || {};
-const ccputHourly = model.stations.CCPUT?.byHour || {};
-const utmpkHourly = model.stations.UTMPK?.byHour || {};
-const utcopHourly = model.stations.UTCOP?.byHour || {};
-const skyHourly = model.stations.SKY?.byHour || {};
+const _kslcHourly = model.stations.KSLC?.byHour || {};
+const _ccputHourly = model.stations.CCPUT?.byHour || {};
+const _utmpkHourly = model.stations.UTMPK?.byHour || {};
+const _utcopHourly = model.stations.UTCOP?.byHour || {};
+const _skyHourly = model.stations.SKY?.byHour || {};
 
 model.propagationModel = {
   'KSLC→UTCOP': {

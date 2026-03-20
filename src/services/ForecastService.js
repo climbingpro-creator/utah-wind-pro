@@ -569,7 +569,6 @@ export function correlateForecastWithIndicators(forecastAnalysis, currentIndicat
   if (!forecastAnalysis || !currentIndicators) return correlation;
   
   const forecastPattern = forecastAnalysis.pattern;
-  const forecastDir = forecastAnalysis.windDirection;
   
   // Check if forecast matches current indicator signals
   if (forecastPattern === 'northFlow') {
@@ -610,11 +609,11 @@ export function correlateForecastWithIndicators(forecastAnalysis, currentIndicat
 export function getFullForecast(locationId, conditions = {}) {
   const {
     pressureGradient = 0,
-    eveningTemp,
-    eveningWindSpeed = 0,
+    eveningTemp: _eveningTemp,
+    eveningWindSpeed: _eveningWindSpeed = 0,
     morningTemp,
     morningWindSpeed = 0,
-    morningWindDirection,
+    morningWindDirection: _morningWindDirection,
     currentWindSpeed = 0,
     currentWindDirection,
     thermalDelta = 0,

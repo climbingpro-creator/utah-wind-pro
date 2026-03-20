@@ -149,7 +149,6 @@ async function getHistoricalPatterns() {
         console.log(`\n--- ${station.NAME} (${station.STID}) ---`);
         
         const speeds = station.OBSERVATIONS?.wind_speed_set_1 || [];
-        const dirs = station.OBSERVATIONS?.wind_direction_set_1 || [];
         const times = station.OBSERVATIONS?.date_time || [];
         
         // Find good kiting days (10+ mph for 2+ hours)
@@ -159,7 +158,6 @@ async function getHistoricalPatterns() {
         
         for (let i = 0; i < speeds.length; i++) {
           const speed = speeds[i];
-          const dir = dirs[i];
           const time = new Date(times[i]);
           const dayKey = time.toDateString();
           const hour = time.getHours();

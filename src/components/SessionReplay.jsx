@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Rewind, CheckCircle, XCircle, AlertTriangle, TrendingUp, Clock, ChevronDown, ChevronUp, BarChart3 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { sessionService } from '../services/SessionValidation';
@@ -10,16 +10,11 @@ import { safeToFixed } from '../utils/safeToFixed';
  * Shows accuracy transparently. No other app does this.
  * Builds trust by being honest about when we're right AND wrong.
  */
-export default function SessionReplay({ locationId, activity, lakeState }) {
+export default function SessionReplay({ locationId, activity, lakeState: _lakeState }) {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const [expanded, setExpanded] = useState(false);
   const [replayData, setReplayData] = useState(null);
-
-  // Build yesterday's replay from stored predictions vs actuals
-  useEffect(() => {
-    buildReplay();
-  }, [locationId, activity]);
 
   async function buildReplay() {
     try {
@@ -48,6 +43,11 @@ export default function SessionReplay({ locationId, activity, lakeState }) {
       console.warn('SessionReplay error:', e);
     }
   }
+
+  // Build yesterday's replay from stored predictions vs actuals
+  useEffect(() => {
+    buildReplay();
+  }, [locationId, activity]);
 
   if (!replayData?.hasData) return null;
 
@@ -243,7 +243,7 @@ async function getPredictionAccuracy(dateStr) {
       };
       req.onerror = () => resolve({ predictions: 0, correct: 0, missed: 0, score: null, learned: null });
     });
-  } catch (e) {
+  } catch (_e) {
     return { predictions: 0, correct: 0, missed: 0, score: null, learned: null };
   }
 }

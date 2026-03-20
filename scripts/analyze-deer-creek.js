@@ -248,7 +248,7 @@ function printAnalysis(analysis, monthLabel) {
   });
   
   const goodDays = Array.from(dayMap.entries())
-    .filter(([_, d]) => d.count >= 6) // At least 1 hour of thermal
+    .filter(([_unused, d]) => d.count >= 6) // At least 1 hour of thermal
     .sort((a, b) => b[1].maxSpeed - a[1].maxSpeed);
   
   if (goodDays.length > 0) {
@@ -309,7 +309,7 @@ async function main() {
   
   // Find peak hours
   const peakHours = Object.entries(allHourlyStats)
-    .filter(([h, s]) => s.thermal > 0)
+    .filter(([_h, s]) => s.thermal > 0)
     .sort((a, b) => b[1].thermal - a[1].thermal)
     .slice(0, 5);
   

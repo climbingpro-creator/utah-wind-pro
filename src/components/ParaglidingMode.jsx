@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { Wind, Mountain, Sun, Sunset, AlertTriangle, CheckCircle, XCircle, Clock, Users, Radio, Brain, TrendingUp, TrendingDown, Zap } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { predictParagliding } from '../services/ParaglidingPredictor';
@@ -158,7 +158,7 @@ export function calculateParaglidingScore(site, windSpeed, windDirection, windGu
 }
 
 // Site Card Component
-const SiteCard = ({ site, windData, isLoading }) => {
+const SiteCard = ({ site, windData, isLoading: _isLoading }) => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const config = PARAGLIDING_SITES[site];
@@ -576,11 +576,8 @@ function getCardinalDir(deg) {
 
 // Main Paragliding Dashboard
 const ParaglidingMode = ({ windData, isLoading }) => {
-  const [selectedSite, setSelectedSite] = useState(null);
-  
   const currentHour = new Date().getHours();
-  const recommendedSite = currentHour < 12 ? 'flight-park-south' : 'flight-park-north';
-  
+
   // Get wind data for both sites
   const fpsData = windData?.FPS || windData?.stations?.find(s => s.id === 'FPS');
   const utalpData = windData?.UTALP || windData?.stations?.find(s => s.id === 'UTALP');
@@ -691,7 +688,6 @@ const ParaglidingMode = ({ windData, isLoading }) => {
 
     const southPred = learnedPrediction?.south;
     const northPred = learnedPrediction?.north;
-    const switchLikely = switchPrediction?.likelihood >= 40 || (learnedPrediction?.windSwitch?.likelihood >= 35);
 
     // Currently flyable — show excitement (only if speed is actually above minimum)
     if (northActuallyFlyable && (northScore?.score || 0) >= 60) {

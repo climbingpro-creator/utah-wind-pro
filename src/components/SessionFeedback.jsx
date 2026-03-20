@@ -26,13 +26,13 @@ export default function SessionFeedback({ activity, locationId, locationName, fo
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const [step, setStep] = useState('ask'); // ask → rate → details → done
-  const [didSession, setDidSession] = useState(null);
+  const [, setDidSession] = useState(null);
   const [quality, setQuality] = useState(null);
   const [rating, setRating] = useState(0);
   const [startHour, setStartHour] = useState(null);
   const [endHour, setEndHour] = useState(null);
   const [estimatedSpeed, setEstimatedSpeed] = useState(null);
-  const [submitted, setSubmitted] = useState(false);
+  const [, setSubmitted] = useState(false);
 
   const [smartForecast, setSmartForecast] = useState(forecast);
   const [dismissed, setDismissed] = useState(false);

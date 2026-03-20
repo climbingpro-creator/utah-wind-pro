@@ -210,7 +210,7 @@ export function predictSouth(windData, conditions = {}) {
  * Predict north side (UTALP) flyability.
  * Driven by north flow — KSLC N wind is the primary indicator (30-60 min lead).
  */
-export function predictNorth(windData, conditions = {}) {
+export function predictNorth(windData, _conditions = {}) {
   const w = getWeights();
   const utalp = windData?.UTALP || {};
   const fps = windData?.FPS || {};
@@ -380,8 +380,8 @@ export function predictParagliding(windData, conditions = {}) {
   let switchTimeframe = null;
 
   const hour = new Date().getHours();
-  const kslc = windData?.KSLC || {};
-  const fps = windData?.FPS || {};
+  const _kslc = windData?.KSLC || {};
+  const _fps = windData?.FPS || {};
 
   // Already switched
   if (north.indicators?.fps?.signal === 'switched_north') {

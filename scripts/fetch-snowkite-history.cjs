@@ -182,7 +182,7 @@ async function main() {
         } else {
           process.stdout.write('░');
         }
-      } catch (e) {
+      } catch (_e) {
         process.stdout.write('✗');
       }
       await sleep(300);
@@ -252,7 +252,7 @@ function buildPatternSummary(allData, outDir) {
     for (const h of hours) {
       if (h.speed == null) continue;
       const [datePart, hourPart] = h.hour.split('T');
-      const [year, mon] = datePart.split('-');
+      const [_year, mon] = datePart.split('-');
       const hr = parseInt(hourPart);
       const dow = new Date(datePart).getDay();
 
@@ -294,7 +294,7 @@ function buildPatternSummary(allData, outDir) {
       }
     }
 
-    for (const [mon, mb] of Object.entries(patterns[stid].byMonth)) {
+    for (const [_mon, mb] of Object.entries(patterns[stid].byMonth)) {
       const avg = arr => arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length * 10) / 10 : 0;
       mb.avgSpeed = avg(mb.speeds);
       mb.avgGust = avg(mb.gusts);
@@ -305,19 +305,19 @@ function buildPatternSummary(allData, outDir) {
       delete mb.dirs;
     }
 
-    for (const [hr, hb] of Object.entries(patterns[stid].byHour)) {
+    for (const [_hr, hb] of Object.entries(patterns[stid].byHour)) {
       hb.avgSpeed = hb.speeds.length ? Math.round(hb.speeds.reduce((a, b) => a + b, 0) / hb.speeds.length * 10) / 10 : 0;
       hb.pctStrong = hb.count ? Math.round(hb.strong / hb.count * 100) : 0;
       delete hb.speeds;
     }
 
-    for (const [dow, db] of Object.entries(patterns[stid].byDow)) {
+    for (const [_dow, db] of Object.entries(patterns[stid].byDow)) {
       db.avgSpeed = db.speeds.length ? Math.round(db.speeds.reduce((a, b) => a + b, 0) / db.speeds.length * 10) / 10 : 0;
       db.pctStrong = db.count ? Math.round(db.strong / db.count * 100) : 0;
       delete db.speeds;
     }
 
-    for (const [dir, dr] of Object.entries(patterns[stid].directionRose)) {
+    for (const [_dir, dr] of Object.entries(patterns[stid].directionRose)) {
       dr.avgSpeed = dr.count ? Math.round(dr.totalSpeed / dr.count * 10) / 10 : 0;
       delete dr.totalSpeed;
     }

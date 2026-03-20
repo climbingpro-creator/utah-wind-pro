@@ -19,7 +19,7 @@ function getGreeting() {
   return 'Good evening';
 }
 
-function getActivityVerdict(id, speed, gust, thermalPrediction, boatingPrediction) {
+function getActivityVerdict(id, speed, gust, thermalPrediction, _boatingPrediction) {
   const cfg = ACTIVITY_CONFIGS[id];
   if (!cfg) return null;
   const good = cfg.goodCondition?.(speed, gust);

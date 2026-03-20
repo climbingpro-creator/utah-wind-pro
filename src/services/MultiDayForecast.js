@@ -100,7 +100,7 @@ const PATTERNS = {
 /**
  * Calculate 5-day forecast based on pressure trends
  */
-export function calculate5DayForecast(currentConditions, forecastData = null) {
+export function calculate5DayForecast(currentConditions, _forecastData = null) {
   const now = new Date();
   const month = now.getMonth() + 1;
   const forecasts = [];
@@ -360,10 +360,8 @@ export function getConfidenceDescription(confidence) {
  * Determine if conditions favor SE thermal or North flow
  */
 export function analyzeWindType(conditions) {
-  const { pressure, pressureChange, temperature, pressureGradient } = conditions;
+  const { pressureChange, temperature, pressureGradient } = conditions;
   
-  const seScore = 0;
-  const nScore = 0;
   const analysis = [];
   
   // Pressure change pattern

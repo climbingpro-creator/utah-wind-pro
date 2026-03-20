@@ -164,7 +164,7 @@ function findWindEvents(hours) {
  * Returns warnings for boaters/fishermen based on what's happening
  * at KSLC, KPVU, QSF before it reaches the lake.
  */
-export async function getUpstreamWarnings(lakeId = 'utah-lake') {
+export async function getUpstreamWarnings(_lakeId = 'utah-lake') {
   const warnings = [];
 
   try {
@@ -319,7 +319,7 @@ export async function getUpstreamWarnings(lakeId = 'utah-lake') {
  * Analyze current pressure conditions for boating/fishing safety.
  */
 export function analyzePressureForWater(pressureData = {}) {
-  const { slcPressure, provoPressure, gradient } = pressureData;
+  const { slcPressure, provoPressure: _provoPressure, gradient } = pressureData;
   const alerts = [];
 
   if (gradient != null) {
@@ -382,25 +382,4 @@ function getCardinal(deg) {
   if (deg == null) return '--';
   const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
   return dirs[Math.round(deg / 22.5) % 16];
-}
-
-function formatHour(h) {
-  if (h === 0) return '12 AM';
-  if (h === 12) return '12 PM';
-  return h > 12 ? `${h - 12} PM` : `${h} AM`;
-}
-
-function parseCloudCover(forecast) {
-  if (!forecast) return null;
-  const lower = forecast.toLowerCase();
-  if (lower.includes('sunny') || lower.includes('clear')) return { type: 'clear', label: 'Clear', icon: '☀️' };
-  if (lower.includes('mostly sunny') || lower.includes('mostly clear')) return { type: 'mostly_clear', label: 'Mostly Clear', icon: '🌤️' };
-  if (lower.includes('partly')) return { type: 'partly_cloudy', label: 'Partly Cloudy', icon: '⛅' };
-  if (lower.includes('mostly cloudy')) return { type: 'mostly_cloudy', label: 'Mostly Cloudy', icon: '🌥️' };
-  if (lower.includes('overcast') || lower.includes('cloudy')) return { type: 'overcast', label: 'Overcast', icon: '☁️' };
-  if (lower.includes('rain') || lower.includes('shower')) return { type: 'rain', label: 'Rain', icon: '🌧️' };
-  if (lower.includes('thunderstorm') || lower.includes('t-storm')) return { type: 'storm', label: 'Storms', icon: '⛈️' };
-  if (lower.includes('snow')) return { type: 'snow', label: 'Snow', icon: '🌨️' };
-  if (lower.includes('fog') || lower.includes('haze')) return { type: 'fog', label: 'Fog', icon: '🌫️' };
-  return { type: 'other', label: forecast, icon: '🌤️' };
 }

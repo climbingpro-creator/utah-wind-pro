@@ -205,7 +205,7 @@ async function analyze() {
         if (obs.length > 0) {
           allData[stid] = allData[stid].concat(obs);
         }
-      } catch (e) {
+      } catch (_e) {
         // Station might not exist
       }
     }
@@ -216,7 +216,6 @@ async function analyze() {
   }
   
   // Load Zig Zag historical data for north flow events
-  let zigzagNorthDays = [];
   try {
     const zigzagPath = './src/data/zigzag-historical.json';
     const zigzagData = JSON.parse(fs.readFileSync(zigzagPath, 'utf8'));
@@ -231,7 +230,7 @@ async function analyze() {
         }
       });
     }
-  } catch (e) {
+  } catch (_e) {
     console.log('Could not load Zig Zag data');
   }
   

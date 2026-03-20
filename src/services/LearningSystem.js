@@ -50,7 +50,7 @@ class LearningSystem {
     this._weightListeners.push(callback);
     // Immediately fire with current weights if available
     if (this.currentWeights) {
-      try { callback(this.currentWeights); } catch (e) { /* ignore */ }
+      try { callback(this.currentWeights); } catch (_e) { /* ignore */ }
     }
     return () => {
       this._weightListeners = this._weightListeners.filter(cb => cb !== callback);
@@ -535,7 +535,7 @@ class LearningSystem {
    * Compares user-reported wind quality against our predictions to find
    * systematic biases the station data alone can't reveal.
    */
-  async incorporateUserFeedback(errorAnalysis) {
+  async incorporateUserFeedback(_errorAnalysis) {
     const insights = {
       totalReports: 0,
       avgRating: 0,
@@ -811,7 +811,7 @@ class LearningSystem {
     delete analysis._predictedSpeedCount;
     
     // Calculate probability calibration
-    for (const [bucket, data] of Object.entries(analysis.probabilityBuckets)) {
+    for (const [_bucket, data] of Object.entries(analysis.probabilityBuckets)) {
       data.actualRate = data.predicted > 0 ? data.actualKiteable / data.predicted : 0;
     }
     
@@ -1177,7 +1177,7 @@ class LearningSystem {
           resolve(this.currentWeights);
         };
       });
-    } catch (e) {
+    } catch (_e) {
       this.currentWeights = this._getBootstrapWeights();
       return this.currentWeights;
     }

@@ -192,7 +192,7 @@ async function identifyGoodWindDays(targetStationId) {
       
       // Check if direction matches any enabled wind type
       let matchesWindType = false;
-      for (const [type, config] of Object.entries(TARGET_LOCATION.windTypes)) {
+      for (const [_type, config] of Object.entries(TARGET_LOCATION.windTypes)) {
         if (!config.enabled) continue;
         if (isDirectionInRange(direction, config.direction.min, config.direction.max)) {
           matchesWindType = true;
@@ -334,7 +334,7 @@ async function correlateIndicators(goodDays, candidates) {
         // Rate limit
         await sleep(100);
         
-      } catch (error) {
+      } catch {
         // Skip errors, continue with next day
       }
     }
@@ -383,7 +383,7 @@ async function correlateIndicators(goodDays, candidates) {
 // STEP 4: VALIDATE CORRELATION (SPEED BUCKETS)
 // =============================================================================
 
-async function validateCorrelation(indicatorId, targetId, leadHours) {
+async function _validateCorrelation(indicatorId, targetId, leadHours) {
   console.log('\n' + '='.repeat(70));
   console.log('STEP 4: VALIDATING CORRELATION');
   console.log('='.repeat(70));
@@ -570,7 +570,7 @@ async function main() {
   console.log(`Coordinates: ${TARGET_LOCATION.coordinates.lat}, ${TARGET_LOCATION.coordinates.lng}`);
   
   // Step 1: Search for nearby stations
-  const nearbyStations = await searchNearbyStations();
+  await searchNearbyStations();
   
   // Step 2: Identify good wind days at target
   const goodDays = await identifyGoodWindDays(TARGET_LOCATION.targetStationId);
@@ -579,7 +579,7 @@ async function main() {
   await correlateIndicators(goodDays, CANDIDATE_INDICATORS);
   
   // Step 4: Validate specific correlation (uncomment and fill in to run)
-  // await validateCorrelation('KSLC', 'FPS', 1);
+  // await _validateCorrelation('KSLC', 'FPS', 1);
   
   console.log('\n' + '='.repeat(70));
   console.log('ANALYSIS COMPLETE');
@@ -587,7 +587,7 @@ async function main() {
   console.log('\nNext steps:');
   console.log('1. Review the station list and add promising candidates to CANDIDATE_INDICATORS');
   console.log('2. Re-run to get correlation analysis');
-  console.log('3. For best candidates, uncomment validateCorrelation() call');
+  console.log('3. For best candidates, uncomment _validateCorrelation() call');
   console.log('4. Add validated indicators to src/config/indicatorSystem.js');
 }
 

@@ -29,7 +29,6 @@ export function monitorSwings(history, pressureHistory = null) {
 
   const alerts = [];
   const now = history[history.length - 1];
-  const len = history.length;
 
   // ─── 3-Hour Temperature Drop ────────────────────────────────────
   const threeHourAgo = findClosestToAge(history, 180);

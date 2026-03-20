@@ -1,4 +1,6 @@
-export default function FactorBar({ label, value, detail, icon: Icon }) {
+import { createElement } from 'react';
+
+export default function FactorBar({ label, value, detail, icon }) {
   const getColor = (v) => {
     if (v >= 70) return 'bg-emerald-500';
     if (v >= 50) return 'bg-amber-500';
@@ -10,7 +12,7 @@ export default function FactorBar({ label, value, detail, icon: Icon }) {
     <div className="space-y-1">
       <div className="flex items-center justify-between text-xs">
         <div className="flex items-center gap-1.5 text-[var(--text-tertiary)]">
-          <Icon className="w-3 h-3" />
+          {icon ? createElement(icon, { className: 'w-3 h-3' }) : null}
           <span>{label}</span>
         </div>
         <div className="flex items-center gap-2">

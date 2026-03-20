@@ -765,7 +765,7 @@ function getModelExpSpeed(models, lakeId, eventType) {
   ];
 }
 
-function getModelThermalBoost(models, lakeId, hour, month) {
+function getModelThermalBoost(models, lakeId, hour, _month) {
   const profile = models?.thermalProfiles?.[lakeId];
   if (!profile) return 0;
   const hourData = profile.byHour?.[hour];
@@ -1432,7 +1432,9 @@ async function findAnalogDays(redisCmd, currentFingerprint, lakeId, maxResults =
       if (r.fingerprint && (!lakeId || r.lakeId === lakeId)) {
         records.push(r);
       }
-    } catch {}
+    } catch {
+      // intentionally empty: skip malformed accuracy log entry
+    }
   }
 
   if (records.length === 0) return [];
@@ -1532,7 +1534,9 @@ async function runServerLearningCycle(redisCmd, currentStations, recentSnapshots
         timestamp: now.toISOString(),
         signals: upstreamSignals,
       }), 'EX', '3600');
-    } catch {}
+    } catch {
+      // intentionally empty: Redis write is best-effort for diagnostics
+    }
   }
 
   // 1.6 "Ahead of Forecast" detection: compare upstream vs NWS

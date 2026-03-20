@@ -1,10 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, createElement } from 'react';
 import { Bell, BellOff, Moon, Sun, Clock, Settings, X, Check } from 'lucide-react';
 import { 
   getNotificationPrefs, 
   saveNotificationPrefs, 
   requestPermission,
-  canNotify 
 } from '../services/NotificationService';
 import { UTAH_LAKE_LAUNCHES, OTHER_LAKES } from './LakeSelector';
 
@@ -209,12 +208,12 @@ export function NotificationSettings({ isOpen, onClose }) {
   );
 }
 
-function AlertTypeToggle({ icon: Icon, label, sublabel, enabled, onToggle, threshold, onThresholdChange, disabled }) {
+function AlertTypeToggle({ icon, label, sublabel, enabled, onToggle, threshold, onThresholdChange, disabled }) {
   return (
     <div className={`bg-slate-700/30 rounded-lg p-3 ${disabled ? 'opacity-50' : ''}`}>
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          <Icon className={`w-4 h-4 ${enabled ? 'text-cyan-400' : 'text-slate-500'}`} />
+          {icon ? createElement(icon, { className: `w-4 h-4 ${enabled ? 'text-cyan-400' : 'text-slate-500'}` }) : null}
           <div>
             <p className={`text-sm font-medium ${enabled ? 'text-slate-200' : 'text-slate-400'}`}>{label}</p>
             <p className="text-xs text-slate-500">{sublabel}</p>

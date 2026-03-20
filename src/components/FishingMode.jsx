@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Fish, Moon, Thermometer, Gauge, Clock, MapPin, TrendingUp, TrendingDown, Minus, Sun, Sunset, CloudRain, Wind, Waves, Calendar, Target, AlertTriangle, CheckCircle, Anchor, Navigation, Egg, Mountain, Brain, Zap, Droplets } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { predictFishing } from '../services/FishingPredictor';
-import { getWaterTemp, getAllWaterTemps } from '../services/USGSWaterService';
+import { getAllWaterTemps } from '../services/USGSWaterService';
 import WaterForecast from './WaterForecast';
 import { safeToFixed } from '../utils/safeToFixed';
 
@@ -667,7 +667,7 @@ const LocationCard = ({ location, isSelected, onSelect, theme, waterTemp }) => {
 };
 
 // Main Fishing Mode Component
-const FishingMode = ({ windData, pressureData, isLoading, upstreamData = {} }) => {
+const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamData = {} }) => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const [selectedLocation, setSelectedLocation] = useState('strawberry');
@@ -724,7 +724,7 @@ const FishingMode = ({ windData, pressureData, isLoading, upstreamData = {} }) =
         { speed: windSpeed, temperature: waterTemp },
         { slcPressure: pressure, pressure },
       );
-    } catch (e) { return null; }
+    } catch (_e) { return null; }
   }, [windSpeed, pressure, waterTemp]);
   
   // Build the fishing opportunity banner

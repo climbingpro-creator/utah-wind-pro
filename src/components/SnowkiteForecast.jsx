@@ -1,11 +1,7 @@
 import React, { useMemo } from 'react';
 import { Snowflake, Wind, Mountain, TrendingUp, Clock, ArrowRight, AlertTriangle, Zap } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
-import {
-  predictSnowkiteConditions,
-  getAllSnowkitePredictions,
-  getSnowkiteWindow,
-} from '../services/SnowkitePredictor';
+import { getAllSnowkitePredictions } from '../services/SnowkitePredictor';
 import { safeToFixed } from '../utils/safeToFixed';
 
 const LOCATION_NAMES = {

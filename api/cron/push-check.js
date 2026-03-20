@@ -78,7 +78,7 @@ export default async function handler(req, res) {
   // Evaluate alerts and send pushes
   let sent = 0;
   let cleaned = 0;
-  const results = await Promise.allSettled(userIds.map(async (userId) => {
+  await Promise.allSettled(userIds.map(async (userId) => {
     const userPrefs = prefsMap[userId];
     if (!userPrefs) return;
 

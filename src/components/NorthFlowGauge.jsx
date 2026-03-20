@@ -58,8 +58,6 @@ export function NorthFlowGauge({ gradient, size = 160 }) {
   // Arc parameters (semi-circle from left to right)
   const startAngle = 180;
   const endAngle = 0;
-  const arcLength = 180;
-  
   // Calculate needle position
   // -100 = full left (thermal), +100 = full right (north)
   const needleAngle = 180 - ((normalizedValue + 100) / 200) * 180;

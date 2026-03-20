@@ -193,7 +193,7 @@ async function analyze() {
           if (obs.length > 0) {
             allData[stid] = allData[stid].concat(obs);
           }
-        } catch (e) {
+        } catch (_e) {
           // Station might not exist
         }
       }

@@ -54,7 +54,7 @@ function getHour(date) {
   return date.getHours();
 }
 
-function getDateKey(date) {
+function _getDateKey(date) {
   return date.toISOString().slice(0, 10);
 }
 
@@ -63,7 +63,7 @@ function isNorthWind(dir) {
   return dir >= 315 || dir <= 45;
 }
 
-function isSEWind(dir) {
+function _isSEWind(dir) {
   if (dir == null) return false;
   return dir >= 100 && dir <= 180;
 }
@@ -96,7 +96,7 @@ async function analyze() {
         const data = await fetchData(stid, period.start, period.end);
         const obs = parseObservations(data.STATION?.[0]);
         allData[stid] = allData[stid].concat(obs);
-      } catch (e) {}
+      } catch (_e) {}
     }
     console.log(`${stid}: ${allData[stid].length} observations`);
   }
@@ -187,7 +187,7 @@ async function analyze() {
     '15+': { fpsSpeeds: [], fpsNorthSpeeds: [] },
   };
   
-  kpvuHourly.forEach((kpvuObs, key) => {
+  kpvuHourly.forEach((kpvuObs, _key) => {
     const hour = getHour(kpvuObs.time);
     if (hour < 8 || hour > 16) return;
     
@@ -301,7 +301,7 @@ async function analyze() {
     '15+': { fpsSpeeds: [], fpsNorthSpeeds: [] },
   };
   
-  utalpHourly.forEach((utalpObs, key) => {
+  utalpHourly.forEach((utalpObs, _key) => {
     const hour = getHour(utalpObs.time);
     if (hour < 8 || hour > 16) return;
     
@@ -356,7 +356,7 @@ async function analyze() {
   // Get KSLC data for comparison
   const kslcLeadBuckets = { '8-10': { fpsSpeeds: [] } };
   
-  kslcHourly.forEach((kslcObs, key) => {
+  kslcHourly.forEach((kslcObs, _key) => {
     const hour = getHour(kslcObs.time);
     if (hour < 8 || hour > 16) return;
     if (!isNorthWind(kslcObs.direction)) return;

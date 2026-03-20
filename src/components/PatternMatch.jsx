@@ -79,12 +79,6 @@ export default function PatternMatch() {
   const [loading, setLoading] = useState(true);
   const [showAll, setShowAll] = useState(false);
 
-  useEffect(() => {
-    loadData();
-    const interval = setInterval(loadData, 300000);
-    return () => clearInterval(interval);
-  }, []);
-
   const loadData = async () => {
     try {
       const resp = await fetch(apiUrl(`/api/cron/collect?action=analogs`));
@@ -95,6 +89,12 @@ export default function PatternMatch() {
     }
     setLoading(false);
   };
+
+  useEffect(() => {
+    loadData();
+    const interval = setInterval(loadData, 300000);
+    return () => clearInterval(interval);
+  }, []);
 
   if (loading) {
     return (
@@ -120,7 +120,6 @@ export default function PatternMatch() {
     );
   }
 
-  const topAnalog = analogs[0];
   const display = showAll ? analogs : analogs.slice(0, 2);
 
   return (
