@@ -69,15 +69,27 @@ function getActivityVerdict(id, speed, gust, thermalPrediction, _boatingPredicti
   return { status: 'off', label: 'OFF', reason: 'Not ideal right now', color: 'slate' };
 }
 
-function buildOutlook(windSpeed, windGust, thermalPrediction, boatingPrediction) {
+function buildOutlook(windSpeed, windGust, thermalPrediction, boatingPrediction, fpsStation, utalpStation) {
   const speed = windSpeed ?? 0;
   const gust = windGust ?? speed;
 
-  const cards = ALL_ACTIVITIES.map(id => ({
-    id,
-    cfg: ACTIVITY_CONFIGS[id],
-    verdict: getActivityVerdict(id, speed, gust, thermalPrediction, boatingPrediction),
-  }));
+  const fpsSpeed = fpsStation?.speed ?? fpsStation?.windSpeed;
+  const fpsGust = fpsStation?.gust ?? fpsStation?.windGust;
+  const utalpSpeed = utalpStation?.speed ?? utalpStation?.windSpeed;
+
+  const cards = ALL_ACTIVITIES.map(id => {
+    let useSpeed = speed;
+    let useGust = gust;
+    if (id === 'paragliding') {
+      useSpeed = fpsSpeed ?? utalpSpeed ?? speed;
+      useGust = fpsGust ?? useGust;
+    }
+    return {
+      id,
+      cfg: ACTIVITY_CONFIGS[id],
+      verdict: getActivityVerdict(id, useSpeed, useGust, thermalPrediction, boatingPrediction),
+    };
+  });
 
   const goCount = cards.filter(c => c.verdict?.status === 'go').length;
   const waitCount = cards.filter(c => c.verdict?.status === 'wait').length;
@@ -154,13 +166,13 @@ const STATUS_STYLES_LIGHT = {
   off:     { bg: 'bg-slate-50/50', border: 'border-slate-100', text: 'text-slate-400', badge: 'bg-slate-100 text-slate-400', dot: 'bg-slate-300' },
 };
 
-export default function TodayHero({ windSpeed, windGust, thermalPrediction, boatingPrediction, onSelectActivity }) {
+export default function TodayHero({ windSpeed, windGust, thermalPrediction, boatingPrediction, onSelectActivity, fpsStation, utalpStation }) {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 
   const outlook = useMemo(
-    () => buildOutlook(windSpeed, windGust, thermalPrediction, boatingPrediction),
-    [windSpeed, windGust, thermalPrediction, boatingPrediction]
+    () => buildOutlook(windSpeed, windGust, thermalPrediction, boatingPrediction, fpsStation, utalpStation),
+    [windSpeed, windGust, thermalPrediction, boatingPrediction, fpsStation, utalpStation]
   );
 
   const accent = MOOD_ACCENT[outlook.mood] || MOOD_ACCENT.neutral;

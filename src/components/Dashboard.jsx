@@ -300,6 +300,8 @@ export function Dashboard() {
           thermalPrediction={lakeState?.thermalPrediction}
           boatingPrediction={boatingPrediction}
           onSelectActivity={setSelectedActivity}
+          fpsStation={lakeState?.wind?.stations?.find(s => s.id === 'FPS')}
+          utalpStation={lakeState?.utalpStation || lakeState?.wind?.stations?.find(s => s.id === 'UTALP')}
         />
 
         {/* Wind Intelligence — unified signal convergence */}

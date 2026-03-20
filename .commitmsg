@@ -1,6 +1,8 @@
-Fix Vite dev server failing to load src/main.jsx
+Fix paragliding card showing lake wind instead of FPS station data
 
-The zero-width non-joiner character (U+200C) in the project path
-caused Vite's file resolver to fail during development. Fixed by
-explicitly setting root: __dirname in vite.config.js so the path
-resolves from import.meta.url instead of process.cwd().
+The TodayHero activity cards used the selected lake's wind speed
+for all activities, causing paragliding to show "1 mph TOO LIGHT"
+while the paragliding forecast correctly showed "13 mph 95%".
+
+Now passes FPS and UTALP station data to TodayHero and uses
+those stations specifically for the paragliding verdict card.
