@@ -22,6 +22,7 @@ import { setFishingLearnedWeights } from './FishingPredictor';
 import { setWindFieldLearnedWeights } from './WindFieldEngine';
 import { scoreSessionForActivity } from './ActivityScoring';
 import { predictWindEvents, setWindEventLearnedPatterns, getUpstreamSignals, setStatisticalModels as setWindEventStatisticalModels } from './WindEventPredictor';
+import { setLearnedLags } from './ThermalPropagation';
 import { apiUrl } from '../utils/platform';
 import { safeToFixed } from '../utils/safeToFixed';
 
@@ -44,6 +45,7 @@ class DataCollector {
     this.intervals = [];
     this.lastCollection = {};
     this.recentHistory = {};
+    this.propagationSnapshots = {};
     this.statisticalModels = null;
     this.collectionStats = {
       actualsCollected: 0,
@@ -65,6 +67,12 @@ class DataCollector {
     
     await learningSystem.initialize();
     this.isRunning = true;
+
+    // Load previously learned propagation lags
+    try {
+      const storedLags = JSON.parse(localStorage.getItem('propagation:lags') || 'null');
+      if (storedLags) setLearnedLags(storedLags);
+    } catch (_e) { /* ignore */ }
 
     // Subscribe all predictors to weight updates — closes the learning loop.
     // Filter by activity field so each predictor only receives its own weights.
@@ -553,7 +561,26 @@ class DataCollector {
               direction: lakeState.utalpStation.windDirection,
             } : null,
             temperature: lakeState.pws?.temperature,
+            propagation: lakeState.propagation?.dominant ?? null,
           });
+
+          // Capture propagation snapshot for daily learning
+          if (lakeState.propagation && lakeId.startsWith('utah-lake')) {
+            if (!this.propagationSnapshots[lakeId]) this.propagationSnapshots[lakeId] = [];
+            this.propagationSnapshots[lakeId].push({
+              timestamp: new Date().toISOString(),
+              stationReadings: Object.fromEntries(
+                (lakeState.wind?.stations || []).map(s => [
+                  s.id,
+                  { speed: s.speed, gust: s.gust, direction: s.direction, temp: s.temperature },
+                ])
+              ),
+              propagation: lakeState.propagation,
+            });
+            if (this.propagationSnapshots[lakeId].length > 96) {
+              this.propagationSnapshots[lakeId] = this.propagationSnapshots[lakeId].slice(-96);
+            }
+          }
           
           this.collectionStats.predictionsRecorded++;
         }
@@ -747,6 +774,9 @@ class DataCollector {
     try {
       const newWeights = await learningSystem.learnFromData();
       this.collectionStats.learningCyclesRun++;
+
+      // Feed propagation snapshots into lag learning
+      await this._learnFromPropagation();
       
       this.lastCollection.learning = new Date().toISOString();
       console.log('✅ Learning cycle complete');
@@ -756,6 +786,66 @@ class DataCollector {
     } catch (error) {
       console.error('Error in learning cycle:', error);
       this.collectionStats.lastError = error.message;
+    }
+  }
+
+  /**
+   * Learn from today's propagation snapshots.
+   * Computes actual onset times per station, compares to expected lags,
+   * and stores learned lag adjustments for future predictions.
+   */
+  async _learnFromPropagation() {
+    try {
+      const { validateHistorical, lagAdjustmentsFromValidation } = await import('./ThermalPropagation');
+
+      for (const [lakeId, snaps] of Object.entries(this.propagationSnapshots)) {
+        if (snaps.length < 4) continue;
+
+        const day = {
+          date: new Date().toISOString().slice(0, 10),
+          snapshots: snaps.map(s => ({
+            timestamp: s.timestamp,
+            stations: s.stationReadings,
+          })),
+        };
+
+        const validation = validateHistorical([day]);
+        const lagAdj = lagAdjustmentsFromValidation(validation);
+
+        if (Object.keys(lagAdj).length > 0) {
+          const stored = JSON.parse(localStorage.getItem('propagation:lags') || '{}');
+          for (const [key, val] of Object.entries(lagAdj)) {
+            if (!stored[key]) {
+              stored[key] = val;
+            } else {
+              const w = stored[key].samples / (stored[key].samples + val.samples);
+              stored[key] = {
+                avgLagMinutes: Math.round(stored[key].avgLagMinutes * w + val.avgLagMinutes * (1 - w)),
+                samples: stored[key].samples + val.samples,
+              };
+            }
+          }
+          localStorage.setItem('propagation:lags', JSON.stringify(stored));
+          setLearnedLags(stored);
+          console.log('Propagation lags updated:', stored);
+        }
+
+        // Store daily propagation event for historical reference
+        const events = JSON.parse(localStorage.getItem('propagation:events') || '[]');
+        events.push({
+          date: day.date,
+          lake: lakeId,
+          seThermal: validation.seThermal,
+          northFlow: validation.northFlow,
+          snapshotCount: snaps.length,
+        });
+        if (events.length > 365) events.splice(0, events.length - 365);
+        localStorage.setItem('propagation:events', JSON.stringify(events));
+      }
+
+      this.propagationSnapshots = {};
+    } catch (e) {
+      console.warn('Propagation learning error:', e);
     }
   }
 

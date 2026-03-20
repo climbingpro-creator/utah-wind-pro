@@ -39,6 +39,8 @@ import { safeToFixed } from '../utils/safeToFixed';
 import { synthesize } from '../services/WindIntelligence';
 import SignalConvergence from './SignalConvergence';
 
+const PropagationTracker = lazy(() => import('./PropagationTracker'));
+
 export function Dashboard() {
   const [selectedLake, setSelectedLake] = useState('utah-lake');
   const [showNotificationSettings, setShowNotificationSettings] = useState(false);
@@ -309,6 +311,15 @@ export function Dashboard() {
 
         {/* Wind Intelligence — unified signal convergence */}
         <SignalConvergence intelligence={intelligence} />
+
+        {/* Propagation Tracker — thermal wave through station chain */}
+        {lakeState?.propagation && selectedLake?.startsWith('utah-lake') && (
+          <Suspense fallback={null}>
+            <SafeComponent name="Propagation Tracker">
+              <PropagationTracker propagation={lakeState.propagation} />
+            </SafeComponent>
+          </Suspense>
+        )}
 
         {/* Global Activity Selector */}
         <div className="w-full">

@@ -1,6 +1,7 @@
 import { LAKE_CONFIGS, WIND_DIRECTION_OPTIMAL, STATION_INFO } from '../config/lakeStations';
 import { safeToFixed } from '../utils/safeToFixed';
 import { predictThermal } from './ThermalPredictor';
+import { analyzePropagation } from './ThermalPropagation';
 import { learningSystem } from './LearningSystem';
 
 // Learned weights cache for DataNormalizer's probability calculation
@@ -446,6 +447,53 @@ export class LakeState {
       thermalScore: thermalPrediction?.direction?.score || 50,
       convergenceScore: thermalPrediction?.speed?.score || 50,
     };
+
+    // =========================================
+    // PROPAGATION ANALYSIS
+    // Track thermal wave through station chain
+    // =========================================
+    if (lakeId.startsWith('utah-lake')) {
+      const stationReadings = {};
+      for (const ws of state.wind.stations) {
+        stationReadings[ws.id] = {
+          speed: ws.speed, gust: ws.gust,
+          direction: ws.direction, temp: ws.temperature,
+        };
+      }
+      if (state.earlyIndicator) {
+        stationReadings['QSF'] = {
+          speed: state.earlyIndicator.windSpeed,
+          direction: state.earlyIndicator.windDirection,
+          temp: state.earlyIndicator.temperature,
+        };
+      }
+      if (state.kslcStation) {
+        stationReadings['KSLC'] = {
+          speed: state.kslcStation.windSpeed,
+          direction: state.kslcStation.windDirection,
+          temp: state.kslcStation.temperature,
+        };
+      }
+      if (state.kpvuStation) {
+        stationReadings['KPVU'] = {
+          speed: state.kpvuStation.windSpeed,
+          direction: state.kpvuStation.windDirection,
+          temp: state.kpvuStation.temperature,
+        };
+      }
+      if (state.utalpStation) {
+        stationReadings['UTALP'] = {
+          speed: state.utalpStation.windSpeed,
+          direction: state.utalpStation.windDirection,
+          temp: state.utalpStation.temperature,
+        };
+      }
+
+      state.propagation = analyzePropagation(stationReadings, {
+        lakeId,
+        pressureGradient: state.pressure.gradient,
+      });
+    }
 
     state.alerts = generateAlerts(state);
     state.timestamp = new Date().toISOString();
