@@ -51,7 +51,14 @@ export function InstallPrompt({ onUpdateAvailable }) {
     setShowInstall(false);
   }, []);
 
-  const handleUpdate = useCallback(() => {
+  const handleUpdate = useCallback(async () => {
+    if ('serviceWorker' in navigator) {
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (reg?.waiting) {
+        reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+        return; // controllerchange listener will reload
+      }
+    }
     window.location.reload();
   }, []);
 

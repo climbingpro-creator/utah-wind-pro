@@ -12,6 +12,13 @@ function useSWRegistration() {
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
 
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (refreshing) return;
+      refreshing = true;
+      window.location.reload();
+    });
+
     navigator.serviceWorker.register('/sw.js', { scope: '/' }).then((reg) => {
       reg.addEventListener('updatefound', () => {
         const newWorker = reg.installing;
