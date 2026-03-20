@@ -25,7 +25,8 @@ const https = require('https');
 const fs = require('fs');
 const path = require('path');
 
-const SYNOPTIC_TOKEN = 'a3a1f61831034433b54e754ffeaa151f';
+const SYNOPTIC_TOKEN = process.env.SYNOPTIC_TOKEN || process.env.VITE_SYNOPTIC_TOKEN;
+if (!SYNOPTIC_TOKEN) { console.error('Set SYNOPTIC_TOKEN env var'); process.exit(1); }
 
 const STATIONS = {
   FPS: 'FPS',

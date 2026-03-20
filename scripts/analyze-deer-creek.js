@@ -11,7 +11,8 @@
 
 import https from 'https';
 
-const TOKEN = 'e76aae18d1cf4e9a959d1a8cd15651c7';
+const TOKEN = process.env.SYNOPTIC_TOKEN || process.env.VITE_SYNOPTIC_TOKEN;
+if (!TOKEN) { console.error('Set SYNOPTIC_TOKEN env var'); process.exit(1); }
 const STATIONS = ['DCC', 'SND', 'KHCR'];
 
 // Deer Creek thermal criteria

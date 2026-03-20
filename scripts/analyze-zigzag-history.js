@@ -15,7 +15,8 @@ import fs from 'fs';
 import https from 'https';
 import path from 'path';
 
-const TOKEN = 'e76aae18d1cf4e9a959d1a8cd15651c7';
+const TOKEN = process.env.SYNOPTIC_TOKEN || process.env.VITE_SYNOPTIC_TOKEN;
+if (!TOKEN) { console.error('Set SYNOPTIC_TOKEN env var'); process.exit(1); }
 
 // Wind criteria for kiting/sailing
 const WIND_CRITERIA = {

@@ -19135,7 +19135,7 @@ self.addEventListener('notificationclick', (event) => {
 import fs from 'fs';
 import https from 'https';
 
-const TOKEN = 'e76aae18d1cf4e9a959d1a8cd15651c7';
+const TOKEN = 'REDACTED_SYNOPTIC_TOKEN';
 
 async function fetchData(stid, start, end) {
   return new Promise((resolve, reject) => {
@@ -19473,7 +19473,7 @@ analyze().catch(console.error);
 
 import https from 'https';
 
-const TOKEN = 'e76aae18d1cf4e9a959d1a8cd15651c7';
+const TOKEN = 'REDACTED_SYNOPTIC_TOKEN';
 const STATIONS = ['DCC', 'SND', 'KHCR'];
 
 // Deer Creek thermal criteria
@@ -20367,7 +20367,7 @@ fetchFPS().catch(console.error);
 import fs from 'fs';
 import https from 'https';
 
-const TOKEN = 'e76aae18d1cf4e9a959d1a8cd15651c7';
+const TOKEN = 'REDACTED_SYNOPTIC_TOKEN';
 
 async function fetchData(stid, start, end) {
   return new Promise((resolve, reject) => {
@@ -20842,7 +20842,7 @@ analyze().catch(console.error);
 import fs from 'fs';
 import https from 'https';
 
-const TOKEN = 'e76aae18d1cf4e9a959d1a8cd15651c7';
+const TOKEN = 'REDACTED_SYNOPTIC_TOKEN';
 
 async function searchStations(lat, lng, radius) {
   return new Promise((resolve, reject) => {
@@ -21291,7 +21291,7 @@ analyze().catch(console.error);
 import fs from 'fs';
 import https from 'https';
 
-const TOKEN = 'e76aae18d1cf4e9a959d1a8cd15651c7';
+const TOKEN = 'REDACTED_SYNOPTIC_TOKEN';
 
 async function fetchData(stid, start, end) {
   return new Promise((resolve, reject) => {
@@ -21735,7 +21735,7 @@ analyze().catch(console.error);
 import fs from 'fs';
 import https from 'https';
 
-const TOKEN = 'e76aae18d1cf4e9a959d1a8cd15651c7';
+const TOKEN = 'REDACTED_SYNOPTIC_TOKEN';
 
 async function searchStations(lat, lng, radius) {
   return new Promise((resolve, reject) => {
@@ -22181,7 +22181,7 @@ analyze().catch(console.error);
 import fs from 'fs';
 import https from 'https';
 
-const TOKEN = 'e76aae18d1cf4e9a959d1a8cd15651c7';
+const TOKEN = 'REDACTED_SYNOPTIC_TOKEN';
 
 async function fetchData(stid, start, end) {
   return new Promise((resolve, reject) => {
@@ -22658,7 +22658,7 @@ analyze().catch(console.error);
 import fs from 'fs';
 import https from 'https';
 
-const TOKEN = 'e76aae18d1cf4e9a959d1a8cd15651c7';
+const TOKEN = 'REDACTED_SYNOPTIC_TOKEN';
 
 // Stations to check
 const STATIONS_TO_CHECK = [
@@ -22994,7 +22994,7 @@ analyze().catch(console.error);
 import fs from 'fs';
 import https from 'https';
 
-const TOKEN = 'e76aae18d1cf4e9a959d1a8cd15651c7';
+const TOKEN = 'REDACTED_SYNOPTIC_TOKEN';
 
 async function fetchData(stid, start, end) {
   return new Promise((resolve, reject) => {
@@ -23400,7 +23400,7 @@ if (fs.existsSync(envPath)) {
   });
 }
 
-const SYNOPTIC_TOKEN = process.env.VITE_SYNOPTIC_TOKEN || 'a3a1f61831034433b54e754ffeaa151f';
+const SYNOPTIC_TOKEN = process.env.VITE_SYNOPTIC_TOKEN || 'REDACTED_SYNOPTIC_TOKEN';
 
 function fetchJSON(url) {
   return new Promise((resolve, reject) => {
@@ -24273,7 +24273,7 @@ main().catch(console.error);
 
 import https from 'https';
 
-const TOKEN = 'e76aae18d1cf4e9a959d1a8cd15651c7';
+const TOKEN = 'REDACTED_SYNOPTIC_TOKEN';
 
 // Thermal criteria
 const UTAH_LAKE_THERMAL = {
@@ -24715,7 +24715,7 @@ analyzePatterns().catch(console.error);
 
 import https from 'https';
 
-const TOKEN = 'e76aae18d1cf4e9a959d1a8cd15651c7';
+const TOKEN = 'REDACTED_SYNOPTIC_TOKEN';
 
 // Deer Creek thermal criteria
 const THERMAL_CRITERIA = {
@@ -25385,7 +25385,7 @@ import fs from 'fs';
 import https from 'https';
 import path from 'path';
 
-const TOKEN = 'e76aae18d1cf4e9a959d1a8cd15651c7';
+const TOKEN = 'REDACTED_SYNOPTIC_TOKEN';
 
 // Wind criteria for kiting/sailing
 const WIND_CRITERIA = {
@@ -26898,7 +26898,7 @@ main().catch(console.error);
 import fs from 'fs';
 import https from 'https';
 
-const TOKEN = 'e76aae18d1cf4e9a959d1a8cd15651c7';
+const TOKEN = 'REDACTED_SYNOPTIC_TOKEN';
 
 async function fetchData(stid, start, end) {
   return new Promise((resolve, reject) => {
