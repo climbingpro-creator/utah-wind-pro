@@ -30,6 +30,7 @@ const ParaglidingMode = lazy(() => import('./ParaglidingMode'));
 const FishingMode = lazy(() => import('./FishingMode'));
 const ProUpgrade = lazy(() => import('./ProUpgrade'));
 const SnowkiteForecast = lazy(() => import('./SnowkiteForecast'));
+const AccuracyScoreboard = lazy(() => import('./AccuracyScoreboard'));
 const PhotoSubmit = lazy(() => import('./PhotoSubmit'));
 const SMSAlertSettings = lazy(() => import('./SMSAlertSettings'));
 import { getSMSPrefs, processConditions } from '../services/SMSNotificationService';
@@ -265,10 +266,12 @@ export function Dashboard() {
         >
           ✕
         </button>
-        <div className="p-2 space-y-4">
-          <AccuracyScoreboard />
-          <LearningDashboard />
-        </div>
+        <Suspense fallback={<div className="p-8 text-center text-gray-400">Loading...</div>}>
+          <div className="p-2 space-y-4">
+            <AccuracyScoreboard />
+            <LearningDashboard />
+          </div>
+        </Suspense>
       </Modal>
 
       {showPaywall && <ProUpgrade />}
