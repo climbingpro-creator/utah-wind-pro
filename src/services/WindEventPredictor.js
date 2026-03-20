@@ -784,7 +784,7 @@ function scorePostFrontal(wind, pressure, history, hour) {
 // ─── HELPERS ──────────────────────────────────────────────────
 
 function isNortherly(dir) {
-  return dir >= 300 || dir <= 60;
+  return dir >= 315 || dir <= 45;
 }
 
 function isInRange(dir, min, max) {

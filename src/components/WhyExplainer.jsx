@@ -18,8 +18,12 @@ function PredictionCard({ prediction, expanded, onToggle }) {
   const Icon = config.icon;
   const prob = prediction.probability != null ? Math.round(prediction.probability) : 0;
   const why = prediction.why || [];
-  const speeds = Array.isArray(prediction.expectedSpeed) && prediction.expectedSpeed.length >= 2
-    ? prediction.expectedSpeed : [0, 0];
+  const rawSpeed = prediction.expectedSpeed;
+  const speeds = Array.isArray(rawSpeed) && rawSpeed.length >= 2
+    ? rawSpeed
+    : (rawSpeed && typeof rawSpeed === 'object' && rawSpeed.min != null)
+      ? [rawSpeed.min, rawSpeed.max]
+      : [0, 0];
   const [expMin, expMax] = speeds;
   const isGo = prob >= 50;
 
@@ -92,10 +96,11 @@ export default function WhyExplainer({ locationId = 'utah-lake' }) {
   const loadPredictions = async () => {
     try {
       const resp = await fetch(`${API_BASE}/api/cron/collect?action=predictions&lake=${locationId}`);
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const data = await resp.json();
       setPredictions(data.predictions || []);
     } catch (e) {
-      console.error('WhyExplainer load error:', e);
+      console.warn('WhyExplainer load error:', e.message);
     }
     setLoading(false);
   };
@@ -103,9 +108,9 @@ export default function WhyExplainer({ locationId = 'utah-lake' }) {
   if (loading) {
     return (
       <div className="card p-4 animate-pulse">
-        <div className="h-6 bg-slate-800 rounded w-48 mb-3" />
-        <div className="h-10 bg-slate-800 rounded mb-2" />
-        <div className="h-10 bg-slate-800 rounded mb-2" />
+        <div className="h-6 bg-[var(--border-color)] rounded w-48 mb-3" />
+        <div className="h-10 bg-[var(--border-color)] rounded mb-2" />
+        <div className="h-10 bg-[var(--border-color)] rounded mb-2" />
       </div>
     );
   }

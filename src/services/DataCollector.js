@@ -150,15 +150,30 @@ class DataCollector {
     if (!this.isRunning) return;
 
     try {
+      // Phase 1: Quick startup — sync weights only (fast, 2 API calls)
       await this.syncServerWeights();
+      console.log('Quick startup complete — weights synced');
+
+      // Phase 2: Deferred heavy work — runs after UI is interactive
+      setTimeout(() => {
+        if (!this.isRunning) return;
+        this._deferredCollection();
+      }, 10_000);
+    } catch (e) {
+      console.error('Startup cycle error (non-fatal):', e.message);
+    }
+  }
+
+  async _deferredCollection() {
+    try {
       await this.backfillFromHistory();
       await this.collectActuals();
       await this.recordAndVerify();
       await this.collectIndicatorData();
       await this.triggerLearning();
-      console.log('Full startup cycle complete');
+      console.log('Deferred collection cycle complete');
     } catch (e) {
-      console.error('Startup cycle error (non-fatal):', e.message);
+      console.error('Deferred collection error (non-fatal):', e.message);
     }
   }
 
@@ -290,7 +305,7 @@ class DataCollector {
                     sailing: scoreSessionForActivity('sailing', wind, conditions),
                     paragliding: scoreSessionForActivity('paragliding', wind, conditions),
                     fishing: scoreSessionForActivity('fishing', wind, conditions),
-                    boating: scoreSessionForActivity('boating', wind),
+                    boating: scoreSessionForActivity('boating', wind, conditions),
                   },
                 });
                 serverRecords++;
@@ -347,7 +362,7 @@ class DataCollector {
                 sailing: scoreSessionForActivity('sailing', wind, conditions),
                 paragliding: scoreSessionForActivity('paragliding', wind, conditions),
                 fishing: scoreSessionForActivity('fishing', wind, conditions),
-                boating: scoreSessionForActivity('boating', wind),
+                boating: scoreSessionForActivity('boating', wind, conditions),
               },
             });
             recordCount++;
@@ -406,7 +421,7 @@ class DataCollector {
             sailing: scoreSessionForActivity('sailing', wind, conditions),
             paragliding: scoreSessionForActivity('paragliding', wind, conditions),
             fishing: scoreSessionForActivity('fishing', wind, conditions),
-            boating: scoreSessionForActivity('boating', wind),
+            boating: scoreSessionForActivity('boating', wind, conditions),
           };
 
           await learningSystem.recordActual(lakeId, station.stationId, {
@@ -468,7 +483,7 @@ class DataCollector {
             sailing: scoreSessionForActivity('sailing', pwsWind, pwsConditions),
             paragliding: scoreSessionForActivity('paragliding', pwsWind, pwsConditions),
             fishing: scoreSessionForActivity('fishing', pwsWind, pwsConditions),
-            boating: scoreSessionForActivity('boating', pwsWind),
+            boating: scoreSessionForActivity('boating', pwsWind, pwsConditions),
           },
         });
         this.collectionStats.actualsCollected++;
@@ -556,7 +571,7 @@ class DataCollector {
               await learningSystem.recordPrediction(lakeId, {
                 probability: event.probability,
                 windType: event.id,
-                expectedSpeed: event.expectedSpeed?.max ?? 15,
+                expectedSpeed: Array.isArray(event.expectedSpeed) ? event.expectedSpeed[1] : (event.expectedSpeed?.max ?? 15),
                 expectedDirection: event.expectedDirection?.min,
                 windEventType: event.id,
                 windEventDetails: event.details,

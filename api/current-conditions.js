@@ -57,14 +57,14 @@ export default async function handler(req, res) {
     });
   } catch (err) {
     console.error('[current-conditions]', err);
-    return res.status(502).json({ error: 'Upstream data fetch failed', message: err.message });
+    return res.status(502).json({ error: 'Upstream data fetch failed' });
   }
 }
 
 // ── Synoptic ────────────────────────────────────────────────────────
 
 async function fetchSynoptic(stids) {
-  const token = process.env.VITE_SYNOPTIC_TOKEN || process.env.SYNOPTIC_TOKEN;
+  const token = process.env.SYNOPTIC_TOKEN || process.env.VITE_SYNOPTIC_TOKEN;
   if (!token) throw new Error('SYNOPTIC_TOKEN not configured');
 
   const params = new URLSearchParams({

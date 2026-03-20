@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
-import { MapPin, ChevronDown, ChevronUp, Wind, Trophy, Radio, ExternalLink, AlertTriangle } from 'lucide-react';
+import { MapPin, ChevronDown, ChevronUp, Trophy, Radio, AlertTriangle } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { ACTIVITY_CONFIGS } from './ActivityMode';
 import { LAKE_CONFIGS } from '../config/lakeStations';

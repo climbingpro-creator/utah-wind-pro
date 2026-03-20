@@ -18,7 +18,11 @@ if (fs.existsSync(envPath)) {
   });
 }
 
-const SYNOPTIC_TOKEN = process.env.VITE_SYNOPTIC_TOKEN || 'a3a1f61831034433b54e754ffeaa151f';
+const SYNOPTIC_TOKEN = process.env.VITE_SYNOPTIC_TOKEN || process.env.SYNOPTIC_TOKEN;
+if (!SYNOPTIC_TOKEN) {
+  console.error('SYNOPTIC_TOKEN or VITE_SYNOPTIC_TOKEN must be set in environment');
+  process.exit(1);
+}
 
 function fetchJSON(url) {
   return new Promise((resolve, reject) => {

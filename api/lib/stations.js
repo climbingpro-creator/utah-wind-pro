@@ -52,19 +52,19 @@ export const LAKE_STATIONS = {
   },
   'east-canyon': {
     name: 'East Canyon Reservoir',
-    synoptic: ['KSLC'],
+    synoptic: ['KSLC', 'KHCR', 'UTOLY'],
     primary: 'KSLC',
     hasAmbient: false,
   },
   'echo': {
     name: 'Echo Reservoir',
-    synoptic: ['KSLC'],
+    synoptic: ['KSLC', 'KHCR', 'KVEL'],
     primary: 'KSLC',
     hasAmbient: false,
   },
   'rockport': {
     name: 'Rockport Reservoir',
-    synoptic: ['KSLC'],
+    synoptic: ['KSLC', 'KHCR', 'KVEL'],
     primary: 'KSLC',
     hasAmbient: false,
   },
@@ -222,13 +222,13 @@ export const LAKE_STATIONS = {
   // ── Kite spots ──
   'rush-lake': {
     name: 'Rush Lake',
-    synoptic: ['KSLC'],
+    synoptic: ['KSLC', 'KPVU', 'UTOLY'],
     primary: 'KSLC',
     hasAmbient: false,
   },
   'grantsville': {
     name: 'Grantsville',
-    synoptic: ['KSLC'],
+    synoptic: ['KSLC', 'KPVU', 'UTOLY'],
     primary: 'KSLC',
     hasAmbient: false,
   },
@@ -259,15 +259,15 @@ export const LAKE_STATIONS = {
   },
   'stockton-bar': {
     name: 'Stockton Bar',
-    synoptic: ['KSLC'],
+    synoptic: ['KSLC', 'KPVU', 'UTOLY'],
     primary: 'KSLC',
     hasAmbient: false,
   },
   // ── Snowkite spots ──
   'powder-mountain': {
     name: 'Powder Mountain',
-    synoptic: ['KSLC'],
-    primary: 'KSLC',
+    synoptic: ['KSLC', 'KOGD', 'KLGU'],
+    primary: 'KOGD',
     hasAmbient: false,
   },
   'monte-cristo': {

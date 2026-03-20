@@ -27,6 +27,10 @@ const NWS_GRIDS = {
   'bear-lake':   { lat: 41.95, lng: -111.30 },
   'stgeorge':    { lat: 37.10, lng: -113.40 },
   'vernal':      { lat: 40.45, lng: -109.52 },
+  'strawberry':  { lat: 40.17, lng: -111.13 },
+  'scofield':    { lat: 39.77, lng: -111.14 },
+  'central-mtns': { lat: 38.70, lng: -111.90 },
+  'panguitch':   { lat: 37.82, lng: -112.44 },
 };
 
 // Map every lake/spot to its nearest NWS grid zone.
@@ -49,13 +53,13 @@ const LAKE_TO_GRID = {
   'east-canyon':         'deer-creek',
   'echo':                'deer-creek',
   'rockport':            'deer-creek',
-  'strawberry-ladders':  'deer-creek',
-  'strawberry-bay':      'deer-creek',
-  'strawberry-soldier':  'deer-creek',
-  'strawberry-view':     'deer-creek',
-  'strawberry-river':    'deer-creek',
-  'skyline-drive':       'deer-creek',
-  'scofield':            'deer-creek',
+  'strawberry-ladders':  'strawberry',
+  'strawberry-bay':      'strawberry',
+  'strawberry-soldier':  'strawberry',
+  'strawberry-view':     'strawberry',
+  'strawberry-river':    'strawberry',
+  'skyline-drive':       'scofield',
+  'scofield':            'scofield',
   'willard-bay':         'willard-bay',
   'pineview':            'willard-bay',
   'hyrum':               'willard-bay',
@@ -65,11 +69,11 @@ const LAKE_TO_GRID = {
   'sand-hollow':         'stgeorge',
   'quail-creek':         'stgeorge',
   'lake-powell':         'stgeorge',
-  'otter-creek':         'stgeorge',
-  'fish-lake':           'stgeorge',
-  'minersville':         'stgeorge',
-  'piute':               'stgeorge',
-  'panguitch':           'stgeorge',
+  'otter-creek':         'central-mtns',
+  'fish-lake':           'central-mtns',
+  'minersville':         'panguitch',
+  'piute':               'panguitch',
+  'panguitch':           'panguitch',
   'starvation':          'vernal',
   'steinaker':           'vernal',
   'red-fleet':           'vernal',
@@ -212,9 +216,14 @@ function getNWSForLake(nwsData, lakeId, mountainHour) {
   // Find the hourly period matching the current Mountain Time hour
   const current = grid.hourly?.find(p => p.localHour === mountainHour) || grid.hourly?.[0] || null;
 
-  // Next 12 hours of hourly data
-  const currentIdx = grid.hourly?.findIndex(p => p.localHour === mountainHour) ?? 0;
-  const next12 = grid.hourly?.slice(Math.max(0, currentIdx), currentIdx + 12) || [];
+  // Next 12 hours of hourly data — handle findIndex returning -1
+  let currentIdx = grid.hourly?.findIndex(p => p.localHour === mountainHour) ?? -1;
+  if (currentIdx < 0) {
+    // No exact match: find the first future period (closest hour >= current)
+    currentIdx = grid.hourly?.findIndex(p => p.localHour >= mountainHour) ?? -1;
+    if (currentIdx < 0) currentIdx = 0;
+  }
+  const next12 = grid.hourly?.slice(currentIdx, currentIdx + 12) || [];
 
   // Scan the next 12 hours + 7-day text for weather keywords
   const keywords = {};

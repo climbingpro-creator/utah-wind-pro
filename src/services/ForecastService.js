@@ -17,11 +17,46 @@ const NWS_BASE_URL = 'https://api.weather.gov';
 const USER_AGENT = 'UtahWindPro/1.0 (kite-forecast-app)';
 
 // Forecast grid points for our locations
+const NWS_HEADERS = {
+  'Accept': 'application/geo+json',
+  'User-Agent': USER_AGENT,
+};
+
 const FORECAST_POINTS = {
   'utah-lake': { lat: 40.30, lng: -111.88 },
   'deer-creek': { lat: 40.48, lng: -111.50 },
   'willard-bay': { lat: 41.38, lng: -112.07 },
+  'bear-lake': { lat: 41.95, lng: -111.30 },
+  'strawberry': { lat: 40.17, lng: -111.13 },
+  'sand-hollow': { lat: 37.10, lng: -113.40 },
+  'flaming-gorge': { lat: 40.91, lng: -109.42 },
+  'scofield': { lat: 39.77, lng: -111.14 },
+  'vernal': { lat: 40.45, lng: -109.52 },
+  'panguitch': { lat: 37.82, lng: -112.44 },
 };
+
+const LOCATION_TO_FORECAST_KEY = {
+  'utah-lake-lincoln': 'utah-lake', 'utah-lake-sandy': 'utah-lake',
+  'utah-lake-vineyard': 'utah-lake', 'utah-lake-zigzag': 'utah-lake',
+  'utah-lake-mm19': 'utah-lake', 'potm-south': 'utah-lake', 'potm-north': 'utah-lake',
+  'rush-lake': 'utah-lake', 'grantsville': 'utah-lake', 'stockton-bar': 'utah-lake',
+  'inspo': 'utah-lake', 'west-mountain': 'utah-lake', 'yuba': 'utah-lake',
+  'jordanelle': 'deer-creek', 'east-canyon': 'deer-creek', 'echo': 'deer-creek', 'rockport': 'deer-creek',
+  'pineview': 'willard-bay', 'hyrum': 'willard-bay', 'powder-mountain': 'willard-bay', 'monte-cristo': 'willard-bay',
+  'strawberry-ladders': 'strawberry', 'strawberry-bay': 'strawberry', 'strawberry-soldier': 'strawberry',
+  'strawberry-view': 'strawberry', 'strawberry-river': 'strawberry',
+  'skyline-drive': 'scofield', 'scofield': 'scofield',
+  'starvation': 'vernal', 'steinaker': 'vernal', 'red-fleet': 'vernal',
+  'otter-creek': 'panguitch', 'fish-lake': 'panguitch', 'minersville': 'panguitch',
+  'piute': 'panguitch', 'panguitch': 'panguitch',
+  'quail-creek': 'sand-hollow', 'lake-powell': 'sand-hollow',
+};
+
+function resolveForecastKey(locationId) {
+  if (LOCATION_TO_FORECAST_KEY[locationId]) return LOCATION_TO_FORECAST_KEY[locationId];
+  if (FORECAST_POINTS[locationId]) return locationId;
+  return 'utah-lake';
+}
 
 // Weather pattern keywords and their wind implications
 const WEATHER_PATTERNS = {
@@ -94,7 +129,7 @@ export const FORECAST_STAGES = {
 async function getForecastGrid(lat, lng) {
   try {
     const response = await axios.get(`${NWS_BASE_URL}/points/${lat},${lng}`, {
-      headers: { 'Accept': 'application/geo+json' },
+      headers: NWS_HEADERS,
       timeout: 10000,
     });
     
@@ -119,7 +154,7 @@ export async function getActiveAlerts() {
   try {
     const response = await axios.get(`${NWS_BASE_URL}/alerts/active`, {
       params: { area: 'UT' },
-      headers: { 'Accept': 'application/geo+json' },
+      headers: NWS_HEADERS,
       timeout: 10000,
     });
     
@@ -199,14 +234,14 @@ function parseWindFromAlert(description) {
  * Fetch 7-day forecast for a location
  */
 export async function get7DayForecast(locationId = 'utah-lake') {
-  const point = FORECAST_POINTS[locationId] || FORECAST_POINTS['utah-lake'];
+  const point = FORECAST_POINTS[resolveForecastKey(locationId)];
   
   try {
     const grid = await getForecastGrid(point.lat, point.lng);
     if (!grid) return null;
     
     const response = await axios.get(grid.forecastUrl, {
-      headers: { 'Accept': 'application/geo+json' },
+      headers: NWS_HEADERS,
       timeout: 10000,
     });
     
@@ -236,14 +271,14 @@ export async function get7DayForecast(locationId = 'utah-lake') {
  * Fetch hourly forecast for detailed wind prediction
  */
 export async function getHourlyForecast(locationId = 'utah-lake') {
-  const point = FORECAST_POINTS[locationId] || FORECAST_POINTS['utah-lake'];
+  const point = FORECAST_POINTS[resolveForecastKey(locationId)];
   
   try {
     const grid = await getForecastGrid(point.lat, point.lng);
     if (!grid) return null;
     
     const response = await axios.get(grid.forecastHourlyUrl, {
-      headers: { 'Accept': 'application/geo+json' },
+      headers: NWS_HEADERS,
       timeout: 10000,
     });
     

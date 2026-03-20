@@ -77,14 +77,14 @@ export default async function handler(req, res) {
     return res.status(200).json(response);
   } catch (err) {
     console.error('[thermal-forecast]', err);
-    return res.status(502).json({ error: 'Forecast computation failed', message: err.message });
+    return res.status(502).json({ error: 'Forecast computation failed' });
   }
 }
 
 // ── Synoptic helpers ────────────────────────────────────────────────
 
 async function fetchSynopticLatest(stids) {
-  const token = process.env.VITE_SYNOPTIC_TOKEN || process.env.SYNOPTIC_TOKEN;
+  const token = process.env.SYNOPTIC_TOKEN || process.env.VITE_SYNOPTIC_TOKEN;
   const params = new URLSearchParams({
     token, stid: stids.join(','),
     vars: 'wind_speed,wind_direction,wind_gust,air_temp,altimeter,sea_level_pressure',
@@ -96,7 +96,7 @@ async function fetchSynopticLatest(stids) {
 }
 
 async function fetchSynopticHistory(stids, hours) {
-  const token = process.env.VITE_SYNOPTIC_TOKEN || process.env.SYNOPTIC_TOKEN;
+  const token = process.env.SYNOPTIC_TOKEN || process.env.VITE_SYNOPTIC_TOKEN;
   const end = new Date();
   const start = new Date(end.getTime() - hours * 3600000);
   const fmt = d => d.toISOString().replace(/[-:]/g, '').split('.')[0];

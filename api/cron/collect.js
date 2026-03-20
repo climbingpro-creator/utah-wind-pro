@@ -130,7 +130,17 @@ export default async function handler(req, res) {
   const action = req.query?.action;
   const READ_ACTIONS = ['sync', 'weights', 'predictions', 'upstream', 'nws', 'ahead', 'analogs', 'models'];
 
-  if (!READ_ACTIONS.includes(action)) {
+  // Expensive manual-trigger actions ALWAYS require auth (even if CRON_SECRET isn't set)
+  const PROTECTED_ACTIONS = ['backfill', 'build-models'];
+  if (PROTECTED_ACTIONS.includes(action)) {
+    const authHeader = req.headers['authorization'];
+    const cronSecret = process.env.CRON_SECRET;
+    if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+  }
+  // Regular cron: uses CRON_SECRET if configured, but still works without it
+  if (!READ_ACTIONS.includes(action) && !PROTECTED_ACTIONS.includes(action)) {
     const authHeader = req.headers['authorization'];
     const cronSecret = process.env.CRON_SECRET;
     if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
@@ -224,6 +234,24 @@ export default async function handler(req, res) {
         console.error('Learning cycle error (non-fatal):', learnErr.message);
         learningResult = { error: learnErr.message };
       }
+
+      // Auto-rebuild statistical models weekly (Sunday 3 AM Mountain ≈ 10 AM UTC)
+      try {
+        const utcHour = now.getUTCHours();
+        const utcDay = now.getUTCDay(); // 0 = Sunday
+        if (utcDay === 0 && utcHour === 10) {
+          const modelsRaw = await redisCommand('GET', 'models:statistical');
+          const models = modelsRaw ? JSON.parse(modelsRaw) : null;
+          const modelAge = models?.builtAt ? Date.now() - new Date(models.builtAt).getTime() : Infinity;
+          if (modelAge > 6 * 24 * 3600 * 1000) {
+            console.log('Auto-rebuilding statistical models (weekly schedule)');
+            const { buildStatisticalModels: rebuildModels } = await import('../lib/historicalAnalysis.js');
+            await rebuildModels(redisCommand, env.synopticToken, { days: 30 });
+          }
+        }
+      } catch (modelErr) {
+        console.error('Auto model rebuild error (non-fatal):', modelErr.message);
+      }
     }
 
     // Diagnostic: verify we're actually getting pressure data
@@ -275,14 +303,14 @@ async function handlePredictions(req, res) {
   }
   try {
     const lakeId = req.query?.lake || null;
-    const keys = await redisCommand('LRANGE', 'pred:index', '0', '3');
+    const keys = await redisCommand('LRANGE', 'pred:index', '0', '11');
     if (!keys || keys.length === 0) {
       return res.status(200).json({ predictions: [], message: 'No predictions yet' });
     }
 
     let allPredictions = [];
-    for (const key of keys) {
-      const raw = await redisCommand('GET', key);
+    const values = await redisMGet(keys);
+    for (const raw of values) {
       if (!raw) continue;
       try {
         const record = JSON.parse(raw);

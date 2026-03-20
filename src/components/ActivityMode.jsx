@@ -183,7 +183,7 @@ function getActivityStatus(activityId, windSpeed, windGust) {
 const ActivityMode = ({ selectedActivity, onActivityChange, windSpeed, windGust, fpsStation }) => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
-  const activities = ['kiting', 'snowkiting', 'sailing', 'fishing', 'boating', 'paddling', 'paragliding'];
+  const activities = ['kiting', 'windsurfing', 'snowkiting', 'sailing', 'fishing', 'boating', 'paddling', 'paragliding'];
 
   const fpsSpeed = fpsStation?.speed ?? fpsStation?.windSpeed;
   const fpsGust = fpsStation?.gust ?? fpsStation?.windGust;

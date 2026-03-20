@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import * as React from 'react';
-import { RefreshCw, Clock, Wifi, WifiOff, TrendingUp, Gauge, Wind, Thermometer, ArrowUpDown, MapPin, Navigation, Anchor, Bell, Brain, AlertTriangle, Lightbulb, Ship } from 'lucide-react';
+import { RefreshCw, Wifi, WifiOff, TrendingUp, Wind, Thermometer, ArrowUpDown, MapPin, Navigation, Bell, Brain, AlertTriangle, Lightbulb, Ship } from 'lucide-react';
 import { ConfidenceGauge } from './ConfidenceGauge';
 import { WindVector } from './WindVector';
 import { BustAlert } from './BustAlert';
@@ -69,6 +69,7 @@ export function Dashboard() {
   const [selectedActivity, setSelectedActivity] = useState('kiting');
   const [showPhotoSubmit, setShowPhotoSubmit] = useState(false);
   const [showSMSSettings, setShowSMSSettings] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
   const { lakeState, history, status, isLoading, error, lastUpdated, refresh } = useLakeData(selectedLake);
   const { theme } = useTheme();
   const { isPro, trialActive, trialDaysLeft, openPaywall, showPaywall } = useAuth();
@@ -537,6 +538,108 @@ export function Dashboard() {
           <LakeSelector selectedLake={selectedLake} onSelectLake={setSelectedLake} stationReadings={lakeState?.wind?.stations} activity={selectedActivity} />
         )}
 
+        {/* Live Wind Vectors — station readings at a glance */}
+        <div>
+          <h2 className="text-base font-bold text-[var(--text-primary)] mb-4 flex items-center gap-2">
+            <Wind className="w-4 h-4 text-sky-500" />
+            Live Wind Vectors
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {lakeState?.wind?.stations?.map((station, index) => (
+              <WindVector
+                key={station.id || index}
+                station={station}
+                history={history[station.id]}
+                isPersonalStation={station.isPWS}
+              />
+            ))}
+
+            {isLoading && !lakeState?.wind?.stations?.length && (
+              <>
+                {[1, 2, 3, 4].map((i) => (
+                  <div 
+                    key={i}
+                    className="bg-[var(--bg-card)] rounded-xl p-4 border border-[var(--border-color)] animate-pulse"
+                  >
+                    <div className="h-5 bg-[var(--border-color)] rounded w-2/3 mb-4" />
+                    <div className="flex gap-4">
+                      <div className="w-16 h-16 bg-[var(--border-color)] rounded-full" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-6 bg-[var(--border-color)] rounded w-1/2" />
+                        <div className="h-4 bg-[var(--border-color)] rounded w-3/4" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* 3-Step Prediction Model — gradient, elevation, ground truth */}
+        {selectedActivity !== 'paragliding' && (
+        <div className="card">
+          <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-4">3-Step Prediction Model</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+            <ModelStepCard
+              step="A"
+              label="Gradient Check"
+              description={<>ΔP = P<sub>SLC</sub> - P<sub>Provo</sub></>}
+              value={lakeState?.pressure?.gradient != null 
+                ? `${lakeState.pressure.gradient > 0 ? '+' : ''}${lakeState.pressure.gradient.toFixed(2)} mb`
+                : '-- mb'
+              }
+              explanation={lakeState?.pressure?.isBusted 
+                ? 'North flow dominates - thermal busted'
+                : lakeState?.pressure?.gradient != null 
+                  ? 'Gradient favorable for thermal'
+                  : 'Waiting for data...'}
+              isGood={lakeState?.pressure?.gradient != null && lakeState.pressure.gradient < 0}
+              isBad={lakeState?.pressure?.isBusted}
+              threshold="Bust if > 2.0 mb"
+            />
+
+            <ModelStepCard
+              step="B"
+              label="Elevation Delta"
+              description={<>ΔT = T<sub>Shore</sub> - T<sub>Ridge</sub></>}
+              value={lakeState?.thermal?.delta != null 
+                ? `${lakeState.thermal.delta > 0 ? '+' : ''}${lakeState.thermal.delta}°F`
+                : '--°F'
+              }
+              explanation={lakeState?.thermal?.pumpActive 
+                ? 'Thermal Pump ACTIVE!'
+                : lakeState?.thermal?.inversionTrapped
+                  ? 'Inversion - air trapped'
+                  : lakeState?.thermal?.delta != null
+                    ? 'Thermal building'
+                    : 'Waiting for data...'}
+              isGood={lakeState?.thermal?.pumpActive}
+              isBad={lakeState?.thermal?.inversionTrapped}
+              threshold="Pump active if > 10°F"
+            />
+
+            <ModelStepCard
+              step="C"
+              label="Ground Truth"
+              description={<>Your PWS at {lakeState?.pws?.name || 'Saratoga'}</>}
+              value={lakeState?.pws?.windSpeed != null 
+                ? `${lakeState.pws.windSpeed.toFixed(1)} mph ${lakeState.pws.windDirection}°`
+                : '-- mph'
+              }
+              explanation={lakeState?.thermalPrediction?.direction?.status === 'optimal'
+                ? 'Direction OPTIMAL for thermal'
+                : lakeState?.thermalPrediction?.direction?.status === 'wrong'
+                  ? 'Wrong direction - no thermal'
+                  : 'Verifying thermal arrival...'}
+              isGood={lakeState?.thermalPrediction?.direction?.status === 'optimal'}
+              isBad={lakeState?.thermalPrediction?.direction?.status === 'wrong'}
+              threshold="Verifies exact arrival"
+            />
+          </div>
+        </div>
+        )}
+
         {/* Activity Score Banner — forecast-aware, shows best opportunity */}
         {activityScore && !activityConfig?.specialMode && (() => {
           const score = activityScore.score;
@@ -736,7 +839,33 @@ export function Dashboard() {
           </ProGate>
         ) : (
         <>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        {/* Expand/Collapse toggle for detailed panels */}
+        <button
+          onClick={() => setShowDetails(!showDetails)}
+          className={`w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-semibold transition-all border ${
+            showDetails
+              ? 'bg-sky-500/10 border-sky-500/20 text-sky-500'
+              : theme === 'dark'
+                ? 'bg-[var(--bg-card)] border-[var(--border-color)] text-[var(--text-secondary)] hover:border-sky-500/30 hover:text-sky-400'
+                : 'bg-white border-slate-200 text-slate-500 hover:border-sky-300 hover:text-sky-600'
+          }`}
+        >
+          {showDetails ? (
+            <>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
+              Hide Detailed Panels
+            </>
+          ) : (
+            <>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+              Show Gauges, Forecasts & Analysis
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-sky-500/10 text-sky-500">PRO</span>
+            </>
+          )}
+        </button>
+
+        {showDetails && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 animate-fade-in">
           {/* Left Column - Gauges */}
           <div className="lg:col-span-1 space-y-4">
             {activityConfig?.wantsWind ? (
@@ -745,7 +874,21 @@ export function Dashboard() {
                   {selectedActivity === 'sailing' ? 'Racing Wind Probability' : 'Thermal Probability'}
                 </span>
                 <ConfidenceGauge value={lakeState?.probability || 0} size={180} />
-                
+
+                {(() => {
+                  const stats = lakeState?.thermalPrediction?.statistics;
+                  const hasData = stats?.sampleSize > 0;
+                  return (
+                    <div className={`mt-2 text-[10px] px-2 py-1 rounded-full font-semibold ${
+                      hasData
+                        ? 'bg-emerald-500/10 text-emerald-500'
+                        : 'bg-amber-500/10 text-amber-500'
+                    }`}>
+                      {hasData ? `Based on ${stats.sampleSize.toLocaleString()} days of data` : 'Estimated — limited local data'}
+                    </div>
+                  );
+                })()}
+
                 {status && (
                   <div className={`mt-3 px-4 py-2 rounded-lg text-center ${status.bgColor}`}>
                     <p className={`font-medium text-sm ${status.color}`}>
@@ -1165,108 +1308,11 @@ export function Dashboard() {
             />
           </div>
         </div>
+        )}
 
-        <div>
-          <h2 className="text-base font-bold text-[var(--text-primary)] mb-4 flex items-center gap-2">
-            <Wind className="w-4 h-4 text-sky-500" />
-            Live Wind Vectors
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            {lakeState?.wind?.stations?.map((station, index) => (
-              <WindVector
-                key={station.id || index}
-                station={station}
-                history={history[station.id]}
-                isPersonalStation={station.isPWS}
-              />
-            ))}
-
-            {isLoading && !lakeState?.wind?.stations?.length && (
-              <>
-                {[1, 2, 3, 4].map((i) => (
-                  <div 
-                    key={i}
-                    className="bg-slate-800/50 rounded-xl p-4 border border-slate-700 animate-pulse"
-                  >
-                    <div className="h-5 bg-slate-700 rounded w-2/3 mb-4" />
-                    <div className="flex gap-4">
-                      <div className="w-16 h-16 bg-slate-700 rounded-full" />
-                      <div className="flex-1 space-y-2">
-                        <div className="h-6 bg-slate-700 rounded w-1/2" />
-                        <div className="h-4 bg-slate-700 rounded w-3/4" />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </>
-            )}
-          </div>
-        </div>
         </>
         )}
 
-        {selectedActivity !== 'paragliding' && (
-        <div className="card">
-          <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-4">3-Step Prediction Model</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
-            <ModelStepCard
-              step="A"
-              label="Gradient Check"
-              description={<>ΔP = P<sub>SLC</sub> - P<sub>Provo</sub></>}
-              value={lakeState?.pressure?.gradient != null 
-                ? `${lakeState.pressure.gradient > 0 ? '+' : ''}${lakeState.pressure.gradient.toFixed(2)} mb`
-                : '-- mb'
-              }
-              explanation={lakeState?.pressure?.isBusted 
-                ? 'North flow dominates - thermal busted'
-                : lakeState?.pressure?.gradient != null 
-                  ? 'Gradient favorable for thermal'
-                  : 'Waiting for data...'}
-              isGood={lakeState?.pressure?.gradient != null && lakeState.pressure.gradient < 0}
-              isBad={lakeState?.pressure?.isBusted}
-              threshold="Bust if > 2.0 mb"
-            />
-
-            <ModelStepCard
-              step="B"
-              label="Elevation Delta"
-              description={<>ΔT = T<sub>Shore</sub> - T<sub>Ridge</sub></>}
-              value={lakeState?.thermal?.delta != null 
-                ? `${lakeState.thermal.delta > 0 ? '+' : ''}${lakeState.thermal.delta}°F`
-                : '--°F'
-              }
-              explanation={lakeState?.thermal?.pumpActive 
-                ? 'Thermal Pump ACTIVE!'
-                : lakeState?.thermal?.inversionTrapped
-                  ? 'Inversion - air trapped'
-                  : lakeState?.thermal?.delta != null
-                    ? 'Thermal building'
-                    : 'Waiting for data...'}
-              isGood={lakeState?.thermal?.pumpActive}
-              isBad={lakeState?.thermal?.inversionTrapped}
-              threshold="Pump active if > 10°F"
-            />
-
-            <ModelStepCard
-              step="C"
-              label="Ground Truth"
-              description={<>Your PWS at {lakeState?.pws?.name || 'Saratoga'}</>}
-              value={lakeState?.pws?.windSpeed != null 
-                ? `${lakeState.pws.windSpeed.toFixed(1)} mph ${lakeState.pws.windDirection}°`
-                : '-- mph'
-              }
-              explanation={lakeState?.thermalPrediction?.direction?.status === 'optimal'
-                ? 'Direction OPTIMAL for thermal'
-                : lakeState?.thermalPrediction?.direction?.status === 'wrong'
-                  ? 'Wrong direction - no thermal'
-                  : 'Verifying thermal arrival...'}
-              isGood={lakeState?.thermalPrediction?.direction?.status === 'optimal'}
-              isBad={lakeState?.thermalPrediction?.direction?.status === 'wrong'}
-              threshold="Verifies exact arrival"
-            />
-          </div>
-        </div>
-        )}
       </main>
 
       <footer className="border-t border-[var(--border-color)] mt-12">

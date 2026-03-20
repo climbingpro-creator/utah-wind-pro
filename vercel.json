@@ -5,6 +5,9 @@
   "functions": {
     "api/cron/collect.js": {
       "maxDuration": 300
+    },
+    "api/cron/push-check.js": {
+      "maxDuration": 60
     }
   },
   "crons": [

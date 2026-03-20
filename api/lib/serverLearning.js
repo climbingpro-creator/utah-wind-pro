@@ -17,10 +17,10 @@ import { getNWSForLake, getNWSFrontMentions } from './nwsForecast.js';
 // ── Lake thermal configurations (server-side subset of lakeStations.js) ──
 const LAKE_THERMAL = {
   'utah-lake-lincoln':    { dir: [135, 165], peak: [10, 16], station: 'KPVU' },
-  'utah-lake-sandy':      { dir: [130, 160], peak: [10, 16], station: 'QSF' },
-  'utah-lake-vineyard':   { dir: [180, 270], peak: [10, 16], station: 'QSF' },
+  'utah-lake-sandy':      { dir: [130, 160], peak: [10, 16], station: 'KPVU' },
+  'utah-lake-vineyard':   { dir: [180, 270], peak: [10, 16], station: 'KPVU' },
   'utah-lake-zigzag':     { dir: [135, 165], peak: [10, 16], station: 'FPS' },
-  'utah-lake-mm19':       { dir: [120, 160], peak: [10, 16], station: 'FPS' },
+  'utah-lake-mm19':       { dir: [120, 160], peak: [10, 16], station: 'UID28' },
   'deer-creek':           { dir: [170, 210], peak: [11, 17], station: 'KHCR' },
   'jordanelle':           { dir: [180, 230], peak: [11, 17], station: 'KHCR' },
   'willard-bay':          { dir: [170, 220], peak: [11, 17], station: 'KHIF' },
@@ -36,7 +36,7 @@ const LAKE_THERMAL = {
   'rush-lake':            { dir: [170, 210], peak: [10, 18], station: 'KSLC' },
   'potm-south':           { dir: [110, 250], peak: [7, 15],  station: 'FPS' },
   'potm-north':           { dir: [320, 360], peak: [12, 18], station: 'FPS' },
-  'powder-mountain':      { dir: [180, 270], peak: [10, 18], station: 'KSLC' },
+  'powder-mountain':      { dir: [180, 270], peak: [10, 18], station: 'KOGD' },
   // ── Northern Utah (missing) ──
   'east-canyon':          { dir: [180, 270], peak: [11, 17], station: 'KSLC' },
   'echo':                 { dir: [180, 270], peak: [11, 17], station: 'KSLC' },
@@ -83,6 +83,17 @@ function toMountainHour(date) {
   }
 }
 
+function toMountainMonth(date) {
+  try {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/Denver', month: 'numeric',
+    }).formatToParts(date);
+    return parseInt(parts.find(p => p.type === 'month')?.value || '1', 10) - 1; // 0-indexed
+  } catch {
+    return date.getUTCMonth();
+  }
+}
+
 function normalizeToMb(val) {
   if (val == null) return null;
   return val < 50 ? val * 33.864 : val;
@@ -96,7 +107,7 @@ function isInRange(dir, min, max) {
 }
 
 function isNortherly(dir) {
-  return dir >= 300 || dir <= 60;
+  return dir >= 315 || dir <= 45;
 }
 
 function angleDiff(a, b) {
@@ -362,7 +373,6 @@ function detectUpstreamSignals(currentStations, recentSnapshots) {
     const nearest = sorted[sorted.length - 1];
 
     if (farthest.distMi > nearest.distMi + 30) {
-      const distBetween = farthest.distMi - nearest.distMi;
       // Both detecting = front is between them or past nearest
       // If nearest has stronger signal, front is closer
       const etaConsensus = nearest.strength > farthest.strength
@@ -448,7 +458,7 @@ function scoreNorthFlow(station, pressure, nws) {
     if (station.windSpeed > 10) score += 15;
   }
   if (station.temperature != null) {
-    const month = new Date().getMonth();
+    const month = toMountainMonth(new Date());
     const avg = [35,40,48,55,65,75,85,83,73,60,45,35][month];
     if (station.temperature < avg - 10) score += 15;
   }
@@ -795,7 +805,7 @@ function predictForLake(lakeId, primaryStation, pressure, history, hour, learned
     { id: 'post_frontal',    fn: () => scorePostFrontal(primaryStation, pressure, history, nws), expSpeed: [8, 15], expDir: [290, 340] },
   ];
 
-  const month = new Date().getMonth();
+  const month = toMountainMonth(new Date());
 
   for (const t of types) {
     let result = t.fn();
@@ -831,18 +841,19 @@ function predictForLake(lakeId, primaryStation, pressure, history, hour, learned
       }
     }
 
-    // Apply learned weight adjustments
+    // Apply learned weight adjustments (accumulate without intermediate clamp to avoid saturation)
     if (learnedWeights?.eventWeights?.[t.id]) {
       const mod = learnedWeights.eventWeights[t.id];
-      prob = Math.max(0, Math.min(100, prob + (mod.baseProbMod || 0)));
+      prob += (mod.baseProbMod || 0);
       if (mod.hourlyBias?.[hour]) {
-        prob = Math.max(0, Math.min(100, prob + mod.hourlyBias[hour]));
+        prob += mod.hourlyBias[hour];
       }
     }
 
-    // Apply learned lake-specific weight as a probability multiplier
-    const lw = learnedWeights?.lakeWeights?.[lakeId];
-    if (lw && lw.count > 0) {
+    // Apply learned lake+event-type-specific weight as a probability multiplier
+    const lwKey = `${lakeId}:${t.id}`;
+    const lw = learnedWeights?.lakeWeights?.[lwKey];
+    if (lw && lw.count >= 3) {
       const avgAcc = lw.totalScore / lw.count;
       prob = Math.max(0, Math.min(100, prob * (0.5 + avgAcc)));
     }
@@ -857,6 +868,9 @@ function predictForLake(lakeId, primaryStation, pressure, history, hour, learned
       Math.max(0, baseSpeed[0] + speedBias),
       Math.max(0, baseSpeed[1] + speedBias),
     ];
+
+    // Final clamp after all adjustments
+    prob = Math.max(0, Math.min(100, Math.round(prob)));
 
     if (prob > 20) {
       const evt = {
@@ -911,13 +925,11 @@ function predictForLake(lakeId, primaryStation, pressure, history, hour, learned
 // Both stations report altimeter setting (already altitude-corrected).
 // The difference IS the weather gradient — no altitude correction needed.
 // A positive gradient (SLC > PVU) indicates north-to-south pressure push.
-const PRESSURE_ALTITUDE_BASELINE = 0;
-
 function analyzePressure(currentStations, recentSnapshots) {
   const slc = currentStations.find(s => s.stationId === 'KSLC');
   const pvu = currentStations.find(s => s.stationId === 'KPVU');
   const rawGradient = (slc?.pressure && pvu?.pressure) ? slc.pressure - pvu.pressure : null;
-  const gradient = rawGradient != null ? rawGradient - PRESSURE_ALTITUDE_BASELINE : 0;
+  const gradient = rawGradient ?? 0;
 
   let trend = 'stable';
   if (recentSnapshots.length >= 3) {
@@ -1046,7 +1058,7 @@ function verifyPredictions(predictions, actualStations, lakeStationMap) {
         windSpeed: pred.windSpeed ?? null,
         temp: pred.temperature ?? null,
         hour: pred.predictionHour ?? null,
-        month: new Date().getMonth(),
+        month: toMountainMonth(new Date()),
       },
     });
   }
@@ -1090,12 +1102,13 @@ function updateWeights(currentWeights, newAccuracy) {
     const hourlyTarget = record.score > 0.6 ? 2 : record.score < 0.3 ? -2 : 0;
     ew.hourlyBias[hour] = ew.hourlyBias[hour] * 0.9 + hourlyTarget * 0.1;
 
-    // Per-lake tracking
+    // Per-lake per-event-type tracking (not blanket)
     if (!weights.lakeWeights) weights.lakeWeights = {};
-    if (!weights.lakeWeights[record.lakeId]) {
-      weights.lakeWeights[record.lakeId] = { count: 0, totalScore: 0 };
+    const lwKey = `${record.lakeId}:${record.eventType}`;
+    if (!weights.lakeWeights[lwKey]) {
+      weights.lakeWeights[lwKey] = { count: 0, totalScore: 0 };
     }
-    const lw = weights.lakeWeights[record.lakeId];
+    const lw = weights.lakeWeights[lwKey];
     lw.count++;
     lw.totalScore += record.score;
   }
@@ -1152,7 +1165,7 @@ async function loadWeights(redisCmd) {
 }
 
 async function saveWeights(redisCmd, weights) {
-  await redisCmd('SET', 'weights:server', JSON.stringify(weights));
+  await redisCmd('SET', 'weights:server', JSON.stringify(weights), 'EX', '604800'); // 7-day TTL, refreshed each cycle
 }
 
 async function loadRecentPredictions(redisCmd, lookbackMinutes = 240) {
@@ -1201,7 +1214,7 @@ async function loadMeta(redisCmd) {
 }
 
 async function saveMeta(redisCmd, meta) {
-  await redisCmd('SET', 'learning:meta', JSON.stringify(meta));
+  await redisCmd('SET', 'learning:meta', JSON.stringify(meta), 'EX', '604800'); // 7-day TTL, refreshed each cycle
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -1372,7 +1385,7 @@ function createFingerprint(station, pressure, hour) {
     windSpeed: station.windSpeed ?? 0,
     temp: station.temperature ?? 50,
     hour,
-    month: new Date().getMonth(),
+    month: toMountainMonth(new Date()),
   };
 }
 
@@ -1578,26 +1591,28 @@ async function runServerLearningCycle(redisCmd, currentStations, recentSnapshots
     return age > w.min * 60000 && age < w.max * 60000;
   });
 
-  // Deduplicate: skip predictions already verified in a previous cycle
-  const deduped = [];
-  for (const p of verificationsNeeded) {
-    const dedupKey = `${p.lakeId}:${p.eventType}:${p.timestamp}`;
-    const alreadyVerified = await redisCmd('SISMEMBER', VERIFIED_SET_KEY, dedupKey);
-    if (alreadyVerified) continue;
-    deduped.push(p);
+  // Deduplicate: batch-check which predictions were already verified (1 Redis call instead of N)
+  const dedupKeys = verificationsNeeded.map(p => `${p.lakeId}:${p.eventType}:${p.timestamp}`);
+  let alreadyVerifiedFlags = [];
+  if (dedupKeys.length > 0) {
+    try {
+      alreadyVerifiedFlags = await redisCmd('SMISMEMBER', VERIFIED_SET_KEY, ...dedupKeys);
+    } catch {
+      // Fallback for Redis versions without SMISMEMBER
+      alreadyVerifiedFlags = await Promise.all(dedupKeys.map(k => redisCmd('SISMEMBER', VERIFIED_SET_KEY, k)));
+    }
   }
+  const deduped = verificationsNeeded.filter((_, i) => !alreadyVerifiedFlags[i]);
 
   let accuracyRecords = [];
   if (deduped.length > 0) {
     accuracyRecords = verifyPredictions(deduped, currentStations, lakeStationMap);
   }
 
-  // Mark successfully verified predictions so they aren't re-verified
-  for (const p of deduped) {
-    const dedupKey = `${p.lakeId}:${p.eventType}:${p.timestamp}`;
-    await redisCmd('SADD', VERIFIED_SET_KEY, dedupKey);
-  }
+  // Mark verified predictions in a single SADD call (1 Redis call instead of N)
   if (deduped.length > 0) {
+    const newKeys = deduped.map(p => `${p.lakeId}:${p.eventType}:${p.timestamp}`);
+    await redisCmd('SADD', VERIFIED_SET_KEY, ...newKeys);
     await redisCmd('EXPIRE', VERIFIED_SET_KEY, 86400);
   }
 

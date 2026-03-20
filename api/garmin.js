@@ -218,7 +218,7 @@ export default async function handler(req, res) {
     return res.status(200).end(JSON.stringify(body));
   } catch (err) {
     console.error('[garmin]', err.message);
-    return res.status(502).json({ error: err.message });
+    return res.status(502).json({ error: 'Upstream data unavailable' });
   }
 }
 

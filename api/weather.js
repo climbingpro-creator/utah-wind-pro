@@ -9,12 +9,38 @@
  *   (water-temp route removed — lakes use client-side seasonal model)
  */
 
+const rateLimitMap = new Map();
+const RATE_LIMIT_WINDOW = 60_000;
+const RATE_LIMIT_MAX = 30;
+
+function isRateLimited(ip) {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+  if (!entry || now - entry.start > RATE_LIMIT_WINDOW) {
+    rateLimitMap.set(ip, { start: now, count: 1 });
+    if (rateLimitMap.size > 1000) {
+      for (const [k, v] of rateLimitMap) {
+        if (now - v.start > RATE_LIMIT_WINDOW) rateLimitMap.delete(k);
+      }
+    }
+    return false;
+  }
+  entry.count++;
+  return entry.count > RATE_LIMIT_MAX;
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET');
   
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  const clientIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 'unknown';
+  if (isRateLimited(clientIp)) {
+    res.setHeader('Retry-After', '60');
+    return res.status(429).json({ error: 'Rate limit exceeded. Max 30 requests per minute.' });
   }
 
   const { source, stids, hours } = req.query;
@@ -33,7 +59,6 @@ export default async function handler(req, res) {
     console.error(`[API Proxy] ${source} error:`, error.message);
     return res.status(502).json({
       error: 'Upstream API error',
-      message: error.message,
       source,
     });
   }
@@ -64,12 +89,24 @@ async function handleAmbient(res) {
   return res.status(200).json(data);
 }
 
+const ALLOWED_STATIONS = new Set([
+  'KSLC','KPVU','KHCR','KOGD','KLGU','KHIF','KVEL','KPUC','KSGU','KPGA','KCDC',
+  'KFGR','BERU1','FPS','QSF','SND','UTALP','UTOLY','CSC','UID28','TIMU1','MDAU1',
+  'UTPCY','DCC','UTCOP','UTDAN','DSTU1','RVZU1','CCPUT','UWCU1','SKY','UTESU','UTMPK',
+]);
+
 async function handleSynopticLatest(res, stids) {
   if (!stids) {
     return res.status(400).json({ error: 'stids parameter required' });
   }
+  const requested = stids.split(',').map(s => s.trim());
+  const filtered = requested.filter(s => ALLOWED_STATIONS.has(s));
+  if (filtered.length === 0) {
+    return res.status(400).json({ error: 'No valid station IDs provided' });
+  }
+  stids = filtered.join(',');
 
-  const token = process.env.VITE_SYNOPTIC_TOKEN;
+  const token = process.env.SYNOPTIC_TOKEN || process.env.VITE_SYNOPTIC_TOKEN;
   if (!token) {
     return res.status(500).json({ error: 'Synoptic API token not configured' });
   }
@@ -97,8 +134,15 @@ async function handleSynopticHistory(res, stids, hours = '3') {
   if (!stids) {
     return res.status(400).json({ error: 'stids parameter required' });
   }
+  const requested = stids.split(',').map(s => s.trim());
+  const filtered = requested.filter(s => ALLOWED_STATIONS.has(s));
+  if (filtered.length === 0) {
+    return res.status(400).json({ error: 'No valid station IDs provided' });
+  }
+  stids = filtered.join(',');
+  hours = String(Math.min(parseInt(hours) || 3, 24));
 
-  const token = process.env.VITE_SYNOPTIC_TOKEN;
+  const token = process.env.SYNOPTIC_TOKEN || process.env.VITE_SYNOPTIC_TOKEN;
   if (!token) {
     return res.status(500).json({ error: 'Synoptic API token not configured' });
   }

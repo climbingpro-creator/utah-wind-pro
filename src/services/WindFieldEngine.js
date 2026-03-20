@@ -58,6 +58,15 @@ const STATION_NODES = {
   KHCR:  { name: 'Heber Airport',       lat: 40.482,  lng: -111.429,  elevation: 5637, type: 'valley' },
   KHIF:  { name: 'Hill AFB',            lat: 41.124,  lng: -111.973,  elevation: 4789, type: 'synoptic' },
   CSC:   { name: 'Cascade Peak',        lat: 40.190,  lng: -111.612,  elevation: 10875, type: 'ridge' },
+  UTCOP: { name: 'Co-op Creek',        lat: 40.215,  lng: -111.143,  elevation: 7620,  type: 'lakeshore' },
+  UTDAN: { name: 'Daniel (Strawberry)', lat: 40.181, lng: -111.180,  elevation: 7550,  type: 'lakeshore' },
+  DSTU1: { name: 'Daniels Summit',     lat: 40.299,  lng: -111.220,  elevation: 8000,  type: 'ridge' },
+  RVZU1: { name: 'Soldier Creek',      lat: 40.119,  lng: -111.078,  elevation: 7640,  type: 'lakeshore' },
+  CCPUT: { name: 'Currant Creek Pass', lat: 40.292,  lng: -111.094,  elevation: 8020,  type: 'ridge' },
+  UWCU1: { name: 'Wolf Creek',         lat: 40.312,  lng: -111.106,  elevation: 9400,  type: 'ridge' },
+  SKY:   { name: 'Skyline Drive',      lat: 39.645,  lng: -111.315,  elevation: 10200, type: 'ridge' },
+  UTESU: { name: 'Ephraim South',      lat: 39.358,  lng: -111.540,  elevation: 9800,  type: 'ridge' },
+  UTMPK: { name: 'Millers Peak',       lat: 39.590,  lng: -111.210,  elevation: 9200,  type: 'ridge' },
 };
 
 // Propagation edges: how wind flows from one station to another
@@ -92,6 +101,22 @@ const PROPAGATION_EDGES = [
   // === WILLARD BAY GAP ===
   { from: 'KHIF', to: 'KSLC', delay: 30, attenuation: 0.70, channeling: 1.0,
     headingRange: [160, 220], description: 'Hill AFB → SLC (gap wind)' },
+
+  // === STRAWBERRY RESERVOIR PATHS ===
+  { from: 'DSTU1', to: 'UTCOP', delay: 20, attenuation: 0.80, channeling: 1.1,
+    headingRange: [200, 340], description: 'Daniels Summit → Co-op Creek (downslope)' },
+  { from: 'CCPUT', to: 'UTCOP', delay: 25, attenuation: 0.75, channeling: 1.15,
+    headingRange: [270, 60], description: 'Currant Creek Pass → Co-op (channel)' },
+  { from: 'CCPUT', to: 'RVZU1', delay: 30, attenuation: 0.70, channeling: 1.0,
+    headingRange: [200, 320], description: 'Currant Creek → Soldier Creek' },
+  { from: 'UTCOP', to: 'UTDAN', delay: 15, attenuation: 0.90, channeling: 1.0,
+    headingRange: [180, 360], description: 'Co-op → Daniel (along lake)' },
+
+  // === SKYLINE DRIVE PATHS ===
+  { from: 'UTMPK', to: 'SKY', delay: 25, attenuation: 0.75, channeling: 1.2,
+    headingRange: [180, 360], description: 'Millers Peak → Skyline (ridge flow)' },
+  { from: 'UTESU', to: 'SKY', delay: 30, attenuation: 0.70, channeling: 1.1,
+    headingRange: [160, 260], description: 'Ephraim → Skyline (upslope)' },
 ];
 
 // Location-to-station mapping: which stations best represent each launch
@@ -100,7 +125,7 @@ const LOCATION_STATIONS = {
   'utah-lake-sandy':    { primary: 'KPVU', secondary: ['FPS'],        upstreamNorth: ['KSLC', 'UTALP'], upstreamThermal: ['KPVU'] },
   'utah-lake-vineyard': { primary: 'KPVU', secondary: ['FPS'],        upstreamNorth: ['KSLC', 'UTALP'], upstreamThermal: ['KPVU'] },
   'utah-lake-zigzag':   { primary: 'FPS',  secondary: ['UTALP','KPVU'], upstreamNorth: ['KSLC', 'UTOLY', 'UTALP'], upstreamThermal: ['QSF'] },
-  'utah-lake-mm19':     { primary: 'QSF',  secondary: ['KPVU','FPS'], upstreamNorth: ['KSLC', 'UTALP'], upstreamThermal: ['QSF'] },
+  'utah-lake-mm19':     { primary: 'FPS',  secondary: ['KPVU','UID28'], upstreamNorth: ['KSLC', 'UTALP'], upstreamThermal: ['QSF'] },
   'deer-creek':         { primary: 'KHCR', secondary: ['SND'],        upstreamNorth: ['KSLC'],           upstreamThermal: ['KPVU', 'SND'] },
   'willard-bay':        { primary: 'KHIF', secondary: [],             upstreamNorth: ['KSLC'],           upstreamThermal: ['KHIF'] },
   'strawberry-ladders': { primary: 'UTCOP', secondary: ['UTDAN', 'DSTU1'], upstreamNorth: ['KSLC', 'CCPUT'], upstreamThermal: ['UTCOP', 'DSTU1'] },

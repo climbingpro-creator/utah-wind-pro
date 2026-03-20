@@ -107,7 +107,15 @@ function toMountainHour(ts) {
 }
 
 function getMonth(ts) {
-  return new Date(ts).getUTCMonth();
+  const d = new Date(ts);
+  try {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/Denver', month: 'numeric',
+    }).formatToParts(d);
+    return parseInt(parts.find(p => p.type === 'month')?.value || '1', 10) - 1; // 0-indexed
+  } catch {
+    return d.getUTCMonth();
+  }
 }
 
 function angleDiff(a, b) {
@@ -115,7 +123,7 @@ function angleDiff(a, b) {
   return diff > 180 ? 360 - diff : diff;
 }
 
-function isNortherly(dir) { return dir >= 300 || dir <= 60; }
+function isNortherly(dir) { return dir >= 315 || dir <= 45; }
 function normalizeToMb(val) { return val == null ? null : (val < 50 ? val * 33.864 : val); }
 
 function percentile(arr, p) {
@@ -360,6 +368,67 @@ function detectHistoricalEvents(allStations, lakeStationMap) {
           });
         }
       }
+
+      // ─── Detect clearing wind ───
+      // Post-storm clearing: wind drops from >12 to moderate range + direction stabilizes
+      if (olderSpeed > 12 && r.speed >= 5 && r.speed <= 15) {
+        const speedDrop = olderSpeed - r.speed;
+        const recentDirs = validHistory.filter(h => h.dir != null).map(h => h.dir);
+        const dirSpread = recentDirs.length >= 2
+          ? computeDirSpread(recentDirs) : 360;
+        if (speedDrop > 5 && dirSpread < 90) {
+          events.push({
+            type: 'clearing_wind',
+            lakeId,
+            station: primaryId,
+            timestamp: r.t,
+            hour, month,
+            speed: r.speed,
+            dir: r.dir,
+            speedDrop,
+            pressureTrend: pressTrend,
+            fingerprint: { speed: r.speed, dir: r.dir, hour, month, speedDrop, pressTrend },
+          });
+        }
+      }
+
+      // ─── Detect pre-frontal conditions ───
+      // Rising wind + falling pressure before a front: warm air advection
+      if (r.speed > olderSpeed + 2 && r.speed >= 8 && pressTrend != null && pressTrend < -0.2) {
+        const isWarmSide = !isNortherly(r.dir); // pre-frontal = south/west flow
+        if (isWarmSide) {
+          events.push({
+            type: 'pre_frontal',
+            lakeId,
+            station: primaryId,
+            timestamp: r.t,
+            hour, month,
+            speed: r.speed,
+            dir: r.dir,
+            pressureTrend: pressTrend,
+            fingerprint: { speed: r.speed, dir: r.dir, hour, month, pressTrend, rampUp: r.speed - olderSpeed },
+          });
+        }
+      }
+
+      // ─── Detect post-frontal conditions ───
+      // After frontal passage: northerly + moderate wind + rising pressure
+      if (isNortherly(r.dir) && r.speed >= 6 && r.speed <= 20 && pressTrend != null && pressTrend > 0.1) {
+        const wasStronger = validHistory.some(h => h.speed > r.speed + 5);
+        if (wasStronger) {
+          events.push({
+            type: 'post_frontal',
+            lakeId,
+            station: primaryId,
+            timestamp: r.t,
+            hour, month,
+            speed: r.speed,
+            dir: r.dir,
+            pressureTrend: pressTrend,
+            fingerprint: { speed: r.speed, dir: r.dir, hour, month, pressTrend },
+          });
+        }
+      }
     }
   }
 
@@ -494,7 +563,6 @@ function buildLagCorrelations(allStations) {
       for (const lagMin of LAG_RANGE_MINUTES) {
         const lagMs = lagMin * 60000;
         let sumProduct = 0, sumUp2 = 0, sumDown2 = 0;
-        let upMean = 0, downMean = 0, n = 0;
         const speedPairs = [];
 
         // Sample every 6th reading for performance (still gives thousands of pairs)
@@ -605,8 +673,13 @@ function buildThermalTimingProfiles(events, climatology, lakeStationMap) {
   const thermalEvents = events.filter(e => e.type === 'thermal_cycle');
 
   for (const [lakeId, stationIds] of Object.entries(lakeStationMap)) {
-    const primaryId = stationIds[0];
-    const stationClim = climatology[primaryId];
+    const primaryId = LAKE_STATIONS[lakeId]?.primary || stationIds[0];
+    let stationClim = climatology[primaryId];
+    if (!stationClim) {
+      for (const sid of stationIds) {
+        if (climatology[sid]) { stationClim = climatology[sid]; break; }
+      }
+    }
     if (!stationClim) continue;
 
     const lakeEvents = thermalEvents.filter(e => e.lakeId === lakeId);
@@ -700,7 +773,7 @@ export async function buildStatisticalModels(redisCmd, synopticToken, options = 
   }
 
   // 4. Detect historical events
-  log.push('Scanning history for wind events (thermal, frontal, north flow, glass)...');
+  log.push('Scanning history for wind events (thermal, frontal, north flow, glass, clearing, pre/post-frontal)...');
   const events = detectHistoricalEvents(allStations, lakeStationMap);
   const eventCounts = {};
   for (const e of events) {
@@ -744,7 +817,7 @@ export async function buildStatisticalModels(redisCmd, synopticToken, options = 
 
   // Store in Redis
   const modelsJson = JSON.stringify(models);
-  await redisCmd('SET', 'models:statistical', modelsJson);
+  await redisCmd('SET', 'models:statistical', modelsJson, 'EX', '2592000'); // 30-day TTL
   log.push(`Models saved to Redis (${(modelsJson.length / 1024).toFixed(0)} KB)`);
 
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
