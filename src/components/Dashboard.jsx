@@ -24,6 +24,10 @@ import { calculateCorrelatedWind } from '../services/CorrelationEngine';
 import { monitorSwings } from '../services/FrontalTrendPredictor';
 import { generateBriefing } from '../services/MorningBriefing';
 import TodayHero from './TodayHero';
+import PrimaryWindDisplay from './PrimaryWindDisplay';
+import FactorBar from './FactorBar';
+import ModelStepCard from './ModelStepCard';
+import Modal from './Modal';
 
 // Lazy-loaded components (below the fold / modals / heavy)
 const WindMap = lazy(() => import('./WindMap').then(m => ({ default: m.WindMap })));
@@ -425,26 +429,19 @@ export function Dashboard() {
       />
 
       {/* Learning Dashboard Modal/Panel */}
-      {showLearningDashboard && (
-        <div className="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true" aria-label="Learning System">
-          <div className="flex items-center justify-center min-h-screen p-4">
-            <div className="fixed inset-0 bg-black/60" onClick={() => setShowLearningDashboard(false)} />
-            <div className="relative bg-slate-900 rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-              <button
-                onClick={() => setShowLearningDashboard(false)}
-                aria-label="Close learning dashboard"
-                className="absolute top-4 right-4 text-gray-400 hover:text-white"
-              >
-                ✕
-              </button>
-              <div className="p-2 space-y-4">
-                <AccuracyScoreboard />
-                <LearningDashboard />
-              </div>
-            </div>
-          </div>
+      <Modal isOpen={showLearningDashboard} onClose={() => setShowLearningDashboard(false)} label="Learning System" className="bg-slate-900 rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <button
+          onClick={() => setShowLearningDashboard(false)}
+          aria-label="Close learning dashboard"
+          className="absolute top-4 right-4 text-gray-400 hover:text-white z-10"
+        >
+          ✕
+        </button>
+        <div className="p-2 space-y-4">
+          <AccuracyScoreboard />
+          <LearningDashboard />
         </div>
-      )}
+      </Modal>
 
       {showPaywall && <ProUpgrade />}
 
@@ -549,7 +546,7 @@ export function Dashboard() {
         )}
 
         {/* Live Wind Vectors — station readings at a glance */}
-        <div>
+        <div aria-live="polite" aria-atomic="false">
           <h2 className="text-base font-bold text-[var(--text-primary)] mb-4 flex items-center gap-2">
             <Wind className="w-4 h-4 text-sky-500" />
             Live Wind Vectors
@@ -1346,149 +1343,3 @@ export function Dashboard() {
   );
 }
 
-function PrimaryWindDisplay({ station, optimalDirection, isLoading, pwsUnavailable }) {
-  if (isLoading || !station) {
-    return (
-      <div className="card animate-pulse">
-        <div className="flex items-center justify-center gap-4">
-          <div className="w-14 h-14 bg-[var(--border-color)] rounded-full" />
-          <div className="space-y-2">
-            <div className="h-8 bg-[var(--border-color)] rounded w-24" />
-            <div className="h-4 bg-[var(--border-color)] rounded w-16" />
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const speed = station.windSpeed ?? station.speed;
-  const direction = station.windDirection ?? station.direction;
-  const cardinal = windDirectionToCardinal(direction);
-  const stationName = station.name || 'Primary Station';
-  const isYourStation = station.isYourStation || station.isPWS;
-  
-  const isOptimal = optimalDirection?.status === 'optimal';
-  const isWrong = optimalDirection?.status === 'wrong';
-  
-  const speedColor = speed >= 8 ? 'text-emerald-500' : speed >= 4 ? 'text-amber-500' : 'text-[var(--text-tertiary)]';
-  const directionColor = isOptimal ? 'text-emerald-500' : isWrong ? 'text-red-500' : 'text-sky-500';
-
-  return (
-    <div className={`card ${
-      isOptimal ? '!border-emerald-500/30' : isWrong ? '!border-red-500/30' : ''
-    }`}>
-      {pwsUnavailable && (
-        <div className="text-xs text-amber-500 font-medium text-center mb-2 flex items-center justify-center gap-1.5">
-          <AlertTriangle className="w-3.5 h-3.5" />
-          <span>PWS unavailable — showing nearest station</span>
-        </div>
-      )}
-      <div className="text-center mb-2 flex items-center justify-center gap-1">
-        {isYourStation && <span className="text-sky-500">📍</span>}
-        <span className={`text-xs ${isYourStation ? 'text-sky-500 font-medium' : 'text-[var(--text-tertiary)]'}`}>
-          {stationName}
-        </span>
-        {!isYourStation && !pwsUnavailable && <span className="text-[var(--text-tertiary)] text-[10px]">(MesoWest)</span>}
-      </div>
-      
-      <div className="flex items-center justify-center gap-6">
-        <div className="relative w-14 h-14">
-          <div className="absolute inset-0 rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)]" />
-          <div className="absolute inset-0 flex items-center justify-center">
-            {direction != null ? (
-              <Navigation 
-                className={`w-7 h-7 ${directionColor} transition-transform duration-500`}
-                style={{ transform: `rotate(${direction + 180}deg)` }}
-              />
-            ) : (
-              <span className="text-[var(--text-tertiary)] text-xs">--</span>
-            )}
-          </div>
-          <div className="absolute -top-1 left-1/2 -translate-x-1/2 text-[9px] text-[var(--text-tertiary)]">N</div>
-          <div className="absolute top-1/2 -right-1.5 -translate-y-1/2 text-[9px] text-[var(--text-tertiary)]">E</div>
-          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-[9px] text-[var(--text-tertiary)]">S</div>
-          <div className="absolute top-1/2 -left-1.5 -translate-y-1/2 text-[9px] text-[var(--text-tertiary)]">W</div>
-        </div>
-
-        <div className="text-center">
-          <div className={`data-number ${speedColor}`}>
-            {speed != null ? speed.toFixed(1) : '--'}
-          </div>
-          <div className="data-label mt-0.5">mph</div>
-          <div className={`text-sm font-semibold mt-1 ${directionColor}`}>
-            {cardinal} 
-            <span className="text-[var(--text-tertiary)] text-xs ml-1">
-              {direction != null ? `${Math.round(direction)}°` : ''}
-            </span>
-          </div>
-          {optimalDirection?.expected && (
-            <div className="text-[11px] text-[var(--text-tertiary)] mt-1">
-              Need: {optimalDirection.expected}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {Number(station.windGust ?? station.gust) > (speed || 0) * 1.3 && (
-        <div className="mt-2 text-center text-xs text-amber-500 font-medium">
-          Gusts to {Number(station.windGust ?? station.gust).toFixed(1)} mph
-        </div>
-      )}
-    </div>
-  );
-}
-
-function FactorBar({ label, value, detail, icon: Icon }) {
-  const getColor = (v) => {
-    if (v >= 70) return 'bg-emerald-500';
-    if (v >= 50) return 'bg-amber-500';
-    if (v >= 30) return 'bg-orange-500';
-    return 'bg-red-500';
-  };
-
-  return (
-    <div className="space-y-1">
-      <div className="flex items-center justify-between text-xs">
-        <div className="flex items-center gap-1.5 text-[var(--text-tertiary)]">
-          <Icon className="w-3 h-3" />
-          <span>{label}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-[var(--text-tertiary)] capitalize">{detail || ''}</span>
-          <span className="text-[var(--text-primary)] font-semibold w-8 text-right">{value}</span>
-        </div>
-      </div>
-      <div className="h-1 bg-[var(--border-subtle)] rounded-full overflow-hidden">
-        <div 
-          className={`h-full ${getColor(value)} transition-all duration-500`}
-          style={{ width: `${value}%` }}
-        />
-      </div>
-    </div>
-  );
-}
-
-function ModelStepCard({ step, label, description, value, explanation, isGood, isBad, threshold }) {
-  return (
-    <div className={`rounded-lg p-3 border bg-[var(--bg-card)] ${
-      isGood ? 'border-emerald-500/30' : isBad ? 'border-red-500/30' : 'border-[var(--border-color)]'
-    }`}>
-      <div className="flex items-center gap-2 mb-1">
-        <span className={`w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-bold ${
-          isGood ? 'bg-emerald-500/10 text-emerald-500' : isBad ? 'bg-red-500/10 text-red-500' : 'bg-[var(--border-subtle)] text-[var(--text-tertiary)]'
-        }`}>
-          {step}
-        </span>
-        <span className="text-[var(--text-secondary)] font-medium text-xs">{label}</span>
-      </div>
-      <div className="font-mono text-xs text-[var(--text-tertiary)] mb-2">{description}</div>
-      <div className={`data-number-sm ${
-        isGood ? 'text-emerald-500' : isBad ? 'text-red-500' : 'text-amber-500'
-      }`}>
-        {value}
-      </div>
-      <div className="text-[11px] text-[var(--text-secondary)] mt-1">{explanation}</div>
-      <div className="text-[10px] text-[var(--text-tertiary)] mt-1">{threshold}</div>
-    </div>
-  );
-}

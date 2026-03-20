@@ -19,7 +19,9 @@
     "mobile:ios": "npm run build && cap sync ios && cap open ios",
     "mobile:dev:android": "cap run android --configuration=capacitor.config.dev.json",
     "mobile:dev:ios": "cap run ios --configuration=capacitor.config.dev.json",
-    "generate:icons": "node scripts/generate-icons.js"
+    "generate:icons": "node scripts/generate-icons.js",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@capacitor/android": "^8.2.0",
@@ -53,6 +55,7 @@
     "globals": "^16.5.0",
     "sharp": "^0.34.5",
     "vite": "^7.3.1",
-    "vite-plugin-pwa": "^1.2.0"
+    "vite-plugin-pwa": "^1.2.0",
+    "vitest": "^4.1.0"
   }
 }
