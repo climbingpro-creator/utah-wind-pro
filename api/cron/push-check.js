@@ -24,11 +24,8 @@ export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).end();
 
   const cronSecret = process.env.CRON_SECRET;
-  if (cronSecret) {
-    const authHeader = req.headers['authorization'];
-    if (authHeader !== `Bearer ${cronSecret}`) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
+  if (!cronSecret || req.headers['authorization'] !== `Bearer ${cronSecret}`) {
+    return res.status(401).json({ error: 'Unauthorized' });
   }
 
   if (!VAPID_PUBLIC || !VAPID_PRIVATE) {
@@ -129,7 +126,7 @@ async function fetchConditions(lakeId) {
   const config = getLakeConfig(lakeId);
   if (!config) return null;
 
-  const token = process.env.SYNOPTIC_TOKEN || process.env.VITE_SYNOPTIC_TOKEN;
+  const token = process.env.SYNOPTIC_TOKEN;
   const params = new URLSearchParams({
     token,
     stid: config.synoptic.slice(0, 5).join(','),

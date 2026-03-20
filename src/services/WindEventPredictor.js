@@ -167,11 +167,13 @@ export function predictWindEvents(lakeId, currentConditions, pressureData, stati
   const slcP = pressure.slcPressure;
   const pvuP = pressure.pvuPressure;
 
+  // Upstream signals used by both frontal and pre-frontal blocks
+  const coldFrontUpstream = (upstreamSignals || []).filter(s => s.type === 'cold_front');
+
   // ─── FRONTAL PASSAGE DETECTION ──────────────────────────────
   const frontalScore = scoreFrontalPassage(wind, pressure, stationHistory, hour);
 
   // Boost with upstream detection network
-  const coldFrontUpstream = (upstreamSignals || []).filter(s => s.type === 'cold_front');
   if (coldFrontUpstream.length > 0) {
     const best = coldFrontUpstream[0];
     frontalScore.probability += Math.min(35, best.strength * 0.4);

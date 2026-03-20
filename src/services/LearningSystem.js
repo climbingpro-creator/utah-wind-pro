@@ -791,9 +791,10 @@ class LearningSystem {
       analysis.hourlyAccuracy[hour].sumAccuracy += pred.accuracy.overallScore || 0;
       
       // Condition-specific
-      if (pred.conditions.pressureGradient > 2) {
+      const pg = pred.conditions?.pressureGradient;
+      if (pg != null && pg > 2) {
         analysis.conditionErrors.highPressureGradient.push(pred.accuracy.overallScore);
-      } else if (pred.conditions.pressureGradient < 1) {
+      } else if (pg != null && pg < 1) {
         analysis.conditionErrors.lowPressureGradient.push(pred.accuracy.overallScore);
       }
     }

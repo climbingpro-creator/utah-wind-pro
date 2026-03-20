@@ -15,8 +15,9 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') return res.status(204).end();
 
-  const user = await verifyAuth(req);
-  if (!user) return res.status(401).json({ error: 'Unauthorized' });
+  const auth = await verifyAuth(req);
+  if (auth.error) return res.status(auth.status || 401).json({ error: auth.error });
+  const userId = auth.user.id;
 
   const sb = getSupabase();
 
@@ -29,7 +30,7 @@ export default async function handler(req, res) {
     const { error } = await sb
       .from('push_subscriptions')
       .upsert({
-        user_id: user.id,
+        user_id: userId,
         endpoint,
         p256dh: keys.p256dh,
         auth_key: keys.auth,
@@ -49,7 +50,7 @@ export default async function handler(req, res) {
     const { error } = await sb
       .from('push_subscriptions')
       .delete()
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .eq('endpoint', endpoint);
 
     if (error) {

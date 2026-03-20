@@ -16,7 +16,7 @@ export function isWeb() {
   return Capacitor.getPlatform() === 'web';
 }
 
-const VERCEL_ORIGIN = 'https://utah-wind-pro.vercel.app';
+const VERCEL_ORIGIN = import.meta.env.VITE_API_ORIGIN || 'https://utah-wind-pro.vercel.app';
 
 export function apiUrl(path) {
   return isNativeApp() ? `${VERCEL_ORIGIN}${path}` : path;

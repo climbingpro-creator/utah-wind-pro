@@ -45,6 +45,9 @@ async function getDeviceTier(deviceId) {
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
+  if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'GET') return res.status(405).end();
 
   const lakeId = req.query.lake || 'utah-lake-zigzag';
@@ -66,7 +69,7 @@ export default async function handler(req, res) {
       });
     }
 
-    const token = process.env.SYNOPTIC_TOKEN || process.env.VITE_SYNOPTIC_TOKEN;
+    const token = process.env.SYNOPTIC_TOKEN;
 
     const [synRaw, ambientData] = await Promise.all([
       fetchSynoptic(token, config),
@@ -258,8 +261,8 @@ async function fetchSynoptic(token, config) {
 }
 
 async function fetchAmbient() {
-  const apiKey = process.env.AMBIENT_API_KEY || process.env.VITE_AMBIENT_API_KEY;
-  const appKey = process.env.AMBIENT_APP_KEY || process.env.VITE_AMBIENT_APP_KEY;
+  const apiKey = process.env.AMBIENT_API_KEY;
+  const appKey = process.env.AMBIENT_APP_KEY;
   if (!apiKey || !appKey) return null;
   try {
     const resp = await fetch(

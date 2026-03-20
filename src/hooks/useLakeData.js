@@ -16,6 +16,8 @@ export function useLakeData(lakeId) {
   const previousLakeId = useRef(lakeId);
   const cachedStates = useRef({});
   const previousProbability = useRef(0);
+  const fetchDataRef = useRef(null);
+  const fetchHistoryRef = useRef(null);
 
   const fetchData = useCallback(async (forceRefresh = false) => {
     if (isFetching.current && !forceRefresh) return;
@@ -43,11 +45,18 @@ export function useLakeData(lakeId) {
         setError(null);
       }
 
+      // Flatten history from { stationId: [readings] } to sorted array for LakeState
+      const lakeHistory = history[lakeId];
+      const historyArray = lakeHistory
+        ? Object.values(lakeHistory).flat().sort((a, b) =>
+            new Date(b.dateTime || b.timestamp || 0) - new Date(a.dateTime || a.timestamp || 0))
+        : null;
+
       const newState = LakeState.fromRawData(
         lakeId,
         rawData.ambient,
         rawData.synoptic,
-        history[lakeId]
+        historyArray
       );
 
       cachedStates.current[lakeId] = newState;
@@ -94,12 +103,16 @@ export function useLakeData(lakeId) {
     }
   }, [lakeId]);
 
+  // Keep refs current so intervals always call latest version
+  fetchDataRef.current = fetchData;
+  fetchHistoryRef.current = fetchHistory;
+
   useEffect(() => {
-    fetchData(true);
-    fetchHistory();
+    fetchDataRef.current(true);
+    fetchHistoryRef.current();
     
-    const dataInterval = setInterval(() => fetchData(), REFRESH_INTERVAL);
-    const historyInterval = setInterval(fetchHistory, HISTORY_REFRESH_INTERVAL);
+    const dataInterval = setInterval(() => fetchDataRef.current(), REFRESH_INTERVAL);
+    const historyInterval = setInterval(() => fetchHistoryRef.current(), HISTORY_REFRESH_INTERVAL);
     
     return () => {
       clearInterval(dataInterval);

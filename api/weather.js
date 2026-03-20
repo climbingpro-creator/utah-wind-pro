@@ -31,7 +31,9 @@ function isRateLimited(ip) {
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
+  if (req.method === 'OPTIONS') return res.status(204).end();
   
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -65,8 +67,8 @@ export default async function handler(req, res) {
 }
 
 async function handleAmbient(res) {
-  const apiKey = process.env.AMBIENT_API_KEY || process.env.VITE_AMBIENT_API_KEY;
-  const appKey = process.env.AMBIENT_APP_KEY || process.env.VITE_AMBIENT_APP_KEY;
+  const apiKey = process.env.AMBIENT_API_KEY;
+  const appKey = process.env.AMBIENT_APP_KEY;
 
   if (!apiKey || !appKey) {
     return res.status(500).json({ error: 'Ambient Weather API keys not configured' });
@@ -106,7 +108,7 @@ async function handleSynopticLatest(res, stids) {
   }
   stids = filtered.join(',');
 
-  const token = process.env.SYNOPTIC_TOKEN || process.env.VITE_SYNOPTIC_TOKEN;
+  const token = process.env.SYNOPTIC_TOKEN;
   if (!token) {
     return res.status(500).json({ error: 'Synoptic API token not configured' });
   }
@@ -142,7 +144,7 @@ async function handleSynopticHistory(res, stids, hours = '3') {
   stids = filtered.join(',');
   hours = String(Math.min(parseInt(hours) || 3, 24));
 
-  const token = process.env.SYNOPTIC_TOKEN || process.env.VITE_SYNOPTIC_TOKEN;
+  const token = process.env.SYNOPTIC_TOKEN;
   if (!token) {
     return res.status(500).json({ error: 'Synoptic API token not configured' });
   }

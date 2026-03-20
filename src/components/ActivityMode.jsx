@@ -1,6 +1,5 @@
 import React from 'react';
-import { MdKitesurfing, MdParagliding, MdSailing, MdKayaking, MdSnowboarding, MdDirectionsBoat } from 'react-icons/md';
-import { GiBoatFishing } from 'react-icons/gi';
+import { Wind, Sailboat, Ship, Waves, Mountain, Fish, Anchor } from 'lucide-react';
 
 const WindsurferIcon = ({ className }) => (
   <svg className={className} viewBox="0 0 24 24" fill="currentColor">
@@ -19,7 +18,7 @@ export const ACTIVITY_CONFIGS = {
   kiting: {
     id: 'kiting',
     name: 'Kiting',
-    icon: <MdKitesurfing className="w-10 h-10" />,
+    icon: <Wind className="w-10 h-10" />,
     description: 'Kiteboarding & Foiling',
     heroImage: '/images/kiting-utah-lake.png',
     thresholds: {
@@ -38,7 +37,7 @@ export const ACTIVITY_CONFIGS = {
   snowkiting: {
     id: 'snowkiting',
     name: 'Snowkiting',
-    icon: <MdSnowboarding className="w-10 h-10" />,
+    icon: <Mountain className="w-10 h-10" />,
     description: 'Snowkiting & Big Drifts',
     heroImage: '/images/snowkite-strawberry.png',
     thresholds: {
@@ -57,7 +56,7 @@ export const ACTIVITY_CONFIGS = {
   sailing: {
     id: 'sailing',
     name: 'Sailing',
-    icon: <MdSailing className="w-10 h-10" />,
+    icon: <Sailboat className="w-10 h-10" />,
     description: 'Dinghy & Keelboat',
     heroImage: '/images/storm-clouds.png',
     thresholds: {
@@ -76,7 +75,7 @@ export const ACTIVITY_CONFIGS = {
   boating: {
     id: 'boating',
     name: 'Boating',
-    icon: <MdDirectionsBoat className="w-10 h-10" />,
+    icon: <Ship className="w-10 h-10" />,
     description: 'Powerboats & Cruising',
     heroImage: '/images/wake-wave-sunset.png',
     thresholds: {
@@ -93,7 +92,7 @@ export const ACTIVITY_CONFIGS = {
   paddling: {
     id: 'paddling',
     name: 'Paddling',
-    icon: <MdKayaking className="w-10 h-10" />,
+    icon: <Waves className="w-10 h-10" />,
     description: 'SUP, Kayak, Canoe',
     heroImage: '/images/paddling-utah-lake.png',
     thresholds: {
@@ -110,7 +109,7 @@ export const ACTIVITY_CONFIGS = {
   paragliding: {
     id: 'paragliding',
     name: 'Paragliding',
-    icon: <MdParagliding className="w-10 h-10" />,
+    icon: <Anchor className="w-10 h-10" />,
     description: 'Point of the Mountain',
     heroImage: '/images/storm-clouds.png',
     thresholds: {
@@ -129,7 +128,7 @@ export const ACTIVITY_CONFIGS = {
   fishing: {
     id: 'fishing',
     name: 'Fishing',
-    icon: <GiBoatFishing className="w-10 h-10" />,
+    icon: <Fish className="w-10 h-10" />,
     description: 'Lakes & Rivers',
     heroImage: '/images/fishing-casting.png',
     thresholds: {

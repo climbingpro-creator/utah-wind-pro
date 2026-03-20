@@ -14,7 +14,7 @@
  *   meta: { sources, staleAfterMs }
  * }
  */
-import { getLakeConfig, ALL_STATION_IDS } from './lib/stations.js';
+import { getLakeConfig, ALL_STATION_IDS, LAKE_STATIONS } from './lib/stations.js';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -26,7 +26,7 @@ export default async function handler(req, res) {
   const lakeId = req.query.lake || 'utah-lake-zigzag';
   const config = getLakeConfig(lakeId);
   if (!config) {
-    return res.status(400).json({ error: `Unknown lake: ${lakeId}`, validLakes: Object.keys(getLakeConfig) });
+    return res.status(400).json({ error: `Unknown lake: ${lakeId}`, validLakes: Object.keys(LAKE_STATIONS) });
   }
 
   try {
@@ -64,7 +64,7 @@ export default async function handler(req, res) {
 // ── Synoptic ────────────────────────────────────────────────────────
 
 async function fetchSynoptic(stids) {
-  const token = process.env.SYNOPTIC_TOKEN || process.env.VITE_SYNOPTIC_TOKEN;
+  const token = process.env.SYNOPTIC_TOKEN;
   if (!token) throw new Error('SYNOPTIC_TOKEN not configured');
 
   const params = new URLSearchParams({
@@ -99,8 +99,8 @@ function normalizeSynoptic(data, requestedStids) {
 // ── Ambient ─────────────────────────────────────────────────────────
 
 async function fetchAmbient() {
-  const apiKey = process.env.AMBIENT_API_KEY || process.env.VITE_AMBIENT_API_KEY;
-  const appKey = process.env.AMBIENT_APP_KEY || process.env.VITE_AMBIENT_APP_KEY;
+  const apiKey = process.env.AMBIENT_API_KEY;
+  const appKey = process.env.AMBIENT_APP_KEY;
   if (!apiKey || !appKey) {
     console.warn('[current-conditions] Ambient keys missing — AMBIENT_API_KEY:', !!apiKey, 'AMBIENT_APP_KEY:', !!appKey);
     return null;

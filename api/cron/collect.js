@@ -34,7 +34,7 @@ import { buildStatisticalModels } from '../lib/historicalAnalysis.js';
 
 function getEnv() {
   return {
-    synopticToken: process.env.SYNOPTIC_TOKEN || process.env.VITE_SYNOPTIC_TOKEN,
+    synopticToken: process.env.SYNOPTIC_TOKEN,
     upstashUrl: process.env.UPSTASH_REDIS_REST_URL,
     upstashToken: process.env.UPSTASH_REDIS_REST_TOKEN,
   };
@@ -144,11 +144,11 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
   }
-  // Regular cron: uses CRON_SECRET if configured, but still works without it
+  // Regular cron: requires CRON_SECRET for write operations
   if (!READ_ACTIONS.includes(action) && !PROTECTED_ACTIONS.includes(action)) {
     const authHeader = req.headers['authorization'];
     const cronSecret = process.env.CRON_SECRET;
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+    if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
   }

@@ -3,14 +3,12 @@ import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline, Circle } from
 import L from 'leaflet';
 import { Compass, Maximize2, X, Wind } from 'lucide-react';
 import { LAKE_CONFIGS } from '../config/lakeStations';
-import 'leaflet/dist/leaflet.css';
-
-// Fix Leaflet default marker icon issue
+// Fix Leaflet default marker icon issue (use matching 1.9.4 assets)
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 });
 
 // Map configurations for each area with all relevant weather stations

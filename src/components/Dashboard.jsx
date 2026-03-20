@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, Suspense, lazy } from 'react';
 import * as React from 'react';
 import { RefreshCw, Wifi, WifiOff, TrendingUp, Wind, Thermometer, ArrowUpDown, MapPin, Navigation, Bell, Brain, AlertTriangle, Lightbulb, Ship } from 'lucide-react';
 import { ConfidenceGauge } from './ConfidenceGauge';
@@ -11,56 +11,52 @@ import { ToastContainer } from './ToastNotification';
 import { useLakeData } from '../hooks/useLakeData';
 import { NorthFlowGauge } from './NorthFlowGauge';
 import { KiteSafetyIndicator } from './KiteSafety';
-import { ForecastPanel } from './ForecastPanel';
-import { FiveDayForecast } from './FiveDayForecast';
-import { WindMap } from './WindMap';
-import { NotificationSettings } from './NotificationSettings';
 import { checkAndNotify } from '../services/NotificationService';
 import { getFullForecast } from '../services/ForecastService';
-import LearningDashboard from './LearningDashboard';
-import AccuracyScoreboard from './AccuracyScoreboard';
-import SpotTimeline from './SpotTimeline';
-import WhyExplainer from './WhyExplainer';
-import PatternMatch from './PatternMatch';
 import ActivityMode, { ACTIVITY_CONFIGS, calculateActivityScore, calculateGlassScore, getActivityHeroImage } from './ActivityMode';
-import GlassScore from './GlassScore';
 import { predictGlass } from '../services/BoatingPredictor';
-import WaterForecast from './WaterForecast';
-import SmartTimeline from './SmartTimeline';
-import WeekPlanner from './WeekPlanner';
-import SpotRanker from './SpotRanker';
-import IndicatorCascade from './IndicatorCascade';
-import WeeklyBestDays from './WeeklyBestDays';
-import RaceDayMode from './RaceDayMode';
-import SevereWeatherAlerts from './SevereWeatherAlerts';
-import DataFreshness from './DataFreshness';
-import ParaglidingMode from './ParaglidingMode';
-import FishingMode from './FishingMode';
 import ThemeToggle from './ThemeToggle';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { SafeComponent } from './ErrorBoundary';
 import ProGate from './ProGate';
-import ProUpgrade from './ProUpgrade';
 import { calculateCorrelatedWind } from '../services/CorrelationEngine';
 import { monitorSwings } from '../services/FrontalTrendPredictor';
 import { generateBriefing } from '../services/MorningBriefing';
-import TrendPatterns from './TrendPatterns';
-import PropagationBanner from './PropagationBanner';
-import SessionFeedback from './SessionFeedback';
-import SessionReplay from './SessionReplay';
 import TodayHero from './TodayHero';
-import SnowkiteForecast from './SnowkiteForecast';
-import PhotoSubmit from './PhotoSubmit';
-import SMSAlertSettings from './SMSAlertSettings';
-import { getSMSPrefs, processConditions } from '../services/SMSNotificationService';
 
-function windDirectionToCardinal(degrees) {
-  if (degrees == null) return 'N/A';
-  const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
-  const index = Math.round(degrees / 22.5) % 16;
-  return directions[index];
-}
+// Lazy-loaded components (below the fold / modals / heavy)
+const WindMap = lazy(() => import('./WindMap').then(m => ({ default: m.WindMap })));
+const ForecastPanel = lazy(() => import('./ForecastPanel').then(m => ({ default: m.ForecastPanel })));
+const FiveDayForecast = lazy(() => import('./FiveDayForecast').then(m => ({ default: m.FiveDayForecast })));
+const NotificationSettings = lazy(() => import('./NotificationSettings').then(m => ({ default: m.NotificationSettings })));
+const LearningDashboard = lazy(() => import('./LearningDashboard'));
+const AccuracyScoreboard = lazy(() => import('./AccuracyScoreboard'));
+const SpotTimeline = lazy(() => import('./SpotTimeline'));
+const WhyExplainer = lazy(() => import('./WhyExplainer'));
+const PatternMatch = lazy(() => import('./PatternMatch'));
+const GlassScore = lazy(() => import('./GlassScore'));
+const WaterForecast = lazy(() => import('./WaterForecast'));
+const SmartTimeline = lazy(() => import('./SmartTimeline'));
+const WeekPlanner = lazy(() => import('./WeekPlanner'));
+const SpotRanker = lazy(() => import('./SpotRanker'));
+const IndicatorCascade = lazy(() => import('./IndicatorCascade'));
+const WeeklyBestDays = lazy(() => import('./WeeklyBestDays'));
+const RaceDayMode = lazy(() => import('./RaceDayMode'));
+const SevereWeatherAlerts = lazy(() => import('./SevereWeatherAlerts'));
+const DataFreshness = lazy(() => import('./DataFreshness'));
+const ParaglidingMode = lazy(() => import('./ParaglidingMode'));
+const FishingMode = lazy(() => import('./FishingMode'));
+const ProUpgrade = lazy(() => import('./ProUpgrade'));
+const TrendPatterns = lazy(() => import('./TrendPatterns'));
+const PropagationBanner = lazy(() => import('./PropagationBanner'));
+const SessionFeedback = lazy(() => import('./SessionFeedback'));
+const SessionReplay = lazy(() => import('./SessionReplay'));
+const SnowkiteForecast = lazy(() => import('./SnowkiteForecast'));
+const PhotoSubmit = lazy(() => import('./PhotoSubmit'));
+const SMSAlertSettings = lazy(() => import('./SMSAlertSettings'));
+import { getSMSPrefs, processConditions } from '../services/SMSNotificationService';
+import { windDirectionToCardinal } from '../utils/wind';
 
 export function Dashboard() {
   const [selectedLake, setSelectedLake] = useState('utah-lake');
@@ -189,13 +185,19 @@ export function Dashboard() {
     };
   };
   
-  const activityScore = selectedActivity === 'paragliding'
-    ? getParaglidingScore()
-    : (selectedActivity && currentWindSpeed != null
-      ? calculateActivityScore(selectedActivity, currentWindSpeed, currentWindGust, currentWindDirection)
-      : null);
+  const activityScore = React.useMemo(() => 
+    selectedActivity === 'paragliding'
+      ? getParaglidingScore()
+      : (selectedActivity && currentWindSpeed != null
+        ? calculateActivityScore(selectedActivity, currentWindSpeed, currentWindGust, currentWindDirection)
+        : null),
+    [selectedActivity, currentWindSpeed, currentWindGust, currentWindDirection, lakeState]
+  );
   
-  const glassScore = calculateGlassScore(currentWindSpeed, currentWindGust);
+  const glassScore = React.useMemo(
+    () => calculateGlassScore(currentWindSpeed, currentWindGust),
+    [currentWindSpeed, currentWindGust]
+  );
 
   // Boating AI prediction (trained on 4,984 observations)
   const boatingPrediction = React.useMemo(() => {
@@ -252,23 +254,23 @@ export function Dashboard() {
     }
   }, [lakeState, selectedLake, currentWindSpeed, currentWindGust, currentWindDirection]);
 
-  const formatTime = (date) => {
+  const formatTime = React.useCallback((date) => {
     if (!date) return '--:--';
     return new Intl.DateTimeFormat('en-US', {
       hour: 'numeric',
       minute: '2-digit',
       hour12: true,
     }).format(date);
-  };
+  }, []);
 
-  const pressureData = lakeState?.pressure ? {
+  const pressureData = React.useMemo(() => lakeState?.pressure ? {
     gradient: lakeState.pressure.gradient,
     isBustCondition: lakeState.pressure.gradient != null && Math.abs(lakeState.pressure.gradient) > 2.0,
     slcPressure: lakeState.pressure.high?.value,
     provoPressure: lakeState.pressure.low?.value,
     highName: lakeState.pressure.high?.name,
     lowName: lakeState.pressure.low?.name,
-  } : null;
+  } : null, [lakeState?.pressure]);
 
   return (
     <div className={`min-h-screen transition-colors duration-200 ${
@@ -310,6 +312,7 @@ export function Dashboard() {
 
               <button
                 onClick={() => setShowSMSSettings(true)}
+                aria-label="Text Alerts"
                 className={`p-2 rounded-lg transition-colors relative ${
                   theme === 'dark'
                     ? 'hover:bg-white/5 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
@@ -327,6 +330,7 @@ export function Dashboard() {
 
               <button
                 onClick={() => setShowPhotoSubmit(true)}
+                aria-label="Submit Photo"
                 className={`p-2 rounded-lg transition-colors ${
                   theme === 'dark'
                     ? 'hover:bg-white/5 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
@@ -342,6 +346,7 @@ export function Dashboard() {
 
               <button
                 onClick={() => setShowNotificationSettings(true)}
+                aria-label="Notifications"
                 className={`p-2 rounded-lg transition-colors ${
                   theme === 'dark' 
                     ? 'hover:bg-white/5 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]' 
@@ -354,6 +359,8 @@ export function Dashboard() {
 
               <button
                 onClick={() => setShowLearningDashboard(!showLearningDashboard)}
+                aria-label="Learning System"
+                aria-expanded={showLearningDashboard}
                 className={`p-2 rounded-lg transition-colors relative ${
                   showLearningDashboard 
                     ? 'bg-sky-500 text-white' 
@@ -374,6 +381,7 @@ export function Dashboard() {
               <button
                 onClick={refresh}
                 disabled={isLoading}
+                aria-label="Refresh data"
                 className={`p-2 rounded-lg transition-colors disabled:opacity-40 ${
                   theme === 'dark' 
                     ? 'hover:bg-white/5 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]' 
@@ -418,12 +426,13 @@ export function Dashboard() {
 
       {/* Learning Dashboard Modal/Panel */}
       {showLearningDashboard && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
+        <div className="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true" aria-label="Learning System">
           <div className="flex items-center justify-center min-h-screen p-4">
             <div className="fixed inset-0 bg-black/60" onClick={() => setShowLearningDashboard(false)} />
             <div className="relative bg-slate-900 rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
               <button
                 onClick={() => setShowLearningDashboard(false)}
+                aria-label="Close learning dashboard"
                 className="absolute top-4 right-4 text-gray-400 hover:text-white"
               >
                 ✕
@@ -458,6 +467,7 @@ export function Dashboard() {
         </div>
       )}
 
+      <Suspense fallback={null}>
       <main className="max-w-6xl mx-auto px-5 sm:px-8 py-8 section-stack">
         <TodayHero
           windSpeed={currentWindSpeed}
@@ -1314,6 +1324,7 @@ export function Dashboard() {
         )}
 
       </main>
+      </Suspense>
 
       <footer className="border-t border-[var(--border-color)] mt-12">
         <div className="max-w-6xl mx-auto px-5 sm:px-8 py-6 text-center">

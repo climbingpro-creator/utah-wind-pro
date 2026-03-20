@@ -58,6 +58,7 @@ class DataCollector {
    */
   async start() {
     if (this.isRunning) return;
+    this.stop();
     
     console.log('Starting Data Collector for Learning System...');
     

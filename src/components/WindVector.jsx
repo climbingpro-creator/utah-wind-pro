@@ -1,15 +1,8 @@
 import { Wind, Navigation } from 'lucide-react';
 import { WindSparkline } from './Sparkline';
 import { useTheme } from '../context/ThemeContext';
-
-export function windDirectionToCardinal(degrees) {
-  if (degrees == null) return 'N/A';
-  
-  const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 
-                      'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
-  const index = Math.round(degrees / 22.5) % 16;
-  return directions[index];
-}
+import { windDirectionToCardinal } from '../utils/wind';
+export { windDirectionToCardinal };
 
 export function WindVector({ 
   station,
