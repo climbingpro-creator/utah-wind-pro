@@ -31,6 +31,7 @@ import { runServerLearningCycle, backfillHistorical, loadWeights, loadMeta } fro
 import { fetchNWSForecasts } from '../lib/nwsForecast.js';
 import { LAKE_STATION_MAP, ALL_STATION_IDS } from '../lib/stations.js';
 import { buildStatisticalModels } from '../lib/historicalAnalysis.js';
+import { analyzeFromStations, storePropagationSnapshot, learnFromPropagation, getPropagationData } from '../lib/serverPropagation.js';
 
 function getEnv() {
   return {
@@ -41,6 +42,17 @@ function getEnv() {
 }
 
 const ALL_STATIONS = ALL_STATION_IDS;
+
+function toMountainHour(date) {
+  try {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/Denver', hour: 'numeric', hour12: false,
+    }).formatToParts(date);
+    return parseInt(parts.find(p => p.type === 'hour')?.value || '0', 10) % 24;
+  } catch {
+    return date.getUTCHours() - 7;
+  }
+}
 
 // LAKE_STATION_MAP imported from ../lib/stations.js (single source of truth)
 
@@ -133,7 +145,7 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
 
   const action = req.query?.action;
-  const READ_ACTIONS = ['sync', 'weights', 'predictions', 'upstream', 'nws', 'ahead', 'analogs', 'models'];
+  const READ_ACTIONS = ['sync', 'weights', 'predictions', 'upstream', 'nws', 'ahead', 'analogs', 'models', 'propagation'];
 
   // Expensive manual-trigger actions ALWAYS require auth (even if CRON_SECRET isn't set)
   const PROTECTED_ACTIONS = ['backfill', 'build-models'];
@@ -162,6 +174,7 @@ export default async function handler(req, res) {
   if (action === 'predictions') return await handlePredictions(req, res);
   if (action === 'analogs') return await handleAnalogs(res);
   if (action === 'models') return await handleModels(res);
+  if (action === 'propagation') return await handlePropagation(res);
   if (action === 'build-models') return await handleBuildModels(req, res);
 
   const env = getEnv();
@@ -189,7 +202,65 @@ export default async function handler(req, res) {
       await redisCommand('LTRIM', 'obs:index', '0', '672');
     }
 
-    // ── STEP 1.5: FETCH NWS FORECASTS (cached 90 min) ──
+    // ── STEP 1.5a: PROPAGATION ANALYSIS (24/7) ──
+    let propagationResult = null;
+    if (hasRedis) {
+      try {
+        // Fetch ambient PWS for ground truth at Zigzag
+        let ambientPWS = null;
+        const ambientApiKey = process.env.AMBIENT_API_KEY;
+        const ambientAppKey = process.env.AMBIENT_APP_KEY;
+        if (ambientApiKey && ambientAppKey) {
+          try {
+            const ambResp = await fetch(
+              `https://rt.ambientweather.net/v1/devices?apiKey=${ambientApiKey}&applicationKey=${ambientAppKey}`
+            );
+            if (ambResp.ok) {
+              const ambJson = await ambResp.json();
+              const device = ambJson?.[0]?.lastData;
+              if (device) {
+                ambientPWS = {
+                  windSpeed: device.windspeedmph,
+                  windDirection: device.winddir,
+                  windGust: device.windgustmph,
+                  temperature: device.tempf,
+                };
+              }
+            }
+          } catch (_ambErr) { /* non-fatal */ }
+        }
+
+        const slcStation = stations.find(s => s.stationId === 'KSLC');
+        const pvuStation = stations.find(s => s.stationId === 'KPVU');
+        const gradient = slcStation?.pressure && pvuStation?.pressure
+          ? Math.round((slcStation.pressure - pvuStation.pressure) * 100) / 100
+          : null;
+
+        propagationResult = analyzeFromStations(stations, ambientPWS, gradient);
+
+        // Build station readings map for snapshot storage
+        const readings = {};
+        for (const s of stations) {
+          readings[s.stationId] = s;
+        }
+        if (ambientPWS) readings['PWS'] = ambientPWS;
+
+        await storePropagationSnapshot(redisCommand, propagationResult, readings);
+
+        // Daily lag learning — run at 10 PM Mountain (5 AM UTC next day)
+        const mtHour = toMountainHour(now);
+        if (mtHour === 22) {
+          const lagResult = await learnFromPropagation(redisCommand);
+          if (lagResult) {
+            console.log('Propagation lag learning complete:', lagResult.date);
+          }
+        }
+      } catch (propErr) {
+        console.error('Propagation analysis error (non-fatal):', propErr.message);
+      }
+    }
+
+    // ── STEP 1.5b: FETCH NWS FORECASTS (cached 90 min) ──
     let nwsData = null;
     let nwsDiag = { status: 'skipped' };
     if (hasRedis) {
@@ -284,6 +355,13 @@ export default async function handler(req, res) {
       hasRedis,
       nws: nwsDiag,
       learning: learningResult,
+      propagation: propagationResult ? {
+        dominant: propagationResult.dominant,
+        phase: propagationResult.dominantPhase,
+        confidence: propagationResult.dominantConfidence,
+        seThermal: propagationResult.seThermal?.phase,
+        northFlow: propagationResult.northFlow?.phase,
+      } : null,
     });
   } catch (error) {
     console.error('Cron collect error:', error);
@@ -301,6 +379,20 @@ async function handleAnalogs(res) {
     if (!raw) return res.status(200).json({ analogs: null, message: 'No analog data yet — building after more learning cycles' });
     const data = JSON.parse(raw);
     res.setHeader('Cache-Control', 's-maxage=120, stale-while-revalidate=600');
+    return res.status(200).json(data);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+}
+
+async function handlePropagation(res) {
+  const { upstashUrl, upstashToken } = getEnv();
+  if (!upstashUrl || !upstashToken) {
+    return res.status(200).json({ propagation: null, message: 'Redis not configured' });
+  }
+  try {
+    const data = await getPropagationData(redisCommand);
+    res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
     return res.status(200).json(data);
   } catch (error) {
     return res.status(500).json({ error: error.message });

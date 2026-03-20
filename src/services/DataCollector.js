@@ -22,7 +22,7 @@ import { setFishingLearnedWeights } from './FishingPredictor';
 import { setWindFieldLearnedWeights } from './WindFieldEngine';
 import { scoreSessionForActivity } from './ActivityScoring';
 import { predictWindEvents, setWindEventLearnedPatterns, getUpstreamSignals, setStatisticalModels as setWindEventStatisticalModels } from './WindEventPredictor';
-import { setLearnedLags } from './ThermalPropagation';
+import { setLearnedLags, validateHistorical, lagAdjustmentsFromValidation } from './ThermalPropagation';
 import { apiUrl } from '../utils/platform';
 import { safeToFixed } from '../utils/safeToFixed';
 
@@ -236,6 +236,30 @@ class DataCollector {
       }
     } catch (e) {
       console.warn('[DataCollector] Statistical models fetch failed:', e.message);
+    }
+
+    // Sync server-learned propagation lags (24/7 cron-collected)
+    try {
+      const propResp = await fetch(apiUrl('/api/cron/collect?action=propagation'));
+      if (propResp.ok) {
+        const propData = await propResp.json();
+        if (propData?.lags && Object.keys(propData.lags).length > 0) {
+          // Convert server format (se:QSF → se_thermal:QSF) for client
+          const clientLags = {};
+          for (const [k, v] of Object.entries(propData.lags)) {
+            const clientKey = k.replace('se:', 'se_thermal:').replace('nf:', 'north_flow:');
+            clientLags[clientKey] = { avgLagMinutes: v.avgLag, samples: v.samples };
+          }
+          setLearnedLags(clientLags);
+          localStorage.setItem('propagation:lags', JSON.stringify(clientLags));
+          console.log(`Propagation lags synced from server — ${Object.keys(clientLags).length} station lags`);
+        }
+        if (propData?.stats) {
+          localStorage.setItem('propagation:stats', JSON.stringify(propData.stats));
+        }
+      }
+    } catch (e) {
+      console.warn('[DataCollector] Propagation sync failed:', e.message);
     }
   }
 
@@ -776,7 +800,7 @@ class DataCollector {
       this.collectionStats.learningCyclesRun++;
 
       // Feed propagation snapshots into lag learning
-      await this._learnFromPropagation();
+      this._learnFromPropagation();
       
       this.lastCollection.learning = new Date().toISOString();
       console.log('✅ Learning cycle complete');
@@ -794,9 +818,8 @@ class DataCollector {
    * Computes actual onset times per station, compares to expected lags,
    * and stores learned lag adjustments for future predictions.
    */
-  async _learnFromPropagation() {
+  _learnFromPropagation() {
     try {
-      const { validateHistorical, lagAdjustmentsFromValidation } = await import('./ThermalPropagation');
 
       for (const [lakeId, snaps] of Object.entries(this.propagationSnapshots)) {
         if (snaps.length < 4) continue;
