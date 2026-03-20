@@ -1,3 +1,5 @@
+import { safeToFixed } from '../utils/safeToFixed';
+
 /**
  * MORNING BRIEFING SERVICE
  *
@@ -170,7 +172,8 @@ function briefWind(activity, params) {
   } else if (nf?.persistenceHours >= 3) {
     bodyParts.push(`North flow building (${nf.persistenceHours}h) — likely to persist through the window.`);
   } else if (nf?.status === 'strong') {
-    bodyParts.push(`Strong north signal from KSLC — expect ${nf.expectedZigZagSpeed?.toFixed(0) || '15'}+ mph at the lake in ~1 hour.`);
+    const zzSpeedStr = safeToFixed(nf.expectedZigZagSpeed, 0);
+    bodyParts.push(`Strong north signal from KSLC — expect ${zzSpeedStr === '--' ? '15' : zzSpeedStr}+ mph at the lake in ~1 hour.`);
   }
 
   const upstreamSnip = buildUpstreamSnippet(upstream);

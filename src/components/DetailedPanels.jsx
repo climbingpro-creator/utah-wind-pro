@@ -11,6 +11,7 @@ import { SafeComponent } from './ErrorBoundary';
 import ProGate from './ProGate';
 import PrimaryWindDisplay from './PrimaryWindDisplay';
 import FactorBar from './FactorBar';
+import { safeToFixed } from '../utils/safeToFixed';
 
 const WindMap = lazy(() => import('./WindMap').then(m => ({ default: m.WindMap })));
 const ForecastPanel = lazy(() => import('./ForecastPanel').then(m => ({ default: m.ForecastPanel })));
@@ -220,7 +221,7 @@ export default function DetailedPanels({
               <div className={`mt-2 pt-2 border-t text-xs ${
                 theme === 'dark' ? 'border-blue-500/20 text-blue-400/70' : 'border-blue-200 text-blue-600/70'
               }`}>
-                Base: {(correlation.baseSpeed ?? 0).toFixed(0)} mph → Refined: {correlation.refinedSpeed ?? '--'} mph
+                Base: {safeToFixed(correlation.baseSpeed, 0)} mph → Refined: {correlation.refinedSpeed ?? '--'} mph
               </div>
             )}
           </div>
@@ -404,7 +405,7 @@ export default function DetailedPanels({
                 {lakeState.thermalPrediction.speedBiasCorrection != null && lakeState.thermalPrediction.speedBiasCorrection !== 0 && (
                   <span className="ml-1 opacity-60">
                     bias: {lakeState.thermalPrediction.speedBiasCorrection > 0 ? '+' : ''}
-                    {(lakeState.thermalPrediction.speedBiasCorrection ?? 0).toFixed(1)} mph
+                    {safeToFixed(lakeState.thermalPrediction.speedBiasCorrection, 1)} mph
                   </span>
                 )}
               </span>

@@ -1,5 +1,6 @@
 import { AlertTriangle, CheckCircle, AlertCircle, XCircle, Wind, Anchor } from 'lucide-react';
 import { LAKE_CONFIGS } from '../config/lakeStations';
+import { safeToFixed } from '../utils/safeToFixed';
 
 /**
  * KITE SPEED THRESHOLDS
@@ -38,7 +39,7 @@ export function getKiteSpeedStatus(windSpeed) {
     return {
       foil: 'overpowered',
       twinTip: 'overpowered',
-      message: `${windSpeed.toFixed(0)} mph - Very strong! Small kite only`,
+      message: `${safeToFixed(windSpeed, 0)} mph - Very strong! Small kite only`,
       color: 'text-red-400',
     };
   }
@@ -47,7 +48,7 @@ export function getKiteSpeedStatus(windSpeed) {
     return {
       foil: 'ideal',
       twinTip: 'good',
-      message: `${windSpeed.toFixed(0)} mph - Great for all kites!`,
+      message: `${safeToFixed(windSpeed, 0)} mph - Great for all kites!`,
       color: 'text-green-400',
     };
   }
@@ -56,7 +57,7 @@ export function getKiteSpeedStatus(windSpeed) {
     return {
       foil: 'good',
       twinTip: 'marginal',
-      message: `${windSpeed.toFixed(0)} mph - Foil kite recommended`,
+      message: `${safeToFixed(windSpeed, 0)} mph - Foil kite recommended`,
       color: 'text-cyan-400',
     };
   }
@@ -64,7 +65,7 @@ export function getKiteSpeedStatus(windSpeed) {
   return {
     foil: 'too-light',
     twinTip: 'too-light',
-    message: `${windSpeed.toFixed(0)} mph - Too light for kiting`,
+    message: `${safeToFixed(windSpeed, 0)} mph - Too light for kiting`,
     color: 'text-slate-500',
   };
 }
@@ -276,12 +277,12 @@ export function KiteSafetyIndicator({ lakeId, windDirection, windSpeed, compact 
         <span>
           {windSpeed != null ? (
             safety.safe === false 
-              ? `${windSpeed.toFixed(0)} mph but OFFSHORE - Do not kite!`
+              ? `${safeToFixed(windSpeed, 0)} mph but OFFSHORE - Do not kite!`
               : speedStatus.foil === 'too-light'
-                ? `${windSpeed.toFixed(0)} mph - Need 10+ for foil, 15+ for twin tip`
+                ? `${safeToFixed(windSpeed, 0)} mph - Need 10+ for foil, 15+ for twin tip`
                 : speedStatus.twinTip === 'good' || speedStatus.twinTip === 'ideal'
-                  ? `${windSpeed.toFixed(0)} mph - Great for all kites!`
-                  : `${windSpeed.toFixed(0)} mph - Foil kite recommended`
+                  ? `${safeToFixed(windSpeed, 0)} mph - Great for all kites!`
+                  : `${safeToFixed(windSpeed, 0)} mph - Foil kite recommended`
           ) : 'Waiting for wind data...'}
         </span>
       </div>

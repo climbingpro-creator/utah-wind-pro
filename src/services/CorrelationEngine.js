@@ -14,6 +14,7 @@
  */
 
 import relations from '../config/mesoRegistry.json';
+import { safeToFixed } from '../utils/safeToFixed';
 
 function isInHeadingRange(dir, range) {
   if (dir == null || !range) return false;
@@ -96,7 +97,7 @@ export function calculateCorrelatedWind(lakeId, baseForecast, mesoData, pws = nu
           activeTriggers.push({
             id: 'gsl-surge',
             label: 'GSL Surge Active',
-            detail: `KSLC ${gate.speed.toFixed(0)} mph NW, ΔT=${tempDelta.toFixed(0)}°F`,
+            detail: `KSLC ${safeToFixed(gate.speed, 0)} mph NW, ΔT=${safeToFixed(tempDelta, 0)}°F`,
             impact: `+${Math.round((config.thermal_engine.multiplier - 1) * 100)}%`,
             type: 'boost',
           });
@@ -106,7 +107,7 @@ export function calculateCorrelatedWind(lakeId, baseForecast, mesoData, pws = nu
           activeTriggers.push({
             id: 'gsl-surge-partial',
             label: 'GSL Surge Developing',
-            detail: `KSLC ${gate.speed.toFixed(0)} mph NW — awaiting temp confirmation`,
+            detail: `KSLC ${safeToFixed(gate.speed, 0)} mph NW — awaiting temp confirmation`,
             impact: `+${Math.round((config.thermal_engine.multiplier - 1) * 50)}%`,
             type: 'developing',
           });
@@ -123,7 +124,7 @@ export function calculateCorrelatedWind(lakeId, baseForecast, mesoData, pws = nu
       activeTriggers.push({
         id: 'provo-light',
         label: 'Provo Light — Thermal Free',
-        detail: `KPVU only ${gate.speed.toFixed(0)} mph, no blocking flow`,
+        detail: `KPVU only ${safeToFixed(gate.speed, 0)} mph, no blocking flow`,
         impact: `+${Math.round((config.thermal_engine.multiplier - 1) * 100)}%`,
         type: 'boost',
       });
@@ -142,7 +143,7 @@ export function calculateCorrelatedWind(lakeId, baseForecast, mesoData, pws = nu
         activeTriggers.push({
           id: 'south-onshore',
           label: 'Onshore Flow Active',
-          detail: `KPVU ${gate.speed.toFixed(0)} mph from S/SSW — onshore at Vineyard`,
+          detail: `KPVU ${safeToFixed(gate.speed, 0)} mph from S/SSW — onshore at Vineyard`,
           impact: `+${Math.round((config.thermal_engine.multiplier - 1) * 100)}%`,
           type: 'boost',
         });
@@ -162,7 +163,7 @@ export function calculateCorrelatedWind(lakeId, baseForecast, mesoData, pws = nu
         activeTriggers.push({
           id: 'canyon-drainage',
           label: 'Canyon Drainage Active',
-          detail: `QSF ${gate.speed.toFixed(0)} mph SE — funneling into lake`,
+          detail: `QSF ${safeToFixed(gate.speed, 0)} mph SE — funneling into lake`,
           impact: `+${Math.round((config.thermal_engine.multiplier - 1) * 100)}%`,
           type: 'boost',
         });
@@ -183,7 +184,7 @@ export function calculateCorrelatedWind(lakeId, baseForecast, mesoData, pws = nu
         activeTriggers.push({
           id: 'canyon-boost',
           label: 'Spanish Fork Squeeze',
-          detail: `QSF ${gate.speed.toFixed(0)} mph SE → canyon push adds wind`,
+          detail: `QSF ${safeToFixed(gate.speed, 0)} mph SE → canyon push adds wind`,
           impact: `+${Math.round((config.canyon_boost.multiplier - 1) * 100)}%`,
           type: 'boost',
         });
@@ -203,7 +204,7 @@ export function calculateCorrelatedWind(lakeId, baseForecast, mesoData, pws = nu
         activeTriggers.push({
           id: 'north-flow',
           label: 'North Flow Push',
-          detail: `KSLC ${gate.speed.toFixed(0)} mph NW — pushing south to launch`,
+          detail: `KSLC ${safeToFixed(gate.speed, 0)} mph NW — pushing south to launch`,
           impact: `+${Math.round((config.north_flow.multiplier - 1) * 100)}%`,
           type: 'boost',
         });
@@ -223,7 +224,7 @@ export function calculateCorrelatedWind(lakeId, baseForecast, mesoData, pws = nu
         activeTriggers.push({
           id: 'valley-confirm',
           label: 'Valley Confirmed',
-          detail: `${config.valley_confirmation.sensor} ${sensor.speed.toFixed(0)} mph — flow reaching lake`,
+            detail: `${config.valley_confirmation.sensor} ${safeToFixed(sensor.speed, 0)} mph — flow reaching lake`,
           impact: `+${Math.round((config.valley_confirmation.multiplier - 1) * 100)}%`,
           type: 'confirmation',
         });
@@ -244,7 +245,7 @@ export function calculateCorrelatedWind(lakeId, baseForecast, mesoData, pws = nu
         activeTriggers.push({
           id: 'arrowhead-trigger',
           label: 'Arrowhead Trigger',
-          detail: `SND ${sensor.speed.toFixed(0)} mph SSW — thermal at dam in ~60 min`,
+          detail: `SND ${safeToFixed(sensor.speed, 0)} mph SSW — thermal at dam in ~60 min`,
           impact: `+${Math.round((config.arrowhead_trigger.multiplier - 1) * 100)}%`,
           type: 'boost',
         });
@@ -264,7 +265,7 @@ export function calculateCorrelatedWind(lakeId, baseForecast, mesoData, pws = nu
         activeTriggers.push({
           id: 'venturi',
           label: 'Canyon Venturi Active',
-          detail: `Provo ${upstream.temp.toFixed(0)}°F vs Heber ${target.temp.toFixed(0)}°F (Δ${delta.toFixed(0)}°F)`,
+          detail: `Provo ${safeToFixed(upstream.temp, 0)}°F vs Heber ${safeToFixed(target.temp, 0)}°F (Δ${safeToFixed(delta, 0)}°F)`,
           impact: `+${Math.round((config.thermal_engine.multiplier - 1) * 100)}%`,
           type: 'boost',
         });
@@ -280,7 +281,7 @@ export function calculateCorrelatedWind(lakeId, baseForecast, mesoData, pws = nu
       activeTriggers.push({
         id: 'stability-cap',
         label: 'Turbulence Cap',
-        detail: `${config.stability_cap.sensor} ${sensor.speed.toFixed(0)} mph — high altitude disruption`,
+        detail: `${config.stability_cap.sensor} ${safeToFixed(sensor.speed, 0)} mph — high altitude disruption`,
         impact: `${Math.round((config.stability_cap.multiplier - 1) * 100)}%`,
         type: 'penalty',
       });
@@ -299,7 +300,7 @@ export function calculateCorrelatedWind(lakeId, baseForecast, mesoData, pws = nu
         activeTriggers.push({
           id: 'south-flow',
           label: 'South Flow Active',
-          detail: `Hill AFB ${gate.speed.toFixed(0)} mph S — south flow confirmed`,
+          detail: `Hill AFB ${safeToFixed(gate.speed, 0)} mph S — south flow confirmed`,
           impact: `+${Math.round((config.thermal_engine.multiplier - 1) * 100)}%`,
           type: 'boost',
         });

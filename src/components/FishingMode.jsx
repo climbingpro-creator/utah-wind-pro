@@ -4,6 +4,7 @@ import { useTheme } from '../context/ThemeContext';
 import { predictFishing } from '../services/FishingPredictor';
 import { getWaterTemp, getAllWaterTemps } from '../services/USGSWaterService';
 import WaterForecast from './WaterForecast';
+import { safeToFixed } from '../utils/safeToFixed';
 
 // Utah Fishing Locations Configuration
 export const FISHING_LOCATIONS = {
@@ -567,7 +568,7 @@ function calculateFishingScore(location, conditions) {
   const pressureAnalysis = analyzePressure(pressure, pressureTrend);
   const pressureScore = pressureAnalysis.rating * 4;
   score += pressureScore - 12;
-  factors.push({ name: 'Pressure', value: `${pressure?.toFixed(2) || '--'} inHg`, impact: pressureScore >= 16 ? 'positive' : pressureScore <= 8 ? 'negative' : 'neutral' });
+  factors.push({ name: 'Pressure', value: `${safeToFixed(pressure, 2)} inHg`, impact: pressureScore >= 16 ? 'positive' : pressureScore <= 8 ? 'negative' : 'neutral' });
   
   // Time of day (0-15 points)
   const isGoldenHour = (hour >= 5 && hour <= 8) || (hour >= 17 && hour <= 20);
@@ -584,7 +585,7 @@ function calculateFishingScore(location, conditions) {
   else if (windSpeed < 20) windScore = 5;
   else windScore = 2;
   score += windScore - 10;
-  factors.push({ name: 'Wind', value: `${windSpeed?.toFixed(0) || '--'} mph`, impact: windScore >= 12 ? 'positive' : windScore <= 5 ? 'negative' : 'neutral' });
+  factors.push({ name: 'Wind', value: `${safeToFixed(windSpeed, 0)} mph`, impact: windScore >= 12 ? 'positive' : windScore <= 5 ? 'negative' : 'neutral' });
   
   // Water temperature (species dependent, 0-15 points)
   const locationData = FISHING_LOCATIONS[location];
@@ -973,7 +974,7 @@ const FishingMode = ({ windData, pressureData, isLoading, upstreamData = {} }) =
             <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Pressure</span>
           </div>
           <div className={`text-2xl font-bold ${pressureAnalysis.color}`}>
-            {pressure?.toFixed(2) || '--'}
+            {safeToFixed(pressure, 2)}
             <span className={`text-sm ml-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>inHg</span>
           </div>
           <div className="flex items-center gap-1 mt-1">

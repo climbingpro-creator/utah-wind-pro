@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Brain, TrendingUp, TrendingDown, Minus, Database, RefreshCw, Download, Activity, Target, Zap } from 'lucide-react';
 import { learningSystem } from '../services/LearningSystem';
 import { dataCollector } from '../services/DataCollector';
+import { safeToFixed } from '../utils/safeToFixed';
 
 const LearningDashboard = () => {
   const [stats, setStats] = useState(null);
@@ -263,7 +264,7 @@ const LearningDashboard = () => {
 
           {weights.speedBiasCorrection != null && weights.speedBiasCorrection !== 0 && (
             <div className="text-xs text-gray-400 mb-2">
-              Speed bias correction: {weights.speedBiasCorrection > 0 ? '+' : ''}{(weights.speedBiasCorrection ?? 0).toFixed(1)} mph
+              Speed bias correction: {weights.speedBiasCorrection > 0 ? '+' : ''}{safeToFixed(weights.speedBiasCorrection, 1)} mph
             </div>
           )}
 
@@ -332,10 +333,10 @@ const LearningDashboard = () => {
               <div className="bg-blue-900/20 border border-blue-500/20 p-3 rounded">
                 <div className="text-blue-400 font-bold mb-1">⬇️ North Flow Events</div>
                 <div className="text-gray-300">
-                  Avg duration: {(weights.windEventPatterns.north_flow.avgDuration ?? 0).toFixed(1)} hrs
+                  Avg duration: {safeToFixed(weights.windEventPatterns.north_flow.avgDuration, 1)} hrs
                 </div>
                 <div className="text-gray-300">
-                  Avg speed: {(weights.windEventPatterns.north_flow.avgSpeed ?? 0).toFixed(0)} mph
+                  Avg speed: {safeToFixed(weights.windEventPatterns.north_flow.avgSpeed, 0)} mph
                 </div>
                 <div className="text-gray-400">
                   {weights.windEventPatterns.north_flow.eventCount ?? 0} events recorded
@@ -346,7 +347,7 @@ const LearningDashboard = () => {
               <div className="bg-orange-900/20 border border-orange-500/20 p-3 rounded">
                 <div className="text-orange-400 font-bold mb-1">🔥 Thermal Events</div>
                 <div className="text-gray-300">
-                  Avg duration: {(weights.windEventPatterns.thermal.avgDuration ?? 0).toFixed(1)} hrs
+                  Avg duration: {safeToFixed(weights.windEventPatterns.thermal.avgDuration, 1)} hrs
                 </div>
                 <div className="text-gray-400">
                   {weights.windEventPatterns.thermal.eventCount ?? 0} events recorded

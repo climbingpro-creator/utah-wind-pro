@@ -11,6 +11,7 @@
  */
 
 import axios from 'axios';
+import { safeToFixed } from '../utils/safeToFixed';
 
 // NWS API configuration
 const NWS_BASE_URL = 'https://api.weather.gov';
@@ -657,6 +658,11 @@ export function getFullForecast(locationId, conditions = {}) {
   
   baseProbability = Math.max(0, Math.min(100, baseProbability));
   
+  const pressureGradientDisplay = (() => {
+    const s = safeToFixed(pressureGradient, 1);
+    return s === '--' ? '0' : s;
+  })();
+  
   // Determine wind type
   let windType = 'thermal';
   let expectedDirection = 'SE';
@@ -681,7 +687,7 @@ export function getFullForecast(locationId, conditions = {}) {
       expectedSpeed: { min: 8, max: 15 },
       message: `${windType === 'thermal' ? 'Thermal' : 'North flow'} conditions expected tomorrow`,
       factors: [
-        { name: 'Pressure Gradient', value: pressureGradient?.toFixed(1) || '0', impact: pressureGradient > 1.5 ? 'positive' : 'neutral' },
+        { name: 'Pressure Gradient', value: pressureGradientDisplay, impact: pressureGradient > 1.5 ? 'positive' : 'neutral' },
       ],
     },
     [FORECAST_STAGES.MORNING]: {
@@ -695,8 +701,8 @@ export function getFullForecast(locationId, conditions = {}) {
         ? 'Early wind activity detected - good sign' 
         : 'Calm morning - thermal development expected',
       factors: [
-        { name: 'Morning Wind', value: `${morningWindSpeed?.toFixed(0) || 0} mph`, impact: morningWindSpeed > 5 ? 'positive' : 'neutral' },
-        { name: 'Temperature', value: `${morningTemp?.toFixed(0) || '--'}°F`, impact: 'neutral' },
+        { name: 'Morning Wind', value: `${(() => { const s = safeToFixed(morningWindSpeed, 0); return s === '--' ? '0' : s; })()} mph`, impact: morningWindSpeed > 5 ? 'positive' : 'neutral' },
+        { name: 'Temperature', value: `${safeToFixed(morningTemp, 0)}°F`, impact: 'neutral' },
       ],
     },
     [FORECAST_STAGES.PRE_THERMAL]: {
@@ -710,7 +716,7 @@ export function getFullForecast(locationId, conditions = {}) {
         ? 'Thermal pump active - wind building' 
         : 'Conditions developing',
       factors: [
-        { name: 'Thermal Delta', value: `${thermalDelta?.toFixed(1) || 0}°F`, impact: thermalDelta > 5 ? 'positive' : 'neutral' },
+        { name: 'Thermal Delta', value: `${(() => { const s = safeToFixed(thermalDelta, 1); return s === '--' ? '0' : s; })()}°F`, impact: thermalDelta > 5 ? 'positive' : 'neutral' },
       ],
     },
     [FORECAST_STAGES.IMMINENT]: {
@@ -724,7 +730,7 @@ export function getFullForecast(locationId, conditions = {}) {
         ? 'Wind event starting!' 
         : 'Thermal should start within 30-60 minutes',
       factors: [
-        { name: 'Current Wind', value: `${currentWindSpeed?.toFixed(0) || 0} mph`, impact: currentWindSpeed > 8 ? 'positive' : 'neutral' },
+        { name: 'Current Wind', value: `${(() => { const s = safeToFixed(currentWindSpeed, 0); return s === '--' ? '0' : s; })()} mph`, impact: currentWindSpeed > 8 ? 'positive' : 'neutral' },
       ],
     },
     [FORECAST_STAGES.ACTIVE]: {
@@ -735,10 +741,10 @@ export function getFullForecast(locationId, conditions = {}) {
       expectedDirection,
       expectedSpeed: { min: currentWindSpeed * 0.8, max: currentWindSpeed * 1.3 },
       message: currentWindSpeed > 10 
-        ? `Active ${windType === 'thermal' ? 'thermal' : 'north flow'} - ${currentWindSpeed?.toFixed(0)} mph` 
+        ? `Active ${windType === 'thermal' ? 'thermal' : 'north flow'} - ${safeToFixed(currentWindSpeed, 0)} mph` 
         : 'Light conditions - may improve',
       factors: [
-        { name: 'Current Wind', value: `${currentWindSpeed?.toFixed(0) || 0} mph ${currentWindDirection ? `from ${currentWindDirection}°` : ''}`, impact: currentWindSpeed > 10 ? 'positive' : 'negative' },
+        { name: 'Current Wind', value: `${(() => { const s = safeToFixed(currentWindSpeed, 0); return s === '--' ? '0' : s; })()} mph ${currentWindDirection ? `from ${currentWindDirection}°` : ''}`, impact: currentWindSpeed > 10 ? 'positive' : 'negative' },
       ],
     },
   };

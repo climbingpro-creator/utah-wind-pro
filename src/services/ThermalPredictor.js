@@ -50,6 +50,8 @@
  * - Speed bias correction applied from learning
  */
 
+import { safeToFixed } from '../utils/safeToFixed';
+
 // Learned weights cache (loaded from LearningSystem)
 let learnedWeights = null;
 
@@ -905,19 +907,19 @@ export function predictThermal(lakeId, currentConditions) {
     if (spd >= speed.typical.min && spd <= speed.typical.max) {
       speedStatus = 'good';
       speedScore = 100;
-      speedMessage = `${spd.toFixed(1)} mph is in thermal range`;
+      speedMessage = `${safeToFixed(spd, 1)} mph is in thermal range`;
     } else if (spd >= speed.typical.min * 0.6 && spd < speed.typical.min) {
       speedStatus = 'building';
       speedScore = 50;
-      speedMessage = `${spd.toFixed(1)} mph - thermal may still be building`;
+      speedMessage = `${safeToFixed(spd, 1)} mph - thermal may still be building`;
     } else if (spd < speed.typical.min * 0.6) {
       speedStatus = 'light';
       speedScore = 20;
-      speedMessage = `${spd.toFixed(1)} mph is too light`;
+      speedMessage = `${safeToFixed(spd, 1)} mph is too light`;
     } else {
       speedStatus = 'strong';
       speedScore = 40;
-      speedMessage = `${spd.toFixed(1)} mph is stronger than typical`;
+      speedMessage = `${safeToFixed(spd, 1)} mph is stronger than typical`;
     }
   }
   
@@ -939,19 +941,19 @@ export function predictThermal(lakeId, currentConditions) {
       if (gradient > 2.0) {
         pressureScore = 90;
         pressureStatus = 'excellent';
-        pressureMessage = `ΔP +${gradient.toFixed(2)}mb = Strong North flow - IDEAL`;
+        pressureMessage = `ΔP +${safeToFixed(gradient, 2)}mb = Strong North flow - IDEAL`;
       } else if (gradient > 0.5) {
         pressureScore = 70;
         pressureStatus = 'favorable';
-        pressureMessage = `ΔP +${gradient.toFixed(2)}mb = Good North flow`;
+        pressureMessage = `ΔP +${safeToFixed(gradient, 2)}mb = Good North flow`;
       } else if (gradient > -0.5) {
         pressureScore = 40;
         pressureStatus = 'marginal';
-        pressureMessage = `ΔP ${gradient.toFixed(2)}mb = Weak/variable flow`;
+        pressureMessage = `ΔP ${safeToFixed(gradient, 2)}mb = Weak/variable flow`;
       } else {
         pressureScore = 10;
         pressureStatus = 'bust';
-        pressureMessage = `ΔP ${gradient.toFixed(2)}mb = South flow - wrong for this launch`;
+        pressureMessage = `ΔP ${safeToFixed(gradient, 2)}mb = South flow - wrong for this launch`;
       }
     } else {
       // SE THERMAL LOCATIONS (Saratoga, etc.)
@@ -959,23 +961,23 @@ export function predictThermal(lakeId, currentConditions) {
       if (gradient > 2.0) {
         pressureScore = 0;
         pressureStatus = 'bust';
-        pressureMessage = `ΔP +${gradient.toFixed(2)}mb > 2.0mb = North flow override`;
+        pressureMessage = `ΔP +${safeToFixed(gradient, 2)}mb > 2.0mb = North flow override`;
       } else if (gradient > 0) {
         pressureScore = 10;
         pressureStatus = 'marginal-bust';
-        pressureMessage = `ΔP +${gradient.toFixed(2)}mb positive = North flow likely`;
+        pressureMessage = `ΔP +${safeToFixed(gradient, 2)}mb positive = North flow likely`;
       } else if (gradient > -0.5) {
         pressureScore = 40;
         pressureStatus = 'marginal';
-        pressureMessage = `ΔP ${gradient.toFixed(2)}mb = Marginal conditions`;
+        pressureMessage = `ΔP ${safeToFixed(gradient, 2)}mb = Marginal conditions`;
       } else if (gradient > -1.5) {
         pressureScore = 70;
         pressureStatus = 'favorable';
-        pressureMessage = `ΔP ${gradient.toFixed(2)}mb = Good thermal gradient`;
+        pressureMessage = `ΔP ${safeToFixed(gradient, 2)}mb = Good thermal gradient`;
       } else {
         pressureScore = 90;
         pressureStatus = 'excellent';
-        pressureMessage = `ΔP ${gradient.toFixed(2)}mb = Strong thermal gradient`;
+        pressureMessage = `ΔP ${safeToFixed(gradient, 2)}mb = Strong thermal gradient`;
       }
     }
   }
@@ -1017,13 +1019,13 @@ export function predictThermal(lakeId, currentConditions) {
     
     if (arrowheadScore >= 80) {
       arrowheadStatus = 'trigger';
-      arrowheadMessage = `TRIGGER: Arrowhead ${ridgeSpeed.toFixed(1)} mph from ${ridgeDir}° - thermal likely in 60 min`;
+      arrowheadMessage = `TRIGGER: Arrowhead ${safeToFixed(ridgeSpeed, 1)} mph from ${ridgeDir}° - thermal likely in 60 min`;
     } else if (arrowheadScore >= 50) {
       arrowheadStatus = 'building';
-      arrowheadMessage = `Building: Arrowhead ${ridgeSpeed.toFixed(1)} mph (need 12-18 mph from SSW)`;
+      arrowheadMessage = `Building: Arrowhead ${safeToFixed(ridgeSpeed, 1)} mph (need 12-18 mph from SSW)`;
     } else {
       arrowheadStatus = 'no-trigger';
-      arrowheadMessage = `No trigger: Arrowhead ${ridgeSpeed.toFixed(1)} mph (need 12-18 mph from SSW)`;
+      arrowheadMessage = `No trigger: Arrowhead ${safeToFixed(ridgeSpeed, 1)} mph (need 12-18 mph from SSW)`;
     }
   }
 
@@ -1046,57 +1048,57 @@ export function predictThermal(lakeId, currentConditions) {
       if (delta < 0) {
         elevationScore = 10;
         elevationStatus = 'inverted';
-        elevationMessage = `Inverted: Arrowhead ${Math.abs(delta).toFixed(1)}°F warmer - no thermal`;
+        elevationMessage = `Inverted: Arrowhead ${safeToFixed(Math.abs(delta), 1)}°F warmer - no thermal`;
       } else if (delta >= optMin && delta <= optMax) {
         elevationScore = 100;
         elevationStatus = 'optimal';
-        elevationMessage = `Arrowhead correlation OPTIMAL: Δ${delta.toFixed(1)}°F (ideal: ${optMin}-${optMax}°F)`;
+        elevationMessage = `Arrowhead correlation OPTIMAL: Δ${safeToFixed(delta, 1)}°F (ideal: ${optMin}-${optMax}°F)`;
       } else if (delta > optMax && delta <= 18) {
         // Bell curve decay above optimal: score drops from 100 to ~50 at 18°F
         const overshoot = delta - optMax;
         elevationScore = Math.round(100 - (overshoot / (18 - optMax)) * 50);
         elevationStatus = 'strong';
-        elevationMessage = `High delta: Δ${delta.toFixed(1)}°F — thermal strong but possible turbulence`;
+        elevationMessage = `High delta: Δ${safeToFixed(delta, 1)}°F — thermal strong but possible turbulence`;
       } else if (delta > 18) {
         // Excessive delta: likely turbulence shuts down smooth thermals
         elevationScore = Math.max(15, Math.round(50 - (delta - 18) * 5));
         elevationStatus = 'turbulent';
-        elevationMessage = `Excessive Δ${delta.toFixed(1)}°F — high-altitude turbulence likely disrupting surface flow`;
+        elevationMessage = `Excessive Δ${safeToFixed(delta, 1)}°F — high-altitude turbulence likely disrupting surface flow`;
       } else if (delta >= 5) {
         elevationScore = 70;
         elevationStatus = 'building';
-        elevationMessage = `Thermal building: Δ${delta.toFixed(1)}°F (need ${optMin}-${optMax}°F)`;
+        elevationMessage = `Thermal building: Δ${safeToFixed(delta, 1)}°F (need ${optMin}-${optMax}°F)`;
       } else {
         elevationScore = 40;
         elevationStatus = 'weak';
-        elevationMessage = `Weak delta: Only ${delta.toFixed(1)}°F (need ${optMin}-${optMax}°F)`;
+        elevationMessage = `Weak delta: Only ${safeToFixed(delta, 1)}°F (need ${optMin}-${optMax}°F)`;
       }
     } else {
       // Standard logic for other lakes with same turbulence cap
       if (currentConditions.inversionTrapped) {
         elevationScore = 0;
         elevationStatus = 'inversion';
-        elevationMessage = `Inversion: Ridge warmer than shore (Δ${delta.toFixed(1)}°F)`;
+        elevationMessage = `Inversion: Ridge warmer than shore (Δ${safeToFixed(delta, 1)}°F)`;
       } else if (delta > 20) {
         elevationScore = 40;
         elevationStatus = 'turbulent';
-        elevationMessage = `Excessive Δ${delta.toFixed(1)}°F — possible turbulent mixing`;
+        elevationMessage = `Excessive Δ${safeToFixed(delta, 1)}°F — possible turbulent mixing`;
       } else if (currentConditions.pumpActive) {
         elevationScore = 100;
         elevationStatus = 'pump-active';
-        elevationMessage = `Thermal Pump ACTIVE: Shore ${delta.toFixed(1)}°F warmer`;
+        elevationMessage = `Thermal Pump ACTIVE: Shore ${safeToFixed(delta, 1)}°F warmer`;
       } else if (delta >= 5) {
         elevationScore = 70;
         elevationStatus = 'building';
-        elevationMessage = `Thermal building: Shore ${delta.toFixed(1)}°F warmer`;
+        elevationMessage = `Thermal building: Shore ${safeToFixed(delta, 1)}°F warmer`;
       } else if (delta >= 0) {
         elevationScore = 40;
         elevationStatus = 'weak';
-        elevationMessage = `Weak thermal: Shore only ${delta.toFixed(1)}°F warmer`;
+        elevationMessage = `Weak thermal: Shore only ${safeToFixed(delta, 1)}°F warmer`;
       } else {
         elevationScore = 10;
         elevationStatus = 'inverted';
-        elevationMessage = `Cold shore: Ridge ${Math.abs(delta).toFixed(1)}°F warmer`;
+        elevationMessage = `Cold shore: Ridge ${safeToFixed(Math.abs(delta), 1)}°F warmer`;
       }
     }
   }
@@ -1175,21 +1177,21 @@ export function predictThermal(lakeId, currentConditions) {
       // Strong indicator - thermal likely in 2 hours
       spanishForkScore = 90;
       spanishForkStatus = 'strong';
-      spanishForkMessage = `EARLY WARNING: Spanish Fork ${sfSpeed.toFixed(1)} mph from ${sfDir}° - thermal expected in ~2 hours`;
+      spanishForkMessage = `EARLY WARNING: Spanish Fork ${safeToFixed(sfSpeed, 1)} mph from ${sfDir}° - thermal expected in ~2 hours`;
       spanishForkETA = 120; // minutes
       probability *= 1.0 + (0.4 * sfLearnedWeight);
     } else if (isSEDirection && sfSpeed >= trigger.speed.min) {
       // Moderate indicator
       spanishForkScore = 70;
       spanishForkStatus = 'moderate';
-      spanishForkMessage = `Building: Spanish Fork ${sfSpeed.toFixed(1)} mph SE - thermal developing`;
+      spanishForkMessage = `Building: Spanish Fork ${safeToFixed(sfSpeed, 1)} mph SE - thermal developing`;
       spanishForkETA = 150; // minutes
       probability *= 1.0 + (0.2 * sfLearnedWeight);
     } else if (isSEDirection) {
       // Weak SE
       spanishForkScore = 40;
       spanishForkStatus = 'weak';
-      spanishForkMessage = `Weak: Spanish Fork ${sfSpeed.toFixed(1)} mph SE (need > 6 mph)`;
+      spanishForkMessage = `Weak: Spanish Fork ${safeToFixed(sfSpeed, 1)} mph SE (need > 6 mph)`;
     } else {
       // Wrong direction
       spanishForkScore = 20;
@@ -1249,33 +1251,34 @@ export function predictThermal(lakeId, currentConditions) {
       // Strong indicator - 81% foil kiteable, ~15+ mph at Zig Zag
       northFlowScore = 95;
       northFlowStatus = 'strong';
-      northFlowMessage = `NORTH FLOW: KSLC ${kslcSpeed.toFixed(0)} mph N → expect ~${expectedZigZagSpeed?.toFixed(0)} mph at Zig Zag (${foilKiteablePct}% foil kiteable)`;
+      northFlowMessage = `NORTH FLOW: KSLC ${safeToFixed(kslcSpeed, 0)} mph N → expect ~${safeToFixed(expectedZigZagSpeed, 0)} mph at Zig Zag (${foilKiteablePct}% foil kiteable)`;
       northFlowETA = 60;
       probability *= 1.0 + (0.6 * nfLearnedWeight);
     } else if (isNorthDirection && kslcSpeed >= 8) {
       // Moderate indicator - 56% foil kiteable, ~13 mph at Zig Zag
       northFlowScore = 75;
       northFlowStatus = 'moderate';
-      northFlowMessage = `Building: KSLC ${kslcSpeed.toFixed(0)} mph N → expect ~${expectedZigZagSpeed?.toFixed(0)} mph at Zig Zag (${foilKiteablePct}% foil kiteable)`;
+      northFlowMessage = `Building: KSLC ${safeToFixed(kslcSpeed, 0)} mph N → expect ~${safeToFixed(expectedZigZagSpeed, 0)} mph at Zig Zag (${foilKiteablePct}% foil kiteable)`;
       northFlowETA = 60;
       probability *= 1.0 + (0.3 * nfLearnedWeight);
     } else if (isNorthDirection && kslcSpeed >= 5) {
       // Marginal indicator - 45% foil kiteable, ~9 mph at Zig Zag
       northFlowScore = 50;
       northFlowStatus = 'marginal';
-      northFlowMessage = `Marginal: KSLC ${kslcSpeed.toFixed(0)} mph N → expect ~${expectedZigZagSpeed?.toFixed(0)} mph at Zig Zag (${foilKiteablePct}% foil kiteable)`;
+      northFlowMessage = `Marginal: KSLC ${safeToFixed(kslcSpeed, 0)} mph N → expect ~${safeToFixed(expectedZigZagSpeed, 0)} mph at Zig Zag (${foilKiteablePct}% foil kiteable)`;
       northFlowETA = 60;
       probability *= 1.0 + (0.1 * nfLearnedWeight);
     } else if (isNorthDirection) {
       // Weak north wind
       northFlowScore = 30;
       northFlowStatus = 'weak';
-      northFlowMessage = `Weak: KSLC ${kslcSpeed?.toFixed(0) || '?'} mph N (need 8+ for foil, 10+ for twin tip)`;
+      const weakKslcStr = safeToFixed(kslcSpeed, 0);
+      northFlowMessage = `Weak: KSLC ${weakKslcStr === '--' ? '?' : weakKslcStr} mph N (need 8+ for foil, 10+ for twin tip)`;
     } else if (hasPositiveGradient) {
       // Positive gradient but no north wind yet
       northFlowScore = 40;
       northFlowStatus = 'gradient-only';
-      northFlowMessage = `Gradient favorable (+${gradient?.toFixed(2)} mb) but KSLC not showing north yet`;
+      northFlowMessage = `Gradient favorable (+${safeToFixed(gradient, 2)} mb) but KSLC not showing north yet`;
     } else {
       // No signal
       northFlowScore = 20;
@@ -1352,18 +1355,19 @@ export function predictThermal(lakeId, currentConditions) {
     
     if (isNorthDirection && kpvuSpeed >= 10) {
       status = 'strong';
-      message = `PROVO: ${kpvuSpeed.toFixed(0)} mph N → expect ~${expectedSpeed?.toFixed(0)} mph (${foilPct}% foil)`;
+      message = `PROVO: ${safeToFixed(kpvuSpeed, 0)} mph N → expect ~${safeToFixed(expectedSpeed, 0)} mph (${foilPct}% foil)`;
       probability *= 1.0 + (0.4 * pvuLearnedWeight);
     } else if (isNorthDirection && kpvuSpeed >= 8) {
       status = 'good';
-      message = `PROVO: ${kpvuSpeed.toFixed(0)} mph N → expect ~${expectedSpeed?.toFixed(0)} mph (${foilPct}% foil)`;
+      message = `PROVO: ${safeToFixed(kpvuSpeed, 0)} mph N → expect ~${safeToFixed(expectedSpeed, 0)} mph (${foilPct}% foil)`;
       probability *= 1.0 + (0.2 * pvuLearnedWeight);
     } else if (isNorthDirection && kpvuSpeed >= 5) {
       status = 'possible';
-      message = `PROVO: ${kpvuSpeed.toFixed(0)} mph N → expect ~${expectedSpeed?.toFixed(0)} mph (${foilPct}% foil)`;
+      message = `PROVO: ${safeToFixed(kpvuSpeed, 0)} mph N → expect ~${safeToFixed(expectedSpeed, 0)} mph (${foilPct}% foil)`;
     } else {
       status = 'no-signal';
-      message = `PROVO: ${kpvuDir}° at ${kpvuSpeed?.toFixed(0) || '?'} mph (need N/NW)`;
+      const provoSpdStr = safeToFixed(kpvuSpeed, 0);
+      message = `PROVO: ${kpvuDir}° at ${provoSpdStr === '--' ? '?' : provoSpdStr} mph (need N/NW)`;
     }
     
     provoIndicator = {
@@ -1417,16 +1421,17 @@ export function predictThermal(lakeId, currentConditions) {
     
     if (isNorthDirection && utalpSpeed >= 10) {
       status = 'strong';
-      message = `Gap wind: ${utalpSpeed.toFixed(0)} mph N through Point of Mountain`;
+      message = `Gap wind: ${safeToFixed(utalpSpeed, 0)} mph N through Point of Mountain`;
     } else if (isNorthDirection && utalpSpeed >= 8) {
       status = 'moderate';
-      message = `Gap wind building: ${utalpSpeed.toFixed(0)} mph N`;
+      message = `Gap wind building: ${safeToFixed(utalpSpeed, 0)} mph N`;
     } else if (isNorthDirection && utalpSpeed >= 5) {
       status = 'weak';
-      message = `Light gap wind: ${utalpSpeed.toFixed(0)} mph N`;
+      message = `Light gap wind: ${safeToFixed(utalpSpeed, 0)} mph N`;
     } else {
       status = 'no-signal';
-      message = `No gap wind: ${utalpDir}° at ${utalpSpeed?.toFixed(0) || '?'} mph`;
+      const gapSpdStr = safeToFixed(utalpSpeed, 0);
+      message = `No gap wind: ${utalpDir}° at ${gapSpdStr === '--' ? '?' : gapSpdStr} mph`;
     }
     
     pointOfMountainIndicator = {

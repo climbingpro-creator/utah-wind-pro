@@ -28,6 +28,7 @@ import { calculateCorrelatedWind } from './CorrelationEngine';
 import registry from '../config/mesoRegistry.json';
 import trainedWeightsStatic from '../config/trainedWeights.json';
 import boatWeightsStatic from '../config/trainedWeights-boating.json';
+import { safeToFixed } from '../utils/safeToFixed';
 
 // Live-learned weights override static JSON when available
 let liveWeights = null;
@@ -296,7 +297,7 @@ function propagateToLocation(locationId, forecastHour, currentHour, stationReadi
     sources.push({
       station: edge.from,
       rawSpeed: reading.speed,
-      attenuated: +attenuatedSpeed.toFixed(1),
+      attenuated: +safeToFixed(attenuatedSpeed, 1),
       delay: edge.delay,
       terrain: edge.description,
     });
@@ -491,8 +492,8 @@ export async function generateWindField(locationId, currentWind = {}, upstreamDa
       isCurrent: offset === 0,
       isPast: false,
       time: forecastHour === 0 ? '12 AM' : forecastHour === 12 ? '12 PM' : forecastHour > 12 ? `${forecastHour - 12} PM` : `${forecastHour} AM`,
-      speed: +speed.toFixed(1),
-      gust: +gust.toFixed(1),
+      speed: +safeToFixed(speed, 1),
+      gust: +safeToFixed(gust, 1),
       direction: offset === 0 ? currentWind.direction : null,
       nwsSpeed: nwsWind,
       phase: thermal.phase,

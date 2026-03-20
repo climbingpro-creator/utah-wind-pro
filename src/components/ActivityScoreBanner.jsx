@@ -1,4 +1,5 @@
 import { AlertTriangle } from 'lucide-react';
+import { safeToFixed } from '../utils/safeToFixed';
 
 export default function ActivityScoreBanner({
   activityScore,
@@ -32,7 +33,7 @@ export default function ActivityScoreBanner({
   if (isGreatNow) {
     displayScore = score;
     headline = `${activityConfig?.name} is ON!`;
-    subline = `${(currentWindSpeed ?? 0).toFixed(0) || '--'} mph — get out there!`;
+    subline = `${safeToFixed(currentWindSpeed, 0)} mph — get out there!`;
     bannerColor = 'green';
     badge = { text: 'GO', color: 'bg-green-500 text-white animate-pulse' };
   } else if (isGoodNow && isForecastBetter) {

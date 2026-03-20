@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Wind, Clock, Shield, TrendingUp, TrendingDown, ChevronDown, ChevronUp, Zap, AlertTriangle } from 'lucide-react';
 import { generateSmartForecast, ACTIVITY_PROFILES } from '../services/SmartForecastEngine';
 import { useTheme } from '../context/ThemeContext';
+import { safeToFixed } from '../utils/safeToFixed';
 
 const SCORE_COLORS_WIND = {
   90: { bg: 'bg-green-500', text: 'text-green-400', light: 'bg-green-500/20' },
@@ -240,7 +241,10 @@ const SmartTimeline = ({
         isDark ? 'border-slate-700/50 text-slate-600' : 'border-slate-200 text-slate-400'
       }`}>
         <span>
-          Translation: {(forecast.translation.factor * 100).toFixed(0)}% of upstream wind reaching lake
+          Translation: {safeToFixed(
+            forecast.translation?.factor == null ? null : forecast.translation.factor * 100,
+            0
+          )}% of upstream wind reaching lake
         </span>
         <span>
           {forecast.thermalPrediction.probability}% thermal probability

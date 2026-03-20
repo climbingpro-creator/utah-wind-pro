@@ -1,5 +1,6 @@
 import { Clock, Navigation, Wind, TrendingUp, AlertCircle, CheckCircle, XCircle, Calendar, BarChart3 } from 'lucide-react';
 import { predictThermal, formatTimeUntil, getDirectionInfo } from '../services/ThermalPredictor';
+import { safeToFixed } from '../utils/safeToFixed';
 
 export function ThermalForecast({ lakeId, currentConditions, pressureGradient, thermalDelta, pumpActive, inversionTrapped, isLoading }) {
   const prediction = predictThermal(lakeId, { 
@@ -101,7 +102,7 @@ export function ThermalForecast({ lakeId, currentConditions, pressureGradient, t
             </div>
             {speed.current != null && (
               <div className={`text-sm ${speed.status === 'good' ? 'text-green-400' : speed.status === 'light' ? 'text-yellow-400' : 'text-orange-400'}`}>
-                Current: {speed.current.toFixed(1)} mph
+                Current: {safeToFixed(speed.current, 1)} mph
                 {speed.status === 'good' && ' ✓'}
               </div>
             )}
@@ -194,7 +195,7 @@ export function ThermalForecast({ lakeId, currentConditions, pressureGradient, t
             {prediction.spanishFork.windSpeed != null && (
               <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
                 <div className="text-slate-500">
-                  Current: <span className="text-slate-300">{prediction.spanishFork.windSpeed.toFixed(1)} mph @ {prediction.spanishFork.windDirection}°</span>
+                  Current: <span className="text-slate-300">{safeToFixed(prediction.spanishFork.windSpeed, 1)} mph @ {prediction.spanishFork.windDirection}°</span>
                 </div>
                 <div className="text-slate-500">
                   Trigger: <span className="text-slate-300">{prediction.spanishFork.triggerConditions.directionNeeded} @ {prediction.spanishFork.triggerConditions.speedNeeded}</span>
@@ -248,7 +249,7 @@ export function ThermalForecast({ lakeId, currentConditions, pressureGradient, t
                       : prediction.northFlow.expectedZigZagSpeed >= 10 ? 'text-cyan-400'
                       : 'text-yellow-400'
                   }`}>
-                    ~{prediction.northFlow.expectedZigZagSpeed.toFixed(0)} mph
+                    ~{safeToFixed(prediction.northFlow.expectedZigZagSpeed, 0)} mph
                   </span>
                 </div>
                 <div className="flex justify-between items-center mt-1 text-xs">
@@ -269,11 +270,11 @@ export function ThermalForecast({ lakeId, currentConditions, pressureGradient, t
             {prediction.northFlow.windSpeed != null && (
               <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
                 <div className="text-slate-500">
-                  KSLC: <span className="text-slate-300">{prediction.northFlow.windSpeed.toFixed(0)} mph @ {prediction.northFlow.windDirection}°</span>
+                  KSLC: <span className="text-slate-300">{safeToFixed(prediction.northFlow.windSpeed, 0)} mph @ {prediction.northFlow.windDirection}°</span>
                 </div>
                 <div className="text-slate-500">
                   Gradient: <span className={prediction.northFlow.pressureGradient > 0 ? 'text-blue-400' : 'text-slate-300'}>
-                    {prediction.northFlow.pressureGradient?.toFixed(2) || '?'} mb
+                    {prediction.northFlow.pressureGradient == null ? '?' : safeToFixed(prediction.northFlow.pressureGradient, 2)} mb
                     {prediction.northFlow.pressureGradient > 0 ? ' ✓' : ''}
                   </span>
                 </div>
@@ -321,7 +322,7 @@ export function ThermalForecast({ lakeId, currentConditions, pressureGradient, t
                       : prediction.provoIndicator.expectedSpeed >= 10 ? 'text-purple-400'
                       : 'text-yellow-400'
                   }`}>
-                    ~{prediction.provoIndicator.expectedSpeed.toFixed(0)} mph ({prediction.provoIndicator.foilKiteablePct}% foil)
+                    ~{safeToFixed(prediction.provoIndicator.expectedSpeed, 0)} mph ({prediction.provoIndicator.foilKiteablePct}% foil)
                   </span>
                 </div>
               </div>
@@ -361,7 +362,7 @@ export function ThermalForecast({ lakeId, currentConditions, pressureGradient, t
             </p>
             {prediction.pointOfMountain.windSpeed != null && (
               <div className="mt-1 text-xs text-slate-500">
-                UTALP: {prediction.pointOfMountain.windSpeed.toFixed(0)} mph @ {prediction.pointOfMountain.windDirection}°
+                UTALP: {safeToFixed(prediction.pointOfMountain.windSpeed, 0)} mph @ {prediction.pointOfMountain.windDirection}°
               </div>
             )}
           </div>
@@ -393,7 +394,7 @@ export function ThermalForecast({ lakeId, currentConditions, pressureGradient, t
             {prediction.arrowhead.windSpeed != null && (
               <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
                 <div className="text-slate-500">
-                  Current: <span className="text-slate-300">{prediction.arrowhead.windSpeed.toFixed(1)} mph @ {prediction.arrowhead.windDirection}°</span>
+                  Current: <span className="text-slate-300">{safeToFixed(prediction.arrowhead.windSpeed, 1)} mph @ {prediction.arrowhead.windDirection}°</span>
                 </div>
                 <div className="text-slate-500">
                   Need: <span className="text-slate-300">{prediction.arrowhead.triggerConditions.speedNeeded} from {prediction.arrowhead.triggerConditions.directionNeeded}</span>

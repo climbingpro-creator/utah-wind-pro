@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { safeToFixed } from '../utils/safeToFixed';
 
 export function Sparkline({ 
   data, 
@@ -118,7 +119,7 @@ export function WindSparkline({ history, stationId }) {
         color="#06b6d4"
       />
       <span className={`text-xs ${trend > 1 ? 'text-green-400' : trend < -1 ? 'text-red-400' : 'text-slate-500'}`}>
-        {trend > 0 ? '+' : ''}{trend.toFixed(1)}
+        {trend > 0 ? '+' : ''}{safeToFixed(trend, 1)}
       </span>
     </div>
   );

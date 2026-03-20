@@ -1,5 +1,6 @@
 import { Navigation, AlertTriangle } from 'lucide-react';
 import { windDirectionToCardinal } from '../utils/wind';
+import { safeToFixed } from '../utils/safeToFixed';
 
 export default function PrimaryWindDisplay({ station, optimalDirection, isLoading, pwsUnavailable }) {
   if (isLoading || !station) {
@@ -67,7 +68,7 @@ export default function PrimaryWindDisplay({ station, optimalDirection, isLoadin
 
         <div className="text-center">
           <div className={`data-number ${speedColor}`}>
-            {speed != null ? speed.toFixed(1) : '--'}
+            {safeToFixed(speed, 1)}
           </div>
           <div className="data-label mt-0.5">mph</div>
           <div className={`text-sm font-semibold mt-1 ${directionColor}`}>
@@ -86,7 +87,7 @@ export default function PrimaryWindDisplay({ station, optimalDirection, isLoadin
 
       {Number(station.windGust ?? station.gust) > (speed || 0) * 1.3 && (
         <div className="mt-2 text-center text-xs text-amber-500 font-medium">
-          Gusts to {Number(station.windGust ?? station.gust).toFixed(1)} mph
+          Gusts to {safeToFixed(station.windGust ?? station.gust, 1)} mph
         </div>
       )}
     </div>

@@ -1,0 +1,6 @@
+Adopt safeToFixed across all components and services
+
+Replaced unguarded .toFixed calls with safeToFixed in 40+ files
+where values come from API data or optional properties.
+Null/undefined/NaN now renders as -- instead of crashing.
+Left provably-numeric math operations unchanged.

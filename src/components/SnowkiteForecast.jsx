@@ -6,6 +6,7 @@ import {
   getAllSnowkitePredictions,
   getSnowkiteWindow,
 } from '../services/SnowkitePredictor';
+import { safeToFixed } from '../utils/safeToFixed';
 
 const LOCATION_NAMES = {
   'strawberry-ladders': 'Ladders',
@@ -120,13 +121,13 @@ export default function SnowkiteForecast({ selectedLake, mesoData, onSelectLocat
               Live @ {pred.station}
             </div>
             <div className={`text-2xl font-black tabular-nums ${isDark ? 'text-white' : 'text-slate-900'}`}>
-              {pred.current?.speed?.toFixed(0) || '—'}
+              {safeToFixed(pred.current?.speed, 0)}
               <span className="text-xs font-normal ml-0.5">mph</span>
             </div>
             {pred.current?.direction != null && (
               <div className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                 {dirLabel(pred.current.direction)} ({pred.current.direction}°)
-                {pred.current.gust > 0 && ` g${pred.current.gust.toFixed(0)}`}
+                {pred.current.gust > 0 && ` g${safeToFixed(pred.current.gust, 0)}`}
               </div>
             )}
           </div>
@@ -137,11 +138,11 @@ export default function SnowkiteForecast({ selectedLake, mesoData, onSelectLocat
               <Zap className="w-3 h-3" /> Predicted
             </div>
             <div className={`text-2xl font-black tabular-nums ${isDark ? qColor.text.dark : qColor.text.light}`}>
-              {pred.predicted?.speed?.toFixed(0) || '—'}
+              {safeToFixed(pred.predicted?.speed, 0)}
               <span className="text-xs font-normal ml-0.5">mph</span>
             </div>
             <div className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-              g{pred.predicted?.gust?.toFixed(0) || '—'} · {pred.predicted?.method || '—'}
+              g{pred.predicted?.gust == null ? '—' : safeToFixed(pred.predicted.gust, 0)} · {pred.predicted?.method || '—'}
             </div>
           </div>
 
@@ -188,11 +189,11 @@ export default function SnowkiteForecast({ selectedLake, mesoData, onSelectLocat
                 }`}>
                   <Wind className={`w-3 h-3 ${sig.currentSpeed >= 15 ? (isDark ? 'text-green-400' : 'text-green-600') : (isDark ? 'text-slate-400' : 'text-slate-500')}`} />
                   <span className={isDark ? 'text-slate-300' : 'text-slate-600'}>
-                    {sig.source} {sig.currentSpeed?.toFixed(0)}mph {dirLabel(sig.currentDir)}
+                    {sig.source} {safeToFixed(sig.currentSpeed, 0)}mph {dirLabel(sig.currentDir)}
                   </span>
                   <ArrowRight className="w-3 h-3 text-slate-500" />
                   <span className={isDark ? 'text-sky-400' : 'text-sky-600'}>
-                    ~{sig.expectedSpeed?.toFixed(0)}mph in {sig.arrivalWindow.min}-{sig.arrivalWindow.max}hr
+                    ~{safeToFixed(sig.expectedSpeed, 0)}mph in {sig.arrivalWindow.min}-{sig.arrivalWindow.max}hr
                   </span>
                 </div>
               ))}
@@ -205,7 +206,7 @@ export default function SnowkiteForecast({ selectedLake, mesoData, onSelectLocat
           <div className={`mt-2 flex items-center gap-2 text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
             <Mountain className="w-3 h-3" />
             <span>
-              Pressure gradient: {pred.gradient.strength?.toFixed(1)} mb ({pred.gradient.direction})
+              Pressure gradient: {safeToFixed(pred.gradient.strength, 1)} mb ({pred.gradient.direction})
               {pred.gradient.strongWindLikely && (
                 <span className={`ml-1 font-bold ${isDark ? 'text-green-400' : 'text-green-600'}`}>Strong wind likely</span>
               )}
@@ -221,7 +222,7 @@ export default function SnowkiteForecast({ selectedLake, mesoData, onSelectLocat
           <div className={`mt-1 flex items-center gap-2 text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
             <span>
               Historical: {pred.baseline.monthPctStrong}% of hours ≥10mph this month ·
-              avg {pred.baseline.hourAvgSpeed?.toFixed(1)}mph this hour ·
+              avg {safeToFixed(pred.baseline.hourAvgSpeed, 1)}mph this hour ·
               {pred.baseline.snowkiteDaysInPeriod} kitable days in dataset
             </span>
           </div>
@@ -253,7 +254,7 @@ export default function SnowkiteForecast({ selectedLake, mesoData, onSelectLocat
                   </span>
                   <div className="flex items-center gap-1.5 shrink-0">
                     <span className={`font-bold tabular-nums ${isDark ? spotColor.text.dark : spotColor.text.light}`}>
-                      {p.predicted?.speed?.toFixed(0) || '—'}
+                      {safeToFixed(p.predicted?.speed, 0)}
                     </span>
                     <span className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
                       {p.quality?.emoji}

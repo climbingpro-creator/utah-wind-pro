@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Lightbulb, ChevronDown, ChevronUp, Wind, Thermometer, Gauge, Navigation, AlertTriangle, Sun, CloudRain } from 'lucide-react';
 import { apiUrl } from '../utils/platform';
+import { safeToFixed } from '../utils/safeToFixed';
 
 const EVENT_CONFIG = {
   frontal_passage: { label: 'Frontal Passage', icon: AlertTriangle, color: 'text-red-400', bg: 'bg-red-500/10' },
@@ -149,7 +150,7 @@ export default function WhyExplainer({ locationId = 'utah-lake' }) {
         {topPrediction && (
           <p className="text-sm text-slate-400 mt-1">
             {isGo
-              ? `${EVENT_CONFIG[topPrediction.eventType]?.label || topPrediction.eventType} at ${(topPrediction.probability ?? 0).toFixed(0)}% — tap for details`
+              ? `${EVENT_CONFIG[topPrediction.eventType]?.label || topPrediction.eventType} at ${safeToFixed(topPrediction.probability, 0)}% — tap for details`
               : 'No strong wind events predicted right now'
             }
           </p>

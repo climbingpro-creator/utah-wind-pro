@@ -33,6 +33,7 @@
 
 import { LAKE_CONFIGS } from '../config/lakeStations';
 import { apiUrl } from '../utils/platform';
+import { safeToFixed } from '../utils/safeToFixed';
 
 let learnedPatterns = null;
 let cachedUpstreamSignals = null;
@@ -181,7 +182,7 @@ export function predictWindEvents(lakeId, currentConditions, pressureData, stati
     frontalScore.confidence = Math.min(1, frontalScore.confidence + 0.2);
     frontalScore.details.push(`UPSTREAM: ${best.name} — ${best.details?.[0] || 'front detected'}`);
     if (best.consensusEta || best.etaHours) {
-      frontalScore.timing = `ETA ~${(best.consensusEta || best.etaHours).toFixed(1)} hours (${best.name})`;
+      frontalScore.timing = `ETA ~${safeToFixed(best.consensusEta ?? best.etaHours, 1)} hours (${best.name})`;
     }
     frontalScore.upstreamDetection = {
       stations: coldFrontUpstream.map(s => s.name),
@@ -266,7 +267,7 @@ export function predictWindEvents(lakeId, currentConditions, pressureData, stati
   // If a cold front is detected upstream with ETA > 2hr, pre-frontal ramp is likely
   if (coldFrontUpstream.length > 0 && (coldFrontUpstream[0].consensusEta || coldFrontUpstream[0].etaHours) > 2) {
     preFrontalScore.probability += 15;
-    preFrontalScore.details.push(`Cold front ETA ~${(coldFrontUpstream[0].consensusEta || coldFrontUpstream[0].etaHours).toFixed(1)}hr — expect ramp-up`);
+    preFrontalScore.details.push(`Cold front ETA ~${safeToFixed(coldFrontUpstream[0].consensusEta ?? coldFrontUpstream[0].etaHours, 1)}hr — expect ramp-up`);
   }
 
   if (preFrontalScore.probability > 20) {

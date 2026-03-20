@@ -14,6 +14,7 @@
  */
 
 import { generateWindField, isDaylightHour } from './WindFieldEngine';
+import { safeToFixed } from '../utils/safeToFixed';
 
 // ─── ACTIVITY PROFILES ────────────────────────────────────────────
 // Defines what each activity needs from the wind.
@@ -238,8 +239,8 @@ function findEvents(hours) {
         from: hours[i - 1].predictedSpeed,
         to: hours[i].predictedSpeed,
         message: jump > 0
-          ? `Wind building: ${hours[i - 1].predictedSpeed.toFixed(0)} → ${hours[i].predictedSpeed.toFixed(0)} mph`
-          : `Wind easing: ${hours[i - 1].predictedSpeed.toFixed(0)} → ${hours[i].predictedSpeed.toFixed(0)} mph`,
+          ? `Wind building: ${safeToFixed(hours[i - 1].predictedSpeed, 0)} → ${safeToFixed(hours[i].predictedSpeed, 0)} mph`
+          : `Wind easing: ${safeToFixed(hours[i - 1].predictedSpeed, 0)} → ${safeToFixed(hours[i].predictedSpeed, 0)} mph`,
       });
     }
   }
@@ -260,7 +261,7 @@ function buildRecommendation(activity, hours, windows, flowBlocked, triggers, sw
       return {
         urgency: 'go',
         headline: `${activity === 'kiting' ? 'Kiting' : activity === 'sailing' ? 'Sailing' : activity.charAt(0).toUpperCase() + activity.slice(1)} is ON right now!`,
-        detail: boostActive ? `Spatial triggers active — ${triggers[0]?.label}` : `${hours[0].predictedSpeed.toFixed(0)} mph — ideal conditions`,
+        detail: boostActive ? `Spatial triggers active — ${triggers[0]?.label}` : `${safeToFixed(hours[0].predictedSpeed, 0)} mph — ideal conditions`,
         badge: 'GO NOW',
       };
     }

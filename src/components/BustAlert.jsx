@@ -1,4 +1,5 @@
 import { AlertTriangle, TrendingDown, CheckCircle } from 'lucide-react';
+import { safeToFixed } from '../utils/safeToFixed';
 
 export function BustAlert({ pressureData, isLoading }) {
   if (isLoading) {
@@ -77,7 +78,7 @@ export function BustAlert({ pressureData, isLoading }) {
                   : 'bg-green-500/30 text-green-300'
               }
             `}>
-              ΔP = {gradient > 0 ? '+' : ''}{gradient.toFixed(2)} mb
+              ΔP = {Number(gradient) > 0 ? '+' : ''}{safeToFixed(gradient, 2)} mb
             </span>
           </div>
 
@@ -91,8 +92,8 @@ export function BustAlert({ pressureData, isLoading }) {
           </p>
 
           <div className="flex gap-4 text-xs text-slate-500">
-            <span>{highName || 'High'}: {slcPressure?.toFixed(2) ?? '--'} mb</span>
-            <span>{lowName || 'Low'}: {provoPressure?.toFixed(2) ?? '--'} mb</span>
+            <span>{highName || 'High'}: {safeToFixed(slcPressure, 2)} mb</span>
+            <span>{lowName || 'Low'}: {safeToFixed(provoPressure, 2)} mb</span>
           </div>
         </div>
       </div>

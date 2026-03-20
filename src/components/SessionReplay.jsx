@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Rewind, CheckCircle, XCircle, AlertTriangle, TrendingUp, Clock, ChevronDown, ChevronUp, BarChart3 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { sessionService } from '../services/SessionValidation';
+import { safeToFixed } from '../utils/safeToFixed';
 
 /**
  * SESSION REPLAY — "Here's what we predicted vs what actually happened"
@@ -164,7 +165,7 @@ export default function SessionReplay({ locationId, activity, lakeState }) {
 
               {avgRating && (
                 <div className={`text-xs text-center ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                  Average rating: {avgRating.toFixed(1)}/5
+                  Average rating: {safeToFixed(avgRating, 1)}/5
                 </div>
               )}
             </div>

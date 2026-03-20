@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { History, Calendar, Wind, ChevronDown, ChevronUp, Target } from 'lucide-react';
 import { apiUrl } from '../utils/platform';
+import { safeToFixed } from '../utils/safeToFixed';
 
 const EVENT_LABELS = {
   frontal_passage: 'Front',
@@ -39,7 +40,7 @@ function AnalogDay({ analog, isTop }) {
             {isTop && <span className="text-xs px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-400 font-bold">Best Match</span>}
           </div>
           <div className="flex gap-3 text-xs text-slate-500 mt-0.5">
-            <span>Peak: {(peakSpeed || 0).toFixed(0)} mph</span>
+            <span>Peak: {safeToFixed(peakSpeed, 0)} mph</span>
             <span>Accuracy: {accuracy}%</span>
             <span>{analog.count} events</span>
           </div>
@@ -55,7 +56,7 @@ function AnalogDay({ analog, isTop }) {
               <div key={i} className="flex items-center gap-2 text-xs">
                 <Wind size={10} className="text-slate-500" />
                 <span className="text-slate-400 w-16">{EVENT_LABELS[evt.eventType] || evt.eventType}</span>
-                <span className="text-slate-300 font-medium">{(evt.actualSpeed || 0).toFixed(0)} mph</span>
+                <span className="text-slate-300 font-medium">{safeToFixed(evt.actualSpeed, 0)} mph</span>
                 {evt.hour != null && (
                   <span className="text-slate-500">
                     at {evt.hour <= 12 ? (evt.hour === 0 ? '12 AM' : `${evt.hour} AM`) : (evt.hour === 12 ? '12 PM' : `${evt.hour - 12} PM`)}
@@ -144,13 +145,13 @@ export default function PatternMatch() {
         {fingerprint && (
           <div className="flex gap-3 mt-2 text-xs">
             <span className="text-slate-500">
-              Gradient: <span className="text-slate-300">{(fingerprint.gradient || 0).toFixed(1)} mb</span>
+              Gradient: <span className="text-slate-300">{safeToFixed(fingerprint.gradient, 1)} mb</span>
             </span>
             <span className="text-slate-500">
-              Wind: <span className="text-slate-300">{(fingerprint.windSpeed || 0).toFixed(0)} mph</span>
+              Wind: <span className="text-slate-300">{safeToFixed(fingerprint.windSpeed, 0)} mph</span>
             </span>
             <span className="text-slate-500">
-              Temp: <span className="text-slate-300">{(fingerprint.temp || 0).toFixed(0)}°F</span>
+              Temp: <span className="text-slate-300">{safeToFixed(fingerprint.temp, 0)}°F</span>
             </span>
           </div>
         )}

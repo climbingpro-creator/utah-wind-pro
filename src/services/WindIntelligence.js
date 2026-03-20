@@ -19,6 +19,7 @@
 
 import { monitorSwings } from './FrontalTrendPredictor';
 import { predictWindEvents } from './WindEventPredictor';
+import { safeToFixed } from '../utils/safeToFixed';
 
 /**
  * Synthesize all prediction signals into a unified intelligence report.
@@ -76,7 +77,7 @@ export function synthesize({
       source: 'pressure',
       type: isNorthFlow ? 'north_flow' : isThermalFavorable ? 'thermal_favorable' : 'neutral',
       strength: Math.min(1, absGrad / 3),
-      detail: `ΔP ${gradient > 0 ? '+' : ''}${gradient.toFixed(2)} mb`,
+      detail: `ΔP ${gradient > 0 ? '+' : ''}${safeToFixed(gradient, 2)} mb`,
       raw: { gradient },
     });
   }

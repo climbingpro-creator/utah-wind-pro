@@ -12,6 +12,7 @@ const WindsurferIcon = ({ className }) => (
 );
 import { useTheme } from '../context/ThemeContext';
 import { getRotatingImage } from '../config/imagePool';
+import { safeToFixed } from '../utils/safeToFixed';
 
 // Activity configurations with thresholds and preferences
 export const ACTIVITY_CONFIGS = {
@@ -251,30 +252,30 @@ export function calculateActivityScore(activity, windSpeed, windGust, windDirect
     if (windSpeed < config.thresholds.tooLight) {
       score = Math.round((windSpeed / config.thresholds.tooLight) * 30);
       status = 'too_light';
-      message = `Too light (${windSpeed?.toFixed(0) || 0} mph) - need ${config.thresholds.tooLight}+ mph`;
+      message = `Too light (${safeToFixed(windSpeed, 0)} mph) - need ${config.thresholds.tooLight}+ mph`;
     } else if (windSpeed > config.thresholds.tooStrong) {
       score = Math.max(0, 100 - (windSpeed - config.thresholds.tooStrong) * 5);
       status = 'too_strong';
-      message = `Too strong (${windSpeed?.toFixed(0)} mph) - dangerous conditions`;
+      message = `Too strong (${safeToFixed(windSpeed, 0)} mph) - dangerous conditions`;
     } else if (windSpeed >= config.thresholds.ideal.min && windSpeed <= config.thresholds.ideal.max) {
       score = 85 + Math.round((1 - Math.abs(windSpeed - (config.thresholds.ideal.min + config.thresholds.ideal.max) / 2) / 10) * 15);
       status = 'ideal';
-      message = `Ideal conditions (${windSpeed?.toFixed(0)} mph)`;
+      message = `Ideal conditions (${safeToFixed(windSpeed, 0)} mph)`;
     } else if (windSpeed < config.thresholds.ideal.min) {
       score = 50 + Math.round((windSpeed - config.thresholds.tooLight) / (config.thresholds.ideal.min - config.thresholds.tooLight) * 35);
       status = 'light';
-      message = `Light but usable (${windSpeed?.toFixed(0)} mph)`;
+      message = `Light but usable (${safeToFixed(windSpeed, 0)} mph)`;
     } else {
       score = 70 - Math.round((windSpeed - config.thresholds.ideal.max) / (config.thresholds.tooStrong - config.thresholds.ideal.max) * 30);
       status = 'strong';
-      message = `Strong (${windSpeed?.toFixed(0)} mph) - experienced only`;
+      message = `Strong (${safeToFixed(windSpeed, 0)} mph) - experienced only`;
     }
     
     // Penalize for gusty conditions
     if (gustFactor > config.thresholds.gustFactor) {
       score = Math.round(score * 0.8);
       status = 'gusty';
-      message += ` - GUSTY (${windGust?.toFixed(0)} mph gusts)`;
+      message += ` - GUSTY (${safeToFixed(windGust, 0)} mph gusts)`;
     }
     
     return { score: Math.min(100, Math.max(0, score)), status, message, gustFactor };

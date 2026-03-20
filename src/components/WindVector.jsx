@@ -2,6 +2,7 @@ import { Wind, Navigation } from 'lucide-react';
 import { WindSparkline } from './Sparkline';
 import { useTheme } from '../context/ThemeContext';
 import { windDirectionToCardinal } from '../utils/wind';
+import { safeToFixed } from '../utils/safeToFixed';
 export { windDirectionToCardinal };
 
 export function WindVector({ 
@@ -59,14 +60,14 @@ export function WindVector({
           <div>
             <div className="flex items-baseline gap-1">
               <span className={`text-xl font-bold ${windColor}`}>
-                {speed?.toFixed(1) ?? '--'}
+                {safeToFixed(speed, 1)}
               </span>
               <span className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>mph</span>
             </div>
             <div className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>
               {windDirectionToCardinal(direction)}
               {gust != null && gust > speed && (
-                <span className={`ml-1 ${isDark ? 'text-orange-400' : 'text-orange-600'}`}>G{gust.toFixed(0)}</span>
+                <span className={`ml-1 ${isDark ? 'text-orange-400' : 'text-orange-600'}`}>G{safeToFixed(gust, 0)}</span>
               )}
             </div>
           </div>
@@ -101,7 +102,7 @@ export function WindVector({
         <div className="flex-1 space-y-0.5">
           <div className="flex items-baseline gap-1">
             <span className={`data-number-sm ${windColor}`}>
-              {speed?.toFixed(1) ?? '--'}
+              {safeToFixed(speed, 1)}
             </span>
             <span className="data-label">mph</span>
           </div>
@@ -112,14 +113,14 @@ export function WindVector({
             </span>
             {gust != null && gust > speed && (
               <span className="text-amber-500 font-medium">
-                G {gust.toFixed(0)}
+                G {safeToFixed(gust, 0)}
               </span>
             )}
           </div>
 
           {temperature != null && (
             <div className="text-sm text-[var(--text-tertiary)]">
-              {temperature.toFixed(1)}°F
+              {safeToFixed(temperature, 1)}°F
             </div>
           )}
         </div>

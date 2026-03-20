@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Wind, Mountain, Sun, Sunset, AlertTriangle, CheckCircle, XCircle, Clock, Users, Radio, Brain, TrendingUp, TrendingDown, Zap } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { predictParagliding } from '../services/ParaglidingPredictor';
+import { safeToFixed } from '../utils/safeToFixed';
 
 // Paragliding site configurations
 export const PARAGLIDING_SITES = {
@@ -108,26 +109,26 @@ export function calculateParaglidingScore(site, windSpeed, windDirection, windGu
   
   // Speed check — below minimum is NOT flyable, hard cap at 30
   if (windSpeed > config.wind.speed.max) {
-    issues.push(`Wind ${windSpeed?.toFixed(0)} mph exceeds ${config.wind.speed.max} mph limit`);
+    issues.push(`Wind ${safeToFixed(windSpeed, 0)} mph exceeds ${config.wind.speed.max} mph limit`);
     score = Math.min(score, 20);
   } else if (windSpeed < config.wind.speed.min) {
-    issues.push(`Wind ${windSpeed?.toFixed(0)} mph below minimum ${config.wind.speed.min} mph`);
+    issues.push(`Wind ${safeToFixed(windSpeed, 0)} mph below minimum ${config.wind.speed.min} mph`);
     score = Math.min(score, 30);
   } else if (windSpeed >= config.wind.speed.ideal.min && windSpeed <= config.wind.speed.ideal.max) {
     score += 40;
-    positives.push(`Speed ${windSpeed?.toFixed(0)} mph is ideal (${config.wind.speed.ideal.min}-${config.wind.speed.ideal.max} mph)`);
+    positives.push(`Speed ${safeToFixed(windSpeed, 0)} mph is ideal (${config.wind.speed.ideal.min}-${config.wind.speed.ideal.max} mph)`);
   } else {
     score += 25;
-    positives.push(`Speed ${windSpeed?.toFixed(0)} mph is acceptable`);
+    positives.push(`Speed ${safeToFixed(windSpeed, 0)} mph is acceptable`);
   }
   
   // Gust check
   if (gustOver > config.wind.gustLimit) {
-    issues.push(`Gusts ${windGust?.toFixed(0)} mph (${gustOver.toFixed(0)} over sustained) exceed ${config.wind.gustLimit} mph limit`);
+    issues.push(`Gusts ${safeToFixed(windGust, 0)} mph (${safeToFixed(gustOver, 0)} over sustained) exceed ${config.wind.gustLimit} mph limit`);
     score = Math.max(0, score - 30);
   } else if (gustOver > 0) {
     score += 15;
-    positives.push(`Gusts manageable (${gustOver.toFixed(0)} mph over sustained)`);
+    positives.push(`Gusts manageable (${safeToFixed(gustOver, 0)} mph over sustained)`);
   } else {
     score += 20;
     positives.push('Smooth conditions (no significant gusts)');
@@ -218,20 +219,20 @@ const SiteCard = ({ site, windData, isLoading }) => {
         <div className="text-center">
           <div className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Wind</div>
           <div className={`text-xl font-bold ${assessment?.speedOk ? (isDark ? 'text-white' : 'text-slate-900') : errColor}`}>
-            {windSpeed?.toFixed(0) || '--'}
+            {safeToFixed(windSpeed, 0)}
             <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}> mph</span>
           </div>
         </div>
         <div className="text-center">
           <div className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Direction</div>
           <div className={`text-xl font-bold ${assessment?.directionOk ? (isDark ? 'text-white' : 'text-slate-900') : errColor}`}>
-            {windDirection?.toFixed(0) || '--'}°
+            {safeToFixed(windDirection, 0)}°
           </div>
         </div>
         <div className="text-center">
           <div className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Gusts</div>
           <div className={`text-xl font-bold ${assessment?.gustOk ? (isDark ? 'text-white' : 'text-slate-900') : errColor}`}>
-            {windGust?.toFixed(0) || '--'}
+            {safeToFixed(windGust, 0)}
             <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}> mph</span>
           </div>
         </div>
@@ -341,14 +342,14 @@ function predictWindSwitch(windData, currentHour) {
     indicators.push({
       station: 'KSLC',
       signal: 'positive',
-      message: `SLC Airport: ${kslcSpeed.toFixed(0)} mph from ${kslcDir.toFixed(0)}° - North flow active upstream`,
+      message: `SLC Airport: ${safeToFixed(kslcSpeed, 0)} mph from ${safeToFixed(kslcDir, 0)}° - North flow active upstream`,
     });
   } else if (kslcIsNorth && kslcSpeed >= 3) {
     northSwitchLikelihood += 15;
     indicators.push({
       station: 'KSLC',
       signal: 'developing',
-      message: `SLC Airport: Light NW ${kslcSpeed.toFixed(0)} mph - North flow developing`,
+      message: `SLC Airport: Light NW ${safeToFixed(kslcSpeed, 0)} mph - North flow developing`,
     });
   }
   
@@ -359,7 +360,7 @@ function predictWindSwitch(windData, currentHour) {
     indicators.push({
       station: 'UTALP',
       signal: 'developing',
-      message: `UTALP: South dying (${utalpSpeed.toFixed(0)} mph) - Switch to north imminent!`,
+      message: `UTALP: South dying (${safeToFixed(utalpSpeed, 0)} mph) - Switch to north imminent!`,
     });
     estimatedSwitchTime = '15-30 min';
   }
@@ -371,7 +372,7 @@ function predictWindSwitch(windData, currentHour) {
     indicators.push({
       station: 'UTALP',
       signal: 'positive',
-      message: `UTALP: North side ACTIVE - ${utalpSpeed.toFixed(0)} mph from ${utalpDir.toFixed(0)}°`,
+      message: `UTALP: North side ACTIVE - ${safeToFixed(utalpSpeed, 0)} mph from ${safeToFixed(utalpDir, 0)}°`,
     });
   }
   
@@ -392,14 +393,14 @@ function predictWindSwitch(windData, currentHour) {
     indicators.push({
       station: 'KPVU',
       signal: 'positive',
-      message: `Provo light (${kpvuSpeed.toFixed(0)} mph) - No strong south flow to block switch`,
+      message: `Provo light (${safeToFixed(kpvuSpeed, 0)} mph) - No strong south flow to block switch`,
     });
   } else if (kpvuSpeed >= 12) {
     northSwitchLikelihood -= 15;
     indicators.push({
       station: 'KPVU',
       signal: 'negative',
-      message: `Provo strong (${kpvuSpeed.toFixed(0)} mph) - May delay/prevent north switch`,
+      message: `Provo strong (${safeToFixed(kpvuSpeed, 0)} mph) - May delay/prevent north switch`,
     });
   }
   
@@ -542,7 +543,7 @@ const UpstreamIndicators = ({ windData }) => {
               }`} />
               <span className={`w-20 truncate ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>{station.name}</span>
               <span className={`w-16 font-mono font-medium ${speed > 0 ? (isDark ? 'text-white' : 'text-slate-900') : 'text-[var(--text-tertiary)]'}`}>
-                {speed > 0 ? `${speed.toFixed(0)} mph` : '--'}
+                {speed > 0 ? `${safeToFixed(speed, 0)} mph` : '--'}
               </span>
               <span className={`w-10 font-mono font-medium ${isNorthSignal ? (isDark ? 'text-green-400' : 'text-green-700') : 'text-[var(--text-tertiary)]'}`}>
                 {dir > 0 ? `${cardinal}` : '--'}
@@ -698,7 +699,7 @@ const ParaglidingMode = ({ windData, isLoading }) => {
         mode: 'now', site: 'north', siteName: 'Flight Park North',
         score: northScore.score, status: northScore.status,
         headline: northPred?.isGlassOff ? 'Glass-Off Happening Now!' : 'North Side is ON!',
-        subline: `${northSpeed.toFixed(0)} mph — pilots are flying!`,
+        subline: `${safeToFixed(northSpeed, 0)} mph — pilots are flying!`,
         color: 'green', urgency: 'go',
       };
     }
@@ -707,7 +708,7 @@ const ParaglidingMode = ({ windData, isLoading }) => {
         mode: 'now', site: 'south', siteName: 'Flight Park South',
         score: southScore.score, status: southScore.status,
         headline: 'South Side is Flying!',
-        subline: `${southSpeed.toFixed(0)} mph smooth thermal`,
+        subline: `${safeToFixed(southSpeed, 0)} mph smooth thermal`,
         color: 'green', urgency: 'go',
       };
     }
@@ -718,7 +719,7 @@ const ParaglidingMode = ({ windData, isLoading }) => {
         mode: 'now', site: 'north', siteName: 'Flight Park North',
         score: northScore.score, status: 'marginal',
         headline: 'North Side — On the Edge',
-        subline: `${northSpeed.toFixed(0)} mph — flyable but light, experienced pilots up`,
+        subline: `${safeToFixed(northSpeed, 0)} mph — flyable but light, experienced pilots up`,
         color: 'yellow', urgency: 'watch',
       };
     }
@@ -727,7 +728,7 @@ const ParaglidingMode = ({ windData, isLoading }) => {
         mode: 'now', site: 'south', siteName: 'Flight Park South',
         score: southScore.score, status: 'marginal',
         headline: 'South Side — On the Edge',
-        subline: `${southSpeed.toFixed(0)} mph — light but flyable, watch for changes`,
+        subline: `${safeToFixed(southSpeed, 0)} mph — light but flyable, watch for changes`,
         color: 'yellow', urgency: 'watch',
       };
     }

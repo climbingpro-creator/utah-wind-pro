@@ -1,6 +1,7 @@
 import React from 'react';
 import { Waves, Anchor, AlertTriangle } from 'lucide-react';
 import { calculateGlassScore, calculateCalmWindow } from './ActivityMode';
+import { safeToFixed } from '../utils/safeToFixed';
 
 const GlassScore = ({ windSpeed, windGust, thermalStartHour = 10, size = 180 }) => {
   const glassData = calculateGlassScore(windSpeed, windGust);
@@ -120,13 +121,13 @@ const GlassScore = ({ windSpeed, windGust, thermalStartHour = 10, size = 180 }) 
         <div className="text-center">
           <div className="text-slate-500">Wind</div>
           <div className={`font-medium ${windSpeed > 10 ? 'text-orange-400' : 'text-slate-300'}`}>
-            {windSpeed?.toFixed(1) || '--'} mph
+            {safeToFixed(windSpeed, 1)} mph
           </div>
         </div>
         <div className="text-center">
           <div className="text-slate-500">Gusts</div>
           <div className={`font-medium ${windGust > 15 ? 'text-orange-400' : 'text-slate-300'}`}>
-            {windGust?.toFixed(1) || '--'} mph
+            {safeToFixed(windGust, 1)} mph
           </div>
         </div>
       </div>

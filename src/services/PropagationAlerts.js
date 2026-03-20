@@ -17,6 +17,7 @@
  */
 
 import { STATION_NODES, PROPAGATION_EDGES, LOCATION_STATIONS } from './WindFieldEngine';
+import { safeToFixed } from '../utils/safeToFixed';
 
 function isInHeadingRange(dir, range) {
   if (dir == null || !range) return false;
@@ -103,13 +104,13 @@ export function scanForPropagation(locationId, stationReadings = {}, currentWind
       upstreamSpeed: reading.speed,
       upstreamDirection: reading.direction,
       dirLabel,
-      expectedSpeed: +expectedArrival.toFixed(0),
+      expectedSpeed: +safeToFixed(expectedArrival, 0),
       etaMinutes: edge.delay,
       etaTime: eta,
       terrain: edge.description,
       headline: `${dirLabel} wind detected at ${stationInfo?.name || edge.from}`,
-      detail: `${reading.speed.toFixed(0)} mph ${dirLabel} → expect ${expectedArrival.toFixed(0)} mph at your location by ~${eta}`,
-      shortMessage: `Wind incoming: ${expectedArrival.toFixed(0)} mph by ${eta}`,
+      detail: `${safeToFixed(reading.speed, 0)} mph ${dirLabel} → expect ${safeToFixed(expectedArrival, 0)} mph at your location by ~${eta}`,
+      shortMessage: `Wind incoming: ${safeToFixed(expectedArrival, 0)} mph by ${eta}`,
       timestamp: now,
     });
   }

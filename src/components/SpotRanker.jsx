@@ -4,6 +4,7 @@ import { useTheme } from '../context/ThemeContext';
 import { ACTIVITY_CONFIGS } from './ActivityMode';
 import { LAKE_CONFIGS } from '../config/lakeStations';
 import { STATION_NODES, PROPAGATION_EDGES, LOCATION_STATIONS } from '../services/WindFieldEngine';
+import { safeToFixed } from '../utils/safeToFixed';
 
 const KITE_SPOT_IDS = new Set([
   'utah-lake-lincoln', 'utah-lake-sandy', 'utah-lake-vineyard',
@@ -192,23 +193,23 @@ function scoreSpot(spot, activity, currentWind, lakeState, mesoData) {
     if (hasKitingZones && shoreZone) {
       if (shoreZone === 'onshore') {
         score += 30 + (thermalProb / 100) * 10;
-        reason = `Onshore ${dirLabel(dir)} ${speed.toFixed(0)} mph — ideal`;
+        reason = `Onshore ${dirLabel(dir)} ${safeToFixed(speed, 0)} mph — ideal`;
       } else if (shoreZone === 'side-on') {
         score += 20 + (thermalProb / 100) * 5;
-        reason = `Side-on ${dirLabel(dir)} ${speed.toFixed(0)} mph — good angle`;
+        reason = `Side-on ${dirLabel(dir)} ${safeToFixed(speed, 0)} mph — good angle`;
       } else if (shoreZone === 'side-offshore') {
         score += 12;
-        reason = `Side-off ${dirLabel(dir)} ${speed.toFixed(0)} mph — kitable, intermediate+`;
+        reason = `Side-off ${dirLabel(dir)} ${safeToFixed(speed, 0)} mph — kitable, intermediate+`;
       } else if (shoreZone === 'offshore') {
         score -= 25;
         reason = `Offshore ${dirLabel(dir)} — DANGEROUS`;
       }
     } else if (inNorth && speed >= 5) {
       score += 25;
-      reason = `North flow ${dirLabel(dir)} ${speed.toFixed(0)} mph`;
+      reason = `North flow ${dirLabel(dir)} ${safeToFixed(speed, 0)} mph`;
     } else if (inThermal) {
       score += 25 + (thermalProb / 100) * 15;
-      reason = `Thermal ${dirLabel(dir)} ${speed.toFixed(0)} mph`;
+      reason = `Thermal ${dirLabel(dir)} ${safeToFixed(speed, 0)} mph`;
     } else if (dir != null) {
       score -= 10;
       if (!reason) reason = `${dirLabel(dir)} wind — cross/off direction`;
@@ -220,7 +221,7 @@ function scoreSpot(spot, activity, currentWind, lakeState, mesoData) {
       // Below minimum: cap the entire score. Direction is irrelevant without wind.
       const fraction = speed / (tooLight || 1);
       score = Math.round(fraction * 30);
-      reason = `Too light (${speed.toFixed(0)} mph) — need ${tooLight}+ mph`;
+      reason = `Too light (${safeToFixed(speed, 0)} mph) — need ${tooLight}+ mph`;
     } else if (ideal && speed >= ideal.min && speed <= ideal.max) {
       score += 15;
     } else if (speed > (tooStrong ?? 999)) {
@@ -416,8 +417,8 @@ function SpotRanker({ activity, currentWind, lakeState, mesoData, onSelectSpot }
                       <>
                         <span className="opacity-40 mx-0.5">·</span>
                         <span className={`font-bold ${(spot.wind.speed ?? 0) >= 8 ? 'text-emerald-500' : ''}`}>
-                          {(spot.wind.speed ?? 0).toFixed(0)} mph {spot.wind.dir != null ? dirLabel(spot.wind.dir) : ''}
-                          {(spot.wind.gust ?? 0) > (spot.wind.speed ?? 0) * 1.3 ? ` G${(spot.wind.gust ?? 0).toFixed(0)}` : ''}
+                          {safeToFixed(spot.wind.speed, 0)} mph {spot.wind.dir != null ? dirLabel(spot.wind.dir) : ''}
+                          {(spot.wind.gust ?? 0) > (spot.wind.speed ?? 0) * 1.3 ? ` G${safeToFixed(spot.wind.gust, 0)}` : ''}
                         </span>
                       </>
                     )}

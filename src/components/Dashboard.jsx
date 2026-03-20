@@ -34,6 +34,7 @@ const PhotoSubmit = lazy(() => import('./PhotoSubmit'));
 const SMSAlertSettings = lazy(() => import('./SMSAlertSettings'));
 import { getSMSPrefs, processConditions } from '../services/SMSNotificationService';
 import { getParaglidingScore } from '../utils/paraglidingScore';
+import { safeToFixed } from '../utils/safeToFixed';
 import { synthesize } from '../services/WindIntelligence';
 import SignalConvergence from './SignalConvergence';
 
@@ -428,7 +429,7 @@ export function Dashboard() {
               label="Gradient Check"
               description={<>ΔP = P<sub>SLC</sub> - P<sub>Provo</sub></>}
               value={lakeState?.pressure?.gradient != null 
-                ? `${lakeState.pressure.gradient > 0 ? '+' : ''}${lakeState.pressure.gradient.toFixed(2)} mb`
+                ? `${lakeState.pressure.gradient > 0 ? '+' : ''}${safeToFixed(lakeState.pressure.gradient, 2)} mb`
                 : '-- mb'
               }
               explanation={lakeState?.pressure?.isBusted 
@@ -466,7 +467,7 @@ export function Dashboard() {
               label="Ground Truth"
               description={<>Your PWS at {lakeState?.pws?.name || 'Saratoga'}</>}
               value={lakeState?.pws?.windSpeed != null 
-                ? `${lakeState.pws.windSpeed.toFixed(1)} mph ${lakeState.pws.windDirection}°`
+                ? `${safeToFixed(lakeState.pws.windSpeed, 1)} mph ${lakeState.pws.windDirection}°`
                 : '-- mph'
               }
               explanation={lakeState?.thermalPrediction?.direction?.status === 'optimal'

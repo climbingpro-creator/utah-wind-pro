@@ -17,6 +17,8 @@
  * 4. Add configuration below following the template
  */
 
+import { safeToFixed } from '../utils/safeToFixed';
+
 // =============================================================================
 // WIND TYPES - The mechanisms that create wind
 // =============================================================================
@@ -450,7 +452,7 @@ export function evaluateIndicator(indicator, windData) {
   if (speed < trigger.speed.min) {
     return {
       status: 'too-weak',
-      message: `${name} showing ${speed.toFixed(1)} mph - below ${trigger.speed.min} mph threshold`,
+      message: `${name} showing ${safeToFixed(speed, 1)} mph - below ${trigger.speed.min} mph threshold`,
       prediction: null,
     };
   }
@@ -497,7 +499,7 @@ export function evaluateIndicator(indicator, windData) {
   
   return {
     status,
-    message: `${name}: ${speed.toFixed(1)} mph from ${trigger.direction.label}`,
+    message: `${name}: ${safeToFixed(speed, 1)} mph from ${trigger.direction.label}`,
     prediction: {
       expectedSpeed: correlation.avgTargetSpeed,
       foilKiteablePct: correlation.foilKiteablePct,

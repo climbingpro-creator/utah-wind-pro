@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline, Circle } from
 import L from 'leaflet';
 import { Compass, Maximize2, X, Wind } from 'lucide-react';
 import { LAKE_CONFIGS } from '../config/lakeStations';
+import { safeToFixed } from '../utils/safeToFixed';
 // Fix Leaflet default marker icon issue (use matching 1.9.4 assets)
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -373,7 +374,7 @@ export function WindMap({
           {currentDirection != null && (
             <div className="flex items-center gap-2 text-xs">
               <Wind className="w-4 h-4 text-cyan-400" />
-              <span className="text-cyan-400 font-medium">{currentSpeed?.toFixed(0) || '--'} mph</span>
+              <span className="text-cyan-400 font-medium">{safeToFixed(currentSpeed, 0)} mph</span>
               <span className="text-slate-400">@ {currentDirection}°</span>
             </div>
           )}
@@ -489,7 +490,7 @@ export function WindMap({
                         <div className="flex justify-between items-center">
                           <span className="text-gray-600 text-sm">Wind:</span>
                           <span className="font-bold text-lg text-gray-800">
-                            {stationWind.speed?.toFixed(1)} mph
+                            {safeToFixed(stationWind.speed, 1)} mph
                           </span>
                         </div>
                         <div className="flex justify-between items-center">
@@ -502,7 +503,7 @@ export function WindMap({
                           <div className="flex justify-between items-center">
                             <span className="text-gray-600 text-sm">Gust:</span>
                             <span className="font-medium text-gray-800">
-                              {stationWind.gust?.toFixed(1)} mph
+                              {safeToFixed(stationWind.gust, 1)} mph
                             </span>
                           </div>
                         )}
@@ -510,7 +511,7 @@ export function WindMap({
                           <div className="flex justify-between items-center">
                             <span className="text-gray-600 text-sm">Temp:</span>
                             <span className="font-medium text-gray-800">
-                              {stationWind.temp?.toFixed(0)}°F
+                              {safeToFixed(stationWind.temp, 0)}°F
                             </span>
                           </div>
                         )}
@@ -575,7 +576,7 @@ export function WindMap({
           <div className="absolute top-2 right-2 bg-slate-900/90 rounded-lg px-3 py-2 z-[1000]">
             <div className="text-center">
               <div className="text-2xl font-bold text-cyan-400">
-                {currentSpeed?.toFixed(0) || '--'}
+                {safeToFixed(currentSpeed, 0)}
                 <span className="text-sm font-normal text-slate-400 ml-1">mph</span>
               </div>
               <div className="text-xs text-slate-400">

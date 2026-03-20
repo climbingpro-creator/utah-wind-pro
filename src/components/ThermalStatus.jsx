@@ -1,4 +1,5 @@
 import { Thermometer, TrendingUp, Compass } from 'lucide-react';
+import { safeToFixed } from '../utils/safeToFixed';
 
 export function ThermalStatus({ 
   thermalDelta, 
@@ -50,8 +51,8 @@ export function ThermalStatus({
               </span>
             </div>
             <div className="flex justify-between text-xs text-slate-500">
-              <span>Lakeshore: {lakeshoreTemp?.toFixed(1) ?? '--'}°F</span>
-              <span>Ridge: {ridgeTemp?.toFixed(1) ?? '--'}°F</span>
+              <span>Lakeshore: {safeToFixed(lakeshoreTemp, 1)}°F</span>
+              <span>Ridge: {safeToFixed(ridgeTemp, 1)}°F</span>
             </div>
             {isActive && (
               <div className="mt-2 text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded inline-block">

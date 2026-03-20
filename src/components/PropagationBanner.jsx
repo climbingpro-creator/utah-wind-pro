@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { Wind, Clock, Zap, AlertTriangle } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { scanForPropagation } from '../services/PropagationAlerts';
+import { safeToFixed } from '../utils/safeToFixed';
 
 const URGENCY_STYLES = {
   imminent: {
@@ -83,7 +84,7 @@ export default function PropagationBanner({ locationId, stationReadings, current
             return (
               <div key={a.id} className={`flex items-center gap-1.5 text-[10px] px-2 py-1 rounded-lg ${isDark ? 'bg-slate-800/40 text-slate-400' : 'bg-white/60 text-slate-500'}`}>
                 <Zap className={`w-3 h-3 ${s.icon}`} />
-                <span>{a.stationName}: {a.upstreamSpeed.toFixed(0)} mph {a.dirLabel}</span>
+                <span>{a.stationName}: {safeToFixed(a.upstreamSpeed, 0)} mph {a.dirLabel}</span>
                 <span className={`font-medium ${s.icon}`}>→ {a.expectedSpeed} mph by {a.etaTime}</span>
               </div>
             );

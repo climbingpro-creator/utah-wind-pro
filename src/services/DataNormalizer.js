@@ -1,4 +1,5 @@
 import { LAKE_CONFIGS, WIND_DIRECTION_OPTIMAL, getPrimaryRidgeStation, STATION_INFO } from '../config/lakeStations';
+import { safeToFixed } from '../utils/safeToFixed';
 import { predictThermal } from './ThermalPredictor';
 import { learningSystem } from './LearningSystem';
 
@@ -140,7 +141,7 @@ export class LakeState {
       
       if (state.pressure.high?.value != null && state.pressure.low?.value != null) {
         state.pressure.gradient = parseFloat(
-          (state.pressure.high.value - state.pressure.low.value).toFixed(3)
+          safeToFixed(state.pressure.high.value - state.pressure.low.value, 3)
         );
         state.pressure.bustThreshold = config.stations.pressure.bustThreshold || 2.0;
 
@@ -161,8 +162,8 @@ export class LakeState {
               isBusted: false,
               northFlowActive: state.pressure.northFlowActive,
               explanation: state.pressure.gradient > 0.5
-                ? `ΔP ${state.pressure.gradient.toFixed(2)}mb = North flow active (GOOD for this location)`
-                : `ΔP ${state.pressure.gradient.toFixed(2)}mb = Weak gradient, thermal may be primary wind`,
+                ? `ΔP ${safeToFixed(state.pressure.gradient, 2)}mb = North flow active (GOOD for this location)`
+                : `ΔP ${safeToFixed(state.pressure.gradient, 2)}mb = Weak gradient, thermal may be primary wind`,
             },
           };
         } else {
@@ -176,8 +177,8 @@ export class LakeState {
               threshold: state.pressure.bustThreshold,
               isBusted: state.pressure.isBusted,
               explanation: state.pressure.isBusted 
-                ? `ΔP ${state.pressure.gradient.toFixed(2)}mb > ${state.pressure.bustThreshold}mb = North flow dominates`
-                : `ΔP ${state.pressure.gradient.toFixed(2)}mb < ${state.pressure.bustThreshold}mb = Thermal possible`,
+                ? `ΔP ${safeToFixed(state.pressure.gradient, 2)}mb > ${state.pressure.bustThreshold}mb = North flow dominates`
+                : `ΔP ${safeToFixed(state.pressure.gradient, 2)}mb < ${state.pressure.bustThreshold}mb = Thermal possible`,
             },
           };
         }
@@ -226,7 +227,7 @@ export class LakeState {
 
       if (state.thermal.lakeshore != null && state.thermal.ridge != null) {
         state.thermal.delta = parseFloat(
-          (state.thermal.lakeshore - state.thermal.ridge).toFixed(1)
+          safeToFixed(state.thermal.lakeshore - state.thermal.ridge, 1)
         );
         
         // Thermal pump is active if lakeshore is significantly warmer than ridge
@@ -614,7 +615,7 @@ function generateAlerts(state) {
     alerts.push({
       type: 'bust',
       severity: 'high',
-      message: `Pressure gradient ${state.pressure.gradient.toFixed(2)}mb exceeds bust threshold`,
+      message: `Pressure gradient ${safeToFixed(state.pressure.gradient, 2)}mb exceeds bust threshold`,
       timestamp: state.timestamp,
     });
   }

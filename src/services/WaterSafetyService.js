@@ -13,6 +13,7 @@
 import { weatherService } from './WeatherService';
 import { monitorSwings } from './FrontalTrendPredictor';
 import { generateWindField } from './WindFieldEngine';
+import { safeToFixed } from '../utils/safeToFixed';
 
 const UPSTREAM_STATIONS = {
   KSLC: { name: 'SLC Airport', leadTimeMin: 45, role: 'North flow / cold front origin' },
@@ -135,8 +136,8 @@ function findWindEvents(hours) {
         from: prev.predictedSpeed,
         to: curr.predictedSpeed,
         message: speedJump >= 10
-          ? `Wind surge expected: ${prev.predictedSpeed.toFixed(0)} → ${curr.predictedSpeed.toFixed(0)} mph`
-          : `Wind increasing: ${prev.predictedSpeed.toFixed(0)} → ${curr.predictedSpeed.toFixed(0)} mph`,
+          ? `Wind surge expected: ${safeToFixed(prev.predictedSpeed, 0)} → ${safeToFixed(curr.predictedSpeed, 0)} mph`
+          : `Wind increasing: ${safeToFixed(prev.predictedSpeed, 0)} → ${safeToFixed(curr.predictedSpeed, 0)} mph`,
       });
     }
 
@@ -190,7 +191,7 @@ export async function getUpstreamWarnings(lakeId = 'utah-lake') {
           severity: latest.windSpeed >= 25 ? 'critical' : 'warning',
           type: 'strong_wind',
           leadTime: config.leadTimeMin,
-          message: `${config.name}: ${latest.windSpeed.toFixed(0)} mph — strong wind heading your way`,
+          message: `${config.name}: ${safeToFixed(latest.windSpeed, 0)} mph — strong wind heading your way`,
           detail: `${config.role}. Expect similar conditions at the lake in ~${config.leadTimeMin} min.`,
           windSpeed: latest.windSpeed,
           windDirection: latest.windDirection,
@@ -209,7 +210,7 @@ export async function getUpstreamWarnings(lakeId = 'utah-lake') {
             severity: speedChange >= 15 ? 'critical' : 'warning',
             type: 'wind_building',
             leadTime: config.leadTimeMin,
-            message: `${config.name}: Wind building rapidly (${oldest.windSpeed.toFixed(0)} → ${latest.windSpeed.toFixed(0)} mph)`,
+            message: `${config.name}: Wind building rapidly (${safeToFixed(oldest.windSpeed, 0)} → ${safeToFixed(latest.windSpeed, 0)} mph)`,
             detail: `Conditions deteriorating upstream. Plan to be off the water within ${config.leadTimeMin} min.`,
             windSpeed: latest.windSpeed,
             windDirection: latest.windDirection,
@@ -229,7 +230,7 @@ export async function getUpstreamWarnings(lakeId = 'utah-lake') {
             severity: 'warning',
             type: 'wind_shift',
             leadTime: config.leadTimeMin,
-            message: `${config.name}: Major wind shift detected (${dirChange.toFixed(0)}° change)`,
+            message: `${config.name}: Major wind shift detected (${safeToFixed(dirChange, 0)}° change)`,
             detail: `Possible frontal passage. Conditions may change rapidly at the lake.`,
             windSpeed: latest.windSpeed,
             windDirection: latest.windDirection,
@@ -250,7 +251,7 @@ export async function getUpstreamWarnings(lakeId = 'utah-lake') {
             severity: latest.windSpeed >= 18 ? 'critical' : 'warning',
             type: 'north_flow',
             leadTime: 45,
-            message: `North flow active at SLC: ${latest.windSpeed.toFixed(0)} mph from ${getCardinal(latest.windDirection)}`,
+            message: `North flow active at SLC: ${safeToFixed(latest.windSpeed, 0)} mph from ${getCardinal(latest.windDirection)}`,
             detail: 'Strong north winds will reach Utah Lake within 30-60 min. Whitecaps likely.',
             windSpeed: latest.windSpeed,
             windDirection: latest.windDirection,
@@ -270,7 +271,7 @@ export async function getUpstreamWarnings(lakeId = 'utah-lake') {
             severity: 'info',
             type: 'canyon_wind',
             leadTime: 60,
-            message: `Canyon thermal active: ${latest.windSpeed.toFixed(0)} mph SE from Spanish Fork`,
+            message: `Canyon thermal active: ${safeToFixed(latest.windSpeed, 0)} mph SE from Spanish Fork`,
             detail: 'Thermal winds building from the canyon. Expect choppy conditions on south end of Utah Lake.',
             windSpeed: latest.windSpeed,
             windDirection: latest.windDirection,
@@ -328,21 +329,21 @@ export function analyzePressureForWater(pressureData = {}) {
       alerts.push({
         severity: 'critical',
         message: 'Extreme pressure gradient — very strong winds likely',
-        detail: `Gradient: ${gradient.toFixed(1)} mb. Expect sustained winds 20+ mph.`,
+        detail: `Gradient: ${safeToFixed(gradient, 1)} mb. Expect sustained winds 20+ mph.`,
         icon: '🌪️',
       });
     } else if (absGrad > 2.0) {
       alerts.push({
         severity: 'warning',
         message: 'High pressure gradient — strong winds expected',
-        detail: `Gradient: ${gradient.toFixed(1)} mb. Expect gusty conditions.`,
+        detail: `Gradient: ${safeToFixed(gradient, 1)} mb. Expect gusty conditions.`,
         icon: '💨',
       });
     } else if (absGrad <= 0.5) {
       alerts.push({
         severity: 'positive',
         message: 'Flat pressure gradient — calm conditions favored',
-        detail: `Gradient: ${gradient.toFixed(1)} mb. Good for glass water.`,
+        detail: `Gradient: ${safeToFixed(gradient, 1)} mb. Good for glass water.`,
         icon: '✅',
       });
     }
@@ -354,14 +355,14 @@ export function analyzePressureForWater(pressureData = {}) {
       alerts.push({
         severity: 'info',
         message: 'Low barometric pressure — fish may be actively feeding',
-        detail: `Pressure: ${slcPressure.toFixed(2)} inHg. Falling pressure = pre-storm feeding frenzy.`,
+        detail: `Pressure: ${safeToFixed(slcPressure, 2)} inHg. Falling pressure = pre-storm feeding frenzy.`,
         icon: '🎣',
       });
     } else if (slcPressure > 30.40) {
       alerts.push({
         severity: 'info',
         message: 'High barometric pressure — fish may be less active',
-        detail: `Pressure: ${slcPressure.toFixed(2)} inHg. Try deeper water and slower presentations.`,
+        detail: `Pressure: ${safeToFixed(slcPressure, 2)} inHg. Try deeper water and slower presentations.`,
         icon: '📊',
       });
     }

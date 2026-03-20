@@ -15,6 +15,7 @@
  */
 
 import fishWeightsData from '../config/trainedWeights-fishing.json';
+import { safeToFixed } from '../utils/safeToFixed';
 
 let learnedWeights = null;
 
@@ -291,7 +292,7 @@ function buildFactors(moon, pressure, wind, hour, temp, solunar) {
   if (wind != null) {
     factors.push({
       name: 'Wind',
-      value: `${wind.toFixed(0)} mph`,
+      value: `${safeToFixed(wind, 0)} mph`,
       rating: (wind >= 3 && wind <= 8) ? 5 : wind <= 3 ? 3 : wind <= 15 ? 3 : 1,
       impact: (wind >= 3 && wind <= 8) ? 'positive' : wind > 15 ? 'negative' : 'neutral',
     });

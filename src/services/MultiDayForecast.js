@@ -32,6 +32,7 @@
  */
 
 import zigzagData from '../data/zigzag-historical.json';
+import { safeToFixed } from '../utils/safeToFixed';
 
 /**
  * KITE SPEED THRESHOLDS
@@ -155,11 +156,11 @@ export function calculate5DayForecast(currentConditions, forecastData = null) {
       // Temperature match
       if (Math.abs(currentTemp - seDayBefore.eveningTemp) < 10) {
         seProbability += 15;
-        factors.push(`Evening temp ${currentTemp.toFixed(0)}°F matches thermal pattern`);
+        factors.push(`Evening temp ${safeToFixed(currentTemp, 0)}°F matches thermal pattern`);
       }
       if (Math.abs(currentTemp - nDayBefore.eveningTemp) < 10) {
         nProbability += 15;
-        factors.push(`Evening temp ${currentTemp.toFixed(0)}°F matches north flow pattern`);
+        factors.push(`Evening temp ${safeToFixed(currentTemp, 0)}°F matches north flow pattern`);
       }
       
       // Pressure match
@@ -177,7 +178,7 @@ export function calculate5DayForecast(currentConditions, forecastData = null) {
       
       if (seMultiDay && Math.abs(currentPressure - seMultiDay.pressure) < 0.1) {
         seProbability += 10;
-        factors.push(`Pressure ${currentPressure.toFixed(2)} matches ${day}-day thermal setup`);
+        factors.push(`Pressure ${safeToFixed(currentPressure, 2)} matches ${day}-day thermal setup`);
       }
       
       if (nMultiDay && Math.abs(currentPressure - nMultiDay.pressure) < 0.1) {
@@ -323,7 +324,7 @@ export function getForecastSummary(forecasts) {
   
   let message = '';
   if (best.primary.type === 'SE Thermal') {
-    message = `${best.seThermal.probability}% chance of SE thermal. Expected peak around ${best.seThermal.peakHour}:00 with ${best.seThermal.expectedSpeed.toFixed(0)} mph from ${best.seThermal.expectedDirection}°.`;
+    message = `${best.seThermal.probability}% chance of SE thermal. Expected peak around ${best.seThermal.peakHour}:00 with ${safeToFixed(best.seThermal.expectedSpeed, 0)} mph from ${best.seThermal.expectedDirection}°.`;
   } else if (best.primary.type === 'North Flow') {
     message = `${best.northFlow.probability}% chance of north flow. Watch for frontal passage.`;
   } else {
@@ -390,13 +391,13 @@ export function analyzeWindType(conditions) {
   if (temperature != null) {
     if (temperature > 55) {
       analysis.push({
-        factor: `Warm evening (${temperature.toFixed(0)}°F)`,
+        factor: `Warm evening (${safeToFixed(temperature, 0)}°F)`,
         favors: 'SE Thermal',
         reason: 'Matches thermal day-before pattern (58.2°F avg)',
       });
     } else if (temperature < 50) {
       analysis.push({
-        factor: `Cool evening (${temperature.toFixed(0)}°F)`,
+        factor: `Cool evening (${safeToFixed(temperature, 0)}°F)`,
         favors: 'North Flow',
         reason: 'Matches north flow day-before pattern (46.9°F avg)',
       });

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Calendar, Wind, ArrowUp, ArrowDown, Sun, Cloud, TrendingUp, ChevronRight, Compass, Anchor, Thermometer, Clock } from 'lucide-react';
 import { calculate5DayForecast, getForecastSummary, getConfidenceDescription } from '../services/MultiDayForecast';
 import { KITE_SPEED_THRESHOLDS } from './KiteSafety';
+import { safeToFixed } from '../utils/safeToFixed';
 
 export function FiveDayForecast({ conditions, isLoading }) {
   const [forecasts, setForecasts] = useState([]);
@@ -217,7 +218,7 @@ export function FiveDayForecast({ conditions, isLoading }) {
                     <span>Start: <span className="text-cyan-300">{forecasts[expandedDay].seThermal.startHour}:00</span></span>
                   </div>
                   <p>Peak: <span className="text-cyan-300">{forecasts[expandedDay].seThermal.peakHour}:00</span></p>
-                  <p>Speed: ~{forecasts[expandedDay].seThermal.expectedSpeed.toFixed(0)} mph</p>
+                  <p>Speed: ~{safeToFixed(forecasts[expandedDay].seThermal.expectedSpeed, 0)} mph</p>
                   <p>Direction: {forecasts[expandedDay].seThermal.expectedDirection}° SSE</p>
                 </div>
                 

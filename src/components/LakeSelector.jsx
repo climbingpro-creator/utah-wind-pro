@@ -2,6 +2,7 @@ import { MapPin, ChevronDown, ChevronUp, Wind, Snowflake, Mountain, Fish, Anchor
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { LAKE_CONFIGS } from '../config/lakeStations';
+import { safeToFixed } from '../utils/safeToFixed';
 
 const UTAH_LAKE_LAUNCHES = [
   { id: 'utah-lake-lincoln', name: 'Lincoln Beach', wind: 'SE', direction: '135-165°', icon: '↖', position: 'South', meter: 'KPVU', meterName: 'Provo Airport' },
@@ -152,7 +153,7 @@ function getWindStatus(launch, stationCache, activity) {
   const speed = station.speed ?? station.windSpeed ?? 0;
   const dir = station.direction ?? station.windDirection;
 
-  if (speed < 3) return { level: 'calm', speed, dir, label: `${speed.toFixed(0)} mph` };
+  if (speed < 3) return { level: 'calm', speed, dir, label: `${safeToFixed(speed, 0)} mph` };
 
   const favorable = isDirectionFavorable(dir, launch.id);
   const north = isNorthFlow(dir, launch.id);
@@ -160,18 +161,18 @@ function getWindStatus(launch, stationCache, activity) {
 
   if (wantsWind) {
     if ((favorable || north) && speed >= 8)
-      return { level: 'hot', speed, dir, label: `${speed.toFixed(0)} mph` };
+      return { level: 'hot', speed, dir, label: `${safeToFixed(speed, 0)} mph` };
     if ((favorable || north) && speed >= 5)
-      return { level: 'building', speed, dir, label: `${speed.toFixed(0)} mph` };
+      return { level: 'building', speed, dir, label: `${safeToFixed(speed, 0)} mph` };
     if (speed >= 8)
-      return { level: 'windy', speed, dir, label: `${speed.toFixed(0)} mph` };
+      return { level: 'windy', speed, dir, label: `${safeToFixed(speed, 0)} mph` };
   } else {
     if (speed < 5)
       return { level: 'glass', speed, dir, label: 'Glass' };
     if (speed >= 15)
-      return { level: 'choppy', speed, dir, label: `${speed.toFixed(0)} mph` };
+      return { level: 'choppy', speed, dir, label: `${safeToFixed(speed, 0)} mph` };
   }
-  return { level: 'light', speed, dir, label: `${speed.toFixed(0)} mph` };
+  return { level: 'light', speed, dir, label: `${safeToFixed(speed, 0)} mph` };
 }
 
 // Merge incoming station readings into a persistent cache keyed by station ID

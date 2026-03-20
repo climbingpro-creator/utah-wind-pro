@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Sailboat, Clock, Wind, Compass, AlertTriangle, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { safeToFixed } from '../utils/safeToFixed';
 
 // Helper function - defined outside component to avoid hoisting issues
 const getCardinal = (deg) => {
@@ -107,12 +108,12 @@ const RaceDayMode = ({
     // Gusts
     if (gustFactor > 1.5) {
       overall = overall === 'good' ? 'caution' : overall;
-      issues.push(`Gusty (${(gustFactor * 100 - 100).toFixed(0)}% above sustained)`);
+      issues.push(`Gusty (${safeToFixed(gustFactor * 100 - 100, 0)}% above sustained)`);
     }
     
     // Direction shifts
     if (directionRange > 30) {
-      issues.push(`Wind shifting (${directionRange.toFixed(0)}° range)`);
+      issues.push(`Wind shifting (${safeToFixed(directionRange, 0)}° range)`);
     } else if (directionRange < 15) {
       positives.push('Steady direction');
     }
@@ -192,18 +193,18 @@ const RaceDayMode = ({
       <div className="grid grid-cols-4 gap-3 mb-4">
         <div className="text-center">
           <div className="text-xs text-slate-500">Avg Wind</div>
-          <div className="text-lg font-bold text-white">{stats.avgSpeed.toFixed(0)}</div>
+          <div className="text-lg font-bold text-white">{safeToFixed(stats.avgSpeed, 0)}</div>
           <div className="text-[10px] text-slate-500">mph</div>
         </div>
         <div className="text-center">
           <div className="text-xs text-slate-500">Range</div>
-          <div className="text-lg font-bold text-white">{stats.minSpeed.toFixed(0)}-{stats.maxSpeed.toFixed(0)}</div>
+          <div className="text-lg font-bold text-white">{safeToFixed(stats.minSpeed, 0)}-{safeToFixed(stats.maxSpeed, 0)}</div>
           <div className="text-[10px] text-slate-500">mph</div>
         </div>
         <div className="text-center">
           <div className="text-xs text-slate-500">Direction</div>
           <div className="text-lg font-bold text-white">{getCardinal(stats.avgDirection)}</div>
-          <div className="text-[10px] text-slate-500">{stats.avgDirection?.toFixed(0)}°</div>
+          <div className="text-[10px] text-slate-500">{safeToFixed(stats.avgDirection, 0)}°</div>
         </div>
         <div className="text-center">
           <div className="text-xs text-slate-500">Trend</div>
@@ -219,7 +220,7 @@ const RaceDayMode = ({
         <div className="flex items-center justify-between text-xs mb-1">
           <span className="text-slate-400">Wind Consistency</span>
           <span className={`font-medium ${stats.consistency > 70 ? 'text-green-400' : stats.consistency > 40 ? 'text-yellow-400' : 'text-orange-400'}`}>
-            {stats.consistency.toFixed(0)}%
+            {safeToFixed(stats.consistency, 0)}%
           </span>
         </div>
         <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
@@ -275,7 +276,7 @@ const RaceDayMode = ({
       {/* Gust Factor Warning */}
       {stats.gustFactor > 1.3 && (
         <div className="mt-3 p-2 bg-orange-500/10 border border-orange-500/30 rounded text-xs text-orange-400">
-          ⚠️ Gust factor {((stats.gustFactor - 1) * 100).toFixed(0)}% - Reef early, watch for knockdowns
+          ⚠️ Gust factor {safeToFixed((stats.gustFactor - 1) * 100, 0)}% - Reef early, watch for knockdowns
         </div>
       )}
     </div>

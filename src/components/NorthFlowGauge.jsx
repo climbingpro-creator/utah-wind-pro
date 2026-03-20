@@ -1,4 +1,5 @@
 import { ArrowDown, ArrowUp, Minus } from 'lucide-react';
+import { safeToFixed } from '../utils/safeToFixed';
 
 /**
  * North Flow / Prefrontal Gauge
@@ -172,7 +173,7 @@ export function NorthFlowGauge({ gradient, size = 160 }) {
       {/* Value display */}
       <div className="text-center -mt-2">
         <div className={`text-2xl font-bold ${flowColor}`}>
-          {gradient != null ? `${gradient > 0 ? '+' : ''}${gradient.toFixed(2)}` : '--'}
+          {gradient != null ? `${Number(gradient) > 0 ? '+' : ''}${safeToFixed(gradient, 2)}` : '--'}
           <span className="text-sm text-slate-500 ml-1">mb</span>
         </div>
         <div className={`text-sm font-medium ${flowColor} flex items-center justify-center gap-1`}>

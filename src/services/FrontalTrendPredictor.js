@@ -11,6 +11,7 @@
  */
 
 import registry from '../config/mesoRegistry.json';
+import { safeToFixed } from '../utils/safeToFixed';
 
 const CONFIG = registry.SWING_MONITOR;
 const ALERTS = CONFIG.alerts;
@@ -41,7 +42,7 @@ export function monitorSwings(history, pressureHistory = null) {
         severity: 'critical',
         label: 'Frontal Boundary Hit',
         message: ALERTS.FRONTAL_HIT.message,
-        detail: `${Math.abs(tempDelta3h).toFixed(1)}°F drop in 3 hours`,
+        detail: `${safeToFixed(Math.abs(tempDelta3h), 1)}°F drop in 3 hours`,
         windExpectation: ALERTS.FRONTAL_HIT.wind_expectation,
         value: tempDelta3h,
         icon: '🌬️',
@@ -59,7 +60,7 @@ export function monitorSwings(history, pressureHistory = null) {
         id: 'rapid-cool',
         severity: 'warning',
         label: 'Rapid Cooling',
-        message: `${Math.abs(tempDelta1h).toFixed(1)}°F drop in 1 hour`,
+        message: `${safeToFixed(Math.abs(tempDelta1h), 1)}°F drop in 1 hour`,
         detail: 'Cold air undercutting — gusty shift possible',
         windExpectation: 'North wind strengthening',
         value: tempDelta1h,
@@ -94,7 +95,7 @@ export function monitorSwings(history, pressureHistory = null) {
         id: 'gust-spike',
         severity: 'warning',
         label: 'Gust Spike',
-        message: `Gusts ${now.windGust.toFixed(0)} mph (${gustDiff.toFixed(0)} over sustained)`,
+        message: `Gusts ${safeToFixed(now.windGust, 0)} mph (${safeToFixed(gustDiff, 0)} over sustained)`,
         detail: 'Turbulent mixing — frontal boundary or convergence',
         windExpectation: 'Unstable conditions, rapid changes possible',
         value: gustDiff,
@@ -118,7 +119,7 @@ export function monitorSwings(history, pressureHistory = null) {
           severity: 'info',
           label: 'Pressure Building',
           message: ALERTS.PRESSURE_BOMB.message,
-          detail: `+${pDelta.toFixed(3)} inHg in ${pressureHistory.values.length} readings`,
+          detail: `+${safeToFixed(pDelta, 3)} inHg in ${pressureHistory.values.length} readings`,
           windExpectation: ALERTS.PRESSURE_BOMB.wind_expectation,
           value: pDelta,
           icon: '📈',
@@ -129,7 +130,7 @@ export function monitorSwings(history, pressureHistory = null) {
           severity: 'info',
           label: 'Pressure Falling',
           message: 'Approaching low — storm or strong thermal cycle possible',
-          detail: `${pDelta.toFixed(3)} inHg drop`,
+          detail: `${safeToFixed(pDelta, 3)} inHg drop`,
           windExpectation: 'Strengthening winds likely',
           value: pDelta,
           icon: '📉',
