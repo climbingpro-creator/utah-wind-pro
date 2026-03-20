@@ -244,26 +244,26 @@ const LearningDashboard = () => {
             <div className="text-center">
               <div className="text-xs text-gray-400">Pressure</div>
               <div className="text-lg font-bold text-blue-400">
-                {(weights.pressureWeight * 100).toFixed(0)}%
+                {((weights.pressureWeight ?? 0) * 100).toFixed(0)}%
               </div>
             </div>
             <div className="text-center">
               <div className="text-xs text-gray-400">Thermal</div>
               <div className="text-lg font-bold text-orange-400">
-                {(weights.thermalWeight * 100).toFixed(0)}%
+                {((weights.thermalWeight ?? 0) * 100).toFixed(0)}%
               </div>
             </div>
             <div className="text-center">
               <div className="text-xs text-gray-400">Convergence</div>
               <div className="text-lg font-bold text-green-400">
-                {(weights.convergenceWeight * 100).toFixed(0)}%
+                {((weights.convergenceWeight ?? 0) * 100).toFixed(0)}%
               </div>
             </div>
           </div>
 
-          {weights.speedBiasCorrection !== 0 && (
+          {weights.speedBiasCorrection != null && weights.speedBiasCorrection !== 0 && (
             <div className="text-xs text-gray-400 mb-2">
-              Speed bias correction: {weights.speedBiasCorrection > 0 ? '+' : ''}{weights.speedBiasCorrection.toFixed(1)} mph
+              Speed bias correction: {weights.speedBiasCorrection > 0 ? '+' : ''}{(weights.speedBiasCorrection ?? 0).toFixed(1)} mph
             </div>
           )}
 
@@ -274,7 +274,7 @@ const LearningDashboard = () => {
                 {Object.entries(weights.indicators).slice(0, 4).map(([key, data]) => (
                   <div key={key} className="flex justify-between">
                     <span className="text-gray-500">{key}:</span>
-                    <span className="text-white">{(data.weight * 100).toFixed(0)}%</span>
+                    <span className="text-white">{((data.weight ?? 0) * 100).toFixed(0)}%</span>
                   </div>
                 ))}
               </div>
@@ -304,7 +304,7 @@ const LearningDashboard = () => {
                     : `${weights.patternInsights.peakHour} AM`}
                 </span>
                 <span className="text-gray-500 ml-1">
-                  ({(weights.patternInsights.peakHourConfidence * 100).toFixed(0)}% conf)
+                  ({((weights.patternInsights.peakHourConfidence ?? 0) * 100).toFixed(0)}% conf)
                 </span>
               </div>
             )}
@@ -332,13 +332,13 @@ const LearningDashboard = () => {
               <div className="bg-blue-900/20 border border-blue-500/20 p-3 rounded">
                 <div className="text-blue-400 font-bold mb-1">⬇️ North Flow Events</div>
                 <div className="text-gray-300">
-                  Avg duration: {weights.windEventPatterns.north_flow.avgDuration.toFixed(1)} hrs
+                  Avg duration: {(weights.windEventPatterns.north_flow.avgDuration ?? 0).toFixed(1)} hrs
                 </div>
                 <div className="text-gray-300">
-                  Avg speed: {weights.windEventPatterns.north_flow.avgSpeed.toFixed(0)} mph
+                  Avg speed: {(weights.windEventPatterns.north_flow.avgSpeed ?? 0).toFixed(0)} mph
                 </div>
                 <div className="text-gray-400">
-                  {weights.windEventPatterns.north_flow.eventCount} events recorded
+                  {weights.windEventPatterns.north_flow.eventCount ?? 0} events recorded
                 </div>
               </div>
             )}
@@ -346,10 +346,10 @@ const LearningDashboard = () => {
               <div className="bg-orange-900/20 border border-orange-500/20 p-3 rounded">
                 <div className="text-orange-400 font-bold mb-1">🔥 Thermal Events</div>
                 <div className="text-gray-300">
-                  Avg duration: {weights.windEventPatterns.thermal.avgDuration.toFixed(1)} hrs
+                  Avg duration: {(weights.windEventPatterns.thermal.avgDuration ?? 0).toFixed(1)} hrs
                 </div>
                 <div className="text-gray-400">
-                  {weights.windEventPatterns.thermal.eventCount} events recorded
+                  {weights.windEventPatterns.thermal.eventCount ?? 0} events recorded
                 </div>
               </div>
             )}
@@ -425,7 +425,7 @@ const LearningDashboard = () => {
                       style={{ width: `${Math.min(100, val.accuracy * 100)}%` }}
                     />
                   </div>
-                  <span className="text-gray-300 w-10 text-right">{(val.accuracy * 100).toFixed(0)}%</span>
+                  <span className="text-gray-300 w-10 text-right">{((val.accuracy ?? 0) * 100).toFixed(0)}%</span>
                   <span className="text-gray-500 w-8 text-right">n={val.count}</span>
                 </div>
               ))}
