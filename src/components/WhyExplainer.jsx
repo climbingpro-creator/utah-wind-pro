@@ -149,7 +149,7 @@ export default function WhyExplainer({ locationId = 'utah-lake' }) {
         {topPrediction && (
           <p className="text-sm text-slate-400 mt-1">
             {isGo
-              ? `${EVENT_CONFIG[topPrediction.eventType]?.label || topPrediction.eventType} at ${topPrediction.probability.toFixed(0)}% — tap for details`
+              ? `${EVENT_CONFIG[topPrediction.eventType]?.label || topPrediction.eventType} at ${(topPrediction.probability ?? 0).toFixed(0)}% — tap for details`
               : 'No strong wind events predicted right now'
             }
           </p>

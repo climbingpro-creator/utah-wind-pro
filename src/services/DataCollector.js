@@ -208,7 +208,8 @@ class DataCollector {
 
       const totalServerPredictions = meta?.totalPredictions ?? 0;
       const cycles = meta?.totalCycles ?? 0;
-      console.log(`Server weights synced — ${totalServerPredictions} predictions across ${cycles} cycles, accuracy: ${(weights.meta?.overallAccuracy * 100 || 0).toFixed(1)}%`);
+      const acc = weights.meta?.overallAccuracy;
+      console.log(`Server weights synced — ${totalServerPredictions} predictions across ${cycles} cycles, accuracy: ${acc != null ? (acc * 100).toFixed(1) : '?'}%`);
     } catch (e) {
       console.log('Server weights unavailable (expected if not deployed):', e.message);
     }
