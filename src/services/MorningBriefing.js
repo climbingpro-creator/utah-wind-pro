@@ -536,17 +536,18 @@ function briefMinimal(activity, params) {
  * @returns {object} { headline, body, bullets, excitement, timeOfDay, bestAction }
  */
 export function generateBriefing(activity, params = {}) {
+  const p = params == null ? {} : params;
   const act = (activity || '').toLowerCase().trim();
-  const hasSubstantiveData = params.thermalPrediction || params.smartForecast || params.upstream;
+  const hasSubstantiveData = p.thermalPrediction || p.smartForecast || p.upstream;
 
-  if (!hasSubstantiveData && !params.currentWind?.speed) {
-    return briefMinimal(act, params);
+  if (!hasSubstantiveData && !p.currentWind?.speed) {
+    return briefMinimal(act, p);
   }
 
-  if (WIND_ACTIVITIES.has(act)) return briefWind(act, params);
-  if (CALM_ACTIVITIES.has(act)) return briefCalm(act, params);
-  if (act === 'fishing') return briefFishing(params);
-  if (act === 'paragliding') return briefParagliding(params);
+  if (WIND_ACTIVITIES.has(act)) return briefWind(act, p);
+  if (CALM_ACTIVITIES.has(act)) return briefCalm(act, p);
+  if (act === 'fishing') return briefFishing(p);
+  if (act === 'paragliding') return briefParagliding(p);
 
-  return briefWind(act, params);
+  return briefWind(act, p);
 }

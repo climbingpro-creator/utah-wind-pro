@@ -37,4 +37,29 @@ describe('windDirectionToCardinal', () => {
   it('returns SW for 225 degrees', () => {
     expect(windDirectionToCardinal(225)).toBe('SW');
   });
+
+  it('returns N for north (explicit)', () => {
+    expect(windDirectionToCardinal(2)).toBe('N');
+  });
+
+  it('returns E for east', () => {
+    expect(windDirectionToCardinal(88)).toBe('E');
+  });
+
+  it('returns SE for 135°', () => {
+    expect(windDirectionToCardinal(135)).toBe('SE');
+  });
+
+  it('returns W for west', () => {
+    expect(windDirectionToCardinal(272)).toBe('W');
+  });
+
+  it('returns NW for 315°', () => {
+    expect(windDirectionToCardinal(315)).toBe('NW');
+  });
+
+  it('handles values above 360 by modulo behavior of index', () => {
+    expect(windDirectionToCardinal(450)).toBe('E');
+  });
+
 });
