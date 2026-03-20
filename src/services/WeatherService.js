@@ -1,9 +1,21 @@
 import axios from 'axios';
 import { getAllStationIds } from '../config/lakeStations';
 import { apiUrl } from '../utils/platform';
-import { fetchWithRetry } from '../utils/fetchWithRetry';
 
 const IS_PRODUCTION = import.meta.env.PROD;
+
+async function axiosWithRetry(config, retries = 2, baseDelay = 1000) {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      return await axios(config);
+    } catch (err) {
+      const status = err.response?.status;
+      const retryable = !status || status >= 500 || status === 429;
+      if (attempt >= retries || !retryable) throw err;
+      await new Promise(r => setTimeout(r, baseDelay * 2 ** attempt));
+    }
+  }
+}
 
 // In production, keys stay on the server via /api/weather proxy.
 // In development, use VITE_ env vars directly for local testing.
@@ -29,7 +41,7 @@ class WeatherService {
       let data;
 
       if (IS_PRODUCTION) {
-        const response = await axios.get(apiUrl('/api/weather'), { params: { source: 'ambient' } });
+        const response = await axiosWithRetry({ method: 'get', url: apiUrl('/api/weather'), params: { source: 'ambient' } });
         data = response.data;
       } else {
         const response = await axios.get(`${AMBIENT_BASE_URL}/devices`, {
@@ -78,7 +90,8 @@ class WeatherService {
       let responseData;
 
       if (IS_PRODUCTION) {
-        const response = await axios.get(apiUrl('/api/weather'), {
+        const response = await axiosWithRetry({
+          method: 'get', url: apiUrl('/api/weather'),
           params: { source: 'synoptic', stids: stationIds.join(',') },
         });
         responseData = response.data;
@@ -130,7 +143,8 @@ class WeatherService {
       let responseData;
 
       if (IS_PRODUCTION) {
-        const response = await axios.get(apiUrl('/api/weather'), {
+        const response = await axiosWithRetry({
+          method: 'get', url: apiUrl('/api/weather'),
           params: {
             source: 'synoptic-history',
             stids: stationIds.join(','),

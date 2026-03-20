@@ -9,12 +9,11 @@ const ThemeToggle = () => {
     <button
       onClick={toggleTheme}
       className={`
-        p-2 rounded-lg transition-colors duration-200
+        flex flex-col items-center gap-0.5 px-1.5 py-1 rounded-lg transition-colors duration-200
         ${theme === 'dark' 
           ? 'hover:bg-white/5 text-[var(--text-tertiary)] hover:text-amber-400' 
           : 'hover:bg-slate-100 text-slate-400 hover:text-slate-600'}
       `}
-      title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
       aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
     >
       {theme === 'dark' ? (
@@ -22,6 +21,7 @@ const ThemeToggle = () => {
       ) : (
         <Moon className="w-4 h-4" />
       )}
+      <span className="text-[8px] leading-none font-medium">Theme</span>
     </button>
   );
 };
