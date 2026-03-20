@@ -93,8 +93,9 @@ async function handleAmbient(res) {
 
 const ALLOWED_STATIONS = new Set([
   'KSLC','KPVU','KHCR','KOGD','KLGU','KHIF','KVEL','KPUC','KSGU','KPGA','KCDC',
-  'KFGR','BERU1','FPS','QSF','SND','UTALP','UTOLY','CSC','UID28','TIMU1','MDAU1',
+  'KFGR','KBMC','BERU1','FPS','QSF','SND','UTALP','UTOLY','CSC','UID28','TIMU1','MDAU1',
   'UTPCY','DCC','UTCOP','UTDAN','DSTU1','RVZU1','CCPUT','UWCU1','SKY','UTESU','UTMPK',
+  'UR328','BLPU1','OGP',
 ]);
 
 async function handleSynopticLatest(res, stids) {
@@ -151,7 +152,7 @@ async function handleSynopticHistory(res, stids, hours = '3') {
 
   const end = new Date();
   const start = new Date(end.getTime() - parseInt(hours) * 60 * 60 * 1000);
-  const fmt = (d) => d.toISOString().replace(/[-:]/g, '').split('.')[0];
+  const fmt = (d) => d.toISOString().replace(/[-:T]/g, '').slice(0, 12);
 
   const params = new URLSearchParams({
     token,
