@@ -248,18 +248,30 @@ export function Dashboard() {
         onUpgradeClick={openPaywall}
       />
 
-      <NotificationSettings 
-        isOpen={showNotificationSettings} 
-        onClose={() => setShowNotificationSettings(false)} 
-      />
-      <PhotoSubmit
-        isOpen={showPhotoSubmit}
-        onClose={() => setShowPhotoSubmit(false)}
-      />
-      <SMSAlertSettings
-        isOpen={showSMSSettings}
-        onClose={() => setShowSMSSettings(false)}
-      />
+      {showNotificationSettings && (
+        <Suspense fallback={null}>
+          <NotificationSettings 
+            isOpen={showNotificationSettings} 
+            onClose={() => setShowNotificationSettings(false)} 
+          />
+        </Suspense>
+      )}
+      {showPhotoSubmit && (
+        <Suspense fallback={null}>
+          <PhotoSubmit
+            isOpen={showPhotoSubmit}
+            onClose={() => setShowPhotoSubmit(false)}
+          />
+        </Suspense>
+      )}
+      {showSMSSettings && (
+        <Suspense fallback={null}>
+          <SMSAlertSettings
+            isOpen={showSMSSettings}
+            onClose={() => setShowSMSSettings(false)}
+          />
+        </Suspense>
+      )}
 
       {/* Learning Dashboard Modal/Panel */}
       <Modal isOpen={showLearningDashboard} onClose={() => setShowLearningDashboard(false)} label="Learning System" className="bg-slate-900 rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
@@ -764,7 +776,7 @@ export function Dashboard() {
                   <div className={`mt-2 pt-2 border-t text-xs ${
                     theme === 'dark' ? 'border-blue-500/20 text-blue-400/70' : 'border-blue-200 text-blue-600/70'
                   }`}>
-                    Base: {correlation.baseSpeed.toFixed(0)} mph → Refined: {correlation.refinedSpeed} mph
+                    Base: {(correlation.baseSpeed ?? 0).toFixed(0)} mph → Refined: {correlation.refinedSpeed ?? '--'} mph
                   </div>
                 )}
               </div>
@@ -964,7 +976,7 @@ export function Dashboard() {
                     {lakeState.thermalPrediction.speedBiasCorrection != null && lakeState.thermalPrediction.speedBiasCorrection !== 0 && (
                       <span className="ml-1 opacity-60">
                         bias: {lakeState.thermalPrediction.speedBiasCorrection > 0 ? '+' : ''}
-                        {lakeState.thermalPrediction.speedBiasCorrection.toFixed(1)} mph
+                        {(lakeState.thermalPrediction.speedBiasCorrection ?? 0).toFixed(1)} mph
                       </span>
                     )}
                   </span>
