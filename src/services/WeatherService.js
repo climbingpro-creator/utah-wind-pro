@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getAllStationIds } from '../config/lakeStations';
+import { apiUrl } from '../utils/platform';
 
 const IS_PRODUCTION = import.meta.env.PROD;
 
@@ -27,7 +28,7 @@ class WeatherService {
       let data;
 
       if (IS_PRODUCTION) {
-        const response = await axios.get('/api/weather', { params: { source: 'ambient' } });
+        const response = await axios.get(apiUrl('/api/weather'), { params: { source: 'ambient' } });
         data = response.data;
       } else {
         const response = await axios.get(`${AMBIENT_BASE_URL}/devices`, {
@@ -76,7 +77,7 @@ class WeatherService {
       let responseData;
 
       if (IS_PRODUCTION) {
-        const response = await axios.get('/api/weather', {
+        const response = await axios.get(apiUrl('/api/weather'), {
           params: { source: 'synoptic', stids: stationIds.join(',') },
         });
         responseData = response.data;
@@ -128,7 +129,7 @@ class WeatherService {
       let responseData;
 
       if (IS_PRODUCTION) {
-        const response = await axios.get('/api/weather', {
+        const response = await axios.get(apiUrl('/api/weather'), {
           params: {
             source: 'synoptic-history',
             stids: stationIds.join(','),

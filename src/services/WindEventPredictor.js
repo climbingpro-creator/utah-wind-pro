@@ -32,6 +32,7 @@
  */
 
 import { LAKE_CONFIGS } from '../config/lakeStations';
+import { apiUrl } from '../utils/platform';
 
 let learnedPatterns = null;
 let cachedUpstreamSignals = null;
@@ -56,7 +57,7 @@ async function getUpstreamSignals() {
     return cachedUpstreamSignals;
   }
   try {
-    const resp = await fetch('/api/cron/collect?action=upstream');
+    const resp = await fetch(apiUrl('/api/cron/collect?action=upstream'));
     if (!resp.ok) return [];
     const data = await resp.json();
     cachedUpstreamSignals = data.signals || [];

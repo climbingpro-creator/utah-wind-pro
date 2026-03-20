@@ -127,6 +127,11 @@ async function fetchSynopticLatest() {
 }
 
 export default async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
+  if (req.method === 'OPTIONS') return res.status(204).end();
+
   const action = req.query?.action;
   const READ_ACTIONS = ['sync', 'weights', 'predictions', 'upstream', 'nws', 'ahead', 'analogs', 'models'];
 

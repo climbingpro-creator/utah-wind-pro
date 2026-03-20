@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Lightbulb, ChevronDown, ChevronUp, Wind, Thermometer, Gauge, Navigation, AlertTriangle, Sun, CloudRain } from 'lucide-react';
-
-const API_BASE = import.meta.env.VITE_API_URL || '';
+import { apiUrl } from '../utils/platform';
 
 const EVENT_CONFIG = {
   frontal_passage: { label: 'Frontal Passage', icon: AlertTriangle, color: 'text-red-400', bg: 'bg-red-500/10' },
@@ -95,7 +94,7 @@ export default function WhyExplainer({ locationId = 'utah-lake' }) {
 
   const loadPredictions = async () => {
     try {
-      const resp = await fetch(`${API_BASE}/api/cron/collect?action=predictions&lake=${locationId}`);
+      const resp = await fetch(apiUrl(`/api/cron/collect?action=predictions&lake=${locationId}`));
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const data = await resp.json();
       setPredictions(data.predictions || []);

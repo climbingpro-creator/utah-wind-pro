@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
+import { apiUrl } from '../utils/platform';
 
 const TRIAL_KEY = 'uwf_trial_start';
 const TRIAL_DAYS = 30;
@@ -57,7 +58,7 @@ export function AuthProvider({ children }) {
 
   async function fetchTier(token) {
     try {
-      const resp = await fetch('/api/user-preferences', {
+      const resp = await fetch(apiUrl('/api/user-preferences'), {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (resp.ok) {
@@ -68,7 +69,7 @@ export function AuthProvider({ children }) {
     } catch { /* fall through */ }
 
     try {
-      const resp = await fetch('/api/thermal-forecast?lake=utah-lake-zigzag', {
+      const resp = await fetch(apiUrl('/api/thermal-forecast?lake=utah-lake-zigzag'), {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await resp.json();
@@ -109,7 +110,7 @@ export function AuthProvider({ children }) {
       setShowPaywall(true);
       return;
     }
-    const resp = await fetch('/api/subscribe', {
+    const resp = await fetch(apiUrl('/api/subscribe'), {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${session.access_token}`,
@@ -123,7 +124,7 @@ export function AuthProvider({ children }) {
 
   async function manageSubscription() {
     if (!session) throw new Error('Must be signed in');
-    const resp = await fetch('/api/subscribe?action=portal', {
+    const resp = await fetch(apiUrl('/api/subscribe?action=portal'), {
       headers: { Authorization: `Bearer ${session.access_token}` },
     });
     const { url, error } = await resp.json();

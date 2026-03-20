@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Target, TrendingUp, Clock, Zap, Shield, BarChart3, ChevronDown, ChevronUp } from 'lucide-react';
-
-const API_BASE = import.meta.env.VITE_API_URL || '';
+import { apiUrl } from '../utils/platform';
 
 const EVENT_LABELS = {
   frontal_passage: 'Frontal Passage',
@@ -106,11 +105,10 @@ export default function AccuracyScoreboard() {
   const loadData = async () => {
     try {
       const [wResp, aResp] = await Promise.all([
-        fetch(`${API_BASE}/api/cron/collect?action=weights`).then(r => r.json()),
-        fetch(`${API_BASE}/api/cron/collect?action=ahead`).then(r => r.json()),
+        fetch(apiUrl(`/api/cron/collect?action=weights`)).then(r => r.json()),
+        fetch(apiUrl(`/api/cron/collect?action=ahead`)).then(r => r.json()),
       ]);
       const w = wResp.weights || {};
-      if (wResp.meta) w.meta = wResp.meta;
       setWeights(w);
       setAheadLog(aResp);
     } catch (e) {

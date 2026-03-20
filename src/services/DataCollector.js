@@ -22,6 +22,7 @@ import { setFishingLearnedWeights } from './FishingPredictor';
 import { setWindFieldLearnedWeights } from './WindFieldEngine';
 import { scoreSessionForActivity } from './ActivityScoring';
 import { predictWindEvents, setWindEventLearnedPatterns, getUpstreamSignals, setStatisticalModels as setWindEventStatisticalModels } from './WindEventPredictor';
+import { apiUrl } from '../utils/platform';
 
 function getAllLakeIds() {
   return Object.keys(LAKE_CONFIGS).filter(id => id !== 'utah-lake');
@@ -184,7 +185,7 @@ class DataCollector {
    */
   async syncServerWeights() {
     try {
-      const resp = await fetch('/api/cron/collect?action=weights');
+      const resp = await fetch(apiUrl('/api/cron/collect?action=weights'));
       if (!resp.ok) return;
       const { weights, meta } = await resp.json();
       if (!weights) return;
@@ -213,7 +214,7 @@ class DataCollector {
     }
 
     try {
-      const modelsResp = await fetch('/api/cron/collect?action=models');
+      const modelsResp = await fetch(apiUrl('/api/cron/collect?action=models'));
       if (modelsResp.ok) {
         const modelsData = await modelsResp.json();
         if (modelsData?.thermalProfiles || modelsData?.lagCorrelations) {
@@ -287,7 +288,7 @@ class DataCollector {
 
     // SOURCE 1: Server-collected data (if cron + Redis are set up)
     try {
-      const resp = await fetch('/api/cron/collect?action=sync');
+      const resp = await fetch(apiUrl('/api/cron/collect?action=sync'));
       if (resp.ok) {
         const { records } = await resp.json();
         if (records?.length > 0) {

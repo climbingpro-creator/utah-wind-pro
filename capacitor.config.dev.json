@@ -1,7 +1,12 @@
 {
   "appId": "com.utahlakewindpro.app",
-  "appName": "UtahWindFinder",
+  "appName": "UtahWindFinder Dev",
   "webDir": "dist",
+  "server": {
+    "androidScheme": "https",
+    "url": "https://utah-wind-pro.vercel.app",
+    "cleartext": false
+  },
   "plugins": {
     "StatusBar": {
       "style": "DARK",
@@ -19,6 +24,6 @@
     "contentInset": "automatic"
   },
   "android": {
-    "allowMixedContent": false
+    "allowMixedContent": true
   }
 }

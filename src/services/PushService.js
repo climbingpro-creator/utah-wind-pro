@@ -8,6 +8,8 @@
  *  3. Call getPushStatus() — returns 'subscribed' | 'unsubscribed' | 'denied' | 'unsupported'
  */
 
+import { apiUrl } from '../utils/platform';
+
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
 
 function urlBase64ToUint8Array(base64String) {
@@ -54,7 +56,7 @@ export async function subscribeToPush(authToken) {
   }
 
   const subJson = sub.toJSON();
-  const resp = await fetch('/api/push-subscribe', {
+  const resp = await fetch(apiUrl('/api/push-subscribe'), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -86,7 +88,7 @@ export async function unsubscribeFromPush(authToken) {
     await sub.unsubscribe();
 
     if (authToken) {
-      await fetch('/api/push-subscribe', {
+      await fetch(apiUrl('/api/push-subscribe'), {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',

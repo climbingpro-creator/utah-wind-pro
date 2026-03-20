@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { History, Calendar, Wind, ChevronDown, ChevronUp, Target } from 'lucide-react';
-
-const API_BASE = import.meta.env.VITE_API_URL || '';
+import { apiUrl } from '../utils/platform';
 
 const EVENT_LABELS = {
   frontal_passage: 'Front',
@@ -87,7 +86,7 @@ export default function PatternMatch() {
 
   const loadData = async () => {
     try {
-      const resp = await fetch(`${API_BASE}/api/cron/collect?action=analogs`);
+      const resp = await fetch(apiUrl(`/api/cron/collect?action=analogs`));
       const json = await resp.json();
       setData(json);
     } catch (e) {

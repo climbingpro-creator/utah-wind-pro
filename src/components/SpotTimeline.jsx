@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Clock, Navigation, Wind, CloudSun, ChevronDown, ChevronUp, Zap, Eye } from 'lucide-react';
-
-const API_BASE = import.meta.env.VITE_API_URL || '';
+import { apiUrl } from '../utils/platform';
 
 // NWS grid mapping — must match server-side LAKE_TO_GRID in nwsForecast.js
 const LAKE_TO_GRID = {
@@ -113,8 +112,8 @@ export default function SpotTimeline({ locationId = 'utah-lake', activity = 'kit
   const loadData = async () => {
     try {
       const [nwsResp, aheadResp] = await Promise.all([
-        fetch(`${API_BASE}/api/cron/collect?action=nws`).then(r => r.json()),
-        fetch(`${API_BASE}/api/cron/collect?action=ahead`).then(r => r.json()),
+        fetch(apiUrl(`/api/cron/collect?action=nws`)).then(r => r.json()),
+        fetch(apiUrl(`/api/cron/collect?action=ahead`)).then(r => r.json()),
       ]);
       setNwsData(nwsResp);
       setAheadData(aheadResp);
