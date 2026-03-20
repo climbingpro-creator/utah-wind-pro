@@ -1,11 +1,6 @@
-Fix all 295 ESLint errors across entire codebase
+Fix Vite dev server failing to load src/main.jsx
 
-- Updated eslint.config.js: separate configs for src/, api/, scripts/
-  with proper globals (browser, node, serviceworker)
-- Added caughtErrorsIgnorePattern for _e catch params
-- Ignored android/ build artifacts
-- Disabled React compiler rules that require deep refactoring
-- Fixed 100+ unused variable errors across 50+ files
-- Fixed loadData-before-declaration in 5 components
-- Removed dead imports and dead code
-- Result: 0 errors, 10 warnings (all exhaustive-deps, intentional)
+The zero-width non-joiner character (U+200C) in the project path
+caused Vite's file resolver to fail during development. Fixed by
+explicitly setting root: __dirname in vite.config.js so the path
+resolves from import.meta.url instead of process.cwd().
