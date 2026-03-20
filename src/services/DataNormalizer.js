@@ -450,9 +450,9 @@ export class LakeState {
 
     // =========================================
     // PROPAGATION ANALYSIS
-    // Track thermal wave through station chain
+    // Track thermal wave through station chain (all spots)
     // =========================================
-    if (lakeId.startsWith('utah-lake')) {
+    {
       const stationReadings = {};
       for (const ws of state.wind.stations) {
         stationReadings[ws.id] = {
@@ -460,39 +460,27 @@ export class LakeState {
           direction: ws.direction, temp: ws.temperature,
         };
       }
-      if (state.earlyIndicator) {
-        stationReadings['QSF'] = {
-          speed: state.earlyIndicator.windSpeed,
-          direction: state.earlyIndicator.windDirection,
-          temp: state.earlyIndicator.temperature,
-        };
-      }
-      if (state.kslcStation) {
-        stationReadings['KSLC'] = {
-          speed: state.kslcStation.windSpeed,
-          direction: state.kslcStation.windDirection,
-          temp: state.kslcStation.temperature,
-        };
-      }
-      if (state.kpvuStation) {
-        stationReadings['KPVU'] = {
-          speed: state.kpvuStation.windSpeed,
-          direction: state.kpvuStation.windDirection,
-          temp: state.kpvuStation.temperature,
-        };
-      }
-      if (state.utalpStation) {
-        stationReadings['UTALP'] = {
-          speed: state.utalpStation.windSpeed,
-          direction: state.utalpStation.windDirection,
-          temp: state.utalpStation.temperature,
-        };
+      const extras = [
+        state.earlyIndicator && ['QSF', state.earlyIndicator],
+        state.kslcStation && ['KSLC', state.kslcStation],
+        state.kpvuStation && ['KPVU', state.kpvuStation],
+        state.utalpStation && ['UTALP', state.utalpStation],
+        state.thermal?.ridgeStation && [state.thermal.ridgeStation.id, state.thermal.ridgeStation],
+      ].filter(Boolean);
+      for (const [id, s] of extras) {
+        if (!stationReadings[id]) {
+          stationReadings[id] = {
+            speed: s.windSpeed ?? s.speed, gust: s.windGust ?? s.gust,
+            direction: s.windDirection ?? s.direction, temp: s.temperature ?? s.temp,
+          };
+        }
       }
 
-      state.propagation = analyzePropagation(stationReadings, {
+      const propagation = analyzePropagation(stationReadings, {
         lakeId,
         pressureGradient: state.pressure.gradient,
       });
+      if (propagation) state.propagation = propagation;
     }
 
     state.alerts = generateAlerts(state);

@@ -238,24 +238,25 @@ class DataCollector {
       console.warn('[DataCollector] Statistical models fetch failed:', e.message);
     }
 
-    // Sync server-learned propagation lags (24/7 cron-collected)
+    // Sync server-learned propagation lags for all spots (24/7 cron-collected)
     try {
       const propResp = await fetch(apiUrl('/api/cron/collect?action=propagation'));
       if (propResp.ok) {
         const propData = await propResp.json();
         if (propData?.lags && Object.keys(propData.lags).length > 0) {
-          // Convert server format (se:QSF → se_thermal:QSF) for client
           const clientLags = {};
           for (const [k, v] of Object.entries(propData.lags)) {
-            const clientKey = k.replace('se:', 'se_thermal:').replace('nf:', 'north_flow:');
-            clientLags[clientKey] = { avgLagMinutes: v.avgLag, samples: v.samples };
+            clientLags[k] = { avgLagMinutes: v.avgLag, samples: v.samples };
           }
           setLearnedLags(clientLags);
           localStorage.setItem('propagation:lags', JSON.stringify(clientLags));
-          console.log(`Propagation lags synced from server — ${Object.keys(clientLags).length} station lags`);
+          console.log(`Propagation lags synced — ${Object.keys(clientLags).length} lags across all spots`);
         }
-        if (propData?.stats) {
-          localStorage.setItem('propagation:stats', JSON.stringify(propData.stats));
+        if (propData?.hitRates) {
+          localStorage.setItem('propagation:hitRates', JSON.stringify(propData.hitRates));
+        }
+        if (propData?.recentEvents) {
+          localStorage.setItem('propagation:events', JSON.stringify(propData.recentEvents));
         }
       }
     } catch (e) {

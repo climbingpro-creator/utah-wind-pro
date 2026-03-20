@@ -31,7 +31,7 @@ import { runServerLearningCycle, backfillHistorical, loadWeights, loadMeta } fro
 import { fetchNWSForecasts } from '../lib/nwsForecast.js';
 import { LAKE_STATION_MAP, ALL_STATION_IDS } from '../lib/stations.js';
 import { buildStatisticalModels } from '../lib/historicalAnalysis.js';
-import { analyzeFromStations, storePropagationSnapshot, learnFromPropagation, getPropagationData } from '../lib/serverPropagation.js';
+import { analyzeFromStations, analyzeAllSpots, storePropagationSnapshot, learnFromPropagation, getPropagationData } from '../lib/serverPropagation.js';
 
 function getEnv() {
   return {
@@ -204,6 +204,7 @@ export default async function handler(req, res) {
 
     // ── STEP 1.5a: PROPAGATION ANALYSIS (24/7) ──
     let propagationResult = null;
+    let allPropagation = null;
     if (hasRedis) {
       try {
         // Fetch ambient PWS for ground truth at Zigzag
@@ -236,6 +237,8 @@ export default async function handler(req, res) {
           ? Math.round((slcStation.pressure - pvuStation.pressure) * 100) / 100
           : null;
 
+        // Analyze ALL spots, not just Utah Lake
+        const allPropagation = analyzeAllSpots(stations, ambientPWS, gradient);
         propagationResult = analyzeFromStations(stations, ambientPWS, gradient);
 
         // Build station readings map for snapshot storage
@@ -245,7 +248,7 @@ export default async function handler(req, res) {
         }
         if (ambientPWS) readings['PWS'] = ambientPWS;
 
-        await storePropagationSnapshot(redisCommand, propagationResult, readings);
+        await storePropagationSnapshot(redisCommand, allPropagation, readings);
 
         // Daily lag learning — run at 10 PM Mountain (5 AM UTC next day)
         const mtHour = toMountainHour(now);
@@ -361,6 +364,8 @@ export default async function handler(req, res) {
         confidence: propagationResult.dominantConfidence,
         seThermal: propagationResult.seThermal?.phase,
         northFlow: propagationResult.northFlow?.phase,
+        spotsTracked: allPropagation ? Object.keys(allPropagation).length : 0,
+        activeSpots: allPropagation ? Object.values(allPropagation).filter(s => s.dominantConfidence > 0).length : 0,
       } : null,
     });
   } catch (error) {

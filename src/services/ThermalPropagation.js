@@ -1,609 +1,412 @@
 /**
  * THERMAL PROPAGATION SERVICE
  *
- * Detects, tracks, and validates thermal wind propagation through a network of
- * weather stations. A thermal is not a point event — it's a spatial wave that
- * moves through the valley in a predictable order. This service captures that
- * pattern, times it, and learns from every day's outcome.
+ * Detects, tracks, and validates wind propagation through station networks
+ * for EVERY kiteboarding and paragliding spot in the system.
  *
- * STATION CHAINS (validated correlations from ThermalPredictor.js):
- *
- *   SE Thermal:  QSF (−2h) → KPVU (−1h) → FPS (−30m) → PWS (arrival) → UTALP (spill)
- *   North Flow:  KSLC (−1h) → UTALP (−30m) → FPS (arrival) → PWS (confirmation)
- *
- * Each link in the chain has:
- *   - Onset thresholds (direction + speed)
- *   - Expected lag time (minutes)
- *   - Historical hit rate
- *
- * The service:
- *   1. Detects onset at each station against thresholds
- *   2. Tracks which stations have "fired" and when
- *   3. Calculates ETA to the target station using learned lags
- *   4. After the day is over, scores the propagation event for learning
+ * Each spot has one or more "chains" — ordered station sequences that a wind
+ * wave passes through before arriving at the launch. The service detects
+ * onset at each station, tracks the wave, and learns timing from every day.
  */
 
 import { safeToFixed } from '../utils/safeToFixed';
 
-// ─── SE Thermal chain: south → north along Utah Lake ──────────────
-const SE_THERMAL_CHAIN = [
-  {
-    id: 'QSF',
-    name: 'Spanish Fork Canyon',
-    role: 'Early warning — canyon mouth catches SE flow first',
-    lagMinutes: -120,
-    thresholds: {
-      direction: { min: 100, max: 180 },
-      speed: 6,
-    },
-    coordinates: { lat: 40.115, lng: -111.655 },
-  },
-  {
-    id: 'KPVU',
-    name: 'Provo Airport',
-    role: 'Valley floor confirmation — SE flow entering Utah Valley',
-    lagMinutes: -60,
-    thresholds: {
-      direction: { min: 120, max: 180 },
-      speed: 5,
-    },
-    coordinates: { lat: 40.219, lng: -111.724 },
-  },
-  {
-    id: 'FPS',
-    name: 'Flight Park South',
-    role: 'Primary sensor — thermal hits the Point first',
-    lagMinutes: -30,
-    thresholds: {
-      direction: { min: 130, max: 180 },
-      speed: 8,
-    },
-    coordinates: { lat: 40.442, lng: -111.898 },
-  },
-  {
-    id: 'PWS',
-    name: 'Zigzag (Your Station)',
-    role: 'Target — your launch, ground truth',
-    lagMinutes: 0,
-    thresholds: {
-      direction: { min: 100, max: 180 },
-      speed: 8,
-    },
-    coordinates: { lat: 40.35, lng: -111.87 },
-  },
-  {
-    id: 'UTALP',
-    name: 'Point of Mountain',
-    role: 'Spill indicator — thermal pushing through the gap',
-    lagMinutes: 15,
-    thresholds: {
-      direction: { min: 130, max: 200 },
-      speed: 5,
-    },
-    coordinates: { lat: 40.446, lng: -111.898 },
-  },
-];
+// ─── Chain definitions for all spots ──────────────────────────────
+//
+// Each chain: { id, label, flowDir, nodes[] }
+// Each node:  { id, name, role, lagMinutes, dir:[min,max], speed, wrap? }
+//
+// lagMinutes is relative to target (0 = target station, negative = before)
+// dir.wrap means the range crosses 360° (e.g., 315–45 for north)
 
-// ─── North Flow chain: north → south through the gap ──────────────
-const NORTH_FLOW_CHAIN = [
-  {
-    id: 'KSLC',
-    name: 'SLC Airport',
-    role: 'Source — Great Salt Lake outflow',
-    lagMinutes: -60,
-    thresholds: {
-      direction: { min: 315, max: 45, wrap: true },
-      speed: 8,
-    },
-    coordinates: { lat: 40.788, lng: -111.978 },
+const CHAIN_DEFS = {
+  // ── Utah Lake: SE Thermal (S → N along lakeshore) ──────────────
+  'utah-lake:se_thermal': {
+    label: 'SE Thermal',
+    flowDir: 'S → N',
+    nodes: [
+      { id: 'QSF',  name: 'Spanish Fork Canyon', role: 'Canyon mouth catches SE flow first', lagMinutes: -120, dir: [100, 180], speed: 6 },
+      { id: 'KPVU', name: 'Provo Airport',        role: 'Valley floor confirmation',         lagMinutes: -60,  dir: [120, 180], speed: 5 },
+      { id: 'FPS',  name: 'Flight Park South',     role: 'Thermal hits the Point',            lagMinutes: -30,  dir: [130, 180], speed: 8 },
+      { id: 'PWS',  name: 'Zigzag (Your Station)', role: 'Ground truth at your launch',       lagMinutes: 0,    dir: [100, 180], speed: 8 },
+      { id: 'UTALP',name: 'Point of Mountain',     role: 'Spill through the gap',             lagMinutes: 15,   dir: [130, 200], speed: 5 },
+    ],
+    pressureCheck: { type: 'below', threshold: 2.0 },
   },
-  {
-    id: 'UTALP',
-    name: 'Point of Mountain',
-    role: 'Funneling — gap wind acceleration',
-    lagMinutes: -30,
-    thresholds: {
-      direction: { min: 315, max: 45, wrap: true },
-      speed: 5,
-    },
-    coordinates: { lat: 40.446, lng: -111.898 },
-  },
-  {
-    id: 'FPS',
-    name: 'Flight Park South',
-    role: 'Arrival — wind reaching the lake',
-    lagMinutes: -15,
-    thresholds: {
-      direction: { min: 315, max: 60, wrap: true },
-      speed: 8,
-    },
-    coordinates: { lat: 40.442, lng: -111.898 },
-  },
-  {
-    id: 'PWS',
-    name: 'Zigzag (Your Station)',
-    role: 'Confirmation — ground truth at your launch',
-    lagMinutes: 0,
-    thresholds: {
-      direction: { min: 300, max: 60, wrap: true },
-      speed: 6,
-    },
-    coordinates: { lat: 40.35, lng: -111.87 },
-  },
-];
 
-// ─── Learned lag adjustments (overwritten by learning system) ──────
+  // ── Utah Lake: North Flow (N → S through gap) ──────────────────
+  'utah-lake:north_flow': {
+    label: 'North Flow',
+    flowDir: 'N → S',
+    nodes: [
+      { id: 'KSLC', name: 'SLC Airport',           role: 'Great Salt Lake outflow',        lagMinutes: -60, dir: [315, 45], speed: 8, wrap: true },
+      { id: 'UTALP',name: 'Point of Mountain',     role: 'Gap wind acceleration',          lagMinutes: -30, dir: [315, 45], speed: 5, wrap: true },
+      { id: 'FPS',  name: 'Flight Park South',     role: 'Wind reaching the lake',         lagMinutes: -15, dir: [315, 60], speed: 8, wrap: true },
+      { id: 'PWS',  name: 'Zigzag (Your Station)', role: 'Ground truth at your launch',    lagMinutes: 0,   dir: [300, 60], speed: 6, wrap: true },
+    ],
+    pressureCheck: { type: 'above', threshold: -1.0 },
+  },
+
+  // ── Deer Creek: Canyon Thermal (Arrowhead → Dam) ───────────────
+  'deer-creek:canyon_thermal': {
+    label: 'Canyon Thermal',
+    flowDir: 'Ridge → Dam',
+    nodes: [
+      { id: 'SND',  name: 'Arrowhead Summit',  role: 'Ridge trigger — SSW flow at 8252 ft',   lagMinutes: -90, dir: [200, 230], speed: 12 },
+      { id: 'UTPCY',name: 'Provo Canyon MP10',  role: 'Canyon entrance confirmation',           lagMinutes: -45, dir: [170, 220], speed: 4 },
+      { id: 'KHCR', name: 'Heber Airport',      role: 'Valley floor — flow entering Heber',     lagMinutes: -20, dir: [170, 210], speed: 4 },
+      { id: 'DCC',  name: 'Deer Creek Dam',     role: 'Target — thermal arrival at the dam',    lagMinutes: 0,   dir: [170, 210], speed: 4 },
+    ],
+    pressureCheck: null,
+  },
+
+  // ── Willard Bay: South Flow (SLC → Ogden → Willard) ───────────
+  'willard-bay:south_flow': {
+    label: 'South Flow',
+    flowDir: 'S → N',
+    nodes: [
+      { id: 'KSLC', name: 'SLC Airport',    role: 'Valley-wide south flow origin',     lagMinutes: -90, dir: [150, 220], speed: 5 },
+      { id: 'KHIF', name: 'Hill AFB',        role: 'Military base — south flow transit', lagMinutes: -60, dir: [150, 220], speed: 5 },
+      { id: 'KOGD', name: 'Ogden Airport',   role: 'Ogden valley confirmation',          lagMinutes: -30, dir: [170, 220], speed: 5 },
+      { id: 'UR328',name: 'Willard Bay South',role: 'Target — arrival at the beach',     lagMinutes: 0,   dir: [170, 220], speed: 6 },
+    ],
+    pressureCheck: null,
+  },
+
+  // ── Point of Mountain South: SE Thermal (paragliding) ──────────
+  'potm-south:se_thermal': {
+    label: 'SE Thermal',
+    flowDir: 'S → N',
+    nodes: [
+      { id: 'QSF',  name: 'Spanish Fork Canyon', role: 'Canyon mouth SE indicator',      lagMinutes: -120, dir: [100, 180], speed: 6 },
+      { id: 'KPVU', name: 'Provo Airport',        role: 'Valley floor SE confirmation',   lagMinutes: -60,  dir: [110, 250], speed: 5 },
+      { id: 'FPS',  name: 'Flight Park South',    role: 'Target — south launch',          lagMinutes: 0,    dir: [110, 250], speed: 8 },
+    ],
+    pressureCheck: { type: 'below', threshold: 2.0 },
+  },
+
+  // ── Point of Mountain North: North Flow (paragliding) ──────────
+  'potm-north:north_flow': {
+    label: 'North Flow',
+    flowDir: 'N → S',
+    nodes: [
+      { id: 'KSLC', name: 'SLC Airport',       role: 'North wind source',               lagMinutes: -60, dir: [315, 45], speed: 8, wrap: true },
+      { id: 'UTALP',name: 'Point of Mountain',  role: 'Gap acceleration indicator',      lagMinutes: -20, dir: [315, 45], speed: 5, wrap: true },
+      { id: 'FPS',  name: 'Flight Park South',  role: 'Target — north side launch',      lagMinutes: 0,   dir: [320, 360], speed: 8, wrap: true },
+    ],
+    pressureCheck: { type: 'above', threshold: -1.0 },
+  },
+
+  // ── Jordanelle: Canyon Thermal (similar to Deer Creek) ─────────
+  'jordanelle:canyon_thermal': {
+    label: 'Canyon Thermal',
+    flowDir: 'Ridge → Valley',
+    nodes: [
+      { id: 'SND',  name: 'Arrowhead Summit',  role: 'Ridge trigger — SSW flow',        lagMinutes: -90, dir: [200, 230], speed: 10 },
+      { id: 'KHCR', name: 'Heber Airport',      role: 'Heber valley arrival',            lagMinutes: 0,   dir: [180, 230], speed: 5 },
+    ],
+    pressureCheck: null,
+  },
+
+  // ── Strawberry: Ridge Flow (W wind from Wasatch) ───────────────
+  'strawberry:ridge_flow': {
+    label: 'Ridge Flow',
+    flowDir: 'W → E',
+    nodes: [
+      { id: 'KSLC',  name: 'SLC Airport',       role: 'Wasatch front west flow',         lagMinutes: -120, dir: [220, 300], speed: 5 },
+      { id: 'KPVU',  name: 'Provo Airport',      role: 'Valley confirmation',             lagMinutes: -90,  dir: [220, 300], speed: 5 },
+      { id: 'CCPUT', name: 'Currant Creek Pass',  role: 'Ridge crossing indicator',        lagMinutes: -45,  dir: [240, 340], speed: 5 },
+      { id: 'UTCOP', name: 'Strawberry Co-op',    role: 'Target — reservoir arrival',      lagMinutes: 0,    dir: [220, 340], speed: 5 },
+    ],
+    pressureCheck: null,
+  },
+
+  // ── Bear Lake: West Wind (Logan → Bear Lake) ──────────────────
+  'bear-lake:west_flow': {
+    label: 'West Wind',
+    flowDir: 'W → E',
+    nodes: [
+      { id: 'KLGU',  name: 'Logan Airport',    role: 'Cache Valley west flow indicator', lagMinutes: -60, dir: [250, 320], speed: 5 },
+      { id: 'BERU1', name: 'Bear River RAWS',  role: 'Target — Bear Lake arrival',       lagMinutes: 0,   dir: [250, 320], speed: 6 },
+    ],
+    pressureCheck: null,
+  },
+
+  // ── Skyline Drive: Ridge Flow (snowkite) ───────────────────────
+  'skyline:ridge_flow': {
+    label: 'Ridge Flow',
+    flowDir: 'W → E',
+    nodes: [
+      { id: 'KSLC', name: 'SLC Airport',       role: 'Wasatch front indicator',          lagMinutes: -120, dir: [220, 300], speed: 8 },
+      { id: 'UTESU',name: 'Ephraim Ridge',      role: 'Sanpete ridge confirmation',       lagMinutes: -30,  dir: [220, 300], speed: 8 },
+      { id: 'SKY',  name: 'Skyline Drive',      role: 'Target — ridgetop arrival',        lagMinutes: 0,    dir: [220, 300], speed: 10 },
+    ],
+    pressureCheck: null,
+  },
+};
+
+// ─── Map: lakeId → which chains apply ─────────────────────────────
+
+const LAKE_CHAINS = {
+  'utah-lake':          ['utah-lake:se_thermal', 'utah-lake:north_flow'],
+  'utah-lake-zigzag':   ['utah-lake:se_thermal', 'utah-lake:north_flow'],
+  'utah-lake-lincoln':  ['utah-lake:se_thermal', 'utah-lake:north_flow'],
+  'utah-lake-sandy':    ['utah-lake:se_thermal', 'utah-lake:north_flow'],
+  'utah-lake-vineyard': ['utah-lake:se_thermal', 'utah-lake:north_flow'],
+  'utah-lake-mm19':     ['utah-lake:se_thermal', 'utah-lake:north_flow'],
+  'deer-creek':         ['deer-creek:canyon_thermal'],
+  'jordanelle':         ['jordanelle:canyon_thermal'],
+  'willard-bay':        ['willard-bay:south_flow'],
+  'potm-south':         ['potm-south:se_thermal'],
+  'potm-north':         ['potm-north:north_flow'],
+  'strawberry-ladders': ['strawberry:ridge_flow'],
+  'strawberry-bay':     ['strawberry:ridge_flow'],
+  'strawberry-soldier': ['strawberry:ridge_flow'],
+  'strawberry-view':    ['strawberry:ridge_flow'],
+  'strawberry-river':   ['strawberry:ridge_flow'],
+  'bear-lake':          ['bear-lake:west_flow'],
+  'skyline-drive':      ['skyline:ridge_flow'],
+};
+
+// ─── Learned lag adjustments (set by learning system) ─────────────
 let learnedLags = null;
 
 export function setLearnedLags(lags) {
   learnedLags = lags;
 }
 
-// ─── Helpers ───────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────
 
 function directionInRange(dir, range) {
   if (dir == null) return false;
-  if (range.wrap) {
-    return dir >= range.min || dir <= range.max;
-  }
-  return dir >= range.min && dir <= range.max;
+  if (range.wrap) return dir >= range.dir[0] || dir <= range.dir[1];
+  return dir >= range.dir[0] && dir <= range.dir[1];
 }
 
-function stationHasFired(station, stationData) {
-  if (!stationData) return { fired: false, speed: null, direction: null };
-  const speed = stationData.speed ?? stationData.windSpeed ?? 0;
-  const dir = stationData.direction ?? stationData.windDirection;
-  const gust = stationData.gust ?? stationData.windGust ?? speed;
-  const fired =
-    directionInRange(dir, station.thresholds) &&
-    speed >= station.thresholds.speed;
+function nodeHasFired(node, reading) {
+  if (!reading) return { fired: false, speed: null, direction: null };
+  const speed = reading.speed ?? reading.windSpeed ?? 0;
+  const dir = reading.direction ?? reading.windDirection;
+  const gust = reading.gust ?? reading.windGust ?? speed;
+  const fired = directionInRange(dir, node) && speed >= node.speed;
   return { fired, speed, gust, direction: dir };
 }
 
-function getLag(chainType, stationId) {
-  const key = `${chainType}:${stationId}`;
-  if (learnedLags?.[key]?.samples >= 5) {
-    return learnedLags[key].avgLagMinutes;
-  }
-  const chain = chainType === 'se_thermal' ? SE_THERMAL_CHAIN : NORTH_FLOW_CHAIN;
-  return chain.find((s) => s.id === stationId)?.lagMinutes ?? 0;
+function getLag(chainKey, stationId) {
+  const lk = `${chainKey}:${stationId}`;
+  if (learnedLags?.[lk]?.samples >= 5) return learnedLags[lk].avgLagMinutes;
+  const chain = CHAIN_DEFS[chainKey];
+  return chain?.nodes.find(n => n.id === stationId)?.lagMinutes ?? 0;
 }
 
-// ─── Core: analyze propagation state ──────────────────────────────
+function passesPresCheck(check, gradient) {
+  if (!check || gradient == null) return true;
+  return check.type === 'below' ? gradient < check.threshold : gradient > check.threshold;
+}
 
-/**
- * Analyze the current propagation state across all stations.
- *
- * @param {Object} stationReadings - Map of stationId → { speed, gust, direction, temp }
- *   PWS readings should be keyed as 'PWS'.
- * @param {Object} [options]
- * @param {string} [options.lakeId] - Lake ID for context
- * @param {number} [options.pressureGradient] - SLC − Provo pressure differential (mb)
- * @returns {Object} Propagation analysis
- */
-export function analyzePropagation(stationReadings, options = {}) {
-  const { pressureGradient } = options;
-  const now = new Date();
-  const hour = now.getHours();
-  const results = {};
+// ─── Core: analyze a single chain ─────────────────────────────────
 
-  // ── Detect SE Thermal propagation ───────────────────────────────
-  const seNodes = SE_THERMAL_CHAIN.map((node) => {
+function analyzeChain(chainKey, stationReadings, pressureGradient) {
+  const def = CHAIN_DEFS[chainKey];
+  if (!def) return null;
+
+  const pressureOk = passesPresCheck(def.pressureCheck, pressureGradient);
+  const target = def.nodes[def.nodes.length - 1];
+
+  const nodes = def.nodes.map(node => {
     const data = stationReadings[node.id];
-    const { fired, speed, gust, direction } = stationHasFired(node, data);
-    const lag = getLag('se_thermal', node.id);
+    const { fired, speed, gust, direction } = nodeHasFired(node, data);
     return {
       ...node,
-      lagMinutes: lag,
+      lagMinutes: getLag(chainKey, node.id),
       fired,
       speed,
       gust,
       direction,
       temp: data?.temp ?? data?.temperature,
+      isTarget: node.id === target.id,
     };
   });
 
-  const seFiredCount = seNodes.filter((n) => n.fired).length;
-  const seFarthestFired = [...seNodes].reverse().find((n) => n.fired);
-  const seTarget = seNodes.find((n) => n.id === 'PWS');
-  const sePressureOk = pressureGradient == null || pressureGradient < 2.0;
+  const firedCount = nodes.filter(n => n.fired).length;
+  const farthestFired = [...nodes].reverse().find(n => n.fired);
+  const targetNode = nodes.find(n => n.isTarget);
 
-  let seEtaMinutes = null;
-  let seConfidence = 0;
-  let sePhase = 'none';
-  let seMessage = '';
+  let phase = 'none', etaMinutes = null, confidence = 0, message = '';
 
-  if (seFiredCount === 0 || !sePressureOk) {
-    sePhase = 'none';
-    seMessage = !sePressureOk
-      ? 'Pressure gradient blocking SE thermal'
-      : 'No SE thermal signal detected';
-  } else if (seTarget?.fired) {
-    sePhase = 'arrived';
-    seMessage = `SE thermal at your station: ${safeToFixed(seTarget.speed, 1)} mph from ${seTarget.direction}°`;
-    seConfidence = 95;
-  } else if (seFarthestFired) {
-    sePhase = 'propagating';
-    const targetLag = getLag('se_thermal', 'PWS');
-    const sourceLag = getLag('se_thermal', seFarthestFired.id);
-    seEtaMinutes = Math.max(0, Math.round(targetLag - sourceLag));
-    seConfidence = Math.min(90, 30 + seFiredCount * 20);
-    seMessage = `Thermal at ${seFarthestFired.name} (${safeToFixed(seFarthestFired.speed, 1)} mph ${seFarthestFired.direction}°) — ETA ${seEtaMinutes} min`;
+  if (!pressureOk || firedCount === 0) {
+    phase = 'none';
+    message = !pressureOk ? 'Pressure gradient unfavorable' : 'No signal detected';
+  } else if (targetNode?.fired) {
+    phase = 'arrived';
+    confidence = 95;
+    message = `${def.label} at ${targetNode.name}: ${safeToFixed(targetNode.speed, 1)} mph from ${targetNode.direction}°`;
+  } else if (farthestFired) {
+    phase = 'propagating';
+    const targetLag = getLag(chainKey, target.id);
+    const sourceLag = getLag(chainKey, farthestFired.id);
+    etaMinutes = Math.max(0, Math.round(targetLag - sourceLag));
+    confidence = Math.min(90, 30 + firedCount * 20);
+    message = `${def.label} at ${farthestFired.name} (${safeToFixed(farthestFired.speed, 1)} mph) — ETA ${etaMinutes} min`;
   }
 
-  // Adjust SE confidence for time of day and month
-  if (hour < 7 || hour > 17) seConfidence = Math.min(seConfidence, 20);
-  if (sePhase === 'propagating' && hour >= 10 && hour <= 13) {
-    seConfidence = Math.min(95, seConfidence + 10);
-  }
-
-  results.seThermal = {
-    phase: sePhase,
-    message: seMessage,
-    confidence: seConfidence,
-    etaMinutes: seEtaMinutes,
-    nodes: seNodes.map(({ id, name, role, lagMinutes, fired, speed, gust, direction, temp }) => ({
-      id, name, role, lagMinutes, fired, speed, gust, direction, temp,
-    })),
-    firedCount: seFiredCount,
-    totalNodes: seNodes.length,
-    pressureOk: sePressureOk,
-  };
-
-  // ── Detect North Flow propagation ───────────────────────────────
-  const nfNodes = NORTH_FLOW_CHAIN.map((node) => {
-    const data = stationReadings[node.id];
-    const { fired, speed, gust, direction } = stationHasFired(node, data);
-    const lag = getLag('north_flow', node.id);
-    return {
-      ...node,
-      lagMinutes: lag,
-      fired,
-      speed,
-      gust,
-      direction,
-      temp: data?.temp ?? data?.temperature,
-    };
-  });
-
-  const nfFiredCount = nfNodes.filter((n) => n.fired).length;
-  const nfFarthestFired = [...nfNodes].reverse().find((n) => n.fired);
-  const nfTarget = nfNodes.find((n) => n.id === 'PWS');
-  const nfPressureOk = pressureGradient == null || pressureGradient > -1.0;
-
-  let nfEtaMinutes = null;
-  let nfConfidence = 0;
-  let nfPhase = 'none';
-  let nfMessage = '';
-
-  if (nfFiredCount === 0 || !nfPressureOk) {
-    nfPhase = 'none';
-    nfMessage = !nfPressureOk
-      ? 'Pressure gradient not supporting north flow'
-      : 'No north flow signal detected';
-  } else if (nfTarget?.fired) {
-    nfPhase = 'arrived';
-    nfMessage = `North flow at your station: ${safeToFixed(nfTarget.speed, 1)} mph from ${nfTarget.direction}°`;
-    nfConfidence = 95;
-  } else if (nfFarthestFired) {
-    nfPhase = 'propagating';
-    const targetLag = getLag('north_flow', 'PWS');
-    const sourceLag = getLag('north_flow', nfFarthestFired.id);
-    nfEtaMinutes = Math.max(0, Math.round(targetLag - sourceLag));
-    nfConfidence = Math.min(90, 30 + nfFiredCount * 20);
-    nfMessage = `North flow at ${nfFarthestFired.name} (${safeToFixed(nfFarthestFired.speed, 1)} mph) — ETA ${nfEtaMinutes} min`;
-  }
-
-  results.northFlow = {
-    phase: nfPhase,
-    message: nfMessage,
-    confidence: nfConfidence,
-    etaMinutes: nfEtaMinutes,
-    nodes: nfNodes.map(({ id, name, role, lagMinutes, fired, speed, gust, direction, temp }) => ({
-      id, name, role, lagMinutes, fired, speed, gust, direction, temp,
-    })),
-    firedCount: nfFiredCount,
-    totalNodes: nfNodes.length,
-    pressureOk: nfPressureOk,
-  };
-
-  // ── Dominant signal ─────────────────────────────────────────────
-  const dominant =
-    results.seThermal.confidence >= results.northFlow.confidence
-      ? results.seThermal
-      : results.northFlow;
-  const dominantType =
-    results.seThermal.confidence >= results.northFlow.confidence
-      ? 'se_thermal'
-      : 'north_flow';
-
-  results.dominant = {
-    type: dominantType,
-    phase: dominant.phase,
-    message: dominant.message,
-    confidence: dominant.confidence,
-    etaMinutes: dominant.etaMinutes,
-  };
-
-  results.timestamp = now.toISOString();
-  return results;
-}
-
-// ─── Event capture for learning ───────────────────────────────────
-
-/**
- * Create a propagation event record for learning. Call this at the end of each
- * thermal window to capture the day's propagation outcome.
- *
- * @param {Object} propagationResult - From analyzePropagation()
- * @param {Object} outcome - Observed outcome
- * @param {number} outcome.peakSpeed - Peak wind speed at target
- * @param {number} outcome.usableMinutes - Minutes of usable wind
- * @param {string} outcome.quality - 'excellent' | 'good' | 'marginal' | 'bust'
- * @param {Array}  snapshots - Array of { timestamp, stationReadings } collected during the day
- * @returns {Object} Propagation event for storage
- */
-export function createPropagationEvent(propagationResult, outcome, snapshots = []) {
-  const { seThermal, northFlow, dominant } = propagationResult;
-  const now = new Date();
-
-  // Reconstruct onset times from snapshots
-  const onsetTimes = {};
-  const activeChain =
-    dominant.type === 'se_thermal' ? seThermal.nodes : northFlow.nodes;
-
-  for (const node of activeChain) {
-    if (!node.fired) continue;
-    for (const snap of snapshots) {
-      const reading = snap.stationReadings?.[node.id];
-      if (!reading) continue;
-      const chain =
-        dominant.type === 'se_thermal' ? SE_THERMAL_CHAIN : NORTH_FLOW_CHAIN;
-      const def = chain.find((c) => c.id === node.id);
-      if (!def) continue;
-      const { fired } = stationHasFired(def, reading);
-      if (fired && !onsetTimes[node.id]) {
-        onsetTimes[node.id] = snap.timestamp;
-      }
-    }
-  }
-
-  // Calculate actual lags between stations
-  const actualLags = {};
-  const targetOnset = onsetTimes['PWS'];
-  if (targetOnset) {
-    const targetTime = new Date(targetOnset).getTime();
-    for (const [stationId, onsetTime] of Object.entries(onsetTimes)) {
-      if (stationId === 'PWS') continue;
-      const stationTime = new Date(onsetTime).getTime();
-      actualLags[stationId] = Math.round((stationTime - targetTime) / 60000);
-    }
-  }
+  // Time-of-day adjustment
+  const hour = new Date().getHours();
+  if (hour < 6 || hour > 19) confidence = Math.min(confidence, 20);
 
   return {
-    date: now.toISOString().slice(0, 10),
-    timestamp: now.toISOString(),
-    type: dominant.type,
-    confidence: dominant.confidence,
-    phase: dominant.phase,
-
-    chain: activeChain.map((node) => ({
-      id: node.id,
-      name: node.name,
-      fired: node.fired,
-      speed: node.speed,
-      direction: node.direction,
-      onsetTime: onsetTimes[node.id] || null,
-      expectedLag: node.lagMinutes,
-      actualLag: actualLags[node.id] ?? null,
+    chainKey,
+    label: def.label,
+    flowDir: def.flowDir,
+    phase,
+    message,
+    confidence,
+    etaMinutes,
+    pressureOk,
+    firedCount,
+    totalNodes: nodes.length,
+    nodes: nodes.map(({ id, name, role, lagMinutes, fired, speed, gust, direction, temp, isTarget }) => ({
+      id, name, role, lagMinutes, fired, speed, gust, direction, temp, isTarget,
     })),
-
-    prediction: {
-      etaMinutes: dominant.etaMinutes,
-      confidence: dominant.confidence,
-    },
-
-    outcome: {
-      peakSpeed: outcome.peakSpeed,
-      usableMinutes: outcome.usableMinutes,
-      quality: outcome.quality,
-      arrived: dominant.phase === 'arrived',
-    },
-
-    lagErrors: Object.fromEntries(
-      activeChain
-        .filter((n) => actualLags[n.id] != null)
-        .map((n) => [n.id, actualLags[n.id] - n.lagMinutes])
-    ),
   };
+}
+
+// ─── Public API: analyze propagation for any lake ─────────────────
+
+/**
+ * Analyze propagation for a specific lake/spot.
+ *
+ * @param {string} lakeId
+ * @param {Object} stationReadings - { stationId: { speed, direction, gust, temp } }
+ * @param {Object} [options]
+ * @param {number} [options.pressureGradient]
+ * @returns {Object|null}
+ */
+export function analyzePropagation(stationReadings, options = {}) {
+  const { lakeId, pressureGradient } = options;
+  const chainKeys = LAKE_CHAINS[lakeId];
+  if (!chainKeys?.length) return null;
+
+  const chains = chainKeys
+    .map(key => analyzeChain(key, stationReadings, pressureGradient))
+    .filter(Boolean);
+
+  if (chains.length === 0) return null;
+
+  // Pick dominant chain (highest confidence)
+  const sorted = [...chains].sort((a, b) => b.confidence - a.confidence);
+  const dominant = sorted[0];
+
+  // Build result in the shape the UI expects
+  const result = {
+    timestamp: new Date().toISOString(),
+    lakeId,
+    chains,
+    dominant: {
+      type: dominant.chainKey,
+      label: dominant.label,
+      phase: dominant.phase,
+      message: dominant.message,
+      confidence: dominant.confidence,
+      etaMinutes: dominant.etaMinutes,
+    },
+  };
+
+  // For backward compat with PropagationTracker, expose first two chains as seThermal/northFlow
+  if (chains.length >= 1) result.seThermal = chains[0];
+  if (chains.length >= 2) result.northFlow = chains[1];
+  // If only one chain, set the other to "none" so UI still works
+  if (chains.length === 1) {
+    result[chains[0] === result.seThermal ? 'northFlow' : 'seThermal'] = {
+      phase: 'none', confidence: 0, nodes: [], firedCount: 0, totalNodes: 0, pressureOk: true,
+      label: '', message: '', chainKey: '',
+    };
+  }
+
+  return result;
 }
 
 // ─── Historical validation ────────────────────────────────────────
 
-/**
- * Validate propagation patterns against an array of historical snapshots.
- * Each snapshot: { timestamp, stations: { stationId: { speed, direction, ... } } }
- *
- * Returns statistics about how often the chain pattern predicted correctly.
- *
- * @param {Array} historicalDays - Array of daily data: { date, snapshots: [...] }
- * @returns {Object} Validation results
- */
-export function validateHistorical(historicalDays) {
-  const results = {
-    totalDays: historicalDays.length,
-    seThermal: { signalDays: 0, arrivedDays: 0, hitRate: 0, avgLeadMinutes: 0, lagAccuracy: {} },
-    northFlow: { signalDays: 0, arrivedDays: 0, hitRate: 0, avgLeadMinutes: 0, lagAccuracy: {} },
-  };
+export function validateHistorical(historicalDays, lakeId) {
+  const chainKeys = LAKE_CHAINS[lakeId || 'utah-lake-zigzag'] || [];
+  const results = { totalDays: historicalDays.length, chains: {} };
 
-  const seLagErrors = {};
-  const nfLagErrors = {};
+  for (const chainKey of chainKeys) {
+    const def = CHAIN_DEFS[chainKey];
+    if (!def) continue;
 
-  for (const day of historicalDays) {
-    if (!day.snapshots?.length) continue;
+    let signalDays = 0, arrivedDays = 0, totalLeadMs = 0;
+    const lagErrors = {};
+    const target = def.nodes[def.nodes.length - 1];
 
-    let seSignaled = false;
-    let seArrived = false;
-    let seFirstSignal = null;
-    let seArrivalTime = null;
-    let nfSignaled = false;
-    let nfArrived = false;
-    let nfFirstSignal = null;
-    let nfArrivalTime = null;
+    for (const day of historicalDays) {
+      if (!day.snapshots?.length) continue;
+      const onsets = {};
 
-    const seOnsets = {};
-    const nfOnsets = {};
-
-    for (const snap of day.snapshots) {
-      // SE thermal check
-      for (const node of SE_THERMAL_CHAIN) {
-        const data = snap.stations?.[node.id];
-        if (!data) continue;
-        const { fired } = stationHasFired(node, data);
-        if (fired && !seOnsets[node.id]) {
-          seOnsets[node.id] = snap.timestamp;
-          if (node.id !== 'PWS' && !seSignaled) {
-            seSignaled = true;
-            seFirstSignal = snap.timestamp;
-          }
-          if (node.id === 'PWS') {
-            seArrived = true;
-            seArrivalTime = snap.timestamp;
-          }
+      for (const snap of day.snapshots) {
+        for (const node of def.nodes) {
+          if (onsets[node.id]) continue;
+          const reading = snap.stations?.[node.id];
+          if (!reading) continue;
+          const { fired } = nodeHasFired(node, reading);
+          if (fired) onsets[node.id] = snap.timestamp;
         }
       }
 
-      // North flow check
-      for (const node of NORTH_FLOW_CHAIN) {
-        const data = snap.stations?.[node.id];
-        if (!data) continue;
-        const { fired } = stationHasFired(node, data);
-        if (fired && !nfOnsets[node.id]) {
-          nfOnsets[node.id] = snap.timestamp;
-          if (node.id !== 'PWS' && !nfSignaled) {
-            nfSignaled = true;
-            nfFirstSignal = snap.timestamp;
+      const hasUpstreamSignal = Object.keys(onsets).some(id => id !== target.id);
+      if (hasUpstreamSignal) {
+        signalDays++;
+        if (onsets[target.id]) {
+          arrivedDays++;
+          const firstSignal = Object.entries(onsets)
+            .filter(([id]) => id !== target.id)
+            .sort((a, b) => new Date(a[1]) - new Date(b[1]))[0];
+          if (firstSignal) {
+            totalLeadMs += new Date(onsets[target.id]) - new Date(firstSignal[1]);
           }
-          if (node.id === 'PWS') {
-            nfArrived = true;
-            nfArrivalTime = snap.timestamp;
+
+          const t0 = new Date(onsets[target.id]).getTime();
+          for (const node of def.nodes) {
+            if (node.id === target.id || !onsets[node.id]) continue;
+            const actual = Math.round((new Date(onsets[node.id]).getTime() - t0) / 60000);
+            if (!lagErrors[node.id]) lagErrors[node.id] = [];
+            lagErrors[node.id].push(actual - node.lagMinutes);
           }
         }
       }
     }
 
-    if (seSignaled) {
-      results.seThermal.signalDays++;
-      if (seArrived) {
-        results.seThermal.arrivedDays++;
-        const leadMs = new Date(seArrivalTime) - new Date(seFirstSignal);
-        results.seThermal.avgLeadMinutes += leadMs / 60000;
-
-        // Lag accuracy per station
-        if (seOnsets['PWS']) {
-          const targetTime = new Date(seOnsets['PWS']).getTime();
-          for (const node of SE_THERMAL_CHAIN) {
-            if (node.id === 'PWS' || !seOnsets[node.id]) continue;
-            const actual = Math.round(
-              (new Date(seOnsets[node.id]).getTime() - targetTime) / 60000
-            );
-            if (!seLagErrors[node.id]) seLagErrors[node.id] = [];
-            seLagErrors[node.id].push(actual - node.lagMinutes);
-          }
-        }
-      }
+    const lagAccuracy = {};
+    for (const [sid, errors] of Object.entries(lagErrors)) {
+      const mean = errors.reduce((a, b) => a + b, 0) / errors.length;
+      const mae = errors.reduce((a, b) => a + Math.abs(b), 0) / errors.length;
+      lagAccuracy[sid] = { meanError: Math.round(mean), mae: Math.round(mae), samples: errors.length };
     }
 
-    if (nfSignaled) {
-      results.northFlow.signalDays++;
-      if (nfArrived) {
-        results.northFlow.arrivedDays++;
-        const leadMs = new Date(nfArrivalTime) - new Date(nfFirstSignal);
-        results.northFlow.avgLeadMinutes += leadMs / 60000;
-
-        if (nfOnsets['PWS']) {
-          const targetTime = new Date(nfOnsets['PWS']).getTime();
-          for (const node of NORTH_FLOW_CHAIN) {
-            if (node.id === 'PWS' || !nfOnsets[node.id]) continue;
-            const actual = Math.round(
-              (new Date(nfOnsets[node.id]).getTime() - targetTime) / 60000
-            );
-            if (!nfLagErrors[node.id]) nfLagErrors[node.id] = [];
-            nfLagErrors[node.id].push(actual - node.lagMinutes);
-          }
-        }
-      }
-    }
-  }
-
-  // Compute averages
-  if (results.seThermal.arrivedDays > 0) {
-    results.seThermal.avgLeadMinutes = Math.round(
-      results.seThermal.avgLeadMinutes / results.seThermal.arrivedDays
-    );
-    results.seThermal.hitRate = Math.round(
-      (results.seThermal.arrivedDays / results.seThermal.signalDays) * 100
-    );
-  }
-  if (results.northFlow.arrivedDays > 0) {
-    results.northFlow.avgLeadMinutes = Math.round(
-      results.northFlow.avgLeadMinutes / results.northFlow.arrivedDays
-    );
-    results.northFlow.hitRate = Math.round(
-      (results.northFlow.arrivedDays / results.northFlow.signalDays) * 100
-    );
-  }
-
-  // Lag accuracy per station (mean error and MAE)
-  for (const [stationId, errors] of Object.entries(seLagErrors)) {
-    const mean = errors.reduce((a, b) => a + b, 0) / errors.length;
-    const mae = errors.reduce((a, b) => a + Math.abs(b), 0) / errors.length;
-    results.seThermal.lagAccuracy[stationId] = {
-      meanError: Math.round(mean),
-      mae: Math.round(mae),
-      samples: errors.length,
-    };
-  }
-  for (const [stationId, errors] of Object.entries(nfLagErrors)) {
-    const mean = errors.reduce((a, b) => a + b, 0) / errors.length;
-    const mae = errors.reduce((a, b) => a + Math.abs(b), 0) / errors.length;
-    results.northFlow.lagAccuracy[stationId] = {
-      meanError: Math.round(mean),
-      mae: Math.round(mae),
-      samples: errors.length,
+    results.chains[chainKey] = {
+      signalDays,
+      arrivedDays,
+      hitRate: signalDays > 0 ? Math.round((arrivedDays / signalDays) * 100) : 0,
+      avgLeadMinutes: arrivedDays > 0 ? Math.round(totalLeadMs / arrivedDays / 60000) : 0,
+      lagAccuracy,
     };
   }
 
   return results;
 }
 
-/**
- * Convert validation lag accuracy back into learned lag adjustments.
- * Feed this into setLearnedLags() to close the loop.
- */
 export function lagAdjustmentsFromValidation(validation) {
   const lags = {};
-  for (const [stationId, accuracy] of Object.entries(
-    validation.seThermal.lagAccuracy
-  )) {
-    if (accuracy.samples >= 5) {
-      const chain = SE_THERMAL_CHAIN.find((n) => n.id === stationId);
-      if (chain) {
-        lags[`se_thermal:${stationId}`] = {
-          avgLagMinutes: chain.lagMinutes + accuracy.meanError,
-          samples: accuracy.samples,
-        };
-      }
-    }
-  }
-  for (const [stationId, accuracy] of Object.entries(
-    validation.northFlow.lagAccuracy
-  )) {
-    if (accuracy.samples >= 5) {
-      const chain = NORTH_FLOW_CHAIN.find((n) => n.id === stationId);
-      if (chain) {
-        lags[`north_flow:${stationId}`] = {
-          avgLagMinutes: chain.lagMinutes + accuracy.meanError,
+  for (const [chainKey, data] of Object.entries(validation.chains || {})) {
+    const def = CHAIN_DEFS[chainKey];
+    if (!def) continue;
+    for (const [stationId, accuracy] of Object.entries(data.lagAccuracy || {})) {
+      if (accuracy.samples < 3) continue;
+      const node = def.nodes.find(n => n.id === stationId);
+      if (node) {
+        lags[`${chainKey}:${stationId}`] = {
+          avgLagMinutes: node.lagMinutes + accuracy.meanError,
           samples: accuracy.samples,
         };
       }
@@ -612,4 +415,12 @@ export function lagAdjustmentsFromValidation(validation) {
   return lags;
 }
 
-export { SE_THERMAL_CHAIN, NORTH_FLOW_CHAIN };
+export function getChainsForLake(lakeId) {
+  return (LAKE_CHAINS[lakeId] || []).map(key => ({ key, ...CHAIN_DEFS[key] })).filter(Boolean);
+}
+
+export function getAllSupportedLakes() {
+  return Object.keys(LAKE_CHAINS);
+}
+
+export { CHAIN_DEFS, LAKE_CHAINS };

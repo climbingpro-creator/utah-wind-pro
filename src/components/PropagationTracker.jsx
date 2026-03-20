@@ -8,7 +8,7 @@ const PHASE_CONFIG = {
   arrived:     { color: 'text-emerald-400',bg: 'bg-emerald-500/10',border: 'border-emerald-500/30',label: 'Arrived',    icon: Zap },
 };
 
-function NodeDot({ node, isTarget, phaseCfg }) {
+function NodeDot({ node, isTarget }) {
   const fired = node.fired;
   const dotColor = fired
     ? isTarget ? 'bg-emerald-400 shadow-emerald-400/50' : 'bg-amber-400 shadow-amber-400/50'
@@ -69,8 +69,8 @@ function PropagationChain({ type, data }) {
 
   const phaseCfg = PHASE_CONFIG[data.phase] || PHASE_CONFIG.none;
   const PhaseIcon = phaseCfg.icon;
-  const label = type === 'se_thermal' ? 'SE Thermal' : 'North Flow';
-  const chainDir = type === 'se_thermal' ? 'S → N' : 'N → S';
+  const label = data.label || (type === 'se_thermal' ? 'SE Thermal' : 'North Flow');
+  const chainDir = data.flowDir || (type === 'se_thermal' ? 'S → N' : 'N → S');
 
   return (
     <div className={`rounded-xl ${phaseCfg.bg} border ${phaseCfg.border} p-3 sm:p-4 transition-all duration-300`}>
@@ -107,8 +107,7 @@ function PropagationChain({ type, data }) {
           <div key={node.id} className="contents">
             <NodeDot
               node={node}
-              isTarget={node.id === 'PWS'}
-              phaseCfg={phaseCfg}
+              isTarget={node.isTarget || node.lagMinutes === 0}
             />
             {i < data.nodes.length - 1 && (
               <ChainConnector
@@ -138,23 +137,23 @@ function PropagationChain({ type, data }) {
 }
 
 export default function PropagationTracker({ propagation }) {
-  if (!propagation) return null;
-
-  const { seThermal, northFlow, dominant } = propagation;
-  const hasSignal = seThermal?.phase !== 'none' || northFlow?.phase !== 'none';
+  const chains = propagation?.chains || [];
+  const dominant = propagation?.dominant;
+  const hasSignal = chains.some(c => c.phase !== 'none');
+  const totalStations = chains.reduce((n, c) => n + (c.nodes?.length || 0), 0);
 
   const summaryMessage = useMemo(() => {
     if (!hasSignal) return 'Monitoring station network for wind signals...';
     if (dominant?.phase === 'arrived') {
-      return dominant.type === 'se_thermal'
-        ? 'SE thermal has arrived at your station'
-        : 'North flow has arrived at your station';
+      return `${dominant.label} has arrived at your station`;
     }
     if (dominant?.phase === 'propagating') {
-      return `Wind propagating through station chain — ${dominant.confidence}% confidence`;
+      return `${dominant.label} propagating — ${dominant.confidence}% confidence`;
     }
     return 'Weak signals — monitoring...';
   }, [hasSignal, dominant]);
+
+  if (!propagation || chains.length === 0) return null;
 
   return (
     <div className="space-y-3">
@@ -163,32 +162,27 @@ export default function PropagationTracker({ propagation }) {
         <h3 className="text-sm font-bold text-white">Propagation Tracker</h3>
         <MapPin className="w-3 h-3 text-gray-500 ml-auto" />
         <span className="text-[10px] text-gray-500">
-          {propagation.seThermal?.nodes?.length || 0} stations
+          {totalStations} stations / {chains.length} chain{chains.length !== 1 ? 's' : ''}
         </span>
       </div>
 
       <p className="text-xs text-gray-400 -mt-1">{summaryMessage}</p>
 
-      {seThermal?.phase !== 'none' && (
-        <PropagationChain type="se_thermal" data={seThermal} />
-      )}
+      {chains.filter(c => c.phase !== 'none').map(chain => (
+        <PropagationChain key={chain.chainKey} type={chain.chainKey} data={chain} />
+      ))}
 
-      {northFlow?.phase !== 'none' && (
-        <PropagationChain type="north_flow" data={northFlow} />
-      )}
-
-      {!hasSignal && (
+      {!hasSignal && chains.length > 0 && (
         <div className="rounded-xl bg-gray-500/5 border border-gray-700/30 p-4 text-center">
           <Radio className="w-6 h-6 text-gray-600 mx-auto mb-2" />
           <p className="text-xs text-gray-500">
-            Watching QSF, KPVU, FPS, KSLC, UTALP for onset signals
+            Monitoring station network for wind signals
           </p>
-          <p className="text-[10px] text-gray-600 mt-1">
-            SE thermal chain: QSF → KPVU → FPS → You → UTALP
-          </p>
-          <p className="text-[10px] text-gray-600">
-            North flow chain: KSLC → UTALP → FPS → You
-          </p>
+          {chains.map(chain => (
+            <p key={chain.chainKey} className="text-[10px] text-gray-600 mt-1">
+              {chain.label}: {chain.nodes?.map(n => n.isTarget ? 'You' : n.id).join(' → ')}
+            </p>
+          ))}
         </div>
       )}
     </div>

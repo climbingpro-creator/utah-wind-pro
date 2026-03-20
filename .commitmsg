@@ -1,8 +1,0 @@
-Fix paragliding card showing lake wind instead of FPS station data
-
-The TodayHero activity cards used the selected lake's wind speed
-for all activities, causing paragliding to show "1 mph TOO LIGHT"
-while the paragliding forecast correctly showed "13 mph 95%".
-
-Now passes FPS and UTALP station data to TodayHero and uses
-those stations specifically for the paragliding verdict card.

@@ -313,7 +313,7 @@ export function Dashboard() {
         <SignalConvergence intelligence={intelligence} />
 
         {/* Propagation Tracker — thermal wave through station chain */}
-        {lakeState?.propagation && selectedLake?.startsWith('utah-lake') && (
+        {lakeState?.propagation && (
           <Suspense fallback={null}>
             <SafeComponent name="Propagation Tracker">
               <PropagationTracker propagation={lakeState.propagation} />
