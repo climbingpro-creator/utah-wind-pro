@@ -39,7 +39,7 @@ function AnalogDay({ analog, isTop }) {
             {isTop && <span className="text-xs px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-400 font-bold">Best Match</span>}
           </div>
           <div className="flex gap-3 text-xs text-slate-500 mt-0.5">
-            <span>Peak: {peakSpeed.toFixed(0)} mph</span>
+            <span>Peak: {(peakSpeed || 0).toFixed(0)} mph</span>
             <span>Accuracy: {accuracy}%</span>
             <span>{analog.count} events</span>
           </div>

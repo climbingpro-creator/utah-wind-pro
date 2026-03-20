@@ -415,9 +415,9 @@ function SpotRanker({ activity, currentWind, lakeState, mesoData, onSelectSpot }
                     {spot.wind && (
                       <>
                         <span className="opacity-40 mx-0.5">·</span>
-                        <span className={`font-bold ${spot.wind.speed >= 8 ? 'text-emerald-500' : ''}`}>
-                          {spot.wind.speed.toFixed(0)} mph {spot.wind.dir != null ? dirLabel(spot.wind.dir) : ''}
-                          {spot.wind.gust > spot.wind.speed * 1.3 ? ` G${spot.wind.gust.toFixed(0)}` : ''}
+                        <span className={`font-bold ${(spot.wind.speed ?? 0) >= 8 ? 'text-emerald-500' : ''}`}>
+                          {(spot.wind.speed ?? 0).toFixed(0)} mph {spot.wind.dir != null ? dirLabel(spot.wind.dir) : ''}
+                          {(spot.wind.gust ?? 0) > (spot.wind.speed ?? 0) * 1.3 ? ` G${(spot.wind.gust ?? 0).toFixed(0)}` : ''}
                         </span>
                       </>
                     )}

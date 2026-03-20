@@ -1418,9 +1418,9 @@ function PrimaryWindDisplay({ station, optimalDirection, isLoading, pwsUnavailab
         </div>
       </div>
 
-      {(station.windGust ?? station.gust) > (speed || 0) * 1.3 && (
+      {Number(station.windGust ?? station.gust) > (speed || 0) * 1.3 && (
         <div className="mt-2 text-center text-xs text-amber-500 font-medium">
-          Gusts to {(station.windGust ?? station.gust).toFixed(1)} mph
+          Gusts to {Number(station.windGust ?? station.gust).toFixed(1)} mph
         </div>
       )}
     </div>
