@@ -577,7 +577,7 @@ class LearningSystem {
         }
       }
 
-      console.log(`User feedback: ${stats.total} reports, avg rating ${stats.avgRating.toFixed(1)}/5`);
+      console.log(`User feedback: ${stats.total} reports, avg rating ${(stats.avgRating ?? 0).toFixed(1)}/5`);
     } catch (e) {
       console.warn('Could not load user feedback:', e.message);
     }

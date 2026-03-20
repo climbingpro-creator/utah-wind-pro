@@ -418,7 +418,7 @@ function scoreFrontalPassage(wind, pressure, history, hour) {
   // Current NW-N wind with high speed = front in progress
   if (wind.windDirection != null && isNortherly(wind.windDirection) && wind.windSpeed > 15) {
     score += 20;
-    details.push(`Strong ${getCardinal(wind.windDirection)} wind ${wind.windSpeed.toFixed(0)} mph`);
+    details.push(`Strong ${getCardinal(wind.windDirection)} wind ${(wind.windSpeed ?? 0).toFixed(0)} mph`);
     confidence += 0.1;
   }
 
