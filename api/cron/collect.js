@@ -396,6 +396,7 @@ async function handleAnalogs(res) {
 }
 
 async function handleBackfillPWS(req, res) {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
   const days = Math.min(parseInt(req.query?.days || '90', 10), 1095);
   try {
     const result = await backfillPWSHistory(redisCommand, days);
