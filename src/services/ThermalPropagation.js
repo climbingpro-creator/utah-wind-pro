@@ -201,9 +201,38 @@ export function getSessionThresholds() {
 
 /**
  * Estimate expected session duration for a chain.
- * Uses server-learned stats if available, otherwise returns defaults by chain type.
+ * Priority: 1) 3-year PWS backfill  2) server-learned chain stats  3) defaults
  */
-export function estimateSessionDuration(chainKey) {
+export function estimateSessionDuration(chainKey, activity) {
+  // Priority 1: Real PWS backfill data (3 years of actual history)
+  const backfillRaw = typeof localStorage !== 'undefined' && localStorage.getItem('propagation:pwsBackfill');
+  if (backfillRaw && chainKey.startsWith('utah-lake')) {
+    try {
+      const bf = JSON.parse(backfillRaw);
+      const actKey = activity === 'foil_kiting' ? 'foil_kiting'
+        : activity === 'paragliding' ? 'paragliding'
+        : activity === 'light_wind' ? 'light_wind'
+        : 'kiting';
+      const stats = bf.byActivity?.[actKey];
+      if (stats && stats.windDays >= 5) {
+        const month = new Date().getMonth();
+        const monthKey = `${actKey}:${month}`;
+        const monthStats = bf.byMonth?.[monthKey];
+
+        return {
+          avgMinutes: monthStats?.avgSession || stats.avgLongestSession,
+          minMinutes: 15,
+          maxMinutes: stats.maxSession,
+          avgPeak: monthStats?.avgPeak || stats.avgPeak,
+          samples: stats.windDays,
+          source: 'pws-backfill',
+          windProbability: monthStats ? Math.round((monthStats.windDays / monthStats.days) * 100) : Math.round((stats.windDays / stats.totalDays) * 100),
+        };
+      }
+    } catch { /* fall through */ }
+  }
+
+  // Priority 2: Server-learned chain stats (cron-collected daily)
   if (learnedSessions?.[chainKey]?.samples >= 3) {
     const s = learnedSessions[chainKey];
     return {
@@ -215,7 +244,8 @@ export function estimateSessionDuration(chainKey) {
       source: 'learned',
     };
   }
-  // Defaults based on chain type
+
+  // Priority 3: Defaults based on chain type
   if (chainKey.includes('se_thermal') || chainKey.includes('canyon_thermal')) {
     return { avgMinutes: 180, minMinutes: 60, maxMinutes: 360, avgPeak: 12, samples: 0, source: 'default' };
   }

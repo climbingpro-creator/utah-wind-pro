@@ -83,6 +83,34 @@ class WeatherService {
     }
   }
 
+  async getAmbientHistory(limit = 288, endDate = null) {
+    try {
+      const params = { source: 'ambient-history', limit: String(limit) };
+      if (endDate) params.endDate = endDate;
+
+      if (IS_PRODUCTION) {
+        const response = await axiosWithRetry({
+          method: 'get', url: apiUrl('/api/weather'), params,
+        });
+        return response.data || [];
+      } else {
+        const qp = new URLSearchParams({
+          apiKey: AMBIENT_API_KEY,
+          applicationKey: AMBIENT_APP_KEY,
+          limit: String(limit),
+        });
+        if (endDate) qp.set('endDate', endDate);
+        const response = await axios.get(
+          `https://api.ambientweather.net/v1/devices/48:3F:DA:54:2C:6E?${qp}`
+        );
+        return response.data || [];
+      }
+    } catch (error) {
+      console.error('Ambient history error:', error.message);
+      return [];
+    }
+  }
+
   async getSynopticStationData(stationIds) {
     if (!stationIds || stationIds.length === 0) return [];
     

@@ -420,74 +420,60 @@ export async function learnFromPropagation(redis) {
       }
     }
   }
-  // ── PWS ground truth session learning ──
-  // Use actual PWS time series (not chain proxy) for Utah Lake sessions
-  const pwsRaw = await redis('LRANGE', `pws:history:${date}`, '0', '-1');
-  if (pwsRaw && pwsRaw.length >= 4) {
-    const pwsReadings = pwsRaw.map(r => { try { return JSON.parse(r); } catch { return null; } }).filter(Boolean);
+  // ── PWS ground truth session learning (from real Ambient Weather API) ──
+  const apiKey = process.env.AMBIENT_API_KEY;
+  const appKey = process.env.AMBIENT_APP_KEY;
+  if (apiKey && appKey) {
+    try {
+      const { data: pwsData } = await fetchAmbientPage(apiKey, appKey, null, 288);
+      if (pwsData && pwsData.length >= 12) {
+        // Sort chronologically (API returns newest-first)
+        const sorted = [...pwsData].sort((a, b) =>
+          new Date(a.dateutc ?? a.date).getTime() - new Date(b.dateutc ?? b.date).getTime()
+        );
 
-    // Calculate real sessions at different thresholds from actual PWS data
-    const thresholds = { kiting: 10, foil: 8, paragliding: 5, light: 6 };
-    const pwsSessions = {};
+        // Only analyze today's readings (Mountain time)
+        const todayReadings = sorted.filter(r => {
+          const utc = new Date(r.dateutc ?? r.date);
+          const mt = new Date(utc.getTime() - 7 * 3600 * 1000);
+          return mt.toISOString().split('T')[0] === date;
+        });
 
-    for (const [activity, minSpeed] of Object.entries(thresholds)) {
-      let consecutiveAbove = 0;
-      let maxConsecutive = 0;
-      let peakInSession = 0;
-      let totalAbove = 0;
+        if (todayReadings.length >= 6) {
+          const daySessions = analyzeDaySessions(todayReadings);
 
-      for (const r of pwsReadings) {
-        if (r.s >= minSpeed) {
-          consecutiveAbove++;
-          totalAbove++;
-          if (r.s > peakInSession) peakInSession = r.s;
-          if (consecutiveAbove > maxConsecutive) maxConsecutive = consecutiveAbove;
-        } else {
-          consecutiveAbove = 0;
+          if (!sessions['pws:actual']) {
+            sessions['pws:actual'] = { samples: 0, byActivity: {} };
+          }
+          const pa = sessions['pws:actual'];
+          pa.samples++;
+          for (const [activity, data] of Object.entries(daySessions)) {
+            if (!pa.byActivity[activity]) {
+              pa.byActivity[activity] = {
+                avgLongestSession: data.longestSessionMin,
+                avgTotalAbove: data.totalMinAbove,
+                avgPeak: data.peakSpeed,
+                samples: 1,
+              };
+            } else {
+              const a = pa.byActivity[activity];
+              const w = a.samples / (a.samples + 1);
+              a.avgLongestSession = Math.round(a.avgLongestSession * w + data.longestSessionMin * (1 - w));
+              a.avgTotalAbove = Math.round(a.avgTotalAbove * w + data.totalMinAbove * (1 - w));
+              a.avgPeak = Math.round((a.avgPeak * w + data.peakSpeed * (1 - w)) * 10) / 10;
+              a.samples++;
+            }
+          }
+
+          for (const ev of events) {
+            if (ev.lake?.startsWith('utah-lake')) {
+              ev.pwsSessions = daySessions;
+            }
+          }
         }
       }
-
-      // Each reading is ~15 min apart
-      const longestSessionMin = maxConsecutive * 15;
-      const totalMinAbove = totalAbove * 15;
-
-      pwsSessions[activity] = {
-        longestSessionMin,
-        totalMinAbove,
-        peakSpeed: Math.round(peakInSession * 10) / 10,
-        readings: pwsReadings.length,
-      };
-    }
-
-    // Store PWS session data and learn averages
-    if (!sessions['pws:actual']) {
-      sessions['pws:actual'] = { samples: 0, byActivity: {} };
-    }
-    const pa = sessions['pws:actual'];
-    pa.samples++;
-    for (const [activity, data] of Object.entries(pwsSessions)) {
-      if (!pa.byActivity[activity]) {
-        pa.byActivity[activity] = {
-          avgLongestSession: data.longestSessionMin,
-          avgTotalAbove: data.totalMinAbove,
-          avgPeak: data.peakSpeed,
-          samples: 1,
-        };
-      } else {
-        const a = pa.byActivity[activity];
-        const w = a.samples / (a.samples + 1);
-        a.avgLongestSession = Math.round(a.avgLongestSession * w + data.longestSessionMin * (1 - w));
-        a.avgTotalAbove = Math.round(a.avgTotalAbove * w + data.totalMinAbove * (1 - w));
-        a.avgPeak = Math.round((a.avgPeak * w + data.peakSpeed * (1 - w)) * 10) / 10;
-        a.samples++;
-      }
-    }
-
-    // Today's result for the event log
-    for (const ev of events) {
-      if (ev.lake?.startsWith('utah-lake')) {
-        ev.pwsSessions = pwsSessions;
-      }
+    } catch (pwsErr) {
+      console.error('PWS daily learning error (non-fatal):', pwsErr.message);
     }
   }
 
@@ -512,6 +498,255 @@ async function loadLearnedLags(redis) {
     const raw = await redis('GET', 'prop:lags');
     return raw ? JSON.parse(raw) : {};
   } catch { return {}; }
+}
+
+// ─── Backfill session learning from 3 years of real PWS history ───
+
+const PWS_MAC = '48:3F:DA:54:2C:6E';
+
+async function fetchAmbientPage(apiKey, appKey, endDate, limit = 288) {
+  const params = new URLSearchParams({
+    apiKey,
+    applicationKey: appKey,
+    limit: String(limit),
+  });
+  if (endDate) params.set('endDate', endDate);
+
+  const url = `https://api.ambientweather.net/v1/devices/${PWS_MAC}?${params}`;
+  const resp = await fetch(url);
+  if (!resp.ok) {
+    if (resp.status === 429) return { data: [], rateLimited: true };
+    throw new Error(`Ambient API ${resp.status}`);
+  }
+  return { data: await resp.json(), rateLimited: false };
+}
+
+function analyzeDaySessions(readings) {
+  const thresholds = {
+    kiting:      { minSpeed: 10, label: 'Kiting 10+' },
+    foil_kiting: { minSpeed: 8,  label: 'Foil 8+' },
+    paragliding: { minSpeed: 5,  label: 'PG 5+' },
+    light_wind:  { minSpeed: 6,  label: 'Light 6+' },
+  };
+
+  const result = {};
+  for (const [activity, cfg] of Object.entries(thresholds)) {
+    let sessionStart = null;
+    let longestMin = 0;
+    let currentMin = 0;
+    let totalAboveMin = 0;
+    let peakSpeed = 0;
+    let sessions = [];
+    let currentSessionPeak = 0;
+
+    for (let i = 0; i < readings.length; i++) {
+      const r = readings[i];
+      const spd = r.windspeedmph ?? r.windSpeed ?? 0;
+      const ts = new Date(r.dateutc ?? r.date).getTime();
+
+      if (spd >= cfg.minSpeed) {
+        if (!sessionStart) {
+          sessionStart = ts;
+          currentSessionPeak = spd;
+        }
+        if (spd > currentSessionPeak) currentSessionPeak = spd;
+        if (spd > peakSpeed) peakSpeed = spd;
+
+        if (i + 1 < readings.length) {
+          const nextTs = new Date(readings[i + 1].dateutc ?? readings[i + 1].date).getTime();
+          currentMin = Math.round((nextTs - sessionStart) / 60000);
+        }
+        totalAboveMin += 5; // ~5 min intervals
+      } else {
+        if (sessionStart && currentMin >= 15) {
+          sessions.push({ durationMin: currentMin, peak: currentSessionPeak });
+          if (currentMin > longestMin) longestMin = currentMin;
+        }
+        sessionStart = null;
+        currentMin = 0;
+        currentSessionPeak = 0;
+      }
+    }
+    // Close final session
+    if (sessionStart && currentMin >= 15) {
+      sessions.push({ durationMin: currentMin, peak: currentSessionPeak });
+      if (currentMin > longestMin) longestMin = currentMin;
+    }
+
+    result[activity] = {
+      longestSessionMin: longestMin,
+      totalMinAbove: totalAboveMin,
+      peakSpeed: Math.round(peakSpeed * 10) / 10,
+      sessionCount: sessions.length,
+      sessions,
+    };
+  }
+  return result;
+}
+
+/**
+ * Backfill PWS session learning from real Ambient Weather history.
+ * Pages backward through `days` of data, analyzes sessions for each day,
+ * and stores aggregated session statistics in Redis.
+ *
+ * @param {Function} redis - Redis command function
+ * @param {number} days - How many days to backfill (max ~1095 for 3 years)
+ * @returns {Object} Summary of what was learned
+ */
+export async function backfillPWSHistory(redis, days = 90) {
+  const apiKey = process.env.AMBIENT_API_KEY;
+  const appKey = process.env.AMBIENT_APP_KEY;
+  if (!apiKey || !appKey) throw new Error('Ambient Weather API keys not configured');
+
+  const sessions = await loadSessionStats(redis);
+  if (!sessions['pws:backfill']) {
+    sessions['pws:backfill'] = {
+      byActivity: {},
+      byMonth: {},
+      byDayOfWeek: {},
+      daysAnalyzed: 0,
+      daysWithWind: 0,
+      lastBackfill: null,
+      oldestDate: null,
+      newestDate: null,
+    };
+  }
+  const bf = sessions['pws:backfill'];
+
+  let endDate = null; // Start from most recent
+  let daysProcessed = 0;
+  let totalReadings = 0;
+  let rateLimitHits = 0;
+  const dailySummaries = [];
+
+  while (daysProcessed < days) {
+    const { data, rateLimited } = await fetchAmbientPage(apiKey, appKey, endDate);
+
+    if (rateLimited) {
+      rateLimitHits++;
+      if (rateLimitHits > 3) break;
+      // Wait 1.5s and retry
+      await new Promise(r => setTimeout(r, 1500));
+      continue;
+    }
+
+    if (!data || data.length === 0) break;
+    totalReadings += data.length;
+
+    // Ambient returns newest-first; reverse for chronological processing
+    const sorted = [...data].sort((a, b) =>
+      new Date(a.dateutc ?? a.date).getTime() - new Date(b.dateutc ?? b.date).getTime()
+    );
+
+    // Group by date (Mountain time)
+    const byDate = {};
+    for (const r of sorted) {
+      const utc = new Date(r.dateutc ?? r.date);
+      // Mountain time offset (rough — DST not critical for daily grouping)
+      const mt = new Date(utc.getTime() - 7 * 3600 * 1000);
+      const dateStr = mt.toISOString().split('T')[0];
+      if (!byDate[dateStr]) byDate[dateStr] = [];
+      byDate[dateStr].push(r);
+    }
+
+    for (const [dateStr, dayReadings] of Object.entries(byDate)) {
+      if (dayReadings.length < 6) continue; // Need at least 30 min of data
+
+      const daySessions = analyzeDaySessions(dayReadings);
+      const dt = new Date(dateStr);
+      const month = dt.getMonth(); // 0-11
+      const dow = dt.getDay(); // 0=Sun
+
+      const hadWind = Object.values(daySessions).some(a => a.longestSessionMin >= 15);
+
+      for (const [activity, data] of Object.entries(daySessions)) {
+        // Aggregate overall stats
+        if (!bf.byActivity[activity]) {
+          bf.byActivity[activity] = {
+            totalDays: 0,
+            windDays: 0,
+            avgLongestSession: 0,
+            avgPeak: 0,
+            maxSession: 0,
+            maxPeak: 0,
+          };
+        }
+        const a = bf.byActivity[activity];
+        a.totalDays++;
+        if (data.longestSessionMin >= 15) {
+          a.windDays++;
+          // Running average
+          const w = (a.windDays - 1) / a.windDays;
+          a.avgLongestSession = Math.round(a.avgLongestSession * w + data.longestSessionMin * (1 - w));
+          a.avgPeak = Math.round((a.avgPeak * w + data.peakSpeed * (1 - w)) * 10) / 10;
+          a.maxSession = Math.max(a.maxSession, data.longestSessionMin);
+          a.maxPeak = Math.max(a.maxPeak, data.peakSpeed);
+        }
+
+        // Monthly breakdown
+        const mKey = `${activity}:${month}`;
+        if (!bf.byMonth[mKey]) {
+          bf.byMonth[mKey] = { days: 0, windDays: 0, avgSession: 0, avgPeak: 0 };
+        }
+        const m = bf.byMonth[mKey];
+        m.days++;
+        if (data.longestSessionMin >= 15) {
+          m.windDays++;
+          const wm = (m.windDays - 1) / m.windDays;
+          m.avgSession = Math.round(m.avgSession * wm + data.longestSessionMin * (1 - wm));
+          m.avgPeak = Math.round((m.avgPeak * wm + data.peakSpeed * (1 - wm)) * 10) / 10;
+        }
+
+        // Day-of-week breakdown
+        const dKey = `${activity}:${dow}`;
+        if (!bf.byDayOfWeek[dKey]) {
+          bf.byDayOfWeek[dKey] = { days: 0, windDays: 0, avgSession: 0 };
+        }
+        const d = bf.byDayOfWeek[dKey];
+        d.days++;
+        if (data.longestSessionMin >= 15) {
+          d.windDays++;
+          const wd = (d.windDays - 1) / d.windDays;
+          d.avgSession = Math.round(d.avgSession * wd + data.longestSessionMin * (1 - wd));
+        }
+      }
+
+      if (hadWind) bf.daysWithWind++;
+      bf.daysAnalyzed++;
+      daysProcessed++;
+
+      dailySummaries.push({
+        date: dateStr,
+        hadWind,
+        kiting: daySessions.kiting?.longestSessionMin || 0,
+        foil: daySessions.foil_kiting?.longestSessionMin || 0,
+        peak: Math.max(...Object.values(daySessions).map(a => a.peakSpeed)),
+      });
+
+      if (!bf.oldestDate || dateStr < bf.oldestDate) bf.oldestDate = dateStr;
+      if (!bf.newestDate || dateStr > bf.newestDate) bf.newestDate = dateStr;
+    }
+
+    // Page backward: use oldest timestamp from this batch
+    const oldestInBatch = sorted[0];
+    endDate = new Date(new Date(oldestInBatch.dateutc ?? oldestInBatch.date).getTime() - 1000).toISOString();
+
+    // Rate limit: Ambient allows 1 req/sec
+    await new Promise(r => setTimeout(r, 1100));
+  }
+
+  bf.lastBackfill = new Date().toISOString();
+  await redis('SET', 'prop:sessions', JSON.stringify(sessions));
+
+  return {
+    daysProcessed,
+    totalReadings,
+    daysWithWind: bf.daysWithWind,
+    dateRange: { oldest: bf.oldestDate, newest: bf.newestDate },
+    byActivity: bf.byActivity,
+    recentDays: dailySummaries.slice(-10),
+    rateLimitHits,
+  };
 }
 
 // ─── Client endpoint ──────────────────────────────────────────────
@@ -546,13 +781,14 @@ export async function getPropagationData(redis) {
     };
   }
 
-  // PWS actual session stats
   const pwsActual = sessions['pws:actual'] || null;
+  const pwsBackfill = sessions['pws:backfill'] || null;
 
   return {
     lags,
     sessions,
     pwsActual,
+    pwsBackfill,
     recentEvents: events.slice(0, 10),
     hitRates,
     totalDaysTracked: events.length,

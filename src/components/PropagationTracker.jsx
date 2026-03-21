@@ -133,7 +133,9 @@ function PropagationChain({ type, data }) {
           <div className="flex items-center gap-1 text-[10px] text-gray-400">
             <Clock className="w-3 h-3" />
             <span>
-              {data.session.source === 'learned'
+              {data.session.source === 'pws-backfill'
+                ? `Avg session: ${formatDuration(data.session.avgMinutes)} (${data.session.samples} days of PWS data${data.session.windProbability != null ? `, ${data.session.windProbability}% wind days` : ''})`
+                : data.session.source === 'learned'
                 ? `Avg session: ${formatDuration(data.session.avgMinutes)} (${data.session.samples} days)`
                 : `Est. session: ~${formatDuration(data.session.avgMinutes)}`
               }

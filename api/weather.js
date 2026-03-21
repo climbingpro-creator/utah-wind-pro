@@ -50,12 +50,14 @@ export default async function handler(req, res) {
   try {
     if (source === 'ambient') {
       return await handleAmbient(res);
+    } else if (source === 'ambient-history') {
+      return await handleAmbientHistory(res, req.query);
     } else if (source === 'synoptic') {
       return await handleSynopticLatest(res, stids);
     } else if (source === 'synoptic-history') {
       return await handleSynopticHistory(res, stids, hours);
     } else {
-      return res.status(400).json({ error: 'Invalid source. Use: ambient, synoptic, synoptic-history' });
+      return res.status(400).json({ error: 'Invalid source. Use: ambient, ambient-history, synoptic, synoptic-history' });
     }
   } catch (error) {
     console.error(`[API Proxy] ${source} error:`, error.message);
@@ -64,6 +66,43 @@ export default async function handler(req, res) {
       source,
     });
   }
+}
+
+async function handleAmbientHistory(res, query) {
+  const apiKey = process.env.AMBIENT_API_KEY;
+  const appKey = process.env.AMBIENT_APP_KEY;
+  if (!apiKey || !appKey) {
+    return res.status(500).json({ error: 'Ambient Weather API keys not configured' });
+  }
+
+  const macAddress = '48:3F:DA:54:2C:6E';
+  const limit = Math.min(parseInt(query.limit) || 288, 288);
+  const params = new URLSearchParams({
+    apiKey,
+    applicationKey: appKey,
+    limit: String(limit),
+  });
+
+  // Optional: fetch a specific date range using endDate param
+  if (query.endDate) {
+    params.set('endDate', query.endDate);
+  }
+
+  const url = `https://api.ambientweather.net/v1/devices/${macAddress}?${params}`;
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    const status = response.status;
+    if (status === 429) {
+      res.setHeader('Retry-After', '5');
+      return res.status(429).json({ error: 'Rate limited by Ambient Weather' });
+    }
+    return res.status(status).json({ error: `Ambient API returned ${status}` });
+  }
+
+  const data = await response.json();
+  res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=120');
+  return res.status(200).json(data);
 }
 
 async function handleAmbient(res) {

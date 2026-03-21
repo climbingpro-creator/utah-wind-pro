@@ -37,7 +37,7 @@ function getActivityVerdict(id, speed, gust, thermalPrediction, _boatingPredicti
   const prob = thermal.probability || 0;
 
   const dominantChain = propagation?.dominant?.type;
-  const session = dominantChain ? estimateSessionDuration(dominantChain) : null;
+  const session = dominantChain ? estimateSessionDuration(dominantChain, id) : null;
   const estTargetSpeed = propagation?.chains?.[0]?.estimatedTargetSpeed;
 
   // For wind-seeking: check the ACTUAL speed at this launch, not an upstream proxy
@@ -47,7 +47,7 @@ function getActivityVerdict(id, speed, gust, thermalPrediction, _boatingPredicti
 
   if (good && cfg.wantsWind) {
     // SAFETY CHECK 1: Session too short — stranding risk
-    if (session?.source === 'learned' && session.avgMinutes < 45) {
+    if ((session?.source === 'learned' || session?.source === 'pws-backfill') && session.avgMinutes < 45) {
       return {
         status: 'caution', label: 'BRIEF',
         reason: `${Math.round(speed)} mph but avg session only ${session.avgMinutes} min — stranding risk`,

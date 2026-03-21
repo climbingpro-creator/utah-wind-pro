@@ -31,7 +31,7 @@ import { runServerLearningCycle, backfillHistorical, loadWeights, loadMeta } fro
 import { fetchNWSForecasts } from '../lib/nwsForecast.js';
 import { LAKE_STATION_MAP, ALL_STATION_IDS } from '../lib/stations.js';
 import { buildStatisticalModels } from '../lib/historicalAnalysis.js';
-import { analyzeFromStations, analyzeAllSpots, storePropagationSnapshot, learnFromPropagation, getPropagationData } from '../lib/serverPropagation.js';
+import { analyzeFromStations, analyzeAllSpots, storePropagationSnapshot, learnFromPropagation, getPropagationData, backfillPWSHistory } from '../lib/serverPropagation.js';
 
 function getEnv() {
   return {
@@ -145,10 +145,10 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
 
   const action = req.query?.action;
-  const READ_ACTIONS = ['sync', 'weights', 'predictions', 'upstream', 'nws', 'ahead', 'analogs', 'models', 'propagation'];
+  const READ_ACTIONS = ['sync', 'weights', 'predictions', 'upstream', 'nws', 'ahead', 'analogs', 'models', 'propagation', 'pws-history'];
 
   // Expensive manual-trigger actions ALWAYS require auth (even if CRON_SECRET isn't set)
-  const PROTECTED_ACTIONS = ['backfill', 'build-models'];
+  const PROTECTED_ACTIONS = ['backfill', 'build-models', 'backfill-pws'];
   if (PROTECTED_ACTIONS.includes(action)) {
     const authHeader = req.headers['authorization'];
     const cronSecret = process.env.CRON_SECRET;
@@ -175,6 +175,8 @@ export default async function handler(req, res) {
   if (action === 'analogs') return await handleAnalogs(res);
   if (action === 'models') return await handleModels(res);
   if (action === 'propagation') return await handlePropagation(res);
+  if (action === 'backfill-pws') return await handleBackfillPWS(req, res);
+  if (action === 'pws-history') return await handlePWSHistory(res);
   if (action === 'build-models') return await handleBuildModels(req, res);
 
   const env = getEnv();
@@ -250,18 +252,8 @@ export default async function handler(req, res) {
 
         await storePropagationSnapshot(redisCommand, allPropagation, readings);
 
-        // Store PWS time series for real session duration learning at the actual launch
-        if (ambientPWS && ambientPWS.windSpeed != null) {
-          const date = now.toISOString().split('T')[0];
-          const pwsSnap = JSON.stringify({
-            t: now.toISOString(),
-            s: ambientPWS.windSpeed,
-            d: ambientPWS.windDirection,
-            g: ambientPWS.windGust,
-          });
-          await redisCommand('RPUSH', `pws:history:${date}`, pwsSnap);
-          await redisCommand('EXPIRE', `pws:history:${date}`, '172800');
-        }
+        // Note: PWS history is available directly from Ambient Weather API (3 years)
+        // No need to drip-feed into Redis — use ?action=backfill-pws to learn from full history
 
         // Daily lag learning — run at 10 PM Mountain (5 AM UTC next day)
         const mtHour = toMountainHour(now);
@@ -398,6 +390,38 @@ async function handleAnalogs(res) {
     const data = JSON.parse(raw);
     res.setHeader('Cache-Control', 's-maxage=120, stale-while-revalidate=600');
     return res.status(200).json(data);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+}
+
+async function handleBackfillPWS(req, res) {
+  const days = Math.min(parseInt(req.query?.days || '90', 10), 1095);
+  try {
+    const result = await backfillPWSHistory(redisCommand, days);
+    return res.status(200).json({ ok: true, ...result });
+  } catch (error) {
+    console.error('PWS backfill error:', error);
+    return res.status(500).json({ error: error.message });
+  }
+}
+
+async function handlePWSHistory(res) {
+  try {
+    const raw = await redisCommand('GET', 'prop:sessions');
+    if (!raw) return res.status(200).json({ sessions: null, message: 'No session data yet — trigger with ?action=backfill-pws' });
+    const sessions = JSON.parse(raw);
+    const backfill = sessions['pws:backfill'] || null;
+    res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
+    return res.status(200).json({
+      backfill,
+      sessionThresholds: {
+        kiting: 10,
+        foil_kiting: 8,
+        paragliding: 5,
+        light_wind: 6,
+      },
+    });
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }

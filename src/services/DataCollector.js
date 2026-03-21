@@ -257,6 +257,10 @@ class DataCollector {
           localStorage.setItem('propagation:sessions', JSON.stringify(propData.sessions));
           console.log(`Session durations synced — ${Object.keys(propData.sessions).length} chains tracked`);
         }
+        if (propData?.pwsBackfill) {
+          localStorage.setItem('propagation:pwsBackfill', JSON.stringify(propData.pwsBackfill));
+          console.log(`PWS backfill data synced — ${propData.pwsBackfill.daysAnalyzed} days of real history`);
+        }
         if (propData?.hitRates) {
           localStorage.setItem('propagation:hitRates', JSON.stringify(propData.hitRates));
         }
