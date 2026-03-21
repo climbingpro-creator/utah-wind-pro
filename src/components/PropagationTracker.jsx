@@ -2,6 +2,13 @@ import { useMemo } from 'react';
 import { Wind, ArrowRight, Clock, Zap, MapPin, TrendingUp, Radio } from 'lucide-react';
 import { safeToFixed } from '../utils/safeToFixed';
 
+function formatDuration(minutes) {
+  if (minutes < 60) return `${minutes} min`;
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return m > 0 ? `${h}h ${m}m` : `${h} hr${h > 1 ? 's' : ''}`;
+}
+
 const PHASE_CONFIG = {
   none:        { color: 'text-gray-500',   bg: 'bg-gray-500/10',  border: 'border-gray-600/30',  label: 'No Signal',    icon: Radio },
   propagating: { color: 'text-amber-400',  bg: 'bg-amber-500/10', border: 'border-amber-500/30', label: 'Propagating',  icon: TrendingUp },
@@ -119,6 +126,26 @@ function PropagationChain({ type, data }) {
       </div>
 
       <p className="text-xs text-gray-400 mt-3 leading-relaxed">{data.message}</p>
+
+      {/* Session duration estimate */}
+      {data.session && data.phase !== 'none' && (
+        <div className="flex items-center gap-3 mt-2">
+          <div className="flex items-center gap-1 text-[10px] text-gray-400">
+            <Clock className="w-3 h-3" />
+            <span>
+              {data.session.source === 'learned'
+                ? `Avg session: ${formatDuration(data.session.avgMinutes)} (${data.session.samples} days)`
+                : `Est. session: ~${formatDuration(data.session.avgMinutes)}`
+              }
+            </span>
+          </div>
+          {data.session.avgPeak > 0 && (
+            <span className="text-[10px] text-gray-500">
+              Peak ~{data.session.avgPeak} mph
+            </span>
+          )}
+        </div>
+      )}
 
       {!data.pressureOk && (
         <p className="text-[10px] text-red-400 mt-1">Pressure gradient unfavorable</p>

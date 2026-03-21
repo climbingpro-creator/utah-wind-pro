@@ -307,6 +307,7 @@ export function Dashboard() {
           onSelectActivity={setSelectedActivity}
           fpsStation={lakeState?.wind?.stations?.find(s => s.id === 'FPS')}
           utalpStation={lakeState?.utalpStation || lakeState?.wind?.stations?.find(s => s.id === 'UTALP')}
+          propagation={lakeState?.propagation}
         />
 
         {/* Wind Intelligence — unified signal convergence */}

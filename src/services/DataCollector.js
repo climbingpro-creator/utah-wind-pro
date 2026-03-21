@@ -22,7 +22,7 @@ import { setFishingLearnedWeights } from './FishingPredictor';
 import { setWindFieldLearnedWeights } from './WindFieldEngine';
 import { scoreSessionForActivity } from './ActivityScoring';
 import { predictWindEvents, setWindEventLearnedPatterns, getUpstreamSignals, setStatisticalModels as setWindEventStatisticalModels } from './WindEventPredictor';
-import { setLearnedLags, validateHistorical, lagAdjustmentsFromValidation } from './ThermalPropagation';
+import { setLearnedLags, setLearnedSessions, validateHistorical, lagAdjustmentsFromValidation } from './ThermalPropagation';
 import { apiUrl } from '../utils/platform';
 import { safeToFixed } from '../utils/safeToFixed';
 
@@ -251,6 +251,11 @@ class DataCollector {
           setLearnedLags(clientLags);
           localStorage.setItem('propagation:lags', JSON.stringify(clientLags));
           console.log(`Propagation lags synced — ${Object.keys(clientLags).length} lags across all spots`);
+        }
+        if (propData?.sessions && Object.keys(propData.sessions).length > 0) {
+          setLearnedSessions(propData.sessions);
+          localStorage.setItem('propagation:sessions', JSON.stringify(propData.sessions));
+          console.log(`Session durations synced — ${Object.keys(propData.sessions).length} chains tracked`);
         }
         if (propData?.hitRates) {
           localStorage.setItem('propagation:hitRates', JSON.stringify(propData.hitRates));

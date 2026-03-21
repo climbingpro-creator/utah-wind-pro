@@ -8,7 +8,19 @@
  *   prop:snap:{lakeId}:{date}  — today's snapshots per spot (list, TTL 48h)
  *   prop:events                — daily propagation events (list, capped 365)
  *   prop:lags                  — learned lag adjustments per chain:station
+ *   prop:sessions              — learned session duration stats per chain (hash)
  */
+
+// ─── Session thresholds: minimum wind to count as "rideable" ──────
+// A session = contiguous period (≥45 min) above these speeds at the target
+const SESSION_THRESHOLDS = {
+  kiting:      { minSpeed: 10, minDuration: 45 },
+  foil_kiting: { minSpeed: 8,  minDuration: 45 },
+  sailing:     { minSpeed: 8,  minDuration: 45 },
+  paragliding: { minSpeed: 5,  minDuration: 45 },
+  fishing:     { maxSpeed: 12, minDuration: 60 },
+  boating:     { maxSpeed: 8,  minDuration: 60 },
+};
 
 // ─── Chain definitions (mirrors client-side ThermalPropagation.js) ─
 
@@ -245,15 +257,15 @@ export async function storePropagationSnapshot(redis, allResults, stationReading
     };
   }
 
-  // Store per-spot snapshots for spots that have active signals
-  for (const [lakeId, data] of Object.entries(allResults)) {
-    if (data.dominantConfidence <= 0) continue;
+  // Store per-spot snapshots — always store so we capture onset AND collapse
+  for (const lakeId of Object.keys(LAKE_CHAINS)) {
+    const data = allResults[lakeId];
     const key = `prop:snap:${lakeId}:${date}`;
     const snap = JSON.stringify({
       timestamp: ts,
-      phase: data.dominantPhase,
-      confidence: data.dominantConfidence,
-      chain: data.dominant,
+      phase: data?.dominantPhase || 'none',
+      confidence: data?.dominantConfidence || 0,
+      chain: data?.dominant || null,
       stations: stationSnap,
     });
     await redis('RPUSH', key, snap);
@@ -300,6 +312,7 @@ export async function learnFromPropagation(redis) {
       const hasSignal = Object.keys(onsets).some(id => id !== target.id);
       const arrived = !!onsets[target.id];
 
+      // ── Lag learning ──
       if (hasSignal && arrived) {
         const t0 = new Date(onsets[target.id]).getTime();
         for (const node of def.nodes) {
@@ -317,12 +330,34 @@ export async function learnFromPropagation(redis) {
         }
       }
 
+      // ── Session duration learning ──
+      // Count how many consecutive 15-min snapshots the TARGET was above threshold
+      let sessionMinutes = 0;
+      let peakSpeed = 0;
+      let sessionStart = null;
+      let sessionEnd = null;
+      for (const snap of snaps) {
+        const reading = snap.stations?.[target.id];
+        const spd = reading?.speed ?? 0;
+        const isFired = hasFired(target, reading);
+        if (isFired) {
+          if (!sessionStart) sessionStart = snap.timestamp;
+          sessionEnd = snap.timestamp;
+          if (spd > peakSpeed) peakSpeed = spd;
+        }
+      }
+      if (sessionStart && sessionEnd) {
+        sessionMinutes = Math.round((new Date(sessionEnd) - new Date(sessionStart)) / 60000);
+      }
+
       events.push({
         lake: lakeId,
         chain: chainKey,
         signaled: hasSignal,
         arrived,
         stations: Object.keys(onsets).length,
+        sessionMinutes,
+        peakSpeed: Math.round(peakSpeed * 10) / 10,
       });
     }
   }
@@ -331,11 +366,38 @@ export async function learnFromPropagation(redis) {
     await redis('SET', 'prop:lags', JSON.stringify(learned));
   }
 
+  // ── Learn session duration averages per chain ──
+  const sessions = await loadSessionStats(redis);
+  for (const ev of events) {
+    if (ev.sessionMinutes >= 15) {
+      const k = ev.chain;
+      if (!sessions[k]) {
+        sessions[k] = { avgMinutes: ev.sessionMinutes, avgPeak: ev.peakSpeed, samples: 1, minSession: ev.sessionMinutes, maxSession: ev.sessionMinutes };
+      } else {
+        const s = sessions[k];
+        const w = s.samples / (s.samples + 1);
+        s.avgMinutes = Math.round(s.avgMinutes * w + ev.sessionMinutes * (1 - w));
+        s.avgPeak = Math.round((s.avgPeak * w + ev.peakSpeed * (1 - w)) * 10) / 10;
+        s.minSession = Math.min(s.minSession, ev.sessionMinutes);
+        s.maxSession = Math.max(s.maxSession, ev.sessionMinutes);
+        s.samples++;
+      }
+    }
+  }
+  await redis('SET', 'prop:sessions', JSON.stringify(sessions));
+
   const eventSummary = { date, spots: events.filter(e => e.signaled).length, events };
   await redis('LPUSH', 'prop:events', JSON.stringify(eventSummary));
   await redis('LTRIM', 'prop:events', '0', '364');
 
-  return { date, updated, learned, eventCount: events.length };
+  return { date, updated, learned, sessions, eventCount: events.length };
+}
+
+async function loadSessionStats(redis) {
+  try {
+    const raw = await redis('GET', 'prop:sessions');
+    return raw ? JSON.parse(raw) : {};
+  } catch { return {}; }
 }
 
 async function loadLearnedLags(redis) {
@@ -349,6 +411,7 @@ async function loadLearnedLags(redis) {
 
 export async function getPropagationData(redis) {
   const lags = await loadLearnedLags(redis);
+  const sessions = await loadSessionStats(redis);
   const eventsRaw = await redis('LRANGE', 'prop:events', '0', '29');
   const events = (eventsRaw || []).map(r => { try { return JSON.parse(r); } catch { return null; } }).filter(Boolean);
 
@@ -356,9 +419,13 @@ export async function getPropagationData(redis) {
   const chainStats = {};
   for (const event of events) {
     for (const e of event.events || []) {
-      if (!chainStats[e.chain]) chainStats[e.chain] = { signaled: 0, arrived: 0 };
+      if (!chainStats[e.chain]) chainStats[e.chain] = { signaled: 0, arrived: 0, totalSession: 0, sessionCount: 0 };
       if (e.signaled) chainStats[e.chain].signaled++;
       if (e.arrived) chainStats[e.chain].arrived++;
+      if (e.sessionMinutes > 0) {
+        chainStats[e.chain].totalSession += e.sessionMinutes;
+        chainStats[e.chain].sessionCount++;
+      }
     }
   }
 
@@ -368,8 +435,16 @@ export async function getPropagationData(redis) {
       signalDays: stats.signaled,
       arrivedDays: stats.arrived,
       hitRate: stats.signaled > 0 ? Math.round((stats.arrived / stats.signaled) * 100) : 0,
+      avgSessionMinutes: stats.sessionCount > 0 ? Math.round(stats.totalSession / stats.sessionCount) : null,
     };
   }
 
-  return { lags, recentEvents: events.slice(0, 10), hitRates, totalDaysTracked: events.length };
+  return {
+    lags,
+    sessions,
+    recentEvents: events.slice(0, 10),
+    hitRates,
+    totalDaysTracked: events.length,
+    sessionThresholds: SESSION_THRESHOLDS,
+  };
 }

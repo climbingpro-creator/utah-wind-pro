@@ -168,11 +168,100 @@ const LAKE_CHAINS = {
   'skyline-drive':      ['skyline:ridge_flow'],
 };
 
-// ─── Learned lag adjustments (set by learning system) ─────────────
+// ─── Session viability: minimum wind duration for a real session ──
+const SESSION_THRESHOLDS = {
+  kiting:      { minSpeed: 10, minDuration: 45 },
+  foil_kiting: { minSpeed: 8,  minDuration: 45 },
+  sailing:     { minSpeed: 8,  minDuration: 45 },
+  paragliding: { minSpeed: 5,  minDuration: 45 },
+  fishing:     { maxSpeed: 12, minDuration: 60 },
+  boating:     { maxSpeed: 8,  minDuration: 60 },
+};
+
+// ─── Learned data (set by sync with server) ──────────────────────
 let learnedLags = null;
+let learnedSessions = null;
 
 export function setLearnedLags(lags) {
   learnedLags = lags;
+}
+
+export function setLearnedSessions(sessions) {
+  learnedSessions = sessions;
+}
+
+export function getSessionThresholds() {
+  return SESSION_THRESHOLDS;
+}
+
+/**
+ * Estimate expected session duration for a chain.
+ * Uses server-learned stats if available, otherwise returns defaults by chain type.
+ */
+export function estimateSessionDuration(chainKey) {
+  if (learnedSessions?.[chainKey]?.samples >= 3) {
+    const s = learnedSessions[chainKey];
+    return {
+      avgMinutes: s.avgMinutes,
+      minMinutes: s.minSession,
+      maxMinutes: s.maxSession,
+      avgPeak: s.avgPeak,
+      samples: s.samples,
+      source: 'learned',
+    };
+  }
+  // Defaults based on chain type
+  if (chainKey.includes('se_thermal') || chainKey.includes('canyon_thermal')) {
+    return { avgMinutes: 180, minMinutes: 60, maxMinutes: 360, avgPeak: 12, samples: 0, source: 'default' };
+  }
+  if (chainKey.includes('north_flow')) {
+    return { avgMinutes: 240, minMinutes: 90, maxMinutes: 480, avgPeak: 15, samples: 0, source: 'default' };
+  }
+  if (chainKey.includes('south_flow') || chainKey.includes('ridge_flow') || chainKey.includes('west_flow')) {
+    return { avgMinutes: 180, minMinutes: 60, maxMinutes: 420, avgPeak: 12, samples: 0, source: 'default' };
+  }
+  return { avgMinutes: 120, minMinutes: 45, maxMinutes: 300, avgPeak: 10, samples: 0, source: 'default' };
+}
+
+/**
+ * Check if a wind event is viable for a specific activity.
+ * Returns { viable, reason, expectedMinutes, minimumRequired }
+ */
+export function isSessionViable(activity, chainKey, currentSpeed) {
+  const threshold = SESSION_THRESHOLDS[activity];
+  if (!threshold) return { viable: true, reason: 'Unknown activity' };
+
+  const est = estimateSessionDuration(chainKey);
+  const minimumRequired = threshold.minDuration;
+
+  // Wind-seeking activities need speed above min
+  if (threshold.minSpeed && currentSpeed < threshold.minSpeed) {
+    return { viable: false, reason: 'Too light', expectedMinutes: est.avgMinutes, minimumRequired };
+  }
+
+  // Calm-seeking activities need speed below max
+  if (threshold.maxSpeed && currentSpeed > threshold.maxSpeed) {
+    return { viable: false, reason: 'Too windy', expectedMinutes: est.avgMinutes, minimumRequired };
+  }
+
+  // Check if expected session meets minimum duration
+  if (est.avgMinutes < minimumRequired && est.source === 'learned') {
+    return {
+      viable: false,
+      reason: `Avg session only ${est.avgMinutes} min (need ${minimumRequired})`,
+      expectedMinutes: est.avgMinutes,
+      minimumRequired,
+    };
+  }
+
+  return {
+    viable: true,
+    reason: est.source === 'learned'
+      ? `Avg session: ${est.avgMinutes} min (${est.samples} days tracked)`
+      : `Est. session: ~${Math.round(est.avgMinutes / 60)} hrs`,
+    expectedMinutes: est.avgMinutes,
+    minimumRequired,
+  };
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────
@@ -254,6 +343,8 @@ function analyzeChain(chainKey, stationReadings, pressureGradient) {
   const hour = new Date().getHours();
   if (hour < 6 || hour > 19) confidence = Math.min(confidence, 20);
 
+  const session = estimateSessionDuration(chainKey);
+
   return {
     chainKey,
     label: def.label,
@@ -265,6 +356,7 @@ function analyzeChain(chainKey, stationReadings, pressureGradient) {
     pressureOk,
     firedCount,
     totalNodes: nodes.length,
+    session,
     nodes: nodes.map(({ id, name, role, lagMinutes, fired, speed, gust, direction, temp, isTarget }) => ({
       id, name, role, lagMinutes, fired, speed, gust, direction, temp, isTarget,
     })),

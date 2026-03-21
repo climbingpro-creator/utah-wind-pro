@@ -3,6 +3,7 @@ import { Clock, ChevronRight, ArrowUpRight, Zap, CheckCircle, XCircle } from 'lu
 import { useTheme } from '../context/ThemeContext';
 import { ACTIVITY_CONFIGS } from './ActivityMode';
 import { getRotatingImage } from '../config/imagePool';
+import { estimateSessionDuration } from '../services/ThermalPropagation';
 
 const ALL_ACTIVITIES = ['kiting', 'paragliding', 'sailing', 'snowkiting', 'boating', 'paddling', 'fishing'];
 
@@ -19,7 +20,13 @@ function getGreeting() {
   return 'Good evening';
 }
 
-function getActivityVerdict(id, speed, gust, thermalPrediction, _boatingPrediction) {
+function sessionLabel(minutes) {
+  if (minutes < 60) return `${minutes} min`;
+  const h = Math.floor(minutes / 60);
+  return `~${h} hr${h > 1 ? 's' : ''}`;
+}
+
+function getActivityVerdict(id, speed, gust, thermalPrediction, _boatingPrediction, propagation) {
   const cfg = ACTIVITY_CONFIGS[id];
   if (!cfg) return null;
   const good = cfg.goodCondition?.(speed, gust);
@@ -29,22 +36,32 @@ function getActivityVerdict(id, speed, gust, thermalPrediction, _boatingPredicti
   const thermalEnd = thermal.endHour || 17;
   const prob = thermal.probability || 0;
 
+  // Get session duration estimate from propagation data
+  const dominantChain = propagation?.dominant?.type;
+  const session = dominantChain ? estimateSessionDuration(dominantChain) : null;
+  const sessionStr = session ? ` — ${sessionLabel(session.avgMinutes)} session` : '';
+
   if (good) {
     if (cfg.wantsWind) {
+      // Check if session is too short to be worth rigging (< 45 min, learned data)
+      if (session?.source === 'learned' && session.avgMinutes < 45) {
+        return { status: 'caution', label: 'BRIEF', reason: `${Math.round(speed)} mph but avg session only ${session.avgMinutes} min`, color: 'amber' };
+      }
       const ideal = cfg.thresholds?.ideal;
       if (ideal && speed >= ideal.min && speed <= ideal.max) {
-        return { status: 'go', label: 'GO', reason: `${Math.round(speed)} mph — ideal range`, color: 'emerald' };
+        return { status: 'go', label: 'GO', reason: `${Math.round(speed)} mph — ideal range${sessionStr}`, color: 'emerald' };
       }
-      return { status: 'go', label: 'GO', reason: `${Math.round(speed)} mph — conditions active`, color: 'emerald' };
+      return { status: 'go', label: 'GO', reason: `${Math.round(speed)} mph — conditions active${sessionStr}`, color: 'emerald' };
     }
-    if (speed <= 2) return { status: 'go', label: 'GLASS', reason: 'Mirror-flat water', color: 'emerald' };
-    return { status: 'go', label: 'GOOD', reason: `Light wind (${Math.round(speed)} mph) — still calm`, color: 'lime' };
+    if (speed <= 2) return { status: 'go', label: 'GLASS', reason: `Mirror-flat water${sessionStr}`, color: 'emerald' };
+    return { status: 'go', label: 'GOOD', reason: `Light wind (${Math.round(speed)} mph) — still calm${sessionStr}`, color: 'lime' };
   }
 
   if (cfg.wantsWind) {
     if (speed < (cfg.thresholds?.tooLight || 6)) {
       if (prob >= 50 && now < thermalEnd) {
-        return { status: 'wait', label: 'WAIT', reason: `${prob}% thermal by ${formatHour(thermalStart)}`, color: 'amber', window: formatHour(thermalStart) };
+        const waitSession = session ? ` (${sessionLabel(session.avgMinutes)} expected)` : '';
+        return { status: 'wait', label: 'WAIT', reason: `${prob}% thermal by ${formatHour(thermalStart)}${waitSession}`, color: 'amber', window: formatHour(thermalStart) };
       }
       return { status: 'off', label: 'TOO LIGHT', reason: `${Math.round(speed)} mph — need ${cfg.thresholds?.tooLight || 6}+`, color: 'slate' };
     }
@@ -69,7 +86,7 @@ function getActivityVerdict(id, speed, gust, thermalPrediction, _boatingPredicti
   return { status: 'off', label: 'OFF', reason: 'Not ideal right now', color: 'slate' };
 }
 
-function buildOutlook(windSpeed, windGust, thermalPrediction, boatingPrediction, fpsStation, utalpStation) {
+function buildOutlook(windSpeed, windGust, thermalPrediction, boatingPrediction, fpsStation, utalpStation, propagation) {
   const speed = windSpeed ?? 0;
   const gust = windGust ?? speed;
 
@@ -87,7 +104,7 @@ function buildOutlook(windSpeed, windGust, thermalPrediction, boatingPrediction,
     return {
       id,
       cfg: ACTIVITY_CONFIGS[id],
-      verdict: getActivityVerdict(id, useSpeed, useGust, thermalPrediction, boatingPrediction),
+      verdict: getActivityVerdict(id, useSpeed, useGust, thermalPrediction, boatingPrediction, propagation),
     };
   });
 
@@ -166,13 +183,13 @@ const STATUS_STYLES_LIGHT = {
   off:     { bg: 'bg-slate-50/50', border: 'border-slate-100', text: 'text-slate-400', badge: 'bg-slate-100 text-slate-400', dot: 'bg-slate-300' },
 };
 
-export default function TodayHero({ windSpeed, windGust, thermalPrediction, boatingPrediction, onSelectActivity, fpsStation, utalpStation }) {
+export default function TodayHero({ windSpeed, windGust, thermalPrediction, boatingPrediction, onSelectActivity, fpsStation, utalpStation, propagation }) {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 
   const outlook = useMemo(
-    () => buildOutlook(windSpeed, windGust, thermalPrediction, boatingPrediction, fpsStation, utalpStation),
-    [windSpeed, windGust, thermalPrediction, boatingPrediction, fpsStation, utalpStation]
+    () => buildOutlook(windSpeed, windGust, thermalPrediction, boatingPrediction, fpsStation, utalpStation, propagation),
+    [windSpeed, windGust, thermalPrediction, boatingPrediction, fpsStation, utalpStation, propagation]
   );
 
   const accent = MOOD_ACCENT[outlook.mood] || MOOD_ACCENT.neutral;
