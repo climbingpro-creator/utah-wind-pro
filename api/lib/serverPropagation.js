@@ -31,10 +31,11 @@ const CHAIN_DEFS = {
       { id: 'QSF',  lag: -120, dir: [100, 180], speed: 6 },
       { id: 'KPVU', lag: -60,  dir: [120, 180], speed: 5 },
       { id: 'FPS',  lag: -30,  dir: [130, 180], speed: 8 },
-      { id: 'PWS',  lag: 0,    dir: [100, 180], speed: 8 },
+      { id: 'PWS',  lag: 0,    dir: [100, 180], speed: 5 },
       { id: 'UTALP',lag: 15,   dir: [130, 200], speed: 5 },
     ],
     pressure: { type: 'below', threshold: 2.0 },
+    speedRatios: { FPS: 1.7 },
   },
   'utah-lake:north_flow': {
     label: 'North Flow', target: 'PWS',
@@ -42,9 +43,10 @@ const CHAIN_DEFS = {
       { id: 'KSLC', lag: -60, dir: [315, 45], speed: 8, wrap: true },
       { id: 'UTALP',lag: -30, dir: [315, 45], speed: 5, wrap: true },
       { id: 'FPS',  lag: -15, dir: [315, 60], speed: 8, wrap: true },
-      { id: 'PWS',  lag: 0,   dir: [300, 60], speed: 6, wrap: true },
+      { id: 'PWS',  lag: 0,   dir: [300, 60], speed: 4, wrap: true },
     ],
     pressure: { type: 'above', threshold: -1.0 },
+    speedRatios: { FPS: 1.5 },
   },
   'deer-creek:canyon_thermal': {
     label: 'Canyon Thermal', target: 'DCC',
@@ -311,6 +313,40 @@ export async function learnFromPropagation(redis) {
 
       const hasSignal = Object.keys(onsets).some(id => id !== target.id);
       const arrived = !!onsets[target.id];
+
+      // ── Speed ratio learning ──
+      // When both an upstream station and target fire the same day, learn the ratio
+      if (arrived) {
+        const targetPeaks = [];
+        for (const snap of snaps) {
+          const r = snap.stations?.[target.id];
+          if (r && hasFired(target, r)) targetPeaks.push(r.speed ?? 0);
+        }
+        const targetAvg = targetPeaks.length > 0 ? targetPeaks.reduce((a, b) => a + b, 0) / targetPeaks.length : 0;
+        if (targetAvg > 0) {
+          for (const node of def.nodes) {
+            if (node.id === target.id) continue;
+            const upPeaks = [];
+            for (const snap of snaps) {
+              const r = snap.stations?.[node.id];
+              if (r && hasFired(node, r)) upPeaks.push(r.speed ?? 0);
+            }
+            if (upPeaks.length >= 3) {
+              const upAvg = upPeaks.reduce((a, b) => a + b, 0) / upPeaks.length;
+              const ratio = Math.round((upAvg / targetAvg) * 100) / 100;
+              const rk = `ratio:${chainKey}:${node.id}`;
+              if (!learned[rk]) {
+                learned[rk] = { avgRatio: ratio, samples: 1 };
+              } else {
+                const w = learned[rk].samples / (learned[rk].samples + 1);
+                learned[rk].avgRatio = Math.round((learned[rk].avgRatio * w + ratio * (1 - w)) * 100) / 100;
+                learned[rk].samples++;
+              }
+              updated = true;
+            }
+          }
+        }
+      }
 
       // ── Lag learning ──
       if (hasSignal && arrived) {

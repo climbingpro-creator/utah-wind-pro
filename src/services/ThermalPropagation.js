@@ -21,17 +21,21 @@ import { safeToFixed } from '../utils/safeToFixed';
 
 const CHAIN_DEFS = {
   // ── Utah Lake: SE Thermal (S → N along lakeshore) ──────────────
+  // FPS reads 1.5-2x higher than Zigzag lakeshore due to terrain funneling.
+  // PWS threshold set to 5 (actual lakeshore onset) — system learns the rest.
   'utah-lake:se_thermal': {
     label: 'SE Thermal',
     flowDir: 'S → N',
     nodes: [
       { id: 'QSF',  name: 'Spanish Fork Canyon', role: 'Canyon mouth catches SE flow first', lagMinutes: -120, dir: [100, 180], speed: 6 },
       { id: 'KPVU', name: 'Provo Airport',        role: 'Valley floor confirmation',         lagMinutes: -60,  dir: [120, 180], speed: 5 },
-      { id: 'FPS',  name: 'Flight Park South',     role: 'Thermal hits the Point',            lagMinutes: -30,  dir: [130, 180], speed: 8 },
-      { id: 'PWS',  name: 'Zigzag (Your Station)', role: 'Ground truth at your launch',       lagMinutes: 0,    dir: [100, 180], speed: 8 },
+      { id: 'FPS',  name: 'Flight Park South',     role: 'Ridge-amplified — reads 1.5-2x lakeshore', lagMinutes: -30,  dir: [130, 180], speed: 8 },
+      { id: 'PWS',  name: 'Zigzag (Your Station)', role: 'Ground truth at your launch',       lagMinutes: 0,    dir: [100, 180], speed: 5 },
       { id: 'UTALP',name: 'Point of Mountain',     role: 'Spill through the gap',             lagMinutes: 15,   dir: [130, 200], speed: 5 },
     ],
     pressureCheck: { type: 'below', threshold: 2.0 },
+    // Learned speed ratios: FPS/PWS. Updated by server from daily data.
+    speedRatios: { FPS: 1.7 },
   },
 
   // ── Utah Lake: North Flow (N → S through gap) ──────────────────
@@ -41,10 +45,11 @@ const CHAIN_DEFS = {
     nodes: [
       { id: 'KSLC', name: 'SLC Airport',           role: 'Great Salt Lake outflow',        lagMinutes: -60, dir: [315, 45], speed: 8, wrap: true },
       { id: 'UTALP',name: 'Point of Mountain',     role: 'Gap wind acceleration',          lagMinutes: -30, dir: [315, 45], speed: 5, wrap: true },
-      { id: 'FPS',  name: 'Flight Park South',     role: 'Wind reaching the lake',         lagMinutes: -15, dir: [315, 60], speed: 8, wrap: true },
-      { id: 'PWS',  name: 'Zigzag (Your Station)', role: 'Ground truth at your launch',    lagMinutes: 0,   dir: [300, 60], speed: 6, wrap: true },
+      { id: 'FPS',  name: 'Flight Park South',     role: 'Ridge-amplified N flow',         lagMinutes: -15, dir: [315, 60], speed: 8, wrap: true },
+      { id: 'PWS',  name: 'Zigzag (Your Station)', role: 'Ground truth at your launch',    lagMinutes: 0,   dir: [300, 60], speed: 4, wrap: true },
     ],
     pressureCheck: { type: 'above', threshold: -1.0 },
+    speedRatios: { FPS: 1.5 },
   },
 
   // ── Deer Creek: Canyon Thermal (Arrowhead → Dam) ───────────────
@@ -323,20 +328,30 @@ function analyzeChain(chainKey, stationReadings, pressureGradient) {
 
   let phase = 'none', etaMinutes = null, confidence = 0, message = '';
 
+  // Estimate lakeshore speed from upstream using speed ratios
+  const ratios = def.speedRatios || {};
+  let estimatedTargetSpeed = null;
+  if (!targetNode?.fired && farthestFired?.speed > 0 && ratios[farthestFired.id]) {
+    estimatedTargetSpeed = Math.round((farthestFired.speed / ratios[farthestFired.id]) * 10) / 10;
+  }
+
   if (!pressureOk || firedCount === 0) {
     phase = 'none';
     message = !pressureOk ? 'Pressure gradient unfavorable' : 'No signal detected';
   } else if (targetNode?.fired) {
     phase = 'arrived';
     confidence = 95;
-    message = `${def.label} at ${targetNode.name}: ${safeToFixed(targetNode.speed, 1)} mph from ${targetNode.direction}°`;
+    message = `${def.label} at your launch: ${safeToFixed(targetNode.speed, 1)} mph from ${targetNode.direction}°`;
   } else if (farthestFired) {
     phase = 'propagating';
     const targetLag = getLag(chainKey, target.id);
     const sourceLag = getLag(chainKey, farthestFired.id);
     etaMinutes = Math.max(0, Math.round(targetLag - sourceLag));
     confidence = Math.min(90, 30 + firedCount * 20);
-    message = `${def.label} at ${farthestFired.name} (${safeToFixed(farthestFired.speed, 1)} mph) — ETA ${etaMinutes} min`;
+    const estStr = estimatedTargetSpeed != null
+      ? ` → expect ~${safeToFixed(estimatedTargetSpeed, 0)} mph at your launch`
+      : '';
+    message = `${farthestFired.name}: ${safeToFixed(farthestFired.speed, 1)} mph${estStr} — ETA ${etaMinutes} min`;
   }
 
   // Time-of-day adjustment
@@ -353,6 +368,7 @@ function analyzeChain(chainKey, stationReadings, pressureGradient) {
     message,
     confidence,
     etaMinutes,
+    estimatedTargetSpeed,
     pressureOk,
     firedCount,
     totalNodes: nodes.length,
