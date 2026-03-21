@@ -613,13 +613,19 @@ export async function backfillPWSHistory(redis, days = 90) {
   }
   const bf = sessions['pws:backfill'];
 
-  let endDate = null; // Start from most recent
+  // Resume from where we left off if we've backfilled before
+  let endDate = bf.oldestDate
+    ? new Date(new Date(bf.oldestDate).getTime() - 1000).toISOString()
+    : null;
   let daysProcessed = 0;
   let totalReadings = 0;
   let rateLimitHits = 0;
+  const startTime = Date.now();
+  const MAX_RUNTIME_MS = 250_000; // 250s — stay under Vercel's 300s limit
   const dailySummaries = [];
 
   while (daysProcessed < days) {
+    if (Date.now() - startTime > MAX_RUNTIME_MS) break;
     const { data, rateLimited } = await fetchAmbientPage(apiKey, appKey, endDate);
 
     if (rateLimited) {
@@ -738,14 +744,23 @@ export async function backfillPWSHistory(redis, days = 90) {
   bf.lastBackfill = new Date().toISOString();
   await redis('SET', 'prop:sessions', JSON.stringify(sessions));
 
+  const elapsed = Math.round((Date.now() - startTime) / 1000);
+  const timedOut = elapsed >= 250;
+
   return {
     daysProcessed,
+    totalDaysAnalyzed: bf.daysAnalyzed,
     totalReadings,
     daysWithWind: bf.daysWithWind,
     dateRange: { oldest: bf.oldestDate, newest: bf.newestDate },
     byActivity: bf.byActivity,
     recentDays: dailySummaries.slice(-10),
     rateLimitHits,
+    elapsedSeconds: elapsed,
+    complete: !timedOut && daysProcessed >= days,
+    message: timedOut
+      ? `Processed ${daysProcessed} days in ${elapsed}s (hit time limit). Run again to continue from ${bf.oldestDate}.`
+      : `Done — ${bf.daysAnalyzed} total days analyzed.`,
   };
 }
 

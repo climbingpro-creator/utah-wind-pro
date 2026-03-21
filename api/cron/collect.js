@@ -145,10 +145,10 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
 
   const action = req.query?.action;
-  const READ_ACTIONS = ['sync', 'weights', 'predictions', 'upstream', 'nws', 'ahead', 'analogs', 'models', 'propagation', 'pws-history'];
+  const READ_ACTIONS = ['sync', 'weights', 'predictions', 'upstream', 'nws', 'ahead', 'analogs', 'models', 'propagation', 'pws-history', 'backfill-pws'];
 
   // Expensive manual-trigger actions ALWAYS require auth (even if CRON_SECRET isn't set)
-  const PROTECTED_ACTIONS = ['backfill', 'build-models', 'backfill-pws'];
+  const PROTECTED_ACTIONS = ['backfill', 'build-models'];
   if (PROTECTED_ACTIONS.includes(action)) {
     const authHeader = req.headers['authorization'];
     const cronSecret = process.env.CRON_SECRET;
