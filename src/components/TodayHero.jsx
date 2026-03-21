@@ -36,32 +36,67 @@ function getActivityVerdict(id, speed, gust, thermalPrediction, _boatingPredicti
   const thermalEnd = thermal.endHour || 17;
   const prob = thermal.probability || 0;
 
-  // Get session duration estimate from propagation data
   const dominantChain = propagation?.dominant?.type;
   const session = dominantChain ? estimateSessionDuration(dominantChain) : null;
-  const sessionStr = session ? ` — ${sessionLabel(session.avgMinutes)} session` : '';
+  const estTargetSpeed = propagation?.chains?.[0]?.estimatedTargetSpeed;
 
-  if (good) {
-    if (cfg.wantsWind) {
-      // Check if session is too short to be worth rigging (< 45 min, learned data)
-      if (session?.source === 'learned' && session.avgMinutes < 45) {
-        return { status: 'caution', label: 'BRIEF', reason: `${Math.round(speed)} mph but avg session only ${session.avgMinutes} min`, color: 'amber' };
-      }
-      const ideal = cfg.thresholds?.ideal;
-      if (ideal && speed >= ideal.min && speed <= ideal.max) {
-        return { status: 'go', label: 'GO', reason: `${Math.round(speed)} mph — ideal range${sessionStr}`, color: 'emerald' };
-      }
-      return { status: 'go', label: 'GO', reason: `${Math.round(speed)} mph — conditions active${sessionStr}`, color: 'emerald' };
+  // For wind-seeking: check the ACTUAL speed at this launch, not an upstream proxy
+  // If we only have proxy data (FPS), use the ratio-adjusted estimate
+  const actualSpeed = speed;
+  const proxyWarning = estTargetSpeed != null && estTargetSpeed < speed * 0.8;
+
+  if (good && cfg.wantsWind) {
+    // SAFETY CHECK 1: Session too short — stranding risk
+    if (session?.source === 'learned' && session.avgMinutes < 45) {
+      return {
+        status: 'caution', label: 'BRIEF',
+        reason: `${Math.round(speed)} mph but avg session only ${session.avgMinutes} min — stranding risk`,
+        color: 'amber',
+      };
     }
+
+    // SAFETY CHECK 2: Speed is barely above threshold — marginal session
+    const minForActivity = cfg.thresholds?.tooLight || 6;
+    if (actualSpeed < minForActivity + 4 && actualSpeed >= minForActivity) {
+      const sessionStr = session ? ` — ${sessionLabel(session.avgMinutes)} expected` : '';
+      return {
+        status: 'caution', label: 'MARGINAL',
+        reason: `${Math.round(speed)} mph — barely rideable, may not sustain${sessionStr}`,
+        color: 'amber',
+      };
+    }
+
+    // SAFETY CHECK 3: Proxy mismatch — upstream reads higher than your launch
+    if (proxyWarning && estTargetSpeed != null) {
+      return {
+        status: 'caution', label: 'CHECK',
+        reason: `Upstream ${Math.round(speed)} mph → ~${Math.round(estTargetSpeed)} at your launch`,
+        color: 'amber',
+      };
+    }
+
+    // Passed all safety checks — confident GO
+    const sessionStr = session ? ` — ${sessionLabel(session.avgMinutes)} session` : '';
+    const ideal = cfg.thresholds?.ideal;
+    if (ideal && actualSpeed >= ideal.min && actualSpeed <= ideal.max) {
+      return { status: 'go', label: 'GO', reason: `${Math.round(speed)} mph — ideal range${sessionStr}`, color: 'emerald' };
+    }
+    return { status: 'go', label: 'GO', reason: `${Math.round(speed)} mph — conditions active${sessionStr}`, color: 'emerald' };
+  }
+
+  if (good && !cfg.wantsWind) {
+    const sessionStr = session ? ` — ${sessionLabel(session.avgMinutes)} window` : '';
     if (speed <= 2) return { status: 'go', label: 'GLASS', reason: `Mirror-flat water${sessionStr}`, color: 'emerald' };
-    return { status: 'go', label: 'GOOD', reason: `Light wind (${Math.round(speed)} mph) — still calm${sessionStr}`, color: 'lime' };
+    return { status: 'go', label: 'GOOD', reason: `Light wind (${Math.round(speed)} mph)${sessionStr}`, color: 'lime' };
   }
 
   if (cfg.wantsWind) {
     if (speed < (cfg.thresholds?.tooLight || 6)) {
       if (prob >= 50 && now < thermalEnd) {
-        const waitSession = session ? ` (${sessionLabel(session.avgMinutes)} expected)` : '';
-        return { status: 'wait', label: 'WAIT', reason: `${prob}% thermal by ${formatHour(thermalStart)}${waitSession}`, color: 'amber', window: formatHour(thermalStart) };
+        // Even when waiting, warn if the expected lakeshore speed won't be enough
+        const estStr = estTargetSpeed != null ? ` (~${Math.round(estTargetSpeed)} mph expected here)` : '';
+        const sessionStr = session ? ` — ${sessionLabel(session.avgMinutes)} if it arrives` : '';
+        return { status: 'wait', label: 'WAIT', reason: `${prob}% thermal by ${formatHour(thermalStart)}${estStr}${sessionStr}`, color: 'amber', window: formatHour(thermalStart) };
       }
       return { status: 'off', label: 'TOO LIGHT', reason: `${Math.round(speed)} mph — need ${cfg.thresholds?.tooLight || 6}+`, color: 'slate' };
     }

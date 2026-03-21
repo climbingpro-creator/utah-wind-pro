@@ -238,7 +238,7 @@ export default async function handler(req, res) {
           : null;
 
         // Analyze ALL spots, not just Utah Lake
-        const allPropagation = analyzeAllSpots(stations, ambientPWS, gradient);
+        allPropagation = analyzeAllSpots(stations, ambientPWS, gradient);
         propagationResult = analyzeFromStations(stations, ambientPWS, gradient);
 
         // Build station readings map for snapshot storage
@@ -249,6 +249,19 @@ export default async function handler(req, res) {
         if (ambientPWS) readings['PWS'] = ambientPWS;
 
         await storePropagationSnapshot(redisCommand, allPropagation, readings);
+
+        // Store PWS time series for real session duration learning at the actual launch
+        if (ambientPWS && ambientPWS.windSpeed != null) {
+          const date = now.toISOString().split('T')[0];
+          const pwsSnap = JSON.stringify({
+            t: now.toISOString(),
+            s: ambientPWS.windSpeed,
+            d: ambientPWS.windDirection,
+            g: ambientPWS.windGust,
+          });
+          await redisCommand('RPUSH', `pws:history:${date}`, pwsSnap);
+          await redisCommand('EXPIRE', `pws:history:${date}`, '172800');
+        }
 
         // Daily lag learning — run at 10 PM Mountain (5 AM UTC next day)
         const mtHour = toMountainHour(now);

@@ -420,6 +420,77 @@ export async function learnFromPropagation(redis) {
       }
     }
   }
+  // ── PWS ground truth session learning ──
+  // Use actual PWS time series (not chain proxy) for Utah Lake sessions
+  const pwsRaw = await redis('LRANGE', `pws:history:${date}`, '0', '-1');
+  if (pwsRaw && pwsRaw.length >= 4) {
+    const pwsReadings = pwsRaw.map(r => { try { return JSON.parse(r); } catch { return null; } }).filter(Boolean);
+
+    // Calculate real sessions at different thresholds from actual PWS data
+    const thresholds = { kiting: 10, foil: 8, paragliding: 5, light: 6 };
+    const pwsSessions = {};
+
+    for (const [activity, minSpeed] of Object.entries(thresholds)) {
+      let consecutiveAbove = 0;
+      let maxConsecutive = 0;
+      let peakInSession = 0;
+      let totalAbove = 0;
+
+      for (const r of pwsReadings) {
+        if (r.s >= minSpeed) {
+          consecutiveAbove++;
+          totalAbove++;
+          if (r.s > peakInSession) peakInSession = r.s;
+          if (consecutiveAbove > maxConsecutive) maxConsecutive = consecutiveAbove;
+        } else {
+          consecutiveAbove = 0;
+        }
+      }
+
+      // Each reading is ~15 min apart
+      const longestSessionMin = maxConsecutive * 15;
+      const totalMinAbove = totalAbove * 15;
+
+      pwsSessions[activity] = {
+        longestSessionMin,
+        totalMinAbove,
+        peakSpeed: Math.round(peakInSession * 10) / 10,
+        readings: pwsReadings.length,
+      };
+    }
+
+    // Store PWS session data and learn averages
+    if (!sessions['pws:actual']) {
+      sessions['pws:actual'] = { samples: 0, byActivity: {} };
+    }
+    const pa = sessions['pws:actual'];
+    pa.samples++;
+    for (const [activity, data] of Object.entries(pwsSessions)) {
+      if (!pa.byActivity[activity]) {
+        pa.byActivity[activity] = {
+          avgLongestSession: data.longestSessionMin,
+          avgTotalAbove: data.totalMinAbove,
+          avgPeak: data.peakSpeed,
+          samples: 1,
+        };
+      } else {
+        const a = pa.byActivity[activity];
+        const w = a.samples / (a.samples + 1);
+        a.avgLongestSession = Math.round(a.avgLongestSession * w + data.longestSessionMin * (1 - w));
+        a.avgTotalAbove = Math.round(a.avgTotalAbove * w + data.totalMinAbove * (1 - w));
+        a.avgPeak = Math.round((a.avgPeak * w + data.peakSpeed * (1 - w)) * 10) / 10;
+        a.samples++;
+      }
+    }
+
+    // Today's result for the event log
+    for (const ev of events) {
+      if (ev.lake?.startsWith('utah-lake')) {
+        ev.pwsSessions = pwsSessions;
+      }
+    }
+  }
+
   await redis('SET', 'prop:sessions', JSON.stringify(sessions));
 
   const eventSummary = { date, spots: events.filter(e => e.signaled).length, events };
@@ -475,9 +546,13 @@ export async function getPropagationData(redis) {
     };
   }
 
+  // PWS actual session stats
+  const pwsActual = sessions['pws:actual'] || null;
+
   return {
     lags,
     sessions,
+    pwsActual,
     recentEvents: events.slice(0, 10),
     hitRates,
     totalDaysTracked: events.length,
