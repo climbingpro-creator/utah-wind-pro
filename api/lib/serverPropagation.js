@@ -25,20 +25,20 @@ const SESSION_THRESHOLDS = {
 // ─── Chain definitions (mirrors client-side ThermalPropagation.js) ─
 
 const CHAIN_DEFS = {
-  'utah-lake:se_thermal': {
-    label: 'SE Thermal', target: 'PWS',
+  // ── KITEBOARDING: Zigzag ──
+  'zigzag:se_thermal': {
+    label: 'SE Thermal → Zigzag', target: 'PWS',
     nodes: [
       { id: 'QSF',  lag: -120, dir: [100, 180], speed: 6 },
       { id: 'KPVU', lag: -60,  dir: [120, 180], speed: 5 },
       { id: 'FPS',  lag: -30,  dir: [130, 180], speed: 8 },
       { id: 'PWS',  lag: 0,    dir: [100, 180], speed: 5 },
-      { id: 'UTALP',lag: 15,   dir: [130, 200], speed: 5 },
     ],
     pressure: { type: 'below', threshold: 2.0 },
     speedRatios: { FPS: 1.7 },
   },
-  'utah-lake:north_flow': {
-    label: 'North Flow', target: 'PWS',
+  'zigzag:north_flow': {
+    label: 'North Flow → Zigzag', target: 'PWS',
     nodes: [
       { id: 'KSLC', lag: -60, dir: [315, 45], speed: 8, wrap: true },
       { id: 'UTALP',lag: -30, dir: [315, 45], speed: 5, wrap: true },
@@ -48,8 +48,65 @@ const CHAIN_DEFS = {
     pressure: { type: 'above', threshold: -1.0 },
     speedRatios: { FPS: 1.5 },
   },
+  // ── KITEBOARDING: Lincoln Beach ──
+  'lincoln:se_thermal': {
+    label: 'SE Thermal → Lincoln Beach', target: 'KPVU',
+    nodes: [
+      { id: 'QSF',  lag: -90,  dir: [100, 180], speed: 6 },
+      { id: 'KPVU', lag: 0,    dir: [120, 180], speed: 5 },
+    ],
+    pressure: { type: 'below', threshold: 2.0 },
+  },
+  'lincoln:north_flow': {
+    label: 'North Flow → Lincoln Beach', target: 'KPVU',
+    nodes: [
+      { id: 'KSLC', lag: -90, dir: [315, 45], speed: 8, wrap: true },
+      { id: 'UTALP',lag: -60, dir: [315, 45], speed: 5, wrap: true },
+      { id: 'FPS',  lag: -30, dir: [315, 60], speed: 8, wrap: true },
+      { id: 'KPVU', lag: 0,   dir: [315, 45], speed: 5, wrap: true },
+    ],
+    pressure: { type: 'above', threshold: -1.0 },
+  },
+  // ── KITEBOARDING: Vineyard (east shore, S/SSW/W onshore) ──
+  'vineyard:sw_thermal': {
+    label: 'S/SW Onshore → Vineyard', target: 'FPS',
+    nodes: [
+      { id: 'QSF',  lag: -90, dir: [100, 250], speed: 6 },
+      { id: 'KPVU', lag: -45, dir: [150, 270], speed: 5 },
+      { id: 'FPS',  lag: 0,   dir: [150, 270], speed: 6 },
+    ],
+    speedRatios: { FPS: 1.3 },
+  },
+  // ── KITEBOARDING: MM19 (canyon drainage) ──
+  'mm19:canyon_drainage': {
+    label: 'Canyon Drainage → MM19', target: 'KPVU',
+    nodes: [
+      { id: 'QSF',  lag: -30, dir: [100, 170], speed: 6 },
+      { id: 'KPVU', lag: 0,   dir: [100, 170], speed: 5 },
+    ],
+  },
+  // ── PARAGLIDING: PotM South → FPS ──
+  'potm-south:se_thermal': {
+    label: 'SE Thermal → Flight Park South', target: 'FPS',
+    nodes: [
+      { id: 'QSF',  lag: -120, dir: [100, 180], speed: 6 },
+      { id: 'KPVU', lag: -60,  dir: [110, 250], speed: 5 },
+      { id: 'FPS',  lag: 0,    dir: [110, 250], speed: 8 },
+    ],
+    pressure: { type: 'below', threshold: 2.0 },
+  },
+  // ── PARAGLIDING: PotM North → UTALP ──
+  'potm-north:north_flow': {
+    label: 'North Flow → Flight Park North', target: 'UTALP',
+    nodes: [
+      { id: 'KSLC', lag: -60, dir: [315, 45], speed: 8, wrap: true },
+      { id: 'UTALP',lag: 0,   dir: [315, 45], speed: 5, wrap: true },
+    ],
+    pressure: { type: 'above', threshold: -1.0 },
+  },
+  // ── OTHER SPOTS ──
   'deer-creek:canyon_thermal': {
-    label: 'Canyon Thermal', target: 'DCC',
+    label: 'Canyon Thermal → Deer Creek', target: 'DCC',
     nodes: [
       { id: 'SND',  lag: -90, dir: [200, 230], speed: 12 },
       { id: 'UTPCY',lag: -45, dir: [170, 220], speed: 4 },
@@ -58,7 +115,7 @@ const CHAIN_DEFS = {
     ],
   },
   'willard-bay:south_flow': {
-    label: 'South Flow', target: 'UR328',
+    label: 'South Flow → Willard Bay', target: 'UR328',
     nodes: [
       { id: 'KSLC', lag: -90, dir: [150, 220], speed: 5 },
       { id: 'KHIF', lag: -60, dir: [150, 220], speed: 5 },
@@ -66,31 +123,15 @@ const CHAIN_DEFS = {
       { id: 'UR328',lag: 0,   dir: [170, 220], speed: 6 },
     ],
   },
-  'potm-south:se_thermal': {
-    label: 'SE Thermal', target: 'FPS',
-    nodes: [
-      { id: 'QSF',  lag: -120, dir: [100, 180], speed: 6 },
-      { id: 'KPVU', lag: -60,  dir: [110, 250], speed: 5 },
-      { id: 'FPS',  lag: 0,    dir: [110, 250], speed: 8 },
-    ],
-  },
-  'potm-north:north_flow': {
-    label: 'North Flow', target: 'FPS',
-    nodes: [
-      { id: 'KSLC', lag: -60, dir: [315, 45], speed: 8, wrap: true },
-      { id: 'UTALP',lag: -20, dir: [315, 45], speed: 5, wrap: true },
-      { id: 'FPS',  lag: 0,   dir: [320, 360], speed: 8, wrap: true },
-    ],
-  },
   'jordanelle:canyon_thermal': {
-    label: 'Canyon Thermal', target: 'KHCR',
+    label: 'Canyon Thermal → Jordanelle', target: 'KHCR',
     nodes: [
       { id: 'SND',  lag: -90, dir: [200, 230], speed: 10 },
       { id: 'KHCR', lag: 0,   dir: [180, 230], speed: 5 },
     ],
   },
   'strawberry:ridge_flow': {
-    label: 'Ridge Flow', target: 'UTCOP',
+    label: 'Ridge Flow → Strawberry', target: 'UTCOP',
     nodes: [
       { id: 'KSLC',  lag: -120, dir: [220, 300], speed: 5 },
       { id: 'KPVU',  lag: -90,  dir: [220, 300], speed: 5 },
@@ -99,14 +140,14 @@ const CHAIN_DEFS = {
     ],
   },
   'bear-lake:west_flow': {
-    label: 'West Wind', target: 'BERU1',
+    label: 'West Wind → Bear Lake', target: 'BERU1',
     nodes: [
       { id: 'KLGU',  lag: -60, dir: [250, 320], speed: 5 },
       { id: 'BERU1', lag: 0,   dir: [250, 320], speed: 6 },
     ],
   },
   'skyline:ridge_flow': {
-    label: 'Ridge Flow', target: 'SKY',
+    label: 'Ridge Flow → Skyline', target: 'SKY',
     nodes: [
       { id: 'KSLC',  lag: -120, dir: [220, 300], speed: 8 },
       { id: 'UTESU', lag: -30,  dir: [220, 300], speed: 8 },
@@ -116,11 +157,11 @@ const CHAIN_DEFS = {
 };
 
 const LAKE_CHAINS = {
-  'utah-lake-zigzag':   ['utah-lake:se_thermal', 'utah-lake:north_flow'],
-  'utah-lake-lincoln':  ['utah-lake:se_thermal', 'utah-lake:north_flow'],
-  'utah-lake-sandy':    ['utah-lake:se_thermal', 'utah-lake:north_flow'],
-  'utah-lake-vineyard': ['utah-lake:se_thermal', 'utah-lake:north_flow'],
-  'utah-lake-mm19':     ['utah-lake:se_thermal', 'utah-lake:north_flow'],
+  'utah-lake-zigzag':   ['zigzag:se_thermal', 'zigzag:north_flow'],
+  'utah-lake-lincoln':  ['lincoln:se_thermal', 'lincoln:north_flow'],
+  'utah-lake-sandy':    ['lincoln:se_thermal', 'lincoln:north_flow'],
+  'utah-lake-vineyard': ['vineyard:sw_thermal'],
+  'utah-lake-mm19':     ['mm19:canyon_drainage'],
   'deer-creek':         ['deer-creek:canyon_thermal'],
   'jordanelle':         ['jordanelle:canyon_thermal'],
   'willard-bay':        ['willard-bay:south_flow'],

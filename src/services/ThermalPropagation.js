@@ -20,27 +20,27 @@ import { safeToFixed } from '../utils/safeToFixed';
 // dir.wrap means the range crosses 360° (e.g., 315–45 for north)
 
 const CHAIN_DEFS = {
-  // ── Utah Lake: SE Thermal (S → N along lakeshore) ──────────────
-  // FPS reads 1.5-2x higher than Zigzag lakeshore due to terrain funneling.
-  // PWS threshold set to 5 (actual lakeshore onset) — system learns the rest.
-  'utah-lake:se_thermal': {
-    label: 'SE Thermal',
+  // ═══════════════════════════════════════════════════════════════
+  //  KITEBOARDING CHAINS — target = actual water launch
+  // ═══════════════════════════════════════════════════════════════
+
+  // ── Zigzag: SE Thermal → PWS (your station at the beach) ──────
+  'zigzag:se_thermal': {
+    label: 'SE Thermal → Zigzag',
     flowDir: 'S → N',
     nodes: [
       { id: 'QSF',  name: 'Spanish Fork Canyon', role: 'Canyon mouth catches SE flow first', lagMinutes: -120, dir: [100, 180], speed: 6 },
       { id: 'KPVU', name: 'Provo Airport',        role: 'Valley floor confirmation',         lagMinutes: -60,  dir: [120, 180], speed: 5 },
       { id: 'FPS',  name: 'Flight Park South',     role: 'Ridge-amplified — reads 1.5-2x lakeshore', lagMinutes: -30,  dir: [130, 180], speed: 8 },
       { id: 'PWS',  name: 'Zigzag (Your Station)', role: 'Ground truth at your launch',       lagMinutes: 0,    dir: [100, 180], speed: 5 },
-      { id: 'UTALP',name: 'Point of Mountain',     role: 'Spill through the gap',             lagMinutes: 15,   dir: [130, 200], speed: 5 },
     ],
     pressureCheck: { type: 'below', threshold: 2.0 },
-    // Learned speed ratios: FPS/PWS. Updated by server from daily data.
     speedRatios: { FPS: 1.7 },
   },
 
-  // ── Utah Lake: North Flow (N → S through gap) ──────────────────
-  'utah-lake:north_flow': {
-    label: 'North Flow',
+  // ── Zigzag: North Flow → PWS ──────────────────────────────────
+  'zigzag:north_flow': {
+    label: 'North Flow → Zigzag',
     flowDir: 'N → S',
     nodes: [
       { id: 'KSLC', name: 'SLC Airport',           role: 'Great Salt Lake outflow',        lagMinutes: -60, dir: [315, 45], speed: 8, wrap: true },
@@ -52,9 +52,88 @@ const CHAIN_DEFS = {
     speedRatios: { FPS: 1.5 },
   },
 
+  // ── Lincoln Beach: SE Thermal → KPVU (ground truth for south end) ─
+  'lincoln:se_thermal': {
+    label: 'SE Thermal → Lincoln Beach',
+    flowDir: 'S → N',
+    nodes: [
+      { id: 'QSF',  name: 'Spanish Fork Canyon', role: 'Canyon mouth SE origin',          lagMinutes: -90,  dir: [100, 180], speed: 6 },
+      { id: 'KPVU', name: 'Provo Airport',        role: 'Target — closest station to Lincoln', lagMinutes: 0, dir: [120, 180], speed: 5 },
+    ],
+    pressureCheck: { type: 'below', threshold: 2.0 },
+  },
+
+  // ── Lincoln Beach: North Flow → KPVU ──────────────────────────
+  'lincoln:north_flow': {
+    label: 'North Flow → Lincoln Beach',
+    flowDir: 'N → S',
+    nodes: [
+      { id: 'KSLC', name: 'SLC Airport',       role: 'Great Salt Lake outflow',        lagMinutes: -90, dir: [315, 45], speed: 8, wrap: true },
+      { id: 'UTALP',name: 'Point of Mountain',  role: 'Gap wind passing through PotM',  lagMinutes: -60, dir: [315, 45], speed: 5, wrap: true },
+      { id: 'FPS',  name: 'Flight Park South',  role: 'Flow past the ridge',            lagMinutes: -30, dir: [315, 60], speed: 8, wrap: true },
+      { id: 'KPVU', name: 'Provo Airport',       role: 'Target — arrival at south end',  lagMinutes: 0,   dir: [315, 45], speed: 5, wrap: true },
+    ],
+    pressureCheck: { type: 'above', threshold: -1.0 },
+  },
+
+  // ── Vineyard: S/SSW/W Thermal (onshore from east shore) → FPS proxy ─
+  'vineyard:sw_thermal': {
+    label: 'S/SW Onshore → Vineyard',
+    flowDir: 'S → N',
+    nodes: [
+      { id: 'QSF',  name: 'Spanish Fork Canyon', role: 'Southern flow origin',           lagMinutes: -90,  dir: [100, 250], speed: 6 },
+      { id: 'KPVU', name: 'Provo Airport',        role: 'Valley floor S/SW confirmation', lagMinutes: -45,  dir: [150, 270], speed: 5 },
+      { id: 'FPS',  name: 'Flight Park South',    role: 'Target proxy — nearest to Vineyard', lagMinutes: 0, dir: [150, 270], speed: 6 },
+    ],
+    pressureCheck: null,
+    speedRatios: { FPS: 1.3 },
+  },
+
+  // ── MM19: SE/E Canyon Drainage → QSF as primary driver ───────
+  'mm19:canyon_drainage': {
+    label: 'Canyon Drainage → MM19',
+    flowDir: 'SE → NW',
+    nodes: [
+      { id: 'QSF',  name: 'Spanish Fork Canyon', role: 'Canyon drainage is primary wind source', lagMinutes: -30, dir: [100, 170], speed: 6 },
+      { id: 'KPVU', name: 'Provo Airport',        role: 'Valley floor confirmation',              lagMinutes: 0,  dir: [100, 170], speed: 5 },
+    ],
+    pressureCheck: null,
+  },
+
+  // ═══════════════════════════════════════════════════════════════
+  //  PARAGLIDING CHAINS — target = actual flight launch
+  // ═══════════════════════════════════════════════════════════════
+
+  // ── PotM South: SE Thermal → FPS (south PG launch) ────────────
+  'potm-south:se_thermal': {
+    label: 'SE Thermal → Flight Park South',
+    flowDir: 'S → N',
+    nodes: [
+      { id: 'QSF',  name: 'Spanish Fork Canyon', role: 'Canyon mouth SE indicator',      lagMinutes: -120, dir: [100, 180], speed: 6 },
+      { id: 'KPVU', name: 'Provo Airport',        role: 'Valley floor SE confirmation',   lagMinutes: -60,  dir: [110, 250], speed: 5 },
+      { id: 'FPS',  name: 'Flight Park South',    role: 'Target — south PG launch',       lagMinutes: 0,    dir: [110, 250], speed: 8 },
+    ],
+    pressureCheck: { type: 'below', threshold: 2.0 },
+  },
+
+  // ── PotM North: North Flow → UTALP (north PG launch) ─────────
+  'potm-north:north_flow': {
+    label: 'North Flow → Flight Park North',
+    flowDir: 'N → S',
+    nodes: [
+      { id: 'KSLC', name: 'SLC Airport',           role: 'North wind source — GSL outflow', lagMinutes: -60, dir: [315, 45], speed: 8, wrap: true },
+      { id: 'UTALP',name: 'Point of Mountain North',role: 'Target — north PG launch',       lagMinutes: 0,   dir: [315, 45], speed: 5, wrap: true },
+    ],
+    pressureCheck: { type: 'above', threshold: -1.0 },
+  },
+
+  // ═══════════════════════════════════════════════════════════════
+  //  OTHER SPOTS
+  // ═══════════════════════════════════════════════════════════════
+
   // ── Deer Creek: Canyon Thermal (Arrowhead → Dam) ───────────────
   'deer-creek:canyon_thermal': {
-    label: 'Canyon Thermal',
+    label: 'Canyon Thermal → Deer Creek',
     flowDir: 'Ridge → Dam',
     nodes: [
       { id: 'SND',  name: 'Arrowhead Summit',  role: 'Ridge trigger — SSW flow at 8252 ft',   lagMinutes: -90, dir: [200, 230], speed: 12 },
@@ -67,7 +146,7 @@ const CHAIN_DEFS = {
 
   // ── Willard Bay: South Flow (SLC → Ogden → Willard) ───────────
   'willard-bay:south_flow': {
-    label: 'South Flow',
+    label: 'South Flow → Willard Bay',
     flowDir: 'S → N',
     nodes: [
       { id: 'KSLC', name: 'SLC Airport',    role: 'Valley-wide south flow origin',     lagMinutes: -90, dir: [150, 220], speed: 5 },
@@ -78,33 +157,9 @@ const CHAIN_DEFS = {
     pressureCheck: null,
   },
 
-  // ── Point of Mountain South: SE Thermal (paragliding) ──────────
-  'potm-south:se_thermal': {
-    label: 'SE Thermal',
-    flowDir: 'S → N',
-    nodes: [
-      { id: 'QSF',  name: 'Spanish Fork Canyon', role: 'Canyon mouth SE indicator',      lagMinutes: -120, dir: [100, 180], speed: 6 },
-      { id: 'KPVU', name: 'Provo Airport',        role: 'Valley floor SE confirmation',   lagMinutes: -60,  dir: [110, 250], speed: 5 },
-      { id: 'FPS',  name: 'Flight Park South',    role: 'Target — south launch',          lagMinutes: 0,    dir: [110, 250], speed: 8 },
-    ],
-    pressureCheck: { type: 'below', threshold: 2.0 },
-  },
-
-  // ── Point of Mountain North: North Flow (paragliding) ──────────
-  'potm-north:north_flow': {
-    label: 'North Flow',
-    flowDir: 'N → S',
-    nodes: [
-      { id: 'KSLC', name: 'SLC Airport',       role: 'North wind source',               lagMinutes: -60, dir: [315, 45], speed: 8, wrap: true },
-      { id: 'UTALP',name: 'Point of Mountain',  role: 'Gap acceleration indicator',      lagMinutes: -20, dir: [315, 45], speed: 5, wrap: true },
-      { id: 'FPS',  name: 'Flight Park South',  role: 'Target — north side launch',      lagMinutes: 0,   dir: [320, 360], speed: 8, wrap: true },
-    ],
-    pressureCheck: { type: 'above', threshold: -1.0 },
-  },
-
-  // ── Jordanelle: Canyon Thermal (similar to Deer Creek) ─────────
+  // ── Jordanelle: Canyon Thermal ─────────────────────────────────
   'jordanelle:canyon_thermal': {
-    label: 'Canyon Thermal',
+    label: 'Canyon Thermal → Jordanelle',
     flowDir: 'Ridge → Valley',
     nodes: [
       { id: 'SND',  name: 'Arrowhead Summit',  role: 'Ridge trigger — SSW flow',        lagMinutes: -90, dir: [200, 230], speed: 10 },
@@ -115,7 +170,7 @@ const CHAIN_DEFS = {
 
   // ── Strawberry: Ridge Flow (W wind from Wasatch) ───────────────
   'strawberry:ridge_flow': {
-    label: 'Ridge Flow',
+    label: 'Ridge Flow → Strawberry',
     flowDir: 'W → E',
     nodes: [
       { id: 'KSLC',  name: 'SLC Airport',       role: 'Wasatch front west flow',         lagMinutes: -120, dir: [220, 300], speed: 5 },
@@ -128,7 +183,7 @@ const CHAIN_DEFS = {
 
   // ── Bear Lake: West Wind (Logan → Bear Lake) ──────────────────
   'bear-lake:west_flow': {
-    label: 'West Wind',
+    label: 'West Wind → Bear Lake',
     flowDir: 'W → E',
     nodes: [
       { id: 'KLGU',  name: 'Logan Airport',    role: 'Cache Valley west flow indicator', lagMinutes: -60, dir: [250, 320], speed: 5 },
@@ -139,7 +194,7 @@ const CHAIN_DEFS = {
 
   // ── Skyline Drive: Ridge Flow (snowkite) ───────────────────────
   'skyline:ridge_flow': {
-    label: 'Ridge Flow',
+    label: 'Ridge Flow → Skyline',
     flowDir: 'W → E',
     nodes: [
       { id: 'KSLC', name: 'SLC Airport',       role: 'Wasatch front indicator',          lagMinutes: -120, dir: [220, 300], speed: 8 },
@@ -150,15 +205,15 @@ const CHAIN_DEFS = {
   },
 };
 
-// ─── Map: lakeId → which chains apply ─────────────────────────────
+// ─── Map: lakeId → which chains apply to THAT specific launch ────
 
 const LAKE_CHAINS = {
-  'utah-lake':          ['utah-lake:se_thermal', 'utah-lake:north_flow'],
-  'utah-lake-zigzag':   ['utah-lake:se_thermal', 'utah-lake:north_flow'],
-  'utah-lake-lincoln':  ['utah-lake:se_thermal', 'utah-lake:north_flow'],
-  'utah-lake-sandy':    ['utah-lake:se_thermal', 'utah-lake:north_flow'],
-  'utah-lake-vineyard': ['utah-lake:se_thermal', 'utah-lake:north_flow'],
-  'utah-lake-mm19':     ['utah-lake:se_thermal', 'utah-lake:north_flow'],
+  'utah-lake':          ['zigzag:se_thermal', 'zigzag:north_flow'],
+  'utah-lake-zigzag':   ['zigzag:se_thermal', 'zigzag:north_flow'],
+  'utah-lake-lincoln':  ['lincoln:se_thermal', 'lincoln:north_flow'],
+  'utah-lake-sandy':    ['lincoln:se_thermal', 'lincoln:north_flow'],
+  'utah-lake-vineyard': ['vineyard:sw_thermal'],
+  'utah-lake-mm19':     ['mm19:canyon_drainage'],
   'deer-creek':         ['deer-creek:canyon_thermal'],
   'jordanelle':         ['jordanelle:canyon_thermal'],
   'willard-bay':        ['willard-bay:south_flow'],
