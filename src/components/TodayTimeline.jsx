@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Clock, Wind, Navigation, Sun, Sunset, ChevronRight } from 'lucide-react';
+import { Clock, Wind, Navigation, ChevronRight } from 'lucide-react';
 import { apiUrl } from '../utils/platform';
 import { ACTIVITY_CONFIGS } from './ActivityMode';
+import { getHourlyForecast } from '../services/ForecastService';
 
 const LAKE_TO_GRID = {
   'utah-lake-lincoln': 'utah-lake', 'utah-lake-sandy': 'utah-lake',
@@ -29,6 +30,15 @@ const LAKE_TO_GRID = {
   'starvation': 'vernal', 'steinaker': 'vernal',
   'red-fleet': 'vernal', 'flaming-gorge': 'vernal',
 };
+
+const DIR_TO_DEG = {
+  N: 0, NNE: 22, NE: 45, ENE: 67, E: 90, ESE: 112,
+  SE: 135, SSE: 157, S: 180, SSW: 202, SW: 225, WSW: 247,
+  W: 270, WNW: 292, NW: 315, NNW: 337,
+};
+function dirToDeg(dir) {
+  return DIR_TO_DEG[dir] ?? 0;
+}
 
 function formatHour(h) {
   if (h === 0) return '12a';
@@ -104,6 +114,8 @@ export default function TodayTimeline({ locationId = 'utah-lake', activity = 'ki
   const [loading, setLoading] = useState(true);
   const scrollRef = useRef(null);
 
+  const [clientHourly, setClientHourly] = useState(null);
+
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
@@ -111,8 +123,45 @@ export default function TodayTimeline({ locationId = 'utah-lake', activity = 'ki
         const resp = await fetch(apiUrl('/api/cron/collect?action=nws'));
         const data = await resp.json();
         if (!cancelled) setNwsData(data);
+
+        const gridId = LAKE_TO_GRID[locationId] || 'utah-lake';
+        const serverHourly = data?.grids?.[gridId]?.hourly;
+        if ((!serverHourly || serverHourly.length === 0) && !cancelled) {
+          const hours = await getHourlyForecast(locationId);
+          if (hours && !cancelled) {
+            setClientHourly(hours.map(h => {
+              const dt = new Date(h.startTime);
+              return {
+                localHour: dt.getHours(),
+                speed: h.windSpeed,
+                dir: h.windDirection,
+                dirDeg: dirToDeg(h.windDirection),
+                temp: h.temperature,
+                text: h.shortForecast,
+              };
+            }));
+          }
+        }
       } catch (e) {
         console.error('TodayTimeline load error:', e);
+        try {
+          const hours = await getHourlyForecast(locationId);
+          if (hours && !cancelled) {
+            setClientHourly(hours.map(h => {
+              const dt = new Date(h.startTime);
+              return {
+                localHour: dt.getHours(),
+                speed: h.windSpeed,
+                dir: h.windDirection,
+                dirDeg: dirToDeg(h.windDirection),
+                temp: h.temperature,
+                text: h.shortForecast,
+              };
+            }));
+          }
+        } catch (e2) {
+          console.error('TodayTimeline client fallback error:', e2);
+        }
       }
       if (!cancelled) setLoading(false);
     };
@@ -122,7 +171,9 @@ export default function TodayTimeline({ locationId = 'utah-lake', activity = 'ki
   }, [locationId]);
 
   const gridId = LAKE_TO_GRID[locationId] || 'utah-lake';
-  const allHourly = nwsData?.grids?.[gridId]?.hourly || [];
+  const allHourly = (nwsData?.grids?.[gridId]?.hourly?.length > 0
+    ? nwsData.grids[gridId].hourly
+    : clientHourly) || [];
   const nowHour = new Date().getHours();
 
   const todayHours = useMemo(() => {
