@@ -40,6 +40,31 @@ function dirToDeg(dir) {
   return DIR_TO_DEG[dir] ?? 0;
 }
 
+const SPOT_NAMES = {
+  'utah-lake': 'Utah Lake', 'utah-lake-lincoln': 'Lincoln Beach',
+  'utah-lake-sandy': 'Sandy Beach', 'utah-lake-vineyard': 'Vineyard',
+  'utah-lake-zigzag': 'Zig Zag', 'utah-lake-mm19': 'Mile Marker 19',
+  'potm-south': 'PotM South', 'potm-north': 'PotM North',
+  'deer-creek': 'Deer Creek', 'jordanelle': 'Jordanelle',
+  'willard-bay': 'Willard Bay', 'bear-lake': 'Bear Lake',
+  'pineview': 'Pineview', 'rush-lake': 'Rush Lake',
+  'grantsville': 'Grantsville', 'east-canyon': 'East Canyon',
+  'echo': 'Echo', 'rockport': 'Rockport',
+  'strawberry-ladders': 'Strawberry Ladders', 'strawberry-bay': 'Strawberry Bay',
+  'strawberry-soldier': 'Soldier Creek', 'strawberry-view': 'The View',
+  'strawberry-river': 'The River', 'skyline-drive': 'Skyline Drive',
+  'scofield': 'Scofield', 'sand-hollow': 'Sand Hollow',
+  'quail-creek': 'Quail Creek', 'lake-powell': 'Lake Powell',
+  'starvation': 'Starvation', 'steinaker': 'Steinaker',
+  'red-fleet': 'Red Fleet', 'flaming-gorge': 'Flaming Gorge',
+  'inspo': 'Inspiration Point', 'west-mountain': 'West Mountain',
+  'stockton-bar': 'Stockton Bar', 'powder-mountain': 'Powder Mountain',
+  'monte-cristo': 'Monte Cristo', 'hyrum': 'Hyrum',
+  'otter-creek': 'Otter Creek', 'fish-lake': 'Fish Lake',
+  'minersville': 'Minersville', 'piute': 'Piute',
+  'panguitch': 'Panguitch', 'yuba': 'Yuba',
+};
+
 function formatHour(h) {
   if (h === 0) return '12a';
   if (h < 12) return `${h}a`;
@@ -219,6 +244,8 @@ export default function TodayTimeline({ locationId = 'utah-lake', activity = 'ki
           <div className="flex items-center gap-2">
             <Clock size={18} className="text-sky-400" />
             <h3 className="font-bold text-white text-base">Today's Wind</h3>
+            <span className="text-sm text-slate-400">—</span>
+            <span className="text-sm font-medium text-sky-400">{SPOT_NAMES[locationId] || locationId}</span>
           </div>
           {nwsData?.fetchedAt && (
             <span className="text-xs text-slate-500">
@@ -305,9 +332,9 @@ export default function TodayTimeline({ locationId = 'utah-lake', activity = 'ki
                   <div className="w-1.5 h-1.5 rounded-full bg-sky-400 mt-0.5" />
                 )}
 
-                {/* Temperature (if available) */}
+                {/* Temperature */}
                 {h.temp != null && (
-                  <span className="text-[10px] text-slate-600 mt-0.5">{Math.round(h.temp)}°</span>
+                  <span className="text-xs font-medium text-slate-400 mt-0.5">{Math.round(h.temp)}°</span>
                 )}
               </div>
             );
