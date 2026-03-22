@@ -718,11 +718,13 @@ class LearningSystem {
         '80-100': { predicted: 0, actualKiteable: 0 },
       },
       
-      // Wind type accuracy
       windTypeAccuracy: {
         thermal: { correct: 0, total: 0 },
         north_flow: { correct: 0, total: 0 },
         calm: { correct: 0, total: 0 },
+        postfrontal: { correct: 0, total: 0 },
+        clearing_wind: { correct: 0, total: 0 },
+        frontal_passage: { correct: 0, total: 0 },
       },
       
       // Time of day patterns
@@ -1084,6 +1086,21 @@ class LearningSystem {
       const rate = northFlowAccuracy.correct / northFlowAccuracy.total;
       const target = currentWeights.pressureWeight * (0.5 + rate * 0.5);
       newWeights.pressureWeight = currentWeights.pressureWeight + (target - currentWeights.pressureWeight) * lerpRate;
+    }
+
+    // ─── CONDITION-SPECIFIC PRESSURE GRADIENT ADJUSTMENT ─────
+    const { conditionErrors } = errorAnalysis;
+    if (conditionErrors.highPressureGradient.length >= 3) {
+      const avgHigh = conditionErrors.highPressureGradient.reduce((s, v) => s + v, 0) / conditionErrors.highPressureGradient.length;
+      if (avgHigh < 50) {
+        newWeights.pressureWeight = Math.min(0.55, newWeights.pressureWeight + 0.03 * lerpRate);
+      }
+    }
+    if (conditionErrors.lowPressureGradient.length >= 3) {
+      const avgLow = conditionErrors.lowPressureGradient.reduce((s, v) => s + v, 0) / conditionErrors.lowPressureGradient.length;
+      if (avgLow < 50) {
+        newWeights.thermalWeight = Math.min(0.55, newWeights.thermalWeight + 0.03 * lerpRate);
+      }
     }
 
     // ─── PER-LOCATION BIAS from user feedback ─────────────────

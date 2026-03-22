@@ -261,7 +261,7 @@ export function getSessionThresholds() {
 export function estimateSessionDuration(chainKey, activity) {
   // Priority 1: Real PWS backfill data (3 years of actual history)
   const backfillRaw = typeof localStorage !== 'undefined' && localStorage.getItem('propagation:pwsBackfill');
-  if (backfillRaw && chainKey.startsWith('utah-lake')) {
+  if (backfillRaw) {
     try {
       const bf = JSON.parse(backfillRaw);
       const actKey = activity === 'foil_kiting' ? 'foil_kiting'
@@ -321,7 +321,7 @@ export function isSessionViable(activity, chainKey, currentSpeed) {
   const threshold = SESSION_THRESHOLDS[activity];
   if (!threshold) return { viable: true, reason: 'Unknown activity' };
 
-  const est = estimateSessionDuration(chainKey);
+  const est = estimateSessionDuration(chainKey, activity);
   const minimumRequired = threshold.minDuration;
 
   // Wind-seeking activities need speed above min
@@ -505,16 +505,9 @@ export function analyzePropagation(stationReadings, options = {}) {
     },
   };
 
-  // For backward compat with PropagationTracker, expose first two chains as seThermal/northFlow
-  if (chains.length >= 1) result.seThermal = chains[0];
-  if (chains.length >= 2) result.northFlow = chains[1];
-  // If only one chain, set the other to "none" so UI still works
-  if (chains.length === 1) {
-    result[chains[0] === result.seThermal ? 'northFlow' : 'seThermal'] = {
-      phase: 'none', confidence: 0, nodes: [], firedCount: 0, totalNodes: 0, pressureOk: true,
-      label: '', message: '', chainKey: '',
-    };
-  }
+  const emptyChain = { phase: 'none', confidence: 0, nodes: [], firedCount: 0, totalNodes: 0, pressureOk: true, label: '', message: '', chainKey: '' };
+  result.seThermal = chains.find(c => c.type?.includes('thermal') || c.type?.includes('se_thermal') || c.type?.includes('sw_thermal') || c.type?.includes('canyon')) || emptyChain;
+  result.northFlow = chains.find(c => c.type?.includes('north_flow') || c.type?.includes('postfrontal') || c.type?.includes('ridge')) || emptyChain;
 
   return result;
 }

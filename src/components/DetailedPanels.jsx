@@ -240,6 +240,7 @@ export default function DetailedPanels({
             }}
             currentWind={{ speed: currentWindSpeed, direction: currentWindDirection }}
             translationFactor={0.55}
+            pressureGradient={lakeState?.pressureGradient}
           />
         </SafeComponent>
 

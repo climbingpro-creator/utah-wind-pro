@@ -1039,13 +1039,18 @@ function verifyPredictions(predictions, actualStations, lakeStationMap) {
       nwsScore = Math.round(nScore * 100) / 100;
     }
 
+    const dirRange = pred.expectedDirection;
+    const expectedDirMid = dirRange ? ((dirRange[0] + dirRange[1]) / 2) % 360 : null;
+
     results.push({
       lakeId,
       eventType: pred.eventType,
       predicted: pred.probability,
       actualSpeed,
+      actualDir: primary.windDirection ?? null,
       actualDirection: primary.windDirection,
       expectedSpeedMid: (expMin + expMax) / 2,
+      expectedDirMid,
       predictionHour: pred.predictionHour ?? null,
       score: Math.round(score * 100) / 100,
       nwsScore,
@@ -1091,10 +1096,14 @@ function updateWeights(currentWeights, newAccuracy) {
     }
     ew.baseProbMod = Math.max(-25, Math.min(25, ew.baseProbMod));
 
-    // Speed bias: track systematic over/under prediction
     if (record.actualSpeed != null && record.expectedSpeedMid != null) {
       const speedErr = record.actualSpeed - record.expectedSpeedMid;
       ew.speedBias = ew.speedBias * 0.95 + speedErr * 0.05;
+    }
+
+    if (record.actualDir != null && record.expectedDirMid != null) {
+      const dirErr = angleDiff(record.actualDir, record.expectedDirMid);
+      ew.dirBias = (ew.dirBias || 0) * 0.95 + dirErr * 0.05;
     }
 
     const hour = record.predictionHour ?? toMountainHour(new Date(record.timestamp));

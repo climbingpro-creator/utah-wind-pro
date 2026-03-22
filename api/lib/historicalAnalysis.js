@@ -641,7 +641,7 @@ function buildLagCorrelations(allStations) {
 function buildGradientThresholds(events) {
   const thresholds = {};
 
-  const eventTypes = ['frontal_passage', 'north_flow', 'thermal_cycle', 'glass', 'clearing_wind'];
+  const eventTypes = ['frontal_passage', 'north_flow', 'thermal_cycle', 'glass', 'clearing_wind', 'post_frontal', 'pre_frontal'];
   for (const type of eventTypes) {
     const typeEvents = events.filter(e => e.type === type && e.pressureTrend != null);
     if (typeEvents.length < 10) continue;

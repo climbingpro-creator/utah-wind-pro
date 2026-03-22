@@ -28,13 +28,13 @@ const URGENCY_STYLES = {
   },
 };
 
-export default function PropagationBanner({ locationId, stationReadings, currentWind, translationFactor }) {
+export default function PropagationBanner({ locationId, stationReadings, currentWind, translationFactor, pressureGradient }) {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 
   const alerts = useMemo(() =>
-    scanForPropagation(locationId, stationReadings || {}, currentWind || {}, translationFactor || 0.55),
-    [locationId, stationReadings, currentWind, translationFactor]
+    scanForPropagation(locationId, stationReadings || {}, currentWind || {}, translationFactor || 0.55, pressureGradient),
+    [locationId, stationReadings, currentWind, translationFactor, pressureGradient]
   );
 
   if (alerts.length === 0) return null;

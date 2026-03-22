@@ -5,7 +5,7 @@ import { ACTIVITY_CONFIGS } from './ActivityMode';
 import { getRotatingImage } from '../config/imagePool';
 import { estimateSessionDuration } from '../services/ThermalPropagation';
 
-const ALL_ACTIVITIES = ['kiting', 'paragliding', 'sailing', 'snowkiting', 'boating', 'paddling', 'fishing'];
+const ALL_ACTIVITIES = ['kiting', 'paragliding', 'sailing', 'snowkiting', 'boating', 'paddling', 'fishing', 'windsurfing'];
 
 function formatHour(h) {
   if (h === 0 || h === 24) return '12 AM';
@@ -38,7 +38,12 @@ function getActivityVerdict(id, speed, gust, thermalPrediction, _boatingPredicti
 
   const dominantChain = propagation?.dominant?.type;
   const session = dominantChain ? estimateSessionDuration(dominantChain, id) : null;
-  const estTargetSpeed = propagation?.chains?.[0]?.estimatedTargetSpeed;
+
+  const dominantChainData = propagation?.chains?.find(c => c.type === dominantChain);
+  const estTargetSpeed = dominantChainData?.estimatedTargetSpeed ?? propagation?.chains?.[0]?.estimatedTargetSpeed;
+
+  const isNorthFlow = dominantChain?.includes('north_flow') || dominantChain?.includes('postfrontal');
+  const isNonThermalWind = isNorthFlow || (prob < 20 && speed >= (cfg.thresholds?.tooLight || 6));
 
   // For wind-seeking: check the ACTUAL speed at this launch, not an upstream proxy
   // If we only have proxy data (FPS), use the ratio-adjusted estimate
@@ -92,8 +97,11 @@ function getActivityVerdict(id, speed, gust, thermalPrediction, _boatingPredicti
 
   if (cfg.wantsWind) {
     if (speed < (cfg.thresholds?.tooLight || 6)) {
+      if (isNorthFlow && prob >= 30) {
+        const estStr = estTargetSpeed != null ? ` (~${Math.round(estTargetSpeed)} mph expected)` : '';
+        return { status: 'wait', label: 'BUILDING', reason: `North flow developing — ${prob}% chance${estStr}`, color: 'amber' };
+      }
       if (prob >= 50 && now < thermalEnd) {
-        // Even when waiting, warn if the expected lakeshore speed won't be enough
         const estStr = estTargetSpeed != null ? ` (~${Math.round(estTargetSpeed)} mph expected here)` : '';
         const sessionStr = session ? ` — ${sessionLabel(session.avgMinutes)} if it arrives` : '';
         return { status: 'wait', label: 'WAIT', reason: `${prob}% thermal by ${formatHour(thermalStart)}${estStr}${sessionStr}`, color: 'amber', window: formatHour(thermalStart) };
@@ -110,6 +118,9 @@ function getActivityVerdict(id, speed, gust, thermalPrediction, _boatingPredicti
   } else {
     if (speed >= 15) return { status: 'off', label: 'ROUGH', reason: `${Math.round(speed)} mph — waves`, color: 'red' };
     if (speed >= 8) {
+      if (isNonThermalWind) {
+        return { status: 'off', label: 'CHOPPY', reason: `${Math.round(speed)} mph north flow — extended wind likely`, color: 'orange' };
+      }
       const calmAfter = thermalEnd + 1;
       if (calmAfter < 21 && now < calmAfter) {
         return { status: 'wait', label: 'WINDY', reason: `Calm expected after ${formatHour(calmAfter)}`, color: 'amber', window: `After ${formatHour(calmAfter)}` };

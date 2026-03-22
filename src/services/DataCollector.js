@@ -204,16 +204,15 @@ class DataCollector {
       const localWeights = await learningSystem.getCurrentWeights();
       const merged = this._mergeWeights(localWeights, weights);
 
-      // Push merged weights to all predictors
       if (merged) {
         setLearnedWeights(merged);
         setWindFieldLearnedWeights(merged);
         if (merged.windEventPatterns || merged.eventWeights) {
           setWindEventLearnedPatterns(merged.windEventPatterns || merged.eventWeights);
         }
-        setParaglidingLearnedWeights(merged);
-        setBoatingLearnedWeights(merged);
-        setFishingLearnedWeights(merged);
+        setParaglidingLearnedWeights({ ...merged, activity: 'paragliding' });
+        setBoatingLearnedWeights({ ...merged, activity: 'boating' });
+        setFishingLearnedWeights({ ...merged, activity: 'fishing' });
       }
 
       const totalServerPredictions = meta?.totalPredictions ?? 0;
@@ -410,7 +409,7 @@ class DataCollector {
                 fishing: scoreSessionForActivity('fishing', wind, conditions),
                 boating: scoreSessionForActivity('boating', wind, conditions),
               },
-            });
+            }, reading.timestamp || reading.dateTime);
             recordCount++;
           }
         }

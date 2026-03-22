@@ -1465,10 +1465,11 @@ export function predictThermal(lakeId, currentConditions) {
     }
   }
   
-  // Phase adjustment
-  if (phase === 'ended') {
+  // Phase adjustment — but north flow operates outside thermal timing
+  const hasActiveNorthFlow = northFlowStatus === 'strong' || northFlowStatus === 'moderate' || northFlowStatus === 'sustained';
+  if (phase === 'ended' && !hasActiveNorthFlow) {
     probability = 0;
-  } else if (phase === 'pre-thermal' && currentHour < 5) {
+  } else if (phase === 'pre-thermal' && currentHour < 5 && !hasActiveNorthFlow) {
     probability *= 0.3;
   }
   
@@ -1488,18 +1489,22 @@ export function predictThermal(lakeId, currentConditions) {
   let predictionMessage = '';
   let willHaveThermal = null;
   
+  const windLabel = hasActiveNorthFlow ? 'north flow wind' : 'SE thermal';
+
   if (probability >= 60) {
     willHaveThermal = true;
-    predictionMessage = `High probability (${probability}%) of SE thermal`;
+    predictionMessage = `High probability (${probability}%) of ${windLabel}`;
   } else if (probability >= 30) {
     willHaveThermal = null;
-    predictionMessage = `Moderate chance (${probability}%) - conditions developing`;
+    predictionMessage = hasActiveNorthFlow
+      ? `Moderate chance (${probability}%) of north flow developing`
+      : `Moderate chance (${probability}%) - conditions developing`;
   } else if (probability > 0) {
     willHaveThermal = false;
     predictionMessage = `Low probability (${probability}%) - conditions unfavorable`;
   } else {
     willHaveThermal = false;
-    if (phase === 'ended') {
+    if (phase === 'ended' && !hasActiveNorthFlow) {
       predictionMessage = `0% - Thermal window closed for today`;
     } else if (pressureStatus === 'bust') {
       predictionMessage = `0% - Pressure gradient unfavorable (historical: 0% success when SLC > PVU)`;

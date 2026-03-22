@@ -50,7 +50,7 @@ function formatETA(minutesFromNow) {
  * @param {number} translationFactor - from WindFieldEngine (0-1)
  * @returns {Array} propagation alerts, sorted by urgency
  */
-export function scanForPropagation(locationId, stationReadings = {}, currentWind = {}, translationFactor = 0.55) {
+export function scanForPropagation(locationId, stationReadings = {}, currentWind = {}, translationFactor = 0.55, pressureGradient = null) {
   const locConfig = LOCATION_STATIONS[locationId];
   if (!locConfig) return [];
 
@@ -58,7 +58,6 @@ export function scanForPropagation(locationId, stationReadings = {}, currentWind
   const lakeSpeed = currentWind?.speed || 0;
   const now = Date.now();
 
-  // Find all edges where upstream has active wind heading toward this location
   const relevantEdges = PROPAGATION_EDGES.filter(edge => {
     const upstream = new Set([...(locConfig.upstreamNorth || []), ...(locConfig.upstreamThermal || [])]);
     return upstream.has(edge.from);
@@ -70,6 +69,13 @@ export function scanForPropagation(locationId, stationReadings = {}, currentWind
 
     const dirMatch = isInHeadingRange(reading.direction, edge.headingRange);
     if (!dirMatch) continue;
+
+    const isNorthDir = reading.direction >= 270 || reading.direction <= 60;
+    const isThermalDir = reading.direction >= 130 && reading.direction <= 220;
+    if (pressureGradient != null) {
+      if (isNorthDir && pressureGradient < -1.5) continue;
+      if (isThermalDir && pressureGradient > 2.5) continue;
+    }
 
     // Wind is active upstream and heading the right direction
     const expectedArrival = reading.speed * edge.attenuation * edge.channeling * translationFactor;
@@ -85,13 +91,9 @@ export function scanForPropagation(locationId, stationReadings = {}, currentWind
     const dirLabel = getCardinal(reading.direction);
     const eta = formatETA(edge.delay);
 
-    // Determine alert type
-    const isNorth = reading.direction >= 270 || reading.direction <= 60;
-    const isThermal = reading.direction >= 130 && reading.direction <= 220;
-
     let type, icon;
-    if (isNorth) { type = 'north_flow'; icon = '🌬️'; }
-    else if (isThermal) { type = 'thermal_push'; icon = '🌡️'; }
+    if (isNorthDir) { type = 'north_flow'; icon = '🌬️'; }
+    else if (isThermalDir) { type = 'thermal_push'; icon = '🌡️'; }
     else { type = 'wind_event'; icon = '💨'; }
 
     alerts.push({

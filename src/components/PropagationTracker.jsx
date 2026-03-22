@@ -76,8 +76,9 @@ function PropagationChain({ type, data }) {
 
   const phaseCfg = PHASE_CONFIG[data.phase] || PHASE_CONFIG.none;
   const PhaseIcon = phaseCfg.icon;
-  const label = data.label || (type === 'se_thermal' ? 'SE Thermal' : 'North Flow');
-  const chainDir = data.flowDir || (type === 'se_thermal' ? 'S → N' : 'N → S');
+  const isThermalChain = type?.includes('thermal') || type?.includes('canyon') || type?.includes('sw_');
+  const label = data.label || (isThermalChain ? 'SE Thermal' : 'North Flow');
+  const chainDir = data.flowDir || (isThermalChain ? 'S → N' : 'N → S');
 
   return (
     <div className={`rounded-xl ${phaseCfg.bg} border ${phaseCfg.border} p-3 sm:p-4 transition-all duration-300`}>
