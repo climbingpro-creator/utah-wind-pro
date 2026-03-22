@@ -311,6 +311,11 @@ export function Dashboard() {
           propagation={lakeState?.propagation}
         />
 
+        {/* Spot Selector — pick your spot, see the forecast */}
+        {!activityConfig?.hideLakeSelector && (
+          <LakeSelector selectedLake={selectedLake} onSelectLake={setSelectedLake} stationReadings={lakeState?.wind?.stations} activity={selectedActivity} />
+        )}
+
         {/* Today's Hourly Wind Timeline */}
         <SafeComponent name="Today Timeline">
           <TodayTimeline locationId={selectedLake} activity={selectedActivity} />
@@ -394,10 +399,7 @@ export function Dashboard() {
           </SafeComponent>
         )}
 
-        {/* Only show lake selector for water sports (not paragliding or fishing) */}
-        {!activityConfig?.hideLakeSelector && (
-          <LakeSelector selectedLake={selectedLake} onSelectLake={setSelectedLake} stationReadings={lakeState?.wind?.stations} activity={selectedActivity} />
-        )}
+        {/* Lake selector moved up near TodayHero */}
 
         {/* Live Wind Vectors — station readings at a glance */}
         <div aria-live="polite" aria-atomic="false">
