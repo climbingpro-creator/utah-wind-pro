@@ -7,37 +7,168 @@
  * 
  * This engine sees ALL of them at once and resolves conflicts.
  * 
- * When the thermal predictor says 72% and the frontal detector says a cold front
- * is 30 minutes away — this engine knows the thermal is about to die.
+ * It also performs multi-station valley analysis — reading KSLC, KPVU, FPS,
+ * UTALP, QSF, and PWS together to detect valley-wide patterns that no single
+ * station can reveal: postfrontal clearing, synoptic wind events, and coherent
+ * flow regimes that the thermal-only model completely misses.
  * 
- * When pressure is falling, upstream stations show NW wind, and local temperature
- * just dropped 5°F — this engine knows it's not a thermal day, it's a north flow day.
- * 
- * Signal convergence = high confidence. Signal divergence = uncertainty.
- * The truth is in the agreement between independent systems.
+ * Signal convergence measures how strongly independent sensors AGREE about
+ * what is happening — whether that's thermal, clearing, or calm.
  */
 
 import { safeToFixed } from '../utils/safeToFixed';
 
+// NW/N clearing window: 270° (W) through 360° (N) through 45° (NE)
+const CLEARING_DIR_MIN = 270;
+const CLEARING_DIR_MAX = 45;
+const CLEARING_MIN_SPEED = 5;
+
+const VALLEY_STATIONS = ['KSLC', 'KPVU', 'FPS', 'UTALP', 'QSF'];
+
+function isInClearingRange(dir) {
+  if (dir == null) return false;
+  return dir >= CLEARING_DIR_MIN || dir <= CLEARING_DIR_MAX;
+}
+
+function getCardinal(deg) {
+  if (deg == null) return '?';
+  const dirs = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE',
+    'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+  return dirs[Math.round(deg / 22.5) % 16];
+}
+
+function angleDiff(a, b) {
+  let d = Math.abs(a - b) % 360;
+  return d > 180 ? 360 - d : d;
+}
+
+function extractStationWind(obj) {
+  if (!obj) return null;
+  const speed = obj.windSpeed ?? obj.speed ?? null;
+  const dir = obj.windDirection ?? obj.direction ?? null;
+  if (speed == null && dir == null) return null;
+  return { speed: speed ?? 0, dir: dir ?? null };
+}
+
+/**
+ * Analyze the full valley station network for coherent wind patterns.
+ * Looks at KSLC, KPVU, FPS, UTALP, QSF, and PWS simultaneously.
+ *
+ * Returns { pattern, stationsInAgreement, stationsChecked, dominantDir,
+ *           avgSpeed, clearingConfidence, stationDetails }
+ */
+function analyzeValleyWind(mesoData, lakeState) {
+  const result = {
+    pattern: 'insufficient_data',
+    stationsInAgreement: 0,
+    stationsChecked: 0,
+    dominantDir: null,
+    avgSpeed: 0,
+    clearingConfidence: 0,
+    stationDetails: [],
+  };
+
+  const readings = [];
+
+  for (const id of VALLEY_STATIONS) {
+    let data = mesoData?.[id] || null;
+    if (!data) {
+      const stations = lakeState?.wind?.stations || mesoData?.stations || [];
+      data = stations.find(s => s.id === id || s.stationId === id) || null;
+    }
+    const w = extractStationWind(data);
+    if (w && w.dir != null) {
+      readings.push({ id, ...w });
+      result.stationDetails.push({ id, speed: w.speed, dir: w.dir, cardinal: getCardinal(w.dir) });
+    }
+  }
+
+  const pws = lakeState?.pws;
+  if (pws) {
+    const w = extractStationWind(pws);
+    if (w && w.dir != null) {
+      readings.push({ id: 'PWS', ...w });
+      result.stationDetails.push({ id: 'PWS', speed: w.speed, dir: w.dir, cardinal: getCardinal(w.dir) });
+    }
+  }
+
+  result.stationsChecked = readings.length;
+  if (readings.length < 2) return result;
+
+  const clearingStations = readings.filter(
+    r => isInClearingRange(r.dir) && r.speed >= CLEARING_MIN_SPEED
+  );
+  result.stationsInAgreement = clearingStations.length;
+
+  if (clearingStations.length >= 3) {
+    const avgSpd = clearingStations.reduce((s, r) => s + r.speed, 0) / clearingStations.length;
+    const dirs = clearingStations.map(r => r.dir);
+    const avgDir = averageDirection(dirs);
+
+    result.pattern = 'nw_clearing';
+    result.dominantDir = avgDir;
+    result.avgSpeed = avgSpd;
+    result.clearingConfidence = Math.min(95,
+      40 + (clearingStations.length / readings.length) * 30 + Math.min(avgSpd, 20) * 1.5
+    );
+    return result;
+  }
+
+  const withWind = readings.filter(r => r.speed >= CLEARING_MIN_SPEED);
+  if (withWind.length >= 2) {
+    const dirs = withWind.map(r => r.dir);
+    const spread = maxDirectionSpread(dirs);
+
+    if (spread <= 90) {
+      const avgSpd = withWind.reduce((s, r) => s + r.speed, 0) / withWind.length;
+      const avgDir = averageDirection(dirs);
+      result.pattern = 'coherent_flow';
+      result.dominantDir = avgDir;
+      result.avgSpeed = avgSpd;
+      result.stationsInAgreement = withWind.length;
+      result.clearingConfidence = Math.min(80,
+        30 + (withWind.length / readings.length) * 25 + Math.min(avgSpd, 15)
+      );
+      return result;
+    }
+  }
+
+  result.pattern = 'variable';
+  return result;
+}
+
+function averageDirection(dirs) {
+  let sinSum = 0, cosSum = 0;
+  for (const d of dirs) {
+    const rad = (d * Math.PI) / 180;
+    sinSum += Math.sin(rad);
+    cosSum += Math.cos(rad);
+  }
+  let avg = (Math.atan2(sinSum, cosSum) * 180) / Math.PI;
+  if (avg < 0) avg += 360;
+  return Math.round(avg);
+}
+
+function maxDirectionSpread(dirs) {
+  let maxSpread = 0;
+  for (let i = 0; i < dirs.length; i++) {
+    for (let j = i + 1; j < dirs.length; j++) {
+      const diff = angleDiff(dirs[i], dirs[j]);
+      if (diff > maxSpread) maxSpread = diff;
+    }
+  }
+  return maxSpread;
+}
+
 /**
  * Synthesize all prediction signals into a unified intelligence report.
- *
- * @param {object} params
- * @param {object} params.lakeState - Full lake state from useLakeData
- * @param {object} params.correlation - Output from CorrelationEngine
- * @param {object} params.boatingPrediction - Output from BoatingPredictor
- * @param {Array}  params.swingAlerts - Output from monitorSwings
- * @param {object} params.mesoData - Normalized station data
- * @param {string} params.lakeId - Current lake ID
- * @param {object} [params.pressureHistory] - Pressure history for trend analysis
- * @returns {object} Unified intelligence report
  */
 export function synthesize({
   lakeState,
   correlation,
   boatingPrediction,
   swingAlerts = [],
-  mesoData: _mesoData,
+  mesoData,
   lakeId: _lakeId,
   pressureHistory: _pressureHistory,
 }) {
@@ -50,8 +181,10 @@ export function synthesize({
   const conflicts = [];
   let confidenceMultiplier = 1.0;
 
+  // ─── VALLEY-WIDE PATTERN ANALYSIS ────────────────────────────────
+  const valleyWind = analyzeValleyWind(mesoData, lakeState);
+
   // ─── SIGNAL COLLECTION ──────────────────────────────────────────
-  // Each signal is { source, type, strength (0-1), direction ('bullish'|'bearish'|'neutral'), detail }
 
   // 1. Thermal prediction
   const thermalProb = thermal.probability ?? 0;
@@ -75,7 +208,7 @@ export function synthesize({
       source: 'pressure',
       type: isNorthFlow ? 'north_flow' : isThermalFavorable ? 'thermal_favorable' : 'neutral',
       strength: Math.min(1, absGrad / 3),
-      detail: `ΔP ${gradient > 0 ? '+' : ''}${safeToFixed(gradient, 2)} mb`,
+      detail: `\u0394P ${gradient > 0 ? '+' : ''}${safeToFixed(gradient, 2)} mb`,
       raw: { gradient },
     });
   }
@@ -87,7 +220,7 @@ export function synthesize({
       source: 'frontal',
       type: 'bearish',
       strength: isCritical ? 0.9 : 0.6,
-      detail: alert.label + (alert.detail ? ` — ${alert.detail}` : ''),
+      detail: alert.label + (alert.detail ? ` \u2014 ${alert.detail}` : ''),
       raw: alert,
     });
   }
@@ -129,66 +262,105 @@ export function synthesize({
     });
   }
 
-  // ─── CONFLICT DETECTION ─────────────────────────────────────────
-  // When independent signals disagree, flag it and adjust confidence
+  // 7. Valley-wide multi-station pattern
+  if (valleyWind.pattern === 'nw_clearing') {
+    const dirLabel = getCardinal(valleyWind.dominantDir);
+    signals.push({
+      source: 'valley_pattern',
+      type: 'clearing',
+      strength: Math.min(1, valleyWind.clearingConfidence / 100),
+      detail: `${valleyWind.stationsInAgreement}/${valleyWind.stationsChecked} stations ${dirLabel} at ${Math.round(valleyWind.avgSpeed)}+ mph`,
+      raw: valleyWind,
+    });
+  } else if (valleyWind.pattern === 'coherent_flow') {
+    const dirLabel = getCardinal(valleyWind.dominantDir);
+    signals.push({
+      source: 'valley_pattern',
+      type: 'coherent',
+      strength: Math.min(1, valleyWind.clearingConfidence / 100),
+      detail: `${valleyWind.stationsInAgreement} stations aligned ${dirLabel} at ${Math.round(valleyWind.avgSpeed)} mph`,
+      raw: valleyWind,
+    });
+  }
 
-  const hasFrontalAlert = swingAlerts.some(a => 
+  // ─── CONFLICT DETECTION ─────────────────────────────────────────
+
+  const hasFrontalAlert = swingAlerts.some(a =>
     a.id === 'frontal-hit' || a.id === 'rapid-cool' || a.id === 'wind-shift'
   );
   const hasHighThermal = thermalProb >= 50;
   const hasNorthFlowPressure = gradient != null && gradient > 1.5;
 
-  // Conflict: Thermal says go, but front is hitting
   if (hasHighThermal && hasFrontalAlert) {
     conflicts.push({
       id: 'thermal-vs-frontal',
       severity: 'critical',
       message: 'Thermal prediction conflicts with active frontal passage',
-      resolution: 'Frontal signals override — thermal cycle likely disrupted',
+      resolution: 'Frontal signals override \u2014 thermal cycle likely disrupted',
       adjustedProbability: Math.min(thermalProb, 20),
     });
     confidenceMultiplier *= 0.3;
   }
 
-  // Conflict: Thermal says go, but pressure says north flow
   if (hasHighThermal && hasNorthFlowPressure) {
     conflicts.push({
       id: 'thermal-vs-northflow',
       severity: 'high',
       message: 'Thermal prediction conflicts with strong N-S pressure gradient',
-      resolution: 'North flow dominates — expect NW wind, not thermal SE',
+      resolution: 'North flow dominates \u2014 expect NW wind, not thermal SE',
       adjustedProbability: Math.min(thermalProb, 15),
     });
     confidenceMultiplier *= 0.4;
   }
 
-  // Conflict: Glass prediction but wind is already up
   if (boatingPrediction?.probability >= 50 && currentSpeed >= 10) {
     conflicts.push({
       id: 'glass-vs-wind',
       severity: 'medium',
       message: 'Glass predicted but current wind is already elevated',
-      resolution: 'Wait for wind to die — glass window may be later',
+      resolution: 'Wait for wind to die \u2014 glass window may be later',
     });
     confidenceMultiplier *= 0.7;
   }
 
   // ─── SIGNAL CONVERGENCE SCORE ──────────────────────────────────
-  // When multiple independent signals agree, confidence is high.
-  // When they disagree, confidence drops.
+  // Measures how strongly independent signals AGREE — regardless of
+  // whether they agree on thermal, clearing, or calm. High convergence
+  // means the system is confident in its classification.
 
-  const bullishCount = signals.filter(s => s.type === 'bullish' || s.type === 'thermal_favorable').length;
-  const bearishCount = signals.filter(s => s.type === 'bearish' || s.type === 'north_flow').length;
   const totalSignals = signals.length || 1;
 
-  const agreement = Math.abs(bullishCount - bearishCount) / totalSignals;
-  const convergenceScore = Math.round(agreement * 100);
+  const windPositiveCount = signals.filter(s =>
+    s.type === 'bullish' || s.type === 'thermal_favorable' ||
+    s.type === 'windy' || s.type === 'clearing' || s.type === 'coherent' ||
+    s.type === 'north_flow'
+  ).length;
+  const calmCount = signals.filter(s =>
+    s.type === 'calm' || (s.type === 'bearish' && s.source === 'thermal')
+  ).length;
+  const uncertainCount = totalSignals - windPositiveCount - calmCount;
 
-  // Dominant regime detection
+  const dominantGroupSize = Math.max(windPositiveCount, calmCount, uncertainCount);
+  const convergenceScore = Math.round((dominantGroupSize / totalSignals) * 100);
+
+  // ─── DOMINANT REGIME DETECTION ──────────────────────────────────
+
   let regime = 'uncertain';
   let regimeConfidence = 0;
 
-  if (hasNorthFlowPressure && !hasHighThermal) {
+  const isPostfrontalClearing = valleyWind.pattern === 'nw_clearing'
+    && valleyWind.avgSpeed >= 8
+    && thermalProb < 40;
+
+  const isSynopticWind = !isPostfrontalClearing
+    && valleyWind.pattern === 'coherent_flow'
+    && valleyWind.avgSpeed >= 6
+    && currentSpeed != null && currentSpeed >= 5;
+
+  if (isPostfrontalClearing) {
+    regime = 'postfrontal';
+    regimeConfidence = Math.round(valleyWind.clearingConfidence);
+  } else if (hasNorthFlowPressure && !hasHighThermal) {
     regime = 'north_flow';
     regimeConfidence = Math.min(95, 60 + (gradient ?? 0) * 10);
   } else if (hasFrontalAlert) {
@@ -197,6 +369,9 @@ export function synthesize({
   } else if (thermalProb >= 60 && !hasFrontalAlert && !hasNorthFlowPressure) {
     regime = 'thermal';
     regimeConfidence = thermalProb;
+  } else if (isSynopticWind) {
+    regime = 'synoptic_wind';
+    regimeConfidence = Math.round(valleyWind.clearingConfidence);
   } else if (boatingPrediction?.isGlass || (currentSpeed != null && currentSpeed < 3 && thermalProb < 30)) {
     regime = 'glass';
     regimeConfidence = boatingPrediction?.probability ?? 70;
@@ -209,15 +384,13 @@ export function synthesize({
   }
 
   // ─── ADJUSTED PROBABILITY ──────────────────────────────────────
-  // The thermal probability, adjusted by frontal/pressure overrides
   const criticalConflict = conflicts.find(c => c.adjustedProbability != null);
   const adjustedThermalProbability = criticalConflict
     ? criticalConflict.adjustedProbability
     : thermalProb;
 
   // ─── NARRATIVE ─────────────────────────────────────────────────
-  // Human-readable intelligence summary
-  const narrative = buildNarrative(regime, regimeConfidence, signals, conflicts, thermal, currentSpeed, gradient);
+  const narrative = buildNarrative(regime, regimeConfidence, signals, conflicts, thermal, currentSpeed, gradient, valleyWind);
 
   return {
     signals,
@@ -230,26 +403,45 @@ export function synthesize({
     narrative,
     signalCount: signals.length,
     hasConflicts: conflicts.length > 0,
+    valleyWind,
   };
 }
 
-function buildNarrative(regime, confidence, signals, conflicts, thermal, currentSpeed, gradient) {
+function buildNarrative(regime, confidence, signals, conflicts, thermal, currentSpeed, gradient, valleyWind) {
   const lines = [];
 
   switch (regime) {
+    case 'postfrontal': {
+      const dirLabel = getCardinal(valleyWind?.dominantDir);
+      const count = valleyWind?.stationsInAgreement ?? 0;
+      const total = valleyWind?.stationsChecked ?? 0;
+      const avgSpd = Math.round(valleyWind?.avgSpeed ?? 0);
+      lines.push(`Postfrontal clearing wind \u2014 ${dirLabel} flow confirmed across ${count}/${total} stations.`);
+      lines.push(`Valley averaging ${avgSpd} mph. Sustained wind as post-frontal high builds.`);
+      lines.push('Not thermal-driven \u2014 this is synoptic clearing wind.');
+      break;
+    }
+    case 'synoptic_wind': {
+      const dirLabel = getCardinal(valleyWind?.dominantDir);
+      const count = valleyWind?.stationsInAgreement ?? 0;
+      const avgSpd = Math.round(valleyWind?.avgSpeed ?? 0);
+      lines.push(`Synoptic wind pattern active \u2014 ${count} stations confirm ${dirLabel} flow at ${avgSpd} mph.`);
+      lines.push('Non-thermal wind event. Valley-wide pattern tracking.');
+      break;
+    }
     case 'north_flow':
-      lines.push(`North flow regime dominant (ΔP ${(gradient ?? 0) > 0 ? '+' : ''}${(gradient ?? 0).toFixed(1)} mb).`);
+      lines.push(`North flow regime dominant (\u0394P ${(gradient ?? 0) > 0 ? '+' : ''}${(gradient ?? 0).toFixed(1)} mb).`);
       lines.push('Expect sustained NW-N wind. Thermal cycle suppressed.');
       break;
     case 'frontal':
       lines.push('Active frontal passage detected.');
-      lines.push('Conditions changing rapidly — expect wind shift and temperature drop.');
+      lines.push('Conditions changing rapidly \u2014 expect wind shift and temperature drop.');
       break;
     case 'thermal':
-      lines.push(`Thermal cycle active — ${confidence}% confidence.`);
+      lines.push(`Thermal cycle active \u2014 ${confidence}% confidence.`);
       if (thermal.startHour) {
         const h = thermal.startHour;
-        lines.push(`Peak window: ${h > 12 ? h - 12 : h}${h >= 12 ? 'PM' : 'AM'} – ${h + 3 > 12 ? h + 3 - 12 : h + 3}${h + 3 >= 12 ? 'PM' : 'AM'}`);
+        lines.push(`Peak window: ${h > 12 ? h - 12 : h}${h >= 12 ? 'PM' : 'AM'} \u2013 ${h + 3 > 12 ? h + 3 - 12 : h + 3}${h + 3 >= 12 ? 'PM' : 'AM'}`);
       }
       break;
     case 'glass':
@@ -257,19 +449,19 @@ function buildNarrative(regime, confidence, signals, conflicts, thermal, current
       lines.push('Ideal for boating, paddling, and fishing.');
       break;
     case 'building':
-      lines.push(`Conditions building — ${confidence}% thermal probability.`);
+      lines.push(`Conditions building \u2014 ${confidence}% thermal probability.`);
       lines.push('Wind may develop. Monitor upstream indicators.');
       break;
     default:
-      lines.push('Transitional weather pattern — multiple signals, low convergence.');
+      lines.push('Transitional weather pattern \u2014 multiple signals, low convergence.');
       lines.push('Conditions may change. Check back in 30 minutes.');
   }
 
   if (conflicts.length > 0) {
     lines.push('');
-    lines.push(`⚠ ${conflicts.length} signal conflict${conflicts.length > 1 ? 's' : ''} detected:`);
+    lines.push(`\u26A0 ${conflicts.length} signal conflict${conflicts.length > 1 ? 's' : ''} detected:`);
     for (const c of conflicts) {
-      lines.push(`  • ${c.resolution}`);
+      lines.push(`  \u2022 ${c.resolution}`);
     }
   }
 
@@ -284,7 +476,7 @@ export function isRegimeSuitable(regime, activity) {
   const calmActivities = ['boating', 'paddling', 'fishing'];
 
   if (windActivities.includes(activity)) {
-    return regime === 'thermal' || regime === 'north_flow' || regime === 'frontal' || regime === 'building';
+    return ['thermal', 'north_flow', 'frontal', 'building', 'postfrontal', 'synoptic_wind'].includes(regime);
   }
   if (calmActivities.includes(activity)) {
     return regime === 'glass' || regime === 'transitional';
