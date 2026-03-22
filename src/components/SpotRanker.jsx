@@ -36,17 +36,14 @@ const SPOTS = [
       const loc = LOCATION_STATIONS[id];
       const gt = cfg.stations?.groundTruth;
 
-      // Zig Zag has its own PWS — use that as the ground truth meter.
-      // For other spots with a real MesoWest groundTruth, prefer that.
-      // Otherwise fall back to WindFieldEngine primary → lakeshore[0].
-      const hasPWS = gt?.id === 'PWS' && id === 'utah-lake-zigzag';
+      const hasPWS = gt?.id === 'PWS';
       const hasLocalGT = gt?.id && gt.id !== 'PWS';
       const primaryId = hasPWS ? 'PWS'
         : hasLocalGT ? gt.id
         : loc?.primary || cfg.stations?.lakeshore?.[0]?.id || gt?.id;
 
       const primaryNode = primaryId && STATION_NODES[primaryId];
-      const primaryName = hasPWS ? 'Zig Zag (Your Station)'
+      const primaryName = hasPWS ? (gt?.name || 'Zigzag PWS')
         : primaryNode?.name
         || cfg.stations?.lakeshore?.find(s => s.id === primaryId)?.name
         || gt?.name
