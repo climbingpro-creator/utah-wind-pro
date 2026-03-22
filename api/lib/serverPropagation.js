@@ -17,9 +17,12 @@ const SESSION_THRESHOLDS = {
   kiting:      { minSpeed: 10, minDuration: 45 },
   foil_kiting: { minSpeed: 8,  minDuration: 45 },
   sailing:     { minSpeed: 8,  minDuration: 45 },
+  windsurfing: { minSpeed: 8,  minDuration: 45 },
+  snowkiting:  { minSpeed: 10, minDuration: 45 },
   paragliding: { minSpeed: 5,  minDuration: 45 },
   fishing:     { maxSpeed: 12, minDuration: 60 },
   boating:     { maxSpeed: 8,  minDuration: 60 },
+  paddling:    { maxSpeed: 6,  minDuration: 60 },
 };
 
 // ─── Chain definitions (mirrors client-side ThermalPropagation.js) ─
@@ -566,8 +569,12 @@ function analyzeDaySessions(readings) {
   const thresholds = {
     kiting:      { minSpeed: 10, label: 'Kiting 10+' },
     foil_kiting: { minSpeed: 8,  label: 'Foil 8+' },
+    sailing:     { minSpeed: 8,  label: 'Sailing 8+' },
+    windsurfing: { minSpeed: 8,  label: 'Windsurf 8+' },
     paragliding: { minSpeed: 5,  label: 'PG 5+' },
     light_wind:  { minSpeed: 6,  label: 'Light 6+' },
+    boating:     { maxSpeed: 8,  label: 'Glass <8' },
+    paddling:    { maxSpeed: 6,  label: 'Calm <6' },
   };
 
   const result = {};
@@ -585,7 +592,8 @@ function analyzeDaySessions(readings) {
       const spd = r.windspeedmph ?? r.windSpeed ?? 0;
       const ts = new Date(r.dateutc ?? r.date).getTime();
 
-      if (spd >= cfg.minSpeed) {
+      const meetsThreshold = cfg.maxSpeed != null ? spd <= cfg.maxSpeed : spd >= cfg.minSpeed;
+      if (meetsThreshold) {
         if (!sessionStart) {
           sessionStart = ts;
           currentSessionPeak = spd;

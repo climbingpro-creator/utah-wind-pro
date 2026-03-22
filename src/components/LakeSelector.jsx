@@ -25,7 +25,7 @@ const SKYLINE_SPOT = { id: 'skyline-drive', name: 'Skyline Drive', wind: 'W/NW',
 const OTHER_LAKES = [
   { id: 'deer-creek', name: 'Deer Creek', region: 'Wasatch', wind: 'SW Canyon', meter: 'KHCR', meterName: 'Heber Airport' },
   { id: 'willard-bay', name: 'Willard Bay', region: 'Box Elder', wind: 'S Flow', meter: 'KHIF', meterName: 'Hill AFB' },
-  { id: 'pineview', name: 'Pineview', region: 'Weber', wind: 'E/W Canyon', meter: null, meterName: null },
+  { id: 'pineview', name: 'Pineview', region: 'Weber', wind: 'E/W Canyon', meter: 'KOGD', meterName: 'Ogden Airport' },
 ];
 
 // ─── VERIFIED KITING SPOTS ────────────────────────────────────
@@ -48,7 +48,7 @@ const SNOWKITE_EXTRA = [
 // UHGPGA, Point of the Mountain Paragliding, twocanfly.com verified
 const PARAGLIDING_SITES = [
   { id: 'potm-south', name: 'PotM — South Side', wind: 'S/SE', direction: '150-200°', meter: 'FPS', desc: '#1 US training site — 300 ft vertical, morning south', position: '4,900 ft', rating: 'P2+' },
-  { id: 'potm-north', name: 'PotM — North Side', wind: 'N/NW', direction: '320-360°', meter: 'FPS', desc: '900-1200 ft vertical, two ridges, afternoon north', position: '5,200 ft', rating: 'P2+' },
+  { id: 'potm-north', name: 'PotM — North Side', wind: 'N/NW', direction: '320-360°', meter: 'UTALP', desc: '900-1200 ft vertical, two ridges, afternoon north', position: '5,200 ft', rating: 'P2+' },
   { id: 'inspo', name: 'Inspiration Point', wind: 'W/SW', direction: '220-280°', meter: 'KPVU', desc: 'P3+ — mountain thermals, restricted LZs, midday turbulence', position: '6,667 ft', rating: 'P3+' },
   { id: 'west-mountain', name: 'West Mountain', wind: 'W/NW', direction: '260-330°', meter: 'KPVU', desc: 'Large LZs, 7-10 min flights, good XC intro', position: '5,500 ft', rating: 'P2+' },
   { id: 'stockton-bar', name: 'Stockton Bar', wind: 'N', direction: '340-20°', meter: 'KSLC', desc: 'Bonneville ridge soaring — afternoon north wind', position: '5,100 ft', rating: 'P2+' },
@@ -73,7 +73,7 @@ const LAKE_REGIONS = [
     icon: '🏔️',
     lakes: [
       { id: 'willard-bay', name: 'Willard Bay', wind: 'S Flow', meter: 'KHIF', fish: '🐟 Wiper, Walleye, Catfish' },
-      { id: 'pineview', name: 'Pineview', wind: 'E/W Canyon', meter: null, fish: '🐟 LMB, SMB, Tiger Muskie' },
+      { id: 'pineview', name: 'Pineview', wind: 'E/W Canyon', meter: 'KOGD', fish: '🐟 LMB, SMB, Tiger Muskie' },
       { id: 'bear-lake', name: 'Bear Lake', wind: 'Strong W', meter: 'BERU1', fish: '🐟 Cutthroat, Lake Trout, Cisco', hazard: 'HIGH WIND' },
       { id: 'hyrum', name: 'Hyrum', wind: 'Valley', meter: 'KLGU', fish: '🐟 Rainbow, Perch, Bluegill' },
     ],
@@ -609,7 +609,7 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
           </button>
           {snowExtraExpanded && (
             <div className={`border-t p-3 grid grid-cols-1 sm:grid-cols-2 gap-2 ${isDark ? 'border-[var(--border-color)]' : 'border-slate-100'}`}>
-              {[...SNOWKITE_EXTRA, { id: 'pineview', name: 'Pineview Reservoir', wind: 'E/W Light', meter: null, desc: 'Beginner-friendly — light consistent winds 5-12 mph from spillway', position: '4,900 ft' }].map((spot) => {
+              {[...SNOWKITE_EXTRA, { id: 'pineview', name: 'Pineview Reservoir', wind: 'E/W Light', meter: 'KOGD', desc: 'Beginner-friendly — light consistent winds 5-12 mph from spillway', position: '4,900 ft' }].map((spot) => {
                 const ws = windStatuses[spot.id];
                 const isSelected = selectedLake === spot.id;
                 return (

@@ -351,6 +351,9 @@ class DataCollector {
                     paragliding: scoreSessionForActivity('paragliding', wind, conditions),
                     fishing: scoreSessionForActivity('fishing', wind, conditions),
                     boating: scoreSessionForActivity('boating', wind, conditions),
+                    paddling: scoreSessionForActivity('paddling', wind, conditions),
+                    windsurfing: scoreSessionForActivity('windsurfing', wind, conditions),
+                    snowkiting: scoreSessionForActivity('snowkiting', wind, conditions),
                   },
                 });
                 serverRecords++;
@@ -408,6 +411,9 @@ class DataCollector {
                 paragliding: scoreSessionForActivity('paragliding', wind, conditions),
                 fishing: scoreSessionForActivity('fishing', wind, conditions),
                 boating: scoreSessionForActivity('boating', wind, conditions),
+                paddling: scoreSessionForActivity('paddling', wind, conditions),
+                windsurfing: scoreSessionForActivity('windsurfing', wind, conditions),
+                snowkiting: scoreSessionForActivity('snowkiting', wind, conditions),
               },
             }, reading.timestamp || reading.dateTime);
             recordCount++;
@@ -529,6 +535,9 @@ class DataCollector {
             paragliding: scoreSessionForActivity('paragliding', pwsWind, pwsConditions),
             fishing: scoreSessionForActivity('fishing', pwsWind, pwsConditions),
             boating: scoreSessionForActivity('boating', pwsWind, pwsConditions),
+            paddling: scoreSessionForActivity('paddling', pwsWind, pwsConditions),
+            windsurfing: scoreSessionForActivity('windsurfing', pwsWind, pwsConditions),
+            snowkiting: scoreSessionForActivity('snowkiting', pwsWind, pwsConditions),
           },
         });
         this.collectionStats.actualsCollected++;

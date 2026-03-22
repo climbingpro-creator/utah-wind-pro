@@ -233,9 +233,12 @@ const SESSION_THRESHOLDS = {
   kiting:      { minSpeed: 10, minDuration: 45 },
   foil_kiting: { minSpeed: 8,  minDuration: 45 },
   sailing:     { minSpeed: 8,  minDuration: 45 },
+  windsurfing: { minSpeed: 8,  minDuration: 45 },
+  snowkiting:  { minSpeed: 10, minDuration: 45 },
   paragliding: { minSpeed: 5,  minDuration: 45 },
   fishing:     { maxSpeed: 12, minDuration: 60 },
   boating:     { maxSpeed: 8,  minDuration: 60 },
+  paddling:    { maxSpeed: 6,  minDuration: 60 },
 };
 
 // ─── Learned data (set by sync with server) ──────────────────────
@@ -267,6 +270,8 @@ export function estimateSessionDuration(chainKey, activity) {
       const actKey = activity === 'foil_kiting' ? 'foil_kiting'
         : activity === 'paragliding' ? 'paragliding'
         : activity === 'light_wind' ? 'light_wind'
+        : activity === 'sailing' || activity === 'windsurfing' || activity === 'snowkiting' ? 'kiting'
+        : activity === 'boating' || activity === 'paddling' || activity === 'fishing' ? 'light_wind'
         : 'kiting';
       const stats = bf.byActivity?.[actKey];
       if (stats && stats.windDays >= 5) {

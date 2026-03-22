@@ -116,8 +116,13 @@ function getActivityVerdict(id, speed, gust, thermalPrediction, _boatingPredicti
       return { status: 'caution', label: 'GUSTY', reason: `${Math.round(speed)}G${Math.round(gust)} mph — gusty`, color: 'amber' };
     }
   } else {
-    if (speed >= 15) return { status: 'off', label: 'ROUGH', reason: `${Math.round(speed)} mph — waves`, color: 'red' };
-    if (speed >= 8) {
+    const dangerThreshold = cfg.thresholds?.dangerous ?? cfg.thresholds?.difficult ?? 20;
+    const roughThreshold = cfg.thresholds?.rough ?? cfg.thresholds?.choppy ?? 15;
+    const choppyThreshold = cfg.thresholds?.choppy ?? cfg.thresholds?.manageable ?? 8;
+
+    if (speed >= dangerThreshold) return { status: 'off', label: 'DANGEROUS', reason: `${Math.round(speed)} mph — unsafe conditions`, color: 'red' };
+    if (speed >= roughThreshold) return { status: 'off', label: 'ROUGH', reason: `${Math.round(speed)} mph — too rough`, color: 'red' };
+    if (speed >= choppyThreshold) {
       if (isNonThermalWind) {
         return { status: 'off', label: 'CHOPPY', reason: `${Math.round(speed)} mph north flow — extended wind likely`, color: 'orange' };
       }
@@ -125,7 +130,7 @@ function getActivityVerdict(id, speed, gust, thermalPrediction, _boatingPredicti
       if (calmAfter < 21 && now < calmAfter) {
         return { status: 'wait', label: 'WINDY', reason: `Calm expected after ${formatHour(calmAfter)}`, color: 'amber', window: `After ${formatHour(calmAfter)}` };
       }
-      return { status: 'off', label: 'CHOPPY', reason: `${Math.round(speed)} mph — too rough`, color: 'orange' };
+      return { status: 'off', label: 'CHOPPY', reason: `${Math.round(speed)} mph — choppy`, color: 'orange' };
     }
   }
 

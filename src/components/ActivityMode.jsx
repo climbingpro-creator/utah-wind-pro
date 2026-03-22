@@ -136,6 +136,7 @@ export const ACTIVITY_CONFIGS = {
       ideal: { min: 0, max: 10 },
       choppy: 15,
       rough: 20,
+      dangerous: 25,
     },
     wantsWind: false,
     primaryMetric: 'fishingScore',

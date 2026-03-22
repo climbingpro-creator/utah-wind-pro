@@ -730,12 +730,22 @@ class LearningSystem {
       // Time of day patterns
       hourlyAccuracy: {},
       
-      // Condition-specific errors
       conditionErrors: {
         highPressureGradient: [],
         lowPressureGradient: [],
         strongIndicator: [],
         weakIndicator: [],
+      },
+
+      activityAccuracy: {
+        kiting:      { good: 0, total: 0 },
+        sailing:     { good: 0, total: 0 },
+        windsurfing: { good: 0, total: 0 },
+        snowkiting:  { good: 0, total: 0 },
+        paragliding: { good: 0, total: 0 },
+        boating:     { good: 0, total: 0 },
+        paddling:    { good: 0, total: 0 },
+        fishing:     { good: 0, total: 0 },
       },
     };
     
@@ -798,6 +808,27 @@ class LearningSystem {
         analysis.conditionErrors.highPressureGradient.push(pred.accuracy.overallScore);
       } else if (pg != null && pg < 1) {
         analysis.conditionErrors.lowPressureGradient.push(pred.accuracy.overallScore);
+      }
+
+      // Indicator strength buckets
+      const indicatorScore = pred.prediction?.indicatorScore;
+      if (indicatorScore != null) {
+        if (indicatorScore >= 70) {
+          analysis.conditionErrors.strongIndicator.push(pred.accuracy.overallScore);
+        } else if (indicatorScore <= 30) {
+          analysis.conditionErrors.weakIndicator.push(pred.accuracy.overallScore);
+        }
+      }
+
+      // Per-activity accuracy from stored activityScores
+      const scores = pred.actual?.activityScores;
+      if (scores) {
+        for (const [act, score] of Object.entries(scores)) {
+          if (analysis.activityAccuracy[act]) {
+            analysis.activityAccuracy[act].total++;
+            if (score > 0.5) analysis.activityAccuracy[act].good++;
+          }
+        }
       }
     }
     
@@ -950,6 +981,59 @@ class LearningSystem {
           description: `${maxConsecutiveThermal}h sustained thermal on ${date}`,
         });
       }
+
+      // Glass window discovery (boating/paddling)
+      let consecutiveCalm = 0;
+      let maxConsecutiveCalm = 0;
+      let calmStartHour = null;
+      const calmHours = new Set();
+      for (const a of dayActuals) {
+        if (calmHours.has(a.hour)) continue;
+        calmHours.add(a.hour);
+        if ((a.windSpeed ?? 99) <= 6) {
+          if (consecutiveCalm === 0) calmStartHour = a.hour;
+          consecutiveCalm++;
+          maxConsecutiveCalm = Math.max(maxConsecutiveCalm, consecutiveCalm);
+        } else {
+          consecutiveCalm = 0;
+        }
+      }
+      if (maxConsecutiveCalm >= 3) {
+        patterns.push({
+          type: 'sustained_glass',
+          value: maxConsecutiveCalm,
+          date,
+          startHour: calmStartHour,
+          confidence: Math.min(1, maxConsecutiveCalm / 6),
+          description: `${maxConsecutiveCalm}h glass window on ${date} starting ${calmStartHour}:00`,
+        });
+      }
+
+      // Soarable window discovery (paragliding 5-18 mph, low gust factor)
+      let consecutiveSoarable = 0;
+      let maxConsecutiveSoarable = 0;
+      const soarHours = new Set();
+      for (const a of dayActuals) {
+        if (soarHours.has(a.hour)) continue;
+        soarHours.add(a.hour);
+        const spd = a.windSpeed ?? 0;
+        const gst = a.windGust ?? spd;
+        if (spd >= 5 && spd <= 18 && (spd === 0 || gst / spd <= 1.4)) {
+          consecutiveSoarable++;
+          maxConsecutiveSoarable = Math.max(maxConsecutiveSoarable, consecutiveSoarable);
+        } else {
+          consecutiveSoarable = 0;
+        }
+      }
+      if (maxConsecutiveSoarable >= 3) {
+        patterns.push({
+          type: 'sustained_soarable',
+          value: maxConsecutiveSoarable,
+          date,
+          confidence: Math.min(1, maxConsecutiveSoarable / 6),
+          description: `${maxConsecutiveSoarable}h soarable window on ${date}`,
+        });
+      }
     }
 
     // Save discovered patterns
@@ -1069,7 +1153,31 @@ class LearningSystem {
         };
       }
 
-      console.log(`Patterns applied: ${patterns.length} discovered, peak hour: ${peakHourPattern?.value ?? '?'}, dominant: ${windTypePattern?.value ?? '?'}`);
+      // Glass window patterns (boating/paddling)
+      const sustainedGlass = patterns.filter(p => p.type === 'sustained_glass');
+      if (sustainedGlass.length > 0) {
+        const avgDuration = sustainedGlass.reduce((s, p) => s + p.value, 0) / sustainedGlass.length;
+        const avgStart = sustainedGlass.reduce((s, p) => s + (p.startHour ?? 6), 0) / sustainedGlass.length;
+        newWeights.windEventPatterns.glass = {
+          avgDuration: Math.round(avgDuration),
+          typicalStart: Math.round(avgStart),
+          count: sustainedGlass.length,
+          confidence: Math.min(1, sustainedGlass.length / 10),
+        };
+      }
+
+      // Soarable window patterns (paragliding)
+      const sustainedSoarable = patterns.filter(p => p.type === 'sustained_soarable');
+      if (sustainedSoarable.length > 0) {
+        const avgDuration = sustainedSoarable.reduce((s, p) => s + p.value, 0) / sustainedSoarable.length;
+        newWeights.windEventPatterns.soarable = {
+          avgDuration: Math.round(avgDuration),
+          count: sustainedSoarable.length,
+          confidence: Math.min(1, sustainedSoarable.length / 10),
+        };
+      }
+
+      console.log(`Patterns applied: ${patterns.length} discovered, peak hour: ${peakHourPattern?.value ?? '?'}, dominant: ${windTypePattern?.value ?? '?'}, glass: ${sustainedGlass.length}, soarable: ${sustainedSoarable.length}`);
     }
 
     // ─── WIND TYPE WEIGHT ADJUSTMENT ──────────────────────────
@@ -1100,6 +1208,20 @@ class LearningSystem {
       const avgLow = conditionErrors.lowPressureGradient.reduce((s, v) => s + v, 0) / conditionErrors.lowPressureGradient.length;
       if (avgLow < 50) {
         newWeights.thermalWeight = Math.min(0.55, newWeights.thermalWeight + 0.03 * lerpRate);
+      }
+    }
+
+    // ─── ACTIVITY-SPECIFIC ACCURACY RATES ──────────────────────
+    const actAcc = errorAnalysis.activityAccuracy;
+    newWeights.activityCalibration = {};
+    for (const [act, data] of Object.entries(actAcc)) {
+      if (data.total >= 5) {
+        const rate = data.good / data.total;
+        newWeights.activityCalibration[act] = {
+          hitRate: rate,
+          samples: data.total,
+          calibrationFactor: rate > 0.01 ? rate / 0.5 : 1.0,
+        };
       }
     }
 

@@ -87,15 +87,19 @@ function getHourStatus(speed, activity) {
   if (cfg.wantsWind) {
     if (t.tooStrong && speed >= t.tooStrong) return 'danger';
     if (t.ideal && speed >= t.ideal.min && speed <= t.ideal.max) return 'ideal';
-    if (t.foilMin && speed >= t.foilMin) return 'good';
+    const goodMin = t.foilMin ?? t.beginnerMax ?? t.ideal?.min;
+    if (goodMin && speed >= goodMin) return 'good';
     if (t.tooLight && speed >= t.tooLight) return 'marginal';
     return 'off';
   }
-  if (t.dangerous && speed >= t.dangerous) return 'danger';
-  if (t.rough && speed >= t.rough) return 'marginal';
-  if (t.choppy && speed >= t.choppy) return 'good';
+  const dangerSpeed = t.dangerous ?? t.difficult ?? 25;
+  const roughSpeed = t.rough ?? t.manageable ?? 15;
+  const choppySpeed = t.choppy ?? t.manageable ?? 10;
+  if (speed >= dangerSpeed) return 'danger';
+  if (speed >= roughSpeed) return 'marginal';
+  if (speed >= choppySpeed) return 'good';
   if (t.ideal && speed <= t.ideal.max) return 'ideal';
-  return 'good';
+  return 'ideal';
 }
 
 const STATUS_COLORS = {
