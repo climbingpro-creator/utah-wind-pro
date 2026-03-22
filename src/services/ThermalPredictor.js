@@ -1484,6 +1484,26 @@ export function predictThermal(lakeId, currentConditions) {
   
   // Cap at 95%
   probability = Math.min(95, Math.max(0, Math.round(probability)));
+
+  // windProbability — actual chance of usable wind from ANY source.
+  // When wind is currently blowing at rideable speed, this should be high.
+  const currentSpeed = currentConditions?.windSpeed || 0;
+  const currentDir = currentConditions?.windDirection;
+  const isCurrentlyNorth = currentDir != null && (currentDir >= 290 || currentDir <= 60);
+  const isCurrentlySE = currentDir != null && currentDir >= 100 && currentDir <= 200;
+  let windProbability = probability;
+
+  if (currentSpeed >= 10 && (isCurrentlyNorth || isCurrentlySE)) {
+    windProbability = Math.max(windProbability, 80);
+  } else if (currentSpeed >= 8 && isCurrentlyNorth) {
+    windProbability = Math.max(windProbability, 65);
+  } else if (currentSpeed >= 6 && isCurrentlyNorth && (northFlowStatus === 'strong' || northFlowStatus === 'moderate' || northFlowStatus === 'sustained')) {
+    windProbability = Math.max(windProbability, 55);
+  }
+
+  let windType = 'thermal';
+  if (hasActiveNorthFlow || (isCurrentlyNorth && currentSpeed >= 6)) windType = 'north_flow';
+  else if (pressureStatus === 'bust' && currentSpeed >= 6) windType = 'postfrontal';
   
   // Generate prediction message
   let predictionMessage = '';
@@ -1491,17 +1511,20 @@ export function predictThermal(lakeId, currentConditions) {
   
   const windLabel = hasActiveNorthFlow ? 'north flow wind' : 'SE thermal';
 
-  if (probability >= 60) {
+  const effectiveProb = Math.max(probability, windProbability);
+  if (effectiveProb >= 60) {
     willHaveThermal = true;
-    predictionMessage = `High probability (${probability}%) of ${windLabel}`;
-  } else if (probability >= 30) {
+    predictionMessage = windType === 'north_flow'
+      ? `High probability (${effectiveProb}%) of north flow wind`
+      : `High probability (${effectiveProb}%) of ${windLabel}`;
+  } else if (effectiveProb >= 30) {
     willHaveThermal = null;
     predictionMessage = hasActiveNorthFlow
-      ? `Moderate chance (${probability}%) of north flow developing`
-      : `Moderate chance (${probability}%) - conditions developing`;
-  } else if (probability > 0) {
+      ? `Moderate chance (${effectiveProb}%) of north flow developing`
+      : `Moderate chance (${effectiveProb}%) - conditions developing`;
+  } else if (effectiveProb > 0) {
     willHaveThermal = false;
-    predictionMessage = `Low probability (${probability}%) - conditions unfavorable`;
+    predictionMessage = `Low probability (${effectiveProb}%) - conditions unfavorable`;
   } else {
     willHaveThermal = false;
     if (phase === 'ended' && !hasActiveNorthFlow) {
@@ -1523,6 +1546,8 @@ export function predictThermal(lakeId, currentConditions) {
     timeToThermal,
     
     probability,
+    windProbability,
+    windType,
     
     direction: {
       status: directionStatus,
@@ -1639,7 +1664,7 @@ export function predictThermal(lakeId, currentConditions) {
     
     prediction: {
       willHaveThermal,
-      confidence: probability,
+      confidence: effectiveProb,
       message: predictionMessage,
     },
     

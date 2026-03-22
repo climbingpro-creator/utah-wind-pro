@@ -11,7 +11,7 @@ export default function ActivityScoreBanner({
 }) {
   const score = activityScore.score;
   const prediction = lakeState?.thermalPrediction;
-  const prob = prediction?.probability || 0;
+  const prob = prediction?.windProbability ?? prediction?.probability ?? 0;
   const startHour = prediction?.startHour;
   const windType = prediction?.windType;
   const consistencyForecast = prediction?.consistencyForecast;
@@ -44,18 +44,26 @@ export default function ActivityScoreBanner({
     badge = { text: 'IMPROVING', color: 'bg-green-500/20 text-green-400 border border-green-500/50' };
   } else if (hasForecastOpp) {
     displayScore = prob;
+    const isWindBlowingNow = currentWindSpeed >= 6;
     const timeStr = startHour ? (startHour > 12 ? `${startHour - 12} PM` : `${startHour} AM`) : null;
-    headline = timeStr
-      ? `${activityConfig?.name} Expected at ${timeStr}`
-      : `${activityConfig?.name} Likely Today`;
-    subline = windType === 'thermal'
-      ? (consistencyForecast?.description || 'Thermal cycle building — smooth, consistent wind expected')
-      : windType === 'north_flow'
-        ? 'North flow developing — stronger conditions incoming'
-        : `${prob}% probability — conditions are building`;
-    bannerColor = prob >= 60 ? 'green' : 'yellow';
-    badge = { text: 'PREDICTED', color: prob >= 60 ? 'bg-green-500/20 text-green-400 border border-green-500/50' : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/50' };
-    if (timeStr) arriveTime = timeStr;
+    if (windType === 'north_flow' && isWindBlowingNow) {
+      headline = `${activityConfig?.name} — North flow active`;
+      subline = `${Math.round(currentWindSpeed)} mph from north — rideable and building`;
+      bannerColor = prob >= 60 ? 'green' : 'yellow';
+      badge = { text: 'ACTIVE', color: prob >= 60 ? 'bg-green-500/20 text-green-400 border border-green-500/50' : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/50' };
+    } else {
+      headline = timeStr
+        ? `${activityConfig?.name} Expected at ${timeStr}`
+        : `${activityConfig?.name} Likely Today`;
+      subline = windType === 'thermal'
+        ? (consistencyForecast?.description || 'Thermal cycle building — smooth, consistent wind expected')
+        : windType === 'north_flow'
+          ? 'North flow developing — stronger conditions incoming'
+          : `${prob}% probability — conditions are building`;
+      bannerColor = prob >= 60 ? 'green' : 'yellow';
+      badge = { text: 'PREDICTED', color: prob >= 60 ? 'bg-green-500/20 text-green-400 border border-green-500/50' : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/50' };
+      if (timeStr) arriveTime = timeStr;
+    }
   } else if (hasGlassOpp && !wantsWind) {
     displayScore = boatingPrediction.probability;
     headline = boatingPrediction.isGlass

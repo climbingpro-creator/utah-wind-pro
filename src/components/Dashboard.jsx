@@ -156,9 +156,11 @@ export function Dashboard() {
         },
         thermalPrediction: lakeState?.thermalPrediction,
         boatingPrediction,
+        intelligence,
+        swingAlerts,
       });
     } catch (_e) { return null; }
-  }, [selectedActivity, currentWindSpeed, currentWindGust, currentWindDirection, lakeState?.thermalPrediction, boatingPrediction]);
+  }, [selectedActivity, currentWindSpeed, currentWindGust, currentWindDirection, lakeState?.thermalPrediction, boatingPrediction, intelligence, swingAlerts]);
 
   // Check for notifications when data updates
   React.useEffect(() => {

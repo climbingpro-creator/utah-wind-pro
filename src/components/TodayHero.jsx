@@ -115,6 +115,22 @@ function getActivityVerdict(id, speed, gust, thermalPrediction, _boatingPredicti
     if (gf > (cfg.thresholds?.gustFactor || 1.5)) {
       return { status: 'caution', label: 'GUSTY', reason: `${Math.round(speed)}G${Math.round(gust)} mph — gusty`, color: 'amber' };
     }
+
+    // Between tooLight and goodCondition — not "OFF", it's rideable or building
+    if (!good) {
+      const tooLight = cfg.thresholds?.tooLight || 6;
+      const sessionStr = session ? ` — ${sessionLabel(session.avgMinutes)} session` : '';
+      if (isNonThermalWind && gf < 1.4) {
+        return { status: 'go', label: 'RIDEABLE', reason: `${Math.round(speed)} mph ${isNorthFlow ? 'north flow' : ''} — clean wind${sessionStr}`, color: 'lime' };
+      }
+      if (gf < 1.3) {
+        return { status: 'caution', label: 'FOILABLE', reason: `${Math.round(speed)} mph — light but rideable${sessionStr}`, color: 'amber' };
+      }
+      if (isNorthFlow || isNonThermalWind) {
+        return { status: 'wait', label: 'BUILDING', reason: `${Math.round(speed)} mph ${isNorthFlow ? 'north flow' : ''} — watching for increase`, color: 'amber' };
+      }
+      return { status: 'caution', label: 'MARGINAL', reason: `${Math.round(speed)} mph — above ${tooLight} mph minimum${sessionStr}`, color: 'amber' };
+    }
   } else {
     const dangerThreshold = cfg.thresholds?.dangerous ?? cfg.thresholds?.difficult ?? 20;
     const roughThreshold = cfg.thresholds?.rough ?? cfg.thresholds?.choppy ?? 15;

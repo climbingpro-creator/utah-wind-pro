@@ -23,10 +23,11 @@ const DIRECTION_LABELS = {
 };
 
 // Activity-specific thresholds for excitement scoring
+// foilable: lower bound for foil/light-wind riders
 const EXCITEMENT_THRESHOLDS = {
-  kiting:      { ideal: [15, 25], rideable: [12, 30] },
-  sailing:     { ideal: [10, 20], rideable: [6, 25] },
-  windsurfing: { ideal: [15, 25], rideable: [12, 30] },
+  kiting:      { ideal: [15, 25], rideable: [12, 30], foilable: [8, 30] },
+  sailing:     { ideal: [10, 20], rideable: [6, 25],  foilable: [4, 25] },
+  windsurfing: { ideal: [15, 25], rideable: [12, 30], foilable: [8, 30] },
   boating:     { ideal: [0, 5],   rideable: [0, 10] },
   paddling:    { ideal: [0, 4],   rideable: [0, 8] },
   fishing:     { ideal: [0, 10],  rideable: [0, 15] },
@@ -66,17 +67,47 @@ function gustDescription(factor) {
   return 'high gust factor — expect lulls and surges';
 }
 
+function detectWindRegime(params) {
+  const { currentWind, thermalPrediction, intelligence } = params;
+  const dir = currentWind?.direction;
+  const speed = currentWind?.speed || 0;
+  const nf = thermalPrediction?.northFlow;
+  const regime = intelligence?.regime;
+
+  const isNorthDir = dir != null && (dir >= 315 || dir <= 45);
+  const isNWDir = dir != null && dir >= 290 && dir <= 360;
+  const isSEDir = dir != null && dir >= 100 && dir <= 200;
+
+  if (regime === 'postfrontal' || regime === 'synoptic_wind') return regime;
+  if ((isNorthDir || isNWDir) && speed >= 6 && nf?.status === 'strong') return 'north_flow_strong';
+  if ((isNorthDir || isNWDir) && speed >= 6 && (nf?.status === 'moderate' || nf?.persistenceHours >= 2)) return 'north_flow';
+  if ((isNorthDir || isNWDir) && speed >= 6) return 'north_wind';
+  if (isSEDir && speed >= 6) return 'thermal';
+  if (speed >= 8) return 'active_wind';
+  return 'calm';
+}
+
 function computeExcitement(activity, params) {
   const { currentWind, thermalPrediction, smartForecast, activeTriggers } = params;
   const thresholds = EXCITEMENT_THRESHOLDS[activity] || EXCITEMENT_THRESHOLDS.kiting;
   let score = 1;
 
   const speed = currentWind?.speed || 0;
-  const prob = thermalPrediction?.probability || 0;
+  const gust = currentWind?.gust || speed;
+  const prob = thermalPrediction?.windProbability ?? thermalPrediction?.probability ?? 0;
+  const gf = speed > 0 ? (gust - speed) / speed : 0;
+  const regime = detectWindRegime(params);
+  const isActiveNonThermal = ['north_flow_strong', 'north_flow', 'north_wind', 'postfrontal', 'synoptic_wind', 'active_wind'].includes(regime);
 
   if (WIND_ACTIVITIES.has(activity)) {
     if (speed >= thresholds.ideal[0] && speed <= thresholds.ideal[1]) score += 2;
     else if (speed >= thresholds.rideable[0] && speed <= thresholds.rideable[1]) score += 1;
+    else if (thresholds.foilable && speed >= thresholds.foilable[0] && speed <= thresholds.foilable[1]) {
+      score += 1;
+      if (gf < 0.3) score += 1;
+    }
+
+    if (isActiveNonThermal && speed >= (thresholds.foilable?.[0] || thresholds.rideable[0])) score += 1;
     if (prob >= 0.7) score += 1;
     if (activeTriggers?.length >= 2) score += 1;
   } else if (CALM_ACTIVITIES.has(activity)) {
@@ -92,6 +123,7 @@ function computeExcitement(activity, params) {
     if (speed >= thresholds.ideal[0] && speed <= thresholds.ideal[1]) score += 2;
     if (thermalPrediction?.windType === 'laminar') score += 1;
     if (prob >= 0.5) score += 1;
+    if (isActiveNonThermal && speed >= 5 && speed <= 18) score += 1;
   }
 
   return Math.min(5, Math.max(1, score));
@@ -109,12 +141,23 @@ function buildUpstreamSnippet(upstream) {
   return parts.join(', ');
 }
 
-function buildThermalSnippet(thermal) {
+function buildWindSnippet(thermal, regime) {
   if (!thermal || thermal.probability == null) return '';
   const pct = Math.round(thermal.probability * 100);
   const start = thermal.startHour ? formatHour(thermal.startHour) : null;
   const peak = thermal.peakHour ? formatHour(thermal.peakHour) : null;
   const end = thermal.endHour ? formatHour(thermal.endHour) : null;
+
+  const isNonThermal = ['north_flow_strong', 'north_flow', 'north_wind', 'postfrontal', 'synoptic_wind', 'active_wind'].includes(regime);
+  if (isNonThermal) {
+    const nf = thermal.northFlow;
+    if (nf?.persistenceHours >= 3) return `North flow sustained ${nf.persistenceHours}h — high confidence`;
+    if (nf?.status === 'strong') return `Strong north flow signal — wind likely to persist`;
+    if (nf?.status === 'moderate') return `North flow building — monitoring upstream stations`;
+    if (pct > 0) return `${pct}% wind probability`;
+    return '';
+  }
+
   let s = `${pct}% thermal probability`;
   if (start) s += `, onset ~${start}`;
   if (peak) s += `, peaking ${peak}`;
@@ -139,20 +182,42 @@ function briefWind(activity, params) {
   const dir = currentWind?.direction;
   const gf = gustFactor(speed, gust);
   const thermal = thermalPrediction || {};
-  const prob = thermal.probability || 0;
+  const prob = thermal.windProbability ?? thermal.probability ?? 0;
   const excitement = computeExcitement(activity, params);
+  const regime = detectWindRegime(params);
+  const isNonThermal = ['north_flow_strong', 'north_flow', 'north_wind', 'postfrontal', 'synoptic_wind', 'active_wind'].includes(regime);
+  const thresholds = EXCITEMENT_THRESHOLDS[activity] || EXCITEMENT_THRESHOLDS.kiting;
+  const foilMin = thresholds.foilable?.[0] || thresholds.rideable[0];
 
   let headline = '';
   if (excitement >= 4) {
-    headline = prob >= 0.7
-      ? `Epic ${activity} day shaping up — thermals look dialed`
-      : `Strong wind day ahead for ${activity}`;
+    if (isNonThermal) {
+      headline = regime === 'postfrontal'
+        ? `Postfrontal clearing — epic ${activity} conditions`
+        : `Strong ${dirLabel(dir) || 'north'} flow — ${activity} is ON`;
+    } else {
+      headline = prob >= 0.7
+        ? `Epic ${activity} day shaping up — thermals look dialed`
+        : `Strong wind day ahead for ${activity}`;
+    }
   } else if (excitement === 3) {
-    headline = `Decent ${activity} window today — worth watching`;
+    if (isNonThermal && speed >= foilMin) {
+      headline = `${dirLabel(dir) || 'North'} flow session — ${activity} looks good`;
+    } else {
+      headline = `Decent ${activity} window today — worth watching`;
+    }
   } else if (excitement === 2) {
-    headline = `Marginal ${activity} conditions — could improve`;
+    if (isNonThermal && speed >= foilMin) {
+      headline = `${dirLabel(dir) || 'North'} flow active — foil-rideable for ${activity}`;
+    } else {
+      headline = `Marginal ${activity} conditions — could improve`;
+    }
   } else {
-    headline = `Light day — not much for ${activity} right now`;
+    if (speed >= foilMin && gf < 0.3) {
+      headline = `Light but clean wind — marginal for ${activity}`;
+    } else {
+      headline = `Light day — not much for ${activity} right now`;
+    }
   }
 
   const bodyParts = [];
@@ -162,18 +227,19 @@ function briefWind(activity, params) {
     bodyParts.push('Calm right now.');
   }
 
-  const thermalSnip = buildThermalSnippet(thermal);
-  if (thermalSnip) bodyParts.push(thermalSnip + '.');
+  const windSnip = buildWindSnippet(thermal, regime);
+  if (windSnip) bodyParts.push(windSnip + '.');
 
-  // Sustained north flow awareness
   const nf = thermal.northFlow;
-  if (nf?.persistenceHours >= 6) {
-    bodyParts.push(`All-day north flow event (${nf.persistenceHours}h+) — sustained and reliable. High confidence it continues.`);
-  } else if (nf?.persistenceHours >= 3) {
-    bodyParts.push(`North flow building (${nf.persistenceHours}h) — likely to persist through the window.`);
-  } else if (nf?.status === 'strong') {
-    const zzSpeedStr = safeToFixed(nf.expectedZigZagSpeed, 0);
-    bodyParts.push(`Strong north signal from KSLC — expect ${zzSpeedStr === '--' ? '15' : zzSpeedStr}+ mph at the lake in ~1 hour.`);
+  if (!isNonThermal) {
+    if (nf?.persistenceHours >= 6) {
+      bodyParts.push(`All-day north flow event (${nf.persistenceHours}h+) — sustained and reliable. High confidence it continues.`);
+    } else if (nf?.persistenceHours >= 3) {
+      bodyParts.push(`North flow building (${nf.persistenceHours}h) — likely to persist through the window.`);
+    } else if (nf?.status === 'strong') {
+      const zzSpeedStr = safeToFixed(nf.expectedZigZagSpeed, 0);
+      bodyParts.push(`Strong north signal from KSLC — expect ${zzSpeedStr === '--' ? '15' : zzSpeedStr}+ mph at the lake in ~1 hour.`);
+    }
   }
 
   const upstreamSnip = buildUpstreamSnippet(upstream);
@@ -187,7 +253,11 @@ function briefWind(activity, params) {
     bullets.push({ icon: '🔁', text: `Sustained north flow: ${nf.persistenceHours}h and counting` });
   }
 
-  if (thermal.startHour && prob >= 0.5) {
+  if (isNonThermal && speed >= foilMin) {
+    bullets.push({ icon: '🧭', text: `${dirLabel(dir) || 'North'} flow: ${speed} mph sustained, ${gustDescription(gf)}` });
+  }
+
+  if (thermal.startHour && prob >= 0.5 && !isNonThermal) {
     const windowStart = formatHour(thermal.startHour);
     const windowEnd = thermal.endHour ? formatHour(thermal.endHour) : '???';
     bullets.push({ icon: '🕐', text: `Wind window: ${windowStart}–${windowEnd}` });
@@ -217,14 +287,18 @@ function briefWind(activity, params) {
   }
 
   let bestAction = '';
-  if (excitement >= 3 && thermal.startHour) {
-    // Arrive 30 min before predicted onset for rigging
+  if (isNonThermal && speed >= foilMin && excitement >= 2) {
+    const gearNote = speed >= thresholds.rideable[0] ? 'full-power conditions' : 'foil-rideable';
+    bestAction = `Get on the water — ${Math.round(speed)} mph ${dirLabel(dir) || 'north'} flow, ${gearNote}`;
+  } else if (excitement >= 3 && thermal.startHour) {
     const arriveHour = Math.max(0, thermal.startHour - 1);
     bestAction = `Be rigged and ready by ${formatHour(arriveHour)} — wind onset expected ${formatHour(thermal.startHour)}`;
   } else if (excitement >= 3) {
     bestAction = `Get out there — ${speed} mph and ${gustDescription(gf)}`;
   } else if (prob >= 0.5) {
     bestAction = `Watch upstream stations after ${formatHour(thermal.startHour || 12)} for confirmation`;
+  } else if (isNonThermal && speed >= 5) {
+    bestAction = `North flow present (${Math.round(speed)} mph) — monitor for strengthening`;
   } else {
     bestAction = `Check back midday — conditions may develop`;
   }
@@ -268,8 +342,8 @@ function briefCalm(activity, params) {
     bodyParts.push(`Glass window expected until ~${formatHour(glassInfo.glassUntil)}.`);
   }
 
-  const thermalSnip = buildThermalSnippet(thermalPrediction);
-  if (thermalSnip) bodyParts.push(`Wind forecast: ${thermalSnip}.`);
+  const windSnip = buildWindSnippet(thermalPrediction, 'calm');
+  if (windSnip) bodyParts.push(`Wind forecast: ${windSnip}.`);
 
   const upstreamSnip = buildUpstreamSnippet(upstream);
   if (upstreamSnip) bodyParts.push(`Upstream: ${upstreamSnip} — watch for incoming chop.`);
@@ -440,8 +514,8 @@ function briefParagliding(params) {
     bodyParts.push(`Flow type: ${thermal.windType}${thermal.windType === 'laminar' ? ' — smooth and liftable' : ''}.`);
   }
 
-  const thermalSnip = buildThermalSnippet(thermal);
-  if (thermalSnip) bodyParts.push(thermalSnip + '.');
+  const windSnip = buildWindSnippet(thermal, isNorthFlow ? 'north_flow' : isSouthFlow ? 'thermal' : 'calm');
+  if (windSnip) bodyParts.push(windSnip + '.');
 
   const upstreamSnip = buildUpstreamSnippet(upstream);
   if (upstreamSnip) bodyParts.push(`Upstream: ${upstreamSnip}.`);
@@ -536,6 +610,7 @@ function briefMinimal(activity, params) {
  * @param {object} params.weekOutlook - from PatternLogic.getWeekOutlook()
  * @param {object} params.boatingPrediction - from BoatingPredictor
  * @param {object} params.fishingPrediction - from FishingPredictor
+ * @param {object} params.intelligence - from WindIntelligence.synthesize() (regime, signals)
  * @returns {object} { headline, body, bullets, excitement, timeOfDay, bestAction }
  */
 export function generateBriefing(activity, params = {}) {
