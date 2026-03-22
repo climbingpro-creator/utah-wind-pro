@@ -38,6 +38,7 @@ import { getParaglidingScore } from '../utils/paraglidingScore';
 import { safeToFixed } from '../utils/safeToFixed';
 import { synthesize } from '../services/WindIntelligence';
 import SignalConvergence from './SignalConvergence';
+import TodayTimeline from './TodayTimeline';
 
 const PropagationTracker = lazy(() => import('./PropagationTracker'));
 
@@ -309,6 +310,11 @@ export function Dashboard() {
           utalpStation={lakeState?.utalpStation || lakeState?.wind?.stations?.find(s => s.id === 'UTALP')}
           propagation={lakeState?.propagation}
         />
+
+        {/* Today's Hourly Wind Timeline */}
+        <SafeComponent name="Today Timeline">
+          <TodayTimeline locationId={selectedLake} activity={selectedActivity} />
+        </SafeComponent>
 
         {/* Wind Intelligence — unified signal convergence */}
         <SignalConvergence intelligence={intelligence} />
