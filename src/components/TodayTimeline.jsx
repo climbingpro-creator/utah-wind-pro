@@ -141,10 +141,28 @@ function findBestWindow(hours, activity) {
   };
 }
 
+const MPH_TO_KT = 0.868976;
+
 export default function TodayTimeline({ locationId = 'utah-lake', activity = 'kiting' }) {
   const [nwsData, setNwsData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [useKnots, setUseKnots] = useState(() => localStorage.getItem('windUnit') === 'kt');
   const scrollRef = useRef(null);
+
+  const toggleUnit = () => {
+    setUseKnots(prev => {
+      const next = !prev;
+      localStorage.setItem('windUnit', next ? 'kt' : 'mph');
+      return next;
+    });
+  };
+
+  const displaySpeed = (mph) => {
+    if (mph == null) return '—';
+    return Math.round(useKnots ? mph * MPH_TO_KT : mph);
+  };
+
+  const unitLabel = useKnots ? 'kt' : 'mph';
 
   const [clientHourly, setClientHourly] = useState(null);
 
@@ -254,11 +272,19 @@ export default function TodayTimeline({ locationId = 'utah-lake', activity = 'ki
             <span className="text-sm text-slate-400">—</span>
             <span className="text-sm font-medium text-sky-400">{SPOT_NAMES[locationId] || locationId}</span>
           </div>
-          {nwsData?.fetchedAt && (
-            <span className="text-xs text-slate-500">
-              NWS {new Date(nwsData.fetchedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            </span>
-          )}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={toggleUnit}
+              className="text-xs font-bold px-2 py-0.5 rounded-full border transition-colors bg-slate-800 border-slate-700 text-slate-300 hover:border-sky-500 hover:text-sky-400"
+            >
+              {useKnots ? 'kt → mph' : 'mph → kt'}
+            </button>
+            {nwsData?.fetchedAt && (
+              <span className="text-xs text-slate-500">
+                NWS {new Date(nwsData.fetchedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Best Window Callout */}
@@ -270,7 +296,7 @@ export default function TodayTimeline({ locationId = 'utah-lake', activity = 'ki
                 Best for {activityName}: {formatHourShort(bestWindow.startHour)}–{formatHourShort(bestWindow.endHour)}
               </span>
               <span className="text-xs text-emerald-400/70 ml-2">
-                peak {Math.round(bestWindow.peakSpeed)} mph  ·  {bestWindow.duration}hr window
+                peak {displaySpeed(bestWindow.peakSpeed)} {unitLabel}  ·  {bestWindow.duration}hr window
               </span>
             </div>
             <ChevronRight size={14} className="text-emerald-400/50 shrink-0" />
@@ -316,9 +342,12 @@ export default function TodayTimeline({ locationId = 'utah-lake', activity = 'ki
                 )}
 
                 {/* Wind speed — above bar */}
-                <span className={`text-sm font-bold tabular-nums ${isNow ? 'text-sky-400' : colors.text}`}>
-                  {h.speed != null ? Math.round(h.speed) : '—'}
-                </span>
+                <div className="flex flex-col items-center">
+                  <span className={`text-sm font-bold tabular-nums ${isNow ? 'text-sky-400' : colors.text}`}>
+                    {displaySpeed(h.speed)}
+                  </span>
+                  <span className="text-[9px] text-slate-500">{unitLabel}</span>
+                </div>
 
                 {/* Bar */}
                 <div className="w-5 bg-slate-800 rounded-full mt-1 mb-1 relative" style={{ height: '70px' }}>
