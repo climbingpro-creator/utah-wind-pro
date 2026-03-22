@@ -66,6 +66,13 @@ const SPOT_NAMES = {
 };
 
 function formatHour(h) {
+  if (h === 0) return '12 AM';
+  if (h < 12) return `${h} AM`;
+  if (h === 12) return '12 PM';
+  return `${h - 12} PM`;
+}
+
+function formatHourShort(h) {
   if (h === 0) return '12a';
   if (h < 12) return `${h}a`;
   if (h === 12) return '12p';
@@ -260,7 +267,7 @@ export default function TodayTimeline({ locationId = 'utah-lake', activity = 'ki
             <Wind size={16} className="text-emerald-400 shrink-0" />
             <div className="flex-1 min-w-0">
               <span className="text-sm font-bold text-emerald-400">
-                Best for {activityName}: {formatHour(bestWindow.startHour)}–{formatHour(bestWindow.endHour)}
+                Best for {activityName}: {formatHourShort(bestWindow.startHour)}–{formatHourShort(bestWindow.endHour)}
               </span>
               <span className="text-xs text-emerald-400/70 ml-2">
                 peak {Math.round(bestWindow.peakSpeed)} mph  ·  {bestWindow.duration}hr window
@@ -280,7 +287,7 @@ export default function TodayTimeline({ locationId = 'utah-lake', activity = 'ki
 
       {/* Scrollable Timeline */}
       <div className="px-4 pb-2 pt-1 overflow-x-auto scrollbar-hide" ref={scrollRef}>
-        <div className="flex gap-1" style={{ minWidth: `${todayHours.length * 52}px` }}>
+        <div className="flex gap-1" style={{ minWidth: `${todayHours.length * 60}px` }}>
           {todayHours.map((h, i) => {
             const status = getHourStatus(h.speed, activity);
             const colors = STATUS_COLORS[status];
@@ -292,17 +299,29 @@ export default function TodayTimeline({ locationId = 'utah-lake', activity = 'ki
               <div
                 key={i}
                 data-now={isNow}
-                className={`flex flex-col items-center w-12 shrink-0 rounded-lg py-2 px-1 transition-all ${
+                className={`flex flex-col items-center w-14 shrink-0 rounded-lg py-2 px-1 transition-all ${
                   isNow ? 'bg-sky-500/15 ring-1 ring-sky-500/40' : 'hover:bg-slate-800/50'
                 }`}
               >
-                {/* Wind speed */}
-                <span className={`text-xs font-bold tabular-nums ${isNow ? 'text-sky-400' : colors.text}`}>
+                {/* Time — top */}
+                <span className={`text-sm font-semibold tabular-nums mb-1 ${
+                  isNow ? 'text-sky-400' : 'text-slate-300'
+                }`}>
+                  {formatHour(h.localHour)}
+                </span>
+
+                {/* NOW badge */}
+                {isNow && (
+                  <span className="text-[10px] font-bold text-sky-400 bg-sky-500/20 rounded px-1 mb-1">NOW</span>
+                )}
+
+                {/* Wind speed — above bar */}
+                <span className={`text-sm font-bold tabular-nums ${isNow ? 'text-sky-400' : colors.text}`}>
                   {h.speed != null ? Math.round(h.speed) : '—'}
                 </span>
 
                 {/* Bar */}
-                <div className="w-5 bg-slate-800 rounded-full mt-1 mb-1 relative" style={{ height: '80px' }}>
+                <div className="w-5 bg-slate-800 rounded-full mt-1 mb-1 relative" style={{ height: '70px' }}>
                   <div
                     className={`absolute bottom-0 w-full rounded-full transition-all ${colors.bar} ${
                       status === 'ideal' ? 'opacity-90' : 'opacity-70'
@@ -312,7 +331,7 @@ export default function TodayTimeline({ locationId = 'utah-lake', activity = 'ki
                 </div>
 
                 {/* Direction arrow */}
-                <div className="w-5 h-5 flex items-center justify-center mb-0.5">
+                <div className="w-5 h-5 flex items-center justify-center">
                   <Navigation
                     size={12}
                     className={`${isNow ? 'text-sky-400' : 'text-slate-500'}`}
@@ -320,21 +339,11 @@ export default function TodayTimeline({ locationId = 'utah-lake', activity = 'ki
                   />
                 </div>
 
-                {/* Hour label */}
-                <span className={`text-xs tabular-nums ${
-                  isNow ? 'text-sky-400 font-bold' : 'text-slate-500'
-                }`}>
-                  {formatHour(h.localHour)}
-                </span>
-
-                {/* NOW dot */}
-                {isNow && (
-                  <div className="w-1.5 h-1.5 rounded-full bg-sky-400 mt-0.5" />
-                )}
-
-                {/* Temperature */}
+                {/* Temperature — bottom */}
                 {h.temp != null && (
-                  <span className="text-xs font-medium text-slate-400 mt-0.5">{Math.round(h.temp)}°</span>
+                  <span className={`text-sm font-medium mt-0.5 ${
+                    isNow ? 'text-sky-300' : 'text-slate-400'
+                  }`}>{Math.round(h.temp)}°</span>
                 )}
               </div>
             );
