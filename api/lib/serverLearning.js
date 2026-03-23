@@ -1068,7 +1068,6 @@ function verifyPredictions(predictions, actualStations, lakeStationMap) {
       const isNorth = actualDir >= 290 || actualDir <= 60;
       const isSouth = actualDir >= 100 && actualDir <= 250;
       const isSE = actualDir >= 100 && actualDir <= 200;
-      const isNW = actualDir >= 290 && actualDir <= 360;
       const isSW = actualDir >= 180 && actualDir <= 250;
 
       switch (pred.eventType) {

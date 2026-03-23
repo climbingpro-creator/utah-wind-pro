@@ -482,7 +482,7 @@ function briefFishing(params) {
 }
 
 function briefParagliding(params) {
-  const { currentWind, thermalPrediction, intelligence, upstream, smartForecast, activeTriggers, swingAlerts } = params;
+  const { currentWind, thermalPrediction, upstream, smartForecast, activeTriggers, swingAlerts } = params;
   const speed = currentWind?.speed || 0;
   const gust = currentWind?.gust || speed;
   const dir = currentWind?.direction;
