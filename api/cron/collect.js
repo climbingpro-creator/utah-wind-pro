@@ -145,10 +145,10 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
 
   const action = req.query?.action;
-  const READ_ACTIONS = ['sync', 'weights', 'predictions', 'upstream', 'nws', 'ahead', 'analogs', 'models', 'propagation', 'pws-history', 'backfill-pws', 'build-models'];
+  const READ_ACTIONS = ['sync', 'weights', 'predictions', 'upstream', 'nws', 'ahead', 'analogs', 'models', 'propagation', 'pws-history', 'backfill-pws'];
 
   // Expensive manual-trigger actions ALWAYS require auth (even if CRON_SECRET isn't set)
-  const PROTECTED_ACTIONS = ['backfill'];
+  const PROTECTED_ACTIONS = ['backfill', 'build-models'];
   if (PROTECTED_ACTIONS.includes(action)) {
     const authHeader = req.headers['authorization'];
     const cronSecret = process.env.CRON_SECRET;
@@ -334,9 +334,9 @@ export default async function handler(req, res) {
           const models = modelsRaw ? JSON.parse(modelsRaw) : null;
           const modelAge = models?.builtAt ? Date.now() - new Date(models.builtAt).getTime() : Infinity;
           if (modelAge > 6 * 24 * 3600 * 1000) {
-            console.log('Auto-rebuilding statistical models (weekly schedule — 365 days)');
+            console.log('Auto-rebuilding statistical models (weekly schedule — 30 days)');
             const { buildStatisticalModels: rebuildModels } = await import('../lib/historicalAnalysis.js');
-            await rebuildModels(redisCommand, env.synopticToken, { days: 365 });
+            await rebuildModels(redisCommand, env.synopticToken, { days: 30 });
           }
         }
       } catch (modelErr) {
@@ -631,7 +631,7 @@ async function handleBuildModels(req, res) {
   if (!env.synopticToken) return res.status(500).json({ error: 'SYNOPTIC_TOKEN not set' });
   if (!env.upstashUrl || !env.upstashToken) return res.status(500).json({ error: 'Redis not configured' });
 
-  const days = Math.min(parseInt(req.query?.days || '365', 10), 730);
+  const days = Math.min(parseInt(req.query?.days || '30', 10), 90);
 
   try {
     const { models, log } = await buildStatisticalModels(redisCommand, env.synopticToken, { days });
