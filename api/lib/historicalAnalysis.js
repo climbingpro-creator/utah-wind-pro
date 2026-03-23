@@ -40,50 +40,62 @@ async function fetchTimeseries(token, stationIds, startDate, endDate) {
   return data.STATION || [];
 }
 
+function mergeStationData(allStations, stations) {
+  for (const s of stations) {
+    if (!allStations[s.STID]) {
+      allStations[s.STID] = { stid: s.STID, name: s.NAME, readings: [] };
+    }
+    const obs = s.OBSERVATIONS || {};
+    const times = obs.date_time || [];
+    const speeds = obs.wind_speed_set_1 || obs.wind_speed_value_1 || [];
+    const dirs = obs.wind_direction_set_1 || obs.wind_direction_value_1 || [];
+    const gusts = obs.wind_gust_set_1 || obs.wind_gust_value_1 || [];
+    const temps = obs.air_temp_set_1 || obs.air_temp_value_1 || [];
+    const altims = obs.altimeter_set_1 || obs.altimeter_value_1 || [];
+    const slps = obs.sea_level_pressure_set_1 || obs.sea_level_pressure_value_1 || [];
+
+    for (let i = 0; i < times.length; i++) {
+      allStations[s.STID].readings.push({
+        t: new Date(times[i]).getTime(),
+        speed: speeds[i] ?? null,
+        dir: dirs[i] ?? null,
+        gust: gusts[i] ?? null,
+        temp: temps[i] ?? null,
+        altim: altims[i] ?? null,
+        slp: slps[i] ?? null,
+      });
+    }
+  }
+}
+
+const CONCURRENT_CHUNKS = 5;
+
 async function fetchFullHistory(token, stationIds, days = 365) {
   const end = new Date();
   const start = new Date(end.getTime() - days * 24 * 3600000);
   const allStations = {};
 
+  const chunks = [];
   for (let chunkStart = new Date(start); chunkStart < end;) {
     const chunkEnd = new Date(Math.min(chunkStart.getTime() + CHUNK_DAYS * 24 * 3600000, end.getTime()));
-
-    try {
-      const stations = await fetchTimeseries(token, stationIds, chunkStart, chunkEnd);
-      for (const s of stations) {
-        if (!allStations[s.STID]) {
-          allStations[s.STID] = { stid: s.STID, name: s.NAME, readings: [] };
-        }
-        const obs = s.OBSERVATIONS || {};
-        const times = obs.date_time || [];
-        // Timeseries API uses _set_1 keys; latest API uses _value_1
-        const speeds = obs.wind_speed_set_1 || obs.wind_speed_value_1 || [];
-        const dirs = obs.wind_direction_set_1 || obs.wind_direction_value_1 || [];
-        const gusts = obs.wind_gust_set_1 || obs.wind_gust_value_1 || [];
-        const temps = obs.air_temp_set_1 || obs.air_temp_value_1 || [];
-        const altims = obs.altimeter_set_1 || obs.altimeter_value_1 || [];
-        const slps = obs.sea_level_pressure_set_1 || obs.sea_level_pressure_value_1 || [];
-
-        for (let i = 0; i < times.length; i++) {
-          allStations[s.STID].readings.push({
-            t: new Date(times[i]).getTime(),
-            speed: speeds[i] ?? null,
-            dir: dirs[i] ?? null,
-            gust: gusts[i] ?? null,
-            temp: temps[i] ?? null,
-            altim: altims[i] ?? null,
-            slp: slps[i] ?? null,
-          });
-        }
-      }
-    } catch (err) {
-      console.warn(`[HistoricalAnalysis] Chunk fetch error ${chunkStart.toISOString()}: ${err.message}`);
-    }
-
+    chunks.push({ start: new Date(chunkStart), end: chunkEnd });
     chunkStart = chunkEnd;
   }
 
-  // Sort each station's readings by time
+  for (let i = 0; i < chunks.length; i += CONCURRENT_CHUNKS) {
+    const batch = chunks.slice(i, i + CONCURRENT_CHUNKS);
+    const results = await Promise.allSettled(
+      batch.map(c => fetchTimeseries(token, stationIds, c.start, c.end))
+    );
+    for (let j = 0; j < results.length; j++) {
+      if (results[j].status === 'fulfilled') {
+        mergeStationData(allStations, results[j].value);
+      } else {
+        console.warn(`[HistoricalAnalysis] Chunk fetch error ${batch[j].start.toISOString()}: ${results[j].reason?.message}`);
+      }
+    }
+  }
+
   for (const s of Object.values(allStations)) {
     s.readings.sort((a, b) => a.t - b.t);
   }
