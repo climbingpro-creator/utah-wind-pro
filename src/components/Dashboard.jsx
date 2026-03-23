@@ -1,4 +1,4 @@
-import { useState, Suspense, lazy } from 'react';
+import { useState, useRef, Suspense, lazy } from 'react';
 import * as React from 'react';
 import { Wind, Brain, Lightbulb } from 'lucide-react';
 import { WindVector } from './WindVector';
@@ -53,6 +53,15 @@ export function Dashboard() {
   const { lakeState, history, status, isLoading, error, lastUpdated, refresh } = useLakeData(selectedLake);
   const { theme } = useTheme();
   const { isPro, trialActive, trialDaysLeft, openPaywall, showPaywall } = useAuth();
+  const contentRef = useRef(null);
+  const isFirstRender = useRef(true);
+
+  React.useEffect(() => {
+    if (isFirstRender.current) { isFirstRender.current = false; return; }
+    if (contentRef.current) {
+      contentRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [selectedActivity]);
   
   // Auto-switch lakes when moving between snow and water sports
   React.useEffect(() => {
@@ -313,10 +322,26 @@ export function Dashboard() {
           propagation={lakeState?.propagation}
         />
 
-        {/* Spot Selector — pick your spot, see the forecast */}
-        {!activityConfig?.hideLakeSelector && (
-          <LakeSelector selectedLake={selectedLake} onSelectLake={setSelectedLake} stationReadings={lakeState?.wind?.stations} activity={selectedActivity} />
-        )}
+        {/* ── Activity + Location selectors — always at top for easy planning ── */}
+        <div className="space-y-3">
+          <ActivityMode 
+            selectedActivity={selectedActivity}
+            onActivityChange={setSelectedActivity}
+            windSpeed={currentWindSpeed}
+            windGust={currentWindGust}
+            fpsStation={fpsStation}
+          />
+
+          <LakeSelector
+            selectedLake={selectedLake}
+            onSelectLake={setSelectedLake}
+            stationReadings={lakeState?.wind?.stations}
+            activity={selectedActivity}
+          />
+        </div>
+
+        {/* ── Activity content starts here — scroll target ── */}
+        <div ref={contentRef} className="scroll-mt-4" />
 
         {/* Today's Hourly Wind Timeline */}
         <SafeComponent name="Today Timeline">
@@ -334,17 +359,6 @@ export function Dashboard() {
             </SafeComponent>
           </Suspense>
         )}
-
-        {/* Global Activity Selector */}
-        <div className="w-full">
-          <ActivityMode 
-            selectedActivity={selectedActivity}
-            onActivityChange={setSelectedActivity}
-            windSpeed={currentWindSpeed}
-            windGust={currentWindGust}
-            fpsStation={fpsStation}
-          />
-        </div>
 
         {/* Activity Hero Photo — rotates daily from image pool + user submissions */}
         {activityConfig?.heroImage && (
@@ -389,17 +403,15 @@ export function Dashboard() {
         )}
 
         {/* SPOT RANKER — "Where should I go?" — primary decision */}
-        {!activityConfig?.hideLakeSelector && (
-          <SafeComponent name="Spot Ranker">
-            <SpotRanker
-              activity={selectedActivity}
-              currentWind={{ speed: currentWindSpeed, gust: currentWindGust, direction: currentWindDirection }}
-              lakeState={lakeState}
-              mesoData={mesoData}
-              onSelectSpot={setSelectedLake}
-            />
-          </SafeComponent>
-        )}
+        <SafeComponent name="Spot Ranker">
+          <SpotRanker
+            activity={selectedActivity}
+            currentWind={{ speed: currentWindSpeed, gust: currentWindGust, direction: currentWindDirection }}
+            lakeState={lakeState}
+            mesoData={mesoData}
+            onSelectSpot={setSelectedLake}
+          />
+        </SafeComponent>
 
         {/* Lake selector moved up near TodayHero */}
 

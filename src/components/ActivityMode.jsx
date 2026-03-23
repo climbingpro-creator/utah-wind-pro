@@ -123,7 +123,6 @@ export const ACTIVITY_CONFIGS = {
     primaryMetric: 'paraglidingScore',
     goodCondition: (speed, gust) => speed >= 5 && speed <= 20 && (!gust || gust - speed <= 7),
     specialMode: true,
-    hideLakeSelector: true,
   },
   
   fishing: {
@@ -142,7 +141,6 @@ export const ACTIVITY_CONFIGS = {
     primaryMetric: 'fishingScore',
     goodCondition: (speed) => speed < 15,
     specialMode: true,
-    hideLakeSelector: true,
   },
   
   windsurfing: {
@@ -184,53 +182,86 @@ function getActivityStatus(activityId, windSpeed, windGust) {
 const ActivityMode = ({ selectedActivity, onActivityChange, windSpeed, windGust, fpsStation }) => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
+  const scrollRef = React.useRef(null);
   const activities = ['kiting', 'windsurfing', 'snowkiting', 'sailing', 'fishing', 'boating', 'paddling', 'paragliding'];
 
   const fpsSpeed = fpsStation?.speed ?? fpsStation?.windSpeed;
   const fpsGust = fpsStation?.gust ?? fpsStation?.windGust;
+
+  React.useEffect(() => {
+    if (!scrollRef.current) return;
+    const selected = scrollRef.current.querySelector('[data-selected="true"]');
+    if (selected) selected.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+  }, [selectedActivity]);
   
   return (
-    <div className={`
-      flex items-center gap-1 p-1 rounded-xl border overflow-x-auto hide-scrollbar
-      ${isDark ? 'bg-[var(--bg-card)] border-[var(--border-color)]' : 'bg-white border-slate-200'}
-    `}>
-      {activities.map(activityId => {
-        const activity = ACTIVITY_CONFIGS[activityId];
-        const isSelected = selectedActivity === activityId;
-        const useSpeed = activityId === 'paragliding' && fpsSpeed != null ? fpsSpeed : windSpeed;
-        const useGust = activityId === 'paragliding' && fpsGust != null ? fpsGust : windGust;
-        const status = getActivityStatus(activityId, useSpeed, useGust);
-        const isActive = status === 'active';
-        const isMarginal = status === 'marginal';
+    <div className="space-y-2">
+      <div
+        ref={scrollRef}
+        className={`
+          flex items-center gap-1.5 p-1.5 rounded-2xl border overflow-x-auto hide-scrollbar
+          ${isDark ? 'bg-[var(--bg-card)] border-[var(--border-color)]' : 'bg-white border-slate-200 shadow-sm'}
+        `}
+      >
+        {activities.map(activityId => {
+          const activity = ACTIVITY_CONFIGS[activityId];
+          const isSelected = selectedActivity === activityId;
+          const useSpeed = activityId === 'paragliding' && fpsSpeed != null ? fpsSpeed : windSpeed;
+          const useGust = activityId === 'paragliding' && fpsGust != null ? fpsGust : windGust;
+          const status = getActivityStatus(activityId, useSpeed, useGust);
+          const isActive = status === 'active';
+          const isMarginal = status === 'marginal';
 
-        const statusDotColor = isActive ? 'bg-emerald-500' : isMarginal ? 'bg-amber-500' : null;
-        
-        return (
-          <button
-            key={activityId}
-            onClick={() => onActivityChange(activityId)}
-            className={`
-              relative flex flex-col items-center gap-1 px-3 py-2.5 rounded-xl text-[11px] font-semibold
-              transition-all duration-200 whitespace-nowrap outline-none
-              ${isSelected 
-                ? 'bg-sky-500 text-white shadow-sm'
-                : (isDark 
-                    ? 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/[0.04]'
-                    : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50')
-              }
-            `}
-            title={activity.description}
-          >
-            <span className="flex-shrink-0">{activity.icon}</span>
-            <span className="text-center leading-tight">{activity.name}</span>
-            {statusDotColor && !isSelected && (
-              <span className={`absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full ${statusDotColor} ring-2 ${
-                isDark ? 'ring-[var(--bg-card)]' : 'ring-white'
-              }`} />
-            )}
-          </button>
-        );
-      })}
+          const statusDotColor = isActive ? 'bg-emerald-500' : isMarginal ? 'bg-amber-500' : null;
+          
+          return (
+            <button
+              key={activityId}
+              data-selected={isSelected}
+              onClick={() => onActivityChange(activityId)}
+              className={`
+                relative flex flex-col items-center gap-1 px-3.5 py-3 rounded-xl text-[11px] font-semibold
+                transition-all duration-200 whitespace-nowrap outline-none min-w-[72px]
+                ${isSelected 
+                  ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/30 ring-2 ring-sky-400/50 scale-[1.04]'
+                  : (isDark 
+                      ? 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/[0.06]'
+                      : 'text-slate-400 hover:text-slate-700 hover:bg-slate-50')
+                }
+              `}
+              title={activity.description}
+            >
+              <span className={`flex-shrink-0 transition-transform duration-200 ${isSelected ? 'scale-110' : ''}`}>
+                {React.cloneElement(activity.icon, { className: isSelected ? 'w-6 h-6' : 'w-5 h-5' })}
+              </span>
+              <span className={`text-center leading-tight ${isSelected ? 'font-bold text-xs' : ''}`}>{activity.name}</span>
+              {statusDotColor && !isSelected && (
+                <span className={`absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full ${statusDotColor} ring-2 ${
+                  isDark ? 'ring-[var(--bg-card)]' : 'ring-white'
+                } animate-pulse`} />
+              )}
+              {isSelected && (
+                <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-5 h-0.5 rounded-full bg-white/80" />
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Selected activity confirmation banner */}
+      {selectedActivity && ACTIVITY_CONFIGS[selectedActivity] && (
+        <div className={`
+          flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold
+          ${isDark ? 'bg-sky-500/10 text-sky-400' : 'bg-sky-50 text-sky-600'}
+          transition-all duration-300
+        `}>
+          <span className="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse" />
+          <span>{ACTIVITY_CONFIGS[selectedActivity].description}</span>
+          <span className={`ml-auto text-[10px] font-medium ${isDark ? 'text-sky-500/50' : 'text-sky-400'}`}>
+            viewing
+          </span>
+        </div>
+      )}
     </div>
   );
 };

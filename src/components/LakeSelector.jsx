@@ -233,6 +233,14 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
     selectedLake === 'powder-mountain' || selectedLake === 'monte-cristo'
   );
 
+  // Auto-expand the relevant section when switching activities
+  useEffect(() => {
+    if (activity === 'paragliding') setParaglidingExpanded(true);
+    if (activity === 'snowkiting') setSnowExpanded(true);
+    if (activity === 'kiting' || activity === 'sailing') setKiteSpotsExpanded(true);
+    if (!['snowkiting', 'paragliding'].includes(activity)) setUtahLakeExpanded(true);
+  }, [activity]);
+
   // Persistent station cache — survives tab switches
   const cacheRef = useRef({});
   useEffect(() => {
