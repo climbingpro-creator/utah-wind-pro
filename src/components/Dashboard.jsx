@@ -7,7 +7,7 @@ import { ToastContainer } from './ToastNotification';
 import { useLakeData } from '../hooks/useLakeData';
 import { checkAndNotify } from '../services/NotificationService';
 import { getFullForecast } from '../services/ForecastService';
-import ActivityMode, { ACTIVITY_CONFIGS, calculateActivityScore, calculateGlassScore, getActivityHeroImage } from './ActivityMode';
+import { ACTIVITY_CONFIGS, calculateActivityScore, calculateGlassScore, getActivityHeroImage } from './ActivityMode';
 import { predictGlass } from '../services/BoatingPredictor';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
@@ -323,16 +323,8 @@ export function Dashboard() {
           propagation={lakeState?.propagation}
         />
 
-        {/* ── Activity + Location selectors — always at top for easy planning ── */}
-        <div className="space-y-3">
-          <ActivityMode 
-            selectedActivity={selectedActivity}
-            onActivityChange={setSelectedActivity}
-            windSpeed={currentWindSpeed}
-            windGust={currentWindGust}
-            fpsStation={fpsStation}
-          />
-
+        {/* ── Location selector — scroll target after activity tap ── */}
+        <div ref={contentRef} className="scroll-mt-4">
           <LakeSelector
             selectedLake={selectedLake}
             onSelectLake={setSelectedLake}
@@ -341,9 +333,6 @@ export function Dashboard() {
             pressureData={pressureData}
           />
         </div>
-
-        {/* ── Activity content starts here — scroll target ── */}
-        <div ref={contentRef} className="scroll-mt-4" />
 
         {/* Today's Hourly Wind Timeline */}
         <SafeComponent name="Today Timeline">
