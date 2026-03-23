@@ -198,6 +198,14 @@ export function predictFishing(windData = {}, pressureData = {}, options = {}) {
   const seasonalMult = avgRate > 0 ? Math.min(1.3, Math.max(0.7, monthlyRate / avgRate)) : 1.0;
   probability *= seasonalMult;
 
+  // Apply probability calibration from backtest
+  const bucket = Math.floor(Math.max(0, probability) / 20) * 20;
+  const calKey = `${bucket}-${bucket + 20}`;
+  const calMult = w.probabilityCalibration?.[calKey] || 1.0;
+  if (calMult !== 1.0) {
+    probability = probability * 0.6 + probability * calMult * 0.4;
+  }
+
   probability = Math.min(95, Math.max(0, probability));
 
   // Activity rating

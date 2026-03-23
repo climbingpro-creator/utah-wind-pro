@@ -40,7 +40,7 @@ async function fetchTimeseries(token, stationIds, startDate, endDate) {
   return data.STATION || [];
 }
 
-async function fetchFullHistory(token, stationIds, days = 90) {
+async function fetchFullHistory(token, stationIds, days = 365) {
   const end = new Date();
   const start = new Date(end.getTime() - days * 24 * 3600000);
   const allStations = {};
@@ -728,12 +728,132 @@ function buildThermalTimingProfiles(events, climatology, lakeStationMap) {
 }
 
 // ══════════════════════════════════════════════════════════════
+// MODEL 7: PROBABILITY CALIBRATION CURVES
+// For each event type: what fraction of the time does the event
+// ACTUALLY occur given the conditions that produce each score bucket?
+// Also produces activity-specific rates from real observed data.
+// ══════════════════════════════════════════════════════════════
+
+function buildCalibrationCurves(events, climatology, lakeStationMap) {
+  const byEventType = {};
+  const BUCKETS = ['0-20', '20-40', '40-60', '60-80', '80-100'];
+
+  const eventTypes = ['thermal_cycle', 'north_flow', 'frontal_passage', 'post_frontal',
+    'clearing_wind', 'pre_frontal', 'glass'];
+
+  // Total observation hours by lake (sum of all climatology entries)
+  const lakeObsHours = {};
+  for (const [lakeId, stationIds] of Object.entries(lakeStationMap)) {
+    let totalObs = 0;
+    for (const sid of stationIds) {
+      if (!climatology[sid]) continue;
+      for (const months of Object.values(climatology[sid])) {
+        for (const hourData of Object.values(months)) {
+          totalObs += hourData.n || 0;
+        }
+      }
+      break; // Only count primary station to avoid double-counting
+    }
+    lakeObsHours[lakeId] = totalObs;
+  }
+
+  // Per-event-type: base rate, hourly rate, and monthly rate
+  for (const type of eventTypes) {
+    const typeEvents = events.filter(e => e.type === type);
+    const totalObs = Object.values(lakeObsHours).reduce((s, v) => s + v, 0);
+    const baseRate = totalObs > 0 ? typeEvents.length / totalObs : 0;
+
+    // Hourly rates
+    const hourlyRates = {};
+    for (let h = 0; h < 24; h++) {
+      const hourEvents = typeEvents.filter(e => e.hour === h);
+      // Estimate total obs at this hour across all stations
+      let hourObs = 0;
+      for (const stid of Object.keys(climatology)) {
+        for (const months of Object.values(climatology[stid])) {
+          hourObs += months[h]?.n || 0;
+        }
+      }
+      hourlyRates[h] = hourObs > 0 ? hourEvents.length / hourObs : 0;
+    }
+
+    // Monthly rates
+    const monthlyRates = {};
+    for (let m = 0; m < 12; m++) {
+      const monthEvents = typeEvents.filter(e => e.month === m);
+      monthlyRates[m] = typeEvents.length > 0 ? monthEvents.length / typeEvents.length : 0;
+    }
+
+    // Speed distribution when event occurs
+    const speeds = typeEvents.filter(e => e.speed != null).map(e => e.speed);
+    const speedDist = speeds.length > 0 ? {
+      p25: percentile(speeds, 25),
+      p50: percentile(speeds, 50),
+      p75: percentile(speeds, 75),
+      mean: speeds.reduce((a, b) => a + b, 0) / speeds.length,
+    } : null;
+
+    byEventType[type] = {
+      totalEvents: typeEvents.length,
+      baseRate: Math.round(baseRate * 10000) / 10000,
+      hourlyRates,
+      monthlyRates,
+      speedDist,
+    };
+  }
+
+  // Activity-specific calibration from observed conditions
+  const byActivity = {};
+  const activities = {
+    kiting: (e) => e.speed >= 10 && e.speed <= 30,
+    kiting_quality: (e) => e.speed >= 12 && e.speed <= 22,
+    foil_kiting: (e) => e.speed >= 8 && e.speed <= 30,
+    sailing: (e) => e.speed >= 6 && e.speed <= 25,
+    windsurfing: (e) => e.speed >= 8 && e.speed <= 30,
+    paragliding_south: (e) => e.speed >= 5 && e.speed <= 20 && e.dir != null && e.dir >= 110 && e.dir <= 250,
+    paragliding_north: (e) => e.speed >= 5 && e.speed <= 20 && e.dir != null && (e.dir >= 290 || e.dir <= 60),
+    boating_glass: (e) => e.speed < 5,
+    fishing: (e) => e.speed < 10,
+  };
+
+  // Flatten all readings from all events for activity scoring
+  // Use climatology to get total observation count for base rates
+  const allEventReadings = events;
+  for (const [actName, testFn] of Object.entries(activities)) {
+    const matching = allEventReadings.filter(testFn);
+    const totalObs = Object.values(lakeObsHours).reduce((s, v) => s + v, 0);
+    const baseRate = totalObs > 0 ? matching.length / totalObs : 0;
+
+    // Hourly rates
+    const hourlyRates = {};
+    for (let h = 0; h < 24; h++) {
+      const hourMatch = matching.filter(e => e.hour === h);
+      let hourObs = 0;
+      for (const stid of Object.keys(climatology)) {
+        for (const months of Object.values(climatology[stid])) {
+          hourObs += months[h]?.n || 0;
+        }
+      }
+      hourlyRates[h] = hourObs > 0 ? Math.round((hourMatch.length / hourObs) * 10000) / 10000 : 0;
+    }
+
+    byActivity[actName] = {
+      totalMatches: matching.length,
+      baseRate: Math.round(baseRate * 10000) / 10000,
+      hourlyRates,
+    };
+  }
+
+  return { byEventType, byActivity };
+}
+
+// ══════════════════════════════════════════════════════════════
 // MASTER BUILD FUNCTION
 // Pulls history, runs all models, saves to Redis.
 // ══════════════════════════════════════════════════════════════
 
 export async function buildStatisticalModels(redisCmd, synopticToken, options = {}) {
-  const days = options.days || 90;
+  const days = options.days || 365;
   const log = [];
   const startTime = Date.now();
 
@@ -799,9 +919,14 @@ export async function buildStatisticalModels(redisCmd, synopticToken, options = 
   const thermalProfiles = buildThermalTimingProfiles(events, climatology, lakeStationMap);
   log.push(`Built thermal profiles for ${Object.keys(thermalProfiles).length} lakes`);
 
+  // 9. Build probability calibration curves from event detection rates
+  log.push('Building probability calibration curves...');
+  const calibrationCurves = buildCalibrationCurves(events, climatology, lakeStationMap);
+  log.push(`Calibration curves built for ${Object.keys(calibrationCurves.byEventType).length} event types, ${Object.keys(calibrationCurves.byActivity).length} activities`);
+
   // ── Package and store ──
   const models = {
-    version: 2,
+    version: 3,
     builtAt: new Date().toISOString(),
     daysAnalyzed: days,
     stationCount,
@@ -812,6 +937,7 @@ export async function buildStatisticalModels(redisCmd, synopticToken, options = 
     lagCorrelations,
     gradientThresholds,
     thermalProfiles,
+    calibrationCurves,
   };
 
   // Store in Redis

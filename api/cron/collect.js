@@ -334,9 +334,9 @@ export default async function handler(req, res) {
           const models = modelsRaw ? JSON.parse(modelsRaw) : null;
           const modelAge = models?.builtAt ? Date.now() - new Date(models.builtAt).getTime() : Infinity;
           if (modelAge > 6 * 24 * 3600 * 1000) {
-            console.log('Auto-rebuilding statistical models (weekly schedule)');
+            console.log('Auto-rebuilding statistical models (weekly schedule — 365 days)');
             const { buildStatisticalModels: rebuildModels } = await import('../lib/historicalAnalysis.js');
-            await rebuildModels(redisCommand, env.synopticToken, { days: 30 });
+            await rebuildModels(redisCommand, env.synopticToken, { days: 365 });
           }
         }
       } catch (modelErr) {
@@ -631,7 +631,7 @@ async function handleBuildModels(req, res) {
   if (!env.synopticToken) return res.status(500).json({ error: 'SYNOPTIC_TOKEN not set' });
   if (!env.upstashUrl || !env.upstashToken) return res.status(500).json({ error: 'Redis not configured' });
 
-  const days = Math.min(parseInt(req.query?.days || '90', 10), 365);
+  const days = Math.min(parseInt(req.query?.days || '365', 10), 730);
 
   try {
     const { models, log } = await buildStatisticalModels(redisCommand, env.synopticToken, { days });

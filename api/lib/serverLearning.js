@@ -842,6 +842,20 @@ function predictForLake(lakeId, primaryStation, pressure, history, hour, learned
         }
       }
 
+      // Calibration curves: anchor probability to observed base rates from history
+      const calCurve = statisticalModels.calibrationCurves?.byEventType?.[t.id];
+      if (calCurve && calCurve.totalEvents > 20) {
+        const hourlyRate = calCurve.hourlyRates?.[hour] ?? calCurve.baseRate;
+        const monthlyShare = calCurve.monthlyRates?.[month] ?? (1 / 12);
+        // Scale probability toward observed rate: if our score says 60 but the base rate
+        // at this hour/month is only 5%, pull it down; if score is 20 but rate is 30%, pull up
+        const observedPct = Math.round(hourlyRate * monthlyShare * 12 * 100);
+        if (observedPct > 0) {
+          const anchor = Math.max(5, Math.min(80, observedPct));
+          prob = prob * 0.7 + anchor * 0.3;
+        }
+      }
+
       // Upstream lag correction: use data-driven lead times for upstream signals
       if ((t.id === 'frontal_passage' || t.id === 'pre_frontal') && upstreamSignals?.length > 0) {
         for (const sig of upstreamSignals) {
@@ -1499,7 +1513,7 @@ function fingerprintDistance(a, b) {
 }
 
 async function findAnalogDays(redisCmd, currentFingerprint, lakeId, maxResults = 5) {
-  const raw = await redisCmd('LRANGE', 'accuracy:log', '0', '499');
+  const raw = await redisCmd('LRANGE', 'accuracy:log', '0', '4999');
   if (!raw || raw.length === 0) return [];
 
   const records = [];

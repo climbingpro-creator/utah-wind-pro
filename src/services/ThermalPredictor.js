@@ -1481,7 +1481,21 @@ export function predictThermal(lakeId, currentConditions) {
       probability *= cal;
     }
   }
-  
+
+  // Anchor to statistical model calibration curves (observed base rates from 365-day history)
+  const calCurves = statisticalModels?.calibrationCurves;
+  if (calCurves?.byEventType?.thermal_cycle) {
+    const tc = calCurves.byEventType.thermal_cycle;
+    if (tc.totalEvents > 50 && tc.hourlyRates?.[currentHour] != null) {
+      const observedRate = tc.hourlyRates[currentHour];
+      const monthShare = tc.monthlyRates?.[currentMonth] ?? (1 / 12);
+      const anchorPct = Math.round(observedRate * monthShare * 12 * 100);
+      if (anchorPct > 0 && anchorPct < 100) {
+        probability = probability * 0.75 + anchorPct * 0.25;
+      }
+    }
+  }
+
   // Cap at 95%
   probability = Math.min(95, Math.max(0, Math.round(probability)));
 

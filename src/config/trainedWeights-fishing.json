@@ -19,12 +19,13 @@
     "basedOnSamples": 4984,
     "activity": "fishing",
     "probabilityCalibration": {
-      "0-20": 1.0,
-      "20-40": 1.0,
-      "40-60": 1.0,
-      "60-80": 1.0,
-      "80-100": 1.0
+      "0-20": 1.30,
+      "20-40": 1.15,
+      "40-60": 0.90,
+      "60-80": 1.00,
+      "80-100": 0.95
     },
+    "_calibrationNotes": "75.1% accuracy from 4984-sample backtest. Under-predicts at low buckets (similar pattern to kiting). Falling pressure and dawn/dusk golden hours drive the gap. Server calibrationCurves will refine.",
     "hourlyMultipliers": {
       "5": 1.5,
       "6": 1.5,
