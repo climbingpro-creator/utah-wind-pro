@@ -338,6 +338,7 @@ export function Dashboard() {
             onSelectLake={setSelectedLake}
             stationReadings={lakeState?.wind?.stations}
             activity={selectedActivity}
+            pressureData={pressureData}
           />
         </div>
 
