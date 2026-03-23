@@ -250,7 +250,7 @@ const STATUS_STYLES_LIGHT = {
   off:     { bg: 'bg-slate-50/50', border: 'border-slate-100', text: 'text-slate-400', badge: 'bg-slate-100 text-slate-400', dot: 'bg-slate-300' },
 };
 
-export default function TodayHero({ windSpeed, windGust, thermalPrediction, boatingPrediction, onSelectActivity, fpsStation, utalpStation, propagation }) {
+export default function TodayHero({ windSpeed, windGust, thermalPrediction, boatingPrediction, onSelectActivity, selectedActivity, fpsStation, utalpStation, propagation }) {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 
@@ -306,15 +306,20 @@ export default function TodayHero({ windSpeed, windGust, thermalPrediction, boat
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
           {outlook.cards.map(({ id, cfg, verdict }) => {
             if (!verdict || !cfg) return null;
-            const s = bgImage
-              ? (verdict.status === 'go'
-                ? 'bg-white/15 border-emerald-400/40 backdrop-blur-sm'
-                : verdict.status === 'wait'
-                  ? 'bg-white/8 border-amber-400/30 backdrop-blur-sm'
-                  : 'bg-white/5 border-white/10 backdrop-blur-sm')
-              : `${styles[verdict.status]?.bg || ''} ${styles[verdict.status]?.border || 'border-[var(--border-subtle)]'}`;
-
+            const isSelected = selectedActivity === id;
             const isGo = verdict.status === 'go';
+
+            const s = isSelected
+              ? (bgImage
+                  ? 'bg-sky-500/25 border-sky-400 backdrop-blur-sm ring-2 ring-sky-400/60 shadow-lg shadow-sky-500/20'
+                  : 'bg-sky-500/10 border-sky-500 ring-2 ring-sky-400/40 shadow-md shadow-sky-500/10')
+              : bgImage
+                ? (verdict.status === 'go'
+                  ? 'bg-white/15 border-emerald-400/40 backdrop-blur-sm'
+                  : verdict.status === 'wait'
+                    ? 'bg-white/8 border-amber-400/30 backdrop-blur-sm'
+                    : 'bg-white/5 border-white/10 backdrop-blur-sm')
+                : `${styles[verdict.status]?.bg || ''} ${styles[verdict.status]?.border || 'border-[var(--border-subtle)]'}`;
 
             return (
               <button
@@ -323,11 +328,16 @@ export default function TodayHero({ windSpeed, windGust, thermalPrediction, boat
                 className={`
                   group relative flex flex-col p-3 rounded-xl border transition-all duration-200 text-left
                   ${s}
-                  ${isGo ? 'hover:scale-[1.02] hover:shadow-md' : 'hover:bg-white/[0.06]'}
+                  ${isSelected ? 'scale-[1.03]' : isGo ? 'hover:scale-[1.02] hover:shadow-md' : 'hover:bg-white/[0.06]'}
                 `}
               >
+                {isSelected && (
+                  <span className="absolute -top-1.5 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full text-[8px] font-extrabold uppercase tracking-widest bg-sky-500 text-white shadow-sm">
+                    Selected
+                  </span>
+                )}
                 <div className="flex items-center justify-between mb-2">
-                  <span className={`${bgImage ? 'text-white/80' : 'text-[var(--text-secondary)]'}`}>{cfg.icon}</span>
+                  <span className={`${isSelected ? 'text-sky-400' : bgImage ? 'text-white/80' : 'text-[var(--text-secondary)]'}`}>{cfg.icon}</span>
                   <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded-full uppercase tracking-wider ${
                     bgImage
                       ? (isGo ? 'bg-emerald-500 text-white' : verdict.status === 'wait' ? 'bg-amber-500/30 text-amber-300' : 'bg-white/10 text-white/40')
@@ -336,7 +346,7 @@ export default function TodayHero({ windSpeed, windGust, thermalPrediction, boat
                     {verdict.label}
                   </span>
                 </div>
-                <span className={`text-sm font-bold mb-1 ${bgImage ? 'text-white' : 'text-[var(--text-primary)]'}`}>
+                <span className={`text-sm font-bold mb-1 ${isSelected ? (bgImage ? 'text-sky-300' : 'text-sky-500') : bgImage ? 'text-white' : 'text-[var(--text-primary)]'}`}>
                   {cfg.name}
                 </span>
                 <span className={`text-[11px] leading-tight line-clamp-2 ${
@@ -349,7 +359,10 @@ export default function TodayHero({ windSpeed, windGust, thermalPrediction, boat
                     {verdict.window}
                   </span>
                 )}
-                <ChevronRight className={`absolute top-3 right-2 w-3 h-3 opacity-0 group-hover:opacity-50 transition-opacity ${bgImage ? 'text-white' : 'text-[var(--text-tertiary)]'}`} />
+                {isSelected
+                  ? <CheckCircle className={`absolute top-3 right-2 w-4 h-4 ${bgImage ? 'text-sky-400' : 'text-sky-500'}`} />
+                  : <ChevronRight className={`absolute top-3 right-2 w-3 h-3 opacity-0 group-hover:opacity-50 transition-opacity ${bgImage ? 'text-white' : 'text-[var(--text-tertiary)]'}`} />
+                }
               </button>
             );
           })}
