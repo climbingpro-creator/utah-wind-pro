@@ -166,6 +166,7 @@ class LearningSystem {
         windEventType: prediction.windEventType || null,
         windEventDetails: prediction.windEventDetails || null,
         timing: prediction.timing || null,
+        indicatorScore: prediction.indicatorScore ?? null,
       },
       
       // Conditions at time of prediction
@@ -446,9 +447,28 @@ class LearningSystem {
       windTypes.add('glass');
       windTypes.add('calm');
     }
-    // Paragliding: flyable if south-facing wind in right speed range
-    if (avgDir != null && avgDir >= 110 && avgDir <= 250 && avgSpeed >= 5 && avgSpeed <= 20) {
-      windTypes.add('paragliding');
+    // Paragliding: south-facing sites (PotM South, Inspo) OR north-facing sites (PotM North)
+    if (avgDir != null && avgSpeed >= 5 && avgSpeed <= 20) {
+      if (avgDir >= 110 && avgDir <= 250) windTypes.add('paragliding_south');
+      if (avgDir >= 290 || avgDir <= 60) windTypes.add('paragliding_north');
+      if ((avgDir >= 110 && avgDir <= 250) || (avgDir >= 290 || avgDir <= 60)) windTypes.add('paragliding');
+    }
+
+    // Aggregate activityScores from raw actuals so per-activity learning works
+    const mergedActivityScores = {};
+    let activityScoredCount = 0;
+    for (const a of actuals) {
+      if (!a.activityScores) continue;
+      activityScoredCount++;
+      for (const [act, score] of Object.entries(a.activityScores)) {
+        if (!mergedActivityScores[act]) mergedActivityScores[act] = { sum: 0, count: 0 };
+        mergedActivityScores[act].sum += (typeof score === 'number' ? score : 0);
+        mergedActivityScores[act].count++;
+      }
+    }
+    const activityScores = {};
+    for (const [act, data] of Object.entries(mergedActivityScores)) {
+      activityScores[act] = data.count > 0 ? data.sum / data.count : 0;
     }
 
     return {
@@ -462,6 +482,7 @@ class LearningSystem {
       twinTipKiteablePct: Math.round(twinTipKiteableCount / actuals.length * 100),
       dominantWindType,
       windTypes: [...windTypes],
+      activityScores: activityScoredCount > 0 ? activityScores : undefined,
     };
   }
 
@@ -720,11 +741,18 @@ class LearningSystem {
       
       windTypeAccuracy: {
         thermal: { correct: 0, total: 0 },
+        thermal_cycle: { correct: 0, total: 0 },
         north_flow: { correct: 0, total: 0 },
         calm: { correct: 0, total: 0 },
+        glass: { correct: 0, total: 0 },
         postfrontal: { correct: 0, total: 0 },
+        post_frontal: { correct: 0, total: 0 },
         clearing_wind: { correct: 0, total: 0 },
         frontal_passage: { correct: 0, total: 0 },
+        pre_frontal: { correct: 0, total: 0 },
+        paragliding: { correct: 0, total: 0 },
+        paragliding_south: { correct: 0, total: 0 },
+        paragliding_north: { correct: 0, total: 0 },
       },
       
       // Time of day patterns
@@ -1181,19 +1209,54 @@ class LearningSystem {
     }
 
     // ─── WIND TYPE WEIGHT ADJUSTMENT ──────────────────────────
-    const thermalAccuracy = errorAnalysis.windTypeAccuracy.thermal;
-    const northFlowAccuracy = errorAnalysis.windTypeAccuracy.north_flow;
-    
-    if (thermalAccuracy.total > 5) {
-      const rate = thermalAccuracy.correct / thermalAccuracy.total;
+    // Merge thermal + thermal_cycle for combined accuracy
+    const thermalAcc = errorAnalysis.windTypeAccuracy.thermal;
+    const thermalCycleAcc = errorAnalysis.windTypeAccuracy.thermal_cycle;
+    const thermalTotal = thermalAcc.total + thermalCycleAcc.total;
+    const thermalCorrect = thermalAcc.correct + thermalCycleAcc.correct;
+
+    if (thermalTotal > 5) {
+      const rate = thermalCorrect / thermalTotal;
       const target = currentWeights.thermalWeight * (0.5 + rate * 0.5);
       newWeights.thermalWeight = currentWeights.thermalWeight + (target - currentWeights.thermalWeight) * lerpRate;
     }
-    
-    if (northFlowAccuracy.total > 5) {
-      const rate = northFlowAccuracy.correct / northFlowAccuracy.total;
+
+    // Merge north_flow + frontal_passage + post_frontal + postfrontal
+    const nfAcc = errorAnalysis.windTypeAccuracy.north_flow;
+    const fpAcc = errorAnalysis.windTypeAccuracy.frontal_passage;
+    const pfAcc = errorAnalysis.windTypeAccuracy.post_frontal;
+    const pfAcc2 = errorAnalysis.windTypeAccuracy.postfrontal;
+    const northTotal = nfAcc.total + fpAcc.total + pfAcc.total + pfAcc2.total;
+    const northCorrect = nfAcc.correct + fpAcc.correct + pfAcc.correct + pfAcc2.correct;
+
+    if (northTotal > 5) {
+      const rate = northCorrect / northTotal;
       const target = currentWeights.pressureWeight * (0.5 + rate * 0.5);
       newWeights.pressureWeight = currentWeights.pressureWeight + (target - currentWeights.pressureWeight) * lerpRate;
+    }
+
+    // Paragliding weight: adjust based on PG-specific accuracy
+    const pgAcc = errorAnalysis.windTypeAccuracy.paragliding;
+    const pgNorthAcc = errorAnalysis.windTypeAccuracy.paragliding_north;
+    const pgSouthAcc = errorAnalysis.windTypeAccuracy.paragliding_south;
+    const pgTotal = pgAcc.total + pgNorthAcc.total + pgSouthAcc.total;
+    const pgCorrect = pgAcc.correct + pgNorthAcc.correct + pgSouthAcc.correct;
+    if (pgTotal > 3) {
+      const pgRate = pgCorrect / pgTotal;
+      if (!newWeights.windEventPatterns) newWeights.windEventPatterns = {};
+      newWeights.windEventPatterns.paraglidingAccuracy = pgRate;
+      newWeights.windEventPatterns.paraglidingNorthRate = pgNorthAcc.total > 0 ? pgNorthAcc.correct / pgNorthAcc.total : null;
+    }
+
+    // Calm/glass combined
+    const calmAcc = errorAnalysis.windTypeAccuracy.calm;
+    const glassAcc = errorAnalysis.windTypeAccuracy.glass;
+    const calmTotal = calmAcc.total + glassAcc.total;
+    const calmCorrect = calmAcc.correct + glassAcc.correct;
+    if (calmTotal > 5) {
+      const calmRate = calmCorrect / calmTotal;
+      if (!newWeights.windEventPatterns) newWeights.windEventPatterns = {};
+      newWeights.windEventPatterns.glassAccuracy = calmRate;
     }
 
     // ─── CONDITION-SPECIFIC PRESSURE GRADIENT ADJUSTMENT ─────

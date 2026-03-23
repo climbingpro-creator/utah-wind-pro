@@ -269,11 +269,20 @@ export function predictNorth(windData, _conditions = {}) {
     else if (gradient < -1.0) probability -= 10;
   }
 
-  // Time of day: north side best 5-8 PM (glass-off)
-  if (hour >= 17 && hour <= 19) probability += 15;
-  else if (hour >= 15 && hour <= 20) probability += 10;
-  else if (hour >= 13) probability += 5;
-  else probability -= 5;
+  // Time of day: north side traditionally best 5-8 PM (glass-off),
+  // BUT postfrontal north flow can be great all day
+  const isStrongNorth = (kslc.windDirection != null && (kslc.windDirection >= 315 || kslc.windDirection <= 45) && kslc.windSpeed >= 8);
+  if (isStrongNorth) {
+    // Postfrontal/strong north flow — flyable window is all day, not just glass-off
+    if (hour >= 9 && hour <= 19) probability += 12;
+    else if (hour >= 7 && hour <= 20) probability += 8;
+    else probability += 3;
+  } else {
+    if (hour >= 17 && hour <= 19) probability += 15;
+    else if (hour >= 15 && hour <= 20) probability += 10;
+    else if (hour >= 13) probability += 5;
+    else probability -= 5;
+  }
 
   // Apply learned hourly multiplier
   const hourlyMult = w.hourlyMultipliers?.[hour] || 1.0;

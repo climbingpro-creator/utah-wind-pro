@@ -121,7 +121,8 @@ function computeExcitement(activity, params) {
     if (prob < 0.3) score += 1;
   } else if (activity === 'paragliding') {
     if (speed >= thresholds.ideal[0] && speed <= thresholds.ideal[1]) score += 2;
-    if (thermalPrediction?.windType === 'laminar') score += 1;
+    else if (speed >= thresholds.rideable[0] && speed <= thresholds.rideable[1]) score += 1;
+    if (gf < 0.25 && speed >= 5) score += 1; // Laminar flow bonus
     if (prob >= 0.5) score += 1;
     if (isActiveNonThermal && speed >= 5 && speed <= 18) score += 1;
   }
@@ -481,24 +482,38 @@ function briefFishing(params) {
 }
 
 function briefParagliding(params) {
-  const { currentWind, thermalPrediction, upstream, smartForecast, activeTriggers, swingAlerts } = params;
+  const { currentWind, thermalPrediction, intelligence, upstream, smartForecast, activeTriggers, swingAlerts } = params;
   const speed = currentWind?.speed || 0;
   const gust = currentWind?.gust || speed;
   const dir = currentWind?.direction;
   const excitement = computeExcitement('paragliding', params);
   const thermal = thermalPrediction || {};
+  const regime = detectWindRegime(params);
 
-  // South-facing sites need S/SW flow; north-facing need N/NW
-  const dirUpper = String(dir || '').toUpperCase();
-  const isSouthFlow = ['S', 'SSW', 'SW', 'SSE'].includes(dirUpper);
-  const isNorthFlow = ['N', 'NNW', 'NW', 'NNE'].includes(dirUpper);
-  const siteRec = isSouthFlow ? 'south-facing sites' : isNorthFlow ? 'north-facing sites' : 'either site — cross flow';
+  // Direction is numeric degrees — detect site suitability
+  const isSouthFlow = dir != null && dir >= 110 && dir <= 250;
+  const isNorthFlow = dir != null && (dir >= 290 || dir <= 60);
+  const gf = speed > 0 ? (gust - speed) / speed : 0;
+  const laminar = gf < 0.25;
+
+  let siteRec;
+  if (isSouthFlow) siteRec = 'south side (PotM South)';
+  else if (isNorthFlow) siteRec = 'north side (PotM North)';
+  else siteRec = 'cross flow — check both sites';
 
   let headline = '';
-  if (excitement >= 4) {
+  const isActiveNorth = ['north_flow_strong', 'north_flow', 'north_wind', 'postfrontal', 'synoptic_wind'].includes(regime);
+
+  if (excitement >= 4 && isActiveNorth && laminar) {
+    headline = `North flow soaring — ${siteRec} is epic right now`;
+  } else if (excitement >= 4) {
     headline = `Excellent soaring day — ${siteRec} looking prime`;
+  } else if (excitement === 3 && isActiveNorth) {
+    headline = `North flow flyable — ${siteRec} should be good`;
   } else if (excitement === 3) {
     headline = `Flyable day — ${siteRec} should work`;
+  } else if (excitement === 2 && isActiveNorth && speed >= 5 && speed <= 18 && laminar) {
+    headline = `Light north flow — ${siteRec} marginal but flyable`;
   } else if (excitement === 2) {
     headline = 'Marginal conditions — experienced pilots only';
   } else {
@@ -507,11 +522,15 @@ function briefParagliding(params) {
 
   const bodyParts = [];
   if (speed > 0) {
-    bodyParts.push(`${speed} mph${gust > speed ? ` gusting ${gust}` : ''} from the ${dirLabel(dir) || 'variable'}.`);
+    const gustStr = gust > speed ? ` gusting ${gust}` : '';
+    const laminarStr = laminar ? ' (laminar)' : gf > 0.4 ? ' (gusty — caution)' : '';
+    bodyParts.push(`${speed} mph${gustStr} from the ${dirLabel(dir) || 'variable'}${laminarStr}.`);
   }
 
-  if (thermal.windType) {
-    bodyParts.push(`Flow type: ${thermal.windType}${thermal.windType === 'laminar' ? ' — smooth and liftable' : ''}.`);
+  if (isActiveNorth && speed >= 5) {
+    bodyParts.push(`North flow active — ${siteRec} is the call.`);
+  } else if (thermal.windType && thermal.windType !== 'thermal') {
+    bodyParts.push(`Flow type: ${thermal.windType}.`);
   }
 
   const windSnip = buildWindSnippet(thermal, isNorthFlow ? 'north_flow' : isSouthFlow ? 'thermal' : 'calm');
@@ -549,10 +568,14 @@ function briefParagliding(params) {
   }
 
   let bestAction = '';
-  if (excitement >= 3 && thermal.startHour) {
+  if (excitement >= 3 && isActiveNorth && speed >= 5 && speed <= 18 && laminar) {
+    bestAction = `Get to PotM North — ${Math.round(speed)} mph laminar north flow, soaring conditions`;
+  } else if (excitement >= 3 && thermal.startHour) {
     bestAction = `Set up at ${siteRec} by ${formatHour(thermal.startHour)} for best thermals`;
   } else if (excitement >= 3) {
     bestAction = `Flyable now at ${siteRec} — ${speed} mph ${dirLabel(dir) || ''}`;
+  } else if (excitement === 2 && isActiveNorth && speed >= 5 && laminar) {
+    bestAction = `Light north flow at PotM North — flyable for experienced pilots`;
   } else if (swingWarn) {
     bestAction = 'Hold off — wind shift incoming, reassess after';
   } else {

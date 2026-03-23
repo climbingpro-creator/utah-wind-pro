@@ -247,11 +247,21 @@ export function scoreSessionForActivity(activity, wind, conditions = {}) {
   switch (activity) {
     case 'kiting':
     case 'windsurfing':
+    case 'snowkiting':
       return scoreKitingSession(wind, conditions);
     case 'sailing':
       return scoreSailingSession(wind, conditions);
-    case 'paragliding':
-      return scoreParaglidingSession(wind, conditions.site || 'south', conditions);
+    case 'paragliding': {
+      // Auto-detect north vs south based on wind direction
+      const dir = wind?.direction;
+      const isNorth = dir != null && (dir >= 290 || dir <= 60);
+      const site = conditions.site || (isNorth ? 'north' : 'south');
+      return scoreParaglidingSession(wind, site, conditions);
+    }
+    case 'paragliding_north':
+      return scoreParaglidingSession(wind, 'north', conditions);
+    case 'paragliding_south':
+      return scoreParaglidingSession(wind, 'south', conditions);
     case 'fishing':
       return scoreFishingSession(wind, conditions);
     case 'boating':

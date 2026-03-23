@@ -35,7 +35,7 @@ const LAKE_THERMAL = {
   'lake-powell':          { dir: [180, 270], peak: [10, 18], station: 'KPGA' },
   'rush-lake':            { dir: [170, 210], peak: [10, 18], station: 'KSLC' },
   'potm-south':           { dir: [110, 250], peak: [7, 15],  station: 'FPS' },
-  'potm-north':           { dir: [320, 360], peak: [12, 18], station: 'FPS' },
+  'potm-north':           { dir: [320, 45], peak: [12, 18], station: 'FPS' },
   'powder-mountain':      { dir: [180, 270], peak: [10, 18], station: 'KOGD' },
   // ── Northern Utah (missing) ──
   'east-canyon':          { dir: [180, 270], peak: [11, 17], station: 'KSLC' },
@@ -829,6 +829,19 @@ function predictForLake(lakeId, primaryStation, pressure, history, hour, learned
         if (t.id === 'north_flow' && speedZ > 1) prob += 8;
       }
 
+      // Gradient thresholds: compare current pressure trend to learned percentiles
+      const gradT = statisticalModels.gradientThresholds?.[t.id];
+      if (gradT && pressure?.trend != null) {
+        const trend = pressure.trend;
+        if (trend >= gradT.trendP25 && trend <= gradT.trendP75) {
+          prob += 8; // Current pressure trend is in the "sweet spot" for this event type
+        } else if (trend >= gradT.trendP10 && trend <= gradT.trendP90) {
+          prob += 3; // Plausible range
+        } else {
+          prob -= 5; // Pressure trend is unusual for this event type
+        }
+      }
+
       // Upstream lag correction: use data-driven lead times for upstream signals
       if ((t.id === 'frontal_passage' || t.id === 'pre_frontal') && upstreamSignals?.length > 0) {
         for (const sig of upstreamSignals) {
@@ -869,6 +882,12 @@ function predictForLake(lakeId, primaryStation, pressure, history, hour, learned
       Math.max(0, baseSpeed[1] + speedBias),
     ];
 
+    // Apply learned dirBias as additive correction to expected direction range
+    const dirBias = learnedWeights?.eventWeights?.[t.id]?.dirBias || 0;
+    const adjDir = t.expDir
+      ? [(t.expDir[0] + dirBias + 360) % 360, (t.expDir[1] + dirBias + 360) % 360]
+      : null;
+
     // Final clamp after all adjustments
     prob = Math.max(0, Math.min(100, Math.round(prob)));
 
@@ -877,7 +896,7 @@ function predictForLake(lakeId, primaryStation, pressure, history, hour, learned
         eventType: t.id,
         probability: prob,
         expectedSpeed: adjSpeed,
-        expectedDirection: t.expDir,
+        expectedDirection: adjDir,
         primaryStation: primaryStation.stationId,
         windSpeed: primaryStation.windSpeed,
         windDirection: primaryStation.windDirection,
@@ -1042,17 +1061,67 @@ function verifyPredictions(predictions, actualStations, lakeStationMap) {
     const dirRange = pred.expectedDirection;
     const expectedDirMid = dirRange ? ((dirRange[0] + dirRange[1]) / 2) % 360 : null;
 
+    // Event type verification: did the predicted wind TYPE match reality?
+    let eventTypeCorrect = null;
+    const actualDir = primary.windDirection;
+    if (actualDir != null) {
+      const isNorth = actualDir >= 290 || actualDir <= 60;
+      const isSouth = actualDir >= 100 && actualDir <= 250;
+      const isSE = actualDir >= 100 && actualDir <= 200;
+      const isNW = actualDir >= 290 && actualDir <= 360;
+      const isSW = actualDir >= 180 && actualDir <= 250;
+
+      switch (pred.eventType) {
+        case 'north_flow':
+        case 'frontal_passage':
+        case 'post_frontal':
+          eventTypeCorrect = isNorth && actualSpeed >= 6;
+          break;
+        case 'thermal_cycle':
+        case 'clearing_wind':
+          eventTypeCorrect = isSE && actualSpeed >= 5;
+          break;
+        case 'pre_frontal':
+          eventTypeCorrect = (isSW || isSouth) && actualSpeed >= 8;
+          break;
+        case 'glass':
+          eventTypeCorrect = actualSpeed < 5;
+          break;
+      }
+
+      // Penalty/bonus for event type match
+      if (eventTypeCorrect === true) score = Math.min(1, score + 0.1);
+      else if (eventTypeCorrect === false) score = Math.max(0, score - 0.15);
+    }
+
+    // Activity-specific scores: how good was this for each sport?
+    const activityScores = {};
+    const pgSouthOk = actualDir != null && actualDir >= 110 && actualDir <= 250 && actualSpeed >= 5 && actualSpeed <= 20;
+    const pgNorthOk = actualDir != null && (actualDir >= 290 || actualDir <= 60) && actualSpeed >= 5 && actualSpeed <= 20;
+    activityScores.kiting = actualSpeed >= 10 ? 1 : actualSpeed >= 8 ? 0.6 : 0;
+    activityScores.windsurfing = actualSpeed >= 12 ? 1 : actualSpeed >= 8 ? 0.5 : 0;
+    activityScores.sailing = actualSpeed >= 6 ? 1 : actualSpeed >= 4 ? 0.5 : 0;
+    activityScores.paragliding = pgSouthOk || pgNorthOk ? 1 : 0;
+    activityScores.paragliding_north = pgNorthOk ? 1 : 0;
+    activityScores.paragliding_south = pgSouthOk ? 1 : 0;
+    activityScores.boating = actualSpeed < 15 ? 1 : actualSpeed < 20 ? 0.5 : 0;
+    activityScores.fishing = actualSpeed < 10 ? 1 : actualSpeed < 15 ? 0.5 : 0;
+    activityScores.paddling = actualSpeed < 8 ? 1 : actualSpeed < 12 ? 0.5 : 0;
+    activityScores.snowkiting = actualSpeed >= 10 ? 1 : actualSpeed >= 6 ? 0.5 : 0;
+
     results.push({
       lakeId,
       eventType: pred.eventType,
       predicted: pred.probability,
       actualSpeed,
-      actualDir: primary.windDirection ?? null,
-      actualDirection: primary.windDirection,
+      actualDir: actualDir ?? null,
+      actualDirection: actualDir,
       expectedSpeedMid: (expMin + expMax) / 2,
       expectedDirMid,
       predictionHour: pred.predictionHour ?? null,
       score: Math.round(score * 100) / 100,
+      eventTypeCorrect,
+      activityScores,
       nwsScore,
       nwsSpeed: pred.nwsForecast?.speed ?? null,
       timestamp: new Date().toISOString(),
