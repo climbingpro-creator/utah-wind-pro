@@ -60,6 +60,7 @@ const LAKE_REGIONS = [
     label: 'Wasatch Front & Back',
     icon: '⛰️',
     lakes: [
+      { id: 'strawberry-bay', name: 'Strawberry Reservoir', wind: 'W/NW', meter: 'UTCOP', fish: '🐟 Cutthroat, Rainbow, Kokanee, Chub', blueRibbon: true },
       { id: 'jordanelle', name: 'Jordanelle', wind: 'Canyon/Thermal', meter: 'KHCR', fish: '🐟 Kokanee, SMB, Trout' },
       { id: 'deer-creek', name: 'Deer Creek', wind: 'SW Canyon', meter: 'KHCR', fish: '🐟 Walleye, SMB, Trout', blueRibbon: true },
       { id: 'east-canyon', name: 'East Canyon', wind: 'Canyon', meter: 'KSLC', fish: '🐟 Brown Trout, SMB, Kokanee' },
