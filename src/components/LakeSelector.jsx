@@ -332,7 +332,7 @@ function getFishingRecommendation(windStatuses, pressureData) {
 
 function FishingSpotHero({ recommendation, onSelectLake, isDark }) {
   if (!recommendation?.top) return null;
-  const { top, runner, seasonLabel, todTip, pressureNote, isFallingPressure, season } = recommendation;
+  const { top, runner, seasonLabel, todTip, pressureNote, isFallingPressure } = recommendation;
 
   const topSeason = top.seasonData;
 
