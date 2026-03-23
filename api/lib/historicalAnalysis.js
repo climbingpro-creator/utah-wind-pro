@@ -20,7 +20,7 @@ import { LAKE_STATIONS, ALL_STATION_IDS, UPSTREAM_STATIONS } from './stations.js
 
 // ── Synoptic API chunking (7 days max per call for timeseries) ──
 
-const CHUNK_DAYS = 7;
+const CHUNK_DAYS = 30;
 const SYNOPTIC_BASE = 'https://api.synopticdata.com/v2';
 const VARS = 'wind_speed,wind_direction,wind_gust,air_temp,altimeter,sea_level_pressure';
 
@@ -68,7 +68,7 @@ function mergeStationData(allStations, stations) {
   }
 }
 
-const CONCURRENT_CHUNKS = 5;
+const CONCURRENT_CHUNKS = 8;
 
 async function fetchFullHistory(token, stationIds, days = 365) {
   const end = new Date();
