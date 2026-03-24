@@ -1,0 +1,12 @@
+Fix: ParaglidingPredictor showing 1% when FPS reads 14 mph flyable
+
+The learned weights multipliers (hourly x0.66, seasonal x0.86, calibration)
+were cascading to crush probability far below what live sensor data confirms.
+When FPS reads flyable conditions (5-20 mph, 110-250 deg), that is ground
+truth from the actual launch site sensor.
+
+Changes:
+- Add ground truth floor: if FPS reads flyable, south probability cannot
+  drop below 55%. Same for UTALP on north side.
+- Clamp hourly multipliers to 0.6-1.5 range to prevent extreme crushing
+- Prefer FPS actual reading for expectedSpeed over KPVU proxy estimate

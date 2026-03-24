@@ -122,9 +122,17 @@ export function predictSouth(windData, conditions = {}) {
   else if (hour >= 7 || (hour >= 11 && hour <= 14)) probability += 8;
   else if (hour >= 14 && hour <= 16) probability += 3;
 
-  // Apply learned hourly multiplier
+  // FPS is the on-site sensor. If it reads flyable, that's ground truth —
+  // learned multipliers should adjust the probability but never crush it below
+  // what the live sensor confirms.
+  const fpsConfirmsFlyable = fps.windSpeed != null && fps.windDirection != null
+    && fps.windDirection >= 110 && fps.windDirection <= 250
+    && fps.windSpeed >= 5 && fps.windSpeed <= 20;
+  const fpsMinFloor = fpsConfirmsFlyable ? 55 : 0;
+
+  // Apply learned hourly multiplier (dampen extremes)
   const hourlyMult = w.hourlyMultipliers?.[hour] || 1.0;
-  probability *= hourlyMult;
+  probability *= Math.max(0.6, Math.min(1.5, hourlyMult));
 
   // Apply learned probability calibration
   const bucket = Math.floor(Math.max(0, probability) / 20) * 20;
@@ -139,14 +147,16 @@ export function predictSouth(windData, conditions = {}) {
   const seasonalAdj = avgMonthlyRate > 0 ? Math.min(1.3, Math.max(0.7, monthlyRate / avgMonthlyRate)) : 1.0;
   probability *= seasonalAdj;
 
+  // Ground truth floor: if FPS reads flyable, probability can't drop below floor
+  probability = Math.max(fpsMinFloor, probability);
   probability = Math.min(95, Math.max(0, probability));
 
-  // Expected speed
+  // Expected speed — prefer actual FPS reading when available
   let expectedSpeed = 0;
-  if (kpvu.windSpeed != null && kpvu.windDirection >= 140 && kpvu.windDirection <= 220) {
-    expectedSpeed = kpvu.windSpeed * 0.9;
-  } else if (fps.windSpeed != null) {
+  if (fps.windSpeed != null && fps.windDirection >= 110 && fps.windDirection <= 250) {
     expectedSpeed = fps.windSpeed;
+  } else if (kpvu.windSpeed != null && kpvu.windDirection >= 140 && kpvu.windDirection <= 220) {
+    expectedSpeed = kpvu.windSpeed * 0.9;
   }
   expectedSpeed += (w.speedBiasCorrection || 0);
   expectedSpeed = Math.max(0, expectedSpeed);
@@ -284,23 +294,27 @@ export function predictNorth(windData, _conditions = {}) {
     else probability -= 5;
   }
 
-  // Apply learned hourly multiplier
-  const hourlyMult = w.hourlyMultipliers?.[hour] || 1.0;
-  probability *= hourlyMult;
+  // UTALP is the on-site sensor for north. If it reads flyable, that's ground truth.
+  const utalpConfirmsFlyable = utalp.windSpeed != null && utalp.windDirection != null
+    && (utalp.windDirection >= 300 || utalp.windDirection <= 60)
+    && utalp.windSpeed >= 5 && utalp.windSpeed <= 20;
+  const utalpMinFloor = utalpConfirmsFlyable ? 55 : 0;
 
-  // Apply probability calibration
+  const hourlyMult = w.hourlyMultipliers?.[hour] || 1.0;
+  probability *= Math.max(0.6, Math.min(1.5, hourlyMult));
+
   const bucket = Math.floor(Math.max(0, probability) / 20) * 20;
   const calKey = `${bucket}-${bucket + 20}`;
   const calMult = w.probabilityCalibration?.[calKey] || 1.0;
   probability *= calMult;
 
-  // Monthly seasonal adjustment
   const monthKey = String(month).padStart(2, '0');
   const monthlyRate = w.monthlyQualityRates?.[monthKey] || 0.03;
   const avgMonthlyRate = 0.035;
   const seasonalAdj = avgMonthlyRate > 0 ? Math.min(1.3, Math.max(0.7, monthlyRate / avgMonthlyRate)) : 1.0;
   probability *= seasonalAdj;
 
+  probability = Math.max(utalpMinFloor, probability);
   probability = Math.min(95, Math.max(0, probability));
 
   // Expected speed
