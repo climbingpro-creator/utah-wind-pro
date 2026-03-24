@@ -364,6 +364,44 @@ export function Dashboard() {
           />
         </div>
 
+        {/* ═══════════ LIVE STATION READINGS ═══════════ */}
+        <div aria-live="polite" aria-atomic="false">
+          <h2 className="text-base font-bold text-[var(--text-primary)] mb-4 flex items-center gap-2">
+            <Wind className="w-4 h-4 text-sky-500" />
+            {activityConfig?.wantsWind === false
+              ? `Wind Monitoring — ${activityConfig?.name || 'Calm Sports'}`
+              : selectedActivity === 'paragliding'
+                ? 'Launch Site Sensors'
+                : 'Station Readings'}
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {lakeState?.wind?.stations?.map((station, index) => (
+              <WindVector
+                key={station.id || index}
+                station={station}
+                history={history[station.id]}
+                isPersonalStation={station.isPWS}
+              />
+            ))}
+            {isLoading && !lakeState?.wind?.stations?.length && (
+              <>
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="bg-[var(--bg-card)] rounded-xl p-4 border border-[var(--border-color)] animate-pulse">
+                    <div className="h-5 bg-[var(--border-color)] rounded w-2/3 mb-4" />
+                    <div className="flex gap-4">
+                      <div className="w-16 h-16 bg-[var(--border-color)] rounded-full" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-6 bg-[var(--border-color)] rounded w-1/2" />
+                        <div className="h-4 bg-[var(--border-color)] rounded w-3/4" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
+          </div>
+        </div>
+
         {/* ═══════════ SECTION 3: GO / WAIT / PASS — The Single Answer ═══════════ */}
         <DecisionCard
           activity={selectedActivity}
@@ -451,44 +489,6 @@ export function Dashboard() {
             <p className="text-sm text-[var(--text-secondary)] mt-1">{error}</p>
           </div>
         )}
-
-        {/* ═══════════ LIVE STATION READINGS — always visible ═══════════ */}
-        <div aria-live="polite" aria-atomic="false">
-          <h2 className="text-base font-bold text-[var(--text-primary)] mb-4 flex items-center gap-2">
-            <Wind className="w-4 h-4 text-sky-500" />
-            {activityConfig?.wantsWind === false
-              ? `Wind Monitoring — ${activityConfig?.name || 'Calm Sports'}`
-              : selectedActivity === 'paragliding'
-                ? 'Launch Site Sensors'
-                : 'Station Readings'}
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            {lakeState?.wind?.stations?.map((station, index) => (
-              <WindVector
-                key={station.id || index}
-                station={station}
-                history={history[station.id]}
-                isPersonalStation={station.isPWS}
-              />
-            ))}
-            {isLoading && !lakeState?.wind?.stations?.length && (
-              <>
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="bg-[var(--bg-card)] rounded-xl p-4 border border-[var(--border-color)] animate-pulse">
-                    <div className="h-5 bg-[var(--border-color)] rounded w-2/3 mb-4" />
-                    <div className="flex gap-4">
-                      <div className="w-16 h-16 bg-[var(--border-color)] rounded-full" />
-                      <div className="flex-1 space-y-2">
-                        <div className="h-6 bg-[var(--border-color)] rounded w-1/2" />
-                        <div className="h-4 bg-[var(--border-color)] rounded w-3/4" />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </>
-            )}
-          </div>
-        </div>
 
         {/* ═══════════ SECTION 6: THIS WEEK — Where to Go + Planning ═══════════ */}
         <SafeComponent name="Spot Ranker">
