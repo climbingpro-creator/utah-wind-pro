@@ -27,13 +27,14 @@ const AMBIENT_BASE_URL  = 'https://rt.ambientweather.net/v1';
 const SYNOPTIC_BASE_URL = 'https://api.synopticdata.com/v2';
 
 let lastAmbientCall = 0;
+let cachedAmbientData = null;
 const AMBIENT_RATE_LIMIT_MS = 5000;
 
 class WeatherService {
   async getAmbientWeatherData() {
     const now = Date.now();
     if (now - lastAmbientCall < AMBIENT_RATE_LIMIT_MS) {
-      return null;
+      return cachedAmbientData;
     }
     lastAmbientCall = now;
 
@@ -54,7 +55,7 @@ class WeatherService {
         const device = data[0];
         const lastData = device.lastData;
         
-        return {
+        const result = {
           stationName: device.info?.name || 'Personal Weather Station',
           timestamp: lastData.dateutc,
           temperature: lastData.tempf,
@@ -70,16 +71,18 @@ class WeatherService {
           uv: lastData.uv,
           solarRadiation: lastData.solarradiation,
         };
+        cachedAmbientData = result;
+        return result;
       }
       
-      return null;
+      return cachedAmbientData;
     } catch (error) {
       if (error.response?.status === 429) {
         console.warn('Ambient Weather API rate limited');
-        return null;
+        return cachedAmbientData;
       }
       console.error('Ambient Weather API error:', error.message);
-      return null;
+      return cachedAmbientData;
     }
   }
 

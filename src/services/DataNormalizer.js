@@ -79,8 +79,8 @@ export class LakeState {
     // STEP C: GROUND TRUTH - Your PWS data
     // Verifies exact minute thermal hits boundary
     // =========================================
-    // PWS is physically at Zig Zag / Utah Lake — only attach for Utah Lake locations
-    if (ambientData && lakeId.startsWith('utah-lake')) {
+    const hasPWSGroundTruth = config.stations.groundTruth?.id === 'PWS';
+    if (ambientData && (hasPWSGroundTruth || lakeId.startsWith('utah-lake'))) {
       const pwsDisplayName = lakeId === 'utah-lake-zigzag'
         ? 'Zig Zag (Your Station)'
         : 'Saratoga Springs PWS';
