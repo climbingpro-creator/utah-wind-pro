@@ -555,7 +555,10 @@ function buildEventFingerprints(events) {
 
 function buildLagCorrelations(allStations) {
   const UPSTREAM_IDS = UPSTREAM_STATIONS;
-  const DOWNSTREAM_IDS = ['FPS', 'KPVU', 'KSLC', 'KHCR', 'KHIF', 'KOGD', 'UTCOP', 'BERU1'];
+  // Every station with data is a potential downstream point in the fluid layer
+  const DOWNSTREAM_IDS = Object.keys(allStations).filter(id => 
+    allStations[id]?.readings?.length >= 100 && !UPSTREAM_STATIONS.includes(id)
+  );
   const LAG_RANGE_MINUTES = [15, 30, 60, 90, 120, 180, 240, 300, 360];
 
   const correlations = {};

@@ -326,19 +326,26 @@ export default async function handler(req, res) {
         learningResult = { error: learnErr.message };
       }
 
-      // Auto-rebuild statistical models weekly (Sunday 3 AM Mountain ≈ 10 AM UTC)
+      // Auto-rebuild statistical models: weekly + whenever station config changes
       try {
+        const modelsRaw = await redisCommand('GET', 'models:statistical');
+        const models = modelsRaw ? JSON.parse(modelsRaw) : null;
+        const modelAge = models?.builtAt ? Date.now() - new Date(models.builtAt).getTime() : Infinity;
+        const currentStationCount = ALL_STATIONS.length;
+        const modelStationCount = models?.stationCount || 0;
+        const stationsChanged = currentStationCount !== modelStationCount;
+
         const utcHour = now.getUTCHours();
         const utcDay = now.getUTCDay(); // 0 = Sunday
-        if (utcDay === 0 && utcHour === 10) {
-          const modelsRaw = await redisCommand('GET', 'models:statistical');
-          const models = modelsRaw ? JSON.parse(modelsRaw) : null;
-          const modelAge = models?.builtAt ? Date.now() - new Date(models.builtAt).getTime() : Infinity;
-          if (modelAge > 6 * 24 * 3600 * 1000) {
-            console.log('Auto-rebuilding statistical models (weekly schedule — 30 days)');
-            const { buildStatisticalModels: rebuildModels } = await import('../lib/historicalAnalysis.js');
-            await rebuildModels(redisCommand, env.synopticToken, { days: 30 });
-          }
+        const weeklyRebuild = utcDay === 0 && utcHour === 10 && modelAge > 6 * 24 * 3600 * 1000;
+
+        if (stationsChanged || !models || weeklyRebuild) {
+          const reason = stationsChanged
+            ? `Station config changed (${modelStationCount} → ${currentStationCount})`
+            : !models ? 'No models exist yet' : 'Weekly schedule';
+          console.log(`Auto-rebuilding statistical models: ${reason} — pulling 365 days`);
+          const { buildStatisticalModels: rebuildModels } = await import('../lib/historicalAnalysis.js');
+          await rebuildModels(redisCommand, env.synopticToken, { days: 365 });
         }
       } catch (modelErr) {
         console.error('Auto model rebuild error (non-fatal):', modelErr.message);
@@ -633,7 +640,7 @@ async function handleBuildModels(req, res) {
   if (!env.synopticToken) return res.status(500).json({ error: 'SYNOPTIC_TOKEN not set' });
   if (!env.upstashUrl || !env.upstashToken) return res.status(500).json({ error: 'Redis not configured' });
 
-  const days = Math.min(parseInt(req.query?.days || '30', 10), 90);
+  const days = Math.min(parseInt(req.query?.days || '365', 10), 365);
 
   try {
     const { models, log } = await buildStatisticalModels(redisCommand, env.synopticToken, { days });
