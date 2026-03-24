@@ -156,11 +156,12 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
   }
-  // Regular cron: requires CRON_SECRET for write operations
+  // Regular cron: verify via CRON_SECRET if set, or Vercel's built-in cron header
   if (!READ_ACTIONS.includes(action) && !PROTECTED_ACTIONS.includes(action)) {
     const authHeader = req.headers['authorization'];
     const cronSecret = process.env.CRON_SECRET;
-    if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+    const isVercelCron = req.headers['x-vercel-cron'] === '1';
+    if (cronSecret && authHeader !== `Bearer ${cronSecret}` && !isVercelCron) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
   }
