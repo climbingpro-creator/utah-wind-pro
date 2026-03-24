@@ -1,8 +1,0 @@
-Full 365-day model rebuild with all stations as fluid layer points
-
-- Lag correlations now use every station with data as downstream target,
-  not 8 hardcoded IDs. Each station is a point in the fluid dynamics layer.
-- Auto-rebuild triggers immediately when station config changes (not just
-  weekly). Next cron cycle will detect 11 new stations and rebuild.
-- Manual build-models endpoint now defaults to 365 days (was 30, capped at 90).
-- Weekly auto-rebuild increased from 30 to 365 days.
