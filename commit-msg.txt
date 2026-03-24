@@ -1,6 +1,0 @@
-Fix: paragliding card shows GO when FPS reads flyable, skip proxy mismatch check
-
-FPS and UTALP are the actual launch-site sensors for paragliding,
-not upstream proxies. The proxy mismatch safety check was incorrectly
-downgrading a 14 mph FPS reading to CHECK (estimating ~8 at launch)
-when FPS IS the launch. Also skip MARGINAL for PG since FPS is direct.
