@@ -7,6 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
+    "rebuild-models": "node scripts/rebuild-models-365.js",
+    "rebuild-models:dry": "node scripts/rebuild-models-365.js --dry-run",
     "preview": "vite preview",
     "cap:init": "cap init",
     "cap:add:android": "cap add android",
