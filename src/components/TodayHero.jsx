@@ -45,13 +45,12 @@ function getActivityVerdict(id, speed, gust, thermalPrediction, _boatingPredicti
   const isNorthFlow = dominantChain?.includes('north_flow') || dominantChain?.includes('postfrontal');
   const isNonThermalWind = isNorthFlow || (prob < 20 && speed >= (cfg.thresholds?.tooLight || 6));
 
-  // For wind-seeking: check the ACTUAL speed at this launch, not an upstream proxy
-  // If we only have proxy data (FPS), use the ratio-adjusted estimate
   const actualSpeed = speed;
-  const proxyWarning = estTargetSpeed != null && estTargetSpeed < speed * 0.8;
+  // Proxy mismatch only applies to lake sports where upstream != launch site.
+  // For paragliding, FPS/UTALP ARE the launch-site sensors — never treat as proxy.
+  const proxyWarning = id !== 'paragliding' && estTargetSpeed != null && estTargetSpeed < speed * 0.8;
 
   if (good && cfg.wantsWind) {
-    // SAFETY CHECK 1: Session too short — stranding risk
     if ((session?.source === 'learned' || session?.source === 'pws-backfill') && session.avgMinutes < 45) {
       return {
         status: 'caution', label: 'BRIEF',
@@ -60,9 +59,8 @@ function getActivityVerdict(id, speed, gust, thermalPrediction, _boatingPredicti
       };
     }
 
-    // SAFETY CHECK 2: Speed is barely above threshold — marginal session
     const minForActivity = cfg.thresholds?.tooLight || 6;
-    if (actualSpeed < minForActivity + 4 && actualSpeed >= minForActivity) {
+    if (id !== 'paragliding' && actualSpeed < minForActivity + 4 && actualSpeed >= minForActivity) {
       const sessionStr = session ? ` — ${sessionLabel(session.avgMinutes)} expected` : '';
       return {
         status: 'caution', label: 'MARGINAL',
@@ -71,7 +69,6 @@ function getActivityVerdict(id, speed, gust, thermalPrediction, _boatingPredicti
       };
     }
 
-    // SAFETY CHECK 3: Proxy mismatch — upstream reads higher than your launch
     if (proxyWarning && estTargetSpeed != null) {
       return {
         status: 'caution', label: 'CHECK',
@@ -80,7 +77,6 @@ function getActivityVerdict(id, speed, gust, thermalPrediction, _boatingPredicti
       };
     }
 
-    // Passed all safety checks — confident GO
     const sessionStr = session ? ` — ${sessionLabel(session.avgMinutes)} session` : '';
     const ideal = cfg.thresholds?.ideal;
     if (ideal && actualSpeed >= ideal.min && actualSpeed <= ideal.max) {
