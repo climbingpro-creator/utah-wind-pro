@@ -1,7 +1,0 @@
-Sync server station collection with client configs: add 11 missing stations to cron learning system
-
-Willard Bay was learning from only KOGD/KHIF/KSLC, missing UR328/BLPU1/OGP/KBMC/GSLM.
-Pineview was learning from only KOGD/KSLC, missing COOPOGNU1/PC496.
-Yuba was learning from only KPVU, missing SKY/UTESU/UTMPK/EPMU1/UTHTP.
-Utah Lake Vineyard was missing QLN (Lindon).
-PotM South/North were missing UTALP.
