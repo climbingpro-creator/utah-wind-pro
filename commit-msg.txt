@@ -1,1 +1,0 @@
-Increase refresh rate to 20 seconds for near-realtime station data
