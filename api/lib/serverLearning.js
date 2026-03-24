@@ -115,6 +115,17 @@ function angleDiff(a, b) {
   return diff > 180 ? 360 - diff : diff;
 }
 
+function signedAngleDiff(actual, expected) {
+  let diff = ((actual - expected) % 360 + 540) % 360 - 180;
+  return diff;
+}
+
+function circularMidpoint(a, b) {
+  const ax = Math.cos(a * Math.PI / 180), ay = Math.sin(a * Math.PI / 180);
+  const bx = Math.cos(b * Math.PI / 180), by = Math.sin(b * Math.PI / 180);
+  return (Math.atan2(ay + by, ax + bx) * 180 / Math.PI + 360) % 360;
+}
+
 function getCardinal(deg) {
   if (deg == null) return '?';
   const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
@@ -806,6 +817,7 @@ function predictForLake(lakeId, primaryStation, pressure, history, hour, learned
   ];
 
   const month = toMountainMonth(new Date());
+  const rawScored = [];
 
   for (const t of types) {
     let result = t.fn();
@@ -868,21 +880,22 @@ function predictForLake(lakeId, primaryStation, pressure, history, hour, learned
       }
     }
 
-    // Apply learned weight adjustments (accumulate without intermediate clamp to avoid saturation)
+    // Apply learned weight adjustments (damped to prevent runaway inflation)
     if (learnedWeights?.eventWeights?.[t.id]) {
       const mod = learnedWeights.eventWeights[t.id];
-      prob += (mod.baseProbMod || 0);
+      prob += (mod.baseProbMod || 0) * 0.5;
       if (mod.hourlyBias?.[hour]) {
-        prob += mod.hourlyBias[hour];
+        prob += mod.hourlyBias[hour] * 0.5;
       }
     }
 
-    // Apply learned lake+event-type-specific weight as a probability multiplier
+    // Lake-specific weight: gentle nudge (0.9-1.1x), not aggressive multiplier
     const lwKey = `${lakeId}:${t.id}`;
     const lw = learnedWeights?.lakeWeights?.[lwKey];
     if (lw && lw.count >= 3) {
       const avgAcc = lw.totalScore / lw.count;
-      prob = Math.max(0, Math.min(100, prob * (0.5 + avgAcc)));
+      const mult = 0.9 + avgAcc * 0.2;
+      prob = prob * Math.min(1.1, Math.max(0.7, mult));
     }
 
     // Use data-driven expected speeds from historical fingerprints when available
@@ -902,54 +915,83 @@ function predictForLake(lakeId, primaryStation, pressure, history, hour, learned
       ? [(t.expDir[0] + dirBias + 360) % 360, (t.expDir[1] + dirBias + 360) % 360]
       : null;
 
-    // Final clamp after all adjustments
     prob = Math.max(0, Math.min(100, Math.round(prob)));
 
-    if (prob > 20) {
-      const evt = {
-        eventType: t.id,
-        probability: prob,
-        expectedSpeed: adjSpeed,
-        expectedDirection: adjDir,
-        primaryStation: primaryStation.stationId,
-        windSpeed: primaryStation.windSpeed,
-        windDirection: primaryStation.windDirection,
-        temperature: primaryStation.temperature,
-      };
-
-      // Plain-language "Why" explanation
-      evt.why = generateExplanation(t.id, primaryStation, pressure, history, hour, nws, upstreamSignals, lakeId);
-
-      // Pressure context for fingerprinting in verification
-      evt.pressureGradient = pressure.gradient ?? null;
-      evt.pressureTrend = pressure.trend ?? null;
-
-      // Attach NWS cross-check for later verification
-      if (nws?.current) {
-        evt.nwsForecast = {
-          speed: nws.current.speed,
-          dir: nws.current.dir,
-          text: nws.current.text,
-          keywords: nws.keywords,
-        };
-      }
-
-      // Attach upstream intelligence to frontal/pre-frontal predictions
-      if (eventUpstream && eventUpstream.length > 0) {
-        const best = eventUpstream[0];
-        evt.upstreamDetection = {
-          stationId: best.stationId,
-          stationName: best.name,
-          corridor: best.corridor,
-          strength: best.strength,
-          etaHours: best.consensusEta || best.etaHours,
-          details: best.details,
-          confirmedBy: eventUpstream.length,
-        };
-      }
-
-      events.push(evt);
+    // Store raw scored event for competition step (threshold lowered to 10)
+    if (prob > 10) {
+      rawScored.push({ t, prob, adjSpeed, adjDir, eventUpstream });
     }
+  }
+
+  // ── Event Competition: mutually exclusive events suppress each other ──
+  const EXCLUSIVE_GROUPS = [
+    ['glass', 'frontal_passage', 'north_flow', 'pre_frontal'],
+    ['glass', 'thermal_cycle'],
+    ['frontal_passage', 'clearing_wind', 'post_frontal'],
+  ];
+
+  if (rawScored.length > 1) {
+    rawScored.sort((a, b) => b.prob - a.prob);
+    const topProb = rawScored[0].prob;
+    const topId = rawScored[0].t.id;
+
+    for (let i = 1; i < rawScored.length; i++) {
+      const rs = rawScored[i];
+      const inSameGroup = EXCLUSIVE_GROUPS.some(g => g.includes(topId) && g.includes(rs.t.id));
+      if (inSameGroup) {
+        const gap = topProb - rs.prob;
+        if (gap > 15) {
+          rs.prob = Math.round(rs.prob * 0.5);
+        } else if (gap > 5) {
+          rs.prob = Math.round(rs.prob * 0.7);
+        }
+      }
+    }
+  }
+
+  for (const rs of rawScored) {
+    const prob = Math.max(0, Math.min(100, rs.prob));
+    if (prob < 15) continue;
+
+    const evt = {
+      eventType: rs.t.id,
+      probability: prob,
+      expectedSpeed: rs.adjSpeed,
+      expectedDirection: rs.adjDir,
+      primaryStation: primaryStation.stationId,
+      windSpeed: primaryStation.windSpeed,
+      windDirection: primaryStation.windDirection,
+      temperature: primaryStation.temperature,
+    };
+
+    evt.why = generateExplanation(rs.t.id, primaryStation, pressure, history, hour, nws, upstreamSignals, lakeId);
+
+    evt.pressureGradient = pressure.gradient ?? null;
+    evt.pressureTrend = pressure.trend ?? null;
+
+    if (nws?.current) {
+      evt.nwsForecast = {
+        speed: nws.current.speed,
+        dir: nws.current.dir,
+        text: nws.current.text,
+        keywords: nws.keywords,
+      };
+    }
+
+    if (rs.eventUpstream && rs.eventUpstream.length > 0) {
+      const best = rs.eventUpstream[0];
+      evt.upstreamDetection = {
+        stationId: best.stationId,
+        stationName: best.name,
+        corridor: best.corridor,
+        strength: best.strength,
+        etaHours: best.consensusEta || best.etaHours,
+        details: best.details,
+        confirmedBy: rs.eventUpstream.length,
+      };
+    }
+
+    events.push(evt);
   }
   return events;
 }
@@ -1073,7 +1115,7 @@ function verifyPredictions(predictions, actualStations, lakeStationMap) {
     }
 
     const dirRange = pred.expectedDirection;
-    const expectedDirMid = dirRange ? ((dirRange[0] + dirRange[1]) / 2) % 360 : null;
+    const expectedDirMid = dirRange ? circularMidpoint(dirRange[0], dirRange[1]) : null;
 
     // Event type verification: did the predicted wind TYPE match reality?
     let eventTypeCorrect = null;
@@ -1184,7 +1226,7 @@ function updateWeights(currentWeights, newAccuracy) {
     }
 
     if (record.actualDir != null && record.expectedDirMid != null) {
-      const dirErr = angleDiff(record.actualDir, record.expectedDirMid);
+      const dirErr = signedAngleDiff(record.actualDir, record.expectedDirMid);
       ew.dirBias = (ew.dirBias || 0) * 0.95 + dirErr * 0.05;
     }
 
@@ -1624,7 +1666,7 @@ async function runServerLearningCycle(redisCmd, currentStations, recentSnapshots
       await redisCmd('SET', 'upstream:latest', JSON.stringify({
         timestamp: now.toISOString(),
         signals: upstreamSignals,
-      }), 'EX', '3600');
+      }), 'EX', '86400');
     } catch {
       // intentionally empty: Redis write is best-effort for diagnostics
     }
@@ -1670,7 +1712,7 @@ async function runServerLearningCycle(redisCmd, currentStations, recentSnapshots
       const analogs = await findAnalogDays(redisCmd, fingerprint, null, 5);
       if (analogs.length > 0) {
         analogDays = { fingerprint, analogs };
-        await redisCmd('SET', 'pattern:analogs', JSON.stringify(analogDays), 'EX', '3600');
+        await redisCmd('SET', 'pattern:analogs', JSON.stringify(analogDays), 'EX', '86400');
       }
     }
   } catch (e) {

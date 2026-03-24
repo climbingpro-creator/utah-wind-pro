@@ -197,7 +197,7 @@ async function fetchNWSForecasts(redisCmd) {
   }
 
   if (Object.keys(result.grids).length > 0) {
-    await redisCmd('SET', 'nws:forecasts', JSON.stringify(result), 'EX', '5400');
+    await redisCmd('SET', 'nws:forecasts', JSON.stringify(result), 'EX', '86400');
   }
 
   return result;

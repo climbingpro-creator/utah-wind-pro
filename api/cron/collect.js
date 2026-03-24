@@ -620,6 +620,7 @@ async function handleModels(res) {
       gradientThresholds: data.gradientThresholds,
       thermalProfiles: data.thermalProfiles,
       fingerprints: data.fingerprints,
+      calibrationCurves: data.calibrationCurves,
     });
   } catch (error) {
     return res.status(500).json({ error: error.message });
