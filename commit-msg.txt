@@ -1,1 +1,0 @@
-Max refresh rate: 5s CDN cache, 120 req/min limit, add 6 missing station IDs to allowlist
