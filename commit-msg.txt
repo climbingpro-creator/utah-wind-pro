@@ -1,5 +1,0 @@
-Fix: remove duplicate PotM South/North entries from SpotRanker
-
-PotM South, PotM North already exist in LAKE_CONFIGS (utahLake.js,
-saltLakeArea.js). The manual Flight Park South/North entries in the
-SPOTS array were duplicates causing each site to appear twice.
