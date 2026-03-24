@@ -2,8 +2,8 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { weatherService } from '../services/WeatherService';
 import { LakeState, getProbabilityStatus } from '../services/DataNormalizer';
 
-const REFRESH_INTERVAL = 3 * 60 * 1000;
-const HISTORY_REFRESH_INTERVAL = 10 * 60 * 1000;
+const REFRESH_INTERVAL = 20 * 1000;
+const HISTORY_REFRESH_INTERVAL = 5 * 60 * 1000;
 
 export function useLakeData(lakeId) {
   const [lakeState, setLakeState] = useState(null);

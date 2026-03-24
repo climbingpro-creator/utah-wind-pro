@@ -28,7 +28,7 @@ const SYNOPTIC_BASE_URL = 'https://api.synopticdata.com/v2';
 
 let lastAmbientCall = 0;
 let cachedAmbientData = null;
-const AMBIENT_RATE_LIMIT_MS = 5000;
+const AMBIENT_RATE_LIMIT_MS = 1000;
 
 class WeatherService {
   async getAmbientWeatherData() {
