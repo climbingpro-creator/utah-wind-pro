@@ -1,0 +1,14 @@
+UX overhaul: GO/WAIT/PASS decision card, simplified flow, onboarding, plain language
+
+Add DecisionCard: single GO/WAIT/PASS answer after location picker
+Add Onboarding: first-launch sport and home spot picker with localStorage
+Consolidate Dashboard: Decision Card, Timeline, NOW card, SpotRanker flow
+Merge ActivityScoreBanner and AI Briefing into unified NOW hero card
+Move technical panels (Signal Convergence, Propagation, Wind Vectors,
+3-Step Model) inside Deep Dive toggle for power users
+Simplify LakeSelector: Quick Pick top 3 ranked spots for wind/calm sports
+with See all spots expand for full list
+Rename labels: Propagation Tracker to Wind Arrival Tracker,
+Signal Convergence to Weather Pattern, 3-Step Model to Why We Think
+Wind Is Coming, Pressure Gradient to Wind Forecast Confidence
+Initialize activity/lake from localStorage defaults set during onboarding

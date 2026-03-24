@@ -61,7 +61,7 @@ export default function SignalConvergence({ intelligence }) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Radio className="w-4 h-4 text-sky-500" />
-          <span className="text-sm font-bold text-[var(--text-primary)]">Wind Intelligence</span>
+          <span className="text-sm font-bold text-[var(--text-primary)]">Weather Pattern</span>
         </div>
         <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-bold ${display.bg} ${display.color} border ${display.border}`}>
           <RegimeIcon className="w-3 h-3" />
@@ -72,7 +72,7 @@ export default function SignalConvergence({ intelligence }) {
       {/* Confidence Bar */}
       <div className="space-y-1">
         <div className="flex items-center justify-between text-xs">
-          <span className="text-[var(--text-tertiary)]">Signal Convergence</span>
+          <span className="text-[var(--text-tertiary)]">Forecast Confidence</span>
           <span className={`font-bold ${convergenceColor}`}>{convergenceScore}%</span>
         </div>
         <div className="h-1.5 bg-[var(--border-subtle)] rounded-full overflow-hidden">

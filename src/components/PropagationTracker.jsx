@@ -189,7 +189,7 @@ export default function PropagationTracker({ propagation }) {
     <div className="space-y-3">
       <div className="flex items-center gap-2 mb-1">
         <Wind className="w-4 h-4 text-cyan-400" />
-        <h3 className="text-sm font-bold text-white">Propagation Tracker</h3>
+        <h3 className="text-sm font-bold text-white">Wind Arrival Tracker</h3>
         <MapPin className="w-3 h-3 text-gray-500 ml-auto" />
         <span className="text-[10px] text-gray-500">
           {totalStations} stations / {chains.length} chain{chains.length !== 1 ? 's' : ''}

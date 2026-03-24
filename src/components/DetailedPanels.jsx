@@ -134,8 +134,8 @@ export default function DetailedPanels({
         <div className="card flex flex-col items-center">
           <span className="data-label mb-3">
             {activityConfig?.wantsWind === false
-              ? 'Pressure Gradient (Wind Threat)'
-              : 'Pressure Gradient (N↔S Flow)'}
+              ? 'Wind Forecast Confidence'
+              : 'Wind Forecast Confidence'}
           </span>
           <NorthFlowGauge gradient={lakeState?.pressure?.gradient} size={160} />
         </div>
@@ -159,7 +159,7 @@ export default function DetailedPanels({
         {lakeState?.thermalPrediction && activityConfig?.wantsWind && (
           <ProGate feature="3-Step Prediction Model" preview="See what's driving today's wind">
             <div className="card">
-              <span className="data-label block text-center mb-3">3-Step Prediction Model</span>
+              <span className="data-label block text-center mb-3">Why We Think Wind Is Coming</span>
               <div className="space-y-2">
                 <FactorBar 
                   label="Step A: Gradient" 

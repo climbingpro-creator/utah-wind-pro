@@ -553,7 +553,8 @@ function WindBadge({ status, isDark }) {
 export function LakeSelector({ selectedLake, onSelectLake, stationReadings, activity, pressureData }) {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
-  
+
+  const [showAllSpots, setShowAllSpots] = useState(false);
   const [utahLakeExpanded, setUtahLakeExpanded] = useState(
     selectedLake?.startsWith('utah-lake')
   );
@@ -570,7 +571,6 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
     selectedLake === 'powder-mountain' || selectedLake === 'monte-cristo'
   );
 
-  // Auto-expand the relevant section when switching activities
   useEffect(() => {
     if (activity === 'paragliding') setParaglidingExpanded(true);
     if (activity === 'snowkiting') setSnowExpanded(true);
@@ -612,9 +612,106 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
     return getFishingRecommendation(windStatuses, pressureData);
   }, [activity, windStatuses, pressureData]);
 
+  const isWindSport = ['kiting', 'sailing', 'windsurfing'].includes(activity);
+  const isCalmSport = ['boating', 'paddling'].includes(activity);
+
+  const topSpots = useMemo(() => {
+    if (!isWindSport && !isCalmSport) return [];
+    const allSpots = [...UTAH_LAKE_LAUNCHES, ...KITE_SPOTS, ...OTHER_LAKES];
+    const scored = allSpots.map(spot => {
+      const ws = windStatuses[spot.id];
+      const speed = ws?.speed ?? 0;
+      let score = 0;
+      if (isWindSport) {
+        if (ws?.level === 'hot') score = 100;
+        else if (ws?.level === 'building') score = 70;
+        else if (speed >= 8) score = 50;
+        else if (speed >= 5) score = 30;
+        else score = 10;
+      } else {
+        if (speed <= 2) score = 100;
+        else if (speed <= 5) score = 80;
+        else if (speed <= 8) score = 50;
+        else score = 10;
+      }
+      return { ...spot, ws, score };
+    });
+    scored.sort((a, b) => b.score - a.score);
+    return scored.slice(0, 3);
+  }, [windStatuses, isWindSport, isCalmSport]);
+
+  const showQuickPick = (isWindSport || isCalmSport) && !showAllSpots;
+
   return (
     <div className="space-y-3">
-      {/* Utah Lake Section — visible for kiting, sailing, windsurfing, boating, paddling, fishing */}
+      {/* ─── QUICK PICK: Top 3 Spots ─── */}
+      {showQuickPick && topSpots.length > 0 && (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between mb-1">
+            <span className={`text-xs font-bold uppercase tracking-wider ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+              {isWindSport ? 'Best Wind Right Now' : 'Calmest Water Now'}
+            </span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            {topSpots.map((spot, i) => {
+              const isSelected = selectedLake === spot.id;
+              const ws = spot.ws;
+              return (
+                <button
+                  key={spot.id}
+                  onClick={() => onSelectLake(spot.id)}
+                  className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all text-left ${
+                    isSelected
+                      ? 'border-sky-500 bg-sky-500/[0.08]'
+                      : i === 0
+                        ? (isDark ? 'border-emerald-500/30 bg-emerald-500/[0.06] hover:border-emerald-500/50' : 'border-emerald-200 bg-emerald-50 hover:border-emerald-300')
+                        : (isDark ? 'border-[var(--border-subtle)] bg-[var(--bg-card)] hover:border-[var(--border-color)]' : 'border-slate-200 bg-white hover:border-slate-300')
+                  }`}
+                >
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-extrabold shrink-0 ${
+                    i === 0 ? 'bg-emerald-500 text-white' : isDark ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-500'
+                  }`}>
+                    {i + 1}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className={`font-bold text-sm ${isSelected ? 'text-sky-500' : 'text-[var(--text-primary)]'}`}>
+                      {spot.name}
+                    </div>
+                    <div className={`text-[11px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                      {ws?.speed != null ? `${safeToFixed(ws.speed, 0)} mph` : 'No data'}
+                      {spot.wind ? ` · ${spot.wind}` : ''}
+                    </div>
+                  </div>
+                  {ws && <WindBadge status={ws} isDark={isDark} />}
+                </button>
+              );
+            })}
+          </div>
+          <button
+            onClick={() => setShowAllSpots(true)}
+            className={`w-full py-2 text-xs font-semibold transition-colors rounded-lg ${
+              isDark ? 'text-slate-500 hover:text-slate-300 hover:bg-white/5' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
+            }`}
+          >
+            See all spots &darr;
+          </button>
+        </div>
+      )}
+
+      {/* ─── FULL SELECTOR (shown when "See all spots" clicked, or for fishing/PG/snow) ─── */}
+      {(showAllSpots || activity === 'fishing' || activity === 'paragliding' || activity === 'snowkiting') && showAllSpots && (isWindSport || isCalmSport) && (
+        <button
+          onClick={() => setShowAllSpots(false)}
+          className={`w-full py-2 text-xs font-semibold transition-colors rounded-lg ${
+            isDark ? 'text-sky-400 hover:text-sky-300' : 'text-sky-500 hover:text-sky-600'
+          }`}
+        >
+          &uarr; Back to top picks
+        </button>
+      )}
+
+      {(!showQuickPick || showAllSpots || activity === 'fishing' || activity === 'paragliding' || activity === 'snowkiting') && (
+      <>
       {!['snowkiting', 'paragliding'].includes(activity) && (
         <div className={`card !p-0 overflow-hidden ${
           anyUtahHot && !isUtahLakeSelected
@@ -1013,6 +1110,8 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
           );
         })}
       </div>
+      )}
+      </>
       )}
     </div>
   );
