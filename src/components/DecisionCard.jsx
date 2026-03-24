@@ -257,15 +257,35 @@ export default function DecisionCard({
   boatingPrediction,
   briefing,
   locationName,
+  unifiedDecision,
 }) {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 
-  const result = getDecision(
-    activity, windSpeed, windGust,
-    thermalPrediction, boatingPrediction,
-    windDirection, briefing, locationName,
-  );
+  // Prefer unified decision when available, fall back to legacy
+  let result;
+  if (unifiedDecision?.decision) {
+    const colorMap = { GO: 'emerald', WAIT: 'amber', PASS: 'slate' };
+    const iconMap = { GO: CheckCircle, WAIT: Clock, PASS: XCircle };
+    const headlineLower = (unifiedDecision.headline || '').toLowerCase();
+    if (unifiedDecision.decision === 'PASS' && (headlineLower.includes('dangerous') || headlineLower.includes('too strong') || headlineLower.includes('unsafe'))) {
+      colorMap.PASS = 'red';
+    }
+    result = {
+      decision: unifiedDecision.decision,
+      headline: unifiedDecision.headline || `${unifiedDecision.decision} — ${activity}`,
+      detail: unifiedDecision.detail || '',
+      action: unifiedDecision.action || briefing?.bestAction || '',
+      color: colorMap[unifiedDecision.decision] || 'slate',
+      icon: iconMap[unifiedDecision.decision] || XCircle,
+    };
+  } else {
+    result = getDecision(
+      activity, windSpeed, windGust,
+      thermalPrediction, boatingPrediction,
+      windDirection, briefing, locationName,
+    );
+  }
 
   if (!result) return null;
 

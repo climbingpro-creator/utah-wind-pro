@@ -169,7 +169,7 @@ function findBestWindow(hours, activity) {
 
 const MPH_TO_KT = 0.868976;
 
-export default function TodayTimeline({ locationId = 'utah-lake', activity = 'kiting' }) {
+export default function TodayTimeline({ locationId = 'utah-lake', activity = 'kiting', unifiedHourly }) {
   const [nwsData, setNwsData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [useKnots, setUseKnots] = useState(() => localStorage.getItem('windUnit') === 'kt');
@@ -247,9 +247,26 @@ export default function TodayTimeline({ locationId = 'utah-lake', activity = 'ki
   }, [locationId]);
 
   const gridId = LAKE_TO_GRID[locationId] || 'utah-lake';
-  const allHourly = (nwsData?.grids?.[gridId]?.hourly?.length > 0
-    ? nwsData.grids[gridId].hourly
-    : clientHourly) || [];
+
+  // Prefer unified hourly (from UnifiedPredictor) when available
+  const unifiedMapped = useMemo(() => {
+    if (!unifiedHourly || unifiedHourly.length === 0) return null;
+    return unifiedHourly.map(h => {
+      const dt = h.time ? new Date(h.time) : null;
+      return {
+        localHour: dt ? dt.getHours() : 0,
+        speed: h.speed ?? h.nwsSpeed ?? 0,
+        dir: h.dir || '',
+        dirDeg: typeof h.dir === 'number' ? h.dir : dirToDeg(h.dir),
+        temp: h.temperature,
+        text: h.shortForecast || '',
+      };
+    });
+  }, [unifiedHourly]);
+
+  const allHourly = unifiedMapped
+    || (nwsData?.grids?.[gridId]?.hourly?.length > 0 ? nwsData.grids[gridId].hourly : clientHourly)
+    || [];
   const nowHour = new Date().getHours();
 
   const todayHours = useMemo(() => {

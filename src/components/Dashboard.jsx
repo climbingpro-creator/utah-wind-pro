@@ -5,6 +5,8 @@ import { WindVector } from './WindVector';
 import { LakeSelector } from './LakeSelector';
 import { ToastContainer } from './ToastNotification';
 import { useLakeData } from '../hooks/useLakeData';
+import { useModelContext } from '../hooks/useModelContext';
+import { predict as unifiedPredict } from '../services/UnifiedPredictor';
 import { checkAndNotify } from '../services/NotificationService';
 import { getFullForecast } from '../services/ForecastService';
 import { ACTIVITY_CONFIGS, calculateActivityScore, calculateGlassScore } from './ActivityMode';
@@ -21,6 +23,9 @@ import ModelStepCard from './ModelStepCard';
 import Modal from './Modal';
 import AppHeader from './AppHeader';
 import DecisionCard from './DecisionCard';
+
+// Feature flag: set true to use the UnifiedPredictor pipeline
+const USE_UNIFIED_PREDICTOR = true;
 
 const Onboarding = lazy(() => import('./Onboarding'));
 
@@ -233,6 +238,59 @@ export function Dashboard() {
     lowName: lakeState.pressure.low?.name,
   } : null, [lakeState?.pressure]);
 
+  // ═══════════ UNIFIED PREDICTOR ═══════════
+  const { modelContext } = useModelContext();
+
+  const prediction = React.useMemo(() => {
+    if (!USE_UNIFIED_PREDICTOR) return null;
+    if (!lakeState?.wind?.stations) return null;
+    try {
+      return unifiedPredict(
+        selectedLake,
+        selectedActivity,
+        lakeState.wind.stations,
+        modelContext,
+        lakeState.config
+      );
+    } catch (err) {
+      console.error('UnifiedPredictor error:', err);
+      return null;
+    }
+  }, [selectedLake, selectedActivity, lakeState?.wind?.stations, modelContext, lakeState?.config]);
+
+  // Derived values from unified prediction (with fallbacks to old system)
+  const effectiveBriefing = (USE_UNIFIED_PREDICTOR && prediction?.briefing) ? {
+    headline: prediction.briefing.headline,
+    body: prediction.briefing.body,
+    bullets: (prediction.briefing.bullets || []).map(b => typeof b === 'string' ? { icon: '·', text: b } : b),
+    bestAction: prediction.briefing.bestAction,
+    excitement: prediction.briefing.excitement === 'high' ? 5 : prediction.briefing.excitement === 'moderate' ? 4 : 2,
+  } : briefing;
+
+  const effectiveBoatingPrediction = (USE_UNIFIED_PREDICTOR && prediction?.boatingPrediction)
+    ? prediction.boatingPrediction
+    : boatingPrediction;
+
+  const effectiveThermalPrediction = (USE_UNIFIED_PREDICTOR && prediction?.thermalPrediction)
+    ? prediction.thermalPrediction
+    : lakeState?.thermalPrediction;
+
+  const effectiveActivityScore = React.useMemo(() => {
+    if (!USE_UNIFIED_PREDICTOR || !prediction?.activities?.[selectedActivity]) return activityScore;
+    const ua = prediction.activities[selectedActivity];
+    return { score: ua.score, message: ua.message, status: ua.status };
+  }, [prediction, selectedActivity, activityScore]);
+
+  const effectiveDecision = (USE_UNIFIED_PREDICTOR && prediction) ? {
+    windSpeed: prediction.wind?.current?.speed ?? decisionWindSpeed,
+    windGust: prediction.wind?.current?.gust ?? decisionWindGust,
+    windDirection: prediction.wind?.current?.dir ?? decisionWindDirection,
+  } : {
+    windSpeed: decisionWindSpeed,
+    windGust: decisionWindGust,
+    windDirection: decisionWindDirection,
+  };
+
   return (
     <div className={`min-h-screen transition-colors duration-200 ${
       theme === 'dark' 
@@ -344,13 +402,14 @@ export function Dashboard() {
         <TodayHero
           windSpeed={currentWindSpeed}
           windGust={currentWindGust}
-          thermalPrediction={lakeState?.thermalPrediction}
-          boatingPrediction={boatingPrediction}
+          thermalPrediction={effectiveThermalPrediction}
+          boatingPrediction={effectiveBoatingPrediction}
           onSelectActivity={setSelectedActivity}
           selectedActivity={selectedActivity}
           fpsStation={lakeState?.wind?.stations?.find(s => s.id === 'FPS')}
           utalpStation={lakeState?.utalpStation || lakeState?.wind?.stations?.find(s => s.id === 'UTALP')}
-          propagation={lakeState?.propagation}
+          propagation={prediction?.propagation || lakeState?.propagation}
+          unifiedActivities={prediction?.activities}
         />
 
         {/* ═══════════ SECTION 2: WHERE TO GO ═══════════ */}
@@ -405,42 +464,43 @@ export function Dashboard() {
         {/* ═══════════ SECTION 3: GO / WAIT / PASS — The Single Answer ═══════════ */}
         <DecisionCard
           activity={selectedActivity}
-          windSpeed={decisionWindSpeed}
-          windGust={decisionWindGust}
-          windDirection={decisionWindDirection}
-          thermalPrediction={lakeState?.thermalPrediction}
-          boatingPrediction={boatingPrediction}
-          briefing={briefing}
+          windSpeed={effectiveDecision.windSpeed}
+          windGust={effectiveDecision.windGust}
+          windDirection={effectiveDecision.windDirection}
+          thermalPrediction={effectiveThermalPrediction}
+          boatingPrediction={effectiveBoatingPrediction}
+          briefing={effectiveBriefing}
           locationName={lakeState?.config?.shortName || lakeState?.config?.name || selectedLake}
+          unifiedDecision={prediction ? { decision: prediction.decision, confidence: prediction.confidence, headline: prediction.briefing?.headline, detail: prediction.briefing?.body, action: prediction.briefing?.bestAction } : null}
         />
 
         {/* ═══════════ SECTION 4: TODAY — Hourly Timeline ═══════════ */}
         <SafeComponent name="Today Timeline">
-          <TodayTimeline locationId={selectedLake} activity={selectedActivity} />
+          <TodayTimeline locationId={selectedLake} activity={selectedActivity} unifiedHourly={prediction?.hourly} />
         </SafeComponent>
 
         {/* ═══════════ SECTION 5: NOW — Combined Briefing + Score ═══════════ */}
-        {(activityScore || briefing) && (
+        {(effectiveActivityScore || effectiveBriefing) && (
           <div className="card space-y-4">
             {/* Score + headline row */}
-            {activityScore && (
+            {effectiveActivityScore && (
               <div className="flex items-center gap-3">
                 <div className="flex-1 min-w-0">
                   <div className={`font-bold text-base ${
-                    activityScore.score >= 70 ? (theme === 'dark' ? 'text-green-400' : 'text-green-700')
-                    : activityScore.score >= 40 ? (theme === 'dark' ? 'text-yellow-400' : 'text-yellow-700')
+                    effectiveActivityScore.score >= 70 ? (theme === 'dark' ? 'text-green-400' : 'text-green-700')
+                    : effectiveActivityScore.score >= 40 ? (theme === 'dark' ? 'text-yellow-400' : 'text-yellow-700')
                     : (theme === 'dark' ? 'text-red-400' : 'text-red-700')
                   }`}>
-                    {activityConfig?.name}: {activityScore.message}
+                    {activityConfig?.name}: {effectiveActivityScore.message}
                   </div>
                 </div>
                 <div className="text-right flex-shrink-0">
                   <div className={`text-2xl font-extrabold tabular-nums ${
-                    activityScore.score >= 70 ? (theme === 'dark' ? 'text-green-400' : 'text-green-700')
-                    : activityScore.score >= 40 ? (theme === 'dark' ? 'text-yellow-400' : 'text-yellow-700')
+                    effectiveActivityScore.score >= 70 ? (theme === 'dark' ? 'text-green-400' : 'text-green-700')
+                    : effectiveActivityScore.score >= 40 ? (theme === 'dark' ? 'text-yellow-400' : 'text-yellow-700')
                     : (theme === 'dark' ? 'text-red-400' : 'text-red-700')
                   }`}>
-                    {activityScore.score}
+                    {effectiveActivityScore.score}
                   </div>
                   <div className="text-[10px] font-semibold text-[var(--text-tertiary)] uppercase">score</div>
                 </div>
@@ -448,34 +508,34 @@ export function Dashboard() {
             )}
 
             {/* AI Briefing body */}
-            {briefing && (
+            {effectiveBriefing && (
               <>
-                {activityScore && <div className="border-t border-[var(--border-subtle)]" />}
+                {effectiveActivityScore && <div className="border-t border-[var(--border-subtle)]" />}
                 <div className="flex items-center gap-2 mb-1">
                   <Brain className="w-4 h-4 text-sky-500" />
                   <span className="text-sm font-semibold text-[var(--text-primary)]">
-                    {briefing.headline}
+                    {effectiveBriefing.headline}
                   </span>
-                  {briefing.excitement >= 4 && (
+                  {effectiveBriefing.excitement >= 4 && (
                     <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500">
-                      {briefing.excitement >= 5 ? 'EPIC' : 'HOT'}
+                      {effectiveBriefing.excitement >= 5 ? 'EPIC' : 'HOT'}
                     </span>
                   )}
                 </div>
-                {briefing.body && (
-                  <p className="text-sm text-[var(--text-secondary)] leading-relaxed">{briefing.body}</p>
+                {effectiveBriefing.body && (
+                  <p className="text-sm text-[var(--text-secondary)] leading-relaxed">{effectiveBriefing.body}</p>
                 )}
                 <div className="space-y-1.5">
-                  {briefing.bullets?.slice(0, 3).map((b, i) => (
+                  {effectiveBriefing.bullets?.slice(0, 3).map((b, i) => (
                     <div key={i} className="flex items-start gap-2 text-xs text-[var(--text-tertiary)]">
                       <span className="flex-shrink-0">{b.icon || '·'}</span>
-                      <span>{b.text}</span>
+                      <span>{typeof b === 'string' ? b : b.text}</span>
                     </div>
                   ))}
                 </div>
-                {briefing.bestAction && (
+                {effectiveBriefing.bestAction && (
                   <div className="px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 bg-sky-500/[0.06] text-sky-500 border border-sky-500/20">
-                    <Lightbulb className="w-4 h-4 shrink-0" /> {briefing.bestAction}
+                    <Lightbulb className="w-4 h-4 shrink-0" /> {effectiveBriefing.bestAction}
                   </div>
                 )}
               </>
@@ -581,13 +641,13 @@ export function Dashboard() {
         {showDetails && (
           <>
             {/* Weather Pattern — moved from main flow */}
-            <SignalConvergence intelligence={intelligence} />
+            <SignalConvergence intelligence={intelligence} unifiedPrediction={prediction} />
 
             {/* Wind Arrival Tracker — moved from main flow */}
-            {lakeState?.propagation && activityConfig?.wantsWind && (
+            {(prediction?.propagation || lakeState?.propagation) && activityConfig?.wantsWind && (
               <Suspense fallback={null}>
                 <SafeComponent name="Wind Arrival Tracker">
-                  <PropagationTracker propagation={lakeState.propagation} />
+                  <PropagationTracker propagation={prediction?.propagation || lakeState.propagation} />
                 </SafeComponent>
               </Suspense>
             )}

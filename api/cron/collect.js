@@ -145,7 +145,7 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
 
   const action = req.query?.action;
-  const READ_ACTIONS = ['sync', 'weights', 'predictions', 'upstream', 'nws', 'ahead', 'analogs', 'models', 'propagation', 'pws-history', 'backfill-pws'];
+  const READ_ACTIONS = ['context', 'sync', 'weights', 'predictions', 'upstream', 'nws', 'ahead', 'analogs', 'models', 'propagation', 'pws-history', 'backfill-pws'];
 
   // Expensive manual-trigger actions ALWAYS require auth (even if CRON_SECRET isn't set)
   const PROTECTED_ACTIONS = ['backfill', 'build-models'];
@@ -166,6 +166,7 @@ export default async function handler(req, res) {
     }
   }
 
+  if (action === 'context') return await handleContext(res);
   if (action === 'sync') return await handleSync(res);
   if (action === 'weights') return await handleWeights(res);
   if (action === 'backfill') return await handleBackfill(req, res);
@@ -383,6 +384,86 @@ export default async function handler(req, res) {
     });
   } catch (error) {
     console.error('Cron collect error:', error);
+    return res.status(500).json({ error: error.message });
+  }
+}
+
+async function handleContext(res) {
+  const { upstashUrl, upstashToken } = getEnv();
+  if (!upstashUrl || !upstashToken) {
+    return res.status(200).json({ error: 'Redis not configured', partial: true });
+  }
+
+  try {
+    const keys = [
+      'models:statistical',
+      'weights:server',
+      'nws:forecasts',
+      'pattern:analogs',
+      'prop:lags',
+      'prop:sessions',
+    ];
+    const values = await redisMGet(keys);
+
+    const models = values[0] ? JSON.parse(values[0]) : null;
+    const weights = values[1] ? JSON.parse(values[1]) : null;
+    const nws = values[2] ? JSON.parse(values[2]) : null;
+    const analogs = values[3] ? JSON.parse(values[3]) : null;
+    const propLags = values[4] ? JSON.parse(values[4]) : null;
+    const propSessions = values[5] ? JSON.parse(values[5]) : null;
+
+    const now = new Date();
+    let currentMonth;
+    try {
+      const parts = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'America/Denver', month: 'numeric',
+      }).formatToParts(now);
+      currentMonth = parseInt(parts.find(p => p.type === 'month')?.value || '1', 10) - 1;
+    } catch { currentMonth = now.getUTCMonth(); }
+
+    let currentHour;
+    try {
+      const parts = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'America/Denver', hour: 'numeric', hour12: false,
+      }).formatToParts(now);
+      currentHour = parseInt(parts.find(p => p.type === 'hour')?.value || '0', 10) % 24;
+    } catch { currentHour = now.getUTCHours() - 7; }
+
+    // Trim climatology to current month only (saves bandwidth)
+    let monthClimatology = null;
+    if (models?.climatology) {
+      monthClimatology = {};
+      for (const [stid, months] of Object.entries(models.climatology)) {
+        if (months[currentMonth]) {
+          monthClimatology[stid] = months[currentMonth];
+        }
+      }
+    }
+
+    const context = {
+      lagCorrelations: models?.lagCorrelations || null,
+      climatology: monthClimatology,
+      currentMonth,
+      currentHour,
+      fingerprints: models?.fingerprints || null,
+      calibration: models?.calibrationCurves || null,
+      gradientThresholds: models?.gradientThresholds || null,
+      thermalProfiles: models?.thermalProfiles || null,
+      learnedWeights: weights || null,
+      nwsHourly: nws?.grids || null,
+      learnedLags: propLags || null,
+      learnedSessions: propSessions || null,
+      analogs: analogs || null,
+      modelsBuiltAt: models?.builtAt || null,
+      modelsStationCount: models?.stationCount || 0,
+      modelsTotalReadings: models?.totalReadings || 0,
+      updatedAt: now.toISOString(),
+    };
+
+    res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
+    return res.status(200).json(context);
+  } catch (error) {
+    console.error('Context fetch error:', error.message);
     return res.status(500).json({ error: error.message });
   }
 }

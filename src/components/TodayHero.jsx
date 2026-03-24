@@ -256,7 +256,7 @@ const STATUS_STYLES_LIGHT = {
   off:     { bg: 'bg-slate-50/50', border: 'border-slate-100', text: 'text-slate-400', badge: 'bg-slate-100 text-slate-400', dot: 'bg-slate-300' },
 };
 
-export default function TodayHero({ windSpeed, windGust, thermalPrediction, boatingPrediction, onSelectActivity, selectedActivity, fpsStation, utalpStation, propagation }) {
+export default function TodayHero({ windSpeed, windGust, thermalPrediction, boatingPrediction, onSelectActivity, selectedActivity, fpsStation, utalpStation, propagation, unifiedActivities }) {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 
@@ -264,6 +264,26 @@ export default function TodayHero({ windSpeed, windGust, thermalPrediction, boat
     () => buildOutlook(windSpeed, windGust, thermalPrediction, boatingPrediction, fpsStation, utalpStation, propagation),
     [windSpeed, windGust, thermalPrediction, boatingPrediction, fpsStation, utalpStation, propagation]
   );
+
+  // Overlay unified activity scores onto the outlook cards when available
+  const augmentedCards = useMemo(() => {
+    if (!unifiedActivities) return outlook.cards;
+    return outlook.cards.map(card => {
+      const ua = unifiedActivities[card.id];
+      if (!ua) return card;
+      const verdictFromUnified = {
+        status: ua.status === 'dangerous' ? 'off' : ua.status,
+        label: ua.status === 'go' ? 'GO' : ua.status === 'wait' ? 'WAIT' : ua.status === 'dangerous' ? 'DANGER' : 'OFF',
+        reason: ua.message,
+        color: ua.status === 'go' ? 'emerald' : ua.status === 'wait' ? 'amber' : ua.status === 'dangerous' ? 'red' : 'slate',
+      };
+      // Only override if unified is more informative (e.g. has a clear go/wait with message)
+      if (ua.message && ua.score > 0) {
+        return { ...card, verdict: verdictFromUnified };
+      }
+      return card;
+    });
+  }, [outlook.cards, unifiedActivities]);
 
   const accent = MOOD_ACCENT[outlook.mood] || MOOD_ACCENT.neutral;
   const bgImage = getRotatingImage(outlook.mood, 'mood') || MOOD_IMAGE_FALLBACK[outlook.mood];
@@ -310,7 +330,7 @@ export default function TodayHero({ windSpeed, windGust, thermalPrediction, boat
 
         {/* Activity Cards Grid — selected activity always first */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-          {[...outlook.cards].sort((a, b) => {
+          {[...augmentedCards].sort((a, b) => {
             if (a.id === selectedActivity) return -1;
             if (b.id === selectedActivity) return 1;
             const rank = { go: 0, wait: 1, off: 2 };

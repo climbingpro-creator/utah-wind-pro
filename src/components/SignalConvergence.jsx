@@ -43,10 +43,14 @@ function getSignalBarColor(signal) {
   return 'bg-slate-500';
 }
 
-export default function SignalConvergence({ intelligence }) {
-  if (!intelligence || intelligence.signalCount === 0) return null;
+export default function SignalConvergence({ intelligence, unifiedPrediction }) {
+  // Merge unified prediction data when available
+  const effectiveRegime = unifiedPrediction?.regime || intelligence?.regime;
+  const effectiveConfidence = unifiedPrediction?.confidence ?? intelligence?.regimeConfidence;
 
-  const { regime, regimeConfidence, signals, conflicts, convergenceScore, adjustedThermalProbability, narrative, valleyWind } = intelligence;
+  if ((!intelligence || intelligence.signalCount === 0) && !unifiedPrediction) return null;
+
+  const { regime, regimeConfidence, signals, conflicts, convergenceScore, adjustedThermalProbability, narrative, valleyWind } = intelligence || {};
   const display = REGIME_DISPLAY[regime] || REGIME_DISPLAY.uncertain;
   const RegimeIcon = display.icon;
 
