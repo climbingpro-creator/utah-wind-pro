@@ -1,0 +1,1 @@
+Show all designed station meters as cards: ridge, lakeshore, and reference stations per spot config

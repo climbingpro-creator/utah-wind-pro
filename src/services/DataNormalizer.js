@@ -254,8 +254,9 @@ export class LakeState {
         };
       }
 
-      // Wind stations from all sources
+      // Wind stations from all sources — show every configured meter as a card
       state.wind.stations = [];
+      const addedIds = new Set();
       
       if (state.pws) {
         state.wind.stations.push({
@@ -269,9 +270,11 @@ export class LakeState {
           isYourStation: true,
           role: 'Ground Truth - Your station at Zig Zag',
         });
+        addedIds.add('PWS');
       }
       
       config.stations.lakeshore.forEach((stationConfig) => {
+        if (addedIds.has(stationConfig.id)) return;
         const station = stationMap.get(stationConfig.id);
         if (station) {
           const info = STATION_INFO[stationConfig.id] || {};
@@ -287,6 +290,49 @@ export class LakeState {
             network: info.network,
             isPWS: false,
           });
+          addedIds.add(stationConfig.id);
+        }
+      });
+
+      config.stations.ridge.forEach((stationConfig) => {
+        if (addedIds.has(stationConfig.id)) return;
+        const station = stationMap.get(stationConfig.id);
+        if (station) {
+          const info = STATION_INFO[stationConfig.id] || {};
+          state.wind.stations.push({
+            id: station.stationId,
+            name: stationConfig.name,
+            speed: station.windSpeed,
+            gust: station.windGust,
+            direction: station.windDirection,
+            temperature: station.temperature,
+            elevation: stationConfig.elevation,
+            role: stationConfig.role,
+            network: info.network,
+            isPWS: false,
+          });
+          addedIds.add(stationConfig.id);
+        }
+      });
+
+      config.stations.reference.forEach((stationConfig) => {
+        if (addedIds.has(stationConfig.id)) return;
+        const station = stationMap.get(stationConfig.id);
+        if (station) {
+          const info = STATION_INFO[stationConfig.id] || {};
+          state.wind.stations.push({
+            id: station.stationId,
+            name: stationConfig.name,
+            speed: station.windSpeed,
+            gust: station.windGust,
+            direction: station.windDirection,
+            temperature: station.temperature,
+            elevation: stationConfig.elevation,
+            role: stationConfig.role,
+            network: info.network,
+            isPWS: false,
+          });
+          addedIds.add(stationConfig.id);
         }
       });
 
