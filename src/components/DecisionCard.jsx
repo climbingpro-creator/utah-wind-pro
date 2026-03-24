@@ -1,7 +1,7 @@
 import { CheckCircle, Clock, XCircle, ArrowRight, Lightbulb, MapPin } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { ACTIVITY_CONFIGS } from './ActivityMode';
-import { safeToFixed } from '../utils/safeToFixed';
+
 
 function formatHour(h) {
   if (h === 0 || h === 24) return '12 AM';
