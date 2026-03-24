@@ -11,7 +11,7 @@
 
 const rateLimitMap = new Map();
 const RATE_LIMIT_WINDOW = 60_000;
-const RATE_LIMIT_MAX = 30;
+const RATE_LIMIT_MAX = 120;
 
 function isRateLimited(ip) {
   const now = Date.now();
@@ -42,7 +42,7 @@ export default async function handler(req, res) {
   const clientIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 'unknown';
   if (isRateLimited(clientIp)) {
     res.setHeader('Retry-After', '60');
-    return res.status(429).json({ error: 'Rate limit exceeded. Max 30 requests per minute.' });
+    return res.status(429).json({ error: 'Rate limit exceeded. Max 120 requests per minute.' });
   }
 
   const { source, stids, hours } = req.query;
@@ -101,7 +101,7 @@ async function handleAmbientHistory(res, query) {
   }
 
   const data = await response.json();
-  res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=120');
+  res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
   return res.status(200).json(data);
 }
 
@@ -126,7 +126,7 @@ async function handleAmbient(res) {
   }
 
   const data = await response.json();
-  res.setHeader('Cache-Control', 's-maxage=10, stale-while-revalidate=30');
+  res.setHeader('Cache-Control', 's-maxage=5, stale-while-revalidate=15');
   return res.status(200).json(data);
 }
 
@@ -135,6 +135,7 @@ const ALLOWED_STATIONS = new Set([
   'KFGR','KBMC','BERU1','FPS','QSF','SND','UTALP','UTOLY','CSC','UID28','TIMU1','MDAU1',
   'UTPCY','DCC','UTCOP','UTDAN','DSTU1','RVZU1','CCPUT','UWCU1','SKY','UTESU','UTMPK',
   'UR328','BLPU1','OGP',
+  'QLN','GSLM','EPMU1','UTHTP','COOPOGNU1','PC496',
 ]);
 
 async function handleSynopticLatest(res, stids) {
@@ -168,7 +169,7 @@ async function handleSynopticLatest(res, stids) {
   }
 
   const data = await response.json();
-  res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
+  res.setHeader('Cache-Control', 's-maxage=5, stale-while-revalidate=15');
   return res.status(200).json(data);
 }
 
@@ -210,6 +211,6 @@ async function handleSynopticHistory(res, stids, hours = '3') {
   }
 
   const data = await response.json();
-  res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=120');
+  res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
   return res.status(200).json(data);
 }
