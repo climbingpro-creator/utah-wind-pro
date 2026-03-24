@@ -1,6 +1,12 @@
 import { AlertTriangle } from 'lucide-react';
 import { safeToFixed } from '../utils/safeToFixed';
 
+const CALM_LABELS = {
+  boating: { glass: 'Glass Water Now!', calm: 'Calm Lake Ahead', badge: 'GLASS', unit: 'glass' },
+  paddling: { glass: 'Mirror Flat — Go Paddle!', calm: 'Calm Window for Paddling', badge: 'FLAT', unit: 'flat' },
+  fishing: { glass: 'Still Water — Fish Are Rising', calm: 'Low Wind — Great for Casting', badge: 'CALM', unit: 'calm' },
+};
+
 export default function ActivityScoreBanner({
   activityScore,
   activityConfig,
@@ -16,6 +22,8 @@ export default function ActivityScoreBanner({
   const windType = prediction?.windType;
   const consistencyForecast = prediction?.consistencyForecast;
   const wantsWind = activityConfig?.wantsWind !== false;
+  const actName = activityConfig?.name || 'Activity';
+  const actId = activityConfig?.id || 'boating';
 
   const hasForecastOpp = wantsWind && prob >= 40 && score < 60;
   const isForecastBetter = wantsWind && prob > score;
@@ -24,37 +32,49 @@ export default function ActivityScoreBanner({
   const hasGlassOpp = !wantsWind && boatingPrediction?.probability >= 45;
 
   let displayScore = score;
-  let headline = `${activityConfig?.name}: ${activityScore.message}`;
+  let headline = `${actName}: ${activityScore.message}`;
   let subline = null;
   let bannerColor = score >= 70 ? 'green' : score >= 40 ? 'yellow' : 'red';
   let badge = null;
   let arriveTime = null;
 
-  if (isGreatNow) {
+  const calmLabel = CALM_LABELS[actId] || CALM_LABELS.boating;
+
+  if (wantsWind && isGreatNow) {
     displayScore = score;
-    headline = `${activityConfig?.name} is ON!`;
+    headline = `${actName} is ON!`;
     subline = `${safeToFixed(currentWindSpeed, 0)} mph — get out there!`;
     bannerColor = 'green';
     badge = { text: 'GO', color: 'bg-green-500 text-white animate-pulse' };
+  } else if (!wantsWind && isGreatNow) {
+    displayScore = score;
+    headline = calmLabel.glass;
+    subline = `${safeToFixed(currentWindSpeed, 0)} mph — perfect conditions`;
+    bannerColor = 'green';
+    badge = { text: calmLabel.badge, color: 'bg-emerald-500 text-white animate-pulse' };
   } else if (isGoodNow && isForecastBetter) {
     displayScore = score;
-    headline = `Good ${activityConfig?.name} now — getting better!`;
-    subline = consistencyForecast?.description || `${prob}% probability, building to peak`;
+    headline = wantsWind
+      ? `Good ${actName} now — getting better!`
+      : `${actName} is good now — staying calm`;
+    subline = wantsWind
+      ? (consistencyForecast?.description || `${prob}% probability, building to peak`)
+      : `${safeToFixed(currentWindSpeed, 0)} mph — low wind window holding`;
     bannerColor = 'green';
-    badge = { text: 'IMPROVING', color: 'bg-green-500/20 text-green-400 border border-green-500/50' };
+    badge = { text: wantsWind ? 'IMPROVING' : 'HOLDING', color: 'bg-green-500/20 text-green-400 border border-green-500/50' };
   } else if (hasForecastOpp) {
     displayScore = prob;
     const isWindBlowingNow = currentWindSpeed >= 6;
     const timeStr = startHour ? (startHour > 12 ? `${startHour - 12} PM` : `${startHour} AM`) : null;
     if (windType === 'north_flow' && isWindBlowingNow) {
-      headline = `${activityConfig?.name} — North flow active`;
+      headline = `${actName} — North flow active`;
       subline = `${Math.round(currentWindSpeed)} mph from north — rideable and building`;
       bannerColor = prob >= 60 ? 'green' : 'yellow';
       badge = { text: 'ACTIVE', color: prob >= 60 ? 'bg-green-500/20 text-green-400 border border-green-500/50' : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/50' };
     } else {
       headline = timeStr
-        ? `${activityConfig?.name} Expected at ${timeStr}`
-        : `${activityConfig?.name} Likely Today`;
+        ? `${actName} Expected at ${timeStr}`
+        : `${actName} Likely Today`;
       subline = windType === 'thermal'
         ? (consistencyForecast?.description || 'Thermal cycle building — smooth, consistent wind expected')
         : windType === 'north_flow'
@@ -67,15 +87,20 @@ export default function ActivityScoreBanner({
   } else if (hasGlassOpp && !wantsWind) {
     displayScore = boatingPrediction.probability;
     headline = boatingPrediction.isGlass
-      ? 'Glass Conditions Now!'
+      ? calmLabel.glass
       : boatingPrediction.glassWindow?.start
-        ? `Glass Window: ${boatingPrediction.glassWindow.start} – ${boatingPrediction.glassWindow.end}`
-        : 'Calm Conditions Possible';
+        ? `Calm Window: ${boatingPrediction.glassWindow.start} – ${boatingPrediction.glassWindow.end}`
+        : calmLabel.calm;
     subline = boatingPrediction.recommendation;
     bannerColor = boatingPrediction.probability >= 60 ? 'green' : boatingPrediction.probability >= 40 ? 'yellow' : 'red';
-    if (boatingPrediction.isGlass) badge = { text: 'GLASS', color: 'bg-emerald-500 text-white animate-pulse' };
+    if (boatingPrediction.isGlass) badge = { text: calmLabel.badge, color: 'bg-emerald-500 text-white animate-pulse' };
+  } else if (!wantsWind && score >= 40) {
+    headline = `${actName}: ${activityScore.message}`;
+    if (startHour) {
+      subline = `Wind expected ~${startHour > 12 ? `${startHour - 12} PM` : `${startHour} AM`} — plan around it`;
+    }
   } else {
-    headline = `${activityConfig?.name}: ${activityScore.message}`;
+    headline = `${actName}: ${activityScore.message}`;
   }
 
   const textColorMap = {
