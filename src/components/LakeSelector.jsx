@@ -614,15 +614,26 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
 
   const isWindSport = ['kiting', 'sailing', 'windsurfing'].includes(activity);
   const isCalmSport = ['boating', 'paddling'].includes(activity);
+  const isPG = activity === 'paragliding';
+  const isSnow = activity === 'snowkiting';
+  const isFishing = activity === 'fishing';
+  const hasQuickPick = isWindSport || isCalmSport || isPG || isSnow;
 
   const topSpots = useMemo(() => {
-    if (!isWindSport && !isCalmSport) return [];
-    const allSpots = [...UTAH_LAKE_LAUNCHES, ...KITE_SPOTS, ...OTHER_LAKES];
-    const scored = allSpots.map(spot => {
+    if (!hasQuickPick) return [];
+
+    let pool;
+    if (isPG) pool = PARAGLIDING_SITES;
+    else if (isSnow) pool = [...STRAWBERRY_LAUNCHES, SKYLINE_SPOT, ...SNOWKITE_EXTRA];
+    else if (isCalmSport) pool = [...UTAH_LAKE_LAUNCHES, ...OTHER_LAKES];
+    else pool = [...UTAH_LAKE_LAUNCHES, ...KITE_SPOTS, ...OTHER_LAKES];
+
+    const wantsWind = isWindSport || isPG || isSnow;
+    const scored = pool.map(spot => {
       const ws = windStatuses[spot.id];
       const speed = ws?.speed ?? 0;
       let score = 0;
-      if (isWindSport) {
+      if (wantsWind) {
         if (ws?.level === 'hot') score = 100;
         else if (ws?.level === 'building') score = 70;
         else if (speed >= 8) score = 50;
@@ -638,9 +649,9 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
     });
     scored.sort((a, b) => b.score - a.score);
     return scored.slice(0, 3);
-  }, [windStatuses, isWindSport, isCalmSport]);
+  }, [windStatuses, hasQuickPick, isPG, isSnow, isCalmSport, isWindSport]);
 
-  const showQuickPick = (isWindSport || isCalmSport) && !showAllSpots;
+  const showQuickPick = hasQuickPick && !showAllSpots;
 
   return (
     <div className="space-y-3">
@@ -649,7 +660,10 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
         <div className="space-y-2">
           <div className="flex items-center justify-between mb-1">
             <span className={`text-xs font-bold uppercase tracking-wider ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-              {isWindSport ? 'Best Wind Right Now' : 'Calmest Water Now'}
+              {isPG ? 'Best Launch Sites Now'
+                : isSnow ? 'Best Snow Sites Now'
+                : isWindSport ? 'Best Wind Right Now'
+                : 'Calmest Water Now'}
             </span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -698,8 +712,8 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
         </div>
       )}
 
-      {/* ─── FULL SELECTOR (shown when "See all spots" clicked, or for fishing/PG/snow) ─── */}
-      {(showAllSpots || activity === 'fishing' || activity === 'paragliding' || activity === 'snowkiting') && showAllSpots && (isWindSport || isCalmSport) && (
+      {/* ─── FULL SELECTOR ─── */}
+      {showAllSpots && hasQuickPick && (
         <button
           onClick={() => setShowAllSpots(false)}
           className={`w-full py-2 text-xs font-semibold transition-colors rounded-lg ${
@@ -710,7 +724,7 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
         </button>
       )}
 
-      {(!showQuickPick || showAllSpots || activity === 'fishing' || activity === 'paragliding' || activity === 'snowkiting') && (
+      {(!showQuickPick || showAllSpots || isFishing) && (
       <>
       {!['snowkiting', 'paragliding'].includes(activity) && (
         <div className={`card !p-0 overflow-hidden ${

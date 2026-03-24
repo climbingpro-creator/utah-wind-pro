@@ -312,9 +312,14 @@ export default function TodayHero({ windSpeed, windGust, thermalPrediction, boat
           </div>
         </div>
 
-        {/* Activity Cards Grid */}
+        {/* Activity Cards Grid — selected activity always first */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-          {outlook.cards.map(({ id, cfg, verdict }) => {
+          {[...outlook.cards].sort((a, b) => {
+            if (a.id === selectedActivity) return -1;
+            if (b.id === selectedActivity) return 1;
+            const rank = { go: 0, wait: 1, off: 2 };
+            return (rank[a.verdict?.status] ?? 2) - (rank[b.verdict?.status] ?? 2);
+          }).map(({ id, cfg, verdict }) => {
             if (!verdict || !cfg) return null;
             const isSelected = selectedActivity === id;
             const isGo = verdict.status === 'go';

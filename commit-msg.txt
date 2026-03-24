@@ -1,0 +1,14 @@
+Fix: restore station readings, activity-specific locations, correct wind data per sport
+
+Bug fixes after UX overhaul:
+1. Station readings (PWS, WindVectors) restored to main flow, no longer hidden in Deep Dive
+2. Auto-switch location when changing activities: paragliding goes to PotM South,
+   snowkiting to Strawberry Ladders, leaving PG/snow spots returns to Utah Lake
+3. DecisionCard now uses FPS/UTALP launch-site sensors for paragliding
+   instead of generic lake wind data
+4. LakeSelector Quick Pick now shows correct site pools per activity:
+   paragliding shows PG sites, snowkiting shows snow sites, wind sports
+   show kite spots, calm sports show calm-water lakes
+5. TodayHero activity grid: selected activity always appears first,
+   then GO activities, then WAIT, then OFF
+6. Paragliding-specific language in DecisionCard (fly vs ride, launch vs water)

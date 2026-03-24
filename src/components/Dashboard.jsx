@@ -66,12 +66,15 @@ export function Dashboard() {
     }
   }, [selectedActivity]);
   
-  // Auto-switch lakes when moving between snow and water sports
   React.useEffect(() => {
     const isSnowSpot = selectedLake?.startsWith('strawberry') || selectedLake === 'skyline-drive';
+    const isPGSpot = ['potm-south', 'potm-north', 'inspo', 'west-mountain', 'stockton-bar'].includes(selectedLake);
+
     if (selectedActivity === 'snowkiting' && !isSnowSpot) {
       setSelectedLake('strawberry-ladders');
-    } else if (selectedActivity !== 'snowkiting' && isSnowSpot) {
+    } else if (selectedActivity === 'paragliding' && !isPGSpot) {
+      setSelectedLake('potm-south');
+    } else if (selectedActivity !== 'snowkiting' && selectedActivity !== 'paragliding' && (isSnowSpot || isPGSpot)) {
       setSelectedLake('utah-lake');
     }
   }, [selectedActivity, selectedLake]);
@@ -82,9 +85,19 @@ export function Dashboard() {
   const currentWindGust = lakeState?.pws?.windGust || lakeState?.wind?.stations?.[0]?.gust;
   const currentWindDirection = lakeState?.pws?.windDirection || lakeState?.wind?.stations?.[0]?.direction;
   
-  // For paragliding, use Flight Park South/North data instead of generic wind
   const fpsStation = lakeState?.wind?.stations?.find(s => s.id === 'FPS');
   const utalpStation = lakeState?.wind?.stations?.find(s => s.id === 'UTALP');
+
+  // For paragliding, use the primary PG station (FPS for south, UTALP for north)
+  const pgPrimaryStation = fpsStation || utalpStation;
+  const pgWindSpeed = pgPrimaryStation?.speed ?? pgPrimaryStation?.windSpeed;
+  const pgWindGust = pgPrimaryStation?.gust ?? pgPrimaryStation?.windGust;
+  const pgWindDirection = pgPrimaryStation?.direction ?? pgPrimaryStation?.windDirection;
+
+  // Wind values used by DecisionCard — paragliding uses launch-site sensors
+  const decisionWindSpeed = selectedActivity === 'paragliding' ? pgWindSpeed : currentWindSpeed;
+  const decisionWindGust = selectedActivity === 'paragliding' ? pgWindGust : currentWindGust;
+  const decisionWindDirection = selectedActivity === 'paragliding' ? pgWindDirection : currentWindDirection;
 
   // Frontal Swing Monitor — checks 3-hour history for rapid changes
   const swingAlerts = React.useMemo(() => {
@@ -354,9 +367,9 @@ export function Dashboard() {
         {/* ═══════════ SECTION 3: GO / WAIT / PASS — The Single Answer ═══════════ */}
         <DecisionCard
           activity={selectedActivity}
-          windSpeed={currentWindSpeed}
-          windGust={currentWindGust}
-          windDirection={currentWindDirection}
+          windSpeed={decisionWindSpeed}
+          windGust={decisionWindGust}
+          windDirection={decisionWindDirection}
           thermalPrediction={lakeState?.thermalPrediction}
           boatingPrediction={boatingPrediction}
           briefing={briefing}
@@ -438,6 +451,44 @@ export function Dashboard() {
             <p className="text-sm text-[var(--text-secondary)] mt-1">{error}</p>
           </div>
         )}
+
+        {/* ═══════════ LIVE STATION READINGS — always visible ═══════════ */}
+        <div aria-live="polite" aria-atomic="false">
+          <h2 className="text-base font-bold text-[var(--text-primary)] mb-4 flex items-center gap-2">
+            <Wind className="w-4 h-4 text-sky-500" />
+            {activityConfig?.wantsWind === false
+              ? `Wind Monitoring — ${activityConfig?.name || 'Calm Sports'}`
+              : selectedActivity === 'paragliding'
+                ? 'Launch Site Sensors'
+                : 'Station Readings'}
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {lakeState?.wind?.stations?.map((station, index) => (
+              <WindVector
+                key={station.id || index}
+                station={station}
+                history={history[station.id]}
+                isPersonalStation={station.isPWS}
+              />
+            ))}
+            {isLoading && !lakeState?.wind?.stations?.length && (
+              <>
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="bg-[var(--bg-card)] rounded-xl p-4 border border-[var(--border-color)] animate-pulse">
+                    <div className="h-5 bg-[var(--border-color)] rounded w-2/3 mb-4" />
+                    <div className="flex gap-4">
+                      <div className="w-16 h-16 bg-[var(--border-color)] rounded-full" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-6 bg-[var(--border-color)] rounded w-1/2" />
+                        <div className="h-4 bg-[var(--border-color)] rounded w-3/4" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
+          </div>
+        </div>
 
         {/* ═══════════ SECTION 6: THIS WEEK — Where to Go + Planning ═══════════ */}
         <SafeComponent name="Spot Ranker">
@@ -540,28 +591,6 @@ export function Dashboard() {
                 </SafeComponent>
               </Suspense>
             )}
-
-            {/* Station Readings */}
-            <div aria-live="polite" aria-atomic="false">
-              <h2 className="text-base font-bold text-[var(--text-primary)] mb-4 flex items-center gap-2">
-                <Wind className="w-4 h-4 text-sky-500" />
-                {activityConfig?.wantsWind === false
-                  ? `Wind Monitoring — ${activityConfig?.name || 'Calm Sports'}`
-                  : selectedActivity === 'paragliding'
-                    ? 'Launch Site Sensors'
-                    : 'Station Readings'}
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                {lakeState?.wind?.stations?.map((station, index) => (
-                  <WindVector
-                    key={station.id || index}
-                    station={station}
-                    history={history[station.id]}
-                    isPersonalStation={station.isPWS}
-                  />
-                ))}
-              </div>
-            </div>
 
             {/* Why We Think Wind Is Coming — renamed from 3-Step Model */}
             {activityConfig?.wantsWind && selectedActivity !== 'paragliding' && (

@@ -39,13 +39,16 @@ function getDecision(activity, windSpeed, windGust, thermalPrediction, boatingPr
     const gustFactor = gust > 0 && speed > 0 ? gust / speed : 1;
     const gustLimit = cfg.thresholds?.gustFactor ?? 1.5;
 
+    const isPG = activity === 'paragliding';
+    const goVerb = isPG ? 'fly' : 'ride';
+
     if (good && ideal && speed >= ideal.min && speed <= ideal.max && gustFactor <= gustLimit) {
       const untilStr = endHour && endHour > now ? ` until ~${formatHour(endHour)}` : '';
       return {
         decision: 'GO',
         headline: `GO to ${spot} now`,
         detail: `${Math.round(speed)} mph ${dirLabel(dir)} — ideal range${untilStr}`,
-        action: briefing?.bestAction || `Get on the water — conditions are perfect`,
+        action: briefing?.bestAction || (isPG ? 'Conditions are perfect — go fly' : 'Get on the water — conditions are perfect'),
         color: 'emerald',
         icon: CheckCircle,
       };
@@ -55,9 +58,9 @@ function getDecision(activity, windSpeed, windGust, thermalPrediction, boatingPr
       const untilStr = endHour && endHour > now ? ` — good until ~${formatHour(endHour)}` : '';
       return {
         decision: 'GO',
-        headline: `GO — ${activity} is active`,
+        headline: `GO — ${cfg.name} is on`,
         detail: `${Math.round(speed)} mph ${dirLabel(dir)}${untilStr}`,
-        action: briefing?.bestAction || `Conditions are rideable — get out there`,
+        action: briefing?.bestAction || (isPG ? 'Flyable conditions — head to launch' : `Conditions are ${goVerb}able — get out there`),
         color: 'emerald',
         icon: CheckCircle,
       };
@@ -66,9 +69,11 @@ function getDecision(activity, windSpeed, windGust, thermalPrediction, boatingPr
     if (speed >= tooLight && speed < (ideal?.min ?? tooLight) && gustFactor < 1.4) {
       return {
         decision: 'GO',
-        headline: `GO — light but rideable`,
-        detail: `${Math.round(speed)} mph ${dirLabel(dir)} — foil-friendly conditions`,
-        action: briefing?.bestAction || `Light wind session — bring your big kite or foil`,
+        headline: isPG ? `GO — light but flyable` : `GO — light but rideable`,
+        detail: isPG
+          ? `${Math.round(speed)} mph ${dirLabel(dir)} — light lift, stay close to ridge`
+          : `${Math.round(speed)} mph ${dirLabel(dir)} — foil-friendly conditions`,
+        action: briefing?.bestAction || (isPG ? `Light conditions — stay close to the hill` : `Light wind session — bring your big kite or foil`),
         color: 'lime',
         icon: CheckCircle,
       };
@@ -78,8 +83,10 @@ function getDecision(activity, windSpeed, windGust, thermalPrediction, boatingPr
       return {
         decision: 'PASS',
         headline: `Too strong — ${Math.round(speed)} mph`,
-        detail: `Dangerous conditions at ${spot}. Wait for wind to drop below ${tooStrong} mph.`,
-        action: 'Stay off the water — safety first',
+        detail: isPG
+          ? `Dangerous for ${cfg.name}. Gusts exceed safe limits at ${spot}.`
+          : `Dangerous conditions at ${spot}. Wait for wind to drop below ${tooStrong} mph.`,
+        action: isPG ? 'Do not launch — conditions are dangerous' : 'Stay off the water — safety first',
         color: 'red',
         icon: XCircle,
       };
@@ -89,8 +96,12 @@ function getDecision(activity, windSpeed, windGust, thermalPrediction, boatingPr
       return {
         decision: 'WAIT',
         headline: `Gusty — ${Math.round(speed)}G${Math.round(gust)} mph`,
-        detail: `Gusts too high for safe ${activity}. Wait for conditions to stabilize.`,
-        action: briefing?.bestAction || `Monitor gusts — needs to settle below ${Math.round(speed * gustLimit)} mph`,
+        detail: isPG
+          ? `Gust spread too wide for safe ${cfg.name}. Wait for stabilization.`
+          : `Gusts too high for safe ${activity}. Wait for conditions to stabilize.`,
+        action: briefing?.bestAction || (isPG
+          ? `Watch the cycles — gust spread needs to tighten`
+          : `Monitor gusts — needs to settle below ${Math.round(speed * gustLimit)} mph`),
         color: 'amber',
         icon: Clock,
       };
