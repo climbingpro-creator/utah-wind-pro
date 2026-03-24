@@ -64,7 +64,10 @@ export default function DetailedPanels({
         {activityConfig?.wantsWind ? (
           <div className="card flex flex-col items-center">
             <span className="data-label mb-3">
-              {selectedActivity === 'sailing' ? 'Racing Wind Probability' : 'Thermal Probability'}
+              {selectedActivity === 'sailing' ? 'Racing Wind Probability'
+                : selectedActivity === 'paragliding' ? 'Soaring Probability'
+                : selectedActivity === 'snowkiting' ? 'Snowkite Wind Probability'
+                : 'Thermal Probability'}
             </span>
             <ConfidenceGauge value={lakeState?.probability || 0} size={180} />
 
@@ -99,11 +102,13 @@ export default function DetailedPanels({
           />
         )}
 
-        {boatingPrediction && (selectedActivity === 'boating' || selectedActivity === 'paddling') && (
+        {boatingPrediction && (selectedActivity === 'boating' || selectedActivity === 'paddling' || selectedActivity === 'fishing') && (
           <div className="card">
             <div className="flex items-center gap-2 mb-3">
               <Ship className="w-4 h-4 text-sky-500" />
-              <span className="text-sm font-semibold text-[var(--text-primary)]">Glass Forecast</span>
+              <span className="text-sm font-semibold text-[var(--text-primary)]">
+                {selectedActivity === 'fishing' ? 'Water Calm Forecast' : 'Glass Forecast'}
+              </span>
               <span className="text-[9px] font-bold bg-sky-500/10 text-sky-500 px-1.5 py-0.5 rounded ml-auto">AI</span>
             </div>
             <div className="text-center mb-2">
@@ -127,7 +132,11 @@ export default function DetailedPanels({
         )}
 
         <div className="card flex flex-col items-center">
-          <span className="data-label mb-3">Pressure Gradient (N↔S Flow)</span>
+          <span className="data-label mb-3">
+            {activityConfig?.wantsWind === false
+              ? 'Pressure Gradient (Wind Threat)'
+              : 'Pressure Gradient (N↔S Flow)'}
+          </span>
           <NorthFlowGauge gradient={lakeState?.pressure?.gradient} size={160} />
         </div>
 
@@ -147,7 +156,7 @@ export default function DetailedPanels({
           />
         )}
 
-        {lakeState?.thermalPrediction && (
+        {lakeState?.thermalPrediction && activityConfig?.wantsWind && (
           <ProGate feature="3-Step Prediction Model" preview="See what's driving today's wind">
             <div className="card">
               <span className="data-label block text-center mb-3">3-Step Prediction Model</span>
@@ -229,20 +238,22 @@ export default function DetailedPanels({
       </div>
 
       <div className="lg:col-span-2 space-y-4">
-        <SafeComponent name="Propagation Banner">
-          <PropagationBanner
-            locationId={selectedLake}
-            stationReadings={{
-              KSLC: lakeState?.kslcStation ? { speed: lakeState.kslcStation.speed ?? lakeState.kslcStation.windSpeed, direction: lakeState.kslcStation.direction ?? lakeState.kslcStation.windDirection } : null,
-              KPVU: lakeState?.kpvuStation ? { speed: lakeState.kpvuStation.speed ?? lakeState.kpvuStation.windSpeed, direction: lakeState.kpvuStation.direction ?? lakeState.kpvuStation.windDirection } : null,
-              UTALP: lakeState?.utalpStation ? { speed: lakeState.utalpStation.speed ?? lakeState.utalpStation.windSpeed, direction: lakeState.utalpStation.direction ?? lakeState.utalpStation.windDirection } : null,
-              ...(mesoData || {}),
-            }}
-            currentWind={{ speed: currentWindSpeed, direction: currentWindDirection }}
-            translationFactor={0.55}
-            pressureGradient={lakeState?.pressureGradient}
-          />
-        </SafeComponent>
+        {activityConfig?.wantsWind && (
+          <SafeComponent name="Propagation Banner">
+            <PropagationBanner
+              locationId={selectedLake}
+              stationReadings={{
+                KSLC: lakeState?.kslcStation ? { speed: lakeState.kslcStation.speed ?? lakeState.kslcStation.windSpeed, direction: lakeState.kslcStation.direction ?? lakeState.kslcStation.windDirection } : null,
+                KPVU: lakeState?.kpvuStation ? { speed: lakeState.kpvuStation.speed ?? lakeState.kpvuStation.windSpeed, direction: lakeState.kpvuStation.direction ?? lakeState.kpvuStation.windDirection } : null,
+                UTALP: lakeState?.utalpStation ? { speed: lakeState.utalpStation.speed ?? lakeState.utalpStation.windSpeed, direction: lakeState.utalpStation.direction ?? lakeState.utalpStation.windDirection } : null,
+                ...(mesoData || {}),
+              }}
+              currentWind={{ speed: currentWindSpeed, direction: currentWindDirection }}
+              translationFactor={0.55}
+              pressureGradient={lakeState?.pressureGradient}
+            />
+          </SafeComponent>
+        )}
 
         <ProGate feature="Smart Hourly Forecast" preview="Hour-by-hour wind predictions">
           <SmartTimeline
@@ -452,34 +463,38 @@ export default function DetailedPanels({
           isLoading={isLoading}
         />
 
-        <ProGate feature="Thermal Forecast" preview="Detailed thermal wind predictions">
-          <ThermalForecast
-            lakeId={selectedLake}
-            currentConditions={{
-              windSpeed: lakeState?.pws?.windSpeed || lakeState?.wind?.stations?.[0]?.speed,
-              windDirection: lakeState?.pws?.windDirection || lakeState?.wind?.stations?.[0]?.direction,
-              temperature: lakeState?.pws?.temperature,
-            }}
-            pressureGradient={lakeState?.pressure?.gradient}
-            thermalDelta={lakeState?.thermal?.delta}
-            pumpActive={lakeState?.thermal?.pumpActive}
-            inversionTrapped={lakeState?.thermal?.inversionTrapped}
-            isLoading={isLoading}
-          />
-        </ProGate>
+        {activityConfig?.wantsWind && (
+          <>
+            <ProGate feature="Thermal Forecast" preview="Detailed thermal wind predictions">
+              <ThermalForecast
+                lakeId={selectedLake}
+                currentConditions={{
+                  windSpeed: lakeState?.pws?.windSpeed || lakeState?.wind?.stations?.[0]?.speed,
+                  windDirection: lakeState?.pws?.windDirection || lakeState?.wind?.stations?.[0]?.direction,
+                  temperature: lakeState?.pws?.temperature,
+                }}
+                pressureGradient={lakeState?.pressure?.gradient}
+                thermalDelta={lakeState?.thermal?.delta}
+                pumpActive={lakeState?.thermal?.pumpActive}
+                inversionTrapped={lakeState?.thermal?.inversionTrapped}
+                isLoading={isLoading}
+              />
+            </ProGate>
 
-        <BustAlert 
-          pressureData={pressureData} 
-          isLoading={isLoading} 
-        />
+            <BustAlert 
+              pressureData={pressureData} 
+              isLoading={isLoading} 
+            />
 
-        <ThermalStatus
-          thermalDelta={lakeState?.thermal}
-          lakeshoreTemp={lakeState?.thermal?.lakeshore}
-          ridgeTemp={lakeState?.thermal?.ridge}
-          convergence={lakeState?.wind?.convergence}
-          isLoading={isLoading}
-        />
+            <ThermalStatus
+              thermalDelta={lakeState?.thermal}
+              lakeshoreTemp={lakeState?.thermal?.lakeshore}
+              ridgeTemp={lakeState?.thermal?.ridge}
+              convergence={lakeState?.wind?.convergence}
+              isLoading={isLoading}
+            />
+          </>
+        )}
       </div>
     </div>
   );

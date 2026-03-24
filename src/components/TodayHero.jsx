@@ -91,8 +91,18 @@ function getActivityVerdict(id, speed, gust, thermalPrediction, _boatingPredicti
 
   if (good && !cfg.wantsWind) {
     const sessionStr = session ? ` — ${sessionLabel(session.avgMinutes)} window` : '';
-    if (speed <= 2) return { status: 'go', label: 'GLASS', reason: `Mirror-flat water${sessionStr}`, color: 'emerald' };
-    return { status: 'go', label: 'GOOD', reason: `Light wind (${Math.round(speed)} mph)${sessionStr}`, color: 'lime' };
+    const actId = Object.entries(ACTIVITY_CONFIGS).find(([, v]) => v === cfg)?.[0];
+    if (speed <= 2) {
+      const glassLabel = actId === 'fishing' ? 'CALM' : actId === 'paddling' ? 'FLAT' : 'GLASS';
+      const glassReason = actId === 'fishing' ? `Still water — fish are active${sessionStr}`
+        : actId === 'paddling' ? `Mirror-flat — perfect paddle${sessionStr}`
+        : `Mirror-flat water${sessionStr}`;
+      return { status: 'go', label: glassLabel, reason: glassReason, color: 'emerald' };
+    }
+    const goodReason = actId === 'fishing' ? `Light ripple (${Math.round(speed)} mph) — great casting${sessionStr}`
+      : actId === 'paddling' ? `Light wind (${Math.round(speed)} mph) — easy paddle${sessionStr}`
+      : `Light wind (${Math.round(speed)} mph)${sessionStr}`;
+    return { status: 'go', label: 'GOOD', reason: goodReason, color: 'lime' };
   }
 
   if (cfg.wantsWind) {

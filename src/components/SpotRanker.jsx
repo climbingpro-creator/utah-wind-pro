@@ -261,18 +261,23 @@ function scoreSpot(spot, activity, currentWind, lakeState, mesoData) {
       }
     }
   } else {
-    // Calm-seeking activities
     score = isBestFor ? 80 : 50;
 
     if (speed >= 10) {
       score -= Math.min(30, speed * 2);
-      reason = 'Exposed to current wind';
+      reason = activity === 'fishing' ? `${safeToFixed(speed, 0)} mph — fish sheltered banks`
+        : activity === 'paddling' ? `${safeToFixed(speed, 0)} mph — too rough to paddle`
+        : 'Exposed to current wind';
     } else if (speed >= 5) {
       score -= 10;
-      reason = 'Light wind exposure';
+      reason = activity === 'fishing' ? `Light chop — nice ripple for fishing`
+        : activity === 'paddling' ? `Light chop — manageable paddle`
+        : 'Light wind exposure';
     } else {
       score += 15;
-      reason = 'Glass conditions';
+      reason = activity === 'fishing' ? `Calm — topwater bite active`
+        : activity === 'paddling' ? `Glass — mirror-flat water`
+        : 'Glass conditions';
     }
   }
 
