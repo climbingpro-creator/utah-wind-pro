@@ -111,6 +111,28 @@ const STATUS_COLORS = {
   unknown:  { bar: 'bg-slate-700',   text: 'text-slate-600',   label: '' },
 };
 
+const ACTIVITY_LEGENDS = {
+  kiting:      { ideal: 'Ideal wind',   good: 'Rideable',      marginal: 'Gusty / marginal', off: 'Too light' },
+  snowkiting:  { ideal: 'Ideal wind',   good: 'Rideable',      marginal: 'Gusty / marginal', off: 'Too light' },
+  windsurfing: { ideal: 'Ideal wind',   good: 'Planing',       marginal: 'Overpowered',      off: 'Too light' },
+  sailing:     { ideal: 'Racing wind',  good: 'Good breeze',   marginal: 'Heavy air',         off: 'Drifter' },
+  boating:     { ideal: 'Glass / calm', good: 'Light chop',    marginal: 'Choppy',            off: null },
+  paddling:    { ideal: 'Glass / calm', good: 'Light ripple',  marginal: 'Choppy — caution',  off: null },
+  fishing:     { ideal: 'Perfect calm', good: 'Light breeze',  marginal: 'Windy — tough bite', off: null },
+  paragliding: { ideal: 'Soarable',     good: 'Flyable',       marginal: 'Strong / gusty',    off: 'Too light' },
+};
+
+const ACTIVITY_WINDOW_LABELS = {
+  kiting:      { best: 'Best session', none: 'No rideable window today' },
+  snowkiting:  { best: 'Best session', none: 'No rideable window today' },
+  windsurfing: { best: 'Best session', none: 'No planing wind today' },
+  sailing:     { best: 'Best racing window', none: 'No strong breeze today' },
+  boating:     { best: 'Calmest window', none: 'Windy all day — rough conditions' },
+  paddling:    { best: 'Calmest window', none: 'Windy all day — stay near shore' },
+  fishing:     { best: 'Best fishing window', none: 'Windy all day — fish sheltered spots' },
+  paragliding: { best: 'Best flying window', none: 'No flyable window today' },
+};
+
 function findBestWindow(hours, activity) {
   if (!hours.length) return null;
   let bestStart = -1, bestEnd = -1, bestScore = 0;
@@ -264,6 +286,9 @@ export default function TodayTimeline({ locationId = 'utah-lake', activity = 'ki
   if (!todayHours.length) return null;
 
   const activityName = ACTIVITY_CONFIGS[activity]?.name || activity;
+  const isCalmActivity = !ACTIVITY_CONFIGS[activity]?.wantsWind;
+  const legend = ACTIVITY_LEGENDS[activity] || ACTIVITY_LEGENDS.kiting;
+  const windowLabels = ACTIVITY_WINDOW_LABELS[activity] || ACTIVITY_WINDOW_LABELS.kiting;
 
   return (
     <div className="card overflow-hidden">
@@ -272,7 +297,7 @@ export default function TodayTimeline({ locationId = 'utah-lake', activity = 'ki
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2">
             <Clock size={18} className="text-sky-400" />
-            <h3 className="font-bold text-white text-base">Today's Wind</h3>
+            <h3 className="font-bold text-white text-base">{isCalmActivity ? `${activityName} Conditions` : "Today's Wind"}</h3>
             <span className="text-sm text-slate-400">—</span>
             <span className="text-sm font-medium text-sky-400">{SPOT_NAMES[locationId] || locationId}</span>
           </div>
@@ -297,10 +322,10 @@ export default function TodayTimeline({ locationId = 'utah-lake', activity = 'ki
             <Wind size={16} className="text-emerald-400 shrink-0" />
             <div className="flex-1 min-w-0">
               <span className="text-sm font-bold text-emerald-400">
-                Best for {activityName}: {formatHourShort(bestWindow.startHour)}–{formatHourShort(bestWindow.endHour)}
+                {windowLabels.best}: {formatHourShort(bestWindow.startHour)}–{formatHourShort(bestWindow.endHour)}
               </span>
               <span className="text-xs text-emerald-400/70 ml-2">
-                peak {displaySpeed(bestWindow.peakSpeed)} {unitLabel}  ·  {bestWindow.duration}hr window
+                {isCalmActivity ? 'max' : 'peak'} {displaySpeed(bestWindow.peakSpeed)} {unitLabel}  ·  {bestWindow.duration}hr window
               </span>
             </div>
             <ChevronRight size={14} className="text-emerald-400/50 shrink-0" />
@@ -309,7 +334,7 @@ export default function TodayTimeline({ locationId = 'utah-lake', activity = 'ki
           <div className="flex items-center gap-2 mt-2 px-3 py-2 rounded-lg bg-slate-800/50 border border-slate-700/50">
             <Wind size={16} className="text-slate-500 shrink-0" />
             <span className="text-sm text-slate-400">
-              No strong {activityName.toLowerCase()} window today
+              {windowLabels.none}
             </span>
           </div>
         )}
@@ -384,12 +409,12 @@ export default function TodayTimeline({ locationId = 'utah-lake', activity = 'ki
         </div>
       </div>
 
-      {/* Legend */}
+      {/* Legend — sport-specific labels */}
       <div className="flex items-center gap-3 px-4 py-2 border-t border-slate-800/50 text-[10px] text-slate-500">
-        <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-emerald-500" /> Ideal</div>
-        <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-500" /> Rideable</div>
-        <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-amber-500" /> Marginal</div>
-        <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-slate-600" /> Too light</div>
+        <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-emerald-500" /> {legend.ideal}</div>
+        <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-500" /> {legend.good}</div>
+        <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-amber-500" /> {legend.marginal}</div>
+        {legend.off && <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-slate-600" /> {legend.off}</div>}
       </div>
     </div>
   );

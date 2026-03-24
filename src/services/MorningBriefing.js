@@ -12,7 +12,7 @@ import { safeToFixed } from '../utils/safeToFixed';
  *  Glass water before 10 AM for boaters. North flow unlikely tonight."
  */
 
-const WIND_ACTIVITIES = new Set(['kiting', 'sailing', 'windsurfing']);
+const WIND_ACTIVITIES = new Set(['kiting', 'sailing', 'windsurfing', 'snowkiting']);
 const CALM_ACTIVITIES = new Set(['boating', 'paddling']);
 
 const DIRECTION_LABELS = {
@@ -26,6 +26,7 @@ const DIRECTION_LABELS = {
 // foilable: lower bound for foil/light-wind riders
 const EXCITEMENT_THRESHOLDS = {
   kiting:      { ideal: [15, 25], rideable: [12, 30], foilable: [8, 30] },
+  snowkiting:  { ideal: [12, 25], rideable: [10, 35], foilable: [8, 35] },
   sailing:     { ideal: [10, 20], rideable: [6, 25],  foilable: [4, 25] },
   windsurfing: { ideal: [15, 25], rideable: [12, 30], foilable: [8, 30] },
   boating:     { ideal: [0, 5],   rideable: [0, 10] },

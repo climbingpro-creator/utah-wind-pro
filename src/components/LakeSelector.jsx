@@ -574,7 +574,7 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
   useEffect(() => {
     if (activity === 'paragliding') setParaglidingExpanded(true);
     if (activity === 'snowkiting') setSnowExpanded(true);
-    if (activity === 'kiting' || activity === 'sailing') setKiteSpotsExpanded(true);
+    if (['kiting', 'sailing', 'windsurfing'].includes(activity)) setKiteSpotsExpanded(true);
     if (!['snowkiting', 'paragliding'].includes(activity)) setUtahLakeExpanded(true);
   }, [activity]);
 
@@ -837,7 +837,7 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
       )}
 
       {/* ─── KITE SPOTS (kiting & sailing only) ─── */}
-      {(activity === 'kiting' || activity === 'sailing') && (
+      {(['kiting', 'sailing', 'windsurfing'].includes(activity)) && (
         <div className="card !p-0 overflow-hidden">
           <button
             onClick={() => setKiteSpotsExpanded(!kiteSpotsExpanded)}
@@ -992,7 +992,7 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
       )}
 
       {/* All Utah Lakes — organized by region (fishing, boating, paddling, sailing) */}
-      {['fishing', 'boating', 'paddling', 'sailing'].includes(activity) && (
+      {['fishing', 'boating', 'paddling', 'sailing', 'windsurfing'].includes(activity) && (
       <div className="space-y-2">
         {LAKE_REGIONS.map((region) => {
           const hasSelectedLake = region.lakes.some(l => l.id === selectedLake);

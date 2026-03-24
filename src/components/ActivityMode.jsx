@@ -321,64 +321,76 @@ export function calculateActivityScore(activity, windSpeed, windGust, _windDirec
 /**
  * Calculate Glass Score for calm-seeking activities
  */
-export function calculateGlassScore(windSpeed, windGust, _config = ACTIVITY_CONFIGS.boating) {
+export function calculateGlassScore(windSpeed, windGust, config = ACTIVITY_CONFIGS.boating) {
   if (windSpeed == null) {
     return { score: null, status: 'unknown', message: 'No wind data' };
   }
-  
+
+  const t = config?.thresholds || {};
+  const idealMax = t.ideal?.max ?? 8;
+  const choppy = t.choppy ?? t.manageable ?? 10;
+  const rough = t.rough ?? 15;
+  const danger = t.dangerous ?? t.difficult ?? 25;
+  const actName = config?.name?.toLowerCase() || 'boating';
+
   let score = 0;
   let status = 'poor';
   let message = '';
   let waveEstimate = 'unknown';
-  
-  // Perfect glass = 100, increases wind = lower score
+
   if (windSpeed <= 2) {
     score = 100;
     status = 'glass';
-    message = 'Perfect glass conditions!';
+    message = actName === 'fishing' ? 'Perfect — fish are active, water is still'
+      : actName === 'paddling' ? 'Perfect glass — mirror-flat water'
+      : 'Perfect glass conditions!';
     waveEstimate = 'flat';
-  } else if (windSpeed <= 5) {
-    score = 95 - (windSpeed - 2) * 5;
+  } else if (windSpeed <= idealMax) {
+    score = 95 - (windSpeed - 2) * (15 / Math.max(1, idealMax - 2));
     status = 'excellent';
-    message = 'Excellent - nearly flat water';
+    message = actName === 'fishing' ? 'Excellent — light ripple helps disguise your line'
+      : actName === 'paddling' ? 'Excellent — easy paddling, light ripple'
+      : 'Excellent — nearly flat water';
     waveEstimate = 'ripples';
-  } else if (windSpeed <= 8) {
-    score = 80 - (windSpeed - 5) * 5;
+  } else if (windSpeed <= choppy) {
+    score = 80 - (windSpeed - idealMax) * (15 / Math.max(1, choppy - idealMax));
     status = 'good';
-    message = 'Good - light chop';
+    message = actName === 'fishing' ? 'Good — manageable chop, topwater still works'
+      : actName === 'paddling' ? 'Good — light chop, stay aware of wind direction'
+      : 'Good — light chop';
     waveEstimate = 'light_chop';
-  } else if (windSpeed <= 12) {
-    score = 65 - (windSpeed - 8) * 5;
+  } else if (windSpeed <= rough) {
+    score = 65 - (windSpeed - choppy) * (20 / Math.max(1, rough - choppy));
     status = 'moderate';
-    message = 'Moderate - noticeable waves';
+    message = actName === 'fishing' ? 'Moderate — switch to jigs or deep bait, surface bite off'
+      : actName === 'paddling' ? 'Moderate — only experienced paddlers, stay near shore'
+      : 'Moderate — noticeable waves';
     waveEstimate = 'moderate_chop';
-  } else if (windSpeed <= 18) {
-    score = 45 - (windSpeed - 12) * 4;
+  } else if (windSpeed <= danger) {
+    score = Math.max(5, 45 - (windSpeed - rough) * (40 / Math.max(1, danger - rough)));
     status = 'choppy';
-    message = 'Choppy - uncomfortable for small boats';
+    message = actName === 'fishing' ? 'Rough — fish sheltered coves or from shore'
+      : actName === 'paddling' ? 'Rough — not recommended, risk of capsize'
+      : 'Choppy — uncomfortable for small boats';
     waveEstimate = 'choppy';
-  } else if (windSpeed <= 25) {
-    score = 21 - (windSpeed - 18) * 3;
-    status = 'rough';
-    message = 'Rough - stay near shore';
-    waveEstimate = 'rough';
   } else {
     score = 0;
     status = 'dangerous';
-    message = 'Dangerous - stay off the water';
+    message = actName === 'fishing' ? 'Dangerous — shore fishing only'
+      : actName === 'paddling' ? 'Dangerous — do not paddle'
+      : 'Dangerous — stay off the water';
     waveEstimate = 'dangerous';
   }
-  
-  // Gusts make it worse for boaters
+
   if (windGust && windGust > windSpeed * 1.3) {
     score = Math.round(score * 0.85);
     message += ' (gusty)';
   }
-  
-  return { 
-    score: Math.max(0, Math.round(score)), 
-    status, 
-    message, 
+
+  return {
+    score: Math.max(0, Math.round(score)),
+    status,
+    message,
     waveEstimate,
     windSpeed,
   };

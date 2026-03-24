@@ -63,6 +63,12 @@ const ACTIVITY_PROFILES = {
     scoreLabel: (s) => s >= 80 ? 'Epic' : s >= 60 ? 'Flyable' : s >= 40 ? 'Marginal' : 'Grounded',
     emoji: (s) => s >= 80 ? '🪂' : s >= 60 ? '✅' : s >= 40 ? '⚠️' : '❌',
   },
+  snowkiting: {
+    idealMin: 12, idealMax: 22, min: 10, max: 35,
+    gustLimit: 1.6, wantsWind: true, daylightOnly: true,
+    scoreLabel: (s) => s >= 80 ? 'Send it' : s >= 60 ? 'Good session' : s >= 40 ? 'Light but rideable' : s >= 20 ? 'Barely' : 'No wind',
+    emoji: (s) => s >= 80 ? '🔥' : s >= 60 ? '✅' : s >= 40 ? '〰️' : '❌',
+  },
 };
 
 // ─── SCORE CALCULATOR ────────────────────────────────────────────
@@ -256,11 +262,18 @@ function buildRecommendation(activity, hours, windows, flowBlocked, triggers, sw
   const hasFrontal = swings.some(a => a.id === 'frontal-hit');
   const boostActive = triggers.filter(t => t.type === 'boost').length > 0;
 
+  const actLabel = profile === ACTIVITY_PROFILES.kiting ? 'Kiting'
+    : profile === ACTIVITY_PROFILES.sailing ? 'Sailing'
+    : profile === ACTIVITY_PROFILES.snowkiting ? 'Snowkiting'
+    : profile === ACTIVITY_PROFILES.windsurfing ? 'Windsurfing'
+    : profile === ACTIVITY_PROFILES.paragliding ? 'Flying'
+    : activity.charAt(0).toUpperCase() + activity.slice(1);
+
   if (profile.wantsWind) {
     if (currentScore >= 70) {
       return {
         urgency: 'go',
-        headline: `${activity === 'kiting' ? 'Kiting' : activity === 'sailing' ? 'Sailing' : activity.charAt(0).toUpperCase() + activity.slice(1)} is ON right now!`,
+        headline: `${actLabel} is ON right now!`,
         detail: boostActive ? `Spatial triggers active — ${triggers[0]?.label}` : `${safeToFixed(hours[0].predictedSpeed, 0)} mph — ideal conditions`,
         badge: 'GO NOW',
       };
@@ -268,7 +281,7 @@ function buildRecommendation(activity, hours, windows, flowBlocked, triggers, sw
     if (bestWindow) {
       return {
         urgency: 'plan',
-        headline: `Best window: ${bestWindow.start} – ${bestWindow.end}`,
+        headline: `Best ${actLabel.toLowerCase()} window: ${bestWindow.start} – ${bestWindow.end}`,
         detail: hasFrontal
           ? 'Frontal passage detected — stronger winds incoming'
           : `${bestWindow.avgSpeed} mph avg, ${bestWindow.duration}hr window`,
@@ -279,39 +292,60 @@ function buildRecommendation(activity, hours, windows, flowBlocked, triggers, sw
     if (flowBlocked) {
       return {
         urgency: 'wait',
-        headline: 'Upstream wind not reaching the lake',
-        detail: 'Valley wind is active but blocked — thermals may still develop locally',
+        headline: activity === 'paragliding'
+          ? 'Valley wind active but not reaching launch'
+          : 'Upstream wind not reaching the lake',
+        detail: activity === 'paragliding'
+          ? 'Thermals may still cycle — watch for lulls'
+          : 'Valley wind is active but blocked — thermals may still develop locally',
         badge: 'WATCHING',
       };
     }
-    return { urgency: 'wait', headline: 'No strong wind signals today', detail: 'Checking indicators for changes', badge: null };
+    return { urgency: 'wait', headline: `No strong ${actLabel.toLowerCase()} signals today`, detail: 'Checking indicators for changes', badge: null };
   } else {
+    const calmLabel = activity === 'fishing' ? 'Calm water — great bite conditions'
+      : activity === 'paddling' ? 'Glass conditions — perfect for paddling'
+      : 'Glass conditions — upstream wind is blocked!';
+    const calmNow = activity === 'fishing' ? 'Calm water — fish are active'
+      : activity === 'paddling' ? 'Flat water right now — go paddle'
+      : 'Calm water right now';
+
     if (currentScore >= 80 && flowBlocked) {
       return {
         urgency: 'go',
-        headline: 'Glass conditions — upstream wind is blocked!',
-        detail: 'Valley wind is NOT reaching the lake. Go now!',
-        badge: 'GLASS',
+        headline: calmLabel,
+        detail: activity === 'fishing'
+          ? 'No wind reaching the lake — topwater bite is on'
+          : 'Valley wind is NOT reaching the lake. Go now!',
+        badge: activity === 'fishing' ? 'FISH ON' : 'GLASS',
       };
     }
     if (currentScore >= 70) {
       return {
         urgency: 'go',
-        headline: 'Calm water right now',
-        detail: bestWindow ? `Glass until ~${bestWindow.end}` : 'Enjoy the calm',
+        headline: calmNow,
+        detail: bestWindow ? `Calm until ~${bestWindow.end}` : 'Enjoy the calm',
         badge: 'GO NOW',
       };
     }
     if (bestWindow && bestWindow.isToday) {
+      const windowLabel = activity === 'fishing' ? 'Best fishing window'
+        : activity === 'paddling' ? 'Calm paddle window'
+        : 'Glass window';
       return {
         urgency: 'plan',
-        headline: `Glass window: ${bestWindow.start} – ${bestWindow.end}`,
-        detail: `${bestWindow.avgSpeed} mph avg — ${bestWindow.duration}hr of calm water`,
+        headline: `${windowLabel}: ${bestWindow.start} – ${bestWindow.end}`,
+        detail: activity === 'fishing'
+          ? `Low wind (${bestWindow.avgSpeed} mph) — ${bestWindow.duration}hr of calm water`
+          : `${bestWindow.avgSpeed} mph avg — ${bestWindow.duration}hr of calm water`,
         badge: 'PLAN AHEAD',
         arriveBy: bestWindow.start,
       };
     }
-    return { urgency: 'wait', headline: 'Wind expected — choppy conditions', detail: 'Waiting for calm windows', badge: null };
+    const waitMsg = activity === 'fishing' ? 'Windy — fish deeper or sheltered spots'
+      : activity === 'paddling' ? 'Choppy — wait for calm or stay near shore'
+      : 'Wind expected — choppy conditions';
+    return { urgency: 'wait', headline: waitMsg, detail: 'Waiting for calm windows', badge: null };
   }
 }
 
