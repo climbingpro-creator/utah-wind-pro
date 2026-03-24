@@ -27,7 +27,7 @@ export const LAKE_STATIONS = {
   },
   'utah-lake-vineyard': {
     name: 'Vineyard / Utah Lake SP',
-    synoptic: ['KSLC', 'KPVU', 'QSF', 'FPS', 'UTALP', 'CSC', 'TIMU1'],
+    synoptic: ['KSLC', 'KPVU', 'QSF', 'FPS', 'UTALP', 'CSC', 'TIMU1', 'QLN'],
     primary: 'KPVU',
     hasAmbient: false,
   },
@@ -71,14 +71,14 @@ export const LAKE_STATIONS = {
   // ── Northern Utah ──
   'willard-bay': {
     name: 'Willard Bay',
-    synoptic: ['KOGD', 'KHIF', 'KSLC'],
-    primary: 'KOGD',
+    synoptic: ['KOGD', 'KHIF', 'KSLC', 'KBMC', 'UR328', 'BLPU1', 'OGP', 'GSLM'],
+    primary: 'UR328',
     hasAmbient: false,
   },
   'pineview': {
     name: 'Pineview Reservoir',
-    synoptic: ['KOGD', 'KSLC'],
-    primary: 'KOGD',
+    synoptic: ['KOGD', 'KSLC', 'COOPOGNU1', 'PC496'],
+    primary: 'COOPOGNU1',
     hasAmbient: false,
   },
   'hyrum': {
@@ -158,8 +158,8 @@ export const LAKE_STATIONS = {
   // ── Central Utah ──
   'yuba': {
     name: 'Yuba Reservoir',
-    synoptic: ['KPVU'],
-    primary: 'KPVU',
+    synoptic: ['KSLC', 'KPVU', 'SKY', 'UTESU', 'UTMPK', 'EPMU1', 'UTHTP'],
+    primary: 'SKY',
     hasAmbient: false,
   },
   'scofield': {
@@ -235,14 +235,14 @@ export const LAKE_STATIONS = {
   // ── Paragliding sites ──
   'potm-south': {
     name: 'Point of the Mountain — South',
-    synoptic: ['FPS', 'KSLC', 'KPVU'],
+    synoptic: ['FPS', 'UTALP', 'KSLC', 'KPVU'],
     primary: 'FPS',
     hasAmbient: false,
   },
   'potm-north': {
     name: 'Point of the Mountain — North',
-    synoptic: ['FPS', 'KSLC', 'KPVU'],
-    primary: 'FPS',
+    synoptic: ['FPS', 'UTALP', 'KSLC', 'KPVU'],
+    primary: 'UTALP',
     hasAmbient: false,
   },
   'inspo': {
