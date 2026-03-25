@@ -34,6 +34,9 @@ export function predictSouth(windData, conditions = {}) {
   const kslc = windData?.KSLC || {};
   const kpvu = windData?.KPVU || {};
   const utoly = windData?.UTOLY || {};
+  const wuLehi111 = windData?.KUTLEHI111 || {};
+  const wuLehi160 = windData?.KUTLEHI160 || {};
+  const wuAlpin3 = windData?.KUTALPIN3 || {};
   const hour = new Date().getHours();
   const month = new Date().getMonth() + 1;
 
@@ -102,6 +105,14 @@ export function predictSouth(windData, conditions = {}) {
       probability += 8 * utolyWeight;
     }
   }
+
+  // ── WU PWS CORROBORATION — nearby neighborhood sensors ──
+  let wuSouthCount = 0;
+  if (wuLehi111.windSpeed >= 3 && wuLehi111.windDirection >= 110 && wuLehi111.windDirection <= 250) wuSouthCount++;
+  if (wuLehi160.windSpeed >= 3 && wuLehi160.windDirection >= 110 && wuLehi160.windDirection <= 250) wuSouthCount++;
+  if (wuAlpin3.windSpeed >= 3 && wuAlpin3.windDirection >= 110 && wuAlpin3.windDirection <= 250) wuSouthCount++;
+  if (wuSouthCount >= 2) probability += 10;
+  else if (wuSouthCount >= 1) probability += 5;
 
   // Pressure gradient: slight negative = thermal draw
   if (kslc.pressure != null && kpvu.pressure != null) {
@@ -227,6 +238,10 @@ export function predictNorth(windData, _conditions = {}) {
   const kslc = windData?.KSLC || {};
   const kpvu = windData?.KPVU || {};
   const utoly = windData?.UTOLY || {};
+  const wuDrape = windData?.KUTDRAPE132 || {};
+  const wuBluff = windData?.KUTBLUFF18 || {};
+  const wuRiver = windData?.KUTRIVER67 || {};
+  const wuSandy = windData?.KUTSANDY188 || {};
   const hour = new Date().getHours();
   const month = new Date().getMonth() + 1;
 
@@ -270,6 +285,17 @@ export function predictNorth(windData, _conditions = {}) {
       probability += 10 * utolyWeight;
     }
   }
+
+  // ── WU PWS CORROBORATION — Draper/Bluffdale/Riverton corridor sensors ──
+  let wuNorthCount = 0;
+  const isNorthDir = (d) => d != null && (d >= 300 || d <= 60);
+  if (wuDrape.windSpeed >= 4 && isNorthDir(wuDrape.windDirection)) wuNorthCount++;
+  if (wuBluff.windSpeed >= 3 && isNorthDir(wuBluff.windDirection)) wuNorthCount++;
+  if (wuRiver.windSpeed >= 3 && isNorthDir(wuRiver.windDirection)) wuNorthCount++;
+  if (wuSandy.windSpeed >= 3 && isNorthDir(wuSandy.windDirection)) wuNorthCount++;
+  if (wuNorthCount >= 3) probability += 15;
+  else if (wuNorthCount >= 2) probability += 10;
+  else if (wuNorthCount >= 1) probability += 5;
 
   // Pressure gradient: positive (SLC higher) = north push
   if (kslc.pressure != null && kpvu.pressure != null) {

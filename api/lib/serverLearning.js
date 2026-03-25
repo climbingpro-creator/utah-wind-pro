@@ -21,7 +21,7 @@ const LAKE_THERMAL = {
   'utah-lake-vineyard':   { dir: [180, 270], peak: [10, 16], station: 'KPVU' },
   'utah-lake-zigzag':     { dir: [135, 165], peak: [10, 16], station: 'FPS' },
   'utah-lake-mm19':       { dir: [120, 160], peak: [10, 16], station: 'UID28' },
-  'deer-creek':           { dir: [170, 210], peak: [11, 17], station: 'KHCR' },
+  'deer-creek':           { dir: [170, 210], peak: [11, 17], station: 'UTDCD' },
   'jordanelle':           { dir: [180, 230], peak: [11, 17], station: 'KHCR' },
   'willard-bay':          { dir: [170, 220], peak: [11, 17], station: 'KHIF' },
   'bear-lake':            { dir: [250, 320], peak: [12, 18], station: 'BERU1' },
@@ -35,7 +35,7 @@ const LAKE_THERMAL = {
   'lake-powell':          { dir: [180, 270], peak: [10, 18], station: 'KPGA' },
   'rush-lake':            { dir: [170, 210], peak: [10, 18], station: 'KSLC' },
   'potm-south':           { dir: [110, 250], peak: [7, 15],  station: 'FPS' },
-  'potm-north':           { dir: [320, 45], peak: [12, 18], station: 'FPS' },
+  'potm-north':           { dir: [320, 45], peak: [12, 18], station: 'UTALP' },
   'powder-mountain':      { dir: [180, 270], peak: [10, 18], station: 'KOGD' },
   // ── Northern Utah (missing) ──
   'east-canyon':          { dir: [180, 270], peak: [11, 17], station: 'KSLC' },
