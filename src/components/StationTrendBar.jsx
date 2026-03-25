@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import { Navigation } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { windDirectionToCardinal } from '../utils/wind';
 import { safeToFixed } from '../utils/safeToFixed';
@@ -70,7 +69,7 @@ export function StationTrendBar({ history, expanded = false }) {
         </span>
       </div>
 
-      <div className="flex items-end gap-[3px]" style={{ height: expanded ? 64 : 48 }}>
+      <div className="flex items-end gap-[3px]" style={{ height: expanded ? 80 : 60 }}>
         {bars.map((bar, i) => {
           const speed = bar.windSpeed ?? 0;
           const gust = bar.windGust ?? 0;
@@ -100,12 +99,20 @@ export function StationTrendBar({ history, expanded = false }) {
                 </div>
               </div>
 
-              {/* Direction arrow above bar */}
-              {expanded && bar.windDirection != null && (
-                <Navigation
-                  className={`w-2.5 h-2.5 mb-0.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}
-                  style={{ transform: `rotate(${(bar.windDirection || 0) + 180}deg)` }}
-                />
+              {/* Speed number above bar */}
+              <span className={`text-[8px] leading-none font-medium tabular-nums ${
+                isDark ? 'text-slate-400' : 'text-slate-500'
+              }`}>
+                {Math.round(speed)}
+              </span>
+
+              {/* Direction label */}
+              {bar.windDirection != null && (
+                <span className={`text-[7px] leading-none ${
+                  isDark ? 'text-slate-500' : 'text-slate-400'
+                }`}>
+                  {windDirectionToCardinal(bar.windDirection)}
+                </span>
               )}
 
               {/* Gust cap */}

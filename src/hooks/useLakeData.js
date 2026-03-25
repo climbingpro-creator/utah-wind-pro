@@ -87,13 +87,31 @@ export function useLakeData(lakeId) {
 
   const fetchHistory = useCallback(async () => {
     try {
-      const historyData = await weatherService.getHistoryForLake(lakeId, 3);
-      
+      const [historyData, ambientHistory] = await Promise.allSettled([
+        weatherService.getHistoryForLake(lakeId, 3),
+        weatherService.getAmbientHistory(36),
+      ]);
+
       const historyMap = {};
-      historyData.forEach((station) => {
-        historyMap[station.stationId] = station.history;
-      });
-      
+      if (historyData.status === 'fulfilled') {
+        historyData.value.forEach((station) => {
+          historyMap[station.stationId] = station.history;
+        });
+      }
+
+      if (ambientHistory.status === 'fulfilled' && ambientHistory.value?.length > 0) {
+        historyMap['PWS'] = ambientHistory.value
+          .filter(r => r.windspeedmph != null)
+          .map(r => ({
+            timestamp: r.date || r.dateutc,
+            windSpeed: r.windspeedmph,
+            windGust: r.windgustmph,
+            windDirection: r.winddir,
+            temperature: r.tempf,
+          }))
+          .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+      }
+
       setHistory((prev) => ({
         ...prev,
         [lakeId]: historyMap,
