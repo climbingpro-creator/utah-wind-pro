@@ -45,8 +45,8 @@ function getSignalBarColor(signal) {
 
 export default function SignalConvergence({ intelligence, unifiedPrediction }) {
   // Merge unified prediction data when available
-  const effectiveRegime = unifiedPrediction?.regime || intelligence?.regime;
-  const effectiveConfidence = unifiedPrediction?.confidence ?? intelligence?.regimeConfidence;
+  const _effectiveRegime = unifiedPrediction?.regime || intelligence?.regime;
+  const _effectiveConfidence = unifiedPrediction?.confidence ?? intelligence?.regimeConfidence;
 
   if ((!intelligence || intelligence.signalCount === 0) && !unifiedPrediction) return null;
 

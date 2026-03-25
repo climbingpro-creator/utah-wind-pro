@@ -44,7 +44,7 @@ function denverMonth(date = new Date()) {
   }
 }
 
-function angleDiff(a, b) {
+function _angleDiff(a, b) {
   let d = Math.abs(a - b) % 360;
   return d > 180 ? 360 - d : d;
 }
@@ -275,7 +275,7 @@ function classify(obs, context, overallAnomaly) {
   // Chain: QSF SE ≥6 mph → KPVU SE → FPS SE → PWS. QSF fires ~2 hrs ahead.
   const ei = obs.earlyIndicator;
   const eiId = obs.earlyIndicatorId;
-  const eiTrigger = context?._config?.stations?.earlyIndicator?.trigger;
+  const _eiTrigger = context?._config?.stations?.earlyIndicator?.trigger;
 
   const qsfSE = ei && eiId === 'QSF'
     && ei.dir != null && ei.dir >= 100 && ei.dir <= 180
@@ -288,7 +288,7 @@ function classify(obs, context, overallAnomaly) {
   // Ground truth or fallback signal for other regime checks
   let sigDir = obs.groundTruth?.dir;
   let sigSpeed = obs.groundTruth?.speed ?? 0;
-  let sigSource = obs.groundTruthId || 'gt';
+  // sigSource tracked for debugging
 
   if (sigSpeed < 1 || sigDir == null) {
     const candidates = [
@@ -301,7 +301,7 @@ function classify(obs, context, overallAnomaly) {
       const best = candidates.reduce((a, b) => (b.speed > a.speed ? b : a));
       sigDir = best.dir;
       sigSpeed = best.speed;
-      sigSource = best.src;
+      void best.src;
     }
   }
 
@@ -799,7 +799,7 @@ function calibrate(regime, pressure, propagation, context, hour, month, obs) {
 //  STEP 7: SCORE — per-activity scoring
 // ═══════════════════════════════════════════════════════════════════
 
-function scoreActivity(activityId, speed, gust, probability, dir, config) {
+function scoreActivity(activityId, speed, gust, probability, dir, _config) {
   const p = PROFILES[activityId];
   if (!p) return { score: 50, status: 'unknown', message: '' };
 
@@ -869,7 +869,7 @@ function scoreAllActivities(speed, gust, probability, dir, config) {
 //  STEP 8: DECIDE — GO / WAIT / PASS with confidence
 // ═══════════════════════════════════════════════════════════════════
 
-function decide(activity, activityScore, speed, gust, dir, probability, propagation, pressure) {
+function decide(activity, activityScore, speed, gust, dir, probability, _propagation, _pressure) {
   const p = PROFILES[activity];
   if (!p) return { decision: 'WAIT', confidence: 0.3, headline: 'Unknown activity', detail: '', action: '' };
 
@@ -1025,7 +1025,7 @@ function buildHourlyForecast(lakeId, context, calibrationResult) {
 //  PARAGLIDING SPECIAL HANDLING
 // ═══════════════════════════════════════════════════════════════════
 
-function paraglidingOverride(lakeId, obs, activities, decision, propagation) {
+function paraglidingOverride(lakeId, obs, activities, decision, _propagation) {
   const isPGSpot = lakeId === 'potm-south' || lakeId === 'potm-north';
   if (!isPGSpot) return { activities, decision };
 
@@ -1142,7 +1142,7 @@ export function predict(lakeId, activity, liveStations, modelContext, config, op
   const obs = observe(liveStations, config);
 
   // 2. CONTEXTUALIZE
-  const { anomalies, overallAnomaly } = contextualize(obs, ctx.climatology, hour);
+  const { overallAnomaly } = contextualize(obs, ctx.climatology, hour);
 
   // 3. CLASSIFY
   const regime = classify(obs, ctx, overallAnomaly);
