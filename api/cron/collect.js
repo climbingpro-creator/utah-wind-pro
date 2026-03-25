@@ -32,6 +32,8 @@ import { fetchNWSForecasts } from '../lib/nwsForecast.js';
 import { LAKE_STATION_MAP, ALL_STATION_IDS } from '../lib/stations.js';
 import { buildStatisticalModels } from '../lib/historicalAnalysis.js';
 import { analyzeFromStations, analyzeAllSpots, storePropagationSnapshot, learnFromPropagation, getPropagationData, backfillPWSHistory } from '../lib/serverPropagation.js';
+import { splitStations, fetchNwsLatest } from '../lib/nwsAdapter.js';
+import { isUdotStation, fetchUdotLatest } from '../lib/udotAdapter.js';
 
 function getEnv() {
   return {
@@ -162,29 +164,79 @@ async function fetchWuPwsLatest() {
   return results;
 }
 
-async function fetchSynopticLatest() {
-  const { synopticToken } = getEnv();
-  const url = `https://api.synopticdata.com/v2/stations/latest?token=${synopticToken}&stids=${ALL_STATIONS.join(',')}&vars=wind_speed,wind_direction,wind_gust,air_temp,altimeter,sea_level_pressure&units=english&obtimezone=local`;
-  const resp = await fetch(url);
-  if (!resp.ok) throw new Error(`Synoptic ${resp.status}`);
-  const json = await resp.json();
+function stationObjFromSynopticFormat(s) {
+  const o = s.OBSERVATIONS || {};
+  const rawP = o.altimeter_value_1?.value
+    ?? o.sea_level_pressure_value_1d?.value
+    ?? o.pressure_value_1d?.value
+    ?? o.sea_level_pressure_value_1?.value
+    ?? null;
+  return {
+    stationId: s.STID,
+    windSpeed: o.wind_speed_value_1?.value ?? null,
+    windDirection: o.wind_direction_value_1?.value ?? null,
+    windGust: o.wind_gust_value_1?.value ?? null,
+    temperature: o.air_temp_value_1?.value ?? null,
+    pressure: normalizeToMb(rawP),
+    observedAt: o.wind_speed_value_1?.date_time || o.date_time || new Date().toISOString(),
+  };
+}
 
-  return (json.STATION || []).map(s => {
-    const o = s.OBSERVATIONS || {};
-    const rawP = o.altimeter_value_1?.value
-      ?? o.sea_level_pressure_value_1d?.value
-      ?? o.pressure_value_1d?.value
-      ?? null;
-    return {
-      stationId: s.STID,
-      windSpeed: o.wind_speed_value_1?.value ?? null,
-      windDirection: o.wind_direction_value_1?.value ?? null,
-      windGust: o.wind_gust_value_1?.value ?? null,
-      temperature: o.air_temp_value_1?.value ?? null,
-      pressure: normalizeToMb(rawP),
-      observedAt: o.wind_speed_value_1?.date_time || new Date().toISOString(),
-    };
-  });
+async function fetchSynopticLatest() {
+  const allIds = [...ALL_STATIONS];
+  const { airport, other } = splitStations(allIds);
+  const udotIds = other.filter(id => isUdotStation(id));
+  const synopticOnlyIds = other.filter(id => !isUdotStation(id));
+
+  const fetches = [];
+
+  if (airport.length > 0) {
+    fetches.push(fetchNwsLatest(airport).catch(err => {
+      console.warn('[Collect] NWS fetch error:', err.message);
+      return [];
+    }));
+  }
+
+  const udotKey = process.env.UDOT_API_KEY;
+  if (udotIds.length > 0 && udotKey) {
+    fetches.push(fetchUdotLatest(udotIds, udotKey).catch(err => {
+      console.warn('[Collect] UDOT fetch error:', err.message);
+      return [];
+    }));
+  }
+
+  const synopticFallbackIds = udotKey ? synopticOnlyIds : [...synopticOnlyIds, ...udotIds];
+  const { synopticToken } = getEnv();
+  if (synopticToken && synopticFallbackIds.length > 0) {
+    fetches.push((async () => {
+      try {
+        const url = `https://api.synopticdata.com/v2/stations/latest?token=${synopticToken}&stids=${synopticFallbackIds.join(',')}&vars=wind_speed,wind_direction,wind_gust,air_temp,altimeter,sea_level_pressure&units=english&obtimezone=local`;
+        const resp = await fetch(url, { signal: AbortSignal.timeout(10000) });
+        if (!resp.ok) {
+          console.warn(`[Collect] Synoptic returned ${resp.status}`);
+          return [];
+        }
+        const json = await resp.json();
+        return json.STATION || [];
+      } catch (err) {
+        console.warn('[Collect] Synoptic fetch error:', err.message);
+        return [];
+      }
+    })());
+  }
+
+  const results = await Promise.all(fetches);
+  const allStationData = results.flat();
+
+  const sources = { nws: 0, udot: 0, synoptic: 0 };
+  for (const s of allStationData) {
+    if (s._source === 'nws') sources.nws++;
+    else if (s._source === 'udot') sources.udot++;
+    else sources.synoptic++;
+  }
+  console.log(`[Collect] Multi-source fetch: NWS=${sources.nws}, UDOT=${sources.udot}, Synoptic=${sources.synoptic}`);
+
+  return allStationData.map(stationObjFromSynopticFormat);
 }
 
 export default async function handler(req, res) {

@@ -12,6 +12,8 @@
  */
 import { getLakeConfig } from './lib/stations.js';
 import { createClient } from '@supabase/supabase-js';
+import { splitStations, fetchNwsLatest } from './lib/nwsAdapter.js';
+import { isUdotStation, fetchUdotLatest } from './lib/udotAdapter.js';
 
 const CARDINAL = ['N','NNE','NE','ENE','E','ESE','SE','SSE',
                    'S','SSW','SW','WSW','W','WNW','NW','NNW'];
@@ -248,16 +250,37 @@ function fmtHour(h) {
 function clamp(v) { return Math.min(100, Math.max(0, v)); }
 
 async function fetchSynoptic(token, config) {
-  if (!token) throw new Error('SYNOPTIC_TOKEN not set');
-  const params = new URLSearchParams({
-    token,
-    stid: config.synoptic.slice(0, 5).join(','),
-    vars: 'wind_speed,wind_direction,wind_gust,air_temp,altimeter',
-    units: 'english',
-  });
-  const resp = await fetch(`https://api.synopticdata.com/v2/stations/latest?${params}`);
-  if (!resp.ok) throw new Error(`Synoptic ${resp.status}`);
-  return resp.json();
+  const stids = config.synoptic.slice(0, 5);
+  const { airport, other } = splitStations(stids);
+  const udotIds = other.filter(id => isUdotStation(id));
+  const synOnly = other.filter(id => !isUdotStation(id));
+  const fetches = [];
+
+  if (airport.length > 0) fetches.push(fetchNwsLatest(airport).catch(() => []));
+
+  const udotKey = process.env.UDOT_API_KEY;
+  if (udotIds.length > 0 && udotKey) fetches.push(fetchUdotLatest(udotIds, udotKey).catch(() => []));
+
+  const synFallback = udotKey ? synOnly : [...synOnly, ...udotIds];
+  if (token && synFallback.length > 0) {
+    fetches.push((async () => {
+      try {
+        const params = new URLSearchParams({
+          token, stid: synFallback.join(','),
+          vars: 'wind_speed,wind_direction,wind_gust,air_temp,altimeter',
+          units: 'english',
+        });
+        const resp = await fetch(`https://api.synopticdata.com/v2/stations/latest?${params}`,
+          { signal: AbortSignal.timeout(8000) });
+        if (!resp.ok) return [];
+        const data = await resp.json();
+        return data.STATION || [];
+      } catch { return []; }
+    })());
+  }
+
+  const results = await Promise.all(fetches);
+  return { STATION: results.flat() };
 }
 
 async function fetchAmbient() {

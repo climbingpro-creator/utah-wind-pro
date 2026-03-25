@@ -15,6 +15,8 @@
  * }
  */
 import { getLakeConfig, ALL_STATION_IDS, LAKE_STATIONS } from './lib/stations.js';
+import { splitStations, fetchNwsLatest } from './lib/nwsAdapter.js';
+import { isUdotStation, fetchUdotLatest } from './lib/udotAdapter.js';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -64,19 +66,42 @@ export default async function handler(req, res) {
 // ── Synoptic ────────────────────────────────────────────────────────
 
 async function fetchSynoptic(stids) {
+  const { airport, other } = splitStations(stids);
+  const udotIds = other.filter(id => isUdotStation(id));
+  const synopticOnlyIds = other.filter(id => !isUdotStation(id));
+
+  const fetches = [];
+
+  if (airport.length > 0) {
+    fetches.push(fetchNwsLatest(airport).catch(() => []));
+  }
+
+  const udotKey = process.env.UDOT_API_KEY;
+  if (udotIds.length > 0 && udotKey) {
+    fetches.push(fetchUdotLatest(udotIds, udotKey).catch(() => []));
+  }
+
+  const synFallback = udotKey ? synopticOnlyIds : [...synopticOnlyIds, ...udotIds];
   const token = process.env.SYNOPTIC_TOKEN;
-  if (!token) throw new Error('SYNOPTIC_TOKEN not configured');
+  if (token && synFallback.length > 0) {
+    fetches.push((async () => {
+      try {
+        const params = new URLSearchParams({
+          token, stid: synFallback.join(','),
+          vars: 'wind_speed,wind_direction,wind_gust,air_temp,altimeter,sea_level_pressure',
+          units: 'english',
+        });
+        const resp = await fetch(`https://api.synopticdata.com/v2/stations/latest?${params}`,
+          { signal: AbortSignal.timeout(8000) });
+        if (!resp.ok) return [];
+        const data = await resp.json();
+        return data.STATION || [];
+      } catch { return []; }
+    })());
+  }
 
-  const params = new URLSearchParams({
-    token,
-    stid: stids.join(','),
-    vars: 'wind_speed,wind_direction,wind_gust,air_temp,altimeter,sea_level_pressure',
-    units: 'english',
-  });
-
-  const resp = await fetch(`https://api.synopticdata.com/v2/stations/latest?${params}`);
-  if (!resp.ok) throw new Error(`Synoptic ${resp.status}`);
-  return resp.json();
+  const results = await Promise.all(fetches);
+  return { STATION: results.flat() };
 }
 
 function normalizeSynoptic(data, requestedStids) {

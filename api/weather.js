@@ -9,7 +9,14 @@
  *   GET /api/weather?source=wu-nearby&lat=40.35&lon=-111.90
  *   GET /api/weather?source=wu-pws&stationIds=KUTSARAT50,KUTSARAT88
  *   GET /api/weather?source=wu-pws-history&stationId=KUTSARAT50
+ *
+ * Multi-source fallback: airport stations (K-prefix) route through NWS
+ * (free, no key), UDOT RWIS stations (UT-prefix) route through UDOT
+ * (free with key), remaining stations try Synoptic.
  */
+
+import { splitStations, fetchNwsLatest, fetchNwsHistory } from './lib/nwsAdapter.js';
+import { isUdotStation, fetchUdotLatest } from './lib/udotAdapter.js';
 
 const rateLimitMap = new Map();
 const RATE_LIMIT_WINDOW = 60_000;
@@ -165,30 +172,68 @@ async function handleSynopticLatest(res, stids) {
   if (filtered.length === 0) {
     return res.status(400).json({ error: 'No valid station IDs provided' });
   }
-  stids = filtered.join(',');
 
-  const token = process.env.SYNOPTIC_TOKEN;
-  if (!token) {
-    return res.status(500).json({ error: 'Synoptic API token not configured' });
+  const { airport, other } = splitStations(filtered);
+  const udotIds = other.filter(id => isUdotStation(id));
+  const synopticIds = other.filter(id => !isUdotStation(id));
+
+  const fetches = [];
+
+  if (airport.length > 0) {
+    fetches.push(fetchNwsLatest(airport).catch(() => []));
   }
 
+  const udotKey = process.env.UDOT_API_KEY;
+  if (udotIds.length > 0 && udotKey) {
+    fetches.push(fetchUdotLatest(udotIds, udotKey).catch(() => []));
+  }
+
+  if (synopticIds.length > 0 || (udotIds.length > 0 && !udotKey)) {
+    const synopticFallbackIds = udotKey ? synopticIds : [...synopticIds, ...udotIds];
+    const token = process.env.SYNOPTIC_TOKEN;
+    if (token && synopticFallbackIds.length > 0) {
+      fetches.push(
+        fetchSynopticDirect(synopticFallbackIds.join(','), token).catch(() => [])
+      );
+    }
+  }
+
+  const results = await Promise.all(fetches);
+  const allStations = results.flat();
+
+  const data = {
+    SUMMARY: {
+      RESPONSE_CODE: 1,
+      RESPONSE_MESSAGE: 'OK',
+      NUMBER_OF_OBJECTS: allStations.length,
+      _sources: allStations.reduce((acc, s) => {
+        const src = s._source || 'synoptic';
+        acc[src] = (acc[src] || 0) + 1;
+        return acc;
+      }, {}),
+    },
+    STATION: allStations,
+  };
+
+  res.setHeader('Cache-Control', 's-maxage=5, stale-while-revalidate=15');
+  return res.status(200).json(data);
+}
+
+async function fetchSynopticDirect(stidsStr, token) {
   const params = new URLSearchParams({
     token,
-    stid: stids,
+    stid: stidsStr,
     vars: 'air_temp,relative_humidity,wind_speed,wind_direction,wind_gust,altimeter,sea_level_pressure',
     units: 'english',
   });
-
   const url = `https://api.synopticdata.com/v2/stations/latest?${params}`;
-  const response = await fetch(url);
-
+  const response = await fetch(url, { signal: AbortSignal.timeout(8000) });
   if (!response.ok) {
-    return res.status(response.status).json({ error: `Synoptic API returned ${response.status}` });
+    console.warn(`[Synoptic] returned ${response.status} — falling back`);
+    return [];
   }
-
   const data = await response.json();
-  res.setHeader('Cache-Control', 's-maxage=5, stale-while-revalidate=15');
-  return res.status(200).json(data);
+  return (data.STATION || []).map(s => ({ ...s, _source: 'synoptic' }));
 }
 
 async function handleSynopticHistory(res, stids, hours = '3') {
@@ -200,37 +245,61 @@ async function handleSynopticHistory(res, stids, hours = '3') {
   if (filtered.length === 0) {
     return res.status(400).json({ error: 'No valid station IDs provided' });
   }
-  stids = filtered.join(',');
   hours = String(Math.min(parseInt(hours) || 3, 24));
+  const numHours = parseInt(hours);
 
-  const token = process.env.SYNOPTIC_TOKEN;
-  if (!token) {
-    return res.status(500).json({ error: 'Synoptic API token not configured' });
+  const { airport, other } = splitStations(filtered);
+
+  const fetches = [];
+
+  if (airport.length > 0) {
+    fetches.push(fetchNwsHistory(airport, numHours).catch(() => []));
   }
 
+  if (other.length > 0) {
+    const token = process.env.SYNOPTIC_TOKEN;
+    if (token) {
+      fetches.push(fetchSynopticHistoryDirect(other.join(','), token, numHours).catch(() => []));
+    }
+  }
+
+  const results = await Promise.all(fetches);
+  const allStations = results.flat();
+
+  const data = {
+    SUMMARY: {
+      RESPONSE_CODE: 1,
+      RESPONSE_MESSAGE: 'OK',
+      NUMBER_OF_OBJECTS: allStations.length,
+    },
+    STATION: allStations,
+  };
+
+  res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
+  return res.status(200).json(data);
+}
+
+async function fetchSynopticHistoryDirect(stidsStr, token, hours) {
   const end = new Date();
-  const start = new Date(end.getTime() - parseInt(hours) * 60 * 60 * 1000);
+  const start = new Date(end.getTime() - hours * 3600_000);
   const fmt = (d) => d.toISOString().replace(/[-:T]/g, '').slice(0, 12);
 
   const params = new URLSearchParams({
     token,
-    stid: stids,
+    stid: stidsStr,
     start: fmt(start),
     end: fmt(end),
     vars: 'wind_speed,wind_direction,wind_gust,air_temp',
     units: 'english',
   });
-
   const url = `https://api.synopticdata.com/v2/stations/timeseries?${params}`;
-  const response = await fetch(url);
-
+  const response = await fetch(url, { signal: AbortSignal.timeout(12000) });
   if (!response.ok) {
-    return res.status(response.status).json({ error: `Synoptic API returned ${response.status}` });
+    console.warn(`[Synoptic History] returned ${response.status}`);
+    return [];
   }
-
   const data = await response.json();
-  res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
-  return res.status(200).json(data);
+  return data.STATION || [];
 }
 
 // ─── Weather Underground PWS Network ─────────────────────────────

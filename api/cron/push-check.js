@@ -11,6 +11,8 @@
 import webpush from 'web-push';
 import { getSupabase } from '../lib/supabase.js';
 import { getLakeConfig } from '../lib/stations.js';
+import { splitStations, fetchNwsLatest } from '../lib/nwsAdapter.js';
+import { isUdotStation, fetchUdotLatest } from '../lib/udotAdapter.js';
 
 const VAPID_PUBLIC  = process.env.VAPID_PUBLIC_KEY;
 const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY;
@@ -126,17 +128,35 @@ async function fetchConditions(lakeId) {
   const config = getLakeConfig(lakeId);
   if (!config) return null;
 
-  const token = process.env.SYNOPTIC_TOKEN;
-  const params = new URLSearchParams({
-    token,
-    stid: config.synoptic.slice(0, 5).join(','),
-    vars: 'wind_speed,wind_direction,wind_gust,air_temp',
-    units: 'english',
-  });
+  const stids = config.synoptic.slice(0, 5);
+  const { airport, other } = splitStations(stids);
+  const udotIds = other.filter(id => isUdotStation(id));
+  const synOnly = other.filter(id => !isUdotStation(id));
+  const fetches = [];
 
-  const resp = await fetch(`https://api.synopticdata.com/v2/stations/latest?${params}`);
-  if (!resp.ok) return null;
-  const raw = await resp.json();
+  if (airport.length > 0) fetches.push(fetchNwsLatest(airport).catch(() => []));
+  const udotKey = process.env.UDOT_API_KEY;
+  if (udotIds.length > 0 && udotKey) fetches.push(fetchUdotLatest(udotIds, udotKey).catch(() => []));
+  const synFallback = udotKey ? synOnly : [...synOnly, ...udotIds];
+  const token = process.env.SYNOPTIC_TOKEN;
+  if (token && synFallback.length > 0) {
+    fetches.push((async () => {
+      try {
+        const params = new URLSearchParams({
+          token, stid: synFallback.join(','),
+          vars: 'wind_speed,wind_direction,wind_gust,air_temp', units: 'english',
+        });
+        const resp = await fetch(`https://api.synopticdata.com/v2/stations/latest?${params}`,
+          { signal: AbortSignal.timeout(8000) });
+        if (!resp.ok) return [];
+        const data = await resp.json();
+        return data.STATION || [];
+      } catch { return []; }
+    })());
+  }
+
+  const allResults = (await Promise.all(fetches)).flat();
+  const raw = { STATION: allResults };
 
   const primary = (raw?.STATION || []).find(s => s.STID === config.primary) || raw?.STATION?.[0];
   if (!primary) return null;
