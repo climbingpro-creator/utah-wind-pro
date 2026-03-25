@@ -271,20 +271,63 @@ function classify(obs, context, overallAnomaly) {
     description: '',
   };
 
-  // First: simple heuristic regime detection from live data
-  const gtDir = obs.groundTruth?.dir;
-  const gtSpeed = obs.groundTruth?.speed ?? 0;
+  // ── SE thermal detection: QSF (Spanish Fork Canyon) is THE leading indicator.
+  // Chain: QSF SE ≥6 mph → KPVU SE → FPS SE → PWS. QSF fires ~2 hrs ahead.
+  const ei = obs.earlyIndicator;
+  const eiId = obs.earlyIndicatorId;
+  const eiTrigger = context?._config?.stations?.earlyIndicator?.trigger;
 
-  const seFlow = gtDir != null && gtDir >= 100 && gtDir <= 200 && gtSpeed >= 5;
-  const northFlow = gtDir != null && (gtDir >= 315 || gtDir <= 45) && gtSpeed >= 5;
-  const clearing = gtDir != null && (gtDir >= 270 || gtDir <= 45) && gtSpeed >= 8;
-  const calm = gtSpeed < 3;
+  const qsfSE = ei && eiId === 'QSF'
+    && ei.dir != null && ei.dir >= 100 && ei.dir <= 180
+    && ei.speed >= 6;
 
-  if (northFlow) { result.regime = 'north_flow'; result.confidence = 0.6; result.description = 'N/NW flow detected'; }
-  else if (clearing && overallAnomaly > 1.0) { result.regime = 'postfrontal_clearing'; result.confidence = 0.5; result.description = 'Post-frontal clearing wind'; }
-  else if (seFlow) { result.regime = 'se_thermal'; result.confidence = 0.6; result.description = 'SE thermal flow'; }
-  else if (calm) { result.regime = 'calm'; result.confidence = 0.5; result.description = 'Calm conditions'; }
-  else { result.regime = 'transitional'; result.confidence = 0.3; result.description = 'Transition / mixed signals'; }
+  // Also check KPVU for confirming SE flow (mid-chain)
+  const kpvu = obs.allReadings?.KPVU;
+  const kpvuSE = kpvu && kpvu.dir != null && kpvu.dir >= 120 && kpvu.dir <= 200 && kpvu.speed >= 4;
+
+  // Ground truth or fallback signal for other regime checks
+  let sigDir = obs.groundTruth?.dir;
+  let sigSpeed = obs.groundTruth?.speed ?? 0;
+  let sigSource = obs.groundTruthId || 'gt';
+
+  if (sigSpeed < 1 || sigDir == null) {
+    const candidates = [
+      ei ? { ...ei, src: eiId } : null,
+      ...(obs.lakeshore || []).map(s => ({ ...s, src: s.id })),
+      ...(obs.reference || []).map(s => ({ ...s, src: s.id })),
+    ].filter(s => s && s.speed >= 3 && s.dir != null);
+
+    if (candidates.length > 0) {
+      const best = candidates.reduce((a, b) => (b.speed > a.speed ? b : a));
+      sigDir = best.dir;
+      sigSpeed = best.speed;
+      sigSource = best.src;
+    }
+  }
+
+  const seFlow = sigDir != null && sigDir >= 100 && sigDir <= 200 && sigSpeed >= 5;
+  const northFlow = sigDir != null && (sigDir >= 315 || sigDir <= 45) && sigSpeed >= 5;
+  const clearing = sigDir != null && (sigDir >= 270 || sigDir <= 45) && sigSpeed >= 8;
+  const calm = sigSpeed < 3;
+
+  // QSF SE is the strongest SE thermal signal — if QSF says SE, trust it
+  if (qsfSE && kpvuSE) {
+    result.regime = 'se_thermal'; result.confidence = 0.85; result.description = `SE thermal confirmed: QSF ${Math.round(ei.speed)} mph SE + KPVU SE`;
+    result.qsfSignal = true;
+  } else if (qsfSE) {
+    result.regime = 'se_thermal'; result.confidence = 0.7; result.description = `SE thermal building: QSF ${Math.round(ei.speed)} mph SE`;
+    result.qsfSignal = true;
+  } else if (northFlow) {
+    result.regime = 'north_flow'; result.confidence = 0.6; result.description = 'N/NW flow detected';
+  } else if (clearing && overallAnomaly > 1.0) {
+    result.regime = 'postfrontal_clearing'; result.confidence = 0.5; result.description = 'Post-frontal clearing wind';
+  } else if (seFlow) {
+    result.regime = 'se_thermal'; result.confidence = 0.5; result.description = 'SE thermal flow (weaker signal)';
+  } else if (calm) {
+    result.regime = 'calm'; result.confidence = 0.5; result.description = 'Calm conditions';
+  } else {
+    result.regime = 'transitional'; result.confidence = 0.3; result.description = 'Transition / mixed signals';
+  }
 
   // Now try to match against learned fingerprints for higher confidence
   const fps = context?.fingerprints;
@@ -347,33 +390,60 @@ function propagate(obs, context, config, regime) {
   const gtId = obs.groundTruthId;
   const lagCorr = context?.lagCorrelations;
 
+  // Normalize lag correlations: Redis stores object map "UP→DOWN" → { upstream, downstream, peakCorrelation, optimalLagMinutes }
+  const lagPairs = !lagCorr
+    ? []
+    : Array.isArray(lagCorr)
+      ? lagCorr
+      : Object.values(lagCorr).filter((x) => x && x.upstream && x.downstream);
+
   // Use learned lag correlations when available
-  if (lagCorr && gtId) {
+  if (lagPairs.length > 0 && gtId) {
     let bestUpstream = null;
     let bestR = 0;
     let bestLag = 0;
 
-    for (const pair of lagCorr) {
+    for (const pair of lagPairs) {
       if (pair.downstream !== gtId) continue;
       const upReading = obs.allReadings[pair.upstream];
       if (!upReading || upReading.speed < 3) continue;
 
-      const r = typeof pair.correlation === 'number' ? pair.correlation : parseFloat(pair.correlation) || 0;
+      const r = typeof pair.peakCorrelation === 'number'
+        ? pair.peakCorrelation
+        : typeof pair.correlation === 'number'
+          ? pair.correlation
+          : parseFloat(pair.peakCorrelation ?? pair.correlation) || 0;
       if (r > bestR) {
         bestR = r;
         bestUpstream = { id: pair.upstream, ...upReading };
-        bestLag = typeof pair.lagMinutes === 'number' ? pair.lagMinutes : parseInt(pair.lagMinutes) || 30;
+        const lm = pair.optimalLagMinutes ?? pair.lagMinutes;
+        bestLag = typeof lm === 'number' ? lm : parseInt(lm, 10) || 30;
       }
     }
 
     if (bestUpstream && bestR > 0.3) {
-      const ratio = bestUpstream.speed > 0 ? (obs.groundTruth?.speed ?? 0) / bestUpstream.speed : 0;
+      // Regime-dependent ratios: north flow has much higher FPS→PWS ratio
+      const KNOWN_RATIOS_SE = { FPS: 1.7, KPVU: 1.2, UTALP: 1.3, KSLC: 1.4 };
+      const KNOWN_RATIOS_N  = { FPS: 2.8, KPVU: 1.5, UTALP: 1.5, KSLC: 1.6 };
+      const KNOWN_RATIOS = regime.regime === 'north_flow' ? KNOWN_RATIOS_N : KNOWN_RATIOS_SE;
+
+      let ratio;
+      if (obs.groundTruth?.speed > 0 && bestUpstream.speed > 0) {
+        ratio = obs.groundTruth.speed / bestUpstream.speed;
+      } else {
+        const knownR = KNOWN_RATIOS[bestUpstream.id];
+        ratio = knownR ? (1 / knownR) : 0.6;
+      }
+
       result.dominantSource = bestUpstream.id;
       result.lagConfidence = bestR;
-      result.expectedSpeed = bestUpstream.speed * (ratio > 0.1 ? ratio : 0.7);
+      result.expectedSpeed = bestUpstream.speed * (ratio > 0.05 ? ratio : 0.6);
 
       const gtSpeed = obs.groundTruth?.speed ?? 0;
-      if (gtSpeed >= 5) {
+      const proxySpeed = gtSpeed > 0 ? gtSpeed
+        : obs.lakeshore.length > 0 ? obs.lakeshore[0].speed / (KNOWN_RATIOS[obs.lakeshore[0].id] || 1) : 0;
+
+      if (proxySpeed >= 5) {
         result.phase = 'arrived';
         result.eta = 0;
       } else if (bestUpstream.speed >= 5) {
@@ -385,7 +455,10 @@ function propagate(obs, context, config, regime) {
     }
   }
 
-  // Also check early indicator if available
+  // QSF (Spanish Fork Canyon) is the primary SE thermal predictor for Zigzag.
+  // When QSF shows SE ≥ 6 mph, that's a stronger signal than FPS for whether
+  // wind will reach the lake. QSF→PWS has a ~2hr lag but a tighter correlation
+  // than FPS→PWS (FPS often reads high wind that doesn't propagate to Zigzag).
   if (obs.earlyIndicator && obs.earlyIndicatorId && config?.stations?.earlyIndicator) {
     const ei = config.stations.earlyIndicator;
     const trigger = ei.trigger;
@@ -409,6 +482,19 @@ function propagate(obs, context, config, regime) {
         if (result.phase === 'quiet' || result.phase === 'unknown') {
           result.phase = 'building';
           result.eta = leadTime;
+        }
+
+      // QSF SE maps roughly 0.75:1 to PWS (validated over 3yr backtest).
+      // With KPVU confirming SE, bump to 0.8.
+      if (!obs.groundTruth?.speed && regime.regime === 'se_thermal') {
+          const kpvu = obs.allReadings?.KPVU;
+          const kpvuConfirmed = kpvu && kpvu.dir != null && kpvu.dir >= 120 && kpvu.dir <= 200 && kpvu.speed >= 4;
+          const qsfRatio = kpvuConfirmed ? 0.8 : 0.7;
+          const qsfEstimate = eiWind.speed * qsfRatio;
+          if (!result.expectedSpeed || qsfEstimate > result.expectedSpeed) {
+            result.expectedSpeed = qsfEstimate;
+            result.dominantSource = obs.earlyIndicatorId;
+          }
         }
       }
     }
@@ -492,18 +578,18 @@ function pressureAnalysis(obs, context, config) {
 //  STEP 6: CALIBRATE — apply learned weights, calibration curves, analogs
 // ═══════════════════════════════════════════════════════════════════
 
-function calibrate(regime, pressure, propagation, context, hour, month) {
+function calibrate(regime, pressure, propagation, context, hour, month, obs) {
   let probability = 50;
   let confidence = 0.5;
   let speedMultiplier = 1.0;
 
-  // Base probability from regime
+  // Base probability from regime — QSF-confirmed SE thermal is strongest signal
   switch (regime.regime) {
     case 'se_thermal':
-      probability = 65;
+      probability = regime.qsfSignal && regime.confidence >= 0.8 ? 75 : 60;
       break;
     case 'north_flow':
-      probability = 60;
+      probability = 55;
       break;
     case 'postfrontal_clearing':
       probability = 55;
@@ -518,14 +604,120 @@ function calibrate(regime, pressure, propagation, context, hour, month) {
       probability = 30;
   }
 
-  // Thermal profiles from 365-day analysis
+  // ── NORTH FLOW GATE ──────────────────────────────────────────────
+  // FPS often reads 2.5-3x what Zigzag (PWS) actually gets in north flow.
+  // Require corroborating evidence from corridor stations before trusting GO.
+  // WU PWS stations fill the Draper→Bluffdale→Riverton gap with 5-min data.
+  if (regime.regime === 'north_flow') {
+    const kpvu = obs.allReadings?.KPVU;
+    const kslc = obs.allReadings?.KSLC;
+    const qsf = obs.allReadings?.QSF;
+    const ut7 = obs.allReadings?.UT7;
+    const utpcr = obs.allReadings?.UTPCR;
+
+    const kpvuWind = kpvu?.speed >= 8;
+    const kslcWind = kslc?.speed >= 8;
+    const qsfWind = qsf?.speed >= 5;
+    const ut7Wind = ut7?.speed >= 5 && ut7?.dir != null && (ut7.dir >= 315 || ut7.dir <= 45);
+    const utpcrWind = utpcr?.speed >= 4 && utpcr?.dir != null && (utpcr.dir >= 300 || utpcr.dir <= 60);
+
+    // WU PWS corroboration: trained from 90 days of cross-validation.
+    // KUTBLUFF18 and KUTRIVER67 are best north flow indicators (0.65x and 0.67x of PWS).
+    // KUTSARAT62 actually sees 1.13x of PWS in north flow — strongest WU signal.
+    const isNorth = (d) => d != null && (d >= 315 || d <= 45);
+    const wuDrape = obs.allReadings?.KUTDRAPE132;
+    const wuBluff = obs.allReadings?.KUTBLUFF18;
+    const wuRiver = obs.allReadings?.KUTRIVER67;
+    const wuSS62 = obs.allReadings?.KUTSARAT62;
+    const wuDrapeWind = wuDrape?.speed >= 3 && isNorth(wuDrape?.dir);
+    const wuBluffWind = wuBluff?.speed >= 4 && isNorth(wuBluff?.dir);
+    const wuRiverWind = wuRiver?.speed >= 4 && isNorth(wuRiver?.dir);
+    const wuSS62Wind = wuSS62?.speed >= 5 && isNorth(wuSS62?.dir);
+    const wuNorthCount = (wuDrapeWind ? 1 : 0) + (wuBluffWind ? 1 : 0) + (wuRiverWind ? 1 : 0) + (wuSS62Wind ? 1 : 0);
+
+    const corroborating = (kpvuWind ? 1 : 0) + (kslcWind ? 1 : 0) + (qsfWind ? 1 : 0)
+      + (ut7Wind ? 1 : 0) + (utpcrWind ? 1 : 0) + Math.min(wuNorthCount, 2);
+
+    if (corroborating >= 4) {
+      probability = Math.min(probability * 1.2, 80);
+      confidence = Math.max(confidence, 0.7);
+    } else if (corroborating >= 3) {
+      probability = Math.min(probability * 1.15, 75);
+      confidence = Math.max(confidence, 0.6);
+    } else if (corroborating >= 2) {
+      probability = Math.min(probability * 1.1, 70);
+      confidence = Math.max(confidence, 0.55);
+    } else if (corroborating === 1) {
+      probability *= 0.75;
+    } else {
+      probability *= 0.45;
+    }
+
+    if (pressure.gradient != null && pressure.gradient > 2.5) {
+      probability = Math.min(probability * 1.15, 75);
+    }
+  }
+
+  // ── SE THERMAL GATE ──────────────────────────────────────────────
+  // QSF (Spanish Fork Canyon) is the best leading indicator.
+  // UTORM (Orem I-15) and KPVU provide mid-chain confirmation.
+  // UTPCR (Pioneer Crossing) provides close-range confirmation.
+  // WU PWS: Saratoga Springs + Lehi stations provide neighborhood-level validation.
+  if (regime.regime === 'se_thermal' && obs?.earlyIndicator) {
+    const ei = obs.earlyIndicator;
+    const eiSE = ei.dir != null && ei.dir >= 100 && ei.dir <= 180;
+    const eiStrong = ei.speed >= 6;
+    const kpvu = obs.allReadings?.KPVU;
+    const utorm = obs.allReadings?.UTORM;
+    const utpcr = obs.allReadings?.UTPCR;
+    const kpvuSE = kpvu && kpvu.dir != null && kpvu.dir >= 120 && kpvu.dir <= 200 && kpvu.speed >= 4;
+    const utormSE = utorm && utorm.dir != null && utorm.dir >= 100 && utorm.dir <= 180 && utorm.speed >= 4;
+    const utpcrSE = utpcr && utpcr.dir != null && utpcr.dir >= 100 && utpcr.dir <= 180 && utpcr.speed >= 4;
+
+    // WU PWS close-range validation: trained from 90 days of cross-validation.
+    // KUTSARAT88 sees 0.83x of PWS during SE thermal — closest WU proxy.
+    // KUTBLUFF18 and KUTRIVER67 see ~1.0x during SE thermal — excellent confirmation.
+    const isSE = (d) => d != null && d >= 100 && d <= 200;
+    const wuSS88 = obs.allReadings?.KUTSARAT88;
+    const wuSS81 = obs.allReadings?.KUTSARAT81;
+    const wuBluffSE = obs.allReadings?.KUTBLUFF18;
+    const wuRiverSE = obs.allReadings?.KUTRIVER67;
+    const wuSS88SE = wuSS88?.speed >= 3 && isSE(wuSS88?.dir);
+    const wuSS81SE = wuSS81?.speed >= 3 && isSE(wuSS81?.dir);
+    const wuBluffSESig = wuBluffSE?.speed >= 4 && isSE(wuBluffSE?.dir);
+    const wuRiverSESig = wuRiverSE?.speed >= 4 && isSE(wuRiverSE?.dir);
+    const wuSECount = (wuSS88SE ? 1 : 0) + (wuSS81SE ? 1 : 0) + (wuBluffSESig ? 1 : 0) + (wuRiverSESig ? 1 : 0);
+
+    const midConfirm = (kpvuSE ? 1 : 0) + (utormSE ? 1 : 0) + (utpcrSE ? 1 : 0) + Math.min(wuSECount, 2);
+
+    if (eiSE && eiStrong && midConfirm >= 3) {
+      probability = Math.max(probability, 80);
+      confidence = Math.max(confidence, 0.75);
+    } else if (eiSE && eiStrong && midConfirm >= 2) {
+      probability = Math.max(probability, 75);
+      confidence = Math.max(confidence, 0.7);
+    } else if (eiSE && eiStrong && midConfirm >= 1) {
+      probability = Math.max(probability, 70);
+      confidence = Math.max(confidence, 0.65);
+    } else if (eiSE && eiStrong) {
+      probability = Math.max(probability, 60);
+      confidence = Math.max(confidence, 0.5);
+    } else if (eiSE) {
+      probability = probability * 0.8;
+    } else {
+      probability *= 0.4;
+    }
+  } else if (regime.regime === 'se_thermal' && !obs?.earlyIndicator) {
+    probability *= 0.7;
+  }
+
+  // Thermal profiles from 365-day analysis (hourlyProbability[h] is 0–100 from historicalAnalysis)
   if (context?.thermalProfiles) {
     const profiles = context.thermalProfiles;
-    const hourKey = String(hour);
     for (const [, lakeProfile] of Object.entries(profiles)) {
-      if (lakeProfile[hourKey]?.probability != null) {
-        const histProb = lakeProfile[hourKey].probability * 100;
-        probability = probability * 0.6 + histProb * 0.4;
+      const hp = lakeProfile?.hourlyProbability?.[hour];
+      if (hp != null && typeof hp === 'number') {
+        probability = probability * 0.6 + hp * 0.4;
         break;
       }
     }
@@ -558,6 +750,17 @@ function calibrate(regime, pressure, propagation, context, hour, month) {
   // Lag correlation confidence
   if (propagation.lagConfidence > 0.5) {
     confidence = Math.max(confidence, propagation.lagConfidence * 0.8);
+  }
+
+  // ── EVENING DECAY ────────────────────────────────────────────────
+  // Thermal wind at Zigzag (PWS) dies off faster than meso stations show.
+  // After 17:00, upstream stations still read high but PWS drops rapidly.
+  // Backtest: 18:00 precision 40%, 19:00 precision 31% — too many false GO.
+  if (hour >= 17) {
+    const decayFactors = { 17: 0.85, 18: 0.6, 19: 0.45 };
+    const decay = decayFactors[hour] ?? 0.4;
+    probability *= decay;
+    speedMultiplier *= (decay + (1 - decay) * 0.3);
   }
 
   // Calibration curves from statistical models
@@ -929,8 +1132,8 @@ function backwardCompat(calibration, regime, propagation, pressure, speed, gust,
 //  MAIN EXPORT: predict()
 // ═══════════════════════════════════════════════════════════════════
 
-export function predict(lakeId, activity, liveStations, modelContext, config) {
-  const now = new Date();
+export function predict(lakeId, activity, liveStations, modelContext, config, options = {}) {
+  const now = options.referenceDate instanceof Date ? options.referenceDate : new Date();
   const hour = modelContext?.currentHour ?? denverHour(now);
   const month = modelContext?.currentMonth ?? denverMonth(now);
   const ctx = modelContext || {};
@@ -951,21 +1154,88 @@ export function predict(lakeId, activity, liveStations, modelContext, config) {
   const pressure = pressureAnalysis(obs, ctx, config);
 
   // 6. CALIBRATE
-  const cal = calibrate(regime, pressure, prop, ctx, hour, month);
+  const cal = calibrate(regime, pressure, prop, ctx, hour, month, obs);
 
-  // Determine effective wind speed (ground truth > first lakeshore > first ridge)
+  // ── Wind speed estimation ──────────────────────────────────────
+  // Priority: ground truth (PWS) > QSF-based estimate (SE thermal) > lakeshore/ratio > ridge
   let windSpeed = obs.groundTruth?.speed ?? 0;
   let windDir = obs.groundTruth?.dir ?? null;
   let windGust = obs.groundTruth?.gust ?? null;
+  let windSource = obs.groundTruthId || null;
+  let speedRatioApplied = 1.0;
+
+  if (windSpeed === 0) {
+    // For SE thermal: QSF is the best predictor of what PWS will see.
+    // QSF SE → PWS roughly 0.75:1 (validated over 3 years of backtest data).
+    // FPS overstates by ~1.7x and often has wind that doesn't reach Zigzag.
+    const eiSE = regime.regime === 'se_thermal' && regime.qsfSignal
+      && obs.earlyIndicator?.speed >= 6;
+    if (eiSE) {
+      const kpvu = obs.allReadings?.KPVU;
+      const kpvuConfirmed = kpvu && kpvu.dir != null && kpvu.dir >= 120 && kpvu.dir <= 200 && kpvu.speed >= 4;
+      const qsfRatio = kpvuConfirmed ? 0.8 : 0.7;
+      windSpeed = obs.earlyIndicator.speed * qsfRatio;
+      windDir = obs.earlyIndicator.dir;
+      windGust = null;
+      windSource = obs.earlyIndicatorId;
+      speedRatioApplied = qsfRatio;
+    }
+  }
+
+  // WU PWS fallback: KUTSARAT88 (0.83x) and KUTSARAT81 (0.85x) are nearly 1:1
+  // with your PWS — much better than FPS (1.7x) for estimating actual beach wind.
+  if (windSpeed === 0) {
+    const wuBest = ['KUTSARAT88', 'KUTSARAT81', 'KUTSARAT62'].map(id => {
+      const r = obs.allReadings?.[id];
+      return r?.speed > 0 ? { id, ...r } : null;
+    }).filter(Boolean).sort((a, b) => b.speed - a.speed)[0];
+    if (wuBest) {
+      windSpeed = wuBest.speed;
+      windDir = wuBest.dir;
+      windGust = wuBest.gust ?? null;
+      windSource = wuBest.id;
+    }
+  }
+
   if (windSpeed === 0 && obs.lakeshore.length > 0) {
-    windSpeed = obs.lakeshore[0].speed;
-    windDir = obs.lakeshore[0].dir;
-    windGust = obs.lakeshore[0].gust;
+    const ls = obs.lakeshore[0];
+    windSpeed = ls.speed;
+    windDir = ls.dir;
+    windGust = ls.gust;
+    windSource = ls.id;
   }
   if (windSpeed === 0 && obs.ridge.length > 0) {
-    windSpeed = obs.ridge[0].speed;
-    windDir = obs.ridge[0].dir;
-    windGust = obs.ridge[0].gust;
+    const r = obs.ridge[0];
+    windSpeed = r.speed;
+    windDir = r.dir;
+    windGust = r.gust;
+    windSource = r.id;
+  }
+
+  // Regime-dependent speed ratios: north flow FPS overstates 2.5-3x at Zigzag,
+  // while SE thermal FPS overstates ~1.7x. Use a higher divisor for north flow.
+  // Speed ratios: how much a station overstates vs PWS (Zigzag ground truth).
+  // Learned from 90 days of WU PWS + MesoWest cross-validation (2025-12 → 2026-03).
+  const FALLBACK_SPEED_RATIOS_SE = {
+    FPS: 1.7, KPVU: 1.2, UTALP: 1.3, KSLC: 1.4,
+    KUTSARAT88: 0.83, KUTSARAT81: 0.85, KUTSARAT62: 0.39,
+    KUTBLUFF18: 0.99, KUTRIVER67: 1.1, KUTDRAPE59: 0.72,
+  };
+  const FALLBACK_SPEED_RATIOS_N = {
+    FPS: 2.8, KPVU: 1.5, UTALP: 1.5, KSLC: 1.6,
+    KUTSARAT88: 0.85, KUTSARAT81: 0.75, KUTSARAT62: 1.13,
+    KUTBLUFF18: 0.65, KUTRIVER67: 0.67, KUTDRAPE132: 0.39,
+  };
+  const ratioTable = regime.regime === 'north_flow' ? FALLBACK_SPEED_RATIOS_N : FALLBACK_SPEED_RATIOS_SE;
+
+  if (obs.groundTruthId === 'PWS' && windSource && windSource !== 'PWS'
+      && windSource !== obs.earlyIndicatorId) {
+    const ratio = ratioTable[windSource];
+    if (ratio && ratio > 0) {
+      speedRatioApplied = ratio;
+      windSpeed = windSpeed / ratio;
+      if (windGust != null) windGust = windGust / ratio;
+    }
   }
 
   // Apply speed multiplier from calibration
@@ -1008,7 +1278,8 @@ export function predict(lakeId, activity, liveStations, modelContext, config) {
       current: { speed: Math.round(adjustedSpeed * 10) / 10, dir: windDir, gust: windGust, cardinal: getCardinal(windDir) },
       expected: { speed: Math.round((prop.expectedSpeed || adjustedSpeed) * 10) / 10 },
       anomaly: overallAnomaly,
-      source: obs.groundTruthId || 'unknown',
+      source: windSource || obs.groundTruthId || 'unknown',
+      speedRatioApplied,
     },
 
     // Propagation state

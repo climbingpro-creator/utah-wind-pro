@@ -29,13 +29,16 @@ const CHAIN_DEFS = {
     label: 'SE Thermal → Zigzag',
     flowDir: 'S → N',
     nodes: [
-      { id: 'QSF',  name: 'Spanish Fork Canyon', role: 'Canyon mouth catches SE flow first', lagMinutes: -120, dir: [100, 180], speed: 6 },
-      { id: 'KPVU', name: 'Provo Airport',        role: 'Valley floor confirmation',         lagMinutes: -60,  dir: [120, 180], speed: 5 },
-      { id: 'FPS',  name: 'Flight Park South',     role: 'Ridge-amplified — reads 1.5-2x lakeshore', lagMinutes: -30,  dir: [130, 180], speed: 8 },
-      { id: 'PWS',  name: 'Zigzag (Your Station)', role: 'Ground truth at your launch',       lagMinutes: 0,    dir: [100, 180], speed: 5 },
+      { id: 'QSF',         name: 'Spanish Fork Canyon',  role: 'Canyon mouth catches SE flow first',    lagMinutes: -120, dir: [100, 180], speed: 6 },
+      { id: 'KPVU',        name: 'Provo Airport',         role: 'Valley floor confirmation',             lagMinutes: -60,  dir: [120, 180], speed: 5 },
+      { id: 'KUTLEHI160',  name: 'Lehi (WU PWS)',         role: 'WU neighborhood sensor — thermal path', lagMinutes: -40,  dir: [100, 200], speed: 3, optional: true },
+      { id: 'FPS',         name: 'Flight Park South',     role: 'Ridge-amplified — reads 1.5-2x',       lagMinutes: -30,  dir: [130, 180], speed: 8 },
+      { id: 'KUTSARAT62',  name: 'Saratoga Springs N (WU)', role: 'WU close-range validation',          lagMinutes: -10,  dir: [100, 200], speed: 3, optional: true },
+      { id: 'KUTSARAT88',  name: 'Saratoga Springs S (WU)', role: 'WU near-target validation',          lagMinutes: -5,   dir: [100, 200], speed: 3, optional: true },
+      { id: 'PWS',         name: 'Zigzag (Your Station)', role: 'Ground truth at your launch',           lagMinutes: 0,    dir: [100, 180], speed: 5 },
     ],
     pressureCheck: { type: 'below', threshold: 2.0 },
-    speedRatios: { FPS: 1.7 },
+    speedRatios: { FPS: 1.7, KUTSARAT88: 1.0 },
   },
 
   // ── Zigzag: North Flow → PWS ──────────────────────────────────
@@ -43,10 +46,12 @@ const CHAIN_DEFS = {
     label: 'North Flow → Zigzag',
     flowDir: 'N → S',
     nodes: [
-      { id: 'KSLC', name: 'SLC Airport',           role: 'Great Salt Lake outflow',        lagMinutes: -60, dir: [315, 45], speed: 8, wrap: true },
-      { id: 'UTALP',name: 'Point of Mountain',     role: 'Gap wind acceleration',          lagMinutes: -30, dir: [315, 45], speed: 5, wrap: true },
-      { id: 'FPS',  name: 'Flight Park South',     role: 'Ridge-amplified N flow',         lagMinutes: -15, dir: [315, 60], speed: 8, wrap: true },
-      { id: 'PWS',  name: 'Zigzag (Your Station)', role: 'Ground truth at your launch',    lagMinutes: 0,   dir: [300, 60], speed: 4, wrap: true },
+      { id: 'KSLC',        name: 'SLC Airport',           role: 'Great Salt Lake outflow',        lagMinutes: -60, dir: [315, 45], speed: 8, wrap: true },
+      { id: 'KUTSANDY188', name: 'Sandy (WU PWS)',        role: 'WU north corridor early',        lagMinutes: -50, dir: [315, 45], speed: 4, wrap: true, optional: true },
+      { id: 'KUTDRAPE132', name: 'Draper (WU PWS)',       role: 'WU mid-corridor confirmation',   lagMinutes: -40, dir: [315, 45], speed: 4, wrap: true, optional: true },
+      { id: 'UTALP',       name: 'Point of Mountain',     role: 'Gap wind acceleration',          lagMinutes: -30, dir: [315, 45], speed: 5, wrap: true },
+      { id: 'FPS',         name: 'Flight Park South',     role: 'Ridge-amplified N flow',         lagMinutes: -15, dir: [315, 60], speed: 8, wrap: true },
+      { id: 'PWS',         name: 'Zigzag (Your Station)', role: 'Ground truth at your launch',    lagMinutes: 0,   dir: [300, 60], speed: 4, wrap: true },
     ],
     pressureCheck: { type: 'above', threshold: -1.0 },
     speedRatios: { FPS: 1.5 },
@@ -134,12 +139,12 @@ const CHAIN_DEFS = {
   // ── Deer Creek: Canyon Thermal (Arrowhead → Dam) ───────────────
   'deer-creek:canyon_thermal': {
     label: 'Canyon Thermal → Deer Creek',
-    flowDir: 'Ridge → Dam',
+    flowDir: 'Canyon → Dam',
     nodes: [
-      { id: 'SND',  name: 'Arrowhead Summit',  role: 'Ridge trigger — SSW flow at 8252 ft',   lagMinutes: -90, dir: [200, 230], speed: 12 },
-      { id: 'UTPCY',name: 'Provo Canyon MP10',  role: 'Canyon entrance confirmation',           lagMinutes: -45, dir: [170, 220], speed: 4 },
-      { id: 'KHCR', name: 'Heber Airport',      role: 'Valley floor — flow entering Heber',     lagMinutes: -20, dir: [170, 210], speed: 4 },
-      { id: 'DCC',  name: 'Deer Creek Dam',     role: 'Target — thermal arrival at the dam',    lagMinutes: 0,   dir: [170, 210], speed: 4 },
+      { id: 'UTLPC', name: 'Lower Provo Canyon',  role: 'Early canyon thermal draw indicator',    lagMinutes: -60, dir: [170, 220], speed: 4 },
+      { id: 'UTPCY', name: 'Provo Canyon MP10',    role: 'Canyon entrance confirmation',           lagMinutes: -45, dir: [170, 220], speed: 4 },
+      { id: 'UTCHL', name: 'Charleston',            role: 'Heber Valley — flow near reservoir',     lagMinutes: -20, dir: [170, 210], speed: 4 },
+      { id: 'UTDCD', name: 'Deer Creek Dam',        role: 'Target — thermal arrival at the dam',    lagMinutes: 0,   dir: [170, 210], speed: 4 },
     ],
     pressureCheck: null,
   },
@@ -160,10 +165,11 @@ const CHAIN_DEFS = {
   // ── Jordanelle: Canyon Thermal ─────────────────────────────────
   'jordanelle:canyon_thermal': {
     label: 'Canyon Thermal → Jordanelle',
-    flowDir: 'Ridge → Valley',
+    flowDir: 'Canyon → Valley',
     nodes: [
-      { id: 'SND',  name: 'Arrowhead Summit',  role: 'Ridge trigger — SSW flow',        lagMinutes: -90, dir: [200, 230], speed: 10 },
-      { id: 'KHCR', name: 'Heber Airport',      role: 'Heber valley arrival',            lagMinutes: 0,   dir: [180, 230], speed: 5 },
+      { id: 'UTLPC', name: 'Lower Provo Canyon',  role: 'Canyon thermal draw indicator',     lagMinutes: -60, dir: [170, 220], speed: 4 },
+      { id: 'UTCHL', name: 'Charleston',            role: 'Heber Valley mid-chain',            lagMinutes: -30, dir: [180, 230], speed: 4 },
+      { id: 'KHCR',  name: 'Heber Airport',         role: 'Heber valley arrival',              lagMinutes: 0,   dir: [180, 230], speed: 5 },
     ],
     pressureCheck: null,
   },

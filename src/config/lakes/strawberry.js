@@ -62,7 +62,7 @@ export const strawberryConfigs = {
           id: 'UTDAN',
           name: 'US-40 Daniels Summit (UDOT)',
           elevation: 8000,
-          role: 'North ridge reference',
+          role: 'Chain node — between Heber and Co-Op Creek',
           priority: 3,
         },
       ],
@@ -88,11 +88,18 @@ export const strawberryConfigs = {
           role: 'High-elevation snow/wind reference',
           priority: 2,
         },
+        {
+          id: 'UTHEB',
+          name: 'Heber (UDOT)',
+          elevation: 5600,
+          role: 'Mid-chain — between KPVU and Daniels Summit',
+          priority: 3,
+        },
       ],
 
       reference: [
         { id: 'UWCU1', name: 'Provo 22E AgriMet', elevation: 7812 },
-        { id: 'UTDAN', name: 'US-40 Daniels Summit (UDOT)', elevation: 8000 },
+        { id: 'UTHEB', name: 'Heber (UDOT)', elevation: 5600 },
       ],
     },
 
@@ -201,6 +208,7 @@ export const strawberryConfigs = {
       reference: [
         { id: 'UWCU1', name: 'Provo 22E AgriMet', elevation: 7812 },
         { id: 'UTDAN', name: 'US-40 Daniels Summit (UDOT)', elevation: 8000 },
+        { id: 'UTHEB', name: 'Heber (UDOT)', elevation: 5600 },
       ],
     },
 
@@ -309,6 +317,8 @@ export const strawberryConfigs = {
       reference: [
         { id: 'UWCU1', name: 'Provo 22E AgriMet', elevation: 7812 },
         { id: 'DSTU1', name: 'Daniels-Strawberry SNOTEL', elevation: 8007 },
+        { id: 'UTSLD', name: 'Soldier Summit (UDOT)', elevation: 7400 },
+        { id: 'UTHEB', name: 'Heber (UDOT)', elevation: 5600 },
       ],
     },
 

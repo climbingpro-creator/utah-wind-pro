@@ -124,18 +124,22 @@ export const centralUtahConfigs = {
     description: '22-mile warmwater monster — walleye, northern pike, tiger muskie',
     stations: {
       pressure: {
-        high: { id: 'KPVU', name: 'Provo Municipal', elevation: 4495, role: 'Regional reference' },
-        low: { id: 'KPVU', name: 'Provo Municipal', elevation: 4495, role: 'Nearest major ASOS (50+ mi)' },
+        high: { id: 'KPVU', name: 'Provo Municipal', elevation: 4495, role: 'Regional pressure reference' },
+        low: { id: 'UTLMP', name: 'I-15 Lampson Canyon (UDOT)', elevation: 5200, role: 'Local pressure near Yuba' },
         bustThreshold: 3.0,
       },
       ridge: [
-        { id: 'KPVU', name: 'Provo Municipal', elevation: 4495, role: 'Regional reference', priority: 1 },
+        { id: 'UTRKY', name: 'I-15 Rocky Ridge (UDOT)', elevation: 5400, role: 'North approach indicator', priority: 1 },
       ],
-      groundTruth: { id: 'KPVU', name: 'Provo Municipal', role: 'Ground Truth — distant' },
+      groundTruth: { id: 'UTLMP', name: 'I-15 Lampson Canyon (UDOT)', role: 'Ground Truth — nearest I-15 station to Yuba' },
       lakeshore: [
-        { id: 'KPVU', name: 'Provo Municipal', elevation: 4495, role: 'Primary (distant)', priority: 1 },
+        { id: 'UTLMP', name: 'I-15 Lampson Canyon (UDOT)', elevation: 5200, role: 'Primary — closest station to Yuba', priority: 1 },
+        { id: 'UTRKY', name: 'I-15 Rocky Ridge (UDOT)', elevation: 5400, role: 'North approach — near Nephi', priority: 2 },
       ],
-      reference: [{ id: 'KPVU', name: 'Provo Municipal', elevation: 4495 }],
+      reference: [
+        { id: 'KPVU', name: 'Provo Municipal', elevation: 4495 },
+        { id: 'UTSCI', name: 'I-15 Scipio Summit (UDOT)', elevation: 5900 },
+      ],
     },
     thermal: {
       optimalDirection: { min: 170, max: 230, ideal: 200 },

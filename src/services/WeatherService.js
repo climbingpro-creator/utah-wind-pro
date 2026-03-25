@@ -227,17 +227,42 @@ class WeatherService {
     }
   }
 
+  async getWuPwsCurrent(stationIds) {
+    if (!stationIds || stationIds.length === 0) return [];
+    try {
+      const response = await axiosWithRetry({
+        method: 'get',
+        url: apiUrl('/api/weather'),
+        params: { source: 'wu-pws', stationIds: stationIds.join(',') },
+      });
+      return response.data?.observations || [];
+    } catch (error) {
+      console.error('WU PWS fetch error:', error.message);
+      return [];
+    }
+  }
+
   async getDataForLake(lakeId) {
     const stationIds = getAllStationIds(lakeId);
     
-    const [ambientData, synopticData] = await Promise.allSettled([
+    const { getWuStationsForSpot, normalizeWuObservation } = await import('../config/wuPwsNetwork.js');
+    const wuStations = getWuStationsForSpot(lakeId);
+    const wuIds = wuStations.map(s => s.id);
+
+    const [ambientData, synopticData, wuData] = await Promise.allSettled([
       this.getAmbientWeatherData(),
       this.getSynopticStationData(stationIds),
+      wuIds.length > 0 ? this.getWuPwsCurrent(wuIds) : Promise.resolve([]),
     ]);
     
+    const normalizedWu = (wuData.status === 'fulfilled' ? wuData.value : [])
+      .map(normalizeWuObservation)
+      .filter(Boolean);
+
     return {
       ambient: ambientData.status === 'fulfilled' ? ambientData.value : null,
       synoptic: synopticData.status === 'fulfilled' ? synopticData.value : [],
+      wuPws: normalizedWu,
       fetchedAt: new Date().toISOString(),
     };
   }

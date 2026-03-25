@@ -114,7 +114,10 @@ export const saltLakeAreaConfigs = {
         { id: 'FPS', name: 'Flight Park South', elevation: 4970, role: 'Primary — adjacent', priority: 1 },
         { id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226, role: 'North flow indicator', priority: 2 },
       ],
-      reference: [{ id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226 }],
+      reference: [
+        { id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226 },
+        { id: 'UT7', name: 'Bluffdale I-15 (UDOT)', elevation: 4500 },
+      ],
     },
     thermal: {
       optimalDirection: { min: 320, max: 360, ideal: 340 },

@@ -173,7 +173,7 @@ const DEER_CREEK_HOURLY_PROBABILITY = {
 };
 
 // Deer Creek temperature correlation
-// When DCC is 8-12°F warmer than Arrowhead (SND), thermal is likely
+// When UTDCD is 8-12°F warmer than ridge stations, thermal is likely
 const DEER_CREEK_TEMP_DELTA = {
   optimal: { min: 8, max: 15 },
   average: 9.6,
@@ -182,7 +182,7 @@ const DEER_CREEK_TEMP_DELTA = {
 // DEER CREEK ARROWHEAD TRIGGER - from July 2025 correlation analysis
 // When Arrowhead shows these conditions, thermal at Dam is likely
 const DEER_CREEK_ARROWHEAD_TRIGGER = {
-  // Wind speed at Arrowhead during DCC thermals: avg 13.7 mph
+  // Wind speed at Provo Canyon during UTDCD thermals: avg 13.7 mph
   speed: {
     optimal: { min: 12, max: 18 },  // 24.8-29.9% thermal rate
     marginal: { min: 10, max: 12 }, // 13.1% thermal rate
@@ -699,14 +699,14 @@ export const THERMAL_PROFILES = {
     statistics: {
       goodDaysPercent: 9.2,
       sampleSize: 13248,
-      dataSource: 'DCC Jun-Aug 2025 (1,216 thermal events)',
+      dataSource: 'UTDCD Jun-Aug 2025 (1,216 thermal events)',
       peakHourRate: 28.4, // % at 1 PM
-      avgTempDelta: 9.6,  // DCC warmer than Arrowhead during thermals
+      avgTempDelta: 9.6,  // UTDCD warmer than ridge during thermals
     },
     
     // Arrowhead correlation - KEY TRIGGER from data analysis
     arrowheadTrigger: {
-      tempDelta: 9.6, // DCC should be ~10°F warmer than Arrowhead
+      tempDelta: 9.6, // UTDCD should be ~10°F warmer than ridge
       triggerThreshold: 8, // When delta exceeds this, thermal likely
       // Wind trigger: When Arrowhead shows 12-18 mph from SSW (210°)
       windSpeed: { min: 12, max: 18, optimal: 14 },
@@ -714,8 +714,8 @@ export const THERMAL_PROFILES = {
       leadTime: 60, // minutes - Arrowhead signal precedes Dam thermal
     },
     
-    primaryStation: 'DCC',
-    triggerStation: 'SND', // Arrowhead Summit
+    primaryStation: 'UTDCD',
+    triggerStation: 'UTLPC', // Lower Provo Canyon
     referenceStation: 'KHCR', // Heber Airport
     yourStation: null,
     requirement: 'MUST have South wind (160-220°) - canyon only works with S flow',

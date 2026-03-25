@@ -1,0 +1,5232 @@
+{
+  "version": "1.0",
+  "trainedAt": "2026-03-25T03:43:22.645Z",
+  "referenceStation": "KUTSARAT50",
+  "stationCount": 10,
+  "totalHourlyRecords": 20787,
+  "speedRatios": {
+    "KUTSARAT88": {
+      "se_thermal": {
+        "median": 0.83,
+        "mean": 0.87,
+        "n": 269
+      },
+      "north_flow": {
+        "median": 0.85,
+        "mean": 0.86,
+        "n": 291
+      },
+      "all": {
+        "median": 0.87,
+        "mean": 0.87,
+        "n": 838
+      }
+    },
+    "KUTSARAT81": {
+      "se_thermal": {
+        "median": 0.85,
+        "mean": 0.86,
+        "n": 363
+      },
+      "north_flow": {
+        "median": 0.75,
+        "mean": 0.72,
+        "n": 293
+      },
+      "all": {
+        "median": 0.74,
+        "mean": 0.71,
+        "n": 858
+      }
+    },
+    "KUTSARAT74": {
+      "se_thermal": {
+        "median": 0.3,
+        "mean": 0.33,
+        "n": 227
+      },
+      "north_flow": {
+        "median": 0.25,
+        "mean": 0.26,
+        "n": 188
+      },
+      "all": {
+        "median": 0.26,
+        "mean": 0.29,
+        "n": 506
+      }
+    },
+    "KUTSARAT62": {
+      "se_thermal": {
+        "median": 0.39,
+        "mean": 0.44,
+        "n": 294
+      },
+      "north_flow": {
+        "median": 1.13,
+        "mean": 1.11,
+        "n": 282
+      },
+      "all": {
+        "median": 0.67,
+        "mean": 0.8,
+        "n": 847
+      }
+    },
+    "KUTDRAPE132": {
+      "se_thermal": {
+        "median": 0.2,
+        "mean": 0.24,
+        "n": 113
+      },
+      "north_flow": {
+        "median": 0.39,
+        "mean": 0.34,
+        "n": 10
+      },
+      "all": {
+        "median": 0.2,
+        "mean": 0.25,
+        "n": 132
+      }
+    },
+    "KUTDRAPE59": {
+      "se_thermal": {
+        "median": 0.72,
+        "mean": 0.86,
+        "n": 362
+      },
+      "north_flow": {
+        "median": 0.3,
+        "mean": 0.41,
+        "n": 254
+      },
+      "all": {
+        "median": 0.46,
+        "mean": 0.63,
+        "n": 861
+      }
+    },
+    "KUTRIVER67": {
+      "se_thermal": {
+        "median": 1.1,
+        "mean": 1.25,
+        "n": 358
+      },
+      "north_flow": {
+        "median": 0.67,
+        "mean": 0.71,
+        "n": 229
+      },
+      "all": {
+        "median": 0.82,
+        "mean": 0.97,
+        "n": 775
+      }
+    },
+    "KUTBLUFF18": {
+      "se_thermal": {
+        "median": 0.99,
+        "mean": 1.09,
+        "n": 360
+      },
+      "north_flow": {
+        "median": 0.65,
+        "mean": 0.7,
+        "n": 212
+      },
+      "all": {
+        "median": 0.75,
+        "mean": 0.88,
+        "n": 704
+      }
+    },
+    "KUTSANDY188": {
+      "se_thermal": {
+        "median": 0.6,
+        "mean": 0.67,
+        "n": 253
+      },
+      "north_flow": {
+        "median": 0.16,
+        "mean": 0.27,
+        "n": 62
+      },
+      "all": {
+        "median": 0.45,
+        "mean": 0.55,
+        "n": 404
+      }
+    }
+  },
+  "propagationLags": {
+    "KUTSARAT88": {
+      "se_thermal": {
+        "medianHours": 4,
+        "meanHours": 3.5,
+        "n": 31
+      },
+      "north_flow": {
+        "medianHours": -1,
+        "meanHours": -0.1,
+        "n": 14
+      }
+    },
+    "KUTSARAT81": {
+      "se_thermal": {
+        "medianHours": 0,
+        "meanHours": 0.7,
+        "n": 39
+      },
+      "north_flow": {
+        "medianHours": 0,
+        "meanHours": 0,
+        "n": 41
+      }
+    },
+    "KUTSARAT74": {
+      "se_thermal": {
+        "medianHours": 3,
+        "meanHours": 2.7,
+        "n": 20
+      },
+      "north_flow": {
+        "medianHours": 3,
+        "meanHours": 3,
+        "n": 12
+      }
+    },
+    "KUTSARAT62": {
+      "se_thermal": {
+        "medianHours": 2,
+        "meanHours": 3.1,
+        "n": 18
+      },
+      "north_flow": {
+        "medianHours": 0,
+        "meanHours": 0.7,
+        "n": 43
+      }
+    },
+    "KUTDRAPE132": {
+      "se_thermal": null,
+      "north_flow": null
+    },
+    "KUTDRAPE59": {
+      "se_thermal": {
+        "medianHours": -1,
+        "meanHours": 0.6,
+        "n": 25
+      },
+      "north_flow": {
+        "medianHours": -1,
+        "meanHours": -1.7,
+        "n": 13
+      }
+    },
+    "KUTRIVER67": {
+      "se_thermal": {
+        "medianHours": 0,
+        "meanHours": -0.7,
+        "n": 40
+      },
+      "north_flow": {
+        "medianHours": 0,
+        "meanHours": 0.4,
+        "n": 36
+      }
+    },
+    "KUTBLUFF18": {
+      "se_thermal": {
+        "medianHours": 0,
+        "meanHours": -1.6,
+        "n": 50
+      },
+      "north_flow": {
+        "medianHours": 0,
+        "meanHours": 0.1,
+        "n": 37
+      }
+    },
+    "KUTSANDY188": {
+      "se_thermal": {
+        "medianHours": 0,
+        "meanHours": 2,
+        "n": 21
+      },
+      "north_flow": null
+    }
+  },
+  "climatology": {
+    "KUTSARAT50": {
+      "1": {
+        "0": {
+          "avgSpeed": 2.8,
+          "stdSpeed": 3.1,
+          "samples": 31
+        },
+        "1": {
+          "avgSpeed": 2.7,
+          "stdSpeed": 2.7,
+          "samples": 31
+        },
+        "2": {
+          "avgSpeed": 3.1,
+          "stdSpeed": 3.3,
+          "samples": 31
+        },
+        "3": {
+          "avgSpeed": 2.6,
+          "stdSpeed": 2,
+          "samples": 31
+        },
+        "4": {
+          "avgSpeed": 2.8,
+          "stdSpeed": 2.2,
+          "samples": 31
+        },
+        "5": {
+          "avgSpeed": 2.9,
+          "stdSpeed": 2.7,
+          "samples": 31
+        },
+        "6": {
+          "avgSpeed": 2.8,
+          "stdSpeed": 2.4,
+          "samples": 31
+        },
+        "7": {
+          "avgSpeed": 3.1,
+          "stdSpeed": 2.4,
+          "samples": 31
+        },
+        "8": {
+          "avgSpeed": 2.8,
+          "stdSpeed": 2.9,
+          "samples": 31
+        },
+        "9": {
+          "avgSpeed": 3.5,
+          "stdSpeed": 2.9,
+          "samples": 31
+        },
+        "10": {
+          "avgSpeed": 3.5,
+          "stdSpeed": 3.2,
+          "samples": 31
+        },
+        "11": {
+          "avgSpeed": 3.7,
+          "stdSpeed": 3.6,
+          "samples": 31
+        },
+        "12": {
+          "avgSpeed": 3.3,
+          "stdSpeed": 3.5,
+          "samples": 31
+        },
+        "13": {
+          "avgSpeed": 3.6,
+          "stdSpeed": 4.1,
+          "samples": 31
+        },
+        "14": {
+          "avgSpeed": 4.4,
+          "stdSpeed": 4.2,
+          "samples": 31
+        },
+        "15": {
+          "avgSpeed": 4.5,
+          "stdSpeed": 4.7,
+          "samples": 31
+        },
+        "16": {
+          "avgSpeed": 4,
+          "stdSpeed": 4.2,
+          "samples": 31
+        },
+        "17": {
+          "avgSpeed": 4.1,
+          "stdSpeed": 3.1,
+          "samples": 31
+        },
+        "18": {
+          "avgSpeed": 4.6,
+          "stdSpeed": 3.2,
+          "samples": 31
+        },
+        "19": {
+          "avgSpeed": 4.5,
+          "stdSpeed": 2.9,
+          "samples": 31
+        },
+        "20": {
+          "avgSpeed": 4.2,
+          "stdSpeed": 3,
+          "samples": 31
+        },
+        "21": {
+          "avgSpeed": 3.6,
+          "stdSpeed": 3.4,
+          "samples": 31
+        },
+        "22": {
+          "avgSpeed": 3.4,
+          "stdSpeed": 4.2,
+          "samples": 31
+        },
+        "23": {
+          "avgSpeed": 3.2,
+          "stdSpeed": 3.6,
+          "samples": 31
+        }
+      },
+      "2": {
+        "0": {
+          "avgSpeed": 4,
+          "stdSpeed": 4,
+          "samples": 28
+        },
+        "1": {
+          "avgSpeed": 3.9,
+          "stdSpeed": 3.8,
+          "samples": 28
+        },
+        "2": {
+          "avgSpeed": 3.7,
+          "stdSpeed": 4.2,
+          "samples": 28
+        },
+        "3": {
+          "avgSpeed": 3.5,
+          "stdSpeed": 3.4,
+          "samples": 28
+        },
+        "4": {
+          "avgSpeed": 3.8,
+          "stdSpeed": 3.5,
+          "samples": 28
+        },
+        "5": {
+          "avgSpeed": 4.2,
+          "stdSpeed": 4.4,
+          "samples": 28
+        },
+        "6": {
+          "avgSpeed": 4.3,
+          "stdSpeed": 4.6,
+          "samples": 28
+        },
+        "7": {
+          "avgSpeed": 3.8,
+          "stdSpeed": 3.4,
+          "samples": 28
+        },
+        "8": {
+          "avgSpeed": 4.3,
+          "stdSpeed": 4.2,
+          "samples": 28
+        },
+        "9": {
+          "avgSpeed": 4.9,
+          "stdSpeed": 4.5,
+          "samples": 28
+        },
+        "10": {
+          "avgSpeed": 4.8,
+          "stdSpeed": 3.7,
+          "samples": 28
+        },
+        "11": {
+          "avgSpeed": 5.1,
+          "stdSpeed": 3.8,
+          "samples": 28
+        },
+        "12": {
+          "avgSpeed": 5.2,
+          "stdSpeed": 4,
+          "samples": 28
+        },
+        "13": {
+          "avgSpeed": 5.3,
+          "stdSpeed": 4.5,
+          "samples": 28
+        },
+        "14": {
+          "avgSpeed": 5.4,
+          "stdSpeed": 3.7,
+          "samples": 28
+        },
+        "15": {
+          "avgSpeed": 5.2,
+          "stdSpeed": 3.8,
+          "samples": 28
+        },
+        "16": {
+          "avgSpeed": 4.7,
+          "stdSpeed": 3.4,
+          "samples": 28
+        },
+        "17": {
+          "avgSpeed": 4.9,
+          "stdSpeed": 2.7,
+          "samples": 28
+        },
+        "18": {
+          "avgSpeed": 4.5,
+          "stdSpeed": 1.9,
+          "samples": 28
+        },
+        "19": {
+          "avgSpeed": 4.3,
+          "stdSpeed": 2,
+          "samples": 28
+        },
+        "20": {
+          "avgSpeed": 3.7,
+          "stdSpeed": 1.8,
+          "samples": 28
+        },
+        "21": {
+          "avgSpeed": 3.8,
+          "stdSpeed": 3.1,
+          "samples": 28
+        },
+        "22": {
+          "avgSpeed": 3.8,
+          "stdSpeed": 3.8,
+          "samples": 28
+        },
+        "23": {
+          "avgSpeed": 3.5,
+          "stdSpeed": 3.3,
+          "samples": 28
+        }
+      },
+      "3": {
+        "0": {
+          "avgSpeed": 5.1,
+          "stdSpeed": 5.9,
+          "samples": 19
+        },
+        "1": {
+          "avgSpeed": 4.6,
+          "stdSpeed": 4.9,
+          "samples": 19
+        },
+        "2": {
+          "avgSpeed": 4.8,
+          "stdSpeed": 4.4,
+          "samples": 18
+        },
+        "3": {
+          "avgSpeed": 3.8,
+          "stdSpeed": 3.9,
+          "samples": 19
+        },
+        "4": {
+          "avgSpeed": 3.6,
+          "stdSpeed": 4,
+          "samples": 19
+        },
+        "5": {
+          "avgSpeed": 3.6,
+          "stdSpeed": 4.2,
+          "samples": 19
+        },
+        "6": {
+          "avgSpeed": 3.4,
+          "stdSpeed": 3.8,
+          "samples": 19
+        },
+        "7": {
+          "avgSpeed": 3.1,
+          "stdSpeed": 3.4,
+          "samples": 19
+        },
+        "8": {
+          "avgSpeed": 3.5,
+          "stdSpeed": 3.9,
+          "samples": 20
+        },
+        "9": {
+          "avgSpeed": 3.4,
+          "stdSpeed": 3.5,
+          "samples": 20
+        },
+        "10": {
+          "avgSpeed": 4.2,
+          "stdSpeed": 4,
+          "samples": 20
+        },
+        "11": {
+          "avgSpeed": 4.2,
+          "stdSpeed": 4.2,
+          "samples": 20
+        },
+        "12": {
+          "avgSpeed": 4.5,
+          "stdSpeed": 4.3,
+          "samples": 20
+        },
+        "13": {
+          "avgSpeed": 5,
+          "stdSpeed": 4.7,
+          "samples": 20
+        },
+        "14": {
+          "avgSpeed": 5.5,
+          "stdSpeed": 5.5,
+          "samples": 20
+        },
+        "15": {
+          "avgSpeed": 5.2,
+          "stdSpeed": 4.5,
+          "samples": 20
+        },
+        "16": {
+          "avgSpeed": 5.2,
+          "stdSpeed": 4.6,
+          "samples": 20
+        },
+        "17": {
+          "avgSpeed": 5.7,
+          "stdSpeed": 4.1,
+          "samples": 20
+        },
+        "18": {
+          "avgSpeed": 5.4,
+          "stdSpeed": 3.7,
+          "samples": 20
+        },
+        "19": {
+          "avgSpeed": 5.5,
+          "stdSpeed": 3.1,
+          "samples": 20
+        },
+        "20": {
+          "avgSpeed": 5.6,
+          "stdSpeed": 2.8,
+          "samples": 20
+        },
+        "21": {
+          "avgSpeed": 6.7,
+          "stdSpeed": 3.9,
+          "samples": 20
+        },
+        "22": {
+          "avgSpeed": 6.5,
+          "stdSpeed": 6.6,
+          "samples": 20
+        },
+        "23": {
+          "avgSpeed": 5.6,
+          "stdSpeed": 6,
+          "samples": 20
+        }
+      },
+      "12": {
+        "0": {
+          "avgSpeed": 6,
+          "stdSpeed": 3.6,
+          "samples": 8
+        },
+        "1": {
+          "avgSpeed": 7,
+          "stdSpeed": 5.1,
+          "samples": 8
+        },
+        "2": {
+          "avgSpeed": 6.2,
+          "stdSpeed": 4.7,
+          "samples": 8
+        },
+        "3": {
+          "avgSpeed": 6.2,
+          "stdSpeed": 4.7,
+          "samples": 8
+        },
+        "4": {
+          "avgSpeed": 7,
+          "stdSpeed": 5.2,
+          "samples": 8
+        },
+        "5": {
+          "avgSpeed": 5.4,
+          "stdSpeed": 3.7,
+          "samples": 8
+        },
+        "6": {
+          "avgSpeed": 5.6,
+          "stdSpeed": 4.3,
+          "samples": 8
+        },
+        "7": {
+          "avgSpeed": 5.9,
+          "stdSpeed": 3.6,
+          "samples": 8
+        },
+        "8": {
+          "avgSpeed": 6.6,
+          "stdSpeed": 3.9,
+          "samples": 8
+        },
+        "9": {
+          "avgSpeed": 6.9,
+          "stdSpeed": 5.8,
+          "samples": 8
+        },
+        "10": {
+          "avgSpeed": 6,
+          "stdSpeed": 5.3,
+          "samples": 8
+        },
+        "11": {
+          "avgSpeed": 6.3,
+          "stdSpeed": 4.6,
+          "samples": 8
+        },
+        "12": {
+          "avgSpeed": 7.2,
+          "stdSpeed": 5,
+          "samples": 8
+        },
+        "13": {
+          "avgSpeed": 6.7,
+          "stdSpeed": 3.9,
+          "samples": 8
+        },
+        "14": {
+          "avgSpeed": 7.4,
+          "stdSpeed": 4.6,
+          "samples": 8
+        },
+        "15": {
+          "avgSpeed": 7.2,
+          "stdSpeed": 5.7,
+          "samples": 8
+        },
+        "16": {
+          "avgSpeed": 6.4,
+          "stdSpeed": 5.7,
+          "samples": 8
+        },
+        "17": {
+          "avgSpeed": 6.2,
+          "stdSpeed": 4.5,
+          "samples": 8
+        },
+        "18": {
+          "avgSpeed": 6.9,
+          "stdSpeed": 4.1,
+          "samples": 8
+        },
+        "19": {
+          "avgSpeed": 7,
+          "stdSpeed": 4.2,
+          "samples": 8
+        },
+        "20": {
+          "avgSpeed": 5.9,
+          "stdSpeed": 3.4,
+          "samples": 8
+        },
+        "21": {
+          "avgSpeed": 4.1,
+          "stdSpeed": 2.9,
+          "samples": 8
+        },
+        "22": {
+          "avgSpeed": 5.5,
+          "stdSpeed": 3.7,
+          "samples": 8
+        },
+        "23": {
+          "avgSpeed": 5.8,
+          "stdSpeed": 5.2,
+          "samples": 8
+        }
+      }
+    },
+    "KUTSARAT88": {
+      "1": {
+        "0": {
+          "avgSpeed": 1.1,
+          "stdSpeed": 2.4,
+          "samples": 31
+        },
+        "1": {
+          "avgSpeed": 1,
+          "stdSpeed": 2.4,
+          "samples": 31
+        },
+        "2": {
+          "avgSpeed": 1,
+          "stdSpeed": 2.2,
+          "samples": 31
+        },
+        "3": {
+          "avgSpeed": 1.3,
+          "stdSpeed": 2.3,
+          "samples": 31
+        },
+        "4": {
+          "avgSpeed": 1.4,
+          "stdSpeed": 2.3,
+          "samples": 31
+        },
+        "5": {
+          "avgSpeed": 1.8,
+          "stdSpeed": 2.8,
+          "samples": 31
+        },
+        "6": {
+          "avgSpeed": 1.7,
+          "stdSpeed": 2.7,
+          "samples": 31
+        },
+        "7": {
+          "avgSpeed": 1.6,
+          "stdSpeed": 2.6,
+          "samples": 31
+        },
+        "8": {
+          "avgSpeed": 1.6,
+          "stdSpeed": 2.7,
+          "samples": 31
+        },
+        "9": {
+          "avgSpeed": 1.9,
+          "stdSpeed": 2.8,
+          "samples": 31
+        },
+        "10": {
+          "avgSpeed": 2.3,
+          "stdSpeed": 2.8,
+          "samples": 31
+        },
+        "11": {
+          "avgSpeed": 3.4,
+          "stdSpeed": 2.8,
+          "samples": 31
+        },
+        "12": {
+          "avgSpeed": 3,
+          "stdSpeed": 2.8,
+          "samples": 31
+        },
+        "13": {
+          "avgSpeed": 3.4,
+          "stdSpeed": 3,
+          "samples": 31
+        },
+        "14": {
+          "avgSpeed": 3.5,
+          "stdSpeed": 3.2,
+          "samples": 31
+        },
+        "15": {
+          "avgSpeed": 3.4,
+          "stdSpeed": 3.4,
+          "samples": 31
+        },
+        "16": {
+          "avgSpeed": 3,
+          "stdSpeed": 3.2,
+          "samples": 31
+        },
+        "17": {
+          "avgSpeed": 3,
+          "stdSpeed": 2.8,
+          "samples": 31
+        },
+        "18": {
+          "avgSpeed": 3.1,
+          "stdSpeed": 2.9,
+          "samples": 31
+        },
+        "19": {
+          "avgSpeed": 3.3,
+          "stdSpeed": 2.9,
+          "samples": 31
+        },
+        "20": {
+          "avgSpeed": 3.4,
+          "stdSpeed": 2.6,
+          "samples": 31
+        },
+        "21": {
+          "avgSpeed": 2.7,
+          "stdSpeed": 2.6,
+          "samples": 31
+        },
+        "22": {
+          "avgSpeed": 2.2,
+          "stdSpeed": 2.6,
+          "samples": 31
+        },
+        "23": {
+          "avgSpeed": 1.6,
+          "stdSpeed": 2.6,
+          "samples": 31
+        }
+      },
+      "2": {
+        "0": {
+          "avgSpeed": 2.1,
+          "stdSpeed": 2.8,
+          "samples": 28
+        },
+        "1": {
+          "avgSpeed": 2.8,
+          "stdSpeed": 3.2,
+          "samples": 28
+        },
+        "2": {
+          "avgSpeed": 2.5,
+          "stdSpeed": 3.2,
+          "samples": 28
+        },
+        "3": {
+          "avgSpeed": 2.4,
+          "stdSpeed": 3,
+          "samples": 28
+        },
+        "4": {
+          "avgSpeed": 2.9,
+          "stdSpeed": 2.9,
+          "samples": 28
+        },
+        "5": {
+          "avgSpeed": 3,
+          "stdSpeed": 3.1,
+          "samples": 28
+        },
+        "6": {
+          "avgSpeed": 3,
+          "stdSpeed": 3.1,
+          "samples": 28
+        },
+        "7": {
+          "avgSpeed": 2.9,
+          "stdSpeed": 2.6,
+          "samples": 28
+        },
+        "8": {
+          "avgSpeed": 3.3,
+          "stdSpeed": 3,
+          "samples": 28
+        },
+        "9": {
+          "avgSpeed": 3.7,
+          "stdSpeed": 3.3,
+          "samples": 28
+        },
+        "10": {
+          "avgSpeed": 4,
+          "stdSpeed": 2.9,
+          "samples": 28
+        },
+        "11": {
+          "avgSpeed": 4.6,
+          "stdSpeed": 3.1,
+          "samples": 28
+        },
+        "12": {
+          "avgSpeed": 5.2,
+          "stdSpeed": 2.8,
+          "samples": 28
+        },
+        "13": {
+          "avgSpeed": 4.9,
+          "stdSpeed": 2.6,
+          "samples": 28
+        },
+        "14": {
+          "avgSpeed": 4.3,
+          "stdSpeed": 2.7,
+          "samples": 28
+        },
+        "15": {
+          "avgSpeed": 3.9,
+          "stdSpeed": 3.1,
+          "samples": 28
+        },
+        "16": {
+          "avgSpeed": 3.7,
+          "stdSpeed": 2.8,
+          "samples": 28
+        },
+        "17": {
+          "avgSpeed": 3.9,
+          "stdSpeed": 2.8,
+          "samples": 28
+        },
+        "18": {
+          "avgSpeed": 3.3,
+          "stdSpeed": 2.5,
+          "samples": 28
+        },
+        "19": {
+          "avgSpeed": 3,
+          "stdSpeed": 2.2,
+          "samples": 28
+        },
+        "20": {
+          "avgSpeed": 3.2,
+          "stdSpeed": 2,
+          "samples": 28
+        },
+        "21": {
+          "avgSpeed": 3.4,
+          "stdSpeed": 2.6,
+          "samples": 28
+        },
+        "22": {
+          "avgSpeed": 2.7,
+          "stdSpeed": 2.9,
+          "samples": 28
+        },
+        "23": {
+          "avgSpeed": 1.9,
+          "stdSpeed": 2.7,
+          "samples": 28
+        }
+      },
+      "3": {
+        "0": {
+          "avgSpeed": 2.7,
+          "stdSpeed": 4.2,
+          "samples": 19
+        },
+        "1": {
+          "avgSpeed": 2.8,
+          "stdSpeed": 4.1,
+          "samples": 19
+        },
+        "2": {
+          "avgSpeed": 3.1,
+          "stdSpeed": 3.7,
+          "samples": 18
+        },
+        "3": {
+          "avgSpeed": 2.3,
+          "stdSpeed": 3.4,
+          "samples": 19
+        },
+        "4": {
+          "avgSpeed": 2.3,
+          "stdSpeed": 3.7,
+          "samples": 19
+        },
+        "5": {
+          "avgSpeed": 2.2,
+          "stdSpeed": 3.7,
+          "samples": 19
+        },
+        "6": {
+          "avgSpeed": 2.5,
+          "stdSpeed": 3.3,
+          "samples": 19
+        },
+        "7": {
+          "avgSpeed": 2.3,
+          "stdSpeed": 3.1,
+          "samples": 19
+        },
+        "8": {
+          "avgSpeed": 2.2,
+          "stdSpeed": 2.8,
+          "samples": 20
+        },
+        "9": {
+          "avgSpeed": 2.9,
+          "stdSpeed": 3,
+          "samples": 20
+        },
+        "10": {
+          "avgSpeed": 4.2,
+          "stdSpeed": 2.6,
+          "samples": 20
+        },
+        "11": {
+          "avgSpeed": 4.2,
+          "stdSpeed": 3,
+          "samples": 20
+        },
+        "12": {
+          "avgSpeed": 4.4,
+          "stdSpeed": 2.8,
+          "samples": 20
+        },
+        "13": {
+          "avgSpeed": 4.9,
+          "stdSpeed": 3,
+          "samples": 20
+        },
+        "14": {
+          "avgSpeed": 5.3,
+          "stdSpeed": 3.3,
+          "samples": 20
+        },
+        "15": {
+          "avgSpeed": 5.1,
+          "stdSpeed": 3,
+          "samples": 20
+        },
+        "16": {
+          "avgSpeed": 4.9,
+          "stdSpeed": 3.1,
+          "samples": 20
+        },
+        "17": {
+          "avgSpeed": 5.5,
+          "stdSpeed": 2.9,
+          "samples": 20
+        },
+        "18": {
+          "avgSpeed": 5.5,
+          "stdSpeed": 3.1,
+          "samples": 20
+        },
+        "19": {
+          "avgSpeed": 5.1,
+          "stdSpeed": 2.9,
+          "samples": 20
+        },
+        "20": {
+          "avgSpeed": 4.1,
+          "stdSpeed": 3.2,
+          "samples": 20
+        },
+        "21": {
+          "avgSpeed": 5.1,
+          "stdSpeed": 3.1,
+          "samples": 20
+        },
+        "22": {
+          "avgSpeed": 5.6,
+          "stdSpeed": 3.7,
+          "samples": 20
+        },
+        "23": {
+          "avgSpeed": 4,
+          "stdSpeed": 4.3,
+          "samples": 20
+        }
+      },
+      "12": {
+        "0": {
+          "avgSpeed": 3.2,
+          "stdSpeed": 2.7,
+          "samples": 5
+        },
+        "1": {
+          "avgSpeed": 3.5,
+          "stdSpeed": 3,
+          "samples": 5
+        },
+        "2": {
+          "avgSpeed": 3.3,
+          "stdSpeed": 3.1,
+          "samples": 5
+        },
+        "3": {
+          "avgSpeed": 2.3,
+          "stdSpeed": 2.4,
+          "samples": 5
+        },
+        "4": {
+          "avgSpeed": 3.3,
+          "stdSpeed": 2.9,
+          "samples": 5
+        },
+        "5": {
+          "avgSpeed": 2.2,
+          "stdSpeed": 2.8,
+          "samples": 5
+        },
+        "6": {
+          "avgSpeed": 2.2,
+          "stdSpeed": 3,
+          "samples": 5
+        },
+        "7": {
+          "avgSpeed": 2.9,
+          "stdSpeed": 3.6,
+          "samples": 5
+        },
+        "8": {
+          "avgSpeed": 2.7,
+          "stdSpeed": 3.4,
+          "samples": 5
+        },
+        "9": {
+          "avgSpeed": 3,
+          "stdSpeed": 3.2,
+          "samples": 5
+        },
+        "10": {
+          "avgSpeed": 4.4,
+          "stdSpeed": 2.8,
+          "samples": 5
+        },
+        "11": {
+          "avgSpeed": 4.3,
+          "stdSpeed": 2.6,
+          "samples": 5
+        },
+        "12": {
+          "avgSpeed": 4.6,
+          "stdSpeed": 2.6,
+          "samples": 5
+        },
+        "13": {
+          "avgSpeed": 4.4,
+          "stdSpeed": 1.6,
+          "samples": 5
+        },
+        "14": {
+          "avgSpeed": 4.9,
+          "stdSpeed": 1.3,
+          "samples": 5
+        },
+        "15": {
+          "avgSpeed": 4.2,
+          "stdSpeed": 2.7,
+          "samples": 5
+        },
+        "16": {
+          "avgSpeed": 4.4,
+          "stdSpeed": 3.9,
+          "samples": 6
+        },
+        "17": {
+          "avgSpeed": 3.3,
+          "stdSpeed": 3.5,
+          "samples": 6
+        },
+        "18": {
+          "avgSpeed": 4.3,
+          "stdSpeed": 3.5,
+          "samples": 6
+        },
+        "19": {
+          "avgSpeed": 4.6,
+          "stdSpeed": 3.1,
+          "samples": 6
+        },
+        "20": {
+          "avgSpeed": 4.7,
+          "stdSpeed": 3.3,
+          "samples": 6
+        },
+        "21": {
+          "avgSpeed": 4.3,
+          "stdSpeed": 3.3,
+          "samples": 6
+        },
+        "22": {
+          "avgSpeed": 3.6,
+          "stdSpeed": 2.8,
+          "samples": 6
+        },
+        "23": {
+          "avgSpeed": 2.5,
+          "stdSpeed": 2.6,
+          "samples": 6
+        }
+      }
+    },
+    "KUTSARAT81": {
+      "1": {
+        "0": {
+          "avgSpeed": 1.1,
+          "stdSpeed": 2.1,
+          "samples": 31
+        },
+        "1": {
+          "avgSpeed": 1.2,
+          "stdSpeed": 2,
+          "samples": 31
+        },
+        "2": {
+          "avgSpeed": 1.3,
+          "stdSpeed": 2,
+          "samples": 31
+        },
+        "3": {
+          "avgSpeed": 1.2,
+          "stdSpeed": 1.8,
+          "samples": 31
+        },
+        "4": {
+          "avgSpeed": 1.3,
+          "stdSpeed": 1.8,
+          "samples": 31
+        },
+        "5": {
+          "avgSpeed": 1.5,
+          "stdSpeed": 2.3,
+          "samples": 31
+        },
+        "6": {
+          "avgSpeed": 1.4,
+          "stdSpeed": 1.9,
+          "samples": 31
+        },
+        "7": {
+          "avgSpeed": 1.4,
+          "stdSpeed": 2,
+          "samples": 31
+        },
+        "8": {
+          "avgSpeed": 1.1,
+          "stdSpeed": 1.5,
+          "samples": 31
+        },
+        "9": {
+          "avgSpeed": 2.2,
+          "stdSpeed": 1.9,
+          "samples": 31
+        },
+        "10": {
+          "avgSpeed": 3,
+          "stdSpeed": 2.3,
+          "samples": 31
+        },
+        "11": {
+          "avgSpeed": 3.5,
+          "stdSpeed": 2.7,
+          "samples": 31
+        },
+        "12": {
+          "avgSpeed": 3.5,
+          "stdSpeed": 2.5,
+          "samples": 31
+        },
+        "13": {
+          "avgSpeed": 3.9,
+          "stdSpeed": 2.9,
+          "samples": 31
+        },
+        "14": {
+          "avgSpeed": 4.2,
+          "stdSpeed": 3.2,
+          "samples": 31
+        },
+        "15": {
+          "avgSpeed": 3.8,
+          "stdSpeed": 3.5,
+          "samples": 31
+        },
+        "16": {
+          "avgSpeed": 2.7,
+          "stdSpeed": 3.3,
+          "samples": 31
+        },
+        "17": {
+          "avgSpeed": 1.5,
+          "stdSpeed": 1.9,
+          "samples": 31
+        },
+        "18": {
+          "avgSpeed": 1.7,
+          "stdSpeed": 1.9,
+          "samples": 31
+        },
+        "19": {
+          "avgSpeed": 1.7,
+          "stdSpeed": 2.1,
+          "samples": 31
+        },
+        "20": {
+          "avgSpeed": 1.6,
+          "stdSpeed": 2.1,
+          "samples": 31
+        },
+        "21": {
+          "avgSpeed": 1.5,
+          "stdSpeed": 2.5,
+          "samples": 31
+        },
+        "22": {
+          "avgSpeed": 1.5,
+          "stdSpeed": 2.5,
+          "samples": 31
+        },
+        "23": {
+          "avgSpeed": 1.4,
+          "stdSpeed": 2.6,
+          "samples": 31
+        }
+      },
+      "2": {
+        "0": {
+          "avgSpeed": 2.2,
+          "stdSpeed": 2.8,
+          "samples": 28
+        },
+        "1": {
+          "avgSpeed": 2.3,
+          "stdSpeed": 3.6,
+          "samples": 28
+        },
+        "2": {
+          "avgSpeed": 2.3,
+          "stdSpeed": 3.9,
+          "samples": 28
+        },
+        "3": {
+          "avgSpeed": 2.1,
+          "stdSpeed": 3.3,
+          "samples": 28
+        },
+        "4": {
+          "avgSpeed": 2.3,
+          "stdSpeed": 2.8,
+          "samples": 28
+        },
+        "5": {
+          "avgSpeed": 2.5,
+          "stdSpeed": 2.9,
+          "samples": 28
+        },
+        "6": {
+          "avgSpeed": 2.7,
+          "stdSpeed": 3.7,
+          "samples": 28
+        },
+        "7": {
+          "avgSpeed": 2.2,
+          "stdSpeed": 2.3,
+          "samples": 28
+        },
+        "8": {
+          "avgSpeed": 3.4,
+          "stdSpeed": 2.8,
+          "samples": 28
+        },
+        "9": {
+          "avgSpeed": 4,
+          "stdSpeed": 3.8,
+          "samples": 28
+        },
+        "10": {
+          "avgSpeed": 4.1,
+          "stdSpeed": 2.4,
+          "samples": 28
+        },
+        "11": {
+          "avgSpeed": 4.6,
+          "stdSpeed": 2.5,
+          "samples": 28
+        },
+        "12": {
+          "avgSpeed": 5,
+          "stdSpeed": 2.8,
+          "samples": 28
+        },
+        "13": {
+          "avgSpeed": 5.2,
+          "stdSpeed": 2.7,
+          "samples": 28
+        },
+        "14": {
+          "avgSpeed": 5.2,
+          "stdSpeed": 2.4,
+          "samples": 28
+        },
+        "15": {
+          "avgSpeed": 4.5,
+          "stdSpeed": 3.1,
+          "samples": 28
+        },
+        "16": {
+          "avgSpeed": 3.4,
+          "stdSpeed": 3.1,
+          "samples": 28
+        },
+        "17": {
+          "avgSpeed": 2.1,
+          "stdSpeed": 2.5,
+          "samples": 28
+        },
+        "18": {
+          "avgSpeed": 1.6,
+          "stdSpeed": 1.8,
+          "samples": 28
+        },
+        "19": {
+          "avgSpeed": 1.3,
+          "stdSpeed": 1.4,
+          "samples": 28
+        },
+        "20": {
+          "avgSpeed": 1.6,
+          "stdSpeed": 2.2,
+          "samples": 28
+        },
+        "21": {
+          "avgSpeed": 2.2,
+          "stdSpeed": 3.4,
+          "samples": 28
+        },
+        "22": {
+          "avgSpeed": 1.8,
+          "stdSpeed": 3.1,
+          "samples": 28
+        },
+        "23": {
+          "avgSpeed": 1.9,
+          "stdSpeed": 3.1,
+          "samples": 28
+        }
+      },
+      "3": {
+        "0": {
+          "avgSpeed": 2.2,
+          "stdSpeed": 4.2,
+          "samples": 19
+        },
+        "1": {
+          "avgSpeed": 2.1,
+          "stdSpeed": 3.7,
+          "samples": 19
+        },
+        "2": {
+          "avgSpeed": 2.1,
+          "stdSpeed": 3.5,
+          "samples": 18
+        },
+        "3": {
+          "avgSpeed": 1.9,
+          "stdSpeed": 3.4,
+          "samples": 19
+        },
+        "4": {
+          "avgSpeed": 1.7,
+          "stdSpeed": 3.5,
+          "samples": 19
+        },
+        "5": {
+          "avgSpeed": 1.4,
+          "stdSpeed": 3.2,
+          "samples": 19
+        },
+        "6": {
+          "avgSpeed": 1.6,
+          "stdSpeed": 3,
+          "samples": 19
+        },
+        "7": {
+          "avgSpeed": 1.5,
+          "stdSpeed": 2.9,
+          "samples": 19
+        },
+        "8": {
+          "avgSpeed": 2.3,
+          "stdSpeed": 3.3,
+          "samples": 20
+        },
+        "9": {
+          "avgSpeed": 3.2,
+          "stdSpeed": 3,
+          "samples": 20
+        },
+        "10": {
+          "avgSpeed": 4,
+          "stdSpeed": 3,
+          "samples": 20
+        },
+        "11": {
+          "avgSpeed": 4.4,
+          "stdSpeed": 3.4,
+          "samples": 20
+        },
+        "12": {
+          "avgSpeed": 4.6,
+          "stdSpeed": 3.2,
+          "samples": 20
+        },
+        "13": {
+          "avgSpeed": 5.1,
+          "stdSpeed": 3,
+          "samples": 20
+        },
+        "14": {
+          "avgSpeed": 5.6,
+          "stdSpeed": 3.6,
+          "samples": 20
+        },
+        "15": {
+          "avgSpeed": 5.2,
+          "stdSpeed": 3.4,
+          "samples": 20
+        },
+        "16": {
+          "avgSpeed": 4.5,
+          "stdSpeed": 3,
+          "samples": 20
+        },
+        "17": {
+          "avgSpeed": 4.5,
+          "stdSpeed": 3.1,
+          "samples": 20
+        },
+        "18": {
+          "avgSpeed": 3.5,
+          "stdSpeed": 2.5,
+          "samples": 20
+        },
+        "19": {
+          "avgSpeed": 2.2,
+          "stdSpeed": 2.3,
+          "samples": 20
+        },
+        "20": {
+          "avgSpeed": 2.2,
+          "stdSpeed": 2.5,
+          "samples": 20
+        },
+        "21": {
+          "avgSpeed": 2.7,
+          "stdSpeed": 2.9,
+          "samples": 20
+        },
+        "22": {
+          "avgSpeed": 3,
+          "stdSpeed": 4.6,
+          "samples": 20
+        },
+        "23": {
+          "avgSpeed": 2.5,
+          "stdSpeed": 4.2,
+          "samples": 20
+        }
+      },
+      "12": {
+        "0": {
+          "avgSpeed": 3.4,
+          "stdSpeed": 3.7,
+          "samples": 8
+        },
+        "1": {
+          "avgSpeed": 4.2,
+          "stdSpeed": 3.6,
+          "samples": 8
+        },
+        "2": {
+          "avgSpeed": 3.3,
+          "stdSpeed": 2.8,
+          "samples": 8
+        },
+        "3": {
+          "avgSpeed": 2.7,
+          "stdSpeed": 2.8,
+          "samples": 8
+        },
+        "4": {
+          "avgSpeed": 4.1,
+          "stdSpeed": 3.4,
+          "samples": 8
+        },
+        "5": {
+          "avgSpeed": 3.3,
+          "stdSpeed": 3,
+          "samples": 8
+        },
+        "6": {
+          "avgSpeed": 4.1,
+          "stdSpeed": 4.2,
+          "samples": 8
+        },
+        "7": {
+          "avgSpeed": 3.3,
+          "stdSpeed": 2.9,
+          "samples": 8
+        },
+        "8": {
+          "avgSpeed": 3.8,
+          "stdSpeed": 3.9,
+          "samples": 8
+        },
+        "9": {
+          "avgSpeed": 4.9,
+          "stdSpeed": 4.4,
+          "samples": 8
+        },
+        "10": {
+          "avgSpeed": 5,
+          "stdSpeed": 4.3,
+          "samples": 8
+        },
+        "11": {
+          "avgSpeed": 5.3,
+          "stdSpeed": 3.1,
+          "samples": 8
+        },
+        "12": {
+          "avgSpeed": 5.9,
+          "stdSpeed": 3.9,
+          "samples": 8
+        },
+        "13": {
+          "avgSpeed": 5.9,
+          "stdSpeed": 3.5,
+          "samples": 8
+        },
+        "14": {
+          "avgSpeed": 6.6,
+          "stdSpeed": 3.7,
+          "samples": 8
+        },
+        "15": {
+          "avgSpeed": 6.4,
+          "stdSpeed": 5.6,
+          "samples": 8
+        },
+        "16": {
+          "avgSpeed": 5,
+          "stdSpeed": 5.4,
+          "samples": 8
+        },
+        "17": {
+          "avgSpeed": 4.8,
+          "stdSpeed": 4.8,
+          "samples": 8
+        },
+        "18": {
+          "avgSpeed": 4.2,
+          "stdSpeed": 3.6,
+          "samples": 8
+        },
+        "19": {
+          "avgSpeed": 3.2,
+          "stdSpeed": 3.6,
+          "samples": 8
+        },
+        "20": {
+          "avgSpeed": 3.7,
+          "stdSpeed": 3.4,
+          "samples": 8
+        },
+        "21": {
+          "avgSpeed": 2.1,
+          "stdSpeed": 2.1,
+          "samples": 8
+        },
+        "22": {
+          "avgSpeed": 3.2,
+          "stdSpeed": 4.5,
+          "samples": 8
+        },
+        "23": {
+          "avgSpeed": 3.7,
+          "stdSpeed": 5.2,
+          "samples": 8
+        }
+      }
+    },
+    "KUTSARAT74": {
+      "1": {
+        "0": {
+          "avgSpeed": 0.3,
+          "stdSpeed": 0.8,
+          "samples": 31
+        },
+        "1": {
+          "avgSpeed": 0.2,
+          "stdSpeed": 0.7,
+          "samples": 31
+        },
+        "2": {
+          "avgSpeed": 0.4,
+          "stdSpeed": 1,
+          "samples": 31
+        },
+        "3": {
+          "avgSpeed": 0.3,
+          "stdSpeed": 0.7,
+          "samples": 31
+        },
+        "4": {
+          "avgSpeed": 0.2,
+          "stdSpeed": 0.5,
+          "samples": 31
+        },
+        "5": {
+          "avgSpeed": 0.2,
+          "stdSpeed": 0.6,
+          "samples": 31
+        },
+        "6": {
+          "avgSpeed": 0.2,
+          "stdSpeed": 0.5,
+          "samples": 31
+        },
+        "7": {
+          "avgSpeed": 0.2,
+          "stdSpeed": 0.6,
+          "samples": 31
+        },
+        "8": {
+          "avgSpeed": 0.2,
+          "stdSpeed": 0.4,
+          "samples": 31
+        },
+        "9": {
+          "avgSpeed": 0.4,
+          "stdSpeed": 0.5,
+          "samples": 31
+        },
+        "10": {
+          "avgSpeed": 0.8,
+          "stdSpeed": 0.8,
+          "samples": 31
+        },
+        "11": {
+          "avgSpeed": 1,
+          "stdSpeed": 0.8,
+          "samples": 31
+        },
+        "12": {
+          "avgSpeed": 1.4,
+          "stdSpeed": 0.9,
+          "samples": 31
+        },
+        "13": {
+          "avgSpeed": 1.5,
+          "stdSpeed": 1.2,
+          "samples": 31
+        },
+        "14": {
+          "avgSpeed": 1.5,
+          "stdSpeed": 1.3,
+          "samples": 31
+        },
+        "15": {
+          "avgSpeed": 1.3,
+          "stdSpeed": 1.4,
+          "samples": 31
+        },
+        "16": {
+          "avgSpeed": 0.9,
+          "stdSpeed": 1.3,
+          "samples": 31
+        },
+        "17": {
+          "avgSpeed": 0.5,
+          "stdSpeed": 0.7,
+          "samples": 31
+        },
+        "18": {
+          "avgSpeed": 0.4,
+          "stdSpeed": 0.9,
+          "samples": 31
+        },
+        "19": {
+          "avgSpeed": 0.4,
+          "stdSpeed": 0.7,
+          "samples": 31
+        },
+        "20": {
+          "avgSpeed": 0.3,
+          "stdSpeed": 0.8,
+          "samples": 31
+        },
+        "21": {
+          "avgSpeed": 0.3,
+          "stdSpeed": 0.8,
+          "samples": 31
+        },
+        "22": {
+          "avgSpeed": 0.3,
+          "stdSpeed": 0.9,
+          "samples": 31
+        },
+        "23": {
+          "avgSpeed": 0.3,
+          "stdSpeed": 0.8,
+          "samples": 31
+        }
+      },
+      "2": {
+        "0": {
+          "avgSpeed": 0.5,
+          "stdSpeed": 1.1,
+          "samples": 28
+        },
+        "1": {
+          "avgSpeed": 0.3,
+          "stdSpeed": 0.9,
+          "samples": 28
+        },
+        "2": {
+          "avgSpeed": 0.3,
+          "stdSpeed": 0.6,
+          "samples": 28
+        },
+        "3": {
+          "avgSpeed": 0.3,
+          "stdSpeed": 0.5,
+          "samples": 28
+        },
+        "4": {
+          "avgSpeed": 0.3,
+          "stdSpeed": 0.7,
+          "samples": 28
+        },
+        "5": {
+          "avgSpeed": 0.4,
+          "stdSpeed": 1.2,
+          "samples": 28
+        },
+        "6": {
+          "avgSpeed": 0.5,
+          "stdSpeed": 1.2,
+          "samples": 28
+        },
+        "7": {
+          "avgSpeed": 0.4,
+          "stdSpeed": 0.9,
+          "samples": 28
+        },
+        "8": {
+          "avgSpeed": 0.7,
+          "stdSpeed": 1,
+          "samples": 28
+        },
+        "9": {
+          "avgSpeed": 1.3,
+          "stdSpeed": 1.4,
+          "samples": 28
+        },
+        "10": {
+          "avgSpeed": 1.6,
+          "stdSpeed": 1.4,
+          "samples": 28
+        },
+        "11": {
+          "avgSpeed": 1.8,
+          "stdSpeed": 1.3,
+          "samples": 28
+        },
+        "12": {
+          "avgSpeed": 2,
+          "stdSpeed": 1.1,
+          "samples": 28
+        },
+        "13": {
+          "avgSpeed": 2.1,
+          "stdSpeed": 1.1,
+          "samples": 28
+        },
+        "14": {
+          "avgSpeed": 1.8,
+          "stdSpeed": 1.2,
+          "samples": 28
+        },
+        "15": {
+          "avgSpeed": 1.7,
+          "stdSpeed": 1.1,
+          "samples": 28
+        },
+        "16": {
+          "avgSpeed": 1.1,
+          "stdSpeed": 0.9,
+          "samples": 28
+        },
+        "17": {
+          "avgSpeed": 0.6,
+          "stdSpeed": 0.6,
+          "samples": 28
+        },
+        "18": {
+          "avgSpeed": 0.3,
+          "stdSpeed": 0.5,
+          "samples": 28
+        },
+        "19": {
+          "avgSpeed": 0.2,
+          "stdSpeed": 0.3,
+          "samples": 28
+        },
+        "20": {
+          "avgSpeed": 0.2,
+          "stdSpeed": 0.3,
+          "samples": 28
+        },
+        "21": {
+          "avgSpeed": 0.3,
+          "stdSpeed": 0.6,
+          "samples": 28
+        },
+        "22": {
+          "avgSpeed": 0.4,
+          "stdSpeed": 0.8,
+          "samples": 28
+        },
+        "23": {
+          "avgSpeed": 0.3,
+          "stdSpeed": 0.7,
+          "samples": 28
+        }
+      },
+      "3": {
+        "0": {
+          "avgSpeed": 1.2,
+          "stdSpeed": 2.1,
+          "samples": 22
+        },
+        "1": {
+          "avgSpeed": 0.9,
+          "stdSpeed": 1.6,
+          "samples": 22
+        },
+        "2": {
+          "avgSpeed": 0.5,
+          "stdSpeed": 1.1,
+          "samples": 21
+        },
+        "3": {
+          "avgSpeed": 0.3,
+          "stdSpeed": 0.6,
+          "samples": 22
+        },
+        "4": {
+          "avgSpeed": 0.2,
+          "stdSpeed": 0.5,
+          "samples": 22
+        },
+        "5": {
+          "avgSpeed": 0.2,
+          "stdSpeed": 0.6,
+          "samples": 22
+        },
+        "6": {
+          "avgSpeed": 0.3,
+          "stdSpeed": 0.8,
+          "samples": 22
+        },
+        "7": {
+          "avgSpeed": 0.4,
+          "stdSpeed": 1.1,
+          "samples": 23
+        },
+        "8": {
+          "avgSpeed": 0.5,
+          "stdSpeed": 0.9,
+          "samples": 23
+        },
+        "9": {
+          "avgSpeed": 0.9,
+          "stdSpeed": 0.8,
+          "samples": 23
+        },
+        "10": {
+          "avgSpeed": 1.3,
+          "stdSpeed": 1,
+          "samples": 23
+        },
+        "11": {
+          "avgSpeed": 1.4,
+          "stdSpeed": 0.9,
+          "samples": 23
+        },
+        "12": {
+          "avgSpeed": 1.6,
+          "stdSpeed": 1,
+          "samples": 23
+        },
+        "13": {
+          "avgSpeed": 2,
+          "stdSpeed": 1.3,
+          "samples": 23
+        },
+        "14": {
+          "avgSpeed": 2,
+          "stdSpeed": 1.3,
+          "samples": 23
+        },
+        "15": {
+          "avgSpeed": 2.2,
+          "stdSpeed": 1.3,
+          "samples": 23
+        },
+        "16": {
+          "avgSpeed": 2,
+          "stdSpeed": 1.1,
+          "samples": 23
+        },
+        "17": {
+          "avgSpeed": 1.8,
+          "stdSpeed": 1.2,
+          "samples": 23
+        },
+        "18": {
+          "avgSpeed": 1.3,
+          "stdSpeed": 1.7,
+          "samples": 23
+        },
+        "19": {
+          "avgSpeed": 0.6,
+          "stdSpeed": 1.3,
+          "samples": 23
+        },
+        "20": {
+          "avgSpeed": 0.7,
+          "stdSpeed": 1.1,
+          "samples": 23
+        },
+        "21": {
+          "avgSpeed": 0.9,
+          "stdSpeed": 1.5,
+          "samples": 23
+        },
+        "22": {
+          "avgSpeed": 1.1,
+          "stdSpeed": 2.2,
+          "samples": 23
+        },
+        "23": {
+          "avgSpeed": 1,
+          "stdSpeed": 2.1,
+          "samples": 23
+        }
+      },
+      "12": {
+        "0": {
+          "avgSpeed": 1.5,
+          "stdSpeed": 1.4,
+          "samples": 8
+        },
+        "1": {
+          "avgSpeed": 1.2,
+          "stdSpeed": 1.3,
+          "samples": 8
+        },
+        "2": {
+          "avgSpeed": 1.1,
+          "stdSpeed": 1.2,
+          "samples": 8
+        },
+        "3": {
+          "avgSpeed": 1.2,
+          "stdSpeed": 1.3,
+          "samples": 8
+        },
+        "4": {
+          "avgSpeed": 1.1,
+          "stdSpeed": 1.3,
+          "samples": 8
+        },
+        "5": {
+          "avgSpeed": 1.1,
+          "stdSpeed": 1.2,
+          "samples": 8
+        },
+        "6": {
+          "avgSpeed": 0.8,
+          "stdSpeed": 0.7,
+          "samples": 8
+        },
+        "7": {
+          "avgSpeed": 1.4,
+          "stdSpeed": 1.5,
+          "samples": 8
+        },
+        "8": {
+          "avgSpeed": 1.2,
+          "stdSpeed": 1.6,
+          "samples": 8
+        },
+        "9": {
+          "avgSpeed": 1,
+          "stdSpeed": 1.3,
+          "samples": 8
+        },
+        "10": {
+          "avgSpeed": 1.3,
+          "stdSpeed": 1.1,
+          "samples": 8
+        },
+        "11": {
+          "avgSpeed": 1.7,
+          "stdSpeed": 1.3,
+          "samples": 8
+        },
+        "12": {
+          "avgSpeed": 2.3,
+          "stdSpeed": 1.6,
+          "samples": 8
+        },
+        "13": {
+          "avgSpeed": 1.6,
+          "stdSpeed": 0.8,
+          "samples": 8
+        },
+        "14": {
+          "avgSpeed": 1.6,
+          "stdSpeed": 1,
+          "samples": 8
+        },
+        "15": {
+          "avgSpeed": 1.1,
+          "stdSpeed": 0.7,
+          "samples": 8
+        },
+        "16": {
+          "avgSpeed": 1.3,
+          "stdSpeed": 1.4,
+          "samples": 8
+        },
+        "17": {
+          "avgSpeed": 0.8,
+          "stdSpeed": 0.9,
+          "samples": 8
+        },
+        "18": {
+          "avgSpeed": 0.9,
+          "stdSpeed": 1,
+          "samples": 8
+        },
+        "19": {
+          "avgSpeed": 0.8,
+          "stdSpeed": 0.8,
+          "samples": 8
+        },
+        "20": {
+          "avgSpeed": 1,
+          "stdSpeed": 1,
+          "samples": 8
+        },
+        "21": {
+          "avgSpeed": 0.2,
+          "stdSpeed": 0.3,
+          "samples": 8
+        },
+        "22": {
+          "avgSpeed": 0.4,
+          "stdSpeed": 0.6,
+          "samples": 8
+        },
+        "23": {
+          "avgSpeed": 0.5,
+          "stdSpeed": 0.8,
+          "samples": 8
+        }
+      }
+    },
+    "KUTSARAT62": {
+      "1": {
+        "0": {
+          "avgSpeed": 0.9,
+          "stdSpeed": 2,
+          "samples": 31
+        },
+        "1": {
+          "avgSpeed": 1.1,
+          "stdSpeed": 2.2,
+          "samples": 31
+        },
+        "2": {
+          "avgSpeed": 1,
+          "stdSpeed": 2.2,
+          "samples": 31
+        },
+        "3": {
+          "avgSpeed": 1.2,
+          "stdSpeed": 2.5,
+          "samples": 31
+        },
+        "4": {
+          "avgSpeed": 1.5,
+          "stdSpeed": 3.2,
+          "samples": 31
+        },
+        "5": {
+          "avgSpeed": 1.6,
+          "stdSpeed": 3.2,
+          "samples": 31
+        },
+        "6": {
+          "avgSpeed": 1.3,
+          "stdSpeed": 2.7,
+          "samples": 31
+        },
+        "7": {
+          "avgSpeed": 1.1,
+          "stdSpeed": 2.7,
+          "samples": 31
+        },
+        "8": {
+          "avgSpeed": 1.1,
+          "stdSpeed": 2.4,
+          "samples": 31
+        },
+        "9": {
+          "avgSpeed": 1.7,
+          "stdSpeed": 2.8,
+          "samples": 31
+        },
+        "10": {
+          "avgSpeed": 2.6,
+          "stdSpeed": 3,
+          "samples": 31
+        },
+        "11": {
+          "avgSpeed": 3.1,
+          "stdSpeed": 3.4,
+          "samples": 31
+        },
+        "12": {
+          "avgSpeed": 3.2,
+          "stdSpeed": 3.9,
+          "samples": 31
+        },
+        "13": {
+          "avgSpeed": 3.6,
+          "stdSpeed": 4.1,
+          "samples": 31
+        },
+        "14": {
+          "avgSpeed": 4.1,
+          "stdSpeed": 4.7,
+          "samples": 31
+        },
+        "15": {
+          "avgSpeed": 4.3,
+          "stdSpeed": 4.7,
+          "samples": 31
+        },
+        "16": {
+          "avgSpeed": 4.7,
+          "stdSpeed": 4.4,
+          "samples": 31
+        },
+        "17": {
+          "avgSpeed": 4.3,
+          "stdSpeed": 4.1,
+          "samples": 31
+        },
+        "18": {
+          "avgSpeed": 4.4,
+          "stdSpeed": 4.3,
+          "samples": 31
+        },
+        "19": {
+          "avgSpeed": 4,
+          "stdSpeed": 3.9,
+          "samples": 31
+        },
+        "20": {
+          "avgSpeed": 3.4,
+          "stdSpeed": 3.5,
+          "samples": 31
+        },
+        "21": {
+          "avgSpeed": 2.9,
+          "stdSpeed": 3.3,
+          "samples": 31
+        },
+        "22": {
+          "avgSpeed": 1.8,
+          "stdSpeed": 2.7,
+          "samples": 31
+        },
+        "23": {
+          "avgSpeed": 1.3,
+          "stdSpeed": 2.6,
+          "samples": 31
+        }
+      },
+      "2": {
+        "0": {
+          "avgSpeed": 2,
+          "stdSpeed": 2.7,
+          "samples": 28
+        },
+        "1": {
+          "avgSpeed": 1.7,
+          "stdSpeed": 2.5,
+          "samples": 28
+        },
+        "2": {
+          "avgSpeed": 1.7,
+          "stdSpeed": 3.1,
+          "samples": 28
+        },
+        "3": {
+          "avgSpeed": 1.9,
+          "stdSpeed": 3.1,
+          "samples": 28
+        },
+        "4": {
+          "avgSpeed": 2.1,
+          "stdSpeed": 3.2,
+          "samples": 28
+        },
+        "5": {
+          "avgSpeed": 1.7,
+          "stdSpeed": 3.3,
+          "samples": 28
+        },
+        "6": {
+          "avgSpeed": 1.6,
+          "stdSpeed": 2.4,
+          "samples": 28
+        },
+        "7": {
+          "avgSpeed": 1.3,
+          "stdSpeed": 1.9,
+          "samples": 28
+        },
+        "8": {
+          "avgSpeed": 1.6,
+          "stdSpeed": 2.4,
+          "samples": 28
+        },
+        "9": {
+          "avgSpeed": 2.8,
+          "stdSpeed": 4,
+          "samples": 28
+        },
+        "10": {
+          "avgSpeed": 3.3,
+          "stdSpeed": 4.1,
+          "samples": 28
+        },
+        "11": {
+          "avgSpeed": 3.7,
+          "stdSpeed": 4.3,
+          "samples": 28
+        },
+        "12": {
+          "avgSpeed": 4.1,
+          "stdSpeed": 4.3,
+          "samples": 28
+        },
+        "13": {
+          "avgSpeed": 4.2,
+          "stdSpeed": 4.6,
+          "samples": 28
+        },
+        "14": {
+          "avgSpeed": 4.1,
+          "stdSpeed": 4.6,
+          "samples": 28
+        },
+        "15": {
+          "avgSpeed": 4.3,
+          "stdSpeed": 4.3,
+          "samples": 28
+        },
+        "16": {
+          "avgSpeed": 4.5,
+          "stdSpeed": 3.8,
+          "samples": 28
+        },
+        "17": {
+          "avgSpeed": 4.5,
+          "stdSpeed": 3.3,
+          "samples": 28
+        },
+        "18": {
+          "avgSpeed": 3.9,
+          "stdSpeed": 3,
+          "samples": 28
+        },
+        "19": {
+          "avgSpeed": 2.8,
+          "stdSpeed": 2.4,
+          "samples": 28
+        },
+        "20": {
+          "avgSpeed": 2.6,
+          "stdSpeed": 2.6,
+          "samples": 28
+        },
+        "21": {
+          "avgSpeed": 2.4,
+          "stdSpeed": 3.1,
+          "samples": 28
+        },
+        "22": {
+          "avgSpeed": 2.4,
+          "stdSpeed": 3.2,
+          "samples": 28
+        },
+        "23": {
+          "avgSpeed": 1.7,
+          "stdSpeed": 2.3,
+          "samples": 28
+        }
+      },
+      "3": {
+        "0": {
+          "avgSpeed": 3.4,
+          "stdSpeed": 5.3,
+          "samples": 21
+        },
+        "1": {
+          "avgSpeed": 3.3,
+          "stdSpeed": 5.2,
+          "samples": 21
+        },
+        "2": {
+          "avgSpeed": 2.8,
+          "stdSpeed": 4.5,
+          "samples": 20
+        },
+        "3": {
+          "avgSpeed": 2.2,
+          "stdSpeed": 3.6,
+          "samples": 21
+        },
+        "4": {
+          "avgSpeed": 1.9,
+          "stdSpeed": 3.5,
+          "samples": 21
+        },
+        "5": {
+          "avgSpeed": 1.6,
+          "stdSpeed": 3.2,
+          "samples": 22
+        },
+        "6": {
+          "avgSpeed": 1.8,
+          "stdSpeed": 3.4,
+          "samples": 22
+        },
+        "7": {
+          "avgSpeed": 1.4,
+          "stdSpeed": 2.1,
+          "samples": 22
+        },
+        "8": {
+          "avgSpeed": 1.5,
+          "stdSpeed": 2.4,
+          "samples": 23
+        },
+        "9": {
+          "avgSpeed": 2.5,
+          "stdSpeed": 3,
+          "samples": 23
+        },
+        "10": {
+          "avgSpeed": 3.3,
+          "stdSpeed": 3.4,
+          "samples": 23
+        },
+        "11": {
+          "avgSpeed": 3.5,
+          "stdSpeed": 3.7,
+          "samples": 23
+        },
+        "12": {
+          "avgSpeed": 4.6,
+          "stdSpeed": 4.3,
+          "samples": 23
+        },
+        "13": {
+          "avgSpeed": 5,
+          "stdSpeed": 5,
+          "samples": 23
+        },
+        "14": {
+          "avgSpeed": 5.1,
+          "stdSpeed": 5.6,
+          "samples": 23
+        },
+        "15": {
+          "avgSpeed": 5.2,
+          "stdSpeed": 5.2,
+          "samples": 23
+        },
+        "16": {
+          "avgSpeed": 5.8,
+          "stdSpeed": 5,
+          "samples": 23
+        },
+        "17": {
+          "avgSpeed": 6.2,
+          "stdSpeed": 5.6,
+          "samples": 23
+        },
+        "18": {
+          "avgSpeed": 5.7,
+          "stdSpeed": 5.3,
+          "samples": 23
+        },
+        "19": {
+          "avgSpeed": 5.3,
+          "stdSpeed": 4.7,
+          "samples": 23
+        },
+        "20": {
+          "avgSpeed": 4.6,
+          "stdSpeed": 4.1,
+          "samples": 23
+        },
+        "21": {
+          "avgSpeed": 5.2,
+          "stdSpeed": 5.5,
+          "samples": 23
+        },
+        "22": {
+          "avgSpeed": 5.3,
+          "stdSpeed": 7.6,
+          "samples": 23
+        },
+        "23": {
+          "avgSpeed": 4.6,
+          "stdSpeed": 7.4,
+          "samples": 23
+        }
+      },
+      "12": {
+        "0": {
+          "avgSpeed": 3.6,
+          "stdSpeed": 2.7,
+          "samples": 8
+        },
+        "1": {
+          "avgSpeed": 2.8,
+          "stdSpeed": 3.1,
+          "samples": 8
+        },
+        "2": {
+          "avgSpeed": 4.2,
+          "stdSpeed": 3.8,
+          "samples": 8
+        },
+        "3": {
+          "avgSpeed": 3,
+          "stdSpeed": 2.6,
+          "samples": 8
+        },
+        "4": {
+          "avgSpeed": 3,
+          "stdSpeed": 3.4,
+          "samples": 8
+        },
+        "5": {
+          "avgSpeed": 3,
+          "stdSpeed": 3.1,
+          "samples": 8
+        },
+        "6": {
+          "avgSpeed": 3.8,
+          "stdSpeed": 3.6,
+          "samples": 8
+        },
+        "7": {
+          "avgSpeed": 4.6,
+          "stdSpeed": 4.1,
+          "samples": 8
+        },
+        "8": {
+          "avgSpeed": 3.3,
+          "stdSpeed": 2.7,
+          "samples": 8
+        },
+        "9": {
+          "avgSpeed": 3.4,
+          "stdSpeed": 2.7,
+          "samples": 8
+        },
+        "10": {
+          "avgSpeed": 3.6,
+          "stdSpeed": 3.1,
+          "samples": 8
+        },
+        "11": {
+          "avgSpeed": 4.2,
+          "stdSpeed": 3.7,
+          "samples": 8
+        },
+        "12": {
+          "avgSpeed": 4.2,
+          "stdSpeed": 3.1,
+          "samples": 8
+        },
+        "13": {
+          "avgSpeed": 5.5,
+          "stdSpeed": 3.4,
+          "samples": 8
+        },
+        "14": {
+          "avgSpeed": 4.6,
+          "stdSpeed": 3.1,
+          "samples": 8
+        },
+        "15": {
+          "avgSpeed": 4.4,
+          "stdSpeed": 2.9,
+          "samples": 8
+        },
+        "16": {
+          "avgSpeed": 4.1,
+          "stdSpeed": 3,
+          "samples": 8
+        },
+        "17": {
+          "avgSpeed": 4.1,
+          "stdSpeed": 2.7,
+          "samples": 8
+        },
+        "18": {
+          "avgSpeed": 5.7,
+          "stdSpeed": 5,
+          "samples": 8
+        },
+        "19": {
+          "avgSpeed": 5.3,
+          "stdSpeed": 4.6,
+          "samples": 8
+        },
+        "20": {
+          "avgSpeed": 4.2,
+          "stdSpeed": 4.7,
+          "samples": 8
+        },
+        "21": {
+          "avgSpeed": 3.3,
+          "stdSpeed": 3.8,
+          "samples": 8
+        },
+        "22": {
+          "avgSpeed": 2.4,
+          "stdSpeed": 3,
+          "samples": 8
+        },
+        "23": {
+          "avgSpeed": 2.8,
+          "stdSpeed": 3.1,
+          "samples": 8
+        }
+      }
+    },
+    "KUTDRAPE132": {
+      "1": {
+        "0": {
+          "avgSpeed": 0.3,
+          "stdSpeed": 0.4,
+          "samples": 31
+        },
+        "1": {
+          "avgSpeed": 0.3,
+          "stdSpeed": 0.4,
+          "samples": 31
+        },
+        "2": {
+          "avgSpeed": 0.3,
+          "stdSpeed": 0.4,
+          "samples": 31
+        },
+        "3": {
+          "avgSpeed": 0.3,
+          "stdSpeed": 0.6,
+          "samples": 31
+        },
+        "4": {
+          "avgSpeed": 0.2,
+          "stdSpeed": 0.4,
+          "samples": 31
+        },
+        "5": {
+          "avgSpeed": 0.1,
+          "stdSpeed": 0.3,
+          "samples": 31
+        },
+        "6": {
+          "avgSpeed": 0.2,
+          "stdSpeed": 0.4,
+          "samples": 31
+        },
+        "7": {
+          "avgSpeed": 0.2,
+          "stdSpeed": 0.5,
+          "samples": 31
+        },
+        "8": {
+          "avgSpeed": 0.3,
+          "stdSpeed": 0.6,
+          "samples": 31
+        },
+        "9": {
+          "avgSpeed": 0.3,
+          "stdSpeed": 0.6,
+          "samples": 31
+        },
+        "10": {
+          "avgSpeed": 0.3,
+          "stdSpeed": 0.5,
+          "samples": 31
+        },
+        "11": {
+          "avgSpeed": 0.2,
+          "stdSpeed": 0.4,
+          "samples": 31
+        },
+        "12": {
+          "avgSpeed": 0.2,
+          "stdSpeed": 0.4,
+          "samples": 31
+        },
+        "13": {
+          "avgSpeed": 0.3,
+          "stdSpeed": 0.4,
+          "samples": 31
+        },
+        "14": {
+          "avgSpeed": 0.3,
+          "stdSpeed": 0.4,
+          "samples": 31
+        },
+        "15": {
+          "avgSpeed": 0.2,
+          "stdSpeed": 0.4,
+          "samples": 31
+        },
+        "16": {
+          "avgSpeed": 0.2,
+          "stdSpeed": 0.3,
+          "samples": 31
+        },
+        "17": {
+          "avgSpeed": 0.2,
+          "stdSpeed": 0.4,
+          "samples": 31
+        },
+        "18": {
+          "avgSpeed": 0.1,
+          "stdSpeed": 0.3,
+          "samples": 31
+        },
+        "19": {
+          "avgSpeed": 0.1,
+          "stdSpeed": 0.3,
+          "samples": 31
+        },
+        "20": {
+          "avgSpeed": 0.1,
+          "stdSpeed": 0.3,
+          "samples": 31
+        },
+        "21": {
+          "avgSpeed": 0.2,
+          "stdSpeed": 0.3,
+          "samples": 31
+        },
+        "22": {
+          "avgSpeed": 0.2,
+          "stdSpeed": 0.4,
+          "samples": 31
+        },
+        "23": {
+          "avgSpeed": 0.2,
+          "stdSpeed": 0.3,
+          "samples": 31
+        }
+      },
+      "2": {
+        "0": {
+          "avgSpeed": 0.4,
+          "stdSpeed": 0.6,
+          "samples": 28
+        },
+        "1": {
+          "avgSpeed": 0.4,
+          "stdSpeed": 0.6,
+          "samples": 28
+        },
+        "2": {
+          "avgSpeed": 0.5,
+          "stdSpeed": 0.6,
+          "samples": 28
+        },
+        "3": {
+          "avgSpeed": 0.5,
+          "stdSpeed": 0.7,
+          "samples": 28
+        },
+        "4": {
+          "avgSpeed": 0.5,
+          "stdSpeed": 0.6,
+          "samples": 28
+        },
+        "5": {
+          "avgSpeed": 0.5,
+          "stdSpeed": 0.7,
+          "samples": 28
+        },
+        "6": {
+          "avgSpeed": 0.5,
+          "stdSpeed": 0.6,
+          "samples": 28
+        },
+        "7": {
+          "avgSpeed": 0.7,
+          "stdSpeed": 0.8,
+          "samples": 28
+        },
+        "8": {
+          "avgSpeed": 0.7,
+          "stdSpeed": 0.7,
+          "samples": 28
+        },
+        "9": {
+          "avgSpeed": 0.5,
+          "stdSpeed": 0.7,
+          "samples": 28
+        },
+        "10": {
+          "avgSpeed": 0.6,
+          "stdSpeed": 0.7,
+          "samples": 28
+        },
+        "11": {
+          "avgSpeed": 0.5,
+          "stdSpeed": 0.6,
+          "samples": 28
+        },
+        "12": {
+          "avgSpeed": 0.4,
+          "stdSpeed": 0.4,
+          "samples": 28
+        },
+        "13": {
+          "avgSpeed": 0.5,
+          "stdSpeed": 0.5,
+          "samples": 28
+        },
+        "14": {
+          "avgSpeed": 0.4,
+          "stdSpeed": 0.4,
+          "samples": 28
+        },
+        "15": {
+          "avgSpeed": 0.3,
+          "stdSpeed": 0.3,
+          "samples": 28
+        },
+        "16": {
+          "avgSpeed": 0.2,
+          "stdSpeed": 0.2,
+          "samples": 28
+        },
+        "17": {
+          "avgSpeed": 0.1,
+          "stdSpeed": 0.2,
+          "samples": 28
+        },
+        "18": {
+          "avgSpeed": 0.1,
+          "stdSpeed": 0.2,
+          "samples": 28
+        },
+        "19": {
+          "avgSpeed": 0.2,
+          "stdSpeed": 0.3,
+          "samples": 28
+        },
+        "20": {
+          "avgSpeed": 0.2,
+          "stdSpeed": 0.4,
+          "samples": 28
+        },
+        "21": {
+          "avgSpeed": 0.3,
+          "stdSpeed": 0.4,
+          "samples": 28
+        },
+        "22": {
+          "avgSpeed": 0.3,
+          "stdSpeed": 0.6,
+          "samples": 28
+        },
+        "23": {
+          "avgSpeed": 0.4,
+          "stdSpeed": 0.6,
+          "samples": 28
+        }
+      },
+      "3": {
+        "0": {
+          "avgSpeed": 0.3,
+          "stdSpeed": 0.5,
+          "samples": 19
+        },
+        "1": {
+          "avgSpeed": 0.3,
+          "stdSpeed": 0.6,
+          "samples": 19
+        },
+        "2": {
+          "avgSpeed": 0.3,
+          "stdSpeed": 0.6,
+          "samples": 18
+        },
+        "3": {
+          "avgSpeed": 0.3,
+          "stdSpeed": 0.5,
+          "samples": 19
+        },
+        "4": {
+          "avgSpeed": 0.3,
+          "stdSpeed": 0.6,
+          "samples": 19
+        },
+        "5": {
+          "avgSpeed": 0.4,
+          "stdSpeed": 0.7,
+          "samples": 19
+        },
+        "6": {
+          "avgSpeed": 0.4,
+          "stdSpeed": 0.8,
+          "samples": 19
+        },
+        "7": {
+          "avgSpeed": 0.5,
+          "stdSpeed": 0.9,
+          "samples": 19
+        },
+        "8": {
+          "avgSpeed": 0.5,
+          "stdSpeed": 0.8,
+          "samples": 20
+        },
+        "9": {
+          "avgSpeed": 0.4,
+          "stdSpeed": 0.6,
+          "samples": 20
+        },
+        "10": {
+          "avgSpeed": 0.4,
+          "stdSpeed": 0.5,
+          "samples": 20
+        },
+        "11": {
+          "avgSpeed": 0.4,
+          "stdSpeed": 0.5,
+          "samples": 20
+        },
+        "12": {
+          "avgSpeed": 0.4,
+          "stdSpeed": 0.6,
+          "samples": 20
+        },
+        "13": {
+          "avgSpeed": 0.4,
+          "stdSpeed": 0.5,
+          "samples": 20
+        },
+        "14": {
+          "avgSpeed": 0.3,
+          "stdSpeed": 0.3,
+          "samples": 20
+        },
+        "15": {
+          "avgSpeed": 0.2,
+          "stdSpeed": 0.3,
+          "samples": 20
+        },
+        "16": {
+          "avgSpeed": 0.2,
+          "stdSpeed": 0.3,
+          "samples": 20
+        },
+        "17": {
+          "avgSpeed": 0.2,
+          "stdSpeed": 0.2,
+          "samples": 20
+        },
+        "18": {
+          "avgSpeed": 0.1,
+          "stdSpeed": 0.2,
+          "samples": 20
+        },
+        "19": {
+          "avgSpeed": 0.1,
+          "stdSpeed": 0.2,
+          "samples": 20
+        },
+        "20": {
+          "avgSpeed": 0.1,
+          "stdSpeed": 0.3,
+          "samples": 20
+        },
+        "21": {
+          "avgSpeed": 0.2,
+          "stdSpeed": 0.4,
+          "samples": 20
+        },
+        "22": {
+          "avgSpeed": 0.3,
+          "stdSpeed": 0.5,
+          "samples": 20
+        },
+        "23": {
+          "avgSpeed": 0.3,
+          "stdSpeed": 0.5,
+          "samples": 20
+        }
+      },
+      "12": {
+        "0": {
+          "avgSpeed": 0.4,
+          "stdSpeed": 0.5,
+          "samples": 8
+        },
+        "1": {
+          "avgSpeed": 0.4,
+          "stdSpeed": 0.5,
+          "samples": 8
+        },
+        "2": {
+          "avgSpeed": 0.5,
+          "stdSpeed": 0.5,
+          "samples": 8
+        },
+        "3": {
+          "avgSpeed": 0.6,
+          "stdSpeed": 0.6,
+          "samples": 8
+        },
+        "4": {
+          "avgSpeed": 0.5,
+          "stdSpeed": 0.5,
+          "samples": 8
+        },
+        "5": {
+          "avgSpeed": 0.5,
+          "stdSpeed": 0.5,
+          "samples": 8
+        },
+        "6": {
+          "avgSpeed": 0.5,
+          "stdSpeed": 0.6,
+          "samples": 8
+        },
+        "7": {
+          "avgSpeed": 0.4,
+          "stdSpeed": 0.5,
+          "samples": 8
+        },
+        "8": {
+          "avgSpeed": 0.4,
+          "stdSpeed": 0.6,
+          "samples": 8
+        },
+        "9": {
+          "avgSpeed": 0.5,
+          "stdSpeed": 0.7,
+          "samples": 8
+        },
+        "10": {
+          "avgSpeed": 0.4,
+          "stdSpeed": 0.6,
+          "samples": 8
+        },
+        "11": {
+          "avgSpeed": 0.4,
+          "stdSpeed": 0.6,
+          "samples": 8
+        },
+        "12": {
+          "avgSpeed": 0.6,
+          "stdSpeed": 0.7,
+          "samples": 8
+        },
+        "13": {
+          "avgSpeed": 0.6,
+          "stdSpeed": 0.8,
+          "samples": 8
+        },
+        "14": {
+          "avgSpeed": 0.6,
+          "stdSpeed": 0.7,
+          "samples": 8
+        },
+        "15": {
+          "avgSpeed": 0.5,
+          "stdSpeed": 0.6,
+          "samples": 8
+        },
+        "16": {
+          "avgSpeed": 0.4,
+          "stdSpeed": 0.4,
+          "samples": 8
+        },
+        "17": {
+          "avgSpeed": 0.4,
+          "stdSpeed": 0.6,
+          "samples": 8
+        },
+        "18": {
+          "avgSpeed": 0.5,
+          "stdSpeed": 0.7,
+          "samples": 8
+        },
+        "19": {
+          "avgSpeed": 0.3,
+          "stdSpeed": 0.5,
+          "samples": 8
+        },
+        "20": {
+          "avgSpeed": 0.2,
+          "stdSpeed": 0.3,
+          "samples": 8
+        },
+        "21": {
+          "avgSpeed": 0.2,
+          "stdSpeed": 0.4,
+          "samples": 8
+        },
+        "22": {
+          "avgSpeed": 0.4,
+          "stdSpeed": 0.7,
+          "samples": 8
+        },
+        "23": {
+          "avgSpeed": 0.4,
+          "stdSpeed": 0.6,
+          "samples": 8
+        }
+      }
+    },
+    "KUTDRAPE59": {
+      "1": {
+        "0": {
+          "avgSpeed": 2.2,
+          "stdSpeed": 2.1,
+          "samples": 31
+        },
+        "1": {
+          "avgSpeed": 2.5,
+          "stdSpeed": 2.3,
+          "samples": 31
+        },
+        "2": {
+          "avgSpeed": 2.4,
+          "stdSpeed": 2.2,
+          "samples": 31
+        },
+        "3": {
+          "avgSpeed": 2.9,
+          "stdSpeed": 2.9,
+          "samples": 31
+        },
+        "4": {
+          "avgSpeed": 2.9,
+          "stdSpeed": 2.2,
+          "samples": 31
+        },
+        "5": {
+          "avgSpeed": 2.5,
+          "stdSpeed": 1.9,
+          "samples": 31
+        },
+        "6": {
+          "avgSpeed": 2.7,
+          "stdSpeed": 2.8,
+          "samples": 31
+        },
+        "7": {
+          "avgSpeed": 2.9,
+          "stdSpeed": 2.7,
+          "samples": 31
+        },
+        "8": {
+          "avgSpeed": 3,
+          "stdSpeed": 2.9,
+          "samples": 31
+        },
+        "9": {
+          "avgSpeed": 2.8,
+          "stdSpeed": 3,
+          "samples": 31
+        },
+        "10": {
+          "avgSpeed": 2.5,
+          "stdSpeed": 2.8,
+          "samples": 31
+        },
+        "11": {
+          "avgSpeed": 2.3,
+          "stdSpeed": 2.4,
+          "samples": 31
+        },
+        "12": {
+          "avgSpeed": 2.6,
+          "stdSpeed": 2.2,
+          "samples": 31
+        },
+        "13": {
+          "avgSpeed": 2.6,
+          "stdSpeed": 1.7,
+          "samples": 31
+        },
+        "14": {
+          "avgSpeed": 2.5,
+          "stdSpeed": 1.7,
+          "samples": 31
+        },
+        "15": {
+          "avgSpeed": 2.4,
+          "stdSpeed": 1.8,
+          "samples": 31
+        },
+        "16": {
+          "avgSpeed": 2,
+          "stdSpeed": 1.4,
+          "samples": 31
+        },
+        "17": {
+          "avgSpeed": 1.8,
+          "stdSpeed": 1.3,
+          "samples": 31
+        },
+        "18": {
+          "avgSpeed": 1.8,
+          "stdSpeed": 1.2,
+          "samples": 31
+        },
+        "19": {
+          "avgSpeed": 1.7,
+          "stdSpeed": 1.1,
+          "samples": 31
+        },
+        "20": {
+          "avgSpeed": 1.8,
+          "stdSpeed": 1.5,
+          "samples": 31
+        },
+        "21": {
+          "avgSpeed": 1.8,
+          "stdSpeed": 1.4,
+          "samples": 31
+        },
+        "22": {
+          "avgSpeed": 2.3,
+          "stdSpeed": 2,
+          "samples": 31
+        },
+        "23": {
+          "avgSpeed": 2.8,
+          "stdSpeed": 2.3,
+          "samples": 31
+        }
+      },
+      "2": {
+        "0": {
+          "avgSpeed": 3.4,
+          "stdSpeed": 3.5,
+          "samples": 28
+        },
+        "1": {
+          "avgSpeed": 3.5,
+          "stdSpeed": 2.7,
+          "samples": 28
+        },
+        "2": {
+          "avgSpeed": 4.3,
+          "stdSpeed": 3.4,
+          "samples": 28
+        },
+        "3": {
+          "avgSpeed": 4.3,
+          "stdSpeed": 3.4,
+          "samples": 28
+        },
+        "4": {
+          "avgSpeed": 4,
+          "stdSpeed": 3.1,
+          "samples": 28
+        },
+        "5": {
+          "avgSpeed": 4.4,
+          "stdSpeed": 4,
+          "samples": 28
+        },
+        "6": {
+          "avgSpeed": 4,
+          "stdSpeed": 3.2,
+          "samples": 28
+        },
+        "7": {
+          "avgSpeed": 4.5,
+          "stdSpeed": 3.1,
+          "samples": 28
+        },
+        "8": {
+          "avgSpeed": 4.6,
+          "stdSpeed": 2.5,
+          "samples": 28
+        },
+        "9": {
+          "avgSpeed": 4.1,
+          "stdSpeed": 2.7,
+          "samples": 28
+        },
+        "10": {
+          "avgSpeed": 4,
+          "stdSpeed": 2.4,
+          "samples": 28
+        },
+        "11": {
+          "avgSpeed": 4.2,
+          "stdSpeed": 2.5,
+          "samples": 28
+        },
+        "12": {
+          "avgSpeed": 4.8,
+          "stdSpeed": 2.4,
+          "samples": 28
+        },
+        "13": {
+          "avgSpeed": 4.2,
+          "stdSpeed": 1.8,
+          "samples": 28
+        },
+        "14": {
+          "avgSpeed": 3.6,
+          "stdSpeed": 1.6,
+          "samples": 28
+        },
+        "15": {
+          "avgSpeed": 3.5,
+          "stdSpeed": 1.4,
+          "samples": 28
+        },
+        "16": {
+          "avgSpeed": 2.9,
+          "stdSpeed": 1.3,
+          "samples": 28
+        },
+        "17": {
+          "avgSpeed": 2,
+          "stdSpeed": 1.2,
+          "samples": 28
+        },
+        "18": {
+          "avgSpeed": 1.9,
+          "stdSpeed": 1.2,
+          "samples": 28
+        },
+        "19": {
+          "avgSpeed": 2.4,
+          "stdSpeed": 2.1,
+          "samples": 28
+        },
+        "20": {
+          "avgSpeed": 2.6,
+          "stdSpeed": 2.4,
+          "samples": 28
+        },
+        "21": {
+          "avgSpeed": 2.6,
+          "stdSpeed": 2.6,
+          "samples": 28
+        },
+        "22": {
+          "avgSpeed": 2.8,
+          "stdSpeed": 3.1,
+          "samples": 28
+        },
+        "23": {
+          "avgSpeed": 3.3,
+          "stdSpeed": 3.3,
+          "samples": 28
+        }
+      },
+      "3": {
+        "0": {
+          "avgSpeed": 2.7,
+          "stdSpeed": 2.1,
+          "samples": 22
+        },
+        "1": {
+          "avgSpeed": 3.3,
+          "stdSpeed": 2.3,
+          "samples": 22
+        },
+        "2": {
+          "avgSpeed": 3.6,
+          "stdSpeed": 2.5,
+          "samples": 21
+        },
+        "3": {
+          "avgSpeed": 3.5,
+          "stdSpeed": 2.8,
+          "samples": 22
+        },
+        "4": {
+          "avgSpeed": 3.6,
+          "stdSpeed": 2.8,
+          "samples": 22
+        },
+        "5": {
+          "avgSpeed": 3.5,
+          "stdSpeed": 3.1,
+          "samples": 22
+        },
+        "6": {
+          "avgSpeed": 3.9,
+          "stdSpeed": 2.9,
+          "samples": 22
+        },
+        "7": {
+          "avgSpeed": 4.1,
+          "stdSpeed": 3.2,
+          "samples": 22
+        },
+        "8": {
+          "avgSpeed": 4.3,
+          "stdSpeed": 3.4,
+          "samples": 23
+        },
+        "9": {
+          "avgSpeed": 3.8,
+          "stdSpeed": 3.3,
+          "samples": 23
+        },
+        "10": {
+          "avgSpeed": 4.7,
+          "stdSpeed": 2.8,
+          "samples": 23
+        },
+        "11": {
+          "avgSpeed": 4.1,
+          "stdSpeed": 2.5,
+          "samples": 23
+        },
+        "12": {
+          "avgSpeed": 3.8,
+          "stdSpeed": 2.1,
+          "samples": 23
+        },
+        "13": {
+          "avgSpeed": 3.6,
+          "stdSpeed": 1.7,
+          "samples": 23
+        },
+        "14": {
+          "avgSpeed": 3.6,
+          "stdSpeed": 1.7,
+          "samples": 23
+        },
+        "15": {
+          "avgSpeed": 3.1,
+          "stdSpeed": 1.5,
+          "samples": 23
+        },
+        "16": {
+          "avgSpeed": 3.1,
+          "stdSpeed": 1.3,
+          "samples": 23
+        },
+        "17": {
+          "avgSpeed": 2.8,
+          "stdSpeed": 1.3,
+          "samples": 23
+        },
+        "18": {
+          "avgSpeed": 2.3,
+          "stdSpeed": 1.1,
+          "samples": 23
+        },
+        "19": {
+          "avgSpeed": 1.9,
+          "stdSpeed": 1.1,
+          "samples": 23
+        },
+        "20": {
+          "avgSpeed": 2,
+          "stdSpeed": 1.3,
+          "samples": 23
+        },
+        "21": {
+          "avgSpeed": 2.3,
+          "stdSpeed": 1.8,
+          "samples": 23
+        },
+        "22": {
+          "avgSpeed": 2.5,
+          "stdSpeed": 2.2,
+          "samples": 23
+        },
+        "23": {
+          "avgSpeed": 2.6,
+          "stdSpeed": 2.5,
+          "samples": 23
+        }
+      },
+      "12": {
+        "0": {
+          "avgSpeed": 3.1,
+          "stdSpeed": 3,
+          "samples": 8
+        },
+        "1": {
+          "avgSpeed": 2.9,
+          "stdSpeed": 2.8,
+          "samples": 8
+        },
+        "2": {
+          "avgSpeed": 2.7,
+          "stdSpeed": 2.7,
+          "samples": 8
+        },
+        "3": {
+          "avgSpeed": 3.2,
+          "stdSpeed": 2.9,
+          "samples": 8
+        },
+        "4": {
+          "avgSpeed": 2.2,
+          "stdSpeed": 2.2,
+          "samples": 8
+        },
+        "5": {
+          "avgSpeed": 3.2,
+          "stdSpeed": 2.3,
+          "samples": 8
+        },
+        "6": {
+          "avgSpeed": 2.9,
+          "stdSpeed": 2.6,
+          "samples": 8
+        },
+        "7": {
+          "avgSpeed": 2.7,
+          "stdSpeed": 2.7,
+          "samples": 8
+        },
+        "8": {
+          "avgSpeed": 3.7,
+          "stdSpeed": 3.3,
+          "samples": 8
+        },
+        "9": {
+          "avgSpeed": 4.1,
+          "stdSpeed": 4.1,
+          "samples": 8
+        },
+        "10": {
+          "avgSpeed": 2.6,
+          "stdSpeed": 3,
+          "samples": 8
+        },
+        "11": {
+          "avgSpeed": 3,
+          "stdSpeed": 3.5,
+          "samples": 8
+        },
+        "12": {
+          "avgSpeed": 4.1,
+          "stdSpeed": 3.3,
+          "samples": 8
+        },
+        "13": {
+          "avgSpeed": 4.5,
+          "stdSpeed": 3.6,
+          "samples": 8
+        },
+        "14": {
+          "avgSpeed": 4.2,
+          "stdSpeed": 3.7,
+          "samples": 8
+        },
+        "15": {
+          "avgSpeed": 4.1,
+          "stdSpeed": 3.3,
+          "samples": 8
+        },
+        "16": {
+          "avgSpeed": 3.1,
+          "stdSpeed": 2.3,
+          "samples": 8
+        },
+        "17": {
+          "avgSpeed": 2.8,
+          "stdSpeed": 2.4,
+          "samples": 8
+        },
+        "18": {
+          "avgSpeed": 3.5,
+          "stdSpeed": 3.5,
+          "samples": 8
+        },
+        "19": {
+          "avgSpeed": 2.9,
+          "stdSpeed": 2.2,
+          "samples": 8
+        },
+        "20": {
+          "avgSpeed": 2.4,
+          "stdSpeed": 1.9,
+          "samples": 8
+        },
+        "21": {
+          "avgSpeed": 1.8,
+          "stdSpeed": 1.9,
+          "samples": 8
+        },
+        "22": {
+          "avgSpeed": 2.5,
+          "stdSpeed": 3.2,
+          "samples": 8
+        },
+        "23": {
+          "avgSpeed": 2.4,
+          "stdSpeed": 3.2,
+          "samples": 8
+        }
+      }
+    },
+    "KUTRIVER67": {
+      "1": {
+        "0": {
+          "avgSpeed": 2.8,
+          "stdSpeed": 3.1,
+          "samples": 27
+        },
+        "1": {
+          "avgSpeed": 3.1,
+          "stdSpeed": 3.1,
+          "samples": 27
+        },
+        "2": {
+          "avgSpeed": 3.1,
+          "stdSpeed": 3.2,
+          "samples": 28
+        },
+        "3": {
+          "avgSpeed": 2.9,
+          "stdSpeed": 3.1,
+          "samples": 28
+        },
+        "4": {
+          "avgSpeed": 3.1,
+          "stdSpeed": 2.9,
+          "samples": 28
+        },
+        "5": {
+          "avgSpeed": 3.3,
+          "stdSpeed": 2.7,
+          "samples": 28
+        },
+        "6": {
+          "avgSpeed": 3.2,
+          "stdSpeed": 3,
+          "samples": 28
+        },
+        "7": {
+          "avgSpeed": 3.3,
+          "stdSpeed": 3.1,
+          "samples": 28
+        },
+        "8": {
+          "avgSpeed": 3.9,
+          "stdSpeed": 3.6,
+          "samples": 28
+        },
+        "9": {
+          "avgSpeed": 4.2,
+          "stdSpeed": 3.2,
+          "samples": 28
+        },
+        "10": {
+          "avgSpeed": 4.6,
+          "stdSpeed": 3.2,
+          "samples": 29
+        },
+        "11": {
+          "avgSpeed": 4.7,
+          "stdSpeed": 2.8,
+          "samples": 29
+        },
+        "12": {
+          "avgSpeed": 4.9,
+          "stdSpeed": 3.1,
+          "samples": 29
+        },
+        "13": {
+          "avgSpeed": 5.4,
+          "stdSpeed": 3.4,
+          "samples": 29
+        },
+        "14": {
+          "avgSpeed": 5.2,
+          "stdSpeed": 3.3,
+          "samples": 29
+        },
+        "15": {
+          "avgSpeed": 5.2,
+          "stdSpeed": 3.2,
+          "samples": 29
+        },
+        "16": {
+          "avgSpeed": 4.9,
+          "stdSpeed": 3.1,
+          "samples": 29
+        },
+        "17": {
+          "avgSpeed": 4,
+          "stdSpeed": 2.8,
+          "samples": 28
+        },
+        "18": {
+          "avgSpeed": 2.9,
+          "stdSpeed": 2.7,
+          "samples": 28
+        },
+        "19": {
+          "avgSpeed": 2.2,
+          "stdSpeed": 2.6,
+          "samples": 28
+        },
+        "20": {
+          "avgSpeed": 2.1,
+          "stdSpeed": 3.3,
+          "samples": 28
+        },
+        "21": {
+          "avgSpeed": 2,
+          "stdSpeed": 2.9,
+          "samples": 28
+        },
+        "22": {
+          "avgSpeed": 2.7,
+          "stdSpeed": 3.4,
+          "samples": 28
+        },
+        "23": {
+          "avgSpeed": 3,
+          "stdSpeed": 3.1,
+          "samples": 28
+        }
+      },
+      "2": {
+        "0": {
+          "avgSpeed": 4.5,
+          "stdSpeed": 4.6,
+          "samples": 28
+        },
+        "1": {
+          "avgSpeed": 4.1,
+          "stdSpeed": 3.7,
+          "samples": 28
+        },
+        "2": {
+          "avgSpeed": 5,
+          "stdSpeed": 4.8,
+          "samples": 28
+        },
+        "3": {
+          "avgSpeed": 5.3,
+          "stdSpeed": 4.6,
+          "samples": 28
+        },
+        "4": {
+          "avgSpeed": 5.4,
+          "stdSpeed": 4.5,
+          "samples": 28
+        },
+        "5": {
+          "avgSpeed": 5.4,
+          "stdSpeed": 4,
+          "samples": 28
+        },
+        "6": {
+          "avgSpeed": 6.1,
+          "stdSpeed": 3.8,
+          "samples": 28
+        },
+        "7": {
+          "avgSpeed": 6.4,
+          "stdSpeed": 3.6,
+          "samples": 28
+        },
+        "8": {
+          "avgSpeed": 6.5,
+          "stdSpeed": 3.8,
+          "samples": 28
+        },
+        "9": {
+          "avgSpeed": 7.4,
+          "stdSpeed": 3.5,
+          "samples": 28
+        },
+        "10": {
+          "avgSpeed": 7.6,
+          "stdSpeed": 2.3,
+          "samples": 28
+        },
+        "11": {
+          "avgSpeed": 7.8,
+          "stdSpeed": 2.4,
+          "samples": 28
+        },
+        "12": {
+          "avgSpeed": 7.6,
+          "stdSpeed": 2.2,
+          "samples": 27
+        },
+        "13": {
+          "avgSpeed": 7.2,
+          "stdSpeed": 2.9,
+          "samples": 27
+        },
+        "14": {
+          "avgSpeed": 6.3,
+          "stdSpeed": 2.9,
+          "samples": 27
+        },
+        "15": {
+          "avgSpeed": 6.4,
+          "stdSpeed": 2.5,
+          "samples": 28
+        },
+        "16": {
+          "avgSpeed": 6,
+          "stdSpeed": 2.4,
+          "samples": 28
+        },
+        "17": {
+          "avgSpeed": 4.7,
+          "stdSpeed": 2.1,
+          "samples": 28
+        },
+        "18": {
+          "avgSpeed": 3,
+          "stdSpeed": 2.2,
+          "samples": 28
+        },
+        "19": {
+          "avgSpeed": 2.5,
+          "stdSpeed": 2.5,
+          "samples": 28
+        },
+        "20": {
+          "avgSpeed": 2.5,
+          "stdSpeed": 2.8,
+          "samples": 28
+        },
+        "21": {
+          "avgSpeed": 3.1,
+          "stdSpeed": 3.3,
+          "samples": 28
+        },
+        "22": {
+          "avgSpeed": 3.6,
+          "stdSpeed": 4.6,
+          "samples": 28
+        },
+        "23": {
+          "avgSpeed": 4,
+          "stdSpeed": 4.2,
+          "samples": 28
+        }
+      },
+      "3": {
+        "0": {
+          "avgSpeed": 4.5,
+          "stdSpeed": 4.2,
+          "samples": 13
+        },
+        "1": {
+          "avgSpeed": 4.7,
+          "stdSpeed": 4,
+          "samples": 13
+        },
+        "2": {
+          "avgSpeed": 4.9,
+          "stdSpeed": 3.7,
+          "samples": 12
+        },
+        "3": {
+          "avgSpeed": 4.9,
+          "stdSpeed": 4.2,
+          "samples": 13
+        },
+        "4": {
+          "avgSpeed": 5,
+          "stdSpeed": 4.1,
+          "samples": 13
+        },
+        "5": {
+          "avgSpeed": 5.5,
+          "stdSpeed": 3.9,
+          "samples": 13
+        },
+        "6": {
+          "avgSpeed": 6.2,
+          "stdSpeed": 4.5,
+          "samples": 13
+        },
+        "7": {
+          "avgSpeed": 6.1,
+          "stdSpeed": 4.1,
+          "samples": 13
+        },
+        "8": {
+          "avgSpeed": 7.2,
+          "stdSpeed": 4.1,
+          "samples": 13
+        },
+        "9": {
+          "avgSpeed": 7.7,
+          "stdSpeed": 3.4,
+          "samples": 12
+        },
+        "10": {
+          "avgSpeed": 7.9,
+          "stdSpeed": 2.9,
+          "samples": 13
+        },
+        "11": {
+          "avgSpeed": 6.9,
+          "stdSpeed": 2.4,
+          "samples": 13
+        },
+        "12": {
+          "avgSpeed": 6.6,
+          "stdSpeed": 3.1,
+          "samples": 13
+        },
+        "13": {
+          "avgSpeed": 7.2,
+          "stdSpeed": 3.3,
+          "samples": 13
+        },
+        "14": {
+          "avgSpeed": 6.7,
+          "stdSpeed": 3.9,
+          "samples": 13
+        },
+        "15": {
+          "avgSpeed": 6.1,
+          "stdSpeed": 4.1,
+          "samples": 13
+        },
+        "16": {
+          "avgSpeed": 6,
+          "stdSpeed": 2.8,
+          "samples": 14
+        },
+        "17": {
+          "avgSpeed": 6,
+          "stdSpeed": 3,
+          "samples": 14
+        },
+        "18": {
+          "avgSpeed": 5.1,
+          "stdSpeed": 2.1,
+          "samples": 14
+        },
+        "19": {
+          "avgSpeed": 3.3,
+          "stdSpeed": 1.2,
+          "samples": 14
+        },
+        "20": {
+          "avgSpeed": 2.5,
+          "stdSpeed": 1.8,
+          "samples": 14
+        },
+        "21": {
+          "avgSpeed": 3.6,
+          "stdSpeed": 4.1,
+          "samples": 14
+        },
+        "22": {
+          "avgSpeed": 3.9,
+          "stdSpeed": 4.8,
+          "samples": 14
+        },
+        "23": {
+          "avgSpeed": 4.2,
+          "stdSpeed": 4.5,
+          "samples": 14
+        }
+      },
+      "12": {
+        "0": {
+          "avgSpeed": 5,
+          "stdSpeed": 3.9,
+          "samples": 8
+        },
+        "1": {
+          "avgSpeed": 5.4,
+          "stdSpeed": 4.2,
+          "samples": 8
+        },
+        "2": {
+          "avgSpeed": 5.6,
+          "stdSpeed": 5.1,
+          "samples": 8
+        },
+        "3": {
+          "avgSpeed": 5.7,
+          "stdSpeed": 5,
+          "samples": 8
+        },
+        "4": {
+          "avgSpeed": 5.4,
+          "stdSpeed": 4.9,
+          "samples": 8
+        },
+        "5": {
+          "avgSpeed": 5.2,
+          "stdSpeed": 4.5,
+          "samples": 8
+        },
+        "6": {
+          "avgSpeed": 5.4,
+          "stdSpeed": 4.6,
+          "samples": 8
+        },
+        "7": {
+          "avgSpeed": 4.3,
+          "stdSpeed": 4.7,
+          "samples": 8
+        },
+        "8": {
+          "avgSpeed": 4.3,
+          "stdSpeed": 4.5,
+          "samples": 8
+        },
+        "9": {
+          "avgSpeed": 5.4,
+          "stdSpeed": 4.5,
+          "samples": 8
+        },
+        "10": {
+          "avgSpeed": 5.8,
+          "stdSpeed": 3.9,
+          "samples": 8
+        },
+        "11": {
+          "avgSpeed": 6.1,
+          "stdSpeed": 4.1,
+          "samples": 8
+        },
+        "12": {
+          "avgSpeed": 6,
+          "stdSpeed": 4.4,
+          "samples": 8
+        },
+        "13": {
+          "avgSpeed": 6.8,
+          "stdSpeed": 4.4,
+          "samples": 8
+        },
+        "14": {
+          "avgSpeed": 6.9,
+          "stdSpeed": 4.9,
+          "samples": 8
+        },
+        "15": {
+          "avgSpeed": 6.6,
+          "stdSpeed": 4.7,
+          "samples": 8
+        },
+        "16": {
+          "avgSpeed": 5.8,
+          "stdSpeed": 3.6,
+          "samples": 8
+        },
+        "17": {
+          "avgSpeed": 5.9,
+          "stdSpeed": 3.9,
+          "samples": 8
+        },
+        "18": {
+          "avgSpeed": 5.4,
+          "stdSpeed": 4.1,
+          "samples": 8
+        },
+        "19": {
+          "avgSpeed": 4.7,
+          "stdSpeed": 4.3,
+          "samples": 8
+        },
+        "20": {
+          "avgSpeed": 4.1,
+          "stdSpeed": 4,
+          "samples": 8
+        },
+        "21": {
+          "avgSpeed": 3.6,
+          "stdSpeed": 3.9,
+          "samples": 8
+        },
+        "22": {
+          "avgSpeed": 3.6,
+          "stdSpeed": 3.9,
+          "samples": 8
+        },
+        "23": {
+          "avgSpeed": 3.6,
+          "stdSpeed": 3.3,
+          "samples": 8
+        }
+      }
+    },
+    "KUTBLUFF18": {
+      "1": {
+        "0": {
+          "avgSpeed": 2.1,
+          "stdSpeed": 2.4,
+          "samples": 29
+        },
+        "1": {
+          "avgSpeed": 2.3,
+          "stdSpeed": 2.3,
+          "samples": 29
+        },
+        "2": {
+          "avgSpeed": 2.2,
+          "stdSpeed": 2.3,
+          "samples": 29
+        },
+        "3": {
+          "avgSpeed": 2.1,
+          "stdSpeed": 2.5,
+          "samples": 29
+        },
+        "4": {
+          "avgSpeed": 2.5,
+          "stdSpeed": 2.6,
+          "samples": 29
+        },
+        "5": {
+          "avgSpeed": 2.5,
+          "stdSpeed": 2.4,
+          "samples": 29
+        },
+        "6": {
+          "avgSpeed": 2.4,
+          "stdSpeed": 2.3,
+          "samples": 29
+        },
+        "7": {
+          "avgSpeed": 2.7,
+          "stdSpeed": 2.7,
+          "samples": 30
+        },
+        "8": {
+          "avgSpeed": 3.1,
+          "stdSpeed": 2.9,
+          "samples": 30
+        },
+        "9": {
+          "avgSpeed": 3.7,
+          "stdSpeed": 3,
+          "samples": 30
+        },
+        "10": {
+          "avgSpeed": 5,
+          "stdSpeed": 3.4,
+          "samples": 30
+        },
+        "11": {
+          "avgSpeed": 5.5,
+          "stdSpeed": 3,
+          "samples": 30
+        },
+        "12": {
+          "avgSpeed": 5.2,
+          "stdSpeed": 2.8,
+          "samples": 30
+        },
+        "13": {
+          "avgSpeed": 4.9,
+          "stdSpeed": 2.8,
+          "samples": 30
+        },
+        "14": {
+          "avgSpeed": 4.5,
+          "stdSpeed": 3,
+          "samples": 30
+        },
+        "15": {
+          "avgSpeed": 4.2,
+          "stdSpeed": 2.7,
+          "samples": 30
+        },
+        "16": {
+          "avgSpeed": 3.7,
+          "stdSpeed": 2.7,
+          "samples": 29
+        },
+        "17": {
+          "avgSpeed": 1.9,
+          "stdSpeed": 2.4,
+          "samples": 29
+        },
+        "18": {
+          "avgSpeed": 1.2,
+          "stdSpeed": 2.4,
+          "samples": 29
+        },
+        "19": {
+          "avgSpeed": 1.1,
+          "stdSpeed": 2.4,
+          "samples": 29
+        },
+        "20": {
+          "avgSpeed": 1.1,
+          "stdSpeed": 2.4,
+          "samples": 29
+        },
+        "21": {
+          "avgSpeed": 1,
+          "stdSpeed": 2.2,
+          "samples": 29
+        },
+        "22": {
+          "avgSpeed": 1.3,
+          "stdSpeed": 2.2,
+          "samples": 29
+        },
+        "23": {
+          "avgSpeed": 1.6,
+          "stdSpeed": 2.1,
+          "samples": 29
+        }
+      },
+      "2": {
+        "0": {
+          "avgSpeed": 2.6,
+          "stdSpeed": 3.6,
+          "samples": 28
+        },
+        "1": {
+          "avgSpeed": 3,
+          "stdSpeed": 3.7,
+          "samples": 28
+        },
+        "2": {
+          "avgSpeed": 3.3,
+          "stdSpeed": 4,
+          "samples": 28
+        },
+        "3": {
+          "avgSpeed": 4,
+          "stdSpeed": 4.3,
+          "samples": 28
+        },
+        "4": {
+          "avgSpeed": 4.1,
+          "stdSpeed": 4.1,
+          "samples": 28
+        },
+        "5": {
+          "avgSpeed": 4.2,
+          "stdSpeed": 3.6,
+          "samples": 28
+        },
+        "6": {
+          "avgSpeed": 4,
+          "stdSpeed": 3.5,
+          "samples": 28
+        },
+        "7": {
+          "avgSpeed": 4.7,
+          "stdSpeed": 3.6,
+          "samples": 28
+        },
+        "8": {
+          "avgSpeed": 5.4,
+          "stdSpeed": 3.6,
+          "samples": 28
+        },
+        "9": {
+          "avgSpeed": 6.7,
+          "stdSpeed": 3.4,
+          "samples": 28
+        },
+        "10": {
+          "avgSpeed": 7.7,
+          "stdSpeed": 2.4,
+          "samples": 28
+        },
+        "11": {
+          "avgSpeed": 7.9,
+          "stdSpeed": 2.2,
+          "samples": 28
+        },
+        "12": {
+          "avgSpeed": 7.7,
+          "stdSpeed": 2.3,
+          "samples": 28
+        },
+        "13": {
+          "avgSpeed": 7.1,
+          "stdSpeed": 2.4,
+          "samples": 28
+        },
+        "14": {
+          "avgSpeed": 6.3,
+          "stdSpeed": 2.8,
+          "samples": 27
+        },
+        "15": {
+          "avgSpeed": 5.9,
+          "stdSpeed": 2.4,
+          "samples": 28
+        },
+        "16": {
+          "avgSpeed": 4.8,
+          "stdSpeed": 2.2,
+          "samples": 28
+        },
+        "17": {
+          "avgSpeed": 3,
+          "stdSpeed": 1.8,
+          "samples": 28
+        },
+        "18": {
+          "avgSpeed": 1.4,
+          "stdSpeed": 2.1,
+          "samples": 28
+        },
+        "19": {
+          "avgSpeed": 1.1,
+          "stdSpeed": 2.4,
+          "samples": 28
+        },
+        "20": {
+          "avgSpeed": 1.3,
+          "stdSpeed": 2.4,
+          "samples": 28
+        },
+        "21": {
+          "avgSpeed": 1.7,
+          "stdSpeed": 3.1,
+          "samples": 28
+        },
+        "22": {
+          "avgSpeed": 1.8,
+          "stdSpeed": 3.4,
+          "samples": 28
+        },
+        "23": {
+          "avgSpeed": 2.1,
+          "stdSpeed": 3.5,
+          "samples": 28
+        }
+      },
+      "3": {
+        "0": {
+          "avgSpeed": 2.8,
+          "stdSpeed": 3.7,
+          "samples": 21
+        },
+        "1": {
+          "avgSpeed": 3.2,
+          "stdSpeed": 3.4,
+          "samples": 21
+        },
+        "2": {
+          "avgSpeed": 3.6,
+          "stdSpeed": 3.4,
+          "samples": 20
+        },
+        "3": {
+          "avgSpeed": 3.6,
+          "stdSpeed": 4,
+          "samples": 21
+        },
+        "4": {
+          "avgSpeed": 3.8,
+          "stdSpeed": 3.8,
+          "samples": 21
+        },
+        "5": {
+          "avgSpeed": 3.8,
+          "stdSpeed": 3.3,
+          "samples": 21
+        },
+        "6": {
+          "avgSpeed": 4.1,
+          "stdSpeed": 3.5,
+          "samples": 21
+        },
+        "7": {
+          "avgSpeed": 3.7,
+          "stdSpeed": 3.1,
+          "samples": 21
+        },
+        "8": {
+          "avgSpeed": 4.9,
+          "stdSpeed": 3.6,
+          "samples": 22
+        },
+        "9": {
+          "avgSpeed": 6.3,
+          "stdSpeed": 3.6,
+          "samples": 22
+        },
+        "10": {
+          "avgSpeed": 7.6,
+          "stdSpeed": 3.2,
+          "samples": 22
+        },
+        "11": {
+          "avgSpeed": 7.3,
+          "stdSpeed": 3,
+          "samples": 22
+        },
+        "12": {
+          "avgSpeed": 7,
+          "stdSpeed": 3,
+          "samples": 22
+        },
+        "13": {
+          "avgSpeed": 6.3,
+          "stdSpeed": 2.3,
+          "samples": 22
+        },
+        "14": {
+          "avgSpeed": 5.8,
+          "stdSpeed": 2.6,
+          "samples": 22
+        },
+        "15": {
+          "avgSpeed": 5.1,
+          "stdSpeed": 2.8,
+          "samples": 22
+        },
+        "16": {
+          "avgSpeed": 5.2,
+          "stdSpeed": 2.6,
+          "samples": 22
+        },
+        "17": {
+          "avgSpeed": 5,
+          "stdSpeed": 2.8,
+          "samples": 22
+        },
+        "18": {
+          "avgSpeed": 3.7,
+          "stdSpeed": 2.8,
+          "samples": 22
+        },
+        "19": {
+          "avgSpeed": 1.6,
+          "stdSpeed": 2.2,
+          "samples": 22
+        },
+        "20": {
+          "avgSpeed": 1.2,
+          "stdSpeed": 2.6,
+          "samples": 22
+        },
+        "21": {
+          "avgSpeed": 1.9,
+          "stdSpeed": 3.5,
+          "samples": 22
+        },
+        "22": {
+          "avgSpeed": 2.1,
+          "stdSpeed": 4.1,
+          "samples": 22
+        },
+        "23": {
+          "avgSpeed": 2.7,
+          "stdSpeed": 3.8,
+          "samples": 22
+        }
+      },
+      "12": {
+        "0": {
+          "avgSpeed": 3.4,
+          "stdSpeed": 3.4,
+          "samples": 8
+        },
+        "1": {
+          "avgSpeed": 3.9,
+          "stdSpeed": 3.3,
+          "samples": 8
+        },
+        "2": {
+          "avgSpeed": 4.4,
+          "stdSpeed": 4.1,
+          "samples": 8
+        },
+        "3": {
+          "avgSpeed": 4.4,
+          "stdSpeed": 4.4,
+          "samples": 8
+        },
+        "4": {
+          "avgSpeed": 4.7,
+          "stdSpeed": 4.4,
+          "samples": 8
+        },
+        "5": {
+          "avgSpeed": 4.3,
+          "stdSpeed": 4,
+          "samples": 8
+        },
+        "6": {
+          "avgSpeed": 4.7,
+          "stdSpeed": 4.6,
+          "samples": 8
+        },
+        "7": {
+          "avgSpeed": 3.6,
+          "stdSpeed": 4.9,
+          "samples": 8
+        },
+        "8": {
+          "avgSpeed": 3.1,
+          "stdSpeed": 4.2,
+          "samples": 8
+        },
+        "9": {
+          "avgSpeed": 5.6,
+          "stdSpeed": 5.7,
+          "samples": 8
+        },
+        "10": {
+          "avgSpeed": 7.1,
+          "stdSpeed": 4.5,
+          "samples": 8
+        },
+        "11": {
+          "avgSpeed": 6,
+          "stdSpeed": 4.3,
+          "samples": 8
+        },
+        "12": {
+          "avgSpeed": 6.3,
+          "stdSpeed": 5,
+          "samples": 8
+        },
+        "13": {
+          "avgSpeed": 6.7,
+          "stdSpeed": 4.4,
+          "samples": 8
+        },
+        "14": {
+          "avgSpeed": 6.9,
+          "stdSpeed": 5.2,
+          "samples": 8
+        },
+        "15": {
+          "avgSpeed": 6.5,
+          "stdSpeed": 5.8,
+          "samples": 8
+        },
+        "16": {
+          "avgSpeed": 5.6,
+          "stdSpeed": 4.6,
+          "samples": 8
+        },
+        "17": {
+          "avgSpeed": 4.2,
+          "stdSpeed": 4.3,
+          "samples": 8
+        },
+        "18": {
+          "avgSpeed": 3.9,
+          "stdSpeed": 3.9,
+          "samples": 8
+        },
+        "19": {
+          "avgSpeed": 2.9,
+          "stdSpeed": 3.3,
+          "samples": 8
+        },
+        "20": {
+          "avgSpeed": 2.7,
+          "stdSpeed": 3.3,
+          "samples": 8
+        },
+        "21": {
+          "avgSpeed": 3.1,
+          "stdSpeed": 3.3,
+          "samples": 8
+        },
+        "22": {
+          "avgSpeed": 3,
+          "stdSpeed": 4,
+          "samples": 8
+        },
+        "23": {
+          "avgSpeed": 3,
+          "stdSpeed": 3.6,
+          "samples": 8
+        }
+      }
+    },
+    "KUTSANDY188": {
+      "1": {
+        "0": {
+          "avgSpeed": 1,
+          "stdSpeed": 1.8,
+          "samples": 31
+        },
+        "1": {
+          "avgSpeed": 1.1,
+          "stdSpeed": 1.7,
+          "samples": 31
+        },
+        "2": {
+          "avgSpeed": 0.8,
+          "stdSpeed": 1.4,
+          "samples": 31
+        },
+        "3": {
+          "avgSpeed": 0.8,
+          "stdSpeed": 1.5,
+          "samples": 31
+        },
+        "4": {
+          "avgSpeed": 0.7,
+          "stdSpeed": 1.4,
+          "samples": 31
+        },
+        "5": {
+          "avgSpeed": 0.6,
+          "stdSpeed": 1.2,
+          "samples": 31
+        },
+        "6": {
+          "avgSpeed": 0.7,
+          "stdSpeed": 1.2,
+          "samples": 31
+        },
+        "7": {
+          "avgSpeed": 0.6,
+          "stdSpeed": 0.9,
+          "samples": 31
+        },
+        "8": {
+          "avgSpeed": 0.5,
+          "stdSpeed": 1,
+          "samples": 31
+        },
+        "9": {
+          "avgSpeed": 0.4,
+          "stdSpeed": 1,
+          "samples": 31
+        },
+        "10": {
+          "avgSpeed": 0.6,
+          "stdSpeed": 1.1,
+          "samples": 31
+        },
+        "11": {
+          "avgSpeed": 0.9,
+          "stdSpeed": 1.1,
+          "samples": 31
+        },
+        "12": {
+          "avgSpeed": 1.2,
+          "stdSpeed": 1.1,
+          "samples": 31
+        },
+        "13": {
+          "avgSpeed": 1.2,
+          "stdSpeed": 1,
+          "samples": 31
+        },
+        "14": {
+          "avgSpeed": 1.2,
+          "stdSpeed": 1.1,
+          "samples": 31
+        },
+        "15": {
+          "avgSpeed": 1.2,
+          "stdSpeed": 1.2,
+          "samples": 31
+        },
+        "16": {
+          "avgSpeed": 0.8,
+          "stdSpeed": 1.3,
+          "samples": 31
+        },
+        "17": {
+          "avgSpeed": 0.6,
+          "stdSpeed": 1.4,
+          "samples": 31
+        },
+        "18": {
+          "avgSpeed": 0.8,
+          "stdSpeed": 1.7,
+          "samples": 31
+        },
+        "19": {
+          "avgSpeed": 0.8,
+          "stdSpeed": 1.5,
+          "samples": 31
+        },
+        "20": {
+          "avgSpeed": 1,
+          "stdSpeed": 1.8,
+          "samples": 31
+        },
+        "21": {
+          "avgSpeed": 1.2,
+          "stdSpeed": 2.1,
+          "samples": 31
+        },
+        "22": {
+          "avgSpeed": 1.1,
+          "stdSpeed": 1.9,
+          "samples": 31
+        },
+        "23": {
+          "avgSpeed": 1,
+          "stdSpeed": 1.8,
+          "samples": 31
+        }
+      },
+      "2": {
+        "0": {
+          "avgSpeed": 1.7,
+          "stdSpeed": 2.7,
+          "samples": 28
+        },
+        "1": {
+          "avgSpeed": 1.6,
+          "stdSpeed": 2.5,
+          "samples": 28
+        },
+        "2": {
+          "avgSpeed": 1.7,
+          "stdSpeed": 2.8,
+          "samples": 28
+        },
+        "3": {
+          "avgSpeed": 1.8,
+          "stdSpeed": 2.7,
+          "samples": 28
+        },
+        "4": {
+          "avgSpeed": 1.5,
+          "stdSpeed": 2.3,
+          "samples": 28
+        },
+        "5": {
+          "avgSpeed": 1.7,
+          "stdSpeed": 2.5,
+          "samples": 28
+        },
+        "6": {
+          "avgSpeed": 1.9,
+          "stdSpeed": 2.6,
+          "samples": 28
+        },
+        "7": {
+          "avgSpeed": 1.8,
+          "stdSpeed": 2.6,
+          "samples": 28
+        },
+        "8": {
+          "avgSpeed": 1.5,
+          "stdSpeed": 2.5,
+          "samples": 28
+        },
+        "9": {
+          "avgSpeed": 1.5,
+          "stdSpeed": 2.6,
+          "samples": 28
+        },
+        "10": {
+          "avgSpeed": 1.6,
+          "stdSpeed": 2.2,
+          "samples": 28
+        },
+        "11": {
+          "avgSpeed": 1.6,
+          "stdSpeed": 2,
+          "samples": 28
+        },
+        "12": {
+          "avgSpeed": 1.9,
+          "stdSpeed": 1.8,
+          "samples": 28
+        },
+        "13": {
+          "avgSpeed": 2,
+          "stdSpeed": 1.7,
+          "samples": 28
+        },
+        "14": {
+          "avgSpeed": 2.2,
+          "stdSpeed": 2,
+          "samples": 28
+        },
+        "15": {
+          "avgSpeed": 1.9,
+          "stdSpeed": 1.9,
+          "samples": 28
+        },
+        "16": {
+          "avgSpeed": 1.5,
+          "stdSpeed": 1.5,
+          "samples": 28
+        },
+        "17": {
+          "avgSpeed": 1,
+          "stdSpeed": 1.5,
+          "samples": 27
+        },
+        "18": {
+          "avgSpeed": 1.1,
+          "stdSpeed": 1.6,
+          "samples": 27
+        },
+        "19": {
+          "avgSpeed": 1.2,
+          "stdSpeed": 1.6,
+          "samples": 27
+        },
+        "20": {
+          "avgSpeed": 1,
+          "stdSpeed": 1.3,
+          "samples": 27
+        },
+        "21": {
+          "avgSpeed": 1,
+          "stdSpeed": 1.5,
+          "samples": 27
+        },
+        "22": {
+          "avgSpeed": 1.2,
+          "stdSpeed": 2.1,
+          "samples": 27
+        },
+        "23": {
+          "avgSpeed": 1.6,
+          "stdSpeed": 2.6,
+          "samples": 27
+        }
+      },
+      "3": {
+        "0": {
+          "avgSpeed": 1.1,
+          "stdSpeed": 1.2,
+          "samples": 21
+        },
+        "1": {
+          "avgSpeed": 1.1,
+          "stdSpeed": 1.1,
+          "samples": 22
+        },
+        "2": {
+          "avgSpeed": 0.8,
+          "stdSpeed": 0.8,
+          "samples": 21
+        },
+        "3": {
+          "avgSpeed": 0.8,
+          "stdSpeed": 1.1,
+          "samples": 22
+        },
+        "4": {
+          "avgSpeed": 0.8,
+          "stdSpeed": 1.3,
+          "samples": 22
+        },
+        "5": {
+          "avgSpeed": 0.7,
+          "stdSpeed": 0.8,
+          "samples": 22
+        },
+        "6": {
+          "avgSpeed": 0.5,
+          "stdSpeed": 0.4,
+          "samples": 22
+        },
+        "7": {
+          "avgSpeed": 0.6,
+          "stdSpeed": 0.6,
+          "samples": 22
+        },
+        "8": {
+          "avgSpeed": 0.7,
+          "stdSpeed": 0.7,
+          "samples": 23
+        },
+        "9": {
+          "avgSpeed": 0.7,
+          "stdSpeed": 0.8,
+          "samples": 23
+        },
+        "10": {
+          "avgSpeed": 0.7,
+          "stdSpeed": 0.8,
+          "samples": 23
+        },
+        "11": {
+          "avgSpeed": 1,
+          "stdSpeed": 1,
+          "samples": 23
+        },
+        "12": {
+          "avgSpeed": 1.5,
+          "stdSpeed": 1.3,
+          "samples": 23
+        },
+        "13": {
+          "avgSpeed": 1.7,
+          "stdSpeed": 1.4,
+          "samples": 23
+        },
+        "14": {
+          "avgSpeed": 1.8,
+          "stdSpeed": 1.5,
+          "samples": 23
+        },
+        "15": {
+          "avgSpeed": 1.7,
+          "stdSpeed": 1.5,
+          "samples": 23
+        },
+        "16": {
+          "avgSpeed": 1.6,
+          "stdSpeed": 1.1,
+          "samples": 23
+        },
+        "17": {
+          "avgSpeed": 1.2,
+          "stdSpeed": 1.1,
+          "samples": 23
+        },
+        "18": {
+          "avgSpeed": 0.9,
+          "stdSpeed": 1,
+          "samples": 23
+        },
+        "19": {
+          "avgSpeed": 1,
+          "stdSpeed": 1.3,
+          "samples": 23
+        },
+        "20": {
+          "avgSpeed": 1.1,
+          "stdSpeed": 1.1,
+          "samples": 23
+        },
+        "21": {
+          "avgSpeed": 1.1,
+          "stdSpeed": 1,
+          "samples": 23
+        },
+        "22": {
+          "avgSpeed": 1,
+          "stdSpeed": 1,
+          "samples": 23
+        },
+        "23": {
+          "avgSpeed": 1.2,
+          "stdSpeed": 1.2,
+          "samples": 23
+        }
+      },
+      "12": {
+        "0": {
+          "avgSpeed": 2.8,
+          "stdSpeed": 3.4,
+          "samples": 8
+        },
+        "1": {
+          "avgSpeed": 3,
+          "stdSpeed": 3.4,
+          "samples": 8
+        },
+        "2": {
+          "avgSpeed": 3.1,
+          "stdSpeed": 3.7,
+          "samples": 8
+        },
+        "3": {
+          "avgSpeed": 3.3,
+          "stdSpeed": 3.8,
+          "samples": 8
+        },
+        "4": {
+          "avgSpeed": 2.9,
+          "stdSpeed": 3.4,
+          "samples": 8
+        },
+        "5": {
+          "avgSpeed": 3,
+          "stdSpeed": 3.2,
+          "samples": 8
+        },
+        "6": {
+          "avgSpeed": 2.7,
+          "stdSpeed": 3.3,
+          "samples": 8
+        },
+        "7": {
+          "avgSpeed": 2.3,
+          "stdSpeed": 3,
+          "samples": 8
+        },
+        "8": {
+          "avgSpeed": 2.4,
+          "stdSpeed": 3,
+          "samples": 8
+        },
+        "9": {
+          "avgSpeed": 1.8,
+          "stdSpeed": 2.3,
+          "samples": 8
+        },
+        "10": {
+          "avgSpeed": 1.9,
+          "stdSpeed": 2.3,
+          "samples": 8
+        },
+        "11": {
+          "avgSpeed": 1.8,
+          "stdSpeed": 1.7,
+          "samples": 8
+        },
+        "12": {
+          "avgSpeed": 2.2,
+          "stdSpeed": 1.7,
+          "samples": 8
+        },
+        "13": {
+          "avgSpeed": 2.3,
+          "stdSpeed": 1.9,
+          "samples": 8
+        },
+        "14": {
+          "avgSpeed": 2.7,
+          "stdSpeed": 2.4,
+          "samples": 8
+        },
+        "15": {
+          "avgSpeed": 2.4,
+          "stdSpeed": 2,
+          "samples": 8
+        },
+        "16": {
+          "avgSpeed": 2.5,
+          "stdSpeed": 2.6,
+          "samples": 8
+        },
+        "17": {
+          "avgSpeed": 2.8,
+          "stdSpeed": 3.3,
+          "samples": 8
+        },
+        "18": {
+          "avgSpeed": 2.4,
+          "stdSpeed": 2.8,
+          "samples": 8
+        },
+        "19": {
+          "avgSpeed": 2.3,
+          "stdSpeed": 2.3,
+          "samples": 8
+        },
+        "20": {
+          "avgSpeed": 2.2,
+          "stdSpeed": 2.7,
+          "samples": 8
+        },
+        "21": {
+          "avgSpeed": 2.1,
+          "stdSpeed": 2.8,
+          "samples": 8
+        },
+        "22": {
+          "avgSpeed": 2.1,
+          "stdSpeed": 3,
+          "samples": 8
+        },
+        "23": {
+          "avgSpeed": 2.5,
+          "stdSpeed": 3.3,
+          "samples": 8
+        }
+      }
+    }
+  },
+  "corroboration": {
+    "se_thermal": {
+      "counts": {
+        "0": 1,
+        "1": 3,
+        "2": 4,
+        "3": 7,
+        "4": 9,
+        "5": 7
+      },
+      "total": 31
+    },
+    "north_flow": {
+      "counts": {
+        "0": 1,
+        "1": 2,
+        "2": 2,
+        "3": 5,
+        "4": 16,
+        "5": 4,
+        "6": 1
+      },
+      "total": 31
+    }
+  },
+  "derivedSpeedRatios": {
+    "se_thermal": {
+      "KUTSARAT88": 0.83,
+      "KUTSARAT81": 0.85,
+      "KUTSARAT74": 0.3,
+      "KUTSARAT62": 0.39,
+      "KUTDRAPE132": 0.2,
+      "KUTDRAPE59": 0.72,
+      "KUTRIVER67": 1.1,
+      "KUTBLUFF18": 0.99,
+      "KUTSANDY188": 0.6
+    },
+    "north_flow": {
+      "KUTSARAT88": 0.85,
+      "KUTSARAT81": 0.75,
+      "KUTSARAT74": 0.25,
+      "KUTSARAT62": 1.13,
+      "KUTDRAPE132": 0.39,
+      "KUTDRAPE59": 0.3,
+      "KUTRIVER67": 0.67,
+      "KUTBLUFF18": 0.65,
+      "KUTSANDY188": 0.16
+    }
+  },
+  "derivedChainLags": {
+    "se_thermal": {
+      "KUTSARAT88": 240,
+      "KUTSARAT81": 0,
+      "KUTSARAT74": 180,
+      "KUTSARAT62": 120,
+      "KUTDRAPE59": -60,
+      "KUTRIVER67": 0,
+      "KUTBLUFF18": 0,
+      "KUTSANDY188": 0
+    },
+    "north_flow": {
+      "KUTSARAT88": -60,
+      "KUTSARAT81": 0,
+      "KUTSARAT74": 180,
+      "KUTSARAT62": 0,
+      "KUTDRAPE59": -60,
+      "KUTRIVER67": 0,
+      "KUTBLUFF18": 0
+    }
+  }
+}

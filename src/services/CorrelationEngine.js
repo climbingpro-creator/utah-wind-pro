@@ -245,7 +245,7 @@ export function calculateCorrelatedWind(lakeId, baseForecast, mesoData, pws = nu
         activeTriggers.push({
           id: 'arrowhead-trigger',
           label: 'Arrowhead Trigger',
-          detail: `SND ${safeToFixed(sensor.speed, 0)} mph SSW — thermal at dam in ~60 min`,
+          detail: `UTLPC ${safeToFixed(sensor.speed, 0)} mph S — thermal at dam in ~60 min`,
           impact: `+${Math.round((config.arrowhead_trigger.multiplier - 1) * 100)}%`,
           type: 'boost',
         });

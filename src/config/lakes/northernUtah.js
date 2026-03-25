@@ -51,30 +51,37 @@ export const northernUtahConfigs = {
       ],
       
       groundTruth: {
-        id: 'COOPOGNU1',
-        name: 'Pineview Dam',
-        role: 'Ground Truth - Dam area thermal indicator',
+        id: 'UTPVD',
+        name: 'SR-39 Pineview Dam (UDOT)',
+        role: 'Ground Truth - right at the dam (replaced distant COOPOGNU1)',
       },
       
       lakeshore: [
         {
-          id: 'COOPOGNU1',
-          name: 'Pineview Dam',
-          elevation: 4940,
-          role: 'Primary - at reservoir',
+          id: 'UTPVD',
+          name: 'SR-39 Pineview Dam (UDOT)',
+          elevation: 4900,
+          role: 'Primary - at the dam',
           priority: 1
+        },
+        {
+          id: 'COOPOGNU1',
+          name: 'Pineview Dam (legacy)',
+          elevation: 4940,
+          role: 'Secondary reference',
+          priority: 2
         },
         {
           id: 'PC496',
           name: 'Pineview Reservoir',
           elevation: 4956,
           role: 'Reservoir station',
-          priority: 2
+          priority: 3
         },
       ],
       
       reference: [
-        { id: 'UTHUN', name: 'Huntsville', elevation: 4951 },
+        { id: 'UTHUN', name: 'Huntsville (UDOT)', elevation: 4951 },
       ],
     },
     
@@ -127,12 +134,16 @@ export const northernUtahConfigs = {
       ridge: [
         { id: 'BERU1', name: 'Bear River RAWS', elevation: 6200, role: 'Closest automated station', priority: 1 },
       ],
-      groundTruth: { id: 'BERU1', name: 'Bear River RAWS', role: 'Ground Truth — nearest to lake' },
+      groundTruth: { id: 'UTGRC', name: 'US-89 Garden City (UDOT)', role: 'Ground Truth — right at Bear Lake' },
       lakeshore: [
-        { id: 'BERU1', name: 'Bear River RAWS', elevation: 6200, role: 'Primary — Bear River drainage', priority: 1 },
-        { id: 'KLGU', name: 'Logan-Cache Airport', elevation: 4457, role: 'Regional ASOS (distant)', priority: 2 },
+        { id: 'UTGRC', name: 'US-89 Garden City (UDOT)', elevation: 5924, role: 'Primary — at the lake', priority: 1 },
+        { id: 'BERU1', name: 'Bear River RAWS', elevation: 6200, role: 'Bear River drainage reference', priority: 2 },
+        { id: 'KLGU', name: 'Logan-Cache Airport', elevation: 4457, role: 'Regional ASOS (distant)', priority: 3 },
       ],
-      reference: [{ id: 'KLGU', name: 'Logan-Cache Airport', elevation: 4457 }],
+      reference: [
+        { id: 'KLGU', name: 'Logan-Cache Airport', elevation: 4457 },
+        { id: 'UTLTS', name: 'SR-30 Laketown Summit (UDOT)', elevation: 6500 },
+      ],
     },
     thermal: {
       optimalDirection: { min: 250, max: 320, ideal: 280 },
@@ -283,17 +294,21 @@ export const northernUtahConfigs = {
     stations: {
       pressure: {
         high: { id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226, role: 'Regional reference' },
-        low: { id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226, role: 'Basin reference' },
+        low: { id: 'KOGD', name: 'Ogden-Hinckley Airport', elevation: 4440, role: 'Valley reference' },
         bustThreshold: 2.5,
       },
       ridge: [
-        { id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226, role: 'Regional reference', priority: 1 },
+        { id: 'UTPOW', name: 'SR-158 Powder Mountain (UDOT)', elevation: 8900, role: 'ON-SITE station at Powder Mountain', priority: 1 },
       ],
-      groundTruth: { id: 'KSLC', name: 'Salt Lake City Intl', role: 'Ground Truth — distant' },
+      groundTruth: { id: 'UTPOW', name: 'SR-158 Powder Mountain (UDOT)', role: 'Ground Truth — on-site at Powder Mountain' },
       lakeshore: [
-        { id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226, role: 'Primary (distant)', priority: 1 },
+        { id: 'UTPOW', name: 'SR-158 Powder Mountain (UDOT)', elevation: 8900, role: 'Primary — on-site', priority: 1 },
+        { id: 'KOGD', name: 'Ogden-Hinckley Airport', elevation: 4440, role: 'Valley reference', priority: 2 },
       ],
-      reference: [{ id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226 }],
+      reference: [
+        { id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226 },
+        { id: 'KOGD', name: 'Ogden-Hinckley Airport', elevation: 4440 },
+      ],
     },
     thermal: {
       optimalDirection: { min: 180, max: 270, ideal: 225 },
@@ -325,11 +340,12 @@ export const northernUtahConfigs = {
         bustThreshold: 2.5,
       },
       ridge: [
-        { id: 'KLGU', name: 'Logan-Cache Airport', elevation: 4457, role: 'Primary reference', priority: 1 },
+        { id: 'UTMON', name: 'SR-39 Monte Cristo (UDOT)', elevation: 8900, role: 'ON-SITE station at Monte Cristo', priority: 1 },
       ],
-      groundTruth: { id: 'KLGU', name: 'Logan-Cache Airport', role: 'Ground Truth — distant' },
+      groundTruth: { id: 'UTMON', name: 'SR-39 Monte Cristo (UDOT)', role: 'Ground Truth — on-site at Monte Cristo' },
       lakeshore: [
-        { id: 'KLGU', name: 'Logan-Cache Airport', elevation: 4457, role: 'Primary (distant)', priority: 1 },
+        { id: 'UTMON', name: 'SR-39 Monte Cristo (UDOT)', elevation: 8900, role: 'Primary — on-site', priority: 1 },
+        { id: 'KLGU', name: 'Logan-Cache Airport', elevation: 4457, role: 'Valley reference', priority: 2 },
       ],
       reference: [{ id: 'KLGU', name: 'Logan-Cache Airport', elevation: 4457 }],
     },

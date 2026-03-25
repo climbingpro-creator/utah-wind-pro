@@ -121,16 +121,38 @@ export const STATION_REGISTRY = {
     network: 'NRCS',
     roles: ['ridge-indicator'],
   },
-  SND: {
-    id: 'SND',
-    name: 'Arrowhead Summit (Sundance)',
-    shortName: 'Arrowhead',
+  UTLPC: {
+    id: 'UTLPC',
+    name: 'Lower Provo Canyon (UDOT)',
+    shortName: 'Lwr Provo Cyn',
     lat: 40.3800,
     lng: -111.5800,
-    elevation: 8252,
-    type: 'ski',
-    network: 'MesoWest',
-    roles: ['deer-creek-trigger', 'ridge-indicator'],
+    elevation: 5100,
+    type: 'rwis',
+    network: 'UDOT',
+    roles: ['deer-creek-trigger', 'canyon-indicator'],
+  },
+  UTCHL: {
+    id: 'UTCHL',
+    name: 'Charleston (UDOT)',
+    shortName: 'Charleston',
+    lat: 40.4800,
+    lng: -111.4600,
+    elevation: 5500,
+    type: 'rwis',
+    network: 'UDOT',
+    roles: ['deer-creek-mid-chain'],
+  },
+  UTDCD: {
+    id: 'UTDCD',
+    name: 'US-189 Deer Creek Dam (UDOT)',
+    shortName: 'Deer Creek Dam',
+    lat: 40.4090,
+    lng: -111.5100,
+    elevation: 5400,
+    type: 'rwis',
+    network: 'UDOT',
+    roles: ['deer-creek-primary'],
   },
   BLPU1: {
     id: 'BLPU1',
@@ -178,16 +200,16 @@ export const STATION_REGISTRY = {
     network: 'MesoWest',
     roles: ['utah-lake-reference'],
   },
-  DCC: {
-    id: 'DCC',
-    name: 'Deer Creek Dam',
-    shortName: 'Deer Creek',
-    lat: 40.4100,
-    lng: -111.5200,
-    elevation: 5400,
-    type: 'mesonet',
-    network: 'MesoWest',
-    roles: ['deer-creek-primary'],
+  UTHEB: {
+    id: 'UTHEB',
+    name: 'Heber (UDOT)',
+    shortName: 'Heber',
+    lat: 40.5100,
+    lng: -111.4100,
+    elevation: 5600,
+    type: 'rwis',
+    network: 'UDOT',
+    roles: ['strawberry-mid-chain'],
   },
   UR328: {
     id: 'UR328',
@@ -420,6 +442,214 @@ export const STATION_REGISTRY = {
     type: 'aviation',
     network: 'MesoWest',
     roles: ['north-flow-indicator'],
+  },
+
+  // ── Expanded network: UDOT RWIS stations ──
+  UTORM: {
+    id: 'UTORM', name: 'I-15 Orem (UDOT)', shortName: 'Orem I-15',
+    lat: 40.2800, lng: -111.7000, elevation: 4500,
+    type: 'rwis', network: 'UDOT', roles: ['se-thermal-mid-chain'],
+  },
+  UTPCR: {
+    id: 'UTPCR', name: 'Pioneer Crossing, Lehi (UDOT)', shortName: 'Pioneer Xing',
+    lat: 40.4100, lng: -111.9200, elevation: 4500,
+    type: 'rwis', network: 'UDOT', roles: ['zigzag-close-indicator'],
+  },
+  UT7: {
+    id: 'UT7', name: 'Bluffdale I-15 (UDOT)', shortName: 'Bluffdale',
+    lat: 40.4900, lng: -111.9300, elevation: 4500,
+    type: 'rwis', network: 'UDOT', roles: ['north-flow-mid-chain'],
+  },
+  UTPRB: {
+    id: 'UTPRB', name: 'Porter Rockwell Blvd (UDOT)', shortName: 'Porter Rockwell',
+    lat: 40.4600, lng: -111.9100, elevation: 4500,
+    type: 'rwis', network: 'UDOT', roles: ['north-flow-corroboration'],
+  },
+  UTRVT: {
+    id: 'UTRVT', name: 'SR-154 Riverton (UDOT)', shortName: 'Riverton',
+    lat: 40.5200, lng: -111.9500, elevation: 4500,
+    type: 'rwis', network: 'UDOT', roles: ['north-flow-corroboration'],
+  },
+  UTLAK: {
+    id: 'UTLAK', name: 'SR-68 Mosida (UDOT)', shortName: 'Mosida',
+    lat: 40.2100, lng: -111.9400, elevation: 4500,
+    type: 'rwis', network: 'UDOT', roles: ['lake-level-crosswind'],
+  },
+  UTLMP: {
+    id: 'UTLMP', name: 'I-15 Lampson Canyon (UDOT)', shortName: 'Lampson Cyn',
+    lat: 39.4500, lng: -111.9200, elevation: 5200,
+    type: 'rwis', network: 'UDOT', roles: ['yuba-ground-truth'],
+  },
+  UTRKY: {
+    id: 'UTRKY', name: 'I-15 Rocky Ridge (UDOT)', shortName: 'Rocky Ridge',
+    lat: 39.7200, lng: -111.8500, elevation: 5400,
+    type: 'rwis', network: 'UDOT', roles: ['yuba-north-approach'],
+  },
+  UTSCI: {
+    id: 'UTSCI', name: 'I-15 Scipio Summit (UDOT)', shortName: 'Scipio',
+    lat: 39.2500, lng: -112.1000, elevation: 5900,
+    type: 'rwis', network: 'UDOT', roles: ['yuba-south-approach'],
+  },
+  UTSLD: {
+    id: 'UTSLD', name: 'Soldier Summit (UDOT)', shortName: 'Soldier Summit',
+    lat: 39.9300, lng: -111.0800, elevation: 7400,
+    type: 'rwis', network: 'UDOT', roles: ['strawberry-south-approach'],
+  },
+  UTANT: {
+    id: 'UTANT', name: 'I-15 Antelope Drive (UDOT)', shortName: 'Antelope Dr',
+    lat: 41.0600, lng: -111.9800, elevation: 4300,
+    type: 'rwis', network: 'UDOT', roles: ['willard-bay-close'],
+  },
+  UTFRW: {
+    id: 'UTFRW', name: 'I-15 Farr West (UDOT)', shortName: 'Farr West',
+    lat: 41.2100, lng: -112.0200, elevation: 4400,
+    type: 'rwis', network: 'UDOT', roles: ['willard-bay-north-approach'],
+  },
+  UTGRC: {
+    id: 'UTGRC', name: 'US-89 Garden City (UDOT)', shortName: 'Garden City',
+    lat: 41.9400, lng: -111.4000, elevation: 5924,
+    type: 'rwis', network: 'UDOT', roles: ['bear-lake-ground-truth'],
+  },
+  UTLTS: {
+    id: 'UTLTS', name: 'SR-30 Laketown Summit (UDOT)', shortName: 'Laketown',
+    lat: 41.8600, lng: -111.3200, elevation: 6500,
+    type: 'rwis', network: 'UDOT', roles: ['bear-lake-west-approach'],
+  },
+  UTPVD: {
+    id: 'UTPVD', name: 'SR-39 Pineview Dam (UDOT)', shortName: 'Pineview Dam',
+    lat: 41.2700, lng: -111.8200, elevation: 4900,
+    type: 'rwis', network: 'UDOT', roles: ['pineview-ground-truth'],
+  },
+  UTPOW: {
+    id: 'UTPOW', name: 'SR-158 Powder Mountain (UDOT)', shortName: 'Powder Mtn',
+    lat: 41.3800, lng: -111.7800, elevation: 8900,
+    type: 'rwis', network: 'UDOT', roles: ['powder-mountain-on-site'],
+  },
+  UTMON: {
+    id: 'UTMON', name: 'SR-39 Monte Cristo (UDOT)', shortName: 'Monte Cristo',
+    lat: 41.4500, lng: -111.5000, elevation: 8900,
+    type: 'rwis', network: 'UDOT', roles: ['monte-cristo-on-site'],
+  },
+  // ── Weather Underground PWS Network ──
+  KUTSARAT50: {
+    id: 'KUTSARAT50', name: 'Zigzag PWS (WU)', shortName: 'Zigzag WU',
+    lat: 40.302, lng: -111.881, elevation: 4531,
+    type: 'pws', network: 'WU', roles: ['zigzag-ground-truth-wu'],
+  },
+  KUTSARAT88: {
+    id: 'KUTSARAT88', name: 'Saratoga Springs S (WU)', shortName: 'SS South WU',
+    lat: 40.293, lng: -111.884, elevation: 4500,
+    type: 'pws', network: 'WU', roles: ['zigzag-close-wu'],
+  },
+  KUTSARAT81: {
+    id: 'KUTSARAT81', name: 'Saratoga Springs SE (WU)', shortName: 'SS SE WU',
+    lat: 40.287, lng: -111.877, elevation: 4500,
+    type: 'pws', network: 'WU', roles: ['zigzag-close-wu'],
+  },
+  KUTSARAT74: {
+    id: 'KUTSARAT74', name: 'Saratoga Springs W (WU)', shortName: 'SS West WU',
+    lat: 40.333, lng: -111.910, elevation: 4500,
+    type: 'pws', network: 'WU', roles: ['zigzag-mid-wu'],
+  },
+  KUTSARAT62: {
+    id: 'KUTSARAT62', name: 'Saratoga Springs N (WU)', shortName: 'SS North WU',
+    lat: 40.377, lng: -111.912, elevation: 4500,
+    type: 'pws', network: 'WU', roles: ['zigzag-mid-wu'],
+  },
+  KUTSARAT65: {
+    id: 'KUTSARAT65', name: 'Saratoga Springs W2 (WU)', shortName: 'SS W2 WU',
+    lat: 40.313, lng: -111.895, elevation: 4500,
+    type: 'pws', network: 'WU', roles: ['lincoln-close-wu'],
+  },
+  KUTSARAT52: {
+    id: 'KUTSARAT52', name: 'Saratoga Springs SW (WU)', shortName: 'SS SW WU',
+    lat: 40.306, lng: -111.904, elevation: 4500,
+    type: 'pws', network: 'WU', roles: ['lincoln-close-wu'],
+  },
+  KUTSARAT80: {
+    id: 'KUTSARAT80', name: 'Saratoga Springs NW (WU)', shortName: 'SS NW WU',
+    lat: 40.315, lng: -111.902, elevation: 4500,
+    type: 'pws', network: 'WU', roles: ['lincoln-mid-wu'],
+  },
+  KUTLEHI73: {
+    id: 'KUTLEHI73', name: 'Lehi NW (WU)', shortName: 'Lehi NW WU',
+    lat: 40.378, lng: -111.905, elevation: 4500,
+    type: 'pws', network: 'WU', roles: ['zigzag-mid-wu', 'potm-south-close-wu'],
+  },
+  KUTLEHI111: {
+    id: 'KUTLEHI111', name: 'Lehi FPS area (WU)', shortName: 'Lehi FPS WU',
+    lat: 40.454, lng: -111.892, elevation: 4500,
+    type: 'pws', network: 'WU', roles: ['potm-south-close-wu'],
+  },
+  KUTLEHI160: {
+    id: 'KUTLEHI160', name: 'Lehi S (WU)', shortName: 'Lehi S WU',
+    lat: 40.447, lng: -111.889, elevation: 4500,
+    type: 'pws', network: 'WU', roles: ['se-thermal-mid-wu'],
+  },
+  KUTDRAPE132: {
+    id: 'KUTDRAPE132', name: 'Draper E (WU)', shortName: 'Draper WU',
+    lat: 40.480, lng: -111.884, elevation: 4500,
+    type: 'pws', network: 'WU', roles: ['north-flow-mid-wu', 'potm-north-close-wu'],
+  },
+  KUTDRAPE59: {
+    id: 'KUTDRAPE59', name: 'Draper W (WU)', shortName: 'Draper W WU',
+    lat: 40.477, lng: -111.883, elevation: 4500,
+    type: 'pws', network: 'WU', roles: ['north-flow-mid-wu'],
+  },
+  KUTRIVER67: {
+    id: 'KUTRIVER67', name: 'Riverton (WU)', shortName: 'Riverton WU',
+    lat: 40.489, lng: -111.919, elevation: 4500,
+    type: 'pws', network: 'WU', roles: ['north-flow-mid-wu'],
+  },
+  KUTBLUFF18: {
+    id: 'KUTBLUFF18', name: 'Bluffdale (WU)', shortName: 'Bluffdale WU',
+    lat: 40.492, lng: -111.935, elevation: 4500,
+    type: 'pws', network: 'WU', roles: ['north-flow-mid-wu'],
+  },
+  KUTSANDY188: {
+    id: 'KUTSANDY188', name: 'Sandy S (WU)', shortName: 'Sandy WU',
+    lat: 40.552, lng: -111.807, elevation: 4500,
+    type: 'pws', network: 'WU', roles: ['north-flow-early-wu'],
+  },
+  KUTALPIN3: {
+    id: 'KUTALPIN3', name: 'Alpine W (WU)', shortName: 'Alpine W WU',
+    lat: 40.444, lng: -111.769, elevation: 4900,
+    type: 'pws', network: 'WU', roles: ['potm-east-bench-wu'],
+  },
+  KUTALPIN25: {
+    id: 'KUTALPIN25', name: 'Alpine E (WU)', shortName: 'Alpine E WU',
+    lat: 40.451, lng: -111.761, elevation: 4900,
+    type: 'pws', network: 'WU', roles: ['potm-east-bench-wu'],
+  },
+  KUTMIDWA37: {
+    id: 'KUTMIDWA37', name: 'Midway (WU)', shortName: 'Midway WU',
+    lat: 40.505, lng: -111.465, elevation: 5600,
+    type: 'pws', network: 'WU', roles: ['deer-creek-close-wu'],
+  },
+  KUTHEBER105: {
+    id: 'KUTHEBER105', name: 'Heber City E (WU)', shortName: 'Heber E WU',
+    lat: 40.485, lng: -111.444, elevation: 5600,
+    type: 'pws', network: 'WU', roles: ['deer-creek-mid-wu', 'jordanelle-close-wu'],
+  },
+  KUTHEBER26: {
+    id: 'KUTHEBER26', name: 'Heber City S (WU)', shortName: 'Heber S WU',
+    lat: 40.477, lng: -111.450, elevation: 5600,
+    type: 'pws', network: 'WU', roles: ['deer-creek-mid-wu'],
+  },
+  KUTPLEAS11: {
+    id: 'KUTPLEAS11', name: 'Pleasant Grove (WU)', shortName: 'PG WU',
+    lat: 40.400, lng: -111.742, elevation: 4600,
+    type: 'pws', network: 'WU', roles: ['vineyard-close-wu', 'deer-creek-early-wu'],
+  },
+  KUTPLEAS84: {
+    id: 'KUTPLEAS84', name: 'Pleasant Grove E (WU)', shortName: 'PG East WU',
+    lat: 40.413, lng: -111.756, elevation: 4600,
+    type: 'pws', network: 'WU', roles: ['vineyard-close-wu'],
+  },
+  KUTCEDAR10: {
+    id: 'KUTCEDAR10', name: 'Cedar Hills (WU)', shortName: 'Cedar Hills WU',
+    lat: 40.396, lng: -111.741, elevation: 4700,
+    type: 'pws', network: 'WU', roles: ['vineyard-mid-wu', 'deer-creek-early-wu'],
   },
 };
 

@@ -9,44 +9,50 @@ export const LAKE_STATIONS = {
   // ── Utah Lake variants ──
   'utah-lake-zigzag': {
     name: 'Zigzag Island / Saratoga Springs',
-    synoptic: ['KSLC', 'KPVU', 'QSF', 'FPS', 'UTALP', 'UTOLY', 'UID28', 'CSC'],
+    synoptic: ['KSLC', 'KPVU', 'QSF', 'FPS', 'UTALP', 'UTOLY', 'UID28', 'CSC', 'UTORM', 'UTPCR', 'UT7', 'UTPRB', 'UTRVT', 'UTLAK'],
+    wuPws: ['KUTSARAT50', 'KUTSARAT88', 'KUTSARAT81', 'KUTSARAT74', 'KUTSARAT62', 'KUTLEHI73', 'KUTLEHI160'],
     primary: 'UID28',
     hasAmbient: true,
   },
   'utah-lake-lincoln': {
     name: 'Lincoln Point',
-    synoptic: ['KSLC', 'KPVU', 'QSF', 'FPS', 'UTALP', 'CSC', 'TIMU1'],
+    synoptic: ['KSLC', 'KPVU', 'QSF', 'FPS', 'UTALP', 'CSC', 'TIMU1', 'UTORM', 'UTPCR', 'UT7'],
+    wuPws: ['KUTSARAT65', 'KUTSARAT52', 'KUTSARAT80'],
     primary: 'KPVU',
     hasAmbient: false,
   },
   'utah-lake-sandy': {
     name: 'Sandy Beach',
-    synoptic: ['KSLC', 'KPVU', 'QSF', 'FPS', 'UTALP', 'CSC', 'TIMU1'],
+    synoptic: ['KSLC', 'KPVU', 'QSF', 'FPS', 'UTALP', 'CSC', 'TIMU1', 'UTORM', 'UTPCR', 'UT7'],
+    wuPws: ['KUTSARAT62', 'KUTLEHI73', 'KUTSARAT74'],
     primary: 'KPVU',
     hasAmbient: false,
   },
   'utah-lake-vineyard': {
     name: 'Vineyard / Utah Lake SP',
-    synoptic: ['KSLC', 'KPVU', 'QSF', 'FPS', 'UTALP', 'CSC', 'TIMU1', 'QLN'],
+    synoptic: ['KSLC', 'KPVU', 'QSF', 'FPS', 'UTALP', 'CSC', 'TIMU1', 'QLN', 'UTORM', 'UTPCR', 'UT7'],
+    wuPws: ['KUTPLEAS11', 'KUTPLEAS84', 'KUTCEDAR10'],
     primary: 'KPVU',
     hasAmbient: false,
   },
   'utah-lake-mm19': {
     name: 'Mile Marker 19',
-    synoptic: ['KSLC', 'KPVU', 'QSF', 'FPS', 'UTALP', 'UID28', 'CSC'],
+    synoptic: ['KSLC', 'KPVU', 'QSF', 'FPS', 'UTALP', 'UID28', 'CSC', 'UTORM', 'UTPCR', 'UT7', 'UTLAK'],
     primary: 'UID28',
     hasAmbient: false,
   },
   // ── Wasatch Back ──
   'deer-creek': {
     name: 'Deer Creek Reservoir',
-    synoptic: ['KSLC', 'DCC', 'KHCR', 'SND', 'TIMU1', 'MDAU1', 'UTPCY'],
-    primary: 'DCC',
+    synoptic: ['KSLC', 'UTDCD', 'KHCR', 'TIMU1', 'MDAU1', 'UTPCY', 'UTLPC', 'UTCHL'],
+    wuPws: ['KUTMIDWA37', 'KUTHEBER105', 'KUTHEBER26', 'KUTPLEAS11', 'KUTCEDAR10'],
+    primary: 'UTDCD',
     hasAmbient: false,
   },
   'jordanelle': {
     name: 'Jordanelle Reservoir',
-    synoptic: ['KSLC', 'KHCR', 'SND', 'TIMU1', 'DCC', 'MDAU1'],
+    synoptic: ['KSLC', 'KHCR', 'TIMU1', 'UTDCD', 'MDAU1', 'UTCHL', 'UTLPC'],
+    wuPws: ['KUTHEBER105', 'KUTHEBER26', 'KUTMIDWA37'],
     primary: 'KHCR',
     hasAmbient: false,
   },
@@ -71,14 +77,14 @@ export const LAKE_STATIONS = {
   // ── Northern Utah ──
   'willard-bay': {
     name: 'Willard Bay',
-    synoptic: ['KOGD', 'KHIF', 'KSLC', 'KBMC', 'UR328', 'BLPU1', 'OGP', 'GSLM'],
+    synoptic: ['KOGD', 'KHIF', 'KSLC', 'KBMC', 'UR328', 'BLPU1', 'OGP', 'GSLM', 'UTANT', 'UTFRW'],
     primary: 'UR328',
     hasAmbient: false,
   },
   'pineview': {
     name: 'Pineview Reservoir',
-    synoptic: ['KOGD', 'KSLC', 'COOPOGNU1', 'PC496'],
-    primary: 'COOPOGNU1',
+    synoptic: ['KOGD', 'KSLC', 'COOPOGNU1', 'PC496', 'UTPVD', 'UTHUN'],
+    primary: 'UTPVD',
     hasAmbient: false,
   },
   'hyrum': {
@@ -89,44 +95,44 @@ export const LAKE_STATIONS = {
   },
   'bear-lake': {
     name: 'Bear Lake',
-    synoptic: ['KLGU', 'BERU1'],
-    primary: 'BERU1',
+    synoptic: ['KLGU', 'BERU1', 'UTGRC', 'UTLTS'],
+    primary: 'UTGRC',
     hasAmbient: false,
   },
   // ── Strawberry variants ──
   'strawberry-ladders': {
     name: 'Strawberry — Ladders',
-    synoptic: ['KHCR', 'SND', 'DCC', 'TIMU1', 'KPVU', 'KSLC', 'UTCOP', 'UTDAN', 'DSTU1', 'CCPUT'],
+    synoptic: ['KHCR', 'TIMU1', 'KPVU', 'KSLC', 'UTCOP', 'UTDAN', 'DSTU1', 'CCPUT', 'UTHEB'],
     primary: 'UTCOP',
     hasAmbient: false,
   },
   'strawberry-bay': {
     name: 'Strawberry — Bay',
-    synoptic: ['KHCR', 'SND', 'DCC', 'TIMU1', 'KPVU', 'KSLC', 'UTCOP', 'UTDAN', 'UWCU1', 'CCPUT'],
+    synoptic: ['KHCR', 'TIMU1', 'KPVU', 'KSLC', 'UTCOP', 'UTDAN', 'UWCU1', 'CCPUT', 'UTHEB'],
     primary: 'UTCOP',
     hasAmbient: false,
   },
   'strawberry-soldier': {
     name: 'Strawberry — Soldier Creek',
-    synoptic: ['KHCR', 'SND', 'DCC', 'TIMU1', 'KPVU', 'KSLC', 'RVZU1', 'UTCOP', 'CCPUT'],
+    synoptic: ['KHCR', 'TIMU1', 'KPVU', 'KSLC', 'RVZU1', 'UTCOP', 'CCPUT', 'UTSLD', 'UTHEB'],
     primary: 'RVZU1',
     hasAmbient: false,
   },
   'strawberry-view': {
     name: 'Strawberry — View',
-    synoptic: ['KHCR', 'SND', 'DCC', 'TIMU1', 'KPVU', 'KSLC', 'UTCOP', 'RVZU1', 'CCPUT', 'DSTU1'],
+    synoptic: ['KHCR', 'TIMU1', 'KPVU', 'KSLC', 'UTCOP', 'RVZU1', 'CCPUT', 'DSTU1', 'UTHEB'],
     primary: 'UTCOP',
     hasAmbient: false,
   },
   'strawberry-river': {
     name: 'Strawberry — River',
-    synoptic: ['KHCR', 'SND', 'DCC', 'TIMU1', 'KPVU', 'KSLC', 'UTCOP', 'RVZU1', 'DSTU1', 'CCPUT'],
+    synoptic: ['KHCR', 'TIMU1', 'KPVU', 'KSLC', 'UTCOP', 'RVZU1', 'DSTU1', 'CCPUT', 'UTHEB', 'UTDAN'],
     primary: 'UTCOP',
     hasAmbient: false,
   },
   'skyline-drive': {
     name: 'Skyline Drive',
-    synoptic: ['KHCR', 'SND', 'DCC', 'TIMU1', 'KPVU', 'KSLC', 'SKY', 'UTESU', 'UTMPK'],
+    synoptic: ['KHCR', 'TIMU1', 'KPVU', 'KSLC', 'SKY', 'UTESU', 'UTMPK', 'EPMU1', 'UTHTP'],
     primary: 'SKY',
     hasAmbient: false,
   },
@@ -158,8 +164,8 @@ export const LAKE_STATIONS = {
   // ── Central Utah ──
   'yuba': {
     name: 'Yuba Reservoir',
-    synoptic: ['KSLC', 'KPVU', 'SKY', 'UTESU', 'UTMPK', 'EPMU1', 'UTHTP'],
-    primary: 'SKY',
+    synoptic: ['KPVU', 'UTLMP', 'UTRKY', 'UTSCI'],
+    primary: 'UTLMP',
     hasAmbient: false,
   },
   'scofield': {
@@ -235,13 +241,15 @@ export const LAKE_STATIONS = {
   // ── Paragliding sites ──
   'potm-south': {
     name: 'Point of the Mountain — South',
-    synoptic: ['FPS', 'UTALP', 'KSLC', 'KPVU'],
+    synoptic: ['FPS', 'UTALP', 'KSLC', 'KPVU', 'QSF', 'UTPCR'],
+    wuPws: ['KUTLEHI111', 'KUTLEHI160', 'KUTALPIN3', 'KUTALPIN25'],
     primary: 'FPS',
     hasAmbient: false,
   },
   'potm-north': {
     name: 'Point of the Mountain — North',
-    synoptic: ['FPS', 'UTALP', 'KSLC', 'KPVU'],
+    synoptic: ['FPS', 'UTALP', 'KSLC', 'KPVU', 'UT7'],
+    wuPws: ['KUTDRAPE132', 'KUTDRAPE59', 'KUTRIVER67', 'KUTBLUFF18', 'KUTSANDY188'],
     primary: 'UTALP',
     hasAmbient: false,
   },
@@ -266,21 +274,22 @@ export const LAKE_STATIONS = {
   // ── Snowkite spots ──
   'powder-mountain': {
     name: 'Powder Mountain',
-    synoptic: ['KSLC', 'KOGD', 'KLGU'],
-    primary: 'KOGD',
+    synoptic: ['KSLC', 'KOGD', 'KLGU', 'UTPOW'],
+    primary: 'UTPOW',
     hasAmbient: false,
   },
   'monte-cristo': {
     name: 'Monte Cristo',
-    synoptic: ['KLGU'],
-    primary: 'KLGU',
+    synoptic: ['KLGU', 'UTMON'],
+    primary: 'UTMON',
     hasAmbient: false,
   },
 };
 
 // Simple lake→stationIds map derived from LAKE_STATIONS (used by collect.js)
+// Includes both Synoptic and WU PWS station IDs for unified observation mapping
 export const LAKE_STATION_MAP = Object.fromEntries(
-  Object.entries(LAKE_STATIONS).map(([id, cfg]) => [id, cfg.synoptic])
+  Object.entries(LAKE_STATIONS).map(([id, cfg]) => [id, [...cfg.synoptic, ...(cfg.wuPws || [])]])
 );
 
 // Upstream detection stations (not tied to any specific lake)

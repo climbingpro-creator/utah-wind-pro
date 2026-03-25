@@ -283,10 +283,10 @@ export const UTAH_LAKE_INDICATORS = {
 export const DEER_CREEK_INDICATORS = {
   ARROWHEAD: {
     id: 'arrowhead',
-    stationId: 'SND',
-    name: 'Arrowhead Summit',
-    coordinates: { lat: 40.4833, lng: -111.4833 },
-    elevation: 8252,
+    stationId: 'UTLPC',
+    name: 'Lower Provo Canyon (replaced dead SND)',
+    coordinates: { lat: 40.380, lng: -111.580 },
+    elevation: 5100,
     
     windType: 'CANYON_THERMAL',
     role: 'High-elevation trigger for Provo Canyon thermal',

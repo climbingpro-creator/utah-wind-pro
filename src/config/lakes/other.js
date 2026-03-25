@@ -24,15 +24,18 @@ export const otherConfigs = {
         bustThreshold: 2.0,
       },
       ridge: [
-        { id: 'SND', name: 'Arrowhead Summit', elevation: 8252, role: 'High-elevation trigger', priority: 1 },
-        { id: 'TIMU1', name: 'Timpanogos Divide', elevation: 8170, role: 'Backup ridge reference', priority: 2 },
+        { id: 'TIMU1', name: 'Timpanogos Divide', elevation: 8170, role: 'Primary ridge reference', priority: 1 },
       ],
       groundTruth: { id: 'KHCR', name: 'Heber Valley Airport', role: 'Ground Truth — closest ASOS' },
       lakeshore: [
         { id: 'KHCR', name: 'Heber Valley Airport', elevation: 5597, role: 'Primary — Heber Valley', priority: 1 },
-        { id: 'DCC', name: 'Deer Creek Dam', elevation: 6675, role: 'Secondary — shared corridor', priority: 2 },
+        { id: 'UTCHL', name: 'Charleston (UDOT)', elevation: 5500, role: 'Secondary — Heber Valley near reservoir', priority: 2 },
+        { id: 'UTDCD', name: 'US-189 Deer Creek Dam (UDOT)', elevation: 5400, role: 'Shared corridor (replaced dead DCC)', priority: 3 },
       ],
-      reference: [{ id: 'MDAU1', name: 'Midway', elevation: 5758 }],
+      reference: [
+        { id: 'MDAU1', name: 'Midway', elevation: 5758 },
+        { id: 'UTLPC', name: 'Lower Provo Canyon (UDOT)', elevation: 5100 },
+      ],
     },
     thermal: {
       optimalDirection: { min: 180, max: 230, ideal: 205 },

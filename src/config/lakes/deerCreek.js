@@ -41,53 +41,66 @@ export const deerCreekConfigs = {
       // ELEVATION DELTA - Arrowhead is THE key station for Deer Creek
       ridge: [
         { 
-          id: 'SND', 
-          name: 'Arrowhead Summit',
-          elevation: 8252,
-          role: 'PRIMARY - High-elevation trigger for Deer Creek thermal',
-          priority: 1
-        },
-        { 
           id: 'TIMU1', 
           name: 'Timpanogos Divide',
           elevation: 8170,
-          role: 'Backup ridge reference',
-          priority: 2
+          role: 'PRIMARY - High-elevation trigger for Deer Creek thermal',
+          priority: 1
         },
       ],
       
       groundTruth: {
-        id: 'DCC',
-        name: 'Deer Creek Dam',
-        role: 'Ground Truth - Dam/Chute thermal indicator',
+        id: 'UTDCD',
+        name: 'US-189 Deer Creek Dam (UDOT)',
+        role: 'Ground Truth - Dam/Chute thermal indicator (replaced dead DCC)',
+      },
+      
+      earlyIndicator: {
+        id: 'UTLPC',
+        name: 'Lower Provo Canyon (UDOT)',
+        elevation: 5100,
+        role: 'Early Warning - canyon thermal draw precedes Deer Creek by ~60 min',
+        leadTimeMinutes: 60,
+        trigger: {
+          direction: { min: 170, max: 220, label: 'S' },
+          speed: { min: 4, optimal: 6 },
+        },
       },
       
       lakeshore: [
         { 
-          id: 'DCC', 
-          name: 'Deer Creek Dam',
-          elevation: 6675,
-          role: 'Primary - at reservoir',
+          id: 'UTDCD', 
+          name: 'US-189 Deer Creek Dam (UDOT)',
+          elevation: 5400,
+          role: 'Primary - at reservoir (replaced dead DCC)',
           priority: 1
+        },
+        { 
+          id: 'UTCHL', 
+          name: 'Charleston (UDOT)',
+          elevation: 5500,
+          role: 'Mid-chain - Heber Valley near reservoir',
+          priority: 2
         },
         { 
           id: 'KHCR', 
           name: 'Heber Valley Airport',
           elevation: 5597,
           role: 'Charleston area reference',
-          priority: 2
+          priority: 3
         },
         {
           id: 'UTPCY',
           name: 'Provo Canyon MP10',
           elevation: 5119,
           role: 'Canyon mouth - thermal draw indicator',
-          priority: 3
+          priority: 4
         }
       ],
       
       reference: [
         { id: 'MDAU1', name: 'Midway', elevation: 5758 },
+        { id: 'UTLPC', name: 'Lower Provo Canyon (UDOT)', elevation: 5100 },
       ],
     },
     

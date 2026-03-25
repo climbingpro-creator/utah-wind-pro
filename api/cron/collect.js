@@ -113,6 +113,55 @@ function normalizeToMb(val) {
   return val < 50 ? val * 33.864 : val;
 }
 
+// WU PWS stations to fetch every cron cycle (highest-value corridor stations)
+const WU_PRIORITY_IDS = [
+  'KUTSARAT50', 'KUTSARAT88', 'KUTSARAT81', 'KUTSARAT74', 'KUTSARAT62',
+  'KUTLEHI73', 'KUTLEHI160', 'KUTLEHI111',
+  'KUTDRAPE132', 'KUTDRAPE59', 'KUTRIVER67', 'KUTBLUFF18',
+  'KUTSANDY188',
+  'KUTALPIN3', 'KUTALPIN25',
+  'KUTMIDWA37', 'KUTHEBER105', 'KUTHEBER26',
+  'KUTPLEAS11', 'KUTCEDAR10',
+];
+
+async function fetchWuPwsLatest() {
+  const apiKey = process.env.WU_API_KEY;
+  if (!apiKey) return [];
+
+  const results = [];
+  // Fetch in batches of 5 to respect 30/min rate limit
+  for (let i = 0; i < WU_PRIORITY_IDS.length; i += 5) {
+    const batch = WU_PRIORITY_IDS.slice(i, i + 5);
+    const batchResults = await Promise.allSettled(
+      batch.map(async (id) => {
+        const url = `https://api.weather.com/v2/pws/observations/current?stationId=${id}&format=json&units=e&numericPrecision=decimal&apiKey=${apiKey}`;
+        const r = await fetch(url);
+        if (!r.ok) return null;
+        const d = await r.json();
+        const obs = d.observations?.[0];
+        if (!obs) return null;
+        const imp = obs.imperial || {};
+        return {
+          stationId: obs.stationID,
+          windSpeed: imp.windSpeed ?? null,
+          windDirection: obs.winddir ?? null,
+          windGust: imp.windGust ?? null,
+          temperature: imp.temp ?? null,
+          humidity: obs.humidity ?? null,
+          pressure: null,
+          observedAt: obs.obsTimeUtc || new Date().toISOString(),
+          source: 'wu-pws',
+        };
+      })
+    );
+    for (const r of batchResults) {
+      if (r.status === 'fulfilled' && r.value) results.push(r.value);
+    }
+  }
+  console.log(`[WU PWS] Fetched ${results.length}/${WU_PRIORITY_IDS.length} stations`);
+  return results;
+}
+
 async function fetchSynopticLatest() {
   const { synopticToken } = getEnv();
   const url = `https://api.synopticdata.com/v2/stations/latest?token=${synopticToken}&stids=${ALL_STATIONS.join(',')}&vars=wind_speed,wind_direction,wind_gust,air_temp,altimeter,sea_level_pressure&units=english&obtimezone=local`;
@@ -187,8 +236,15 @@ export default async function handler(req, res) {
   }
 
   try {
-    // ── STEP 1: COLLECT ──
-    const stations = await fetchSynopticLatest();
+    // ── STEP 1: COLLECT (Synoptic + WU PWS) ──
+    const [synopticStations, wuStations] = await Promise.allSettled([
+      fetchSynopticLatest(),
+      fetchWuPwsLatest(),
+    ]);
+    const stations = [
+      ...(synopticStations.status === 'fulfilled' ? synopticStations.value : []),
+      ...(wuStations.status === 'fulfilled' ? wuStations.value : []),
+    ];
     const now = new Date();
     const key = `obs:${now.toISOString().split('T')[0]}:${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 

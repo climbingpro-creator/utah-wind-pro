@@ -54,7 +54,9 @@ const STATION_NODES = {
   UTALP: { name: 'Pt of Mountain N',    lat: 40.4477, lng: -111.8971, elevation: 4796, type: 'gateway' },
   FPS:   { name: 'Flight Park South',   lat: 40.4477, lng: -111.8971, elevation: 5202, type: 'gateway' },
   QSF:   { name: 'Spanish Fork Canyon', lat: 40.115,  lng: -111.655,  elevation: 4550, type: 'canyon' },
-  SND:   { name: 'Arrowhead/Sundance',  lat: 40.393,  lng: -111.580,  elevation: 8252, type: 'ridge' },
+  UTDCD: { name: 'Deer Creek Dam (UDOT)', lat: 40.409, lng: -111.510, elevation: 5400, type: 'lakeshore' },
+  UTCHL: { name: 'Charleston (UDOT)',    lat: 40.480, lng: -111.460, elevation: 5500, type: 'valley' },
+  UTLPC: { name: 'Lower Provo Cyn (UDOT)', lat: 40.380, lng: -111.580, elevation: 5100, type: 'canyon' },
   KHCR:  { name: 'Heber Airport',       lat: 40.482,  lng: -111.429,  elevation: 5637, type: 'valley' },
   KHIF:  { name: 'Hill AFB',            lat: 41.124,  lng: -111.973,  elevation: 4789, type: 'synoptic' },
   CSC:   { name: 'Cascade Peak',        lat: 40.190,  lng: -111.612,  elevation: 10875, type: 'ridge' },
@@ -95,8 +97,8 @@ const PROPAGATION_EDGES = [
   // === DEER CREEK VENTURI PATH ===
   { from: 'KPVU', to: 'KHCR', delay: 45, attenuation: 0.60, channeling: 1.40,
     headingRange: [100, 200], description: 'Provo Canyon venturi (strong channeling)' },
-  { from: 'SND', to: 'KHCR', delay: 30, attenuation: 0.75, channeling: 1.20,
-    headingRange: [190, 240], description: 'Arrowhead ridge → Heber (downslope)' },
+  { from: 'UTLPC', to: 'KHCR', delay: 30, attenuation: 0.75, channeling: 1.20,
+    headingRange: [170, 220], description: 'Lower Provo Canyon → Heber (canyon thermal)' },
 
   // === WILLARD BAY GAP ===
   { from: 'KHIF', to: 'KSLC', delay: 30, attenuation: 0.70, channeling: 1.0,
@@ -126,7 +128,7 @@ const LOCATION_STATIONS = {
   'utah-lake-vineyard': { primary: 'KPVU', secondary: ['FPS'],        upstreamNorth: ['KSLC', 'UTALP'], upstreamThermal: ['KPVU'] },
   'utah-lake-zigzag':   { primary: 'FPS',  secondary: ['UTALP','KPVU'], upstreamNorth: ['KSLC', 'UTOLY', 'UTALP'], upstreamThermal: ['QSF'] },
   'utah-lake-mm19':     { primary: 'FPS',  secondary: ['KPVU','UID28'], upstreamNorth: ['KSLC', 'UTALP'], upstreamThermal: ['QSF'] },
-  'deer-creek':         { primary: 'KHCR', secondary: ['SND'],        upstreamNorth: ['KSLC'],           upstreamThermal: ['KPVU', 'SND'] },
+  'deer-creek':         { primary: 'KHCR', secondary: ['UTDCD', 'UTCHL'], upstreamNorth: ['KSLC'],      upstreamThermal: ['KPVU', 'UTLPC'] },
   'willard-bay':        { primary: 'KHIF', secondary: [],             upstreamNorth: ['KSLC'],           upstreamThermal: ['KHIF'] },
   'strawberry-ladders': { primary: 'UTCOP', secondary: ['UTDAN', 'DSTU1'], upstreamNorth: ['KSLC', 'CCPUT'], upstreamThermal: ['UTCOP', 'DSTU1'] },
   'strawberry-bay':     { primary: 'UTCOP', secondary: ['UTDAN', 'UWCU1'], upstreamNorth: ['KSLC', 'CCPUT'], upstreamThermal: ['UTCOP', 'UTDAN'] },

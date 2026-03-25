@@ -6,7 +6,9 @@
  *   GET /api/weather?source=ambient
  *   GET /api/weather?source=synoptic&stids=FPS,KSLC,...
  *   GET /api/weather?source=synoptic-history&stids=FPS,KSLC,...&hours=3
- *   (water-temp route removed — lakes use client-side seasonal model)
+ *   GET /api/weather?source=wu-nearby&lat=40.35&lon=-111.90
+ *   GET /api/weather?source=wu-pws&stationIds=KUTSARAT50,KUTSARAT88
+ *   GET /api/weather?source=wu-pws-history&stationId=KUTSARAT50
  */
 
 const rateLimitMap = new Map();
@@ -56,8 +58,16 @@ export default async function handler(req, res) {
       return await handleSynopticLatest(res, stids);
     } else if (source === 'synoptic-history') {
       return await handleSynopticHistory(res, stids, hours);
+    } else if (source === 'wu-nearby') {
+      return await handleWuNearby(res, req.query);
+    } else if (source === 'wu-pws') {
+      return await handleWuPwsCurrent(res, req.query);
+    } else if (source === 'wu-pws-history') {
+      return await handleWuPwsHistory(res, req.query);
+    } else if (source === 'wu-pws-date') {
+      return await handleWuPwsDate(res, req.query);
     } else {
-      return res.status(400).json({ error: 'Invalid source. Use: ambient, ambient-history, synoptic, synoptic-history' });
+      return res.status(400).json({ error: 'Invalid source. Use: ambient, ambient-history, synoptic, synoptic-history, wu-nearby, wu-pws, wu-pws-history' });
     }
   } catch (error) {
     console.error(`[API Proxy] ${source} error:`, error.message);
@@ -132,10 +142,18 @@ async function handleAmbient(res) {
 
 const ALLOWED_STATIONS = new Set([
   'KSLC','KPVU','KHCR','KOGD','KLGU','KHIF','KVEL','KPUC','KSGU','KPGA','KCDC',
-  'KFGR','KBMC','BERU1','FPS','QSF','SND','UTALP','UTOLY','CSC','UID28','TIMU1','MDAU1',
-  'UTPCY','DCC','UTCOP','UTDAN','DSTU1','RVZU1','CCPUT','UWCU1','SKY','UTESU','UTMPK',
+  'KFGR','KBMC','BERU1','FPS','QSF','UTALP','UTOLY','CSC','UID28','TIMU1','MDAU1',
+  'UTPCY','UTCOP','UTDAN','DSTU1','RVZU1','CCPUT','UWCU1','SKY','UTESU','UTMPK',
   'UR328','BLPU1','OGP',
   'QLN','GSLM','EPMU1','UTHTP','COOPOGNU1','PC496',
+  'UTDCD','UTLPC','UTCHL',
+  'UTORM','UTPCR','UT7','UTPRB','UTRVT','UTLAK',
+  'UTHEB','UTSLD',
+  'UTLMP','UTRKY','UTSCI',
+  'UTANT','UTFRW',
+  'UTGRC','UTLTS',
+  'UTPVD','UTHUN',
+  'UTPOW','UTMON',
 ]);
 
 async function handleSynopticLatest(res, stids) {
@@ -212,5 +230,83 @@ async function handleSynopticHistory(res, stids, hours = '3') {
 
   const data = await response.json();
   res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
+  return res.status(200).json(data);
+}
+
+// ─── Weather Underground PWS Network ─────────────────────────────
+
+function getWuApiKey() {
+  return process.env.WU_API_KEY;
+}
+
+async function handleWuNearby(res, query) {
+  const apiKey = getWuApiKey();
+  if (!apiKey) return res.status(500).json({ error: 'WU_API_KEY not configured' });
+
+  const { lat, lon } = query;
+  if (!lat || !lon) return res.status(400).json({ error: 'lat and lon parameters required' });
+
+  const url = `https://api.weather.com/v3/location/near?geocode=${lat},${lon}&product=pws&format=json&apiKey=${apiKey}`;
+  const response = await fetch(url);
+  if (!response.ok) return res.status(response.status).json({ error: `WU API returned ${response.status}` });
+
+  const data = await response.json();
+  res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=7200');
+  return res.status(200).json(data);
+}
+
+async function handleWuPwsCurrent(res, query) {
+  const apiKey = getWuApiKey();
+  if (!apiKey) return res.status(500).json({ error: 'WU_API_KEY not configured' });
+
+  const stationIds = (query.stationIds || '').split(',').map(s => s.trim()).filter(Boolean);
+  if (stationIds.length === 0) return res.status(400).json({ error: 'stationIds parameter required' });
+  if (stationIds.length > 10) return res.status(400).json({ error: 'Max 10 stations per request' });
+
+  const results = await Promise.allSettled(
+    stationIds.map(async (id) => {
+      const url = `https://api.weather.com/v2/pws/observations/current?stationId=${id}&format=json&units=e&numericPrecision=decimal&apiKey=${apiKey}`;
+      const r = await fetch(url);
+      if (!r.ok) return { stationId: id, error: r.status };
+      const d = await r.json();
+      return d.observations?.[0] || { stationId: id, error: 'no_data' };
+    })
+  );
+
+  const observations = results.map(r => r.status === 'fulfilled' ? r.value : { error: 'fetch_failed' });
+  res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=120');
+  return res.status(200).json({ observations });
+}
+
+async function handleWuPwsDate(res, query) {
+  const apiKey = getWuApiKey();
+  if (!apiKey) return res.status(500).json({ error: 'WU_API_KEY not configured' });
+
+  const { stationId, date } = query;
+  if (!stationId) return res.status(400).json({ error: 'stationId parameter required' });
+  if (!date || !/^\d{8}$/.test(date)) return res.status(400).json({ error: 'date parameter required (YYYYMMDD)' });
+
+  const url = `https://api.weather.com/v2/pws/history/all?stationId=${stationId}&format=json&units=e&date=${date}&numericPrecision=decimal&apiKey=${apiKey}`;
+  const response = await fetch(url);
+  if (!response.ok) return res.status(response.status).json({ error: `WU API returned ${response.status}` });
+
+  const data = await response.json();
+  res.setHeader('Cache-Control', 's-maxage=86400, stale-while-revalidate=172800');
+  return res.status(200).json(data);
+}
+
+async function handleWuPwsHistory(res, query) {
+  const apiKey = getWuApiKey();
+  if (!apiKey) return res.status(500).json({ error: 'WU_API_KEY not configured' });
+
+  const { stationId } = query;
+  if (!stationId) return res.status(400).json({ error: 'stationId parameter required' });
+
+  const url = `https://api.weather.com/v2/pws/observations/all/1day?stationId=${stationId}&format=json&units=e&numericPrecision=decimal&apiKey=${apiKey}`;
+  const response = await fetch(url);
+  if (!response.ok) return res.status(response.status).json({ error: `WU API returned ${response.status}` });
+
+  const data = await response.json();
+  res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600');
   return res.status(200).json(data);
 }

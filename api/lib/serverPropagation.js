@@ -32,41 +32,54 @@ const CHAIN_DEFS = {
   'zigzag:se_thermal': {
     label: 'SE Thermal → Zigzag', target: 'PWS',
     nodes: [
-      { id: 'QSF',  lag: -120, dir: [100, 180], speed: 6 },
-      { id: 'KPVU', lag: -60,  dir: [120, 180], speed: 5 },
-      { id: 'FPS',  lag: -30,  dir: [130, 180], speed: 8 },
-      { id: 'PWS',  lag: 0,    dir: [100, 180], speed: 5 },
+      { id: 'QSF',         lag: -120, dir: [100, 180], speed: 6 },
+      { id: 'UTORM',       lag: -90,  dir: [100, 180], speed: 5 },
+      { id: 'KPVU',        lag: -60,  dir: [120, 180], speed: 5 },
+      { id: 'KUTLEHI160',  lag: -40,  dir: [100, 200], speed: 3, optional: true },
+      { id: 'FPS',         lag: -30,  dir: [130, 180], speed: 8 },
+      { id: 'KUTLEHI73',   lag: -20,  dir: [100, 200], speed: 3, optional: true },
+      { id: 'UTPCR',       lag: -15,  dir: [100, 180], speed: 4 },
+      { id: 'KUTSARAT62',  lag: -10,  dir: [100, 200], speed: 3, optional: true },
+      { id: 'KUTSARAT88',  lag: -5,   dir: [100, 200], speed: 3, optional: true },
+      { id: 'PWS',         lag: 0,    dir: [100, 180], speed: 5 },
     ],
     pressure: { type: 'below', threshold: 2.0 },
-    speedRatios: { FPS: 1.7 },
+    speedRatios: { FPS: 1.7, UTORM: 1.3, KUTLEHI160: 1.1, KUTSARAT88: 0.83, KUTSARAT62: 0.39, KUTBLUFF18: 0.99, KUTRIVER67: 1.1 },
   },
   'zigzag:north_flow': {
     label: 'North Flow → Zigzag', target: 'PWS',
     nodes: [
-      { id: 'KSLC', lag: -60, dir: [315, 45], speed: 8, wrap: true },
-      { id: 'UTALP',lag: -30, dir: [315, 45], speed: 5, wrap: true },
-      { id: 'FPS',  lag: -15, dir: [315, 60], speed: 8, wrap: true },
-      { id: 'PWS',  lag: 0,   dir: [300, 60], speed: 4, wrap: true },
+      { id: 'KSLC',        lag: -90,  dir: [315, 45], speed: 8, wrap: true },
+      { id: 'KUTSANDY188', lag: -70,  dir: [315, 45], speed: 4, wrap: true, optional: true },
+      { id: 'KUTDRAPE132', lag: -55,  dir: [315, 45], speed: 4, wrap: true, optional: true },
+      { id: 'UT7',         lag: -45,  dir: [315, 45], speed: 5, wrap: true },
+      { id: 'KUTBLUFF18',  lag: -40,  dir: [315, 60], speed: 3, wrap: true, optional: true },
+      { id: 'KUTRIVER67',  lag: -35,  dir: [315, 60], speed: 3, wrap: true, optional: true },
+      { id: 'UTALP',       lag: -30,  dir: [315, 45], speed: 5, wrap: true },
+      { id: 'UTPCR',       lag: -15,  dir: [300, 60], speed: 4, wrap: true },
+      { id: 'PWS',         lag: 0,    dir: [300, 60], speed: 4, wrap: true },
     ],
     pressure: { type: 'above', threshold: -1.0 },
-    speedRatios: { FPS: 1.5 },
+    speedRatios: { FPS: 2.8, UT7: 1.3, KUTDRAPE132: 0.39, KUTSARAT62: 1.13, KUTBLUFF18: 0.65, KUTRIVER67: 0.67 },
   },
   // ── KITEBOARDING: Lincoln Beach ──
   'lincoln:se_thermal': {
     label: 'SE Thermal → Lincoln Beach', target: 'KPVU',
     nodes: [
-      { id: 'QSF',  lag: -90,  dir: [100, 180], speed: 6 },
-      { id: 'KPVU', lag: 0,    dir: [120, 180], speed: 5 },
+      { id: 'QSF',   lag: -90,  dir: [100, 180], speed: 6 },
+      { id: 'UTORM', lag: -45,  dir: [100, 180], speed: 5 },
+      { id: 'KPVU',  lag: 0,    dir: [120, 180], speed: 5 },
     ],
     pressure: { type: 'below', threshold: 2.0 },
   },
   'lincoln:north_flow': {
     label: 'North Flow → Lincoln Beach', target: 'KPVU',
     nodes: [
-      { id: 'KSLC', lag: -90, dir: [315, 45], speed: 8, wrap: true },
-      { id: 'UTALP',lag: -60, dir: [315, 45], speed: 5, wrap: true },
-      { id: 'FPS',  lag: -30, dir: [315, 60], speed: 8, wrap: true },
-      { id: 'KPVU', lag: 0,   dir: [315, 45], speed: 5, wrap: true },
+      { id: 'KSLC',  lag: -90, dir: [315, 45], speed: 8, wrap: true },
+      { id: 'UT7',   lag: -60, dir: [315, 45], speed: 5, wrap: true },
+      { id: 'UTALP', lag: -45, dir: [315, 45], speed: 5, wrap: true },
+      { id: 'FPS',   lag: -30, dir: [315, 60], speed: 8, wrap: true },
+      { id: 'KPVU',  lag: 0,   dir: [315, 45], speed: 5, wrap: true },
     ],
     pressure: { type: 'above', threshold: -1.0 },
   },
@@ -92,9 +105,10 @@ const CHAIN_DEFS = {
   'potm-south:se_thermal': {
     label: 'SE Thermal → Flight Park South', target: 'FPS',
     nodes: [
-      { id: 'QSF',  lag: -120, dir: [100, 180], speed: 6 },
-      { id: 'KPVU', lag: -60,  dir: [110, 250], speed: 5 },
-      { id: 'FPS',  lag: 0,    dir: [110, 250], speed: 8 },
+      { id: 'QSF',   lag: -120, dir: [100, 180], speed: 6 },
+      { id: 'KPVU',  lag: -60,  dir: [110, 250], speed: 5 },
+      { id: 'UTPCR', lag: -30,  dir: [100, 250], speed: 4 },
+      { id: 'FPS',   lag: 0,    dir: [110, 250], speed: 8 },
     ],
     pressure: { type: 'below', threshold: 2.0 },
   },
@@ -102,35 +116,38 @@ const CHAIN_DEFS = {
   'potm-north:north_flow': {
     label: 'North Flow → Flight Park North', target: 'UTALP',
     nodes: [
-      { id: 'KSLC', lag: -60, dir: [315, 45], speed: 8, wrap: true },
-      { id: 'UTALP',lag: 0,   dir: [315, 45], speed: 5, wrap: true },
+      { id: 'KSLC',  lag: -60, dir: [315, 45], speed: 8, wrap: true },
+      { id: 'UT7',   lag: -30, dir: [315, 45], speed: 5, wrap: true },
+      { id: 'UTALP', lag: 0,   dir: [315, 45], speed: 5, wrap: true },
     ],
     pressure: { type: 'above', threshold: -1.0 },
   },
   // ── OTHER SPOTS ──
   'deer-creek:canyon_thermal': {
-    label: 'Canyon Thermal → Deer Creek', target: 'DCC',
+    label: 'Canyon Thermal → Deer Creek', target: 'UTDCD',
     nodes: [
-      { id: 'SND',  lag: -90, dir: [200, 230], speed: 12 },
-      { id: 'UTPCY',lag: -45, dir: [170, 220], speed: 4 },
-      { id: 'KHCR', lag: -20, dir: [170, 210], speed: 4 },
-      { id: 'DCC',  lag: 0,   dir: [170, 210], speed: 4 },
+      { id: 'UTLPC', lag: -60, dir: [170, 220], speed: 4 },
+      { id: 'UTPCY', lag: -45, dir: [170, 220], speed: 4 },
+      { id: 'UTCHL', lag: -20, dir: [170, 210], speed: 4 },
+      { id: 'UTDCD', lag: 0,   dir: [170, 210], speed: 4 },
     ],
   },
   'willard-bay:south_flow': {
     label: 'South Flow → Willard Bay', target: 'UR328',
     nodes: [
-      { id: 'KSLC', lag: -90, dir: [150, 220], speed: 5 },
-      { id: 'KHIF', lag: -60, dir: [150, 220], speed: 5 },
-      { id: 'KOGD', lag: -30, dir: [170, 220], speed: 5 },
-      { id: 'UR328',lag: 0,   dir: [170, 220], speed: 6 },
+      { id: 'KSLC',  lag: -90, dir: [150, 220], speed: 5 },
+      { id: 'KHIF',  lag: -60, dir: [150, 220], speed: 5 },
+      { id: 'KOGD',  lag: -30, dir: [170, 220], speed: 5 },
+      { id: 'UTANT', lag: -15, dir: [170, 220], speed: 5 },
+      { id: 'UR328', lag: 0,   dir: [170, 220], speed: 6 },
     ],
   },
   'jordanelle:canyon_thermal': {
     label: 'Canyon Thermal → Jordanelle', target: 'KHCR',
     nodes: [
-      { id: 'SND',  lag: -90, dir: [200, 230], speed: 10 },
-      { id: 'KHCR', lag: 0,   dir: [180, 230], speed: 5 },
+      { id: 'UTLPC', lag: -60, dir: [170, 220], speed: 4 },
+      { id: 'UTCHL', lag: -30, dir: [180, 230], speed: 4 },
+      { id: 'KHCR',  lag: 0,   dir: [180, 230], speed: 5 },
     ],
   },
   'strawberry:ridge_flow': {
@@ -138,15 +155,26 @@ const CHAIN_DEFS = {
     nodes: [
       { id: 'KSLC',  lag: -120, dir: [220, 300], speed: 5 },
       { id: 'KPVU',  lag: -90,  dir: [220, 300], speed: 5 },
-      { id: 'CCPUT', lag: -45,  dir: [240, 340], speed: 5 },
+      { id: 'UTHEB', lag: -60,  dir: [220, 320], speed: 4 },
+      { id: 'UTDAN', lag: -45,  dir: [220, 340], speed: 5 },
+      { id: 'CCPUT', lag: -20,  dir: [240, 340], speed: 5 },
       { id: 'UTCOP', lag: 0,    dir: [220, 340], speed: 5 },
     ],
   },
+  'yuba:valley_flow': {
+    label: 'Valley Flow → Yuba', target: 'UTLMP',
+    nodes: [
+      { id: 'KPVU',  lag: -120, dir: [170, 230], speed: 5 },
+      { id: 'UTRKY', lag: -60,  dir: [170, 230], speed: 5 },
+      { id: 'UTLMP', lag: 0,    dir: [170, 230], speed: 5 },
+    ],
+  },
   'bear-lake:west_flow': {
-    label: 'West Wind → Bear Lake', target: 'BERU1',
+    label: 'West Wind → Bear Lake', target: 'UTGRC',
     nodes: [
       { id: 'KLGU',  lag: -60, dir: [250, 320], speed: 5 },
-      { id: 'BERU1', lag: 0,   dir: [250, 320], speed: 6 },
+      { id: 'UTLTS', lag: -30, dir: [250, 320], speed: 5 },
+      { id: 'UTGRC', lag: 0,   dir: [250, 320], speed: 5 },
     ],
   },
   'skyline:ridge_flow': {
@@ -175,6 +203,7 @@ const LAKE_CHAINS = {
   'strawberry-soldier': ['strawberry:ridge_flow'],
   'strawberry-view':    ['strawberry:ridge_flow'],
   'strawberry-river':   ['strawberry:ridge_flow'],
+  'yuba':               ['yuba:valley_flow'],
   'bear-lake':          ['bear-lake:west_flow'],
   'skyline-drive':      ['skyline:ridge_flow'],
 };
@@ -238,6 +267,8 @@ export function analyzeAllSpots(stations, ambientPWS, pressureGradient) {
       }));
 
       const firedCount = nodes.filter(n => n.fired).length;
+      const requiredFired = nodes.filter(n => n.fired && !n.optional).length;
+      const optionalFired = nodes.filter(n => n.fired && n.optional).length;
       const farthest = [...nodes].reverse().find(n => n.fired);
       const targetNode = nodes.find(n => n.id === target.id);
 
@@ -249,7 +280,8 @@ export function analyzeAllSpots(stations, ambientPWS, pressureGradient) {
       } else if (farthest) {
         phase = 'propagating';
         eta = Math.max(0, target.lag - farthest.lag);
-        conf = Math.min(90, 30 + firedCount * 20);
+        // Required stations count 20pts each, optional (WU PWS) count 8pts each
+        conf = Math.min(95, 30 + requiredFired * 20 + optionalFired * 8);
       }
 
       lakeResults.push({ chainKey, label: def.label, phase, confidence: conf, etaMinutes: eta, firedCount, nodes });

@@ -405,6 +405,24 @@ export const utahLakeConfigs = {
         role: 'Ground Truth - Your PWS at Zig Zag',
       },
       
+      earlyIndicator: {
+        id: 'QSF',
+        name: 'Spanish Fork Canyon',
+        elevation: 4550,
+        coordinates: { lat: 40.115, lng: -111.655 },
+        role: 'Early Warning - SE wind here precedes Zigzag thermal by ~90 min',
+        leadTimeMinutes: 90,
+        trigger: {
+          direction: { min: 100, max: 180, label: 'SE' },
+          speed: { min: 6, optimal: 7.5 },
+        },
+        statistics: {
+          seDirectionOnGoodDays: 97,
+          avgSpeedOnGoodDays: 7.6,
+          accuracy: 62.5,
+        },
+      },
+      
       lakeshore: [
         { 
           id: 'FPS', 
@@ -420,10 +438,22 @@ export const utahLakeConfigs = {
           role: 'Valley floor reference',
           priority: 2
         },
+        {
+          id: 'UTPCR',
+          name: 'Pioneer Crossing, Lehi (UDOT)',
+          elevation: 4500,
+          role: 'Close indicator — ~3mi from Zigzag',
+          priority: 3
+        },
       ],
       
       reference: [
         { id: 'UTALP', name: 'Point of the Mountain', elevation: 4796 },
+        { id: 'UTORM', name: 'I-15 Orem (UDOT)', elevation: 4500 },
+        { id: 'UT7', name: 'Bluffdale I-15 (UDOT)', elevation: 4500 },
+        { id: 'UTPRB', name: 'Porter Rockwell Blvd (UDOT)', elevation: 4500 },
+        { id: 'UTRVT', name: 'SR-154 Riverton (UDOT)', elevation: 4500 },
+        { id: 'UTLAK', name: 'SR-68 Mosida (UDOT)', elevation: 4500 },
       ],
     },
     
@@ -684,10 +714,25 @@ export const utahLakeConfigs = {
         { id: 'FPS', name: 'Flight Park South', elevation: 4970, role: 'ON-SITE wind station', priority: 1 },
       ],
       groundTruth: { id: 'FPS', name: 'Flight Park South', role: 'Ground Truth — on-site' },
+      earlyIndicator: {
+        id: 'QSF',
+        name: 'Spanish Fork Canyon',
+        elevation: 4550,
+        role: 'Early Warning - SE wind here precedes FPS by ~120 min',
+        leadTimeMinutes: 120,
+        trigger: {
+          direction: { min: 100, max: 180, label: 'SE' },
+          speed: { min: 6, optimal: 7.5 },
+        },
+      },
       lakeshore: [
         { id: 'FPS', name: 'Flight Park South', elevation: 4970, role: 'Primary — on-site', priority: 1 },
+        { id: 'UTPCR', name: 'Pioneer Crossing, Lehi (UDOT)', elevation: 4500, role: 'South-side approach indicator', priority: 2 },
       ],
-      reference: [{ id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226 }],
+      reference: [
+        { id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226 },
+        { id: 'UTPCR', name: 'Pioneer Crossing, Lehi (UDOT)', elevation: 4500 },
+      ],
     },
     thermal: {
       optimalDirection: { min: 110, max: 250, ideal: 170 },

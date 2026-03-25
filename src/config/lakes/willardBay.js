@@ -94,6 +94,8 @@ export const willardBayConfigs = {
       
       reference: [
         { id: 'GSLM', name: 'Great Salt Lake Minerals', elevation: 4212 },
+        { id: 'UTANT', name: 'I-15 Antelope Drive (UDOT)', elevation: 4300 },
+        { id: 'UTFRW', name: 'I-15 Farr West (UDOT)', elevation: 4400 },
       ],
     },
     
