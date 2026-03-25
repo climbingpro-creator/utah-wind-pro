@@ -869,7 +869,7 @@ function scoreAllActivities(speed, gust, probability, dir, config) {
 //  STEP 8: DECIDE — GO / WAIT / PASS with confidence
 // ═══════════════════════════════════════════════════════════════════
 
-function decide(activity, activityScore, speed, gust, dir, probability, _propagation, _pressure) {
+function decide(activity, activityScore, speed, gust, dir, _probability, propagation, _pressure) {
   const p = PROFILES[activity];
   if (!p) return { decision: 'WAIT', confidence: 0.3, headline: 'Unknown activity', detail: '', action: '' };
 
