@@ -248,7 +248,7 @@ const DECISION_STYLES = {
   },
 };
 
-function buildExpectContext(activity, windSpeed, thermalPrediction, boatingPrediction, unifiedDecision) {
+function buildExpectContext(activity, windSpeed, thermalPrediction, boatingPrediction, _unifiedDecision) {
   const cfg = ACTIVITY_CONFIGS[activity];
   if (!cfg) return null;
   const thermal = thermalPrediction || {};
