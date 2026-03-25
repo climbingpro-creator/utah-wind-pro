@@ -1,5 +1,5 @@
 import { Wind, Navigation } from 'lucide-react';
-import { WindSparkline } from './Sparkline';
+import { StationTrendBar } from './StationTrendBar';
 import { useTheme } from '../context/ThemeContext';
 import { windDirectionToCardinal } from '../utils/wind';
 import { safeToFixed } from '../utils/safeToFixed';
@@ -72,6 +72,9 @@ export function WindVector({
             </div>
           </div>
         </div>
+        {history && history.length > 0 && (
+          <StationTrendBar history={history} expanded={false} />
+        )}
       </div>
     );
   }
@@ -127,12 +130,7 @@ export function WindVector({
       </div>
 
       {history && history.length > 0 && (
-        <div className="mt-3 pt-3 border-t border-[var(--border-subtle)]">
-          <div className="flex items-center justify-between">
-            <span className="data-label">3hr trend</span>
-            <WindSparkline history={history} stationId={station?.id} />
-          </div>
-        </div>
+        <StationTrendBar history={history} expanded={!compact} />
       )}
     </div>
   );

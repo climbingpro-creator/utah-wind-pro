@@ -269,7 +269,7 @@ class WeatherService {
 
   async getHistoryForLake(lakeId, hours = 3) {
     const stationIds = getAllStationIds(lakeId);
-    return this.getSynopticHistory(stationIds.slice(0, 4), hours);
+    return this.getSynopticHistory(stationIds, hours);
   }
 }
 
