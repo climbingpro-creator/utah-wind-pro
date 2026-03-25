@@ -159,7 +159,7 @@ function getActivityVerdict(id, speed, gust, thermalPrediction, _boatingPredicti
   return { status: 'off', label: 'OFF', reason: 'Not ideal right now', color: 'slate' };
 }
 
-function buildOutlook(windSpeed, windGust, thermalPrediction, boatingPrediction, fpsStation, utalpStation, propagation) {
+function buildOutlook(windSpeed, windGust, thermalPrediction, boatingPrediction, fpsStation, utalpStation, propagation, selectedActivity) {
   const speed = windSpeed ?? 0;
   const gust = windGust ?? speed;
 
@@ -181,39 +181,58 @@ function buildOutlook(windSpeed, windGust, thermalPrediction, boatingPrediction,
     };
   });
 
-  const goCount = cards.filter(c => c.verdict?.status === 'go').length;
+  const selectedCard = cards.find(c => c.id === selectedActivity);
+  const selectedVerdict = selectedCard?.verdict;
+  const selectedName = selectedCard?.cfg?.name || 'Activity';
+
+  const goCards = cards.filter(c => c.verdict?.status === 'go');
+  const goCount = goCards.length;
   const waitCount = cards.filter(c => c.verdict?.status === 'wait').length;
+  const selectedIsGo = selectedVerdict?.status === 'go';
+  const selectedIsWait = selectedVerdict?.status === 'wait' || selectedVerdict?.status === 'caution';
+
   let mood = 'neutral';
   let headline = '';
   let subline = '';
 
-  if (goCount >= 4) {
+  if (selectedIsGo && goCount >= 4) {
     mood = 'epic';
-    headline = 'Everything is ON right now';
-    subline = `${Math.round(speed)} mph — multiple activities in ideal range`;
-  } else if (goCount >= 2) {
+    headline = `${selectedName} is ON — everything is firing`;
+    subline = selectedVerdict.reason;
+  } else if (selectedIsGo) {
     mood = 'good';
-    const goNames = cards.filter(c => c.verdict?.status === 'go').map(c => c.cfg.name);
-    headline = `${goNames.join(' & ')} are GO`;
-    subline = `${Math.round(speed)} mph${gust > speed * 1.3 ? ` gusting ${Math.round(gust)}` : ''} right now`;
-  } else if (goCount === 1) {
-    mood = 'good';
-    const goCard = cards.find(c => c.verdict?.status === 'go');
-    headline = `${goCard.cfg.name} is ON`;
-    subline = goCard.verdict.reason;
+    headline = `${selectedName} is GO`;
+    subline = selectedVerdict.reason;
+  } else if (selectedIsWait && goCount > 0) {
+    mood = 'mixed';
+    const goNames = goCards.filter(c => c.id !== selectedActivity).slice(0, 2).map(c => c.cfg.name);
+    headline = `${selectedVerdict.label} for ${selectedName}`;
+    subline = selectedVerdict.reason + (goNames.length ? ` — ${goNames.join(' & ')} are GO now` : '');
+  } else if (selectedIsWait) {
+    mood = 'mixed';
+    headline = `${selectedVerdict.label} for ${selectedName}`;
+    subline = selectedVerdict.reason;
+  } else if (selectedVerdict?.status === 'off' && goCount > 0) {
+    mood = 'calm';
+    const goNames = goCards.slice(0, 3).map(c => c.cfg.name);
+    headline = `Too ${speed < 5 ? 'light' : 'strong'} for ${selectedName}`;
+    subline = `${Math.round(speed)} mph — ${goNames.join(', ')} ${goNames.length === 1 ? 'is' : 'are'} ideal right now`;
   } else if (waitCount > 0) {
     mood = 'mixed';
     const waitCard = cards.find(c => c.verdict?.status === 'wait');
-    headline = `Wind building — ${waitCard.cfg.name} expected`;
+    headline = `Wind building — watching for ${selectedName}`;
     subline = waitCard.verdict.reason;
   } else if (speed <= 3) {
     mood = 'calm';
-    headline = 'Glass conditions — water sports are perfect';
-    subline = 'Mirror-flat water for boating, paddling, fishing';
+    const calmActivities = goCards.map(c => c.cfg.name);
+    headline = calmActivities.length > 0
+      ? `Glassy & calm — ideal for ${calmActivities.slice(0, 2).join(' & ')}`
+      : 'Glass conditions — calm water';
+    subline = `${Math.round(speed)} mph — too light for ${selectedName}`;
   } else {
     mood = 'neutral';
     headline = 'Quiet conditions';
-    subline = 'No strong signals right now — check back later';
+    subline = selectedVerdict?.reason || 'No strong signals right now — check back later';
   }
 
   return { headline, subline, mood, cards, speed, gust };
@@ -261,8 +280,8 @@ export default function TodayHero({ windSpeed, windGust, thermalPrediction, boat
   const isDark = theme === 'dark';
 
   const outlook = useMemo(
-    () => buildOutlook(windSpeed, windGust, thermalPrediction, boatingPrediction, fpsStation, utalpStation, propagation),
-    [windSpeed, windGust, thermalPrediction, boatingPrediction, fpsStation, utalpStation, propagation]
+    () => buildOutlook(windSpeed, windGust, thermalPrediction, boatingPrediction, fpsStation, utalpStation, propagation, selectedActivity),
+    [windSpeed, windGust, thermalPrediction, boatingPrediction, fpsStation, utalpStation, propagation, selectedActivity]
   );
 
   // Overlay unified activity scores onto the outlook cards when available
