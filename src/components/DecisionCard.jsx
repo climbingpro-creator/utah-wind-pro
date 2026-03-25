@@ -248,6 +248,53 @@ const DECISION_STYLES = {
   },
 };
 
+function buildExpectContext(activity, windSpeed, thermalPrediction, boatingPrediction, unifiedDecision) {
+  const cfg = ACTIVITY_CONFIGS[activity];
+  if (!cfg) return null;
+  const thermal = thermalPrediction || {};
+  const endHour = thermal.endHour;
+  const startHour = thermal.startHour;
+  const now = new Date().getHours();
+  const items = [];
+
+  if (cfg.wantsWind) {
+    if (windSpeed >= (cfg.thresholds?.tooLight || 6) && endHour && endHour > now) {
+      const hoursLeft = endHour - now;
+      items.push({ label: 'Session window', value: `~${hoursLeft} hr${hoursLeft > 1 ? 's' : ''} remaining`, icon: '⏱️' });
+    }
+    if (thermal.expectedSpeed || thermal.speed?.expectedAvg) {
+      const peak = Math.round(thermal.expectedSpeed || thermal.speed?.expectedAvg);
+      if (peak > 0) items.push({ label: 'Expected peak', value: `${peak} mph`, icon: '💨' });
+    }
+    if (startHour && now < startHour && windSpeed < (cfg.thresholds?.tooLight || 6)) {
+      items.push({ label: 'Wind expected', value: `~${formatHour(startHour)}`, icon: '🕐' });
+    }
+    const ideal = cfg.thresholds?.ideal;
+    if (ideal && windSpeed >= ideal.min) {
+      if (activity === 'kiting' || activity === 'windsurfing') {
+        const gearNote = windSpeed >= 15 ? 'Twin-tip / short-board conditions' : windSpeed >= 10 ? 'Foil-friendly — light wind gear' : '';
+        if (gearNote) items.push({ label: 'Gear context', value: gearNote, icon: '🪁' });
+      }
+    }
+  } else {
+    const glass = boatingPrediction;
+    if (glass?.glassWindow?.isCurrentlyInWindow && glass?.glassWindow?.end) {
+      items.push({ label: 'Calm until', value: `~${glass.glassWindow.end}`, icon: '🪞' });
+    } else if (glass?.glassWindow?.start) {
+      items.push({ label: 'Calm window', value: `${glass.glassWindow.start} – ${glass.glassWindow.end}`, icon: '🪞' });
+    }
+    if (startHour && now < startHour) {
+      const hoursCalm = startHour - now;
+      items.push({ label: 'Wind builds at', value: `~${formatHour(startHour)} (${hoursCalm} hrs)`, icon: '⚠️' });
+    }
+    if (glass?.waveLabel) {
+      items.push({ label: 'Water state', value: glass.waveLabel, icon: '🌊' });
+    }
+  }
+
+  return items.length > 0 ? items.slice(0, 3) : null;
+}
+
 export default function DecisionCard({
   activity,
   windSpeed,
@@ -262,7 +309,6 @@ export default function DecisionCard({
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 
-  // Prefer unified decision when available, fall back to legacy
   let result;
   if (unifiedDecision?.decision) {
     const colorMap = { GO: 'emerald', WAIT: 'amber', PASS: 'slate' };
@@ -291,6 +337,7 @@ export default function DecisionCard({
 
   const s = DECISION_STYLES[result.color] || DECISION_STYLES.slate;
   const Icon = result.icon;
+  const expectItems = buildExpectContext(activity, windSpeed, thermalPrediction, boatingPrediction, unifiedDecision);
 
   return (
     <div className={`rounded-2xl border p-5 transition-all ${isDark ? s.dark : s.light}`}>
@@ -318,8 +365,22 @@ export default function DecisionCard({
         </div>
       </div>
 
+      {expectItems && (
+        <div className={`mt-3 flex flex-wrap gap-2`}>
+          {expectItems.map((item, i) => (
+            <div key={i} className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium ${
+              isDark ? 'bg-white/[0.04] text-slate-300' : 'bg-slate-100 text-slate-600'
+            }`}>
+              <span>{item.icon}</span>
+              <span className={isDark ? 'text-slate-500' : 'text-slate-400'}>{item.label}:</span>
+              <span className="font-semibold">{item.value}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
       {result.action && (
-        <div className={`mt-4 px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 border ${isDark ? s.action.dark : s.action.light}`}>
+        <div className={`mt-3 px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 border ${isDark ? s.action.dark : s.action.light}`}>
           <Lightbulb className="w-4 h-4 shrink-0" />
           <span className="flex-1">{result.action}</span>
           <ArrowRight className="w-4 h-4 shrink-0 opacity-50" />

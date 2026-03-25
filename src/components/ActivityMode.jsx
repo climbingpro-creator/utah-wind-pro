@@ -20,7 +20,7 @@ export const ACTIVITY_CONFIGS = {
     id: 'kiting',
     name: 'Kiting',
     icon: <Wind className="w-10 h-10" />,
-    description: 'Kiteboarding & Foiling',
+    description: 'Kiteboarding & Foiling — needs 10+ mph wind',
     heroImage: '/images/kiting-utah-lake.png',
     thresholds: {
       tooLight: 8,
@@ -39,7 +39,7 @@ export const ACTIVITY_CONFIGS = {
     id: 'snowkiting',
     name: 'Snowkiting',
     icon: <Mountain className="w-10 h-10" />,
-    description: 'Snowkiting & Big Drifts',
+    description: 'Snowkiting — wind + snow at Strawberry & beyond',
     heroImage: '/images/snowkite-strawberry.png',
     thresholds: {
       tooLight: 8,
@@ -58,7 +58,7 @@ export const ACTIVITY_CONFIGS = {
     id: 'sailing',
     name: 'Sailing',
     icon: <Sailboat className="w-10 h-10" />,
-    description: 'Dinghy & Keelboat',
+    description: 'Dinghy & Keelboat — ideal 8-18 mph',
     heroImage: '/images/storm-clouds.png',
     thresholds: {
       tooLight: 4,
@@ -77,7 +77,7 @@ export const ACTIVITY_CONFIGS = {
     id: 'boating',
     name: 'Boating',
     icon: <Ship className="w-10 h-10" />,
-    description: 'Powerboats & Cruising',
+    description: 'Powerboats & Cruising — calm water is best',
     heroImage: '/images/wake-wave-sunset.png',
     thresholds: {
       ideal: { min: 0, max: 8 },
@@ -94,7 +94,7 @@ export const ACTIVITY_CONFIGS = {
     id: 'paddling',
     name: 'Paddling',
     icon: <Waves className="w-10 h-10" />,
-    description: 'SUP, Kayak, Canoe',
+    description: 'SUP, Kayak, Canoe — glass water ideal',
     heroImage: '/images/paddling-utah-lake.png',
     thresholds: {
       ideal: { min: 0, max: 6 },
@@ -111,7 +111,7 @@ export const ACTIVITY_CONFIGS = {
     id: 'paragliding',
     name: 'Paragliding',
     icon: <Anchor className="w-10 h-10" />,
-    description: 'Point of the Mountain',
+    description: 'Point of the Mountain — P2+ rated pilots',
     heroImage: '/images/storm-clouds.png',
     thresholds: {
       tooLight: 5,
@@ -129,7 +129,7 @@ export const ACTIVITY_CONFIGS = {
     id: 'fishing',
     name: 'Fishing',
     icon: <Fish className="w-10 h-10" />,
-    description: 'Lakes & Rivers',
+    description: 'Lakes & Rivers — pressure, hatches, solunar',
     heroImage: '/images/fishing-casting.png',
     thresholds: {
       ideal: { min: 0, max: 10 },
@@ -147,7 +147,7 @@ export const ACTIVITY_CONFIGS = {
     id: 'windsurfing',
     name: 'Windsurfing',
     icon: <WindsurferIcon className="w-10 h-10" />,
-    description: 'Windsurfing & Winging',
+    description: 'Windsurfing & Winging — needs 8+ mph wind',
     heroImage: '/images/foilboard-sunset.png',
     thresholds: {
       tooLight: 6,

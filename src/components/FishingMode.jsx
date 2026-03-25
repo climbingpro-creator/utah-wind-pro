@@ -435,30 +435,163 @@ export const FISHING_LOCATIONS = {
   },
 };
 
-// Fish Species Data
+// Fish Species Data — temperature ranges, tactics by season, and recommended gear
 const FISH_SPECIES = {
-  'Rainbow Trout': { tempOptimal: [55, 65], tempStress: 70, icon: '🌈', color: 'text-pink-400' },
-  'Brown Trout': { tempOptimal: [60, 70], tempStress: 75, icon: '🟤', color: 'text-amber-600' },
-  'Cutthroat Trout': { tempOptimal: [39, 59], tempStress: 68, icon: '🔴', color: 'text-red-400' },
-  'Lake Trout': { tempOptimal: [42, 55], tempStress: 65, icon: '⬛', color: 'text-slate-400' },
-  'Kokanee Salmon': { tempOptimal: [50, 59], tempStress: 65, icon: '🔶', color: 'text-orange-400' },
-  'Largemouth Bass': { tempOptimal: [68, 78], tempStress: 85, icon: '🐟', color: 'text-green-500' },
-  'Smallmouth Bass': { tempOptimal: [65, 75], tempStress: 80, icon: '🐟', color: 'text-emerald-500' },
-  'Walleye': { tempOptimal: [65, 70], tempStress: 80, icon: '👁️', color: 'text-yellow-400' },
-  'Channel Catfish': { tempOptimal: [65, 76], tempStress: 90, icon: '🐱', color: 'text-slate-500' },
+  'Rainbow Trout': {
+    tempOptimal: [55, 65], tempStress: 70, icon: '🌈', color: 'text-pink-400',
+    tactics: {
+      spring: { method: 'Nymphing & dry-dropper rigs', flies: 'BWO #18-20, Pheasant Tail #16, RS2 #20-22', lures: 'Small Panther Martin, Kastmaster 1/8 oz', tip: 'Target gravel riffles during rainbow spawn; actively feeding pre-spawn fish hit nymphs aggressively' },
+      summer: { method: 'Early morning dry flies, evening emergers', flies: 'PMD #16, Elk Hair Caddis #14-16, Adams #16', lures: 'Rooster Tail, small Rapala, PowerBait', tip: 'Fish before 9 AM or after 7 PM — rainbows stress above 68°F' },
+      fall: { method: 'Streamers & nymphs, aggressive pre-winter feed', flies: 'Woolly Bugger #8-10, San Juan Worm, Zebra Midge #18-22', lures: 'Kastmaster, Blue Fox spinner', tip: 'Rainbows feed heavily before winter; strip streamers through pools' },
+      winter: { method: 'Slow nymphing, ice fishing jigs', flies: 'Zebra Midge #20-24, Copper John #18, Thread Midge', lures: 'Ice jig + wax worm, small spoon', tip: 'Fish midday (10 AM–2 PM) when sun warms water 1-2 degrees' },
+    },
+  },
+  'Brown Trout': {
+    tempOptimal: [60, 70], tempStress: 75, icon: '🟤', color: 'text-amber-600',
+    tactics: {
+      spring: { method: 'Nymphing deep runs, streamer stripping', flies: 'Stonefly #8-12, Pat\'s Rubber Legs, Hare\'s Ear #14', lures: 'Rapala Countdown, gold spinner', tip: 'Browns are territorial post-spawn — swing streamers through deep pools' },
+      summer: { method: 'Terrestrials midday, mouse patterns at dark', flies: 'Hopper #8-10, Ant #16, Beetle #14, Chubby Chernobyl #8', lures: 'Rebel Crickhopper, Mepps Aglia #2', tip: 'Big browns go nocturnal in summer; mouse patterns at dusk produce trophy fish' },
+      fall: { method: 'Streamer fishing — pre-spawn aggression peaks', flies: 'Sculpin #4-6, Egg patterns, Articulated streamers', lures: 'Rapala, large Kastmaster, swimbait', tip: 'Oct-Nov is trophy season — males attack anything near their redds. Fish 45-min before/after sunset.' },
+      winter: { method: 'Deep nymphing slow pools', flies: 'Zebra Midge #20, Blue Winged Olive #20-22, RS2', lures: 'Small jig, marabou jig', tip: 'Target 2-4 PM when weak BWO hatches bring even big browns to the surface' },
+    },
+  },
+  'Cutthroat Trout': {
+    tempOptimal: [39, 59], tempStress: 68, icon: '🔴', color: 'text-red-400',
+    tactics: {
+      spring: { method: 'Sight-fishing spawning cruisers in shallows', flies: 'Prince Nymph #14, Pheasant Tail, Egg #12', lures: 'Tube jig + worm tip, Kastmaster gold', tip: 'Post ice-off cutts cruise 5-15 ft — cast ahead of visible fish; they\'re less wary than browns' },
+      summer: { method: 'Trolling or casting from float tube', flies: 'Damselfly #10, Callibaetis #16, Woolly Bugger olive', lures: 'Tube jig, wedding ring + worm, Rapala', tip: 'Cutthroat move to 20-40 ft thermocline; troll or vertical jig the drop-offs' },
+      fall: { method: 'Aggressive feeding before ice-up', flies: 'Woolly Bugger #8, Leech pattern, Scud #16', lures: 'Kastmaster, Krocodile spoon, tube jig', tip: 'September-October is prime — cutts feed aggressively before winter shutdown' },
+      winter: { method: 'Ice fishing with small jigs', flies: 'N/A — ice fishing', lures: 'Tube jig 1/32 oz + wax worm, Custom Jigs Ratso', tip: 'Set tip-ups at 15-25 ft near drop-offs; jig actively with small glow spoons' },
+    },
+  },
+  'Lake Trout': { tempOptimal: [42, 55], tempStress: 65, icon: '⬛', color: 'text-slate-400',
+    tactics: {
+      spring: { method: 'Jigging near surface or trolling 20-40 ft', flies: 'N/A — too deep', lures: 'Tube jig white, Airplane jig, Flutter spoon', tip: 'Lakers are near surface in spring (40-60 ft) — this is your best shot without downriggers' },
+      summer: { method: 'Deep trolling with downriggers 80-120 ft', flies: 'N/A', lures: 'Dodger + squid, J-plug, large spoon', tip: 'Summer means 80-120 ft with downriggers — follow your electronics for suspended schools' },
+      fall: { method: 'Vertical jigging spawning structure 40-80 ft', flies: 'N/A', lures: 'Tube jig 1 oz, white bucktail jig, flutter spoon', tip: 'Oct-Nov lakers move to 40-80 ft rocky shoals to spawn — vertical jig right on structure' },
+      winter: { method: 'Ice fishing or deep jigging', flies: 'N/A', lures: 'Airplane jig, dead cisco bait, tube jig', tip: 'Lakers feed actively under ice at Flaming Gorge — target 60-100 ft with big jigs' },
+    },
+  },
+  'Kokanee Salmon': { tempOptimal: [50, 59], tempStress: 65, icon: '🔶', color: 'text-orange-400',
+    tactics: {
+      spring: { method: 'Trolling with dodger setups 15-30 ft', flies: 'N/A', lures: 'Wedding ring + shoepeg corn, small dodger + hoochie', tip: 'Kokanee school tight — once you find them, stay on that depth. Use color-coded dodgers (pink/orange).' },
+      summer: { method: 'Trolling thermocline 30-50 ft', flies: 'N/A', lures: 'Dodger + kokanee bug, pink hoochie, wedding ring', tip: 'Follow the 52-55°F thermocline — kokanee won\'t leave it. Add tipped corn for scent.' },
+      fall: { method: 'Snagging at tributaries (where legal), sight-fishing runs', flies: 'Egg patterns #10-12, flesh fly', lures: 'Snagging rig, small spoon near inlets', tip: 'Sept-Oct kokanee turn bright red and stage at tributary mouths — Sheep Creek, Strawberry River, Indian Creek' },
+      winter: { method: 'N/A — kokanee are deep and dormant', flies: 'N/A', lures: 'N/A', tip: 'Kokanee are not viable ice fishing targets — focus on trout species instead' },
+    },
+  },
+  'Largemouth Bass': { tempOptimal: [68, 78], tempStress: 85, icon: '🐟', color: 'text-green-500',
+    tactics: {
+      spring: { method: 'Sight-fishing beds, soft plastics', flies: 'Crawfish #4, Clouser minnow', lures: 'Texas-rigged worm, jig + trailer, Senko 5"', tip: 'Pre-spawn bass move shallow when water hits 58-62°F — slow-roll spinnerbaits along weed edges' },
+      summer: { method: 'Topwater at dawn, deep cranks midday', flies: 'Popper #2, deer hair frog', lures: 'Frog, buzzbait, deep crankbait, drop shot', tip: 'Fish topwater in first 90 minutes of light, then switch to 10-15 ft structure with Texas rigs' },
+      fall: { method: 'Following shad schools, reaction baits', flies: 'Clouser #4, Game Changer', lures: 'Spinnerbait, lipless crankbait, jerkbait', tip: 'Follow the shad — bass gorge in fall. Lipless crankbaits ripped through grass are deadly.' },
+      winter: { method: 'Slow deep presentations', flies: 'N/A', lures: 'Jig + craw trailer, small jerkbait, drop shot', tip: 'Bass stack on the deepest available structure — work a football jig painfully slow on the bottom' },
+    },
+  },
+  'Smallmouth Bass': { tempOptimal: [65, 75], tempStress: 80, icon: '🐟', color: 'text-emerald-500',
+    tactics: {
+      spring: { method: 'Drop shot on rocky points, sight-fishing nests', flies: 'Woolly Bugger olive #6, Clouser #4', lures: 'Drop shot + minnow, Ned rig, tube jig', tip: 'Jordanelle smallies move to 5-12 ft rocky flats in May — sight fish the nesting males' },
+      summer: { method: 'Topwater early, drop shot midday on points', flies: 'Popper #6, crayfish pattern', lures: 'Whopper Plopper, drop shot, small swimbait', tip: 'Smallmouth are the most aggressive feeders in Utah — topwater is explosive on calm mornings' },
+      fall: { method: 'Crankbaits and jerkbaits along rock transitions', flies: 'Sculpin #4, Clouser chartreuse', lures: 'Jerkbait, crankbait, football jig', tip: 'Fall smallmouth school up on main lake points 15-25 ft — cast and retrieve crankbaits parallel to ledges' },
+      winter: { method: 'Deep finesse presentations', flies: 'N/A', lures: 'Drop shot, hair jig, blade bait', tip: 'Smallmouth go dormant but will still bite — work blade baits vertically on deep structure 30+ ft' },
+    },
+  },
+  'Walleye': { tempOptimal: [65, 70], tempStress: 80, icon: '👁️', color: 'text-yellow-400',
+    tactics: {
+      spring: { method: 'Jigging spawning flats at night', flies: 'N/A', lures: 'Jig + minnow, Rapala Husky Jerk, crawler harness', tip: 'Walleye spawn at night on rocky flats 8-15 ft when water hits 45-50°F — Deer Creek dam area is prime' },
+      summer: { method: 'Trolling crawler harnesses along weed edges', flies: 'N/A', lures: 'Crawler harness, bottom bouncer, crankbait', tip: 'Night fishing is king — walleye feed aggressively after dark on main lake points' },
+      fall: { method: 'Jigging drop-offs, following shad', flies: 'N/A', lures: 'Blade bait, jig + minnow, Rapala', tip: 'Fall walleye school on structure 15-35 ft — vertical jig with blade baits for consistent action' },
+      winter: { method: 'Ice fishing with tip-ups and jigging', flies: 'N/A', lures: 'Tip-up + minnow, jigging Rapala, glow spoon', tip: 'Ice fish 25-40 ft near old river channels; use tip-ups with live minnows and jig a Rapala nearby' },
+    },
+  },
+  'Channel Catfish': { tempOptimal: [65, 76], tempStress: 90, icon: '🐱', color: 'text-slate-500',
+    tactics: {
+      spring: { method: 'Bottom rigs in warming shallows', flies: 'N/A', lures: 'Circle hook + chicken liver, stink bait, worm', tip: 'Catfish move shallow when water passes 60°F — fish rip-rap and river mouths at dusk' },
+      summer: { method: 'Night fishing with cut bait', flies: 'N/A', lures: 'Cut carp, chicken liver, nightcrawler on circle hook', tip: 'Summer cats are most active 9 PM to midnight — Lincoln Beach rip-rap at Utah Lake is legendary' },
+      fall: { method: 'Pre-winter feed, aggressive on cut bait', flies: 'N/A', lures: 'Cut shad, stink bait, nightcrawlers', tip: 'Channel cats gorge before winter — fish river mouths where they\'re intercepting baitfish' },
+      winter: { method: 'Slow deep presentations', flies: 'N/A', lures: 'Cut bait on bottom, nightcrawler', tip: 'Cats get sluggish below 45°F but can still be caught — use fresh cut bait fished slow on bottom' },
+    },
+  },
   'Yellow Perch': { tempOptimal: [63, 72], tempStress: 78, icon: '🟡', color: 'text-yellow-500' },
-  'Tiger Muskie': { tempOptimal: [60, 70], tempStress: 80, icon: '🐯', color: 'text-orange-500' },
-  'White Bass': { tempOptimal: [65, 75], tempStress: 85, icon: '⚪', color: 'text-slate-300' },
+  'Tiger Muskie': { tempOptimal: [60, 70], tempStress: 80, icon: '🐯', color: 'text-orange-500',
+    tactics: {
+      spring: { method: 'Casting large baits along weed edges', flies: 'Large streamer #2/0', lures: 'Large swimbait, jerkbait 6"+, bucktail spinner', tip: 'Post ice-off muskies cruise weed flats 5-15 ft — cast big and retrieve steady along vegetation edges' },
+      summer: { method: 'Figure-8 at boatside, weed edge patrol', flies: 'N/A — too large', lures: 'Bulldawg, Suick, large topwater', tip: 'Muskies follow but don\'t always commit — ALWAYS figure-8 at the boat. Evening is prime.' },
+      fall: { method: 'Trophy season — big baits, deep structure', flies: 'N/A', lures: 'Large crankbait, medusa jig, live sucker (where legal)', tip: 'Oct-Nov is when state record fish are caught — throw the biggest baits you own along deep weed transitions' },
+      winter: { method: 'Slow deep jigging near last-known fall locations', flies: 'N/A', lures: 'Sucker rig, large jigging spoon', tip: 'Winter muskies are rare catches but monsters — fish slow near their fall haunts' },
+    },
+  },
+  'White Bass': { tempOptimal: [65, 75], tempStress: 85, icon: '⚪', color: 'text-slate-300',
+    tactics: {
+      spring: { method: 'Intercept spawning runs at river mouths', flies: 'Clouser minnow white #6', lures: 'Roadrunner jig, small crankbait, inline spinner', tip: 'The May white bass run up Provo River is one of Utah\'s best fishing events — nonstop action on small jigs' },
+      summer: { method: 'Follow surface boils, cast into schools', flies: 'Clouser, small streamer', lures: 'Kastmaster, small spoon, grub on jighead', tip: 'Watch for bird activity — white bass push shad to surface creating visible boils' },
+      fall: { method: 'School fishing near main lake points', flies: 'Small Clouser', lures: 'Spoon, inline spinner, small crankbait', tip: 'White bass school tight in fall — when you find one, you find hundreds. Keep casting into the school.' },
+      winter: { method: 'Deep jigging on bottom structure', flies: 'N/A', lures: 'Small jig + minnow, blade bait', tip: 'White bass go deep (10-14 ft at Utah Lake) — vertical jig near river channels' },
+    },
+  },
   'Black Crappie': { tempOptimal: [60, 70], tempStress: 80, icon: '⚫', color: 'text-slate-600' },
   'Mountain Whitefish': { tempOptimal: [45, 55], tempStress: 65, icon: '🐟', color: 'text-blue-300' },
-  'Wiper': { tempOptimal: [65, 75], tempStress: 85, icon: '⚡', color: 'text-cyan-500' },
+  'Wiper': { tempOptimal: [65, 75], tempStress: 85, icon: '⚡', color: 'text-cyan-500',
+    tactics: {
+      spring: { method: 'Casting to surface feeding schools', flies: 'Clouser #4, Deceiver', lures: 'Kastmaster, topwater walker, lipless crankbait', tip: 'Wipers are the hardest fighting fish in Utah — find shad schools and cast into the frenzy' },
+      summer: { method: 'Surface boils early/late, trolling midday', flies: 'N/A', lures: 'Topwater, Kastmaster, trolling spoon', tip: 'Dawn and dusk surface feeds at Willard Bay are explosive — watch for bird activity marking schools' },
+      fall: { method: 'Aggressive feeding before winter', flies: 'Large Clouser', lures: 'Jerkbait, swimbait, Kastmaster', tip: 'Wipers school tight and feed aggressively in fall — fast retrieve along rip-rap and dikes' },
+      winter: { method: 'Slow deep jigging', flies: 'N/A', lures: 'Blade bait, jigging spoon', tip: 'Winter wipers are tough but catchable — find them with electronics and vertical jig slowly' },
+    },
+  },
   'Northern Pike': { tempOptimal: [55, 70], tempStress: 80, icon: '🐊', color: 'text-green-600' },
   'Tiger Trout': { tempOptimal: [50, 62], tempStress: 70, icon: '🐯', color: 'text-amber-500' },
   'Splake': { tempOptimal: [42, 55], tempStress: 65, icon: '❄️', color: 'text-cyan-400' },
   'Bluegill': { tempOptimal: [68, 78], tempStress: 85, icon: '🔵', color: 'text-blue-500' },
-  'Striped Bass': { tempOptimal: [65, 75], tempStress: 82, icon: '🦈', color: 'text-slate-400' },
+  'Striped Bass': { tempOptimal: [65, 75], tempStress: 82, icon: '🦈', color: 'text-slate-400',
+    tactics: {
+      spring: { method: 'Trolling main channels 20-40 ft', flies: 'N/A', lures: 'Umbrella rig, large swimbait, deep crankbait', tip: 'Spring stripers at Powell move to 20-40 ft following shad — trolling is most effective' },
+      summer: { method: 'Night fishing, deep trolling by day', flies: 'N/A', lures: 'Topwater popper, live shad, deep spoon', tip: 'Summer stripers go 50-80 ft in daylight — focus on dawn/dusk surface feeds in canyon narrows' },
+      fall: { method: 'Surface boils — the legendary striper boils', flies: 'Deceiver #1/0', lures: 'Topwater, Kastmaster, jerkbait, spoon', tip: 'Oct-Nov striper boils at Powell are a bucket-list fishing experience — follow the birds, cast into the chaos' },
+      winter: { method: 'Vertical jigging deep structure', flies: 'N/A', lures: 'Slab spoon, jigging Rapala, live shad', tip: 'Winter stripers suspend 40-60 ft near dam areas — find them on electronics and jig vertically' },
+    },
+  },
   'Burbot': { tempOptimal: [35, 45], tempStress: 55, icon: '🐍', color: 'text-amber-700' },
   'Bonneville Cisco': { tempOptimal: [35, 42], tempStress: 50, icon: '✨', color: 'text-sky-300' },
+};
+
+// Utah Aquatic Insect Hatch Calendar — what's hatching by month
+// This drives fly recommendations for river anglers
+const HATCH_CALENDAR = {
+  1:  { primary: null, note: 'Dead of winter — midges only in tailwaters' },
+  2:  { primary: { name: 'Midges', size: '#20-24', pattern: 'Zebra Midge, Thread Midge, Griffith\'s Gnat', water: 'Tailwaters only' },
+       note: 'Late Feb midges start on the Provo & Green. Fish 11 AM–2 PM.' },
+  3:  { primary: { name: 'Blue Winged Olives (BWO)', size: '#18-22', pattern: 'Parachute BWO, RS2, Barr\'s Emerger', water: 'Provo River, Green River' },
+       secondary: { name: 'Midges', size: '#20-24', pattern: 'Zebra Midge, WD-40' },
+       note: 'The BWO hatch begins — overcast days with light drizzle produce the best dry fly fishing of the year.' },
+  4:  { primary: { name: 'Blue Winged Olives (BWO)', size: '#16-20', pattern: 'Parachute BWO, Sparkle Dun, RS2', water: 'Provo River, Green River, all tailwaters' },
+       secondary: { name: 'Early Stoneflies', size: '#12-16', pattern: 'Pat\'s Rubber Legs, Hare\'s Ear', water: 'Provo River upper, freestone streams' },
+       note: 'April is peak BWO month. Fish afternoons 1-4 PM. Match the size precisely — trout get selective.' },
+  5:  { primary: { name: 'Pale Morning Duns (PMD)', size: '#16-18', pattern: 'PMD Emerger, Sparkle Dun, Pheasant Tail', water: 'Green River, Provo River' },
+       secondary: { name: 'Caddis', size: '#14-16', pattern: 'Elk Hair Caddis, X-Caddis, LaFontaine Sparkle Pupa', water: 'All rivers' },
+       tertiary: { name: 'Golden Stoneflies', size: '#6-8', pattern: 'Pat\'s Rubber Legs, Stimulator', water: 'Provo River upper sections' },
+       note: 'May is prime time — hatches overlap and fish are greedy. Dry-dropper rigs (caddis + nymph) are deadly.' },
+  6:  { primary: { name: 'PMDs + Caddis', size: '#14-18', pattern: 'PMD, Elk Hair Caddis, Adams', water: 'All rivers and stillwaters' },
+       secondary: { name: 'Cicadas (Green River)', size: '#4-8', pattern: 'Foam Cicada, Club Sandwich', water: 'Green River A & B sections' },
+       tertiary: { name: 'Damselflies (lakes)', size: '#10-12', pattern: 'Damsel Nymph, Marabou Damsel', water: 'Stillwaters — Strawberry, Scofield' },
+       note: 'June cicada hatch on the Green River is LEGENDARY — trophy browns eat them on the surface all day. Plan a trip.' },
+  7:  { primary: { name: 'Terrestrials begin', size: '#8-14', pattern: 'Hopper, Ant, Beetle, Chubby Chernobyl', water: 'All rivers and streams' },
+       secondary: { name: 'Tricos', size: '#20-24', pattern: 'Trico Spinner, CDC Trico, Parachute Trico', water: 'Green River, lower Provo' },
+       tertiary: { name: 'Callibaetis (lakes)', size: '#14-16', pattern: 'Callibaetis Nymph, Parachute Callibaetis', water: 'Stillwaters' },
+       note: 'Hopper-dropper season is here. Big foam hoppers with a bead-head nymph underneath — covers all bases.' },
+  8:  { primary: { name: 'Terrestrials peak', size: '#8-12', pattern: 'Hopper, Ant, Beetle, Stimulator', water: 'All moving water' },
+       secondary: { name: 'Tricos', size: '#20-24', pattern: 'Trico Spinner', water: 'Green River, Provo River' },
+       note: 'August is hopper heaven. Windy afternoons actually help — wind blows grasshoppers into the water.' },
+  9:  { primary: { name: 'Blue Winged Olives (fall BWO)', size: '#18-22', pattern: 'Parachute BWO, RS2, WD-40', water: 'All tailwaters' },
+       secondary: { name: 'Late Terrestrials', size: '#10-14', pattern: 'Ant, Beetle, small hopper', water: 'Streams & rivers' },
+       tertiary: { name: 'Kokanee spawn at tributaries', size: 'Egg patterns #10-12', pattern: 'Glo-Bug, Sucker Spawn', water: 'Below kokanee spawning tributaries' },
+       note: 'Fall BWOs restart. Browns begin pre-spawn aggression — streamers start producing trophy fish.' },
+  10: { primary: { name: 'Blue Winged Olives + Streamers', size: '#18-22 BWO, #4-8 streamers', pattern: 'BWO, Sculpin, Articulated streamer, Egg', water: 'Provo River, Green River' },
+       note: 'October is TROPHY month. Brown trout spawn — fish are aggressive and territorial. Streamer fishing is at its best.' },
+  11: { primary: { name: 'Midges + Late BWO', size: '#20-24', pattern: 'Zebra Midge, BWO, Egg patterns', water: 'Tailwaters' },
+       note: 'Season winding down but tailwaters still produce. Afternoon midge hatches can be excellent on warm days.' },
+  12: { primary: { name: 'Midges', size: '#22-26', pattern: 'Zebra Midge, Thread Midge, Griffith\'s Gnat', water: 'Green River, lower Provo' },
+       note: 'Winter fishing begins. Tiny midges on tailwaters — delicate tippet (6X-7X) required.' },
 };
 
 // Moon Phase Calculations
@@ -1077,68 +1210,132 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
         </div>
       </div>
       
-      {/* Species & Tips */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Target Species */}
-        <div className={`rounded-xl p-4 border ${isDark ? 'bg-slate-800/30 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`}>
-          <h3 className={`text-sm font-medium mb-3 flex items-center gap-2 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
-            <Target className="w-4 h-4" />
-            Target Species
-          </h3>
-          <div className="space-y-2">
-            {location.species.map(species => {
-              const speciesData = FISH_SPECIES[species];
-              const isPrimary = species === location.primarySpecies;
-              return (
-                <div 
-                  key={species}
-                  className={`flex items-center justify-between p-2 rounded ${
-                    isPrimary 
-                      ? (isDark ? 'bg-cyan-500/10 border border-cyan-500/30' : 'bg-cyan-50 border border-cyan-200')
-                      : ''
-                  }`}
-                >
+      {/* What to Throw — Species Tactics for Current Season */}
+      <div className={`rounded-xl p-4 border ${isDark ? 'bg-slate-800/30 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`}>
+        <h3 className={`text-sm font-medium mb-3 flex items-center gap-2 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+          <Target className="w-4 h-4" />
+          What to Throw — {season.charAt(0).toUpperCase() + season.slice(1)} Tactics
+        </h3>
+        <div className="space-y-3">
+          {location.species.map(species => {
+            const speciesData = FISH_SPECIES[species];
+            const isPrimary = species === location.primarySpecies;
+            const tactics = speciesData?.tactics?.[season];
+            return (
+              <div
+                key={species}
+                className={`p-3 rounded-lg border ${
+                  isPrimary
+                    ? (isDark ? 'bg-cyan-500/10 border-cyan-500/30' : 'bg-cyan-50 border-cyan-200')
+                    : (isDark ? 'bg-slate-700/30 border-slate-600' : 'bg-slate-50 border-slate-200')
+                }`}
+              >
+                <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <span>{speciesData?.icon || '🐟'}</span>
-                    <span className={`${isPrimary ? 'font-medium' : ''} ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>
-                      {species}
-                    </span>
+                    <span className={`font-medium ${isDark ? 'text-white' : 'text-slate-800'}`}>{species}</span>
                     {isPrimary && (
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded ${isDark ? 'bg-cyan-500/20 text-cyan-400' : 'bg-cyan-100 text-cyan-700'}`}>
-                        Primary
-                      </span>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded ${isDark ? 'bg-cyan-500/20 text-cyan-400' : 'bg-cyan-100 text-cyan-700'}`}>Primary</span>
                     )}
                   </div>
                   <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                    {speciesData?.tempOptimal.join('-')}°F
+                    {speciesData?.tempOptimal?.join('-')}°F
                   </span>
                 </div>
-              );
-            })}
-          </div>
+                {tactics ? (
+                  <div className="space-y-1.5">
+                    <div className={`text-xs font-semibold ${isDark ? 'text-sky-400' : 'text-sky-700'}`}>{tactics.method}</div>
+                    {tactics.flies && tactics.flies !== 'N/A' && tactics.flies !== 'N/A — too deep' && tactics.flies !== 'N/A — too large' && tactics.flies !== 'N/A — ice fishing' && (
+                      <div className={`text-xs ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+                        <span className={`font-medium ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>Flies:</span> {tactics.flies}
+                      </div>
+                    )}
+                    {tactics.lures && tactics.lures !== 'N/A' && (
+                      <div className={`text-xs ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+                        <span className={`font-medium ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>Lures:</span> {tactics.lures}
+                      </div>
+                    )}
+                    <div className={`text-xs italic mt-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{tactics.tip}</div>
+                  </div>
+                ) : (
+                  <div className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>General approach — try worms, PowerBait, or small spinners</div>
+                )}
+              </div>
+            );
+          })}
         </div>
-        
-        {/* Tips & Regulations */}
-        <div className={`rounded-xl p-4 border ${isDark ? 'bg-slate-800/30 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`}>
-          <h3 className={`text-sm font-medium mb-3 flex items-center gap-2 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
-            <AlertTriangle className="w-4 h-4" />
-            Tips & Regulations
-          </h3>
-          
-          <div className={`p-3 rounded-lg mb-3 ${isDark ? 'bg-amber-500/10 border border-amber-500/30' : 'bg-amber-50 border border-amber-200'}`}>
-            <div className={`text-xs font-medium mb-1 ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>Regulations</div>
-            <div className={`text-sm ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>{location.regulations}</div>
+      </div>
+
+      {/* Hatch Calendar — What's Hatching Now (Rivers) */}
+      {(location.type === 'river' || ['deer-creek', 'strawberry', 'scofield'].includes(selectedLocation)) && (() => {
+        const currentMonth = new Date().getMonth() + 1;
+        const hatch = HATCH_CALENDAR[currentMonth];
+        const prevMonth = currentMonth === 1 ? 12 : currentMonth - 1;
+        const nextMonth = currentMonth === 12 ? 1 : currentMonth + 1;
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        return hatch ? (
+          <div className={`rounded-xl p-4 border ${isDark ? 'bg-emerald-900/20 border-emerald-500/30' : 'bg-emerald-50 border-emerald-200 shadow-sm'}`}>
+            <h3 className={`text-sm font-medium mb-3 flex items-center gap-2 ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>
+              🪰 Hatch Calendar — {monthNames[currentMonth - 1]}
+            </h3>
+            {hatch.primary && (
+              <div className={`p-3 rounded-lg mb-2 ${isDark ? 'bg-emerald-500/10 border border-emerald-500/30' : 'bg-white border border-emerald-200'}`}>
+                <div className="flex items-center justify-between mb-1">
+                  <span className={`font-semibold text-sm ${isDark ? 'text-emerald-300' : 'text-emerald-800'}`}>{hatch.primary.name}</span>
+                  <span className={`text-xs px-2 py-0.5 rounded ${isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-700'}`}>
+                    {hatch.primary.size}
+                  </span>
+                </div>
+                <div className={`text-xs mb-1 ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+                  <span className="font-medium">Patterns:</span> {hatch.primary.pattern}
+                </div>
+                <div className={`text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{hatch.primary.water}</div>
+              </div>
+            )}
+            {hatch.secondary && (
+              <div className={`p-2.5 rounded-lg mb-2 ${isDark ? 'bg-slate-700/30' : 'bg-slate-50'}`}>
+                <div className="flex items-center justify-between mb-1">
+                  <span className={`font-medium text-xs ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>{hatch.secondary.name}</span>
+                  <span className={`text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{hatch.secondary.size}</span>
+                </div>
+                <div className={`text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{hatch.secondary.pattern}</div>
+              </div>
+            )}
+            {hatch.tertiary && (
+              <div className={`p-2.5 rounded-lg mb-2 ${isDark ? 'bg-slate-700/30' : 'bg-slate-50'}`}>
+                <div className="flex items-center justify-between mb-1">
+                  <span className={`font-medium text-xs ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>{hatch.tertiary.name}</span>
+                  <span className={`text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{hatch.tertiary.size}</span>
+                </div>
+                <div className={`text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{hatch.tertiary.pattern}</div>
+              </div>
+            )}
+            <div className={`text-xs mt-2 italic ${isDark ? 'text-emerald-300/70' : 'text-emerald-700/80'}`}>{hatch.note}</div>
+            <div className={`flex gap-2 mt-3 text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+              <span>← {monthNames[prevMonth - 1]}: {HATCH_CALENDAR[prevMonth]?.primary?.name || 'Midges'}</span>
+              <span className="flex-1" />
+              <span>{monthNames[nextMonth - 1]}: {HATCH_CALENDAR[nextMonth]?.primary?.name || 'Midges'} →</span>
+            </div>
           </div>
-          
-          <div className={`p-3 rounded-lg ${isDark ? 'bg-blue-500/10 border border-blue-500/30' : 'bg-blue-50 border border-blue-200'}`}>
-            <div className={`text-xs font-medium mb-1 ${isDark ? 'text-blue-400' : 'text-blue-700'}`}>Pro Tip</div>
-            <div className={`text-sm ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>{location.tips}</div>
+        ) : null;
+      })()}
+
+      {/* Tips & Regulations */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className={`rounded-xl p-4 border ${isDark ? 'bg-amber-500/10 border-amber-500/30' : 'bg-amber-50 border-amber-200 shadow-sm'}`}>
+          <div className={`text-xs font-semibold mb-2 flex items-center gap-2 ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>
+            <AlertTriangle className="w-3.5 h-3.5" /> Regulations
           </div>
-          
+          <div className={`text-sm ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>{location.regulations}</div>
+        </div>
+        <div className={`rounded-xl p-4 border ${isDark ? 'bg-blue-500/10 border-blue-500/30' : 'bg-blue-50 border-blue-200 shadow-sm'}`}>
+          <div className={`text-xs font-semibold mb-2 flex items-center gap-2 ${isDark ? 'text-blue-400' : 'text-blue-700'}`}>
+            <Zap className="w-3.5 h-3.5" /> Pro Tip
+          </div>
+          <div className={`text-sm ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>{location.tips}</div>
           {location.iceOff && (
-            <div className={`mt-3 text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-              <Calendar className="w-3 h-3 inline mr-1" />
-              Ice-off typically: {location.iceOff}
+            <div className={`mt-2 text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+              <Calendar className="w-3 h-3 inline mr-1" /> Ice-off typically: {location.iceOff}
             </div>
           )}
         </div>
@@ -1316,7 +1513,7 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
       </div>
       {/* Wind Forecast & Water Safety Warnings */}
       <WaterForecast
-        locationId={selectedLocation === 'utah-lake' ? 'utah-lake' : 'utah-lake'}
+        locationId={selectedLocation}
         currentWind={{ speed: windSpeed }}
         pressureData={pressureData}
         activity="fishing"
