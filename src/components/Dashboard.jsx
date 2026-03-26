@@ -455,7 +455,59 @@ export function Dashboard() {
           unifiedDecision={prediction ? { decision: prediction.decision, confidence: prediction.confidence, headline: prediction.briefing?.headline, detail: prediction.briefing?.body, action: prediction.briefing?.bestAction } : null}
         />
 
-        {/* ═══════════ SECTION 4: TODAY — Hourly Timeline ═══════════ */}
+        {/* ═══════════ SECTION 4: ACTIVITY INTELLIGENCE (before generic content) ═══════════ */}
+        {selectedActivity === 'paragliding' && (
+          <SafeComponent name="Paragliding Mode">
+            <ParaglidingMode 
+              windData={{
+                stations: [
+                  ...(lakeState?.wind?.stations || []),
+                  ...(lakeState?.kslcStation ? [{ id: 'KSLC', ...lakeState.kslcStation }] : []),
+                  ...(lakeState?.kpvuStation ? [{ id: 'KPVU', ...lakeState.kpvuStation }] : []),
+                  ...(lakeState?.utalpStation ? [{ id: 'UTALP', ...lakeState.utalpStation }] : []),
+                ].filter((s, i, arr) => arr.findIndex(x => x.id === s.id) === i),
+                FPS: lakeState?.wind?.stations?.find(s => s.id === 'FPS'),
+                UTALP: lakeState?.utalpStation || lakeState?.wind?.stations?.find(s => s.id === 'UTALP'),
+                KSLC: lakeState?.kslcStation,
+                KPVU: lakeState?.kpvuStation,
+              }}
+              isLoading={isLoading}
+            />
+          </SafeComponent>
+        )}
+
+        {selectedActivity === 'fishing' && (
+          <ProGate feature="Fishing Intelligence" preview="Bite rating, moon phase & more">
+            <SafeComponent name="Fishing Mode">
+              <FishingMode 
+                windData={{
+                  stations: lakeState?.wind?.stations,
+                  speed: currentWindSpeed,
+                }}
+                pressureData={pressureData}
+                isLoading={isLoading}
+                upstreamData={{
+                  kslcSpeed: lakeState?.kslcStation?.speed,
+                  kslcDirection: lakeState?.kslcStation?.direction,
+                  kpvuSpeed: lakeState?.kpvuStation?.speed,
+                  kpvuDirection: lakeState?.kpvuStation?.direction,
+                }}
+              />
+            </SafeComponent>
+          </ProGate>
+        )}
+
+        {selectedActivity === 'snowkiting' && (selectedLake?.startsWith('strawberry-') || selectedLake === 'skyline-drive') && (
+          <SafeComponent name="Snowkite Forecast">
+            <SnowkiteForecast
+              selectedLake={selectedLake}
+              mesoData={mesoData}
+              onSelectLocation={handleSelectLake}
+            />
+          </SafeComponent>
+        )}
+
+        {/* ═══════════ SECTION 5: TODAY — Hourly Timeline ═══════════ */}
         <SafeComponent name="Today Timeline">
           <TodayTimeline locationId={selectedLake} activity={selectedActivity} unifiedHourly={prediction?.hourly} />
         </SafeComponent>
@@ -543,57 +595,7 @@ export function Dashboard() {
           />
         </SafeComponent>
 
-        {/* ═══════════ SECTION 7: SPECIAL ACTIVITY MODES ═══════════ */}
-        {selectedActivity === 'paragliding' && (
-          <SafeComponent name="Paragliding Mode">
-            <ParaglidingMode 
-              windData={{
-                stations: [
-                  ...(lakeState?.wind?.stations || []),
-                  ...(lakeState?.kslcStation ? [{ id: 'KSLC', ...lakeState.kslcStation }] : []),
-                  ...(lakeState?.kpvuStation ? [{ id: 'KPVU', ...lakeState.kpvuStation }] : []),
-                  ...(lakeState?.utalpStation ? [{ id: 'UTALP', ...lakeState.utalpStation }] : []),
-                ].filter((s, i, arr) => arr.findIndex(x => x.id === s.id) === i),
-                FPS: lakeState?.wind?.stations?.find(s => s.id === 'FPS'),
-                UTALP: lakeState?.utalpStation || lakeState?.wind?.stations?.find(s => s.id === 'UTALP'),
-                KSLC: lakeState?.kslcStation,
-                KPVU: lakeState?.kpvuStation,
-              }}
-              isLoading={isLoading}
-            />
-          </SafeComponent>
-        )}
-
-        {selectedActivity === 'fishing' && (
-          <ProGate feature="Fishing Intelligence" preview="Bite rating, moon phase & more">
-            <SafeComponent name="Fishing Mode">
-              <FishingMode 
-                windData={{
-                  stations: lakeState?.wind?.stations,
-                  speed: currentWindSpeed,
-                }}
-                pressureData={pressureData}
-                isLoading={isLoading}
-                upstreamData={{
-                  kslcSpeed: lakeState?.kslcStation?.speed,
-                  kslcDirection: lakeState?.kslcStation?.direction,
-                  kpvuSpeed: lakeState?.kpvuStation?.speed,
-                  kpvuDirection: lakeState?.kpvuStation?.direction,
-                }}
-              />
-            </SafeComponent>
-          </ProGate>
-        )}
-
-        {(selectedLake?.startsWith('strawberry-') || selectedLake === 'skyline-drive') && (
-          <SafeComponent name="Snowkite Forecast">
-            <SnowkiteForecast
-              selectedLake={selectedLake}
-              mesoData={mesoData}
-              onSelectLocation={handleSelectLake}
-            />
-          </SafeComponent>
-        )}
+        {/* Activity modes moved to Section 4 (above timeline) */}
 
         {/* ═══════════ LIVE STATION READINGS ═══════════ */}
         <div aria-live="polite" aria-atomic="false">
