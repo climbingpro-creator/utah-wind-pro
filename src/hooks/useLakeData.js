@@ -56,7 +56,8 @@ export function useLakeData(lakeId) {
         lakeId,
         rawData.ambient,
         rawData.synoptic,
-        historyArray
+        historyArray,
+        rawData.wuPws
       );
 
       cachedStates.current[lakeId] = newState;

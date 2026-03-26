@@ -41,18 +41,21 @@ export default async function handler(req, res) {
 
 async function getPreferences(res, userId) {
   const supabase = getSupabase();
-  const { data, error } = await supabase
-    .from('user_preferences')
-    .select('*')
-    .eq('user_id', userId)
-    .single();
 
-  if (error && error.code !== 'PGRST116') {
-    return res.status(500).json({ error: error.message });
+  const [prefsResult, tierResult] = await Promise.all([
+    supabase
+      .from('user_preferences')
+      .select('*')
+      .eq('user_id', userId)
+      .single(),
+    getUserTier(supabase, userId),
+  ]);
+
+  if (prefsResult.error && prefsResult.error.code !== 'PGRST116') {
+    return res.status(500).json({ error: prefsResult.error.message });
   }
 
-  // Return defaults if no row exists yet
-  const prefs = data || {
+  const prefs = prefsResult.data || {
     user_id: userId,
     default_lake: 'utah-lake-zigzag',
     activities: ['kiting'],
@@ -69,8 +72,30 @@ async function getPreferences(res, userId) {
     units: 'imperial',
   };
 
+  prefs.tier = tierResult;
+
   res.setHeader('Cache-Control', 'private, max-age=60');
   return res.status(200).json(prefs);
+}
+
+async function getUserTier(supabase, userId) {
+  try {
+    const { data, error } = await supabase.rpc('get_user_tier', { uid: userId });
+    if (error) {
+      const { data: row } = await supabase
+        .from('subscriptions')
+        .select('tier, status, current_period_end')
+        .eq('user_id', userId)
+        .eq('status', 'active')
+        .single();
+      if (!row) return 'free';
+      if (row.current_period_end && new Date(row.current_period_end) < new Date()) return 'free';
+      return row.tier || 'free';
+    }
+    return data || 'free';
+  } catch {
+    return 'free';
+  }
 }
 
 async function savePreferences(req, res, userId) {

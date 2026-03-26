@@ -1,5 +1,5 @@
 /**
- * Wind Speed Correlation Analysis: Arrowhead (SND) vs Deer Creek Dam (DCC)
+ * Wind Speed Correlation Analysis: Lower Provo Cyn (UTLPC) vs Deer Creek Dam (UTDCD)
  * 
  * Goal: Find wind patterns at Arrowhead that predict thermal events at the Dam
  * - What wind speed/direction at Arrowhead precedes good thermals?
@@ -82,8 +82,8 @@ async function analyzeCorrelation() {
   console.log('\nFetching July 2025 data...');
   
   const [dccData, sndData] = await Promise.all([
-    fetchData('DCC', start, end),
-    fetchData('SND', start, end),
+    fetchData('UTDCD', start, end),
+    fetchData('UTLPC', start, end),
   ]);
   
   const dcc = parseObservations(dccData.STATION?.[0]);

@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Wind, Sailboat, Ship, Waves, Mountain, Fish, Anchor } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Wind, Sailboat, Ship, Waves, Mountain, Fish, Anchor, Loader2 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 
 const WindsurferIcon = ({ className }) => (
@@ -88,13 +88,32 @@ export default function Onboarding({ onComplete }) {
     setSpot(id);
   };
 
+  const [wowData, setWowData] = useState(null);
+  const [wowLoading, setWowLoading] = useState(false);
+
   const handleFinish = () => {
     if (sport) {
-      localStorage.setItem('uwf_default_sport', sport);
-      if (spot) localStorage.setItem('uwf_default_spot', spot);
-      localStorage.setItem('uwf_onboarded', 'true');
-      onComplete(sport, spot);
+      setWowLoading(true);
+      setStep(3);
     }
+  };
+
+  useEffect(() => {
+    if (step !== 3 || !sport) return;
+    const timer = setTimeout(() => {
+      const sportName = SPORT_OPTIONS.find(s => s.id === sport)?.name || sport;
+      const spotName = spot ? (SPOT_OPTIONS[sport]?.find(s => s.id === spot)?.name || spot) : 'your spot';
+      setWowData({ sportName, spotName });
+      setWowLoading(false);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, [step, sport, spot]);
+
+  const finishOnboarding = () => {
+    localStorage.setItem('uwf_default_sport', sport);
+    if (spot) localStorage.setItem('uwf_default_spot', spot);
+    localStorage.setItem('uwf_onboarded', 'true');
+    onComplete(sport, spot);
   };
 
   const spots = sport ? (SPOT_OPTIONS[sport] || []) : [];
@@ -113,6 +132,7 @@ export default function Onboarding({ onComplete }) {
         <div className="flex items-center justify-center gap-2 mb-8">
           <div className={`w-2 h-2 rounded-full transition-all ${step >= 1 ? 'bg-sky-500 w-6' : isDark ? 'bg-slate-700' : 'bg-slate-300'}`} />
           <div className={`w-2 h-2 rounded-full transition-all ${step >= 2 ? 'bg-sky-500 w-6' : isDark ? 'bg-slate-700' : 'bg-slate-300'}`} />
+          <div className={`w-2 h-2 rounded-full transition-all ${step >= 3 ? 'bg-sky-500 w-6' : isDark ? 'bg-slate-700' : 'bg-slate-300'}`} />
         </div>
 
         {step === 1 && (
@@ -209,6 +229,57 @@ export default function Onboarding({ onComplete }) {
             >
               Skip — I'll explore on my own
             </button>
+          </div>
+        )}
+
+        {step === 3 && (
+          <div className="text-center space-y-6">
+            {wowLoading ? (
+              <div className="space-y-4 py-8">
+                <Loader2 className={`w-10 h-10 mx-auto animate-spin ${isDark ? 'text-sky-400' : 'text-sky-500'}`} />
+                <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                  Tuning into your stations...
+                </h2>
+                <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                  Connecting to live sensors near {spot ? (SPOT_OPTIONS[sport]?.find(s => s.id === spot)?.name || 'your spot') : 'your area'}
+                </p>
+              </div>
+            ) : wowData ? (
+              <div className="space-y-5 py-4">
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/15 text-emerald-500 text-sm font-bold">
+                  <Wind className="w-4 h-4" />
+                  You're connected
+                </div>
+                <h2 className={`text-2xl font-extrabold ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                  Ready for {wowData.sportName}
+                </h2>
+                <p className={`text-sm leading-relaxed max-w-sm mx-auto ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                  We're now monitoring live wind stations at <strong className={isDark ? 'text-white' : 'text-slate-900'}>{wowData.spotName}</strong>.
+                  You'll get a GO / WAIT / PASS decision updated every 20 seconds.
+                </p>
+                <div className={`grid grid-cols-3 gap-3 p-4 rounded-xl ${isDark ? 'bg-slate-900 border border-slate-800' : 'bg-slate-50 border border-slate-200'}`}>
+                  <div className="text-center">
+                    <div className="text-2xl font-extrabold text-emerald-500">GO</div>
+                    <div className={`text-[10px] mt-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Conditions are ideal</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-extrabold text-amber-500">WAIT</div>
+                    <div className={`text-[10px] mt-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Wind is coming</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-extrabold text-slate-500">PASS</div>
+                    <div className={`text-[10px] mt-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Not today</div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={finishOnboarding}
+                  className="w-full py-3.5 rounded-xl text-sm font-bold bg-sky-500 text-white hover:bg-sky-600 shadow-lg shadow-sky-500/25 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                >
+                  Show me my forecast
+                </button>
+              </div>
+            ) : null}
           </div>
         )}
       </div>

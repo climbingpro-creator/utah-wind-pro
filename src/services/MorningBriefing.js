@@ -15,6 +15,12 @@ import { safeToFixed } from '../utils/safeToFixed';
 const WIND_ACTIVITIES = new Set(['kiting', 'sailing', 'windsurfing', 'snowkiting']);
 const CALM_ACTIVITIES = new Set(['boating', 'paddling']);
 
+const DISPLAY_NAMES = {
+  kiting: 'kiting', sailing: 'sailing', windsurfing: 'windsurfing',
+  snowkiting: 'snowkiting', boating: 'boating', paddling: 'paddling',
+  fishing: 'fishing', paragliding: 'paragliding',
+};
+
 const DIRECTION_LABELS = {
   N: 'North', NNE: 'North-Northeast', NE: 'Northeast', ENE: 'East-Northeast',
   E: 'East', ESE: 'East-Southeast', SE: 'Southeast', SSE: 'South-Southeast',
@@ -335,7 +341,7 @@ function briefCalm(activity, params) {
 
   const bodyParts = [];
   if (speed <= 5) {
-    bodyParts.push(`Lake is ${speed <= 2 ? 'glass' : 'nearly glass'} at ${speed} mph.`);
+    bodyParts.push(`Water is ${speed <= 2 ? 'glass' : 'nearly glass'} at ${speed} mph.`);
   } else {
     bodyParts.push(`Currently ${speed} mph${gust > speed ? ` gusting ${gust}` : ''} — choppy for ${activity}.`);
   }

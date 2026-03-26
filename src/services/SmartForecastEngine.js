@@ -15,61 +15,55 @@
 
 import { generateWindField } from './WindFieldEngine';
 import { safeToFixed } from '../utils/safeToFixed';
+import { ACTIVITY_CONFIGS } from '../components/ActivityMode';
 
 // ─── ACTIVITY PROFILES ────────────────────────────────────────────
-// Defines what each activity needs from the wind.
-// These thresholds are backtested against 2025 data.
+// Derived from the single source of truth in ACTIVITY_CONFIGS.
+// Adds scoring labels and emoji for SmartTimeline display.
 
-const ACTIVITY_PROFILES = {
-  kiting: {
-    idealMin: 10, idealMax: 20, min: 8, max: 30,
-    gustLimit: 1.5, wantsWind: true, daylightOnly: true,
-    scoreLabel: (s) => s >= 80 ? 'Send it' : s >= 60 ? 'Good session' : s >= 40 ? 'Light but doable' : s >= 20 ? 'Foil only' : 'No wind',
-    emoji: (s) => s >= 80 ? '🔥' : s >= 60 ? '✅' : s >= 40 ? '〰️' : '❌',
-  },
-  sailing: {
-    idealMin: 10, idealMax: 18, min: 6, max: 25,
-    gustLimit: 1.4, wantsWind: true, daylightOnly: true,
-    scoreLabel: (s) => s >= 80 ? 'Race day' : s >= 60 ? 'Good sail' : s >= 40 ? 'Light air' : s >= 20 ? 'Drifter' : 'No wind',
-    emoji: (s) => s >= 80 ? '⛵' : s >= 60 ? '✅' : s >= 40 ? '〰️' : '❌',
-  },
-  windsurfing: {
-    idealMin: 12, idealMax: 22, min: 8, max: 30,
-    gustLimit: 1.5, wantsWind: true, daylightOnly: true,
-    scoreLabel: (s) => s >= 80 ? 'Planing!' : s >= 60 ? 'Good session' : s >= 40 ? 'Light wind' : s >= 20 ? 'Barely' : 'No wind',
-    emoji: (s) => s >= 80 ? '🔥' : s >= 60 ? '✅' : s >= 40 ? '〰️' : '❌',
-  },
-  boating: {
-    idealMin: 0, idealMax: 5, min: 0, max: 8,
-    gustLimit: 1.1, wantsWind: false,
-    scoreLabel: (s) => s >= 85 ? 'Glass' : s >= 65 ? 'Near-glass' : s >= 45 ? 'Light chop' : s >= 25 ? 'Moderate' : 'Choppy',
-    emoji: (s) => s >= 85 ? '🪞' : s >= 65 ? '✨' : s >= 45 ? '〰️' : s >= 25 ? '🌊' : '⚠️',
-  },
-  paddling: {
-    idealMin: 0, idealMax: 5, min: 0, max: 10,
-    gustLimit: 1.2, wantsWind: false,
-    scoreLabel: (s) => s >= 85 ? 'Perfect' : s >= 65 ? 'Great' : s >= 45 ? 'Some chop' : s >= 25 ? 'Challenging' : 'Stay home',
-    emoji: (s) => s >= 85 ? '🪞' : s >= 65 ? '✨' : s >= 45 ? '〰️' : s >= 25 ? '🌊' : '⚠️',
-  },
-  fishing: {
-    idealMin: 0, idealMax: 8, min: 0, max: 15,
-    gustLimit: 1.3, wantsWind: false,
-    scoreLabel: (s) => s >= 80 ? 'Fish ON' : s >= 60 ? 'Good bite' : s >= 40 ? 'Fair' : s >= 20 ? 'Slow' : 'Tough day',
-    emoji: (s) => s >= 80 ? '🎣' : s >= 60 ? '✅' : s >= 40 ? '〰️' : '❌',
-  },
-  paragliding: {
-    idealMin: 8, idealMax: 15, min: 6, max: 18,
-    gustLimit: 1.25, wantsWind: true, daylightOnly: true,
-    scoreLabel: (s) => s >= 80 ? 'Epic' : s >= 60 ? 'Flyable' : s >= 40 ? 'Marginal' : 'Grounded',
-    emoji: (s) => s >= 80 ? '🪂' : s >= 60 ? '✅' : s >= 40 ? '⚠️' : '❌',
-  },
-  snowkiting: {
-    idealMin: 12, idealMax: 22, min: 10, max: 35,
-    gustLimit: 1.6, wantsWind: true, daylightOnly: true,
-    scoreLabel: (s) => s >= 80 ? 'Send it' : s >= 60 ? 'Good session' : s >= 40 ? 'Light but rideable' : s >= 20 ? 'Barely' : 'No wind',
-    emoji: (s) => s >= 80 ? '🔥' : s >= 60 ? '✅' : s >= 40 ? '〰️' : '❌',
-  },
+function deriveProfile(cfg) {
+  if (!cfg) return null;
+  const t = cfg.thresholds || {};
+  return {
+    idealMin: t.ideal?.min ?? (cfg.wantsWind ? 10 : 0),
+    idealMax: t.ideal?.max ?? (cfg.wantsWind ? 20 : 8),
+    min: t.tooLight ?? t.ideal?.min ?? 0,
+    max: t.tooStrong ?? t.dangerous ?? 30,
+    gustLimit: t.gustFactor ?? 1.5,
+    wantsWind: cfg.wantsWind ?? true,
+    daylightOnly: true,
+  };
+}
+
+const SCORE_LABELS = {
+  kiting:      { high: 'Send it', good: 'Good session', ok: 'Light but doable', low: 'Foil only', off: 'No wind', emoji: ['❌','〰️','〰️','✅','🔥'] },
+  sailing:     { high: 'Race day', good: 'Good sail', ok: 'Light air', low: 'Drifter', off: 'No wind', emoji: ['❌','〰️','〰️','✅','⛵'] },
+  windsurfing: { high: 'Planing!', good: 'Good session', ok: 'Light wind', low: 'Barely', off: 'No wind', emoji: ['❌','〰️','〰️','✅','🔥'] },
+  boating:     { high: 'Glass', good: 'Near-glass', ok: 'Light chop', low: 'Moderate', off: 'Choppy', emoji: ['⚠️','🌊','〰️','✨','🪞'] },
+  paddling:    { high: 'Perfect', good: 'Great', ok: 'Some chop', low: 'Challenging', off: 'Stay home', emoji: ['⚠️','🌊','〰️','✨','🪞'] },
+  fishing:     { high: 'Fish ON', good: 'Good bite', ok: 'Fair', low: 'Slow', off: 'Tough day', emoji: ['❌','〰️','〰️','✅','🎣'] },
+  paragliding: { high: 'Epic', good: 'Flyable', ok: 'Marginal', low: 'Marginal', off: 'Grounded', emoji: ['❌','⚠️','⚠️','✅','🪂'] },
+  snowkiting:  { high: 'Send it', good: 'Good session', ok: 'Light but rideable', low: 'Barely', off: 'No wind', emoji: ['❌','〰️','〰️','✅','🔥'] },
 };
+
+function getLabel(activity, score) {
+  const sl = SCORE_LABELS[activity] || SCORE_LABELS.kiting;
+  if (score >= 80) return { label: sl.high, emoji: sl.emoji[4] };
+  if (score >= 60) return { label: sl.good, emoji: sl.emoji[3] };
+  if (score >= 40) return { label: sl.ok, emoji: sl.emoji[2] };
+  if (score >= 20) return { label: sl.low, emoji: sl.emoji[1] };
+  return { label: sl.off, emoji: sl.emoji[0] };
+}
+
+const ACTIVITY_PROFILES = {};
+for (const [id, cfg] of Object.entries(ACTIVITY_CONFIGS)) {
+  const base = deriveProfile(cfg);
+  if (base) {
+    base.scoreLabel = (s) => getLabel(id, s).label;
+    base.emoji = (s) => getLabel(id, s).emoji;
+    ACTIVITY_PROFILES[id] = base;
+  }
+}
 
 // ─── SCORE CALCULATOR ────────────────────────────────────────────
 // Pure function: speed + gust → score for an activity.
@@ -262,12 +256,8 @@ function buildRecommendation(activity, hours, windows, flowBlocked, triggers, sw
   const hasFrontal = swings.some(a => a.id === 'frontal-hit');
   const boostActive = triggers.filter(t => t.type === 'boost').length > 0;
 
-  const actLabel = profile === ACTIVITY_PROFILES.kiting ? 'Kiting'
-    : profile === ACTIVITY_PROFILES.sailing ? 'Sailing'
-    : profile === ACTIVITY_PROFILES.snowkiting ? 'Snowkiting'
-    : profile === ACTIVITY_PROFILES.windsurfing ? 'Windsurfing'
-    : profile === ACTIVITY_PROFILES.paragliding ? 'Flying'
-    : activity.charAt(0).toUpperCase() + activity.slice(1);
+  const actLabel = ACTIVITY_CONFIGS[activity]?.name
+    || (activity.charAt(0).toUpperCase() + activity.slice(1));
 
   if (profile.wantsWind) {
     if (currentScore >= 70) {
@@ -305,18 +295,22 @@ function buildRecommendation(activity, hours, windows, flowBlocked, triggers, sw
   } else {
     const calmLabel = activity === 'fishing' ? 'Calm water — great bite conditions'
       : activity === 'paddling' ? 'Glass conditions — perfect for paddling'
-      : 'Glass conditions — upstream wind is blocked!';
+      : activity === 'sailing' ? 'Light air — drifting conditions'
+      : 'Glass conditions — perfect for boating';
     const calmNow = activity === 'fishing' ? 'Calm water — fish are active'
       : activity === 'paddling' ? 'Flat water right now — go paddle'
-      : 'Calm water right now';
+      : activity === 'sailing' ? 'Very light breeze — drifter conditions'
+      : 'Calm water right now — great for boating';
 
     if (currentScore >= 80 && flowBlocked) {
       return {
         urgency: 'go',
         headline: calmLabel,
         detail: activity === 'fishing'
-          ? 'No wind reaching the lake — topwater bite is on'
-          : 'Valley wind is NOT reaching the lake. Go now!',
+          ? 'No wind reaching the water — topwater bite is on'
+          : activity === 'paddling'
+          ? 'Upstream wind blocked — water is flat, go paddle'
+          : 'Upstream wind blocked — smooth water, go now!',
         badge: activity === 'fishing' ? 'FISH ON' : 'GLASS',
       };
     }
@@ -344,7 +338,8 @@ function buildRecommendation(activity, hours, windows, flowBlocked, triggers, sw
     }
     const waitMsg = activity === 'fishing' ? 'Windy — fish deeper or sheltered spots'
       : activity === 'paddling' ? 'Choppy — wait for calm or stay near shore'
-      : 'Wind expected — choppy conditions';
+      : activity === 'sailing' ? 'Strong wind building — reef early or stay ashore'
+      : 'Choppy conditions — wait for a calm window';
     return { urgency: 'wait', headline: waitMsg, detail: 'Waiting for calm windows', badge: null };
   }
 }

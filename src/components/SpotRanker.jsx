@@ -138,7 +138,7 @@ function getSpotWind(spot, mesoData, fallbackWind) {
 
 // ─── Scoring ─────────────────────────────────────────────────────
 
-function scoreSpot(spot, activity, currentWind, lakeState, mesoData) {
+function scoreSpot(spot, activity, currentWind, lakeState, mesoData, thermalOverride) {
   const config = ACTIVITY_CONFIGS[activity];
   if (!config) return { score: 0, reason: 'Unknown activity', wind: null };
 
@@ -147,7 +147,7 @@ function scoreSpot(spot, activity, currentWind, lakeState, mesoData) {
   const dir = wind?.direction;
   const speed = wind?.speed ?? 0;
   const gust = wind?.gust ?? speed;
-  const thermalProb = lakeState?.thermalPrediction?.probability ?? 0;
+  const thermalProb = thermalOverride?.probability ?? lakeState?.thermalPrediction?.probability ?? 0;
 
   let score = 50;
   let reason = '';
@@ -308,7 +308,7 @@ function mergeIntoCache(cache, mesoData) {
   return next;
 }
 
-function SpotRanker({ activity, currentWind, lakeState, mesoData, onSelectSpot }) {
+function SpotRanker({ activity, currentWind, lakeState, mesoData, thermalPrediction: unifiedThermal, onSelectSpot }) {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const [expanded, setExpanded] = useState(false);
@@ -328,7 +328,7 @@ function SpotRanker({ activity, currentWind, lakeState, mesoData, onSelectSpot }
     return SPOTS
       .filter(spot => spot.bestFor.includes(activity))
       .map(spot => {
-        const { score, reason, wind, shoreZone } = scoreSpot(spot, activity, currentWind, lakeState, stableData);
+        const { score, reason, wind, shoreZone } = scoreSpot(spot, activity, currentWind, lakeState, stableData, unifiedThermal);
         return { ...spot, score, reason, wind, shoreZone };
       })
       .sort((a, b) => b.score - a.score);

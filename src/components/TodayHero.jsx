@@ -92,12 +92,12 @@ function getActivityVerdict(id, speed, gust, thermalPrediction, _boatingPredicti
       const glassLabel = actId === 'fishing' ? 'CALM' : actId === 'paddling' ? 'FLAT' : 'GLASS';
       const glassReason = actId === 'fishing' ? `Still water — fish are active${sessionStr}`
         : actId === 'paddling' ? `Mirror-flat — perfect paddle${sessionStr}`
-        : `Mirror-flat water${sessionStr}`;
+        : `Mirror-flat — perfect boat day${sessionStr}`;
       return { status: 'go', label: glassLabel, reason: glassReason, color: 'emerald' };
     }
     const goodReason = actId === 'fishing' ? `Light ripple (${Math.round(speed)} mph) — great casting${sessionStr}`
       : actId === 'paddling' ? `Light wind (${Math.round(speed)} mph) — easy paddle${sessionStr}`
-      : `Light wind (${Math.round(speed)} mph)${sessionStr}`;
+      : `Light wind (${Math.round(speed)} mph) — smooth cruising${sessionStr}`;
     return { status: 'go', label: 'GOOD', reason: goodReason, color: 'lime' };
   }
 
@@ -110,7 +110,8 @@ function getActivityVerdict(id, speed, gust, thermalPrediction, _boatingPredicti
       if (prob >= 50 && now < thermalEnd) {
         const estStr = estTargetSpeed != null ? ` (~${Math.round(estTargetSpeed)} mph expected here)` : '';
         const sessionStr = session ? ` — ${sessionLabel(session.avgMinutes)} if it arrives` : '';
-        return { status: 'wait', label: 'WAIT', reason: `${prob}% thermal by ${formatHour(thermalStart)}${estStr}${sessionStr}`, color: 'amber', window: formatHour(thermalStart) };
+        const windType = id === 'snowkiting' ? 'wind' : id === 'paragliding' ? 'lift' : 'thermal';
+        return { status: 'wait', label: 'WAIT', reason: `${prob}% ${windType} by ${formatHour(thermalStart)}${estStr}${sessionStr}`, color: 'amber', window: formatHour(thermalStart) };
       }
       return { status: 'off', label: 'TOO LIGHT', reason: `${Math.round(speed)} mph — need ${cfg.thresholds?.tooLight || 6}+`, color: 'slate' };
     }
@@ -275,7 +276,13 @@ const STATUS_STYLES_LIGHT = {
   off:     { bg: 'bg-slate-50/50', border: 'border-slate-100', text: 'text-slate-400', badge: 'bg-slate-100 text-slate-400', dot: 'bg-slate-300' },
 };
 
-export default function TodayHero({ windSpeed, windGust, thermalPrediction, boatingPrediction, onSelectActivity, selectedActivity, fpsStation, utalpStation, propagation, unifiedActivities }) {
+function dirLabel(deg) {
+  if (deg == null) return '';
+  const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+  return dirs[Math.round(deg / 22.5) % 16];
+}
+
+export default function TodayHero({ windSpeed, windGust, windDirection, thermalPrediction, boatingPrediction, onSelectActivity, selectedActivity, fpsStation, utalpStation, propagation, unifiedActivities }) {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 
@@ -338,7 +345,9 @@ export default function TodayHero({ windSpeed, windGust, thermalPrediction, boat
             <div className={`data-number ${bgImage ? 'text-white' : accent}`}>
               {outlook.speed > 0 ? Math.round(outlook.speed) : '--'}
             </div>
-            <p className={`text-[11px] font-semibold uppercase tracking-widest mt-1 ${bgImage ? 'text-white/50' : 'text-[var(--text-tertiary)]'}`}>mph</p>
+            <p className={`text-[11px] font-semibold uppercase tracking-widest mt-1 ${bgImage ? 'text-white/50' : 'text-[var(--text-tertiary)]'}`}>
+              mph{windDirection != null ? ` ${dirLabel(windDirection)}` : ''}
+            </p>
             {outlook.gust > outlook.speed * 1.2 && (
               <p className={`text-xs mt-1 font-medium ${bgImage ? 'text-white/40' : 'text-[var(--text-tertiary)]'}`}>
                 G{Math.round(outlook.gust)}

@@ -114,7 +114,7 @@ export function getKiteSafety(lakeId, windDirection) {
       bgColor: 'bg-green-500/20',
       borderColor: 'border-green-500/30',
       icon: CheckCircle,
-      description: 'Wind blowing from water to land. Safe for kiting.',
+      description: 'Wind blowing from water to land. Safe conditions.',
     };
   }
 
@@ -131,7 +131,7 @@ export function getKiteSafety(lakeId, windDirection) {
       bgColor: 'bg-cyan-500/20',
       borderColor: 'border-cyan-500/30',
       icon: CheckCircle,
-      description: 'Wind parallel to shore. Safe for kiting.',
+      description: 'Wind parallel to shore. Safe conditions.',
     };
   }
 
@@ -145,7 +145,7 @@ export function getKiteSafety(lakeId, windDirection) {
       bgColor: 'bg-red-500/20',
       borderColor: 'border-red-500/30',
       icon: XCircle,
-      description: 'Wind blowing from land to water. DO NOT KITE - you will be blown out!',
+      description: 'Wind blowing from land to water. Dangerous — you will be pushed offshore!',
     };
   }
 
@@ -201,7 +201,9 @@ export function KiteSafetyIndicator({ lakeId, windDirection, windSpeed, compact 
       <div className="flex items-center gap-3 mb-3">
         <Anchor className={`w-4 h-4 ${safety.color}`} />
         <div className="flex-1">
-          <h3 className="font-semibold text-sm text-[var(--text-primary)]">Kite Safety</h3>
+          <h3 className="font-semibold text-sm text-[var(--text-primary)]">
+            {activity === 'kiting' ? 'Kite Safety' : activity === 'windsurfing' ? 'Wind Safety' : activity === 'sailing' ? 'Shore Safety' : 'Wind Safety'}
+          </h3>
           <p className={`text-xs font-medium ${safety.color}`}>{safety.message}</p>
         </div>
         <Icon className={`w-5 h-5 ${safety.color}`} />

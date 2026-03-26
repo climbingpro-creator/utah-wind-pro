@@ -3,8 +3,8 @@ import { Waves, Anchor, AlertTriangle } from 'lucide-react';
 import { calculateGlassScore, calculateCalmWindow } from './ActivityMode';
 import { safeToFixed } from '../utils/safeToFixed';
 
-const GlassScore = ({ windSpeed, windGust, thermalStartHour = 10, size = 180 }) => {
-  const glassData = calculateGlassScore(windSpeed, windGust);
+const GlassScore = ({ windSpeed, windGust, thermalStartHour = 10, size = 180, activityConfig }) => {
+  const glassData = calculateGlassScore(windSpeed, windGust, activityConfig);
   const currentHour = new Date().getHours();
   const calmWindow = calculateCalmWindow(currentHour, thermalStartHour, windSpeed);
   

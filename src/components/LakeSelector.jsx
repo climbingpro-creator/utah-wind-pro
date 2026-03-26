@@ -255,7 +255,7 @@ function getFishingRecommendation(windStatuses, pressureData) {
   for (const lake of allLakes) {
     const intel = FISH_INTEL[lake.id];
     const ws = windStatuses[lake.id];
-    const windSpeed = ws?.speed ?? 99;
+    const windSpeed = ws?.speed ?? null;
     const seasonData = intel?.seasons?.[season];
 
     let score = seasonData?.rating ?? 2;
@@ -265,7 +265,8 @@ function getFishingRecommendation(windStatuses, pressureData) {
       reasons.push(seasonData.method);
     }
 
-    if (windSpeed < 5) { score += 2; reasons.push('Calm water — ideal conditions'); }
+    if (windSpeed == null) { reasons.push('No wind data — check conditions on-site'); }
+    else if (windSpeed < 5) { score += 2; reasons.push('Calm water — ideal conditions'); }
     else if (windSpeed < 10) { score += 1; reasons.push('Light wind — fishable'); }
     else if (windSpeed < 15) { score -= 1; reasons.push('Moderate wind — fish deeper structure'); }
     else { score -= 3; reasons.push('High wind — tough conditions'); }

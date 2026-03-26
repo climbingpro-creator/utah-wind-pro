@@ -376,7 +376,7 @@ export default function DetailedPanels({
           </div>
         )}
 
-        {(selectedActivity === 'boating' || selectedActivity === 'paddling' || selectedActivity === 'fishing') && (
+        {(selectedActivity === 'boating' || selectedActivity === 'paddling' || selectedActivity === 'fishing' || selectedActivity === 'sailing') && (
           <ProGate feature="Water Conditions" preview="Wave data, safety scores & more">
             <SafeComponent name="Water Forecast">
               <WaterForecast

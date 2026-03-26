@@ -95,7 +95,7 @@ const GlassTimeline = ({ hours, expanded }) => {
   );
 };
 
-const GlassWindowCards = ({ windows }) => {
+const GlassWindowCards = ({ windows, activity }) => {
   if (!windows || windows.length === 0) {
     return (
       <div className="bg-slate-700/30 rounded-lg p-3 text-center">
@@ -119,7 +119,9 @@ const GlassWindowCards = ({ windows }) => {
             {w.start} – {w.end}
           </div>
           <div className="text-xs text-slate-400 mt-1">
-            🪞 Glass conditions expected
+            {activity === 'paddling' ? '🪞 Flat water — ideal for SUP & kayak'
+              : activity === 'fishing' ? '🪞 Calm water — prime bite window'
+              : '🪞 Glass conditions — smooth cruising'}
           </div>
         </div>
       ))}
@@ -268,7 +270,7 @@ const WaterForecast = ({ locationId = 'utah-lake', currentWind = {}, pressureDat
             <span className="text-[10px] text-slate-500 ml-auto">Next 24 hours</span>
           </div>
 
-          <GlassWindowCards windows={forecast.glassWindows} />
+          <GlassWindowCards windows={forecast.glassWindows} activity={activity} />
 
           {forecast.windEvents?.length > 0 && (
             <div className="mt-3">
@@ -300,7 +302,11 @@ const WaterForecast = ({ locationId = 'utah-lake', currentWind = {}, pressureDat
             <div className="flex items-center gap-2 mb-2 px-2 py-1.5 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
               <Shield className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
               <span className="text-[11px] text-emerald-400">
-                Upstream wind is not reaching the lake — glass conditions likely to persist
+                {activity === 'paddling'
+                ? 'Upstream wind blocked — flat water should hold'
+                : activity === 'fishing'
+                ? 'Upstream wind blocked — calm water persisting'
+                : 'Upstream wind blocked — glass conditions likely to persist'}
               </span>
             </div>
           )}

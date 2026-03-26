@@ -29,7 +29,7 @@ function getWeights() {
  * Predict glass/calm conditions.
  * Returns probability, glass window forecast, and wave estimate.
  */
-export function predictGlass(windData, pressureData = {}) {
+export function predictGlass(windData, pressureData = {}, activity = 'boating') {
   const w = getWeights();
   const hour = new Date().getHours();
   const month = new Date().getMonth() + 1;
@@ -140,16 +140,26 @@ export function predictGlass(windData, pressureData = {}) {
     hourlyMult: +hourlyMult.toFixed(2),
     isUsingLearnedWeights: !!learnedWeights || !!boatWeightsData?.weights,
     weightsVersion: (learnedWeights || boatWeightsData?.weights)?.version || 'default',
-    recommendation: getBoatingRec(probability, currentSpeed, waveEstimate, hour, isInGlassWindow),
+    recommendation: getBoatingRec(probability, currentSpeed, waveEstimate, hour, isInGlassWindow, activity),
   };
 }
 
-function getBoatingRec(prob, speed, wave, hour, inWindow) {
-  if (wave === 'flat' || wave === 'ripples') return 'Glass conditions now — perfect for water sports!';
-  if (wave === 'light_chop' && prob >= 50) return 'Light chop — good for powerboats and cruising.';
+function getBoatingRec(prob, speed, wave, hour, inWindow, activity) {
+  const isPaddle = activity === 'paddling';
+  if (wave === 'flat' || wave === 'ripples') {
+    return isPaddle
+      ? 'Mirror-flat water — perfect for SUP & kayak!'
+      : 'Glass conditions now — perfect for boating!';
+  }
+  if (wave === 'light_chop' && prob >= 50) {
+    return isPaddle
+      ? 'Light chop — manageable for experienced paddlers, beginners stay close to shore.'
+      : 'Light chop — good for powerboats and cruising.';
+  }
   if (wave === 'moderate' && hour < 8) return 'Morning calm fading. Best window was earlier.';
   if (wave === 'moderate' && hour >= 18) return 'Wind dying down. Glass conditions may return soon.';
   if (wave === 'choppy' || wave === 'rough') {
+    if (isPaddle) return 'Too choppy for safe paddling. Wait for calm.';
     if (hour < 6) return 'Unusually windy for early morning. Check back later.';
     if (hour >= 17) return 'Wind should ease in the next 1-2 hours.';
     return 'Too choppy for comfort. Wait for evening calm.';

@@ -66,7 +66,7 @@ export class LakeState {
     };
   }
 
-  static fromRawData(lakeId, ambientData, synopticStations, historyData = null) {
+  static fromRawData(lakeId, ambientData, synopticStations, historyData = null, wuPwsStations = null) {
     const state = new LakeState(lakeId);
     const config = state.config;
     
@@ -335,6 +335,24 @@ export class LakeState {
           addedIds.add(stationConfig.id);
         }
       });
+
+      if (wuPwsStations && wuPwsStations.length > 0) {
+        for (const wu of wuPwsStations) {
+          if (wu && wu.stationId && !addedIds.has(wu.stationId) && wu.windSpeed != null) {
+            state.wind.stations.push({
+              id: wu.stationId,
+              name: wu.name || wu.stationId,
+              speed: wu.windSpeed,
+              gust: wu.windGust,
+              direction: wu.windDirection,
+              temperature: wu.temperature,
+              isPWS: true,
+              network: 'WU',
+            });
+            addedIds.add(wu.stationId);
+          }
+        }
+      }
 
       state.wind.convergence = calculateVectorConvergence(
         state.wind.stations,

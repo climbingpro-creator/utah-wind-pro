@@ -213,6 +213,28 @@ export default function SnowkiteForecast({ selectedLake, mesoData, onSelectLocat
           </div>
         )}
 
+        {/* Trip readiness strip */}
+        <div className={`mt-3 pt-2 border-t ${isDark ? 'border-white/5' : 'border-black/5'}`}>
+          <div className={`text-[10px] uppercase tracking-wider font-medium mb-1.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+            Trip Readiness
+          </div>
+          <div className="flex flex-wrap gap-2 text-xs">
+            {pred.current?.temp != null && (
+              <span className={`px-2 py-1 rounded-lg ${pred.current.temp < 20 ? (isDark ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-100 text-blue-700') : (isDark ? 'bg-slate-700/50 text-slate-300' : 'bg-slate-100 text-slate-600')}`}>
+                {safeToFixed(pred.current.temp, 0)}°F on-site
+              </span>
+            )}
+            <span className={`px-2 py-1 rounded-lg ${isDark ? 'bg-slate-700/50 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
+              {pred.quality?.score >= 60 ? 'Worth the drive' : pred.quality?.score >= 35 ? 'Check before driving' : 'Marginal — monitor'}
+            </span>
+            {window?.isInWindow && (
+              <span className={`px-2 py-1 rounded-lg font-medium ${isDark ? 'bg-green-500/15 text-green-400' : 'bg-green-100 text-green-700'}`}>
+                Window open — {window.hoursRemaining}hr left
+              </span>
+            )}
+          </div>
+        </div>
+
         {/* Historical baseline */}
         {pred.baseline && (
           <div className={`mt-1 flex items-center gap-2 text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>

@@ -67,16 +67,22 @@ function getDecision(activity, windSpeed, windGust, thermalPrediction, boatingPr
     }
 
     if (speed >= tooLight && speed < (ideal?.min ?? tooLight) && gustFactor < 1.4) {
-      return {
-        decision: 'GO',
-        headline: isPG ? `GO — light but flyable` : `GO — light but rideable`,
-        detail: isPG
-          ? `${Math.round(speed)} mph ${dirLabel(dir)} — light lift, stay close to ridge`
-          : `${Math.round(speed)} mph ${dirLabel(dir)} — foil-friendly conditions`,
-        action: briefing?.bestAction || (isPG ? `Light conditions — stay close to the hill` : `Light wind session — bring your big kite or foil`),
-        color: 'lime',
-        icon: CheckCircle,
-      };
+      {
+        const lightDetail = isPG ? `${Math.round(speed)} mph ${dirLabel(dir)} — light lift, stay close to ridge`
+          : activity === 'sailing' ? `${Math.round(speed)} mph ${dirLabel(dir)} — light air, full sail`
+          : `${Math.round(speed)} mph ${dirLabel(dir)} — foil-friendly conditions`;
+        const lightAction = briefing?.bestAction || (isPG ? `Light conditions — stay close to the hill`
+          : activity === 'sailing' ? `Light wind — full main + jib, be patient with shifts`
+          : `Light wind session — bring your big kite or foil`);
+        return {
+          decision: 'GO',
+          headline: isPG ? `GO — light but flyable` : activity === 'sailing' ? `GO — light air` : `GO — light but rideable`,
+          detail: lightDetail,
+          action: lightAction,
+          color: 'lime',
+          icon: CheckCircle,
+        };
+      }
     }
 
     if (speed > tooStrong) {
@@ -98,7 +104,7 @@ function getDecision(activity, windSpeed, windGust, thermalPrediction, boatingPr
         headline: `Gusty — ${Math.round(speed)}G${Math.round(gust)} mph`,
         detail: isPG
           ? `Gust spread too wide for safe ${cfg.name}. Wait for stabilization.`
-          : `Gusts too high for safe ${activity}. Wait for conditions to stabilize.`,
+          : `Gusts too high for safe ${cfg.name}. Wait for conditions to stabilize.`,
         action: briefing?.bestAction || (isPG
           ? `Watch the cycles — gust spread needs to tighten`
           : `Monitor gusts — needs to settle below ${Math.round(speed * gustLimit)} mph`),
@@ -145,7 +151,7 @@ function getDecision(activity, windSpeed, windGust, thermalPrediction, boatingPr
       decision: 'PASS',
       headline: `Not enough wind for ${cfg.name}`,
       detail: `${speed > 0 ? `${Math.round(speed)} mph` : 'Calm'} — need ${tooLight}+ mph.${prob > 0 ? ` ${prob}% chance later.` : ''}`,
-      action: briefing?.bestAction || 'Check back later — conditions may change',
+      action: briefing?.bestAction || `Check back in 1-2 hours — watching upstream stations for ${tooLight}+ mph`,
       color: 'slate',
       icon: XCircle,
     };
@@ -158,7 +164,8 @@ function getDecision(activity, windSpeed, windGust, thermalPrediction, boatingPr
 
   if (speed <= idealMax) {
     const isGlass = speed <= 2;
-    const glassStr = boatingPrediction?.glassUntil ? ` until ~${formatHour(boatingPrediction.glassUntil)}` : startHour ? ` until ~${formatHour(startHour)}` : '';
+    const glassEnd = boatingPrediction?.glassWindow?.end || boatingPrediction?.glassUntil;
+    const glassStr = glassEnd ? ` until ~${typeof glassEnd === 'number' ? formatHour(glassEnd) : glassEnd}` : '';
     const glassWord = activity === 'fishing' ? 'Calm water' : activity === 'paddling' ? 'Flat water' : 'Glass';
     return {
       decision: 'GO',
@@ -166,7 +173,7 @@ function getDecision(activity, windSpeed, windGust, thermalPrediction, boatingPr
       detail: isGlass
         ? (activity === 'fishing' ? `Still water — surface feeding active at ${spot}` : `Mirror-flat at ${spot} — go now before wind builds`)
         : `${Math.round(speed)} mph — ${activity === 'fishing' ? 'light ripple, great for casting' : 'nearly flat water'}`,
-      action: briefing?.bestAction || (isGlass ? `Launch now — ${glassWord} won't last` : `Conditions are great for ${activity}`),
+      action: briefing?.bestAction || (isGlass ? `Launch now — ${glassWord} won't last` : `Conditions are great for ${cfg.name}`),
       color: 'emerald',
       icon: CheckCircle,
     };
@@ -179,7 +186,7 @@ function getDecision(activity, windSpeed, windGust, thermalPrediction, boatingPr
       headline: `Light chop — ${Math.round(speed)} mph`,
       detail: activity === 'fishing'
         ? `Manageable for fishing — try sheltered banks`
-        : `Getting choppy for ${activity}${calmTime ? `. Calm after ~${formatHour(calmTime)}` : ''}`,
+        : `Getting choppy for ${cfg.name.toLowerCase()}${calmTime ? `. Calm after ~${formatHour(calmTime)}` : ''}`,
       action: briefing?.bestAction || (calmTime ? `Wait until ${formatHour(calmTime)} for calmer water` : `Try a sheltered spot`),
       color: 'amber',
       icon: Clock,
@@ -203,7 +210,7 @@ function getDecision(activity, windSpeed, windGust, thermalPrediction, boatingPr
   return {
     decision: 'PASS',
     headline: `Dangerous — ${Math.round(speed)} mph winds`,
-    detail: `Stay off the water. Wind far exceeds safe limits for ${activity}.`,
+    detail: `Stay off the water. Wind far exceeds safe limits for ${cfg.name.toLowerCase()}.`,
     action: 'Do not go out — conditions are dangerous',
     color: 'red',
     icon: XCircle,
@@ -270,10 +277,25 @@ function buildExpectContext(activity, windSpeed, thermalPrediction, boatingPredi
       items.push({ label: 'Wind expected', value: `~${formatHour(startHour)}`, icon: '🕐' });
     }
     const ideal = cfg.thresholds?.ideal;
-    if (ideal && windSpeed >= ideal.min) {
-      if (activity === 'kiting' || activity === 'windsurfing') {
-        const gearNote = windSpeed >= 15 ? 'Twin-tip / short-board conditions' : windSpeed >= 10 ? 'Foil-friendly — light wind gear' : '';
-        if (gearNote) items.push({ label: 'Gear context', value: gearNote, icon: '🪁' });
+    if (ideal && windSpeed >= (cfg.thresholds?.tooLight || 6)) {
+      if (activity === 'kiting') {
+        const gearNote = windSpeed >= 20 ? 'Small kite (7-9 m²) · twin-tip'
+          : windSpeed >= 15 ? 'Mid kite (10-12 m²) · twin-tip or foil'
+          : windSpeed >= 10 ? 'Big kite (13-17 m²) · foil recommended'
+          : 'Foil only — largest kite';
+        items.push({ label: 'Gear', value: gearNote, icon: '🪁' });
+      } else if (activity === 'windsurfing') {
+        const gearNote = windSpeed >= 18 ? 'Short board · small sail (4-5 m²)'
+          : windSpeed >= 12 ? 'Freeride board · mid sail (5.5-7 m²)'
+          : windSpeed >= 8 ? 'Foil or large sail (7-8.5 m²)'
+          : 'Wing foil or light-wind sail';
+        items.push({ label: 'Gear', value: gearNote, icon: '🏄' });
+      } else if (activity === 'sailing') {
+        const gearNote = windSpeed >= 18 ? 'Reef main + jib — heavy air'
+          : windSpeed >= 12 ? 'Full sail — ideal racing trim'
+          : windSpeed >= 6 ? 'Full sail + light-air tactics'
+          : 'Drifter conditions — patience needed';
+        items.push({ label: 'Sail trim', value: gearNote, icon: '⛵' });
       }
     }
   } else {
@@ -319,7 +341,7 @@ export default function DecisionCard({
     }
     result = {
       decision: unifiedDecision.decision,
-      headline: unifiedDecision.headline || `${unifiedDecision.decision} — ${activity}`,
+      headline: unifiedDecision.headline || `${unifiedDecision.decision} — ${ACTIVITY_CONFIGS[activity]?.name || activity}`,
       detail: unifiedDecision.detail || '',
       action: unifiedDecision.action || briefing?.bestAction || '',
       color: colorMap[unifiedDecision.decision] || 'slate',

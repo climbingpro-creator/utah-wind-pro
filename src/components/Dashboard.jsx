@@ -27,6 +27,11 @@ import DecisionCard from './DecisionCard';
 // Feature flag: set true to use the UnifiedPredictor pipeline
 const USE_UNIFIED_PREDICTOR = true;
 
+const FREE_LAKES = new Set([
+  'utah-lake', 'utah-lake-zigzag', 'utah-lake-lincoln', 'utah-lake-vineyard',
+  'potm-south', 'potm-north', 'inspo',
+]);
+
 const Onboarding = lazy(() => import('./Onboarding'));
 
 const DetailedPanels = lazy(() => import('./DetailedPanels'));
@@ -60,9 +65,17 @@ export function Dashboard() {
   const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem('uwf_onboarded'));
   const { lakeState, history, status, isLoading, error, lastUpdated, refresh } = useLakeData(selectedLake);
   const { theme } = useTheme();
-  const { isPro, trialActive, trialDaysLeft, openPaywall, showPaywall } = useAuth();
+  const { isPro, rawTier, trialActive, trialDaysLeft, openPaywall, showPaywall } = useAuth();
   const contentRef = useRef(null);
   const isFirstRender = useRef(true);
+
+  const handleSelectLake = React.useCallback((lakeId) => {
+    if (isPro || FREE_LAKES.has(lakeId)) {
+      setSelectedLake(lakeId);
+    } else {
+      openPaywall();
+    }
+  }, [isPro, openPaywall]);
 
   React.useEffect(() => {
     if (isFirstRender.current) { isFirstRender.current = false; return; }
@@ -155,9 +168,10 @@ export function Dashboard() {
       return predictGlass(
         { speed: currentWindSpeed, gust: currentWindGust },
         { slcPressure: lakeState?.pressure?.slc, provoPressure: lakeState?.pressure?.provo, gradient: lakeState?.pressure?.gradient },
+        selectedActivity,
       );
     } catch (_e) { return null; }
-  }, [currentWindSpeed, currentWindGust, lakeState?.pressure]);
+  }, [currentWindSpeed, currentWindGust, lakeState?.pressure, selectedActivity]);
 
   // Wind Intelligence — unified signal synthesis
   const intelligence = React.useMemo(() => {
@@ -209,12 +223,14 @@ export function Dashboard() {
       const smsPrefs = getSMSPrefs();
       if (smsPrefs.enabled && smsPrefs.phone) {
         const gs = calculateGlassScore(currentWindSpeed, currentWindGust);
+        const severeAlert = forecast?.alerts?.find(a => a.severity === 'severe' || a.severity === 'extreme');
         processConditions({
           windSpeed: currentWindSpeed,
           windGust: currentWindGust,
           windDirection: currentWindDirection,
           glassScore: gs?.score,
           thermalProbability: lakeState?.probability,
+          severeAlert: severeAlert ? { headline: severeAlert.headline || severeAlert.event } : null,
         }, smsPrefs);
       }
     }
@@ -312,9 +328,9 @@ export function Dashboard() {
         showLearningDashboard={showLearningDashboard}
         lakeState={lakeState}
         getSMSPrefs={getSMSPrefs}
-        onSMSClick={() => setShowSMSSettings(true)}
+        onSMSClick={() => isPro ? setShowSMSSettings(true) : openPaywall()}
         onPhotoClick={() => setShowPhotoSubmit(true)}
-        onNotificationsClick={() => setShowNotificationSettings(true)}
+        onNotificationsClick={() => isPro ? setShowNotificationSettings(true) : openPaywall()}
         onLearningClick={() => setShowLearningDashboard(!showLearningDashboard)}
         onRefresh={refresh}
         onUpgradeClick={openPaywall}
@@ -357,15 +373,17 @@ export function Dashboard() {
         <Suspense fallback={<div className="p-8 text-center text-gray-400">Loading...</div>}>
           <div className="p-2 space-y-4">
             <AccuracyScoreboard />
-            <LearningDashboard />
+            <ProGate feature="Model Intelligence" preview="See how the AI learns and improves">
+              <LearningDashboard />
+            </ProGate>
           </div>
         </Suspense>
       </Modal>
 
       {showPaywall && <ProUpgrade />}
 
-      {/* Trial active banner */}
-      {trialActive && !isPro && (
+      {/* Trial active banner — show when on trial (isPro via trial, not paid subscription) */}
+      {trialActive && rawTier !== 'pro' && (
         <div className="max-w-6xl mx-auto px-5 sm:px-8 mt-4">
           <div className={`flex items-center justify-between px-4 py-2.5 rounded-xl text-sm ${
             theme === 'dark' ? 'bg-sky-500/10 border border-sky-500/20' : 'bg-sky-50 border border-sky-100'
@@ -402,6 +420,7 @@ export function Dashboard() {
         <TodayHero
           windSpeed={currentWindSpeed}
           windGust={currentWindGust}
+          windDirection={currentWindDirection}
           thermalPrediction={effectiveThermalPrediction}
           boatingPrediction={effectiveBoatingPrediction}
           onSelectActivity={setSelectedActivity}
@@ -416,7 +435,7 @@ export function Dashboard() {
         <div ref={contentRef} className="scroll-mt-4">
           <LakeSelector
             selectedLake={selectedLake}
-            onSelectLake={setSelectedLake}
+            onSelectLake={handleSelectLake}
             stationReadings={lakeState?.wind?.stations}
             activity={selectedActivity}
             pressureData={pressureData}
@@ -519,7 +538,8 @@ export function Dashboard() {
             currentWind={{ speed: currentWindSpeed, gust: currentWindGust, direction: currentWindDirection }}
             lakeState={lakeState}
             mesoData={mesoData}
-            onSelectSpot={setSelectedLake}
+            thermalPrediction={effectiveThermalPrediction}
+            onSelectSpot={handleSelectLake}
           />
         </SafeComponent>
 
@@ -570,7 +590,7 @@ export function Dashboard() {
             <SnowkiteForecast
               selectedLake={selectedLake}
               mesoData={mesoData}
-              onSelectLocation={setSelectedLake}
+              onSelectLocation={handleSelectLake}
             />
           </SafeComponent>
         )}
@@ -725,7 +745,9 @@ export function Dashboard() {
                   step="A" label="Wind Check" description={<>Current wind at your spot</>}
                   value={currentWindSpeed != null ? `${safeToFixed(currentWindSpeed, 1)} mph` : '-- mph'}
                   explanation={currentWindSpeed == null ? 'Waiting for data...'
-                    : currentWindSpeed <= 3 ? (selectedActivity === 'fishing' ? 'Still water — fish feeding' : 'Glass — go now')
+                    : currentWindSpeed <= 3 ? (selectedActivity === 'fishing' ? 'Still water — fish feeding'
+                      : selectedActivity === 'paddling' ? 'Flat water — go paddle'
+                      : 'Glass — go now')
                     : currentWindSpeed <= (activityConfig.thresholds?.ideal?.max ?? 8) ? 'Nearly flat — excellent'
                     : 'Getting choppy'}
                   isGood={currentWindSpeed != null && currentWindSpeed <= (activityConfig.thresholds?.ideal?.max ?? 8)}
@@ -746,11 +768,11 @@ export function Dashboard() {
                 />
                 <ModelStepCard
                   step="C" label="Calm Window" description={<>How long will it last?</>}
-                  value={boatingPrediction?.glassUntil
-                    ? `Until ${boatingPrediction.glassUntil > 12 ? `${boatingPrediction.glassUntil - 12} PM` : `${boatingPrediction.glassUntil} AM`}`
-                    : boatingPrediction?.isGlass ? 'NOW' : '--'}
-                  explanation={boatingPrediction?.isGlass ? 'Calm right now' : 'Monitoring...'}
-                  isGood={boatingPrediction?.isGlass || (currentWindSpeed != null && currentWindSpeed <= 3)}
+                  value={effectiveBoatingPrediction?.glassUntil
+                    ? `Until ${effectiveBoatingPrediction.glassUntil > 12 ? `${effectiveBoatingPrediction.glassUntil - 12} PM` : `${effectiveBoatingPrediction.glassUntil} AM`}`
+                    : effectiveBoatingPrediction?.isGlass ? 'NOW' : '--'}
+                  explanation={effectiveBoatingPrediction?.isGlass ? 'Calm right now' : 'Monitoring...'}
+                  isGood={effectiveBoatingPrediction?.isGlass || (currentWindSpeed != null && currentWindSpeed <= 3)}
                   isBad={currentWindSpeed != null && currentWindSpeed > (activityConfig.thresholds?.rough ?? 15)}
                   threshold="Morning is best"
                 />
@@ -765,7 +787,7 @@ export function Dashboard() {
               lakeState={lakeState}
               mesoData={mesoData}
               correlation={correlation}
-              boatingPrediction={boatingPrediction}
+              boatingPrediction={effectiveBoatingPrediction}
               currentWindSpeed={currentWindSpeed}
               currentWindGust={currentWindGust}
               currentWindDirection={currentWindDirection}
@@ -778,7 +800,7 @@ export function Dashboard() {
               refresh={refresh}
               status={status}
               theme={theme}
-              setSelectedLake={setSelectedLake}
+              setSelectedLake={handleSelectLake}
             />
           </>
         )}

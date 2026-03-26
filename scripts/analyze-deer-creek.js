@@ -2,8 +2,8 @@
  * Deer Creek Historical Analysis Script
  * 
  * Correlates data from:
- * - DCC (Deer Creek Dam) - Ground truth for thermal
- * - SND (Arrowhead Summit) - High elevation trigger
+ * - UTDCD (Deer Creek Dam UDOT) - Ground truth for thermal (replaced dead DCC)
+ * - UTLPC (Lower Provo Canyon UDOT) - Canyon draw indicator (replaced dead SND)
  * - KHCR (Heber Valley Airport) - Valley reference
  * 
  * Goal: Find patterns that predict good Deer Creek thermals
@@ -13,7 +13,7 @@ import https from 'https';
 
 const TOKEN = process.env.SYNOPTIC_TOKEN || process.env.VITE_SYNOPTIC_TOKEN;
 if (!TOKEN) { console.error('Set SYNOPTIC_TOKEN env var'); process.exit(1); }
-const STATIONS = ['DCC', 'SND', 'KHCR'];
+const STATIONS = ['UTDCD', 'UTLPC', 'KHCR'];
 
 // Deer Creek thermal criteria
 const THERMAL_CRITERIA = {
@@ -96,12 +96,12 @@ async function analyzeMonth(year, month) {
 }
 
 function analyzeCorrelations(data) {
-  const dcc = data.DCC || [];
-  const snd = data.SND || [];
+  const dcc = data.UTDCD || [];
+  const snd = data.UTLPC || [];
   const khcr = data.KHCR || [];
   
   if (dcc.length === 0) {
-    console.log('No DCC data available');
+    console.log('No UTDCD data available');
     return null;
   }
   

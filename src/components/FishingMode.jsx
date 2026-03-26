@@ -1273,15 +1273,23 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
         const prevMonth = currentMonth === 1 ? 12 : currentMonth - 1;
         const nextMonth = currentMonth === 12 ? 1 : currentMonth + 1;
         const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const isRelevant = (waterField) => {
+          if (!waterField) return false;
+          const lower = waterField.toLowerCase();
+          return lower.includes('all') || lower.includes(location.name.toLowerCase().split(' ')[0]);
+        };
         return hatch ? (
           <div className={`rounded-xl p-4 border ${isDark ? 'bg-emerald-900/20 border-emerald-500/30' : 'bg-emerald-50 border-emerald-200 shadow-sm'}`}>
             <h3 className={`text-sm font-medium mb-3 flex items-center gap-2 ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>
-              🪰 Hatch Calendar — {monthNames[currentMonth - 1]}
+              🪰 Hatch Calendar — {monthNames[currentMonth - 1]} at {location.name}
             </h3>
             {hatch.primary && (
-              <div className={`p-3 rounded-lg mb-2 ${isDark ? 'bg-emerald-500/10 border border-emerald-500/30' : 'bg-white border border-emerald-200'}`}>
+              <div className={`p-3 rounded-lg mb-2 ${isRelevant(hatch.primary.water) ? (isDark ? 'bg-emerald-500/15 border border-emerald-400/40' : 'bg-emerald-50 border border-emerald-300') : (isDark ? 'bg-emerald-500/10 border border-emerald-500/30' : 'bg-white border border-emerald-200')}`}>
                 <div className="flex items-center justify-between mb-1">
-                  <span className={`font-semibold text-sm ${isDark ? 'text-emerald-300' : 'text-emerald-800'}`}>{hatch.primary.name}</span>
+                  <span className={`font-semibold text-sm ${isDark ? 'text-emerald-300' : 'text-emerald-800'}`}>
+                    {hatch.primary.name}
+                    {isRelevant(hatch.primary.water) && <span className={`ml-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full ${isDark ? 'bg-emerald-500/30 text-emerald-300' : 'bg-emerald-200 text-emerald-800'}`}>AT YOUR WATER</span>}
+                  </span>
                   <span className={`text-xs px-2 py-0.5 rounded ${isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-700'}`}>
                     {hatch.primary.size}
                   </span>

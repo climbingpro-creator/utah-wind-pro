@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import { apiUrl } from '../utils/platform';
 
 const TRIAL_KEY = 'uwf_trial_start';
-const TRIAL_DAYS = 30;
+const TRIAL_DAYS = 7;
 const ADMIN_EMAILS = ['climbingpro@gmail.com'];
 
 const AuthContext = createContext({
@@ -137,7 +137,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider value={{
-      user, session, tier: effectiveTier, loading,
+      user, session, tier: effectiveTier, rawTier: tier, loading,
       signIn, signUp, signOut,
       upgradeToPro, manageSubscription,
       isPro: effectiveTier === 'pro',

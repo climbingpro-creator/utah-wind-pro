@@ -239,7 +239,7 @@ const SiteCard = ({ site, windData, isLoading: _isLoading }) => {
       </div>
       
       <div className={`rounded-lg p-3 mb-3 ${isDark ? 'bg-slate-800/80 border border-slate-700' : 'bg-white/60 border border-slate-200'}`}>
-        <div className={`text-xs mb-2 font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>P2 Requirements</div>
+        <div className={`text-xs mb-2 font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Site Limits</div>
         <div className="grid grid-cols-2 gap-2 text-xs">
           <div>
             <span className={isDark ? 'text-slate-400' : 'text-slate-500'}>Direction:</span>
@@ -283,6 +283,17 @@ const SiteCard = ({ site, windData, isLoading: _isLoading }) => {
             </div>
           ))}
         </div>
+      )}
+
+      {config.hazards?.length > 0 && (
+        <details className={`mt-3 text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+          <summary className={`cursor-pointer font-medium ${isDark ? 'text-orange-400' : 'text-orange-600'}`}>
+            <AlertTriangle className="w-3 h-3 inline mr-1" />Site Hazards ({config.hazards.length})
+          </summary>
+          <ul className="mt-1.5 space-y-1 pl-4 list-disc">
+            {config.hazards.map((h, i) => <li key={i}>{h}</li>)}
+          </ul>
+        </details>
       )}
       
       <div className={`mt-3 pt-3 border-t ${isDark ? 'border-slate-700' : 'border-slate-200'}`}>
@@ -1020,7 +1031,7 @@ const ParaglidingMode = ({ windData, isLoading }) => {
       <div className="card">
         <div className="flex items-center gap-2 mb-3">
           <AlertTriangle className={`w-4 h-4 ${isDark ? 'text-yellow-400' : 'text-yellow-600'}`} />
-          <span className="text-sm font-semibold text-[var(--text-primary)]">P2 Safety Limits</span>
+          <span className="text-sm font-semibold text-[var(--text-primary)]">Pilot Safety Limits</span>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
           <div className={`rounded-lg p-2.5 ${isDark ? 'bg-slate-700/50' : 'bg-slate-50'}`}>

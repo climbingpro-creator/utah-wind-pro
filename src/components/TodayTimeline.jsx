@@ -123,14 +123,14 @@ const ACTIVITY_LEGENDS = {
 };
 
 const ACTIVITY_WINDOW_LABELS = {
-  kiting:      { best: 'Best session', none: 'No rideable window today' },
-  snowkiting:  { best: 'Best session', none: 'No rideable window today' },
-  windsurfing: { best: 'Best session', none: 'No planing wind today' },
-  sailing:     { best: 'Best racing window', none: 'No strong breeze today' },
-  boating:     { best: 'Calmest window', none: 'Windy all day — rough conditions' },
-  paddling:    { best: 'Calmest window', none: 'Windy all day — stay near shore' },
-  fishing:     { best: 'Best fishing window', none: 'Windy all day — fish sheltered spots' },
-  paragliding: { best: 'Best flying window', none: 'No flyable window today' },
+  kiting:      { best: 'Best session ahead', none: 'No rideable window remaining' },
+  snowkiting:  { best: 'Best session ahead', none: 'No rideable window remaining' },
+  windsurfing: { best: 'Best session ahead', none: 'No planing wind remaining' },
+  sailing:     { best: 'Best racing window', none: 'No strong breeze remaining' },
+  boating:     { best: 'Calmest window ahead', none: 'Windy through evening — rough conditions' },
+  paddling:    { best: 'Calmest window ahead', none: 'Windy through evening — stay near shore' },
+  fishing:     { best: 'Best fishing window', none: 'Windy through evening — fish sheltered spots' },
+  paragliding: { best: 'Best flying window', none: 'No flyable window remaining' },
 };
 
 function findBestWindow(hours, activity) {
@@ -256,6 +256,7 @@ export default function TodayTimeline({ locationId = 'utah-lake', activity = 'ki
       return {
         localHour: dt ? dt.getHours() : 0,
         speed: h.speed ?? h.nwsSpeed ?? 0,
+        gust: h.gust ?? h.windGust ?? null,
         dir: h.dir || '',
         dirDeg: typeof h.dir === 'number' ? h.dir : dirToDeg(h.dir),
         temp: h.temperature,
@@ -387,12 +388,16 @@ export default function TodayTimeline({ locationId = 'utah-lake', activity = 'ki
                   <span className="text-[10px] font-bold text-sky-400 bg-sky-500/20 rounded px-1 mb-1">NOW</span>
                 )}
 
-                {/* Wind speed — above bar */}
+                {/* Wind speed + gust — above bar */}
                 <div className="flex flex-col items-center">
                   <span className={`text-sm font-bold tabular-nums ${isNow ? 'text-sky-400' : colors.text}`}>
                     {displaySpeed(h.speed)}
                   </span>
-                  <span className="text-[9px] text-slate-500">{unitLabel}</span>
+                  {h.gust != null && h.gust > (h.speed || 0) * 1.25 ? (
+                    <span className="text-[9px] font-semibold text-amber-400">G{displaySpeed(h.gust)}</span>
+                  ) : (
+                    <span className="text-[9px] text-slate-500">{unitLabel}</span>
+                  )}
                 </div>
 
                 {/* Bar */}
@@ -427,10 +432,11 @@ export default function TodayTimeline({ locationId = 'utah-lake', activity = 'ki
       </div>
 
       {/* Legend — sport-specific labels */}
-      <div className="flex items-center gap-3 px-4 py-2 border-t border-slate-800/50 text-[10px] text-slate-500">
+      <div className="flex items-center gap-3 px-4 py-2 border-t border-slate-800/50 text-[10px] text-slate-500 flex-wrap">
         <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-emerald-500" /> {legend.ideal}</div>
         <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-500" /> {legend.good}</div>
         <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-amber-500" /> {legend.marginal}</div>
+        <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-red-500" /> Dangerous</div>
         {legend.off && <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-slate-600" /> {legend.off}</div>}
       </div>
     </div>
