@@ -13,11 +13,13 @@ export const willardBayConfigs = {
     thermalDirection: 'S to SW (170-220°)',
     description: 'South beach near state park — kitable under south flow',
     
-    shoreOrientation: 180, // South beach faces south
+    // Willard Bay west shore. Safe from South (180) through West (270) to North (360).
+    safeWindArc: [180, 360],
+    shoreFacing: 270,
     kiting: {
-      onshore: { min: 135, max: 225 },    // SE to SW - onshore to south beach
+      onshore: { min: 135, max: 225 },
       sideOn: { min: 225, max: 270, min2: 90, max2: 135 },
-      offshore: { min: 315, max: 45 },     // NW to NE - offshore from south beach
+      offshore: { min: 315, max: 45 },
     },
     
     stations: {

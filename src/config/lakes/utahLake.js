@@ -18,14 +18,15 @@ export const utahLakeConfigs = {
     thermalDirection: 'SE to SSE (135-165°)',
     description: 'Southernmost launch - Classic SE lake thermal',
     
-    // Shore orientation for kite safety (direction shore faces - perpendicular to waterline)
-    // Lincoln Beach faces roughly East (shore runs N-S, water is to the East)
-    shoreOrientation: 90, // Shore faces East
+    // safeWindArc: [start, end] read clockwise — rideable wind window
+    // Lincoln wraps around a point. Safe from West (270) through North (0) to East (90).
+    safeWindArc: [270, 90],
+    shoreFacing: 315,
     kiting: {
-      onshore: { min: 45, max: 135 },        // NE to SE — wind from water, safest
-      sideOn: { min: 135, max: 200, min2: 15, max2: 45 }, // SE-SSW and NNE-NE
-      sideOffshore: { min: 330, max: 15 },   // NNW to NNE — north wind, kitable with skill
-      offshore: { min: 225, max: 330 },       // SW to NNW — true offshore, DANGEROUS
+      onshore: { min: 45, max: 135 },
+      sideOn: { min: 135, max: 200, min2: 15, max2: 45 },
+      sideOffshore: { min: 330, max: 15 },
+      offshore: { min: 225, max: 330 },
     },
     
     stations: {
@@ -150,12 +151,14 @@ export const utahLakeConfigs = {
     thermalDirection: 'SE to SSE (130-160°)',
     description: 'South-Central launch - SE thermal',
     
-    shoreOrientation: 100, // Shore faces ESE
+    // Sandy Beach south shore. Safe from West (270) through North (0) to East (90).
+    safeWindArc: [270, 90],
+    shoreFacing: 0,
     kiting: {
-      onshore: { min: 55, max: 145 },        // ENE to SE — wind from water, safest
-      sideOn: { min: 145, max: 210, min2: 20, max2: 55 }, // SE-SSW and NNE-ENE
-      sideOffshore: { min: 335, max: 20 },   // NNW to NNE — north wind, kitable with skill
-      offshore: { min: 235, max: 335 },       // SW to NNW — true offshore, DANGEROUS
+      onshore: { min: 55, max: 145 },
+      sideOn: { min: 145, max: 210, min2: 20, max2: 55 },
+      sideOffshore: { min: 335, max: 20 },
+      offshore: { min: 235, max: 335 },
     },
     
     stations: {
@@ -253,13 +256,14 @@ export const utahLakeConfigs = {
     thermalDirection: 'S to W (180-270°)',
     description: 'East shore launch - S, SSW, W winds are onshore. SE is OFFSHORE!',
     
-    // Vineyard is on EAST shore - shore faces WEST toward the lake
-    shoreOrientation: 270, // Shore faces West
+    // Vineyard east shore. Safe from South (180) through West (270) to North (360).
+    safeWindArc: [180, 360],
+    shoreFacing: 270,
     kiting: {
-      onshore: { min: 225, max: 315 },       // SW to NW — wind from lake, safest
-      sideOn: { min: 180, max: 225, min2: 315, max2: 360 }, // S-SW and NW-N
-      sideOffshore: { min: 0, max: 45 },     // N to NE — side-off, kitable with skill
-      offshore: { min: 90, max: 180 },        // E to S — true offshore at Vineyard, DANGEROUS
+      onshore: { min: 225, max: 315 },
+      sideOn: { min: 180, max: 225, min2: 315, max2: 360 },
+      sideOffshore: { min: 0, max: 45 },
+      offshore: { min: 90, max: 180 },
     },
     
     stations: {
@@ -357,12 +361,14 @@ export const utahLakeConfigs = {
     thermalDirection: 'SE to SSE (135-165°)',
     description: 'Your home launch - Classic SE thermal at Zig Zag',
     
-    shoreOrientation: 80, // Shore faces ENE (shoreline runs NNW-SSE, water is east)
+    // Zig Zag west shore. Safe from North (0) through East (90) to South (180).
+    safeWindArc: [0, 180],
+    shoreFacing: 90,
     kiting: {
-      onshore: { min: 45, max: 135 },        // NE to SE — wind from lake, safest
-      sideOn: { min: 135, max: 200, min2: 15, max2: 45 }, // SE-SSW and NNE-NE
-      sideOffshore: { min: 315, max: 15 },   // NW to NNE — north wind zone, kitable with skill
-      offshore: { min: 225, max: 315 },       // SW to NW — true offshore, DANGEROUS
+      onshore: { min: 45, max: 135 },
+      sideOn: { min: 135, max: 200, min2: 15, max2: 45 },
+      sideOffshore: { min: 315, max: 15 },
+      offshore: { min: 225, max: 315 },
     },
     
     stations: {
@@ -495,7 +501,9 @@ export const utahLakeConfigs = {
     thermalDirection: 'SE to E (120-160°)',
     description: 'Northernmost launch - SE to East thermal',
     
-    shoreOrientation: 160, // Shore faces SSE to S (north end curves)
+    // MM19 north end. Safe from East (70) through South to West (250).
+    safeWindArc: [70, 250],
+    shoreOrientation: 160,
     kiting: {
       onshore: { min: 115, max: 205 },
       sideOn: { min: 205, max: 250, min2: 70, max2: 115 },

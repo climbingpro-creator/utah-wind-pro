@@ -586,7 +586,7 @@ function getCardinalDir(deg) {
 }
 
 // Main Paragliding Dashboard
-const ParaglidingMode = ({ windData, isLoading }) => {
+const ParaglidingMode = ({ windData, isLoading: _isLoading }) => {
   const currentHour = new Date().getHours();
 
   const fpsData = windData?.FPS || windData?.stations?.find(s => s.id === 'FPS');
@@ -614,8 +614,6 @@ const ParaglidingMode = ({ windData, isLoading }) => {
   const southScore = calculateParaglidingScore('flight-park-south', effectiveSouth?.speed, effectiveSouth?.direction, effectiveSouth?.gust);
   const northScore = calculateParaglidingScore('flight-park-north', effectiveNorth?.speed, effectiveNorth?.direction, effectiveNorth?.gust);
   
-  const switchPrediction = predictWindSwitch(windData, currentHour);
-
   const predictorData = useMemo(() => {
     const kslcData = windData?.KSLC || windData?.stations?.find(s => s.id === 'KSLC');
     const kpvuData = windData?.KPVU || windData?.stations?.find(s => s.id === 'KPVU');

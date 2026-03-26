@@ -17,6 +17,9 @@ export const saltLakeAreaConfigs = {
     primaryWindType: 'Storm Front / South Thermal',
     thermalDirection: 'S (170-210°)',
     description: 'Hardcore kite spot — most kitable days in Utah, shallow flat water, storm-front driven',
+    // Rush Lake east shore. Safe from North (0) through East (90) to South (180).
+    safeWindArc: [0, 180],
+    shoreFacing: 90,
     stations: {
       pressure: {
         high: { id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226, role: 'Regional pressure reference' },

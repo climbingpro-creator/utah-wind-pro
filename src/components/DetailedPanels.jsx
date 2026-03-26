@@ -152,6 +152,7 @@ export default function DetailedPanels({
             lakeId={selectedLake}
             windDirection={currentWindDirection}
             windSpeed={currentWindSpeed}
+            windGust={currentWindGust}
             activity={selectedActivity}
           />
         )}
