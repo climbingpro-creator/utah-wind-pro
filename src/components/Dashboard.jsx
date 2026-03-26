@@ -433,9 +433,19 @@ export function Dashboard() {
 
         {/* ═══════════ 2. HERO SESSION CARD (skipped for paragliding — Twin Peaks cards handle it) ═══════════ */}
         {selectedActivity !== 'paragliding' && (() => {
-          const heroStation = lakeState?.pws || lakeState?.wind?.stations?.[0];
+          // Prefer the PWS entry from wind.stations (normalized keys: speed/gust/direction)
+          // over lakeState.pws (raw keys: windSpeed/windGust/windDirection)
+          const pwsFromStations = lakeState?.wind?.stations?.find(s => s.isPWS || s.isYourStation);
+          const heroStation = pwsFromStations || lakeState?.wind?.stations?.[0];
           const heroStationId = heroStation?.id || heroStation?.name;
           const heroHistory = heroStationId ? history?.[heroStationId] : null;
+          const fallbackHistoryId = !heroHistory?.length && lakeState?.wind?.stations
+            ? lakeState.wind.stations.map(s => s.id).find(id => history?.[id]?.length > 0)
+            : null;
+          const effectiveHistory = heroHistory?.length ? heroHistory : (fallbackHistoryId ? history[fallbackHistoryId] : null);
+          const historySourceName = fallbackHistoryId && !heroHistory?.length
+            ? lakeState?.wind?.stations?.find(s => s.id === fallbackHistoryId)?.name
+            : null;
           const locName = lakeState?.config?.shortName || lakeState?.config?.name || selectedLake;
           const score = effectiveActivityScore?.score;
           const scoreColor = score >= 70 ? 'emerald' : score >= 40 ? 'amber' : 'red';
@@ -487,7 +497,7 @@ export function Dashboard() {
                 unifiedDecision={prediction ? { decision: prediction.decision, confidence: prediction.confidence, headline: prediction.briefing?.headline, detail: prediction.briefing?.body, action: prediction.briefing?.bestAction } : null}
               />
 
-              {/* Middle Row: Live Station Proof */}
+              {/* Middle Row: Live Station Proof + 3hr Trend */}
               {heroStation && (
                 <div className="mt-3 pt-3 border-t border-[var(--border-subtle)]">
                   <div className="flex items-center gap-1.5 mb-2">
@@ -495,9 +505,17 @@ export function Dashboard() {
                     <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-tertiary)]">
                       Live at {heroStation.name || heroStationId}
                     </span>
+                    {(heroStation.speed ?? heroStation.windSpeed) == null && (
+                      <span className={`text-[9px] px-1.5 py-0.5 rounded ${theme === 'dark' ? 'bg-amber-500/15 text-amber-400' : 'bg-amber-100 text-amber-700'}`}>Offline</span>
+                    )}
                     <span className={`ml-auto w-2 h-2 rounded-full ${(heroStation.speed ?? heroStation.windSpeed ?? 0) >= 5 ? 'bg-emerald-500 animate-pulse' : 'bg-slate-500'}`} />
                   </div>
-                  <WindVector station={heroStation} history={heroHistory} isPersonalStation={heroStation.isPWS} compact />
+                  <WindVector station={heroStation} history={effectiveHistory} isPersonalStation={heroStation.isPWS} compact />
+                  {historySourceName && (
+                    <div className={`text-[9px] mt-1 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
+                      Trend from {historySourceName}
+                    </div>
+                  )}
                 </div>
               )}
 
