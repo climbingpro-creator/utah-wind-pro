@@ -122,6 +122,8 @@ export const centralUtahConfigs = {
     primaryWindType: 'Valley/Frontal',
     thermalDirection: 'S to SW (170-230°)',
     description: '22-mile warmwater monster — walleye, northern pike, tiger muskie',
+    // Yuba. Direct south flow (140-220°).
+    safeWindArc: [140, 220],
     stations: {
       pressure: {
         high: { id: 'KPVU', name: 'Provo Municipal', elevation: 4495, role: 'Regional pressure reference' },

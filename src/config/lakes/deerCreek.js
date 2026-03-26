@@ -14,8 +14,8 @@ export const deerCreekConfigs = {
     thermalDirection: 'South (170-210°)',
     description: 'Canyon thermal from the south - Arrowhead is key trigger',
     
-    // Deer Creek main. Safe from SE (135) through S/SW to NW (315).
-    safeWindArc: [135, 315],
+    // Deer Creek main. S to SW flow only (160-240°).
+    safeWindArc: [160, 240],
     shoreFacing: 225,
     kiting: {
       onshore: { min: 135, max: 225 },

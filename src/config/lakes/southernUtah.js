@@ -179,6 +179,8 @@ export const southernUtahConfigs = {
     primaryWindType: 'Desert Thermal',
     thermalDirection: 'SW (200-250°)',
     description: 'Dixie warm-water paradise — largemouth bass and bluegill in red rock',
+    // Sand Hollow. NW to NE flow (crosses North): 320-45°.
+    safeWindArc: [320, 45],
     stations: {
       pressure: {
         high: { id: 'KSGU', name: 'St George Regional', elevation: 2941, role: 'Nearest ASOS' },
