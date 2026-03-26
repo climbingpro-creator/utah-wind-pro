@@ -589,7 +589,6 @@ function getCardinalDir(deg) {
 const ParaglidingMode = ({ windData, isLoading }) => {
   const currentHour = new Date().getHours();
 
-  // Get wind data for both sites
   const fpsData = windData?.FPS || windData?.stations?.find(s => s.id === 'FPS');
   const utalpData = windData?.UTALP || windData?.stations?.find(s => s.id === 'UTALP');
   
@@ -605,44 +604,28 @@ const ParaglidingMode = ({ windData, isLoading }) => {
       gust: utalpData?.gust || utalpData?.windGust,
     },
   };
+
+  // Offline sensor interpolation: if one sensor is down, pull from the other
+  const southOnline = stationWindData.FPS?.speed != null;
+  const northOnline = stationWindData.UTALP?.speed != null;
+  const effectiveSouth = southOnline ? stationWindData.FPS : (northOnline ? stationWindData.UTALP : stationWindData.FPS);
+  const effectiveNorth = northOnline ? stationWindData.UTALP : (southOnline ? stationWindData.FPS : stationWindData.UTALP);
+
+  const southScore = calculateParaglidingScore('flight-park-south', effectiveSouth?.speed, effectiveSouth?.direction, effectiveSouth?.gust);
+  const northScore = calculateParaglidingScore('flight-park-north', effectiveNorth?.speed, effectiveNorth?.direction, effectiveNorth?.gust);
   
-  const southScore = calculateParaglidingScore('flight-park-south', stationWindData.FPS?.speed, stationWindData.FPS?.direction, stationWindData.FPS?.gust);
-  const northScore = calculateParaglidingScore('flight-park-north', stationWindData.UTALP?.speed, stationWindData.UTALP?.direction, stationWindData.UTALP?.gust);
-  
-  // Wind switch prediction for smarter recommendations
   const switchPrediction = predictWindSwitch(windData, currentHour);
 
-  // Learned model prediction (trained on 7,624 hourly observations from 2025)
   const predictorData = useMemo(() => {
     const kslcData = windData?.KSLC || windData?.stations?.find(s => s.id === 'KSLC');
     const kpvuData = windData?.KPVU || windData?.stations?.find(s => s.id === 'KPVU');
     const utolyData = windData?.UTOLY || windData?.stations?.find(s => s.id === 'UTOLY');
     return {
-      FPS: {
-        windSpeed: stationWindData.FPS?.speed,
-        windDirection: stationWindData.FPS?.direction,
-        windGust: stationWindData.FPS?.gust,
-        temperature: fpsData?.temperature || fpsData?.temp,
-      },
-      UTALP: {
-        windSpeed: stationWindData.UTALP?.speed,
-        windDirection: stationWindData.UTALP?.direction,
-        windGust: stationWindData.UTALP?.gust,
-      },
-      KSLC: {
-        windSpeed: kslcData?.speed || kslcData?.windSpeed,
-        windDirection: kslcData?.direction || kslcData?.windDirection,
-        pressure: kslcData?.pressure,
-      },
-      KPVU: {
-        windSpeed: kpvuData?.speed || kpvuData?.windSpeed,
-        windDirection: kpvuData?.direction || kpvuData?.windDirection,
-        pressure: kpvuData?.pressure,
-      },
-      UTOLY: {
-        windSpeed: utolyData?.speed || utolyData?.windSpeed,
-        windDirection: utolyData?.direction || utolyData?.windDirection,
-      },
+      FPS: { windSpeed: stationWindData.FPS?.speed, windDirection: stationWindData.FPS?.direction, windGust: stationWindData.FPS?.gust, temperature: fpsData?.temperature || fpsData?.temp },
+      UTALP: { windSpeed: stationWindData.UTALP?.speed, windDirection: stationWindData.UTALP?.direction, windGust: stationWindData.UTALP?.gust },
+      KSLC: { windSpeed: kslcData?.speed || kslcData?.windSpeed, windDirection: kslcData?.direction || kslcData?.windDirection, pressure: kslcData?.pressure },
+      KPVU: { windSpeed: kpvuData?.speed || kpvuData?.windSpeed, windDirection: kpvuData?.direction || kpvuData?.windDirection, pressure: kpvuData?.pressure },
+      UTOLY: { windSpeed: utolyData?.speed || utolyData?.windSpeed, windDirection: utolyData?.direction || utolyData?.windDirection },
     };
   }, [windData, stationWindData, fpsData]);
 
@@ -650,382 +633,192 @@ const ParaglidingMode = ({ windData, isLoading }) => {
     try { return predictParagliding(predictorData); }
     catch (e) { console.warn('ParaglidingPredictor error:', e); return null; }
   }, [predictorData]);
-  
-  // Determine best site - use learned prediction when available, fallback to rule-based
-  let bestSite;
-  if (learnedPrediction) {
-    bestSite = learnedPrediction.bestSite === 'north' ? 'flight-park-north' : 'flight-park-south';
-  } else if ((northScore?.score || 0) >= 60) {
-    bestSite = 'flight-park-north';
-  } else if ((southScore?.score || 0) >= 60) {
-    bestSite = 'flight-park-south';
-  } else if (currentHour >= 14 && switchPrediction.likelihood >= 60) {
-    bestSite = 'flight-park-north';
-  } else {
-    bestSite = (southScore?.score || 0) > (northScore?.score || 0) ? 'flight-park-south' : 'flight-park-north';
-  }
-  
-  const bestSiteConfig = PARAGLIDING_SITES[bestSite];
-  const bestScore = bestSite === 'flight-park-south' ? southScore : northScore;
 
-  // Determine the BEST OPPORTUNITY — current or predicted
-  const opportunity = useMemo(() => {
-    // Approximate sunset by month for Utah
-    const month = new Date().getMonth();
-    const sunsetHours = [17.5, 18, 19.3, 19.8, 20.3, 20.8, 21, 20.5, 19.5, 18.5, 17.2, 17.1];
-    const isAfterDark = currentHour >= Math.ceil(sunsetHours[month]);
+  // Synoptic override: detect mechanical wind overpowering thermals
+  const maxSensorSpeed = Math.max(effectiveSouth?.speed || 0, effectiveNorth?.speed || 0);
+  const maxGust = Math.max(effectiveSouth?.gust || 0, effectiveNorth?.gust || 0);
+  const isSynopticOverride = maxSensorSpeed > 15;
+  const gustSpread = maxGust - maxSensorSpeed;
 
-    if (isAfterDark) {
-      return {
-        mode: 'waiting', site: 'south', siteName: 'Flight Park South',
-        score: 0, status: 'dark',
-        headline: 'After Dark — Flying Done for Today',
-        subline: 'Check back tomorrow morning for the south side forecast',
-        color: 'slate', urgency: 'wait',
-      };
-    }
-
-    const MIN_FLYABLE_SPEED = 6;
-    const northSpeed = stationWindData.UTALP?.speed || 0;
-    const southSpeed = stationWindData.FPS?.speed || 0;
-
-    // Hard speed gate with three tiers: flyable, marginal, unflyable
-    const northActuallyFlyable = northSpeed >= MIN_FLYABLE_SPEED && 
-      (northScore?.status === 'excellent' || northScore?.status === 'good');
-    const southActuallyFlyable = southSpeed >= MIN_FLYABLE_SPEED && 
-      (southScore?.status === 'excellent' || southScore?.status === 'good');
-    const northMarginal = northSpeed >= MIN_FLYABLE_SPEED && northScore?.status === 'marginal';
-    const southMarginal = southSpeed >= MIN_FLYABLE_SPEED && southScore?.status === 'marginal';
-
-    const southPred = learnedPrediction?.south;
-    const northPred = learnedPrediction?.north;
-
-    // Currently flyable — show excitement (only if speed is actually above minimum)
-    if (northActuallyFlyable && (northScore?.score || 0) >= 60) {
-      return {
-        mode: 'now', site: 'north', siteName: 'Flight Park North',
-        score: northScore.score, status: northScore.status,
-        headline: northPred?.isGlassOff ? 'Glass-Off Happening Now!' : 'North Side is ON!',
-        subline: `${safeToFixed(northSpeed, 0)} mph — pilots are flying!`,
-        color: 'green', urgency: 'go',
-      };
-    }
-    if (southActuallyFlyable && (southScore?.score || 0) >= 60) {
-      return {
-        mode: 'now', site: 'south', siteName: 'Flight Park South',
-        score: southScore.score, status: southScore.status,
-        headline: 'South Side is Flying!',
-        subline: `${safeToFixed(southSpeed, 0)} mph smooth thermal`,
-        color: 'green', urgency: 'go',
-      };
-    }
-
-    // Marginal / on the edge — yellow card
-    if (northMarginal) {
-      return {
-        mode: 'now', site: 'north', siteName: 'Flight Park North',
-        score: northScore.score, status: 'marginal',
-        headline: 'North Side — On the Edge',
-        subline: `${safeToFixed(northSpeed, 0)} mph — flyable but light, experienced pilots up`,
-        color: 'yellow', urgency: 'watch',
-      };
-    }
-    if (southMarginal) {
-      return {
-        mode: 'now', site: 'south', siteName: 'Flight Park South',
-        score: southScore.score, status: 'marginal',
-        headline: 'South Side — On the Edge',
-        subline: `${safeToFixed(southSpeed, 0)} mph — light but flyable, watch for changes`,
-        color: 'yellow', urgency: 'watch',
-      };
-    }
-
-    // North predicted for evening — get people excited
-    if (northPred && northPred.probability >= 30 && currentHour >= 12 && currentHour <= 20) {
-      const bestHours = northPred.bestHours || [17, 18, 19];
-      const arriveBy = bestHours[0] > 12 ? `${bestHours[0] - 12} PM` : `${bestHours[0]} AM`;
-      const prob = Math.max(northPred.probability, switchPrediction?.likelihood || 0);
-      return {
-        mode: 'predicted', site: 'north', siteName: 'Flight Park North',
-        score: prob, status: prob >= 55 ? 'likely' : 'possible',
-        headline: prob >= 55 ? `North Side Tonight — Be There by ${arriveBy}` : `North Side Possible — Watch for ${arriveBy}`,
-        subline: learnedPrediction?.recommendation || `${prob}% chance of evening glass-off`,
-        color: prob >= 55 ? 'green' : prob >= 35 ? 'yellow' : 'slate',
-        urgency: prob >= 55 ? 'plan' : 'watch',
-        arriveBy,
-      };
-    }
-
-    // South predicted for morning — thermal often starts by 7-7:30 AM
-    if (southPred && southPred.probability >= 30 && currentHour <= 14) {
-      const arriveBy = currentHour < 7 ? '7 AM' : 'now';
-      const isNow = currentHour >= 7;
-      return {
-        mode: 'predicted', site: 'south', siteName: 'Flight Park South',
-        score: southPred.probability, status: southPred.probability >= 55 ? 'likely' : 'possible',
-        headline: isNow
-          ? (southPred.probability >= 55 ? 'South Side Flying NOW — Get Airborne!' : 'South Side Possible — Check FPS Wind')
-          : (southPred.probability >= 55 ? `South Side This Morning — Thermal by ${arriveBy}` : `South Side Possible — Check by ${arriveBy}`),
-        subline: learnedPrediction?.recommendation || `${southPred.probability}% chance of thermal soaring`,
-        color: southPred.probability >= 55 ? 'green' : southPred.probability >= 35 ? 'yellow' : 'slate',
-        urgency: isNow && southPred.probability >= 55 ? 'go' : southPred.probability >= 55 ? 'plan' : 'watch',
-        arriveBy,
-      };
-    }
-
-    // Nothing great — show the best we have
-    const bestProb = Math.max(southPred?.probability || 0, northPred?.probability || 0);
-    return {
-      mode: 'waiting', site: bestSite === 'flight-park-north' ? 'north' : 'south',
-      siteName: bestSiteConfig.name,
-      score: Math.max(bestScore?.score || 0, bestProb),
-      status: 'waiting',
-      headline: 'No Strong Signal Yet',
-      subline: currentHour < 12 ? 'Morning thermals may develop — watching indicators' : 'Checking upstream stations for changes',
-      color: 'slate', urgency: 'wait',
-    };
-  }, [southScore, northScore, learnedPrediction, switchPrediction, currentHour, bestSite, bestSiteConfig, bestScore, stationWindData]);
+  // Direction-based card sorting (NOT time of day)
+  const dominantDir = effectiveNorth?.direction ?? effectiveSouth?.direction ?? 0;
+  const isNorthFlow = (dominantDir >= 315 || dominantDir <= 45);
+  const isSouthFlow = (dominantDir >= 135 && dominantDir <= 225);
+  const northFirst = isNorthFlow || (!isSouthFlow && currentHour >= 14);
+  const firstSite = northFirst ? 'flight-park-north' : 'flight-park-south';
+  const secondSite = northFirst ? 'flight-park-south' : 'flight-park-north';
 
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 
-  const bannerColors = {
-    green: isDark ? 'bg-gradient-to-r from-green-900/50 to-emerald-900/50 border-green-500/40' : 'bg-gradient-to-r from-green-100 to-emerald-100 border-green-300',
-    yellow: isDark ? 'bg-gradient-to-r from-yellow-900/30 to-amber-900/30 border-yellow-500/30' : 'bg-gradient-to-r from-yellow-100 to-amber-100 border-yellow-300',
-    slate: isDark ? 'bg-[var(--card-bg)] border-[var(--border-color)]' : 'bg-white border-slate-200',
-  };
-  const scoreColors = {
-    green: isDark ? 'text-green-400' : 'text-green-600',
-    yellow: isDark ? 'text-yellow-400' : 'text-yellow-600',
-    slate: isDark ? 'text-slate-400' : 'text-slate-500',
-  };
-  
-  const predStatusColor = (status) => {
-    if (status === 'epic' || status === 'excellent') return isDark ? 'bg-green-500/10 border-green-500/30' : 'bg-green-50 border-green-300';
-    if (status === 'good') return isDark ? 'bg-lime-500/10 border-lime-500/30' : 'bg-lime-50 border-lime-300';
-    if (status === 'marginal') return isDark ? 'bg-yellow-500/10 border-yellow-500/30' : 'bg-yellow-50 border-yellow-300';
-    return isDark ? 'bg-slate-700/50 border-slate-600' : 'bg-slate-50 border-slate-200';
-  };
-
   const probColor = (p) => p >= 60 ? (isDark ? 'text-green-400' : 'text-green-600') : p >= 35 ? (isDark ? 'text-yellow-400' : 'text-yellow-600') : (isDark ? 'text-red-400' : 'text-red-600');
 
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className={`rounded-xl p-4 border ${bannerColors[opportunity.color]}`}>
-        <div className="flex items-center gap-3 mb-3">
-          <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-            opportunity.color === 'green' ? (isDark ? 'bg-green-500/30' : 'bg-green-200') : opportunity.color === 'yellow' ? (isDark ? 'bg-yellow-500/20' : 'bg-yellow-200') : (isDark ? 'bg-purple-500/20' : 'bg-purple-100')
-          }`}>
-            <span className="text-2xl">🪂</span>
+  // Build grounded reason for AI scores < 20%
+  const groundedReason = (siteKey, score, windSpd, gustVal) => {
+    if (score >= 20) return null;
+    if (windSpd > 18) return `Grounded: Base wind ${safeToFixed(windSpd, 0)} mph > 18 mph`;
+    if (gustVal - windSpd > 12) return `Grounded: Gust spread ${safeToFixed(gustVal - windSpd, 0)} mph > 12 mph`;
+    if (gustVal > 25) return `Grounded: Gusts ${safeToFixed(gustVal, 0)} mph — unsafe`;
+    return `Grounded: Conditions outside flyable envelope`;
+  };
+
+  // Inline Twin Peaks site card with AI prediction embedded
+  const TwinPeakCard = ({ siteId, isFirst }) => {
+    const config = PARAGLIDING_SITES[siteId];
+    const isNorth = siteId === 'flight-park-north';
+    const sensorData = isNorth ? effectiveNorth : effectiveSouth;
+    const isInterpolated = isNorth ? !northOnline : !southOnline;
+    const assessment = isNorth ? northScore : southScore;
+    const aiPred = isNorth ? learnedPrediction?.north : learnedPrediction?.south;
+    const aiProb = aiPred?.probability || 0;
+    const windSpd = sensorData?.speed || 0;
+    const windDir = sensorData?.direction;
+    const windGst = sensorData?.gust || 0;
+    const errColor = isDark ? 'text-red-400' : 'text-red-600';
+    const okColor = isDark ? 'text-green-400' : 'text-green-600';
+
+    const statusBg = assessment?.status === 'excellent' ? (isDark ? 'bg-green-500/15 border-green-500/40' : 'bg-green-50 border-green-300')
+      : assessment?.status === 'good' ? (isDark ? 'bg-lime-500/15 border-lime-500/40' : 'bg-lime-50 border-lime-300')
+      : assessment?.status === 'marginal' ? (isDark ? 'bg-yellow-500/15 border-yellow-500/40' : 'bg-yellow-50 border-yellow-300')
+      : (isDark ? 'bg-red-500/15 border-red-500/40' : 'bg-red-50 border-red-300');
+
+    const grounded = groundedReason(siteId, aiProb, windSpd, windGst);
+
+    return (
+      <div className={`rounded-xl border p-4 ${statusBg} ${isFirst ? 'ring-2 ring-sky-500/40' : ''}`}>
+        <div className="flex items-center justify-between mb-2">
+          <div>
+            <h3 className={`font-bold text-base ${isDark ? 'text-white' : 'text-slate-900'}`}>{config.shortName}</h3>
+            {isInterpolated && (
+              <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${isDark ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-700'}`}>
+                Data interpolated from {isNorth ? 'South' : 'North'} sensor
+              </span>
+            )}
           </div>
-          <div className="flex-1">
-            <h2 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>Point of the Mountain</h2>
-            <p className={`text-xs ${isDark ? 'text-purple-300' : 'text-purple-600'}`}>Paragliding Forecast</p>
-          </div>
-          {opportunity.urgency === 'go' && (
-            <div className="bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full animate-pulse">
-              GO FLY
-            </div>
-          )}
-          {opportunity.urgency === 'plan' && (
-            <div className={`text-xs font-bold px-3 py-1 rounded-full border ${isDark ? 'bg-green-500/20 text-green-400 border-green-500/50' : 'bg-green-100 text-green-700 border-green-300'}`}>
-              GET READY
-            </div>
-          )}
-          {opportunity.urgency === 'watch' && opportunity.mode === 'now' && (
-            <div className={`text-xs font-bold px-3 py-1 rounded-full border ${isDark ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50' : 'bg-yellow-100 text-yellow-700 border-yellow-300'}`}>
-              HEADS UP
-            </div>
-          )}
+          {isFirst && <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full ${isDark ? 'bg-sky-500/20 text-sky-400' : 'bg-sky-100 text-sky-700'}`}>#1 PICK</span>}
         </div>
-        
-        <div className={`rounded-lg p-4 border ${
-          opportunity.color === 'green' ? (isDark ? 'bg-green-500/15 border-green-500/40' : 'bg-green-50 border-green-300') :
-          opportunity.color === 'yellow' ? (isDark ? 'bg-yellow-500/10 border-yellow-500/30' : 'bg-yellow-50 border-yellow-300') :
-          (isDark ? 'bg-slate-700/30 border-slate-600/30' : 'bg-white border-slate-200')
-        }`}>
+
+        {/* Live readings */}
+        <div className="grid grid-cols-3 gap-2 mb-3 text-center">
+          <div>
+            <div className={`text-[10px] uppercase ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Wind</div>
+            <div className={`text-2xl font-black ${assessment?.speedOk ? (isDark ? 'text-white' : 'text-slate-900') : errColor}`}>
+              {safeToFixed(windSpd, 0)}<span className="text-xs font-normal ml-0.5">mph</span>
+            </div>
+          </div>
+          <div>
+            <div className={`text-[10px] uppercase ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Dir</div>
+            <div className={`text-2xl font-black ${assessment?.directionOk ? (isDark ? 'text-white' : 'text-slate-900') : errColor}`}>
+              {windDir != null ? `${getCardinalDir(windDir)}` : '--'}
+            </div>
+            <div className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{windDir != null ? `${safeToFixed(windDir, 0)}°` : ''}</div>
+          </div>
+          <div>
+            <div className={`text-[10px] uppercase ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Gust</div>
+            <div className={`text-2xl font-black ${assessment?.gustOk ? (isDark ? 'text-white' : 'text-slate-900') : errColor}`}>
+              {safeToFixed(windGst, 0)}<span className="text-xs font-normal ml-0.5">mph</span>
+            </div>
+          </div>
+        </div>
+
+        {/* AI Prediction — condensed into card */}
+        <div className={`rounded-lg p-2.5 mb-2 border ${isDark ? 'bg-slate-800/60 border-slate-700' : 'bg-white/80 border-slate-200'}`}>
           <div className="flex items-center justify-between">
-            <div className="flex-1 min-w-0">
-              <div className={`text-xs font-semibold ${
-                opportunity.mode === 'now' && opportunity.color === 'green' ? (isDark ? 'text-green-400' : 'text-green-600') :
-                opportunity.mode === 'now' && opportunity.color === 'yellow' ? (isDark ? 'text-yellow-400' : 'text-yellow-600') :
-                opportunity.mode === 'predicted' ? (isDark ? 'text-cyan-400' : 'text-cyan-600') : 'text-[var(--text-tertiary)]'
-              }`}>
-                {opportunity.mode === 'now' && opportunity.color === 'green' ? '🟢 FLYING NOW' :
-                 opportunity.mode === 'now' && opportunity.color === 'yellow' ? '🟡 BORDERLINE' :
-                 opportunity.mode === 'predicted' ? '🔮 PREDICTED' : 'MONITORING'}
-              </div>
-              <div className={`text-xl font-bold mt-1 ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                {opportunity.headline}
-              </div>
-              <div className={`text-sm mt-1 ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
-                {opportunity.subline}
-              </div>
-              {opportunity.arriveBy && opportunity.urgency === 'plan' && (
-                <div className={`mt-2 inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ${isDark ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-700'}`}>
-                  <Clock className="w-3 h-3" />
-                  Arrive by {opportunity.arriveBy}
-                </div>
-              )}
+            <div className="flex items-center gap-1.5">
+              <Brain className={`w-3 h-3 ${isDark ? 'text-purple-400' : 'text-purple-600'}`} />
+              <span className={`text-xs font-semibold ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>AI Prediction</span>
             </div>
-            <div className="text-right ml-4 flex-shrink-0">
-              <div className={`text-4xl font-black ${scoreColors[opportunity.color]}`}>
-                {opportunity.score}%
-              </div>
-              <div className="text-xs text-[var(--text-tertiary)] capitalize">
-                {opportunity.mode === 'now' ? opportunity.status : 
-                 opportunity.mode === 'predicted' ? 'forecast' : 'chance'}
-              </div>
-            </div>
+            <span className={`text-lg font-black ${probColor(aiProb)}`}>{aiProb}%</span>
           </div>
+          {grounded && (
+            <div className={`mt-1 text-[11px] font-medium ${errColor}`}>
+              <XCircle className="w-3 h-3 inline mr-1" />{grounded}
+            </div>
+          )}
+          {!grounded && aiPred?.gustQuality && (
+            <div className={`mt-1 text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{aiPred.gustQuality}</div>
+          )}
         </div>
+
+        {/* Flyability bar */}
+        <div className="flex items-center justify-between text-xs mb-1">
+          <span className={isDark ? 'text-slate-400' : 'text-slate-500'}>Flyability</span>
+          <span className={`font-bold ${
+            assessment?.score >= 60 ? okColor : assessment?.score >= 40 ? (isDark ? 'text-yellow-400' : 'text-yellow-600') : errColor
+          }`}>{assessment?.score || 0}%</span>
+        </div>
+        <div className={`h-1.5 rounded-full overflow-hidden ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`}>
+          <div className={`h-full rounded-full transition-all duration-500 ${
+            assessment?.score >= 80 ? 'bg-green-500' : assessment?.score >= 60 ? 'bg-lime-500' : assessment?.score >= 40 ? 'bg-yellow-500' : 'bg-red-500'
+          }`} style={{ width: `${assessment?.score || 0}%` }} />
+        </div>
+
+        {/* Issues/positives */}
+        {assessment && (
+          <div className="mt-2 space-y-0.5">
+            {assessment.positives.slice(0, 1).map((msg, i) => (
+              <div key={i} className={`flex items-center gap-1.5 text-[11px] ${okColor}`}><CheckCircle className="w-3 h-3" />{msg}</div>
+            ))}
+            {assessment.issues.slice(0, 2).map((msg, i) => (
+              <div key={i} className={`flex items-center gap-1.5 text-[11px] ${errColor}`}><XCircle className="w-3 h-3" />{msg}</div>
+            ))}
+          </div>
+        )}
       </div>
-      
-      {/* Learned Model Prediction */}
-      {learnedPrediction && (
-        <div className={`rounded-xl p-4 border ${isDark ? 'bg-slate-800/80 border-purple-500/30' : 'bg-purple-50 border-purple-200 shadow-sm'}`}>
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <Brain className={`w-4 h-4 ${isDark ? 'text-purple-400' : 'text-purple-600'}`} />
-              <span className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>AI Prediction</span>
-              {learnedPrediction.south?.isUsingLearnedWeights && (
-                <span className={`text-[10px] px-1.5 py-0.5 rounded ${isDark ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-700'}`}>
-                  {learnedPrediction.south.weightsVersion}
-                </span>
-              )}
-            </div>
-            <span className="text-xs text-[var(--text-tertiary)]">Trained on 7,624 observations</span>
-          </div>
+    );
+  };
 
-          <div className="grid grid-cols-2 gap-3 mb-3">
-            <div className={`rounded-lg p-3 border ${predStatusColor(learnedPrediction.south?.status)}`}>
-              <div className={`text-xs mb-1 ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>South Side</div>
-              <div className="flex items-center justify-between">
-                <div className={`text-2xl font-bold ${probColor(learnedPrediction.south?.probability || 0)}`}>
-                  {learnedPrediction.south?.probability || 0}%
-                </div>
-                <div className="text-right">
-                  <div className={`text-xs capitalize ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>{learnedPrediction.south?.status}</div>
-                  <div className="text-xs text-[var(--text-tertiary)]">{learnedPrediction.south?.gustQuality}</div>
-                </div>
+  return (
+    <div className="space-y-4">
+      {/* Synoptic Override Banner */}
+      {isSynopticOverride && (
+        <div className={`rounded-xl p-4 border ${isDark ? 'bg-red-900/30 border-red-500/50' : 'bg-red-50 border-red-400'}`}>
+          <div className="flex items-center gap-3">
+            <AlertTriangle className={`w-6 h-6 flex-shrink-0 ${isDark ? 'text-red-400' : 'text-red-600'}`} />
+            <div>
+              <div className={`text-sm font-extrabold uppercase tracking-wide ${isDark ? 'text-red-400' : 'text-red-700'}`}>
+                Synoptic Override: {maxSensorSpeed >= 20 ? 'BLOWN OUT' : `Strong ${getCardinalDir(dominantDir)} Flow`}
               </div>
-              {learnedPrediction.south?.expectedSpeed > 0 && (
-                <div className="text-xs text-[var(--text-secondary)] mt-1">
-                  Expected: {learnedPrediction.south.expectedSpeed} mph
-                </div>
-              )}
-              {learnedPrediction.south?.indicators?.kpvu?.signal === 'south_active' && (
-                <div className={`text-xs mt-1 flex items-center gap-1 ${isDark ? 'text-green-400' : 'text-green-600'}`}>
-                  <TrendingUp className="w-3 h-3" /> KPVU thermal active
-                </div>
-              )}
-              {learnedPrediction.south?.indicators?.kslc?.signal === 'north_threat' && (
-                <div className={`text-xs mt-1 flex items-center gap-1 ${isDark ? 'text-red-400' : 'text-red-600'}`}>
-                  <TrendingDown className="w-3 h-3" /> KSLC north threat
-                </div>
-              )}
-            </div>
-
-            <div className={`rounded-lg p-3 border ${predStatusColor(learnedPrediction.north?.status)}`}>
-              <div className={`text-xs mb-1 ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>North Side</div>
-              <div className="flex items-center justify-between">
-                <div className={`text-2xl font-bold ${probColor(learnedPrediction.north?.probability || 0)}`}>
-                  {learnedPrediction.north?.probability || 0}%
-                </div>
-                <div className="text-right">
-                  <div className={`text-xs capitalize ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>{learnedPrediction.north?.status}</div>
-                  <div className="text-xs text-[var(--text-tertiary)]">{learnedPrediction.north?.gustQuality}</div>
-                </div>
+              <div className={`text-xs mt-0.5 ${isDark ? 'text-red-300/80' : 'text-red-600/80'}`}>
+                Mechanical wind ({safeToFixed(maxSensorSpeed, 0)} mph{gustSpread > 5 ? ` G${safeToFixed(maxGust, 0)}` : ''}) is overpowering thermal development. DO NOT FLY.
               </div>
-              {learnedPrediction.north?.isGlassOff && (
-                <div className={`text-xs mt-1 flex items-center gap-1 ${isDark ? 'text-purple-400' : 'text-purple-600'}`}>
-                  <Zap className="w-3 h-3" /> Glass-off in progress!
-                </div>
-              )}
-              {learnedPrediction.north?.indicators?.kslc?.signal === 'north_active' && (
-                <div className={`text-xs mt-1 flex items-center gap-1 ${isDark ? 'text-green-400' : 'text-green-600'}`}>
-                  <TrendingUp className="w-3 h-3" /> KSLC north active ({learnedPrediction.north.indicators.kslc.leadTimeMin} min lead)
-                </div>
-              )}
-              {learnedPrediction.north?.indicators?.fps?.signal === 'switched_north' && (
-                <div className={`text-xs mt-1 flex items-center gap-1 ${isDark ? 'text-green-400' : 'text-green-600'}`}>
-                  <CheckCircle className="w-3 h-3" /> FPS confirmed north
-                </div>
-              )}
-              {learnedPrediction.north?.indicators?.kpvu?.signal === 'thermal_blocking' && (
-                <div className={`text-xs mt-1 flex items-center gap-1 ${isDark ? 'text-orange-400' : 'text-orange-600'}`}>
-                  <TrendingDown className="w-3 h-3" /> KPVU thermal still blocking
-                </div>
-              )}
             </div>
-          </div>
-
-          {learnedPrediction.windSwitch?.likelihood > 0 && (
-            <div className={`rounded-lg p-2 text-xs font-medium ${
-              learnedPrediction.windSwitch.likelihood >= 65 ? (isDark ? 'bg-green-500/10 text-green-400' : 'bg-green-100 text-green-700') :
-              learnedPrediction.windSwitch.likelihood >= 35 ? (isDark ? 'bg-yellow-500/10 text-yellow-400' : 'bg-yellow-100 text-yellow-700') :
-              (isDark ? 'bg-slate-700/50 text-slate-400' : 'bg-slate-100 text-slate-500')
-            }`}>
-              S→N Switch: {learnedPrediction.windSwitch.likelihood}% likely
-              {learnedPrediction.windSwitch.timeframe && ` (${learnedPrediction.windSwitch.timeframe})`}
-            </div>
-          )}
-
-          {learnedPrediction.recommendation && (
-            <div className={`mt-2 text-xs italic ${isDark ? 'text-purple-300' : 'text-purple-600'}`}>
-              {learnedPrediction.recommendation}
-            </div>
-          )}
-
-          <div className="mt-2 text-[10px] text-[var(--text-tertiary)] flex items-center gap-2">
-            <span>Seasonal adj: ×{learnedPrediction.south?.seasonalAdj}</span>
-            <span>Hourly: ×{learnedPrediction.south?.hourlyMult}</span>
           </div>
         </div>
       )}
 
-      {/* Time of Day Indicator */}
-      <div className="card">
-        <div className="flex items-center gap-2 mb-3">
-          <Clock className={`w-4 h-4 ${isDark ? 'text-slate-400' : 'text-slate-500'}`} />
-          <span className="text-sm font-semibold text-[var(--text-primary)]">Daily Pattern</span>
-        </div>
-        <div className="grid grid-cols-3 gap-2 text-center text-xs">
-          <div className={`p-3 rounded-lg ${currentHour < 12 ? (isDark ? 'bg-yellow-500/15 border border-yellow-500/30' : 'bg-yellow-50 border border-yellow-300') : (isDark ? 'bg-slate-700/50' : 'bg-slate-50')}`}>
-            <Sun className={`w-4 h-4 mx-auto mb-1 ${currentHour < 12 ? (isDark ? 'text-yellow-400' : 'text-yellow-600') : 'text-[var(--text-tertiary)]'}`} />
-            <div className={`font-medium ${currentHour < 12 ? (isDark ? 'text-yellow-400' : 'text-yellow-700') : 'text-[var(--text-tertiary)]'}`}>Morning</div>
-            <div className="text-[var(--text-secondary)]">South Side</div>
+      {/* Header — adapts to synoptic state */}
+      <div className={`rounded-xl p-4 border ${
+        isSynopticOverride ? (isDark ? 'bg-red-900/20 border-red-500/30' : 'bg-red-50/50 border-red-300')
+        : (isDark ? 'bg-[var(--card-bg)] border-[var(--border-color)]' : 'bg-white border-slate-200')
+      }`}>
+        <div className="flex items-center gap-3 mb-1">
+          <span className="text-2xl">🪂</span>
+          <div className="flex-1">
+            <h2 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>Point of the Mountain</h2>
+            <p className={`text-xs ${isDark ? 'text-purple-300' : 'text-purple-600'}`}>
+              {isSynopticOverride ? 'All sites grounded — mechanical wind' : 'Paragliding Forecast'}
+            </p>
           </div>
-          <div className={`p-3 rounded-lg ${currentHour >= 12 && currentHour < 15 ? (isDark ? 'bg-orange-500/15 border border-orange-500/30' : 'bg-orange-50 border border-orange-300') : (isDark ? 'bg-slate-700/50' : 'bg-slate-50')}`}>
-            <AlertTriangle className={`w-4 h-4 mx-auto mb-1 ${currentHour >= 12 && currentHour < 15 ? (isDark ? 'text-orange-400' : 'text-orange-600') : 'text-[var(--text-tertiary)]'}`} />
-            <div className={`font-medium ${currentHour >= 12 && currentHour < 15 ? (isDark ? 'text-orange-400' : 'text-orange-700') : 'text-[var(--text-tertiary)]'}`}>Midday</div>
-            <div className="text-[var(--text-secondary)]">Caution</div>
-          </div>
-          <div className={`p-3 rounded-lg ${currentHour >= 15 ? (isDark ? 'bg-purple-500/15 border border-purple-500/30' : 'bg-purple-50 border border-purple-300') : (isDark ? 'bg-slate-700/50' : 'bg-slate-50')}`}>
-            <Sunset className={`w-4 h-4 mx-auto mb-1 ${currentHour >= 15 ? (isDark ? 'text-purple-400' : 'text-purple-600') : 'text-[var(--text-tertiary)]'}`} />
-            <div className={`font-medium ${currentHour >= 15 ? (isDark ? 'text-purple-400' : 'text-purple-700') : 'text-[var(--text-tertiary)]'}`}>Evening</div>
-            <div className="text-[var(--text-secondary)]">North Side</div>
-          </div>
+          {isSynopticOverride && (
+            <div className="bg-red-500 text-white text-[10px] font-extrabold px-3 py-1 rounded-full uppercase">Grounded</div>
+          )}
         </div>
       </div>
-      
-      <WindSwitchPredictor windData={windData} />
-      <UpstreamIndicators windData={windData} />
-      
-      {/* Site Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <SiteCard 
-          site="flight-park-south" 
-          windData={stationWindData}
-          isLoading={isLoading}
-        />
-        <SiteCard 
-          site="flight-park-north" 
-          windData={stationWindData}
-          isLoading={isLoading}
-        />
+
+      {/* Twin Peaks: North/South cards sorted by wind direction */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <TwinPeakCard siteId={firstSite} isFirst />
+        <TwinPeakCard siteId={secondSite} isFirst={false} />
       </div>
+
+      {/* Wind Switch + Upstream (only when not blown out) */}
+      {!isSynopticOverride && (
+        <>
+          <WindSwitchPredictor windData={windData} />
+          <UpstreamIndicators windData={windData} />
+        </>
+      )}
       
       {/* Safety Info */}
       <div className="card">

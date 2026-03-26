@@ -431,8 +431,8 @@ export function Dashboard() {
           unifiedActivities={prediction?.activities}
         />
 
-        {/* ═══════════ 2. HERO SESSION CARD (What + Where + When + How Long + Live Proof) ═══════════ */}
-        {(() => {
+        {/* ═══════════ 2. HERO SESSION CARD (skipped for paragliding — Twin Peaks cards handle it) ═══════════ */}
+        {selectedActivity !== 'paragliding' && (() => {
           const heroStation = lakeState?.pws || lakeState?.wind?.stations?.[0];
           const heroStationId = heroStation?.id || heroStation?.name;
           const heroHistory = heroStationId ? history?.[heroStationId] : null;
@@ -600,7 +600,8 @@ export function Dashboard() {
           </div>
         )}
 
-        {/* ═══════════ 4. WHERE TO GO LEADERBOARD ═══════════ */}
+        {/* ═══════════ 4. WHERE TO GO LEADERBOARD (bypassed for paragliding — Twin Peaks replaces it) ═══════════ */}
+        {selectedActivity !== 'paragliding' && (
         <div ref={contentRef} className="scroll-mt-4">
           <SafeComponent name="Spot Ranker">
             <SpotRanker
@@ -613,6 +614,7 @@ export function Dashboard() {
             />
           </SafeComponent>
         </div>
+        )}
 
         {/* ═══════════ 5. LIVE SENSOR NETWORK (compact grid) ═══════════ */}
         <div aria-live="polite" aria-atomic="false">
