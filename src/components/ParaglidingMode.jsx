@@ -585,6 +585,111 @@ function getCardinalDir(deg) {
   return dirs[Math.round(deg / 22.5) % 16];
 }
 
+// Twin Peaks site card — extracted outside render to satisfy react-hooks/static-components
+const TwinPeakCard = ({ siteId, isFirst, sensorData, isInterpolated, assessment, aiPred, isDark }) => {
+  const config = PARAGLIDING_SITES[siteId];
+  const isNorth = siteId === 'flight-park-north';
+  const aiProb = aiPred?.probability || 0;
+  const windSpd = sensorData?.speed || 0;
+  const windDir = sensorData?.direction;
+  const windGst = sensorData?.gust || 0;
+  const errColor = isDark ? 'text-red-400' : 'text-red-600';
+  const okColor = isDark ? 'text-green-400' : 'text-green-600';
+  const probColor = (p) => p >= 60 ? (isDark ? 'text-green-400' : 'text-green-600') : p >= 35 ? (isDark ? 'text-yellow-400' : 'text-yellow-600') : (isDark ? 'text-red-400' : 'text-red-600');
+
+  const statusBg = assessment?.status === 'excellent' ? (isDark ? 'bg-green-500/15 border-green-500/40' : 'bg-green-50 border-green-300')
+    : assessment?.status === 'good' ? (isDark ? 'bg-lime-500/15 border-lime-500/40' : 'bg-lime-50 border-lime-300')
+    : assessment?.status === 'marginal' ? (isDark ? 'bg-yellow-500/15 border-yellow-500/40' : 'bg-yellow-50 border-yellow-300')
+    : (isDark ? 'bg-red-500/15 border-red-500/40' : 'bg-red-50 border-red-300');
+
+  let grounded = null;
+  if (aiProb < 20) {
+    if (windSpd > 18) grounded = `Grounded: Base wind ${safeToFixed(windSpd, 0)} mph > 18 mph`;
+    else if (windGst - windSpd > 12) grounded = `Grounded: Gust spread ${safeToFixed(windGst - windSpd, 0)} mph > 12 mph`;
+    else if (windGst > 25) grounded = `Grounded: Gusts ${safeToFixed(windGst, 0)} mph — unsafe`;
+    else grounded = 'Grounded: Conditions outside flyable envelope';
+  }
+
+  return (
+    <div className={`rounded-xl border p-4 ${statusBg} ${isFirst ? 'ring-2 ring-sky-500/40' : ''}`}>
+      <div className="flex items-center justify-between mb-2">
+        <div>
+          <h3 className={`font-bold text-base ${isDark ? 'text-white' : 'text-slate-900'}`}>{config.shortName}</h3>
+          {isInterpolated && (
+            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${isDark ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-700'}`}>
+              Data interpolated from {isNorth ? 'South' : 'North'} sensor
+            </span>
+          )}
+        </div>
+        {isFirst && <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full ${isDark ? 'bg-sky-500/20 text-sky-400' : 'bg-sky-100 text-sky-700'}`}>#1 PICK</span>}
+      </div>
+
+      <div className="grid grid-cols-3 gap-2 mb-3 text-center">
+        <div>
+          <div className={`text-[10px] uppercase ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Wind</div>
+          <div className={`text-2xl font-black ${assessment?.speedOk ? (isDark ? 'text-white' : 'text-slate-900') : errColor}`}>
+            {safeToFixed(windSpd, 0)}<span className="text-xs font-normal ml-0.5">mph</span>
+          </div>
+        </div>
+        <div>
+          <div className={`text-[10px] uppercase ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Dir</div>
+          <div className={`text-2xl font-black ${assessment?.directionOk ? (isDark ? 'text-white' : 'text-slate-900') : errColor}`}>
+            {windDir != null ? `${getCardinalDir(windDir)}` : '--'}
+          </div>
+          <div className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{windDir != null ? `${safeToFixed(windDir, 0)}°` : ''}</div>
+        </div>
+        <div>
+          <div className={`text-[10px] uppercase ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Gust</div>
+          <div className={`text-2xl font-black ${assessment?.gustOk ? (isDark ? 'text-white' : 'text-slate-900') : errColor}`}>
+            {safeToFixed(windGst, 0)}<span className="text-xs font-normal ml-0.5">mph</span>
+          </div>
+        </div>
+      </div>
+
+      <div className={`rounded-lg p-2.5 mb-2 border ${isDark ? 'bg-slate-800/60 border-slate-700' : 'bg-white/80 border-slate-200'}`}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <Brain className={`w-3 h-3 ${isDark ? 'text-purple-400' : 'text-purple-600'}`} />
+            <span className={`text-xs font-semibold ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>AI Prediction</span>
+          </div>
+          <span className={`text-lg font-black ${probColor(aiProb)}`}>{aiProb}%</span>
+        </div>
+        {grounded && (
+          <div className={`mt-1 text-[11px] font-medium ${errColor}`}>
+            <XCircle className="w-3 h-3 inline mr-1" />{grounded}
+          </div>
+        )}
+        {!grounded && aiPred?.gustQuality && (
+          <div className={`mt-1 text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{aiPred.gustQuality}</div>
+        )}
+      </div>
+
+      <div className="flex items-center justify-between text-xs mb-1">
+        <span className={isDark ? 'text-slate-400' : 'text-slate-500'}>Flyability</span>
+        <span className={`font-bold ${
+          assessment?.score >= 60 ? okColor : assessment?.score >= 40 ? (isDark ? 'text-yellow-400' : 'text-yellow-600') : errColor
+        }`}>{assessment?.score || 0}%</span>
+      </div>
+      <div className={`h-1.5 rounded-full overflow-hidden ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`}>
+        <div className={`h-full rounded-full transition-all duration-500 ${
+          assessment?.score >= 80 ? 'bg-green-500' : assessment?.score >= 60 ? 'bg-lime-500' : assessment?.score >= 40 ? 'bg-yellow-500' : 'bg-red-500'
+        }`} style={{ width: `${assessment?.score || 0}%` }} />
+      </div>
+
+      {assessment && (
+        <div className="mt-2 space-y-0.5">
+          {assessment.positives.slice(0, 1).map((msg, i) => (
+            <div key={i} className={`flex items-center gap-1.5 text-[11px] ${okColor}`}><CheckCircle className="w-3 h-3" />{msg}</div>
+          ))}
+          {assessment.issues.slice(0, 2).map((msg, i) => (
+            <div key={i} className={`flex items-center gap-1.5 text-[11px] ${errColor}`}><XCircle className="w-3 h-3" />{msg}</div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // Main Paragliding Dashboard
 const ParaglidingMode = ({ windData, isLoading: _isLoading }) => {
   const currentHour = new Date().getHours();
@@ -592,18 +697,17 @@ const ParaglidingMode = ({ windData, isLoading: _isLoading }) => {
   const fpsData = windData?.FPS || windData?.stations?.find(s => s.id === 'FPS');
   const utalpData = windData?.UTALP || windData?.stations?.find(s => s.id === 'UTALP');
   
-  const stationWindData = {
-    FPS: {
-      speed: fpsData?.speed || fpsData?.windSpeed,
-      direction: fpsData?.direction || fpsData?.windDirection,
-      gust: fpsData?.gust || fpsData?.windGust,
-    },
-    UTALP: {
-      speed: utalpData?.speed || utalpData?.windSpeed,
-      direction: utalpData?.direction || utalpData?.windDirection,
-      gust: utalpData?.gust || utalpData?.windGust,
-    },
-  };
+  const fpsSpeed = fpsData?.speed || fpsData?.windSpeed;
+  const fpsDir = fpsData?.direction || fpsData?.windDirection;
+  const fpsGust = fpsData?.gust || fpsData?.windGust;
+  const utalpSpeed = utalpData?.speed || utalpData?.windSpeed;
+  const utalpDir = utalpData?.direction || utalpData?.windDirection;
+  const utalpGust = utalpData?.gust || utalpData?.windGust;
+
+  const stationWindData = useMemo(() => ({
+    FPS: { speed: fpsSpeed, direction: fpsDir, gust: fpsGust },
+    UTALP: { speed: utalpSpeed, direction: utalpDir, gust: utalpGust },
+  }), [fpsSpeed, fpsDir, fpsGust, utalpSpeed, utalpDir, utalpGust]);
 
   // Offline sensor interpolation: if one sensor is down, pull from the other
   const southOnline = stationWindData.FPS?.speed != null;
@@ -614,18 +718,19 @@ const ParaglidingMode = ({ windData, isLoading: _isLoading }) => {
   const southScore = calculateParaglidingScore('flight-park-south', effectiveSouth?.speed, effectiveSouth?.direction, effectiveSouth?.gust);
   const northScore = calculateParaglidingScore('flight-park-north', effectiveNorth?.speed, effectiveNorth?.direction, effectiveNorth?.gust);
   
+  const fpsTemp = fpsData?.temperature || fpsData?.temp;
   const predictorData = useMemo(() => {
     const kslcData = windData?.KSLC || windData?.stations?.find(s => s.id === 'KSLC');
     const kpvuData = windData?.KPVU || windData?.stations?.find(s => s.id === 'KPVU');
     const utolyData = windData?.UTOLY || windData?.stations?.find(s => s.id === 'UTOLY');
     return {
-      FPS: { windSpeed: stationWindData.FPS?.speed, windDirection: stationWindData.FPS?.direction, windGust: stationWindData.FPS?.gust, temperature: fpsData?.temperature || fpsData?.temp },
-      UTALP: { windSpeed: stationWindData.UTALP?.speed, windDirection: stationWindData.UTALP?.direction, windGust: stationWindData.UTALP?.gust },
+      FPS: { windSpeed: fpsSpeed, windDirection: fpsDir, windGust: fpsGust, temperature: fpsTemp },
+      UTALP: { windSpeed: utalpSpeed, windDirection: utalpDir, windGust: utalpGust },
       KSLC: { windSpeed: kslcData?.speed || kslcData?.windSpeed, windDirection: kslcData?.direction || kslcData?.windDirection, pressure: kslcData?.pressure },
       KPVU: { windSpeed: kpvuData?.speed || kpvuData?.windSpeed, windDirection: kpvuData?.direction || kpvuData?.windDirection, pressure: kpvuData?.pressure },
       UTOLY: { windSpeed: utolyData?.speed || utolyData?.windSpeed, windDirection: utolyData?.direction || utolyData?.windDirection },
     };
-  }, [windData, stationWindData, fpsData]);
+  }, [windData, fpsSpeed, fpsDir, fpsGust, fpsTemp, utalpSpeed, utalpDir, utalpGust]);
 
   const learnedPrediction = useMemo(() => {
     try { return predictParagliding(predictorData); }
@@ -649,121 +754,15 @@ const ParaglidingMode = ({ windData, isLoading: _isLoading }) => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 
-  const probColor = (p) => p >= 60 ? (isDark ? 'text-green-400' : 'text-green-600') : p >= 35 ? (isDark ? 'text-yellow-400' : 'text-yellow-600') : (isDark ? 'text-red-400' : 'text-red-600');
-
-  // Build grounded reason for AI scores < 20%
-  const groundedReason = (siteKey, score, windSpd, gustVal) => {
-    if (score >= 20) return null;
-    if (windSpd > 18) return `Grounded: Base wind ${safeToFixed(windSpd, 0)} mph > 18 mph`;
-    if (gustVal - windSpd > 12) return `Grounded: Gust spread ${safeToFixed(gustVal - windSpd, 0)} mph > 12 mph`;
-    if (gustVal > 25) return `Grounded: Gusts ${safeToFixed(gustVal, 0)} mph — unsafe`;
-    return `Grounded: Conditions outside flyable envelope`;
-  };
-
-  // Inline Twin Peaks site card with AI prediction embedded
-  const TwinPeakCard = ({ siteId, isFirst }) => {
-    const config = PARAGLIDING_SITES[siteId];
+  const getSiteProps = (siteId) => {
     const isNorth = siteId === 'flight-park-north';
-    const sensorData = isNorth ? effectiveNorth : effectiveSouth;
-    const isInterpolated = isNorth ? !northOnline : !southOnline;
-    const assessment = isNorth ? northScore : southScore;
-    const aiPred = isNorth ? learnedPrediction?.north : learnedPrediction?.south;
-    const aiProb = aiPred?.probability || 0;
-    const windSpd = sensorData?.speed || 0;
-    const windDir = sensorData?.direction;
-    const windGst = sensorData?.gust || 0;
-    const errColor = isDark ? 'text-red-400' : 'text-red-600';
-    const okColor = isDark ? 'text-green-400' : 'text-green-600';
-
-    const statusBg = assessment?.status === 'excellent' ? (isDark ? 'bg-green-500/15 border-green-500/40' : 'bg-green-50 border-green-300')
-      : assessment?.status === 'good' ? (isDark ? 'bg-lime-500/15 border-lime-500/40' : 'bg-lime-50 border-lime-300')
-      : assessment?.status === 'marginal' ? (isDark ? 'bg-yellow-500/15 border-yellow-500/40' : 'bg-yellow-50 border-yellow-300')
-      : (isDark ? 'bg-red-500/15 border-red-500/40' : 'bg-red-50 border-red-300');
-
-    const grounded = groundedReason(siteId, aiProb, windSpd, windGst);
-
-    return (
-      <div className={`rounded-xl border p-4 ${statusBg} ${isFirst ? 'ring-2 ring-sky-500/40' : ''}`}>
-        <div className="flex items-center justify-between mb-2">
-          <div>
-            <h3 className={`font-bold text-base ${isDark ? 'text-white' : 'text-slate-900'}`}>{config.shortName}</h3>
-            {isInterpolated && (
-              <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${isDark ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-700'}`}>
-                Data interpolated from {isNorth ? 'South' : 'North'} sensor
-              </span>
-            )}
-          </div>
-          {isFirst && <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full ${isDark ? 'bg-sky-500/20 text-sky-400' : 'bg-sky-100 text-sky-700'}`}>#1 PICK</span>}
-        </div>
-
-        {/* Live readings */}
-        <div className="grid grid-cols-3 gap-2 mb-3 text-center">
-          <div>
-            <div className={`text-[10px] uppercase ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Wind</div>
-            <div className={`text-2xl font-black ${assessment?.speedOk ? (isDark ? 'text-white' : 'text-slate-900') : errColor}`}>
-              {safeToFixed(windSpd, 0)}<span className="text-xs font-normal ml-0.5">mph</span>
-            </div>
-          </div>
-          <div>
-            <div className={`text-[10px] uppercase ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Dir</div>
-            <div className={`text-2xl font-black ${assessment?.directionOk ? (isDark ? 'text-white' : 'text-slate-900') : errColor}`}>
-              {windDir != null ? `${getCardinalDir(windDir)}` : '--'}
-            </div>
-            <div className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{windDir != null ? `${safeToFixed(windDir, 0)}°` : ''}</div>
-          </div>
-          <div>
-            <div className={`text-[10px] uppercase ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Gust</div>
-            <div className={`text-2xl font-black ${assessment?.gustOk ? (isDark ? 'text-white' : 'text-slate-900') : errColor}`}>
-              {safeToFixed(windGst, 0)}<span className="text-xs font-normal ml-0.5">mph</span>
-            </div>
-          </div>
-        </div>
-
-        {/* AI Prediction — condensed into card */}
-        <div className={`rounded-lg p-2.5 mb-2 border ${isDark ? 'bg-slate-800/60 border-slate-700' : 'bg-white/80 border-slate-200'}`}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5">
-              <Brain className={`w-3 h-3 ${isDark ? 'text-purple-400' : 'text-purple-600'}`} />
-              <span className={`text-xs font-semibold ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>AI Prediction</span>
-            </div>
-            <span className={`text-lg font-black ${probColor(aiProb)}`}>{aiProb}%</span>
-          </div>
-          {grounded && (
-            <div className={`mt-1 text-[11px] font-medium ${errColor}`}>
-              <XCircle className="w-3 h-3 inline mr-1" />{grounded}
-            </div>
-          )}
-          {!grounded && aiPred?.gustQuality && (
-            <div className={`mt-1 text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{aiPred.gustQuality}</div>
-          )}
-        </div>
-
-        {/* Flyability bar */}
-        <div className="flex items-center justify-between text-xs mb-1">
-          <span className={isDark ? 'text-slate-400' : 'text-slate-500'}>Flyability</span>
-          <span className={`font-bold ${
-            assessment?.score >= 60 ? okColor : assessment?.score >= 40 ? (isDark ? 'text-yellow-400' : 'text-yellow-600') : errColor
-          }`}>{assessment?.score || 0}%</span>
-        </div>
-        <div className={`h-1.5 rounded-full overflow-hidden ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`}>
-          <div className={`h-full rounded-full transition-all duration-500 ${
-            assessment?.score >= 80 ? 'bg-green-500' : assessment?.score >= 60 ? 'bg-lime-500' : assessment?.score >= 40 ? 'bg-yellow-500' : 'bg-red-500'
-          }`} style={{ width: `${assessment?.score || 0}%` }} />
-        </div>
-
-        {/* Issues/positives */}
-        {assessment && (
-          <div className="mt-2 space-y-0.5">
-            {assessment.positives.slice(0, 1).map((msg, i) => (
-              <div key={i} className={`flex items-center gap-1.5 text-[11px] ${okColor}`}><CheckCircle className="w-3 h-3" />{msg}</div>
-            ))}
-            {assessment.issues.slice(0, 2).map((msg, i) => (
-              <div key={i} className={`flex items-center gap-1.5 text-[11px] ${errColor}`}><XCircle className="w-3 h-3" />{msg}</div>
-            ))}
-          </div>
-        )}
-      </div>
-    );
+    return {
+      sensorData: isNorth ? effectiveNorth : effectiveSouth,
+      isInterpolated: isNorth ? !northOnline : !southOnline,
+      assessment: isNorth ? northScore : southScore,
+      aiPred: isNorth ? learnedPrediction?.north : learnedPrediction?.south,
+      isDark,
+    };
   };
 
   return (
@@ -806,8 +805,8 @@ const ParaglidingMode = ({ windData, isLoading: _isLoading }) => {
 
       {/* Twin Peaks: North/South cards sorted by wind direction */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <TwinPeakCard siteId={firstSite} isFirst />
-        <TwinPeakCard siteId={secondSite} isFirst={false} />
+        <TwinPeakCard siteId={firstSite} isFirst {...getSiteProps(firstSite)} />
+        <TwinPeakCard siteId={secondSite} isFirst={false} {...getSiteProps(secondSite)} />
       </div>
 
       {/* Wind Switch + Upstream (only when not blown out) */}
