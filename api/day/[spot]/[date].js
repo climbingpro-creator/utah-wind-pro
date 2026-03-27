@@ -611,8 +611,8 @@ function renderDayPage(spot, dateStr, riders) {
   <div class="section-title">Share This Day</div>
   <div class="share-bar">
     <button class="share-btn copy" onclick="copyLink()">&#128203; Copy Link <span id="copied-msg" class="share-copied">Copied!</span></button>
-    <a class="share-btn twitter" href="https://twitter.com/intent/tweet?text=${encodeURIComponent(`Session Day at ${spot.name}! ${riders.length} riders, ${totalJumps} jumps, day record ${dayRecord.toFixed(1)}ft`)}&url=${encodeURIComponent(`https://utahwindfinder.com/day/${spotSlug}/${dateStr}`)}" target="_blank" rel="noopener">&#120143; Post</a>
-    <a class="share-btn sms-share" href="sms:?body=${encodeURIComponent(`Check out today's kite session leaderboard at ${spot.name}! ${totalJumps} jumps, ${riders.length} riders. https://utahwindfinder.com/day/${spotSlug}/${dateStr}`)}">&#128172; Text</a>
+    <a class="share-btn twitter" href="https://twitter.com/intent/tweet?text=${encodeURIComponent(`Session Day at ${spot.name}! ${riders.length} riders, ${totalJumps} jumps, day record ${dayRecord.toFixed(1)}ft`)}&url=${encodeURIComponent(`https://utahwindfinder.com/day/${spot.slug}/${dateStr}`)}" target="_blank" rel="noopener">&#120143; Post</a>
+    <a class="share-btn sms-share" href="sms:?body=${encodeURIComponent(`Check out today's kite session leaderboard at ${spot.name}! ${totalJumps} jumps, ${riders.length} riders. https://utahwindfinder.com/day/${spot.slug}/${dateStr}`)}">&#128172; Text</a>
   </div>
 
   <div class="section-title">Join the Leaderboard</div>
