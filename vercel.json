@@ -1,7 +1,8 @@
 {
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
-  "framework": "vite",
+  "buildCommand": "npx turbo build --filter=@utahwind/wind",
+  "outputDirectory": "apps/wind/dist",
+  "framework": null,
+  "installCommand": "npm install",
   "functions": {
     "api/cron/1-ingest.js": {
       "maxDuration": 60
