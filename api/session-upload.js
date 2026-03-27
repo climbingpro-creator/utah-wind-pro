@@ -54,6 +54,8 @@ export default async function handler(req, res) {
       user_id:           userId,
       device_id:         deviceId,
       spot_id:           spotId,
+      rider_name:        body.rider_name || null,
+      gear_setup:        body.gear_setup || null,
       duration_s:        body.duration_s || 0,
       distance_nm:       body.distance_nm || 0,
       max_speed_kts:     body.max_speed_kts || 0,
@@ -80,10 +82,50 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Failed to store session' });
     }
 
+    const sessionId = data.id;
+
+    // Insert individual jump records if provided
+    if (body.jump_details && Array.isArray(body.jump_details) && body.jump_details.length > 0) {
+      const jumpRows = body.jump_details.map((j, i) => ({
+        session_id:        sessionId,
+        height_ft:         j.height_ft || 0,
+        hangtime_s:        j.hangtime_s || 0,
+        takeoff_speed_kts: j.takeoff_kts || null,
+        distance_ft:       j.distance_ft || null,
+        peak_g:            j.peak_g || null,
+        jump_number:       i + 1,
+      }));
+
+      const { error: jumpErr } = await supabase
+        .from('jumps')
+        .insert(jumpRows);
+
+      if (jumpErr) {
+        console.error('[session-upload] jumps insert error:', jumpErr.message);
+        // Non-fatal — session is already saved, just log the jump error
+      }
+    }
+
+    // Build day page URL from spot slug + date
+    let dayUrl = null;
+    if (spotId) {
+      const { data: spotData } = await supabase
+        .from('spots')
+        .select('slug')
+        .eq('id', spotId)
+        .single();
+      if (spotData) {
+        const d = new Date();
+        const dateStr = d.toISOString().split('T')[0];
+        dayUrl = `https://utahwindfinder.com/day/${spotData.slug}/${dateStr}`;
+      }
+    }
+
     return res.status(200).json({
       success: true,
-      sessionId: data.id,
-      url: `https://utahwindfinder.com/session/${data.id}`,
+      sessionId,
+      url: `https://utahwindfinder.com/session/${sessionId}`,
+      dayUrl,
     });
   } catch (err) {
     console.error('[session-upload]', err.message);

@@ -185,6 +185,8 @@ CREATE TABLE IF NOT EXISTS kite_sessions (
   user_id            UUID REFERENCES auth.users(id) ON DELETE SET NULL,
   device_id          TEXT,
   spot_id            UUID REFERENCES spots(id) ON DELETE SET NULL,
+  rider_name         TEXT,
+  gear_setup         TEXT,
   started_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   duration_s         INTEGER NOT NULL DEFAULT 0,
   distance_nm        DOUBLE PRECISION DEFAULT 0,
@@ -210,6 +212,10 @@ CREATE POLICY "Users can read own sessions"
   ON kite_sessions FOR SELECT
   USING (auth.uid() = user_id);
 
+CREATE POLICY "Public can read sessions for day pages"
+  ON kite_sessions FOR SELECT
+  USING (true);
+
 CREATE POLICY "Service role inserts sessions"
   ON kite_sessions FOR INSERT
   WITH CHECK (true);
@@ -226,14 +232,19 @@ CREATE INDEX IF NOT EXISTS idx_kite_sessions_spot
 CREATE INDEX IF NOT EXISTS idx_kite_sessions_started
   ON kite_sessions(started_at DESC);
 
+CREATE INDEX IF NOT EXISTS idx_kite_sessions_spot_date
+  ON kite_sessions(spot_id, (started_at::date));
+
 -- ── Individual Jumps (for deep-dive charts / leaderboards) ──────
 
 CREATE TABLE IF NOT EXISTS jumps (
   id                UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   session_id        UUID REFERENCES kite_sessions(id) ON DELETE CASCADE NOT NULL,
   recorded_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  jump_number       INTEGER NOT NULL DEFAULT 1,
   height_ft         DOUBLE PRECISION NOT NULL,
   hangtime_s        DOUBLE PRECISION NOT NULL,
+  distance_ft       DOUBLE PRECISION,
   takeoff_speed_kts DOUBLE PRECISION,
   peak_g            DOUBLE PRECISION
 );
@@ -248,6 +259,10 @@ CREATE POLICY "Users can read own jumps"
       WHERE s.id = jumps.session_id AND s.user_id = auth.uid()
     )
   );
+
+CREATE POLICY "Public can read jumps for day pages"
+  ON jumps FOR SELECT
+  USING (true);
 
 CREATE POLICY "Service role inserts jumps"
   ON jumps FOR INSERT
