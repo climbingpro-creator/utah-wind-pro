@@ -395,7 +395,7 @@ export function getDailyFlyPick({
   waterTemp = null,
   windSpeed = 5,
   skyCondition = 'partly',
-  pressure = 30.0,
+  _pressure = 30.0,
   pressureTrend = 'stable',
   hour = new Date().getHours(),
   locationId = 'provo-river',

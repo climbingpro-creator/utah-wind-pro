@@ -2,7 +2,7 @@ import { useState, useRef, Suspense, lazy } from 'react';
 import * as React from 'react';
 import { LakeSelector } from './LakeSelector';
 import { ToastContainer } from './ToastNotification';
-import { useLakeData } from '../hooks/useLakeData';
+import { useWeatherData } from '../store/useWeatherStore';
 import { useModelContext } from '../hooks/useModelContext';
 import { predict as unifiedPredict } from '../services/UnifiedPredictor';
 import { checkAndNotify } from '../services/NotificationService';
@@ -26,7 +26,7 @@ import { SPOT_SLUG_MAP } from '../config/spotSlugs';
 // Feature flag: set true to use the UnifiedPredictor pipeline
 const USE_UNIFIED_PREDICTOR = true;
 
-function ParaglidingLeaderboardCard({ selectedLake, theme }) {
+function ParaglidingLeaderboardCard({ selectedLake, theme: _theme }) {
   const spotSlug = SPOT_SLUG_MAP[selectedLake];
   if (!spotSlug) return null;
   const today = new Date().toISOString().split('T')[0];
@@ -99,7 +99,7 @@ export function Dashboard() {
   const [showSMSSettings, setShowSMSSettings] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem('uwf_onboarded'));
-  const { lakeState, history, status, isLoading, error, lastUpdated, refresh } = useLakeData(selectedLake);
+  const { lakeState, history, status, isLoading, error, lastUpdated, refresh } = useWeatherData(selectedLake);
   const { theme } = useTheme();
   const { isPro, rawTier, trialActive, trialDaysLeft, openPaywall, showPaywall } = useAuth();
   const contentRef = useRef(null);

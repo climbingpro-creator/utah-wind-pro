@@ -4,8 +4,7 @@ import { useTheme } from '../context/ThemeContext';
 import { predictFishing } from '../services/FishingPredictor';
 import { getAllWaterTemps, getAllRiverFlows, getRiverFlowStatus } from '../services/USGSWaterService';
 import { getDailyFlyPick, parseSkyCondition, TIME_WINDOW_LABELS } from '../services/FlyRecommender';
-import { getDailyLurePick, LURES, getShoreStrategy, getTrollingSetup, TIME_WINDOW_LABELS as LURE_TIME_LABELS } from '../services/LureRecommender';
-import { getEcosystem } from '../config/aquaticEcosystems';
+import { getDailyLurePick, LURES, getShoreStrategy, TIME_WINDOW_LABELS as LURE_TIME_LABELS } from '../services/LureRecommender';
 import WaterForecast from './WaterForecast';
 import { safeToFixed } from '../utils/safeToFixed';
 
@@ -1014,9 +1013,6 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
     return parseSkyCondition(skyText);
   }, [hourlyForecast]);
 
-  // ── Ecosystem Profile ──
-  const ecosystem = useMemo(() => getEcosystem(selectedLocation), [selectedLocation]);
-
   // ── Daily Fly Recommendation ──
   const flyPick = useMemo(() => {
     const now = new Date();
@@ -1030,9 +1026,8 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
       hour: now.getHours(),
       locationId: selectedLocation,
       locationType: location.type,
-      ecosystem,
     });
-  }, [currentSky, waterTemp, windSpeed, pressure, pressureTrend, selectedLocation, location.type, ecosystem]);
+  }, [currentSky, waterTemp, windSpeed, pressure, pressureTrend, selectedLocation, location.type]);
 
   // ── Daily Lure/Bait Recommendation ──
   const lurePick = useMemo(() => {
@@ -1047,9 +1042,8 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
       locationId: selectedLocation,
       species: location.species,
       locationType: location.type,
-      ecosystem,
     });
-  }, [currentSky, waterTemp, windSpeed, pressureTrend, selectedLocation, location.species, location.type, ecosystem]);
+  }, [currentSky, waterTemp, windSpeed, pressureTrend, selectedLocation, location.species, location.type]);
 
   // ── Shore Strategy ──
   const shoreAdvice = useMemo(() => {

@@ -216,7 +216,7 @@ async function fetchUSGSTemp() {
     const resp = await fetch(url);
     if (!resp.ok) throw new Error(`USGS temp ${resp.status}`);
     const json = await resp.json();
-    const raw = parseUSGSSeries(json, (val, dateTime, dt, siteId) => ({
+    const raw = parseUSGSSeries(json, (val, dateTime, dt, _siteId) => ({
       tempC: val,
       tempF: cToF(val),
       dateTime,
@@ -246,7 +246,7 @@ async function fetchUSGSFlow() {
     const resp = await fetch(url);
     if (!resp.ok) throw new Error(`USGS flow ${resp.status}`);
     const json = await resp.json();
-    const raw = parseUSGSSeries(json, (val, dateTime, dt, siteId, paramCode) => ({
+    const raw = parseUSGSSeries(json, (val, dateTime, dt, _siteId, _paramCode) => ({
       value: val,
       dateTime,
       stale: Date.now() - dt.getTime() > 24 * 60 * 60 * 1000,

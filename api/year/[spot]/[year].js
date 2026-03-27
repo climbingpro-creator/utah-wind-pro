@@ -122,7 +122,7 @@ export default async function handler(req, res) {
 }
 
 function esc(s) { return s ? String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') : ''; }
-function fmtDur(s) { if (!s) return '0:00'; const h=Math.floor(s/3600),m=Math.floor((s%3600)/60); return h>0?`${h}:${String(m).padStart(2,'0')}`:`${m}m`; }
+function _fmtDur(s) { if (!s) return '0:00'; const h=Math.floor(s/3600),m=Math.floor((s%3600)/60); return h>0?`${h}:${String(m).padStart(2,'0')}`:`${m}m`; }
 function fmtHours(s) { return (s/3600).toFixed(1); }
 
 function errorPage(title, sub) {

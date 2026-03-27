@@ -624,7 +624,7 @@ export function getBestMethod({ species, locationType, waterTemp, windSpeed, hou
 
 // ─── MAIN PUBLIC API ────────────────────────────────────────────────
 
-export function getDailyLurePick({ month, waterTemp, windSpeed, sky, pressureTrend, hour, locationId, species, locationType, ecosystem }) {
+export function getDailyLurePick({ month, waterTemp, windSpeed, sky, pressureTrend, hour, locationId: _locationId, species, locationType, ecosystem }) {
   const season = getSeason(month);
   _currentSeason = season;
   const candidates = buildLureCandidates({ month, waterTemp, windSpeed, sky, pressureTrend, hour, species, locationType, ecosystem });
