@@ -1,5 +1,5 @@
 import React from 'react';
-import { Wind, Sailboat, Ship, Waves, Mountain, Fish, Anchor } from 'lucide-react';
+import { Wind, Sailboat, Mountain, Anchor } from 'lucide-react';
 
 const WindsurferIcon = ({ className }) => (
   <svg className={className} viewBox="0 0 24 24" fill="currentColor">
@@ -73,40 +73,6 @@ export const ACTIVITY_CONFIGS = {
     goodCondition: (speed, gust) => speed >= 6 && speed <= 20 && (!gust || gust/speed < 1.5),
   },
   
-  boating: {
-    id: 'boating',
-    name: 'Boating',
-    icon: <Ship className="w-10 h-10" />,
-    description: 'Powerboats & Cruising — calm water is best',
-    heroImage: '/images/wake-wave-sunset.png',
-    thresholds: {
-      ideal: { min: 0, max: 8 },
-      choppy: 10,
-      rough: 15,
-      dangerous: 25,
-    },
-    wantsWind: false,
-    primaryMetric: 'glassScore',
-    goodCondition: (speed) => speed < 8,
-  },
-  
-  paddling: {
-    id: 'paddling',
-    name: 'Paddling',
-    icon: <Waves className="w-10 h-10" />,
-    description: 'SUP, Kayak, Canoe — glass water ideal',
-    heroImage: '/images/paddling-utah-lake.png',
-    thresholds: {
-      ideal: { min: 0, max: 6 },
-      manageable: 10,
-      difficult: 15,
-      dangerous: 20,
-    },
-    wantsWind: false,
-    primaryMetric: 'glassScore',
-    goodCondition: (speed) => speed < 6,
-  },
-  
   paragliding: {
     id: 'paragliding',
     name: 'Paragliding',
@@ -122,24 +88,6 @@ export const ACTIVITY_CONFIGS = {
     wantsWind: true,
     primaryMetric: 'paraglidingScore',
     goodCondition: (speed, gust) => speed >= 5 && speed <= 20 && (!gust || gust - speed <= 7),
-    specialMode: true,
-  },
-  
-  fishing: {
-    id: 'fishing',
-    name: 'Fishing',
-    icon: <Fish className="w-10 h-10" />,
-    description: 'Lakes & Rivers — pressure, hatches, solunar',
-    heroImage: '/images/fishing-casting.png',
-    thresholds: {
-      ideal: { min: 0, max: 10 },
-      choppy: 15,
-      rough: 20,
-      dangerous: 25,
-    },
-    wantsWind: false,
-    primaryMetric: 'fishingScore',
-    goodCondition: (speed) => speed < 15,
     specialMode: true,
   },
   
@@ -183,7 +131,7 @@ const ActivityMode = ({ selectedActivity, onActivityChange, windSpeed, windGust,
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const scrollRef = React.useRef(null);
-  const activities = ['kiting', 'windsurfing', 'snowkiting', 'sailing', 'fishing', 'boating', 'paddling', 'paragliding'];
+  const activities = ['kiting', 'windsurfing', 'snowkiting', 'sailing', 'paragliding'];
 
   const fpsSpeed = fpsStation?.speed ?? fpsStation?.windSpeed;
   const fpsGust = fpsStation?.gust ?? fpsStation?.windGust;
@@ -321,7 +269,12 @@ export function calculateActivityScore(activity, windSpeed, windGust, _windDirec
 /**
  * Calculate Glass Score for calm-seeking activities
  */
-export function calculateGlassScore(windSpeed, windGust, config = ACTIVITY_CONFIGS.boating) {
+const GLASS_DEFAULTS = {
+  name: 'Boating',
+  thresholds: { ideal: { min: 0, max: 8 }, choppy: 10, rough: 15, dangerous: 25 },
+};
+
+export function calculateGlassScore(windSpeed, windGust, config = GLASS_DEFAULTS) {
   if (windSpeed == null) {
     return { score: null, status: 'unknown', message: 'No wind data' };
   }

@@ -18,7 +18,7 @@ import { LAKE_CONFIGS, getAllStationIds } from '../config/lakeStations';
 import { setLearnedWeights, setStatisticalModels as setThermalStatisticalModels } from './ThermalPredictor';
 import { setParaglidingLearnedWeights, predictParagliding } from './ParaglidingPredictor';
 import { setBoatingLearnedWeights } from './BoatingPredictor';
-import { setFishingLearnedWeights } from './FishingPredictor';
+
 import { setWindFieldLearnedWeights } from './WindFieldEngine';
 import { scoreSessionForActivity } from './ActivityScoring';
 import { predictWindEvents, setWindEventLearnedPatterns, getUpstreamSignals, setStatisticalModels as setWindEventStatisticalModels } from './WindEventPredictor';
@@ -82,8 +82,6 @@ class DataCollector {
         setParaglidingLearnedWeights(weights);
       } else if (weights.activity === 'boating') {
         setBoatingLearnedWeights(weights);
-      } else if (weights.activity === 'fishing') {
-        setFishingLearnedWeights(weights);
       } else if (!weights.activity) {
         setLearnedWeights(weights);
         setWindFieldLearnedWeights(weights);
@@ -212,7 +210,6 @@ class DataCollector {
         }
         setParaglidingLearnedWeights({ ...merged, activity: 'paragliding' });
         setBoatingLearnedWeights({ ...merged, activity: 'boating' });
-        setFishingLearnedWeights({ ...merged, activity: 'fishing' });
       }
 
       const totalServerPredictions = meta?.totalPredictions ?? 0;

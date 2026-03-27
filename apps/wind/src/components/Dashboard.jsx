@@ -77,7 +77,6 @@ const LearningDashboard = lazy(() => import('./LearningDashboard'));
 const ParaglidingMode = lazy(() => import('./ParaglidingMode'));
 const ProUpgrade = lazy(() => import('./ProUpgrade'));
 const WindSeekerTemplate = lazy(() => import('./WindSeekerTemplate'));
-const FlatwaterTemplate = lazy(() => import('./FlatwaterTemplate'));
 const WinterRiderTemplate = lazy(() => import('./WinterRiderTemplate'));
 const AccuracyScoreboard = lazy(() => import('./AccuracyScoreboard'));
 const PhotoSubmit = lazy(() => import('./PhotoSubmit'));
@@ -498,17 +497,8 @@ export function Dashboard() {
             effectiveActivityScore={effectiveActivityScore} effectiveBriefing={effectiveBriefing}
             mesoData={mesoData} isLoading={isLoading} onSelectSpot={handleSelectLake} contentRef={contentRef}
           />
-        ) : activityConfig?.wantsWind ? (
-          <WindSeekerTemplate
-            selectedActivity={selectedActivity} selectedLake={selectedLake} activityConfig={activityConfig} theme={theme}
-            currentWindSpeed={currentWindSpeed} currentWindGust={currentWindGust} currentWindDirection={currentWindDirection}
-            effectiveDecision={effectiveDecision} lakeState={lakeState} history={history}
-            prediction={prediction} effectiveThermalPrediction={effectiveThermalPrediction} effectiveBoatingPrediction={effectiveBoatingPrediction}
-            effectiveActivityScore={effectiveActivityScore} effectiveBriefing={effectiveBriefing} pressureData={pressureData}
-            mesoData={mesoData} isLoading={isLoading} onSelectSpot={handleSelectLake} contentRef={contentRef}
-          />
         ) : (
-          <FlatwaterTemplate
+          <WindSeekerTemplate
             selectedActivity={selectedActivity} selectedLake={selectedLake} activityConfig={activityConfig} theme={theme}
             currentWindSpeed={currentWindSpeed} currentWindGust={currentWindGust} currentWindDirection={currentWindDirection}
             effectiveDecision={effectiveDecision} lakeState={lakeState} history={history}
@@ -635,51 +625,6 @@ export function Dashboard() {
             </div>
             )}
 
-            {/* Calm Conditions Detail — renamed */}
-            {activityConfig && !activityConfig.wantsWind && (
-            <div className="card">
-              <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-4">
-                {selectedActivity === 'fishing' ? 'Fishing Conditions Detail' : `${activityConfig.name} — Water Status`}
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
-                <ModelStepCard
-                  step="A" label="Wind Check" description={<>Current wind at your spot</>}
-                  value={currentWindSpeed != null ? `${safeToFixed(currentWindSpeed, 1)} mph` : '-- mph'}
-                  explanation={currentWindSpeed == null ? 'Waiting for data...'
-                    : currentWindSpeed <= 3 ? (selectedActivity === 'fishing' ? 'Still water — fish feeding'
-                      : selectedActivity === 'paddling' ? 'Flat water — go paddle'
-                      : 'Glass — go now')
-                    : currentWindSpeed <= (activityConfig.thresholds?.ideal?.max ?? 8) ? 'Nearly flat — excellent'
-                    : 'Getting choppy'}
-                  isGood={currentWindSpeed != null && currentWindSpeed <= (activityConfig.thresholds?.ideal?.max ?? 8)}
-                  isBad={currentWindSpeed != null && currentWindSpeed > (activityConfig.thresholds?.rough ?? 15)}
-                  threshold={`Ideal: < ${activityConfig.thresholds?.ideal?.max ?? 8} mph`}
-                />
-                <ModelStepCard
-                  step="B" label="Wind Forecast" description={<>Will it stay calm?</>}
-                  value={lakeState?.pressure?.gradient != null
-                    ? `${lakeState.pressure.gradient > 0 ? '+' : ''}${safeToFixed(lakeState.pressure.gradient, 2)} mb`
-                    : '-- mb'}
-                  explanation={lakeState?.pressure?.gradient == null ? 'Waiting for data...'
-                    : Math.abs(lakeState.pressure.gradient) < 1 ? 'Low gradient — calm persists'
-                    : 'Wind building — plan around it'}
-                  isGood={lakeState?.pressure?.gradient != null && Math.abs(lakeState.pressure.gradient) < 1}
-                  isBad={lakeState?.pressure?.gradient != null && Math.abs(lakeState.pressure.gradient) > 2}
-                  threshold="Low = stays calm"
-                />
-                <ModelStepCard
-                  step="C" label="Calm Window" description={<>How long will it last?</>}
-                  value={effectiveBoatingPrediction?.glassUntil
-                    ? `Until ${effectiveBoatingPrediction.glassUntil > 12 ? `${effectiveBoatingPrediction.glassUntil - 12} PM` : `${effectiveBoatingPrediction.glassUntil} AM`}`
-                    : effectiveBoatingPrediction?.isGlass ? 'NOW' : '--'}
-                  explanation={effectiveBoatingPrediction?.isGlass ? 'Calm right now' : 'Monitoring...'}
-                  isGood={effectiveBoatingPrediction?.isGlass || (currentWindSpeed != null && currentWindSpeed <= 3)}
-                  isBad={currentWindSpeed != null && currentWindSpeed > (activityConfig.thresholds?.rough ?? 15)}
-                  threshold="Morning is best"
-                />
-              </div>
-            </div>
-            )}
 
             <DetailedPanels
               selectedActivity={selectedActivity}

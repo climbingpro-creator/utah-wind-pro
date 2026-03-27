@@ -1,76 +1,112 @@
-import { useState } from 'react'
-import { ErrorBoundary, Modal } from '@utahwind/ui'
+import { useState, Suspense, lazy } from 'react';
+import { Fish, Ship, Waves } from 'lucide-react';
+import { ErrorBoundary } from '@utahwind/ui';
+import { ThemeProvider, useTheme } from './context/ThemeContext';
+
+const FishingMode = lazy(() => import('./components/FishingMode'));
+const FlatwaterTemplate = lazy(() => import('./components/FlatwaterTemplate'));
+
+const WATER_ACTIVITIES = [
+  { id: 'fishing', name: 'Fishing', icon: Fish, color: 'emerald' },
+  { id: 'boating', name: 'Boating', icon: Ship, color: 'blue' },
+  { id: 'paddling', name: 'Paddling', icon: Waves, color: 'cyan' },
+];
 
 function WaterApp() {
-  const [showModal, setShowModal] = useState(false)
+  const { theme } = useTheme();
+  const [selectedActivity, setSelectedActivity] = useState('fishing');
+  const isFishing = selectedActivity === 'fishing';
 
   return (
-    <div className="min-h-screen px-4 py-12">
-      <div className="max-w-2xl mx-auto text-center space-y-8">
-        <div className="space-y-3">
-          <h1 className="text-5xl font-black tracking-tight bg-gradient-to-r from-cyan-400 via-blue-400 to-indigo-400 bg-clip-text text-transparent">
-            Utah Water & Glass
-          </h1>
-          <p className="text-lg text-slate-400 font-medium">
-            Fishing, boating, paddling & glass conditions — powered by the UtahWind monorepo
-          </p>
-        </div>
+    <div className="min-h-screen px-4 py-6 max-w-2xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="text-center space-y-2">
+        <h1 className="text-3xl font-black tracking-tight bg-gradient-to-r from-cyan-400 via-blue-400 to-emerald-400 bg-clip-text text-transparent">
+          Utah Water &amp; Glass
+        </h1>
+        <p className="text-sm text-[var(--text-tertiary)]">
+          Fishing, boating &amp; paddling conditions
+        </p>
+      </div>
 
-        <div className="grid gap-4 text-left">
-          <div className="rounded-2xl border border-cyan-500/20 bg-cyan-500/5 p-6 space-y-2">
-            <h2 className="text-xl font-bold text-cyan-300">Workspace Packages</h2>
-            <ul className="space-y-1 text-sm text-slate-300">
-              <li className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                <code className="text-emerald-400">@utahwind/ui</code> — Modal, ErrorBoundary, FactorBar, Sparkline
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                <code className="text-emerald-400">@utahwind/database</code> — Supabase client
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                <code className="text-emerald-400">@utahwind/config</code> — Shared ESLint config
-              </li>
-            </ul>
-          </div>
-
-          <button
-            onClick={() => setShowModal(true)}
-            className="w-full py-3 px-6 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm transition-colors cursor-pointer"
-          >
-            Open Shared Modal Component
-          </button>
-        </div>
-
-        <Modal isOpen={showModal} onClose={() => setShowModal(false)} label="Demo Modal">
-          <div className="bg-slate-800 rounded-2xl border border-slate-700 p-8 max-w-md w-full space-y-4">
-            <h2 className="text-2xl font-bold text-white">Shared Modal Works!</h2>
-            <p className="text-slate-300 text-sm leading-relaxed">
-              This modal is imported from <code className="text-cyan-400">@utahwind/ui</code> — 
-              the same component used in the Wind app. Monorepo component sharing is live.
-            </p>
+      {/* Activity Tabs */}
+      <div className="flex gap-2 justify-center">
+        {WATER_ACTIVITIES.map((act) => {
+          const Icon = act.icon;
+          const isActive = selectedActivity === act.id;
+          return (
             <button
-              onClick={() => setShowModal(false)}
-              className="w-full py-2.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium transition-colors"
+              key={act.id}
+              onClick={() => setSelectedActivity(act.id)}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
+                isActive
+                  ? `bg-${act.color}-500/15 text-${act.color}-400 border border-${act.color}-500/30`
+                  : 'bg-white/[0.03] text-[var(--text-tertiary)] border border-transparent hover:bg-white/[0.06]'
+              }`}
             >
-              Close
+              <Icon className="w-4 h-4" />
+              {act.name}
             </button>
-          </div>
-        </Modal>
+          );
+        })}
+      </div>
 
-        <p className="text-xs text-slate-600">
-          Tailwind v4 · Vite · React 19 · Turborepo
+      {/* Content */}
+      <Suspense fallback={
+        <div className="space-y-4">
+          {[1, 2, 3].map(i => <div key={i} className="card animate-pulse h-32" />)}
+        </div>
+      }>
+        {isFishing ? (
+          <FishingMode
+            windData={{ stations: [], speed: null }}
+            pressureData={null}
+            isLoading={false}
+            upstreamData={{}}
+          />
+        ) : (
+          <FlatwaterTemplate
+            selectedActivity={selectedActivity}
+            selectedLake={null}
+            activityConfig={{ name: selectedActivity === 'boating' ? 'Boating' : 'Paddling' }}
+            theme={theme}
+            currentWindSpeed={null}
+            currentWindGust={null}
+            currentWindDirection={null}
+            effectiveDecision={{}}
+            lakeState={null}
+            effectiveBoatingPrediction={null}
+            effectiveActivityScore={null}
+            effectiveBriefing={null}
+            pressureData={null}
+            isLoading={false}
+          />
+        )}
+      </Suspense>
+
+      {/* Status Footer */}
+      <div className="text-center space-y-2 pt-4 pb-8">
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20">
+          <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+          <span className="text-xs font-medium text-amber-400">
+            Weather data pending @utahwind/weather package
+          </span>
+        </div>
+        <p className="text-[11px] text-[var(--text-tertiary)]">
+          Domain logic is live — USGS water temps, fly/lure recommenders, fishing predictor.
+          <br />Live weather feed requires extracting WeatherService into a shared package.
         </p>
       </div>
     </div>
-  )
+  );
 }
 
 export default function App() {
   return (
     <ErrorBoundary name="Utah Water">
-      <WaterApp />
+      <ThemeProvider>
+        <WaterApp />
+      </ThemeProvider>
     </ErrorBoundary>
-  )
+  );
 }

@@ -1,36 +1,18 @@
 import React, { Suspense, lazy } from 'react';
 import { Wind, Brain, Lightbulb, Waves, Trophy, Calendar, ArrowUpRight, Users } from 'lucide-react';
-import { WindVector } from './WindVector';
 import { SafeComponent } from '@utahwind/ui';
-import DecisionCard from './DecisionCard';
-import TodayTimeline from './TodayTimeline';
-import ProGate from './ProGate';
 import { safeToFixed } from '../utils/safeToFixed';
 import { SPOT_SLUG_MAP } from '../config/spotSlugs';
 
-const SpotRanker = lazy(() => import('./SpotRanker'));
 const FishingMode = lazy(() => import('./FishingMode'));
 
 export default function FlatwaterTemplate({
   selectedActivity, selectedLake, activityConfig, theme,
-  currentWindSpeed, currentWindGust, currentWindDirection,
-  effectiveDecision, lakeState, history,
-  prediction, effectiveThermalPrediction, effectiveBoatingPrediction,
-  effectiveActivityScore, effectiveBriefing, pressureData,
-  mesoData, isLoading, onSelectSpot, contentRef,
+  currentWindSpeed, currentWindGust: _currentWindGust, currentWindDirection: _currentWindDirection,
+  effectiveDecision, lakeState,
+  effectiveBoatingPrediction, effectiveActivityScore,
+  effectiveBriefing, pressureData, isLoading,
 }) {
-  const pwsFromStations = lakeState?.wind?.stations?.find(s => s.isPWS || s.isYourStation);
-  const heroStation = pwsFromStations || lakeState?.wind?.stations?.[0];
-  const heroStationId = heroStation?.id || heroStation?.name;
-  const heroHistory = heroStationId ? history?.[heroStationId] : null;
-  const fallbackHistoryId = !heroHistory?.length && lakeState?.wind?.stations
-    ? lakeState.wind.stations.map(s => s.id).find(id => history?.[id]?.length > 0)
-    : null;
-  const effectiveHistory = heroHistory?.length ? heroHistory : (fallbackHistoryId ? history[fallbackHistoryId] : null);
-  const historySourceName = fallbackHistoryId && !heroHistory?.length
-    ? lakeState?.wind?.stations?.find(s => s.id === fallbackHistoryId)?.name
-    : null;
-
   const locName = lakeState?.config?.shortName || lakeState?.config?.name || selectedLake;
   const score = effectiveActivityScore?.score;
   const scoreColor = score >= 70 ? 'emerald' : score >= 40 ? 'amber' : 'red';
@@ -43,7 +25,7 @@ export default function FlatwaterTemplate({
 
   return (
     <>
-      {/* ═══════ HERO CARD: #1 spot sorted by lowest wind ═══════ */}
+      {/* ═══════ HERO CARD ═══════ */}
       <div className="card space-y-0 overflow-hidden">
         <div className="flex items-center justify-between gap-3 mb-3">
           <div className="flex-1 min-w-0">
@@ -52,12 +34,12 @@ export default function FlatwaterTemplate({
               <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-sky-500/10 text-sky-500">{activityConfig?.name}</span>
             </div>
             <div className="text-xs text-[var(--text-secondary)]">
-              {effectiveDecision.windSpeed != null ? `${Math.round(effectiveDecision.windSpeed)} mph` : '--'}
-              {effectiveDecision.windDirection != null && (() => {
+              {effectiveDecision?.windSpeed != null ? `${Math.round(effectiveDecision.windSpeed)} mph` : '--'}
+              {effectiveDecision?.windDirection != null && (() => {
                 const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
                 return ` ${dirs[Math.round(effectiveDecision.windDirection / 22.5) % 16]}`;
               })()}
-              {effectiveDecision.windGust > effectiveDecision.windSpeed * 1.2 && ` G${Math.round(effectiveDecision.windGust)}`}
+              {effectiveDecision?.windGust > effectiveDecision?.windSpeed * 1.2 && ` G${Math.round(effectiveDecision.windGust)}`}
             </div>
           </div>
           {score != null && (
@@ -67,39 +49,6 @@ export default function FlatwaterTemplate({
             </div>
           )}
         </div>
-
-        <DecisionCard
-          activity={selectedActivity}
-          windSpeed={effectiveDecision.windSpeed}
-          windGust={effectiveDecision.windGust}
-          windDirection={effectiveDecision.windDirection}
-          thermalPrediction={effectiveThermalPrediction}
-          boatingPrediction={effectiveBoatingPrediction}
-          briefing={effectiveBriefing}
-          locationName={locName}
-          unifiedDecision={prediction ? { decision: prediction.decision, confidence: prediction.confidence, headline: prediction.briefing?.headline, detail: prediction.briefing?.body, action: prediction.briefing?.bestAction } : null}
-        />
-
-        {heroStation && (
-          <div className="mt-3 pt-3 border-t border-[var(--border-subtle)]">
-            <div className="flex items-center gap-1.5 mb-2">
-              <Wind className="w-3 h-3 text-sky-500" />
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-tertiary)]">
-                Live at {heroStation.name || heroStationId}
-              </span>
-              {(heroStation.speed ?? heroStation.windSpeed) == null && (
-                <span className={`text-[9px] px-1.5 py-0.5 rounded ${theme === 'dark' ? 'bg-amber-500/15 text-amber-400' : 'bg-amber-100 text-amber-700'}`}>Offline</span>
-              )}
-              <span className={`ml-auto w-2 h-2 rounded-full ${(heroStation.speed ?? heroStation.windSpeed ?? 0) >= 5 ? 'bg-emerald-500 animate-pulse' : 'bg-slate-500'}`} />
-            </div>
-            <WindVector station={heroStation} history={effectiveHistory} isPersonalStation={heroStation.isPWS} compact />
-            {historySourceName && (
-              <div className={`text-[9px] mt-1 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
-                Trend from {historySourceName}
-              </div>
-            )}
-          </div>
-        )}
 
         {(sessionHours != null || glassEnd) && (
           <div className="mt-3 pt-3 border-t border-[var(--border-subtle)] flex flex-wrap gap-2">
@@ -160,10 +109,10 @@ export default function FlatwaterTemplate({
         </>);
       })()}
 
-      {/* ═══════ FISHING: Bite Score / Pressure / Temp ═══════ */}
+      {/* ═══════ FISHING INTELLIGENCE ═══════ */}
       {isFishing && (
-        <ProGate feature="Fishing Intelligence" preview="Bite rating, moon phase & more">
-          <SafeComponent name="Fishing Mode">
+        <SafeComponent name="Fishing Mode">
+          <Suspense fallback={<div className="card animate-pulse h-64" />}>
             <FishingMode
               windData={{ stations: lakeState?.wind?.stations, speed: currentWindSpeed }}
               pressureData={pressureData}
@@ -172,10 +121,9 @@ export default function FlatwaterTemplate({
                 kslcSpeed: lakeState?.kslcStation?.speed, kslcDirection: lakeState?.kslcStation?.direction,
                 kpvuSpeed: lakeState?.kpvuStation?.speed, kpvuDirection: lakeState?.kpvuStation?.direction,
               }}
-              hourlyForecast={prediction?.hourly}
             />
-          </SafeComponent>
-        </ProGate>
+          </Suspense>
+        </SafeComponent>
       )}
 
       {/* ═══════ SURFACE + PRESSURE CARD ═══════ */}
@@ -208,63 +156,6 @@ export default function FlatwaterTemplate({
         </div>
       </div>
 
-      {/* ═══════ WHERE TO GO (inverted: lowest wind wins) ═══════ */}
-      <div ref={contentRef} className="scroll-mt-4">
-        <SafeComponent name="Spot Ranker">
-          <SpotRanker
-            activity={selectedActivity}
-            currentWind={{ speed: currentWindSpeed, gust: currentWindGust, direction: currentWindDirection }}
-            lakeState={lakeState}
-            mesoData={mesoData}
-            thermalPrediction={effectiveThermalPrediction}
-            onSelectSpot={onSelectSpot}
-          />
-        </SafeComponent>
-      </div>
-
-      {/* ═══════ LIVE SENSOR NETWORK ═══════ */}
-      <div aria-live="polite" aria-atomic="false">
-        <h2 className="text-sm font-bold text-[var(--text-primary)] mb-3 flex items-center gap-2">
-          <Wind className="w-4 h-4 text-sky-500" />
-          Live Sensor Network
-          <span className="text-[10px] font-medium text-[var(--text-tertiary)] ml-auto">
-            {lakeState?.wind?.stations?.filter(s => (s.speed ?? s.windSpeed ?? 0) >= 5).length || 0} firing
-          </span>
-        </h2>
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
-          {lakeState?.wind?.stations?.map((station, index) => (
-            <WindVector
-              key={station.id || index}
-              station={station}
-              history={history[station.id]}
-              isPersonalStation={station.isPWS}
-              compact
-            />
-          ))}
-          {isLoading && !lakeState?.wind?.stations?.length && (
-            <>
-              {[1, 2, 3].map((i) => (
-                <div key={i} className={`rounded-lg p-3 animate-pulse ${theme === 'dark' ? 'bg-slate-800/40 border border-slate-700/50' : 'bg-white border border-slate-200'}`}>
-                  <div className="h-4 bg-[var(--border-color)] rounded w-2/3 mb-3" />
-                  <div className="flex gap-3">
-                    <div className="w-10 h-10 bg-[var(--border-color)] rounded-full" />
-                    <div className="flex-1 space-y-2">
-                      <div className="h-5 bg-[var(--border-color)] rounded w-1/2" />
-                      <div className="h-3 bg-[var(--border-color)] rounded w-3/4" />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* ═══════ HOURLY FORECAST ═══════ */}
-      <SafeComponent name="Today Timeline">
-        <TodayTimeline locationId={selectedLake} activity={selectedActivity} unifiedHourly={prediction?.hourly} />
-      </SafeComponent>
-
       {/* ═══════ AI BRIEFING ═══════ */}
       {effectiveBriefing && (
         <div className="card space-y-3">
@@ -295,6 +186,20 @@ export default function FlatwaterTemplate({
           )}
         </div>
       )}
+
+      {/* ═══════ PLACEHOLDER: Live Sensors & Timeline ═══════ */}
+      {/* WindVector, SpotRanker, and TodayTimeline are deeply coupled to the
+          wind app's WeatherService and WindFieldEngine. They'll be restored
+          once we extract those into @utahwind/weather. */}
+      <div className="card text-center py-8 opacity-60">
+        <Wind className="w-8 h-8 text-sky-500/40 mx-auto mb-2" />
+        <p className="text-sm text-[var(--text-tertiary)]">
+          Live sensor network &amp; hourly timeline coming soon
+        </p>
+        <p className="text-[11px] text-[var(--text-tertiary)] mt-1">
+          Pending @utahwind/weather shared package
+        </p>
+      </div>
     </>
   );
 }
