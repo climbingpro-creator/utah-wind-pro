@@ -38,6 +38,7 @@
     "@tailwindcss/vite": "^4.2.1",
     "@upstash/qstash": "^2.10.1",
     "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.37.0",
     "axios": "^1.13.6",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.577.0",
