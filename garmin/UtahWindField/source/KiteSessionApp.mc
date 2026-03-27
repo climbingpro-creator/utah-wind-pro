@@ -50,15 +50,84 @@ class KiteSessionApp extends Application.AppBase {
 
     function addTrackPoint(lat, lon) {
         if (trackCount >= MAX_TRACK) {
-            for (var i = 0; i < MAX_TRACK - 1; i++) {
-                trackLats[i] = trackLats[i + 1];
-                trackLons[i] = trackLons[i + 1];
-            }
-            trackCount = MAX_TRACK - 1;
+            _simplifyTrack();
         }
         trackLats[trackCount] = lat;
         trackLons[trackCount] = lon;
         trackCount++;
+    }
+
+    //! Perpendicular-distance decimation (simplified Douglas-Peucker).
+    //! Computes each internal point's significance as the squared area of
+    //! the triangle formed with its two neighbors. Points contributing
+    //! least to the track's shape are discarded until ~half remain,
+    //! preserving the full session geometry while freeing buffer space.
+    hidden function _simplifyTrack() {
+        if (trackCount < 6) { return; }
+
+        var target = MAX_TRACK / 2;
+        var n = trackCount;
+
+        // Allocate significance scores — first and last are always kept
+        var sig = new [n];
+        sig[0]     = 1.0e12;
+        sig[n - 1] = 1.0e12;
+
+        var minSig = 1.0e12;
+        var maxSig = 0.0;
+
+        for (var i = 1; i < n - 1; i++) {
+            // Signed cross product = 2x triangle area formed by (i-1, i, i+1)
+            var dx1 = trackLons[i]   - trackLons[i - 1];
+            var dy1 = trackLats[i]   - trackLats[i - 1];
+            var dx2 = trackLons[i + 1] - trackLons[i - 1];
+            var dy2 = trackLats[i + 1] - trackLats[i - 1];
+
+            var cross = dx1 * dy2 - dy1 * dx2;
+            var s = cross * cross;
+            sig[i] = s;
+
+            if (s < minSig) { minSig = s; }
+            if (s > maxSig) { maxSig = s; }
+        }
+
+        // Binary search for the threshold that keeps approximately `target` points
+        var lo = minSig;
+        var hi = maxSig;
+        var threshold = lo;
+
+        for (var iter = 0; iter < 20; iter++) {
+            var mid = (lo + hi) / 2.0;
+            var kept = 0;
+            for (var k = 0; k < n; k++) {
+                if (sig[k] >= mid) { kept++; }
+            }
+            if (kept > target) {
+                lo = mid;
+                threshold = mid;
+            } else {
+                hi = mid;
+            }
+        }
+
+        // Compact in-place: keep only points above the threshold
+        var w = 0;
+        for (var i = 0; i < n; i++) {
+            if (sig[i] >= threshold) {
+                if (w != i) {
+                    trackLats[w] = trackLats[i];
+                    trackLons[w] = trackLons[i];
+                }
+                w++;
+            }
+        }
+        trackCount = w;
+
+        // Null out freed slots so MapView can guard against stale data
+        for (var i = w; i < MAX_TRACK; i++) {
+            trackLats[i] = null;
+            trackLons[i] = null;
+        }
     }
 
     function startSession() {

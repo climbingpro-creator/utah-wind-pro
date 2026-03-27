@@ -92,12 +92,14 @@ class MapView extends WatchUi.View {
             return;
         }
 
-        // Compute bounding box
+        // Compute bounding box (null-safe after track compaction)
         var minLat = _lats[0];
         var maxLat = _lats[0];
         var minLon = _lons[0];
         var maxLon = _lons[0];
+        if (minLat == null) { return; }
         for (var i = 1; i < _count; i++) {
+            if (_lats[i] == null || _lons[i] == null) { continue; }
             if (_lats[i] < minLat) { minLat = _lats[i]; }
             if (_lats[i] > maxLat) { maxLat = _lats[i]; }
             if (_lons[i] < minLon) { minLon = _lons[i]; }
@@ -124,14 +126,16 @@ class MapView extends WatchUi.View {
         var drawH = H - margin * 2 - H * 10 / 100;
         var drawTop = margin + H * 10 / 100;
 
-        // Draw breadcrumb trail
+        // Draw breadcrumb trail (null-safe after track compaction)
         var prevPx = 0;
         var prevPy = 0;
+        var prevValid = false;
         for (var i = 0; i < _count; i++) {
+            if (_lats[i] == null || _lons[i] == null) { prevValid = false; continue; }
             var px = margin + (((_lons[i] - minLon) / lonRange) * drawW).toNumber();
             var py = drawTop + (((maxLat - _lats[i]) / latRange) * drawH).toNumber();
 
-            if (i > 0) {
+            if (prevValid) {
                 // Trail color: older = darker, newer = brighter
                 var age = _count - i;
                 if (age > 100) {
@@ -145,6 +149,7 @@ class MapView extends WatchUi.View {
             }
             prevPx = px;
             prevPy = py;
+            prevValid = true;
         }
 
         // Current position dot (bright white with green halo)
