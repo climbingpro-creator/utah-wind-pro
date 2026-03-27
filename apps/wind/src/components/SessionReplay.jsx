@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Rewind, CheckCircle, XCircle, AlertTriangle, TrendingUp, Clock, ChevronDown, ChevronUp, BarChart3 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
-import { sessionService } from '../services/SessionValidation';
+import { sessionService } from '@utahwind/weather';
 import { safeToFixed } from '../utils/safeToFixed';
 
 /**

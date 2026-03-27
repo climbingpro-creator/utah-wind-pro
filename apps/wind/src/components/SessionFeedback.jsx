@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Star, X, CheckCircle, MapPin, Clock, Send } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
-import { sessionService } from '../services/SessionValidation';
+import { sessionService } from '@utahwind/weather';
 import { generateSmartForecast } from '../services/SmartForecastEngine';
 
 const QUALITY_OPTIONS = [

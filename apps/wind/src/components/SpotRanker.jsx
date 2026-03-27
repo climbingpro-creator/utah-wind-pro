@@ -2,8 +2,8 @@ import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { MapPin, ChevronDown, ChevronUp, Trophy, Radio, AlertTriangle } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { ACTIVITY_CONFIGS } from './ActivityMode';
-import { LAKE_CONFIGS } from '../config/lakeStations';
-import { STATION_NODES, PROPAGATION_EDGES, LOCATION_STATIONS } from '../services/WindFieldEngine';
+import { LAKE_CONFIGS } from '@utahwind/weather';
+import { STATION_NODES, PROPAGATION_EDGES, LOCATION_STATIONS } from '@utahwind/weather';
 import { safeToFixed } from '../utils/safeToFixed';
 
 const KITE_SPOT_IDS = new Set([

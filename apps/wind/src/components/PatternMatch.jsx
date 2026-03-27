@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { History, Calendar, Wind, ChevronDown, ChevronUp, Target } from 'lucide-react';
-import { apiUrl } from '../utils/platform';
+import { apiUrl } from '@utahwind/weather';
 import { safeToFixed } from '../utils/safeToFixed';
 
 const EVENT_LABELS = {

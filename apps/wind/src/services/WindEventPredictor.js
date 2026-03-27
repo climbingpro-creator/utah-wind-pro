@@ -31,8 +31,8 @@
  * historical patterns from the learning system.
  */
 
-import { LAKE_CONFIGS } from '../config/lakeStations';
-import { apiUrl } from '../utils/platform';
+import { LAKE_CONFIGS } from '@utahwind/weather';
+import { apiUrl } from '@utahwind/weather';
 import { safeToFixed } from '../utils/safeToFixed';
 
 let learnedPatterns = null;

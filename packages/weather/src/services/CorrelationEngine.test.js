@@ -25,7 +25,7 @@ vi.mock('../config/mesoRegistry.json', () => ({
   },
 }));
 
-import { calculateCorrelatedWind } from './CorrelationEngine';
+import { calculateCorrelatedWind } from '@utahwind/weather';
 
 describe('calculateCorrelatedWind', () => {
   it('returns baseline when lakeId has no config', () => {

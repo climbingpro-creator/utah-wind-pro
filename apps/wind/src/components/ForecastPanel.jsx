@@ -1,6 +1,6 @@
 import { useState, useEffect, createElement } from 'react';
 import { Bell, BellOff, Calendar, Sun, Clock, TrendingUp, AlertCircle, CheckCircle } from 'lucide-react';
-import { getFullForecast, FORECAST_STAGES } from '../services/ForecastService';
+import { getFullForecast, FORECAST_STAGES } from '@utahwind/weather';
 
 export function ForecastPanel({ lakeId, conditions, isLoading }) {
   const [forecast, setForecast] = useState(null);

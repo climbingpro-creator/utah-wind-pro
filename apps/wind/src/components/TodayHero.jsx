@@ -3,7 +3,7 @@ import { Clock, ChevronRight, ArrowUpRight, Zap, CheckCircle, XCircle } from 'lu
 import { useTheme } from '../context/ThemeContext';
 import { ACTIVITY_CONFIGS } from './ActivityMode';
 import { getRotatingImage } from '../config/imagePool';
-import { estimateSessionDuration } from '../services/ThermalPropagation';
+import { estimateSessionDuration } from '@utahwind/weather';
 
 const ALL_ACTIVITIES = ['kiting', 'paragliding', 'sailing', 'snowkiting', 'boating', 'paddling', 'fishing', 'windsurfing'];
 

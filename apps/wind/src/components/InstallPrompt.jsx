@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Download, X } from 'lucide-react';
-import { isNativeApp } from '../utils/platform';
+import { isNativeApp } from '@utahwind/weather';
 
 const DISMISS_KEY = 'pwa-install-dismissed';
 const DISMISS_DAYS = 14;

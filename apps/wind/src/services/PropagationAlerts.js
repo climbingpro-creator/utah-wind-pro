@@ -16,7 +16,7 @@
  * BEFORE the wind arrives, not after.
  */
 
-import { STATION_NODES, PROPAGATION_EDGES, LOCATION_STATIONS } from './WindFieldEngine';
+import { STATION_NODES, PROPAGATION_EDGES, LOCATION_STATIONS } from '@utahwind/weather';
 import { safeToFixed } from '../utils/safeToFixed';
 
 function isInHeadingRange(dir, range) {

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { weatherService } from '../services/WeatherService';
-import { LakeState, getProbabilityStatus } from '../services/DataNormalizer';
+import { weatherService } from '@utahwind/weather';
+import { LakeState, getProbabilityStatus } from '@utahwind/weather';
 
 const REFRESH_INTERVAL = 60 * 1000;
 const HISTORY_REFRESH_INTERVAL = 5 * 60 * 1000;

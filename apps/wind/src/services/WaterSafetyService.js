@@ -10,9 +10,9 @@
  *   3. PRESSURE & WEATHER ALERTS — detect pressure changes and cloud cover shifts
  */
 
-import { weatherService } from './WeatherService';
-import { monitorSwings } from './FrontalTrendPredictor';
-import { generateWindField } from './WindFieldEngine';
+import { weatherService } from '@utahwind/weather';
+import { monitorSwings } from '@utahwind/weather';
+import { generateWindField } from '@utahwind/weather';
 import { safeToFixed } from '../utils/safeToFixed';
 
 const UPSTREAM_STATIONS = {

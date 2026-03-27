@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Clock, Wind, Navigation, ChevronRight } from 'lucide-react';
-import { apiUrl } from '../utils/platform';
+import { apiUrl } from '@utahwind/weather';
 import { ACTIVITY_CONFIGS } from './ActivityMode';
-import { getHourlyForecast } from '../services/ForecastService';
+import { getHourlyForecast } from '@utahwind/weather';
 
 const LAKE_TO_GRID = {
   'utah-lake-lincoln': 'utah-lake', 'utah-lake-sandy': 'utah-lake',

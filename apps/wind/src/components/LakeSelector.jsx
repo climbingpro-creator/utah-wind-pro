@@ -1,7 +1,7 @@
 import { MapPin, ChevronDown, ChevronUp, Wind, Snowflake, Mountain, Fish, Anchor, Crown, Thermometer, Clock, ArrowRight, TrendingUp, Droplets } from 'lucide-react';
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
-import { LAKE_CONFIGS } from '../config/lakeStations';
+import { LAKE_CONFIGS } from '@utahwind/weather';
 import { safeToFixed } from '../utils/safeToFixed';
 
 const UTAH_LAKE_LAUNCHES = [

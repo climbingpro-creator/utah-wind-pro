@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Target, TrendingUp, Clock, Zap, Shield, BarChart3, ChevronDown, ChevronUp } from 'lucide-react';
-import { apiUrl } from '../utils/platform';
+import { apiUrl } from '@utahwind/weather';
 import { fetchWithRetry } from '../utils/fetchWithRetry';
 
 const EVENT_LABELS = {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Brain, TrendingUp, TrendingDown, Minus, Database, RefreshCw, Download, Activity, Target, Zap } from 'lucide-react';
-import { learningSystem } from '../services/LearningSystem';
+import { learningSystem } from '@utahwind/weather';
 import { dataCollector } from '../services/DataCollector';
 import { safeToFixed } from '../utils/safeToFixed';
 

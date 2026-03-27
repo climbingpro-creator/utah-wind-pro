@@ -13,7 +13,7 @@
  * This engine just interprets what that wind means for each activity.
  */
 
-import { generateWindField } from './WindFieldEngine';
+import { generateWindField } from '@utahwind/weather';
 import { safeToFixed } from '../utils/safeToFixed';
 import { ACTIVITY_CONFIGS } from '../components/ActivityMode';
 

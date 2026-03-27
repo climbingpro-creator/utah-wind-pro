@@ -11,19 +11,19 @@
  * - Every 24 hours: Trigger learning cycle if enough data
  */
 
-import { learningSystem } from './LearningSystem';
-import { weatherService } from './WeatherService';
-import { LakeState } from './DataNormalizer';
-import { LAKE_CONFIGS, getAllStationIds } from '../config/lakeStations';
-import { setLearnedWeights, setStatisticalModels as setThermalStatisticalModels } from './ThermalPredictor';
+import { learningSystem } from '@utahwind/weather';
+import { weatherService } from '@utahwind/weather';
+import { LakeState } from '@utahwind/weather';
+import { LAKE_CONFIGS, getAllStationIds } from '@utahwind/weather';
+import { setLearnedWeights, setStatisticalModels as setThermalStatisticalModels } from '@utahwind/weather';
 import { setParaglidingLearnedWeights, predictParagliding } from './ParaglidingPredictor';
 import { setBoatingLearnedWeights } from './BoatingPredictor';
 
-import { setWindFieldLearnedWeights } from './WindFieldEngine';
+import { setWindFieldLearnedWeights } from '@utahwind/weather';
 import { scoreSessionForActivity } from './ActivityScoring';
 import { predictWindEvents, setWindEventLearnedPatterns, getUpstreamSignals, setStatisticalModels as setWindEventStatisticalModels } from './WindEventPredictor';
-import { setLearnedLags, setLearnedSessions, validateHistorical, lagAdjustmentsFromValidation } from './ThermalPropagation';
-import { apiUrl } from '../utils/platform';
+import { setLearnedLags, setLearnedSessions, validateHistorical, lagAdjustmentsFromValidation } from '@utahwind/weather';
+import { apiUrl } from '@utahwind/weather';
 import { safeToFixed } from '../utils/safeToFixed';
 
 function getAllLakeIds() {

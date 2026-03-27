@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { monitorSwings, isFrontalPassage } from './FrontalTrendPredictor';
+import { monitorSwings, isFrontalPassage } from '@utahwind/weather';
 
 /** Build ISO timestamps: oldest → newest, last = now */
 function series(minuteOffsets, fill) {

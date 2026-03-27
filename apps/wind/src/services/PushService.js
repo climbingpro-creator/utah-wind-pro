@@ -8,7 +8,7 @@
  *  3. Call getPushStatus() — returns 'subscribed' | 'unsubscribed' | 'denied' | 'unsupported'
  */
 
-import { apiUrl } from '../utils/platform';
+import { apiUrl } from '@utahwind/weather';
 
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
 

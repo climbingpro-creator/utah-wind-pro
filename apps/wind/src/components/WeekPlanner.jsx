@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Calendar, Loader2, AlertCircle } from 'lucide-react';
 import { analyzeDailyTrends, findPreFrontalDays, getWeekOutlook } from '../services/PatternLogic';
-import { get7DayForecast } from '../services/ForecastService';
+import { get7DayForecast } from '@utahwind/weather';
 import { useTheme } from '../context/ThemeContext';
 
 const WIND_SEEKING = new Set(['kiting', 'sailing', 'windsurfing']);

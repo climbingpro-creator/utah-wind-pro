@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AlertTriangle, AlertCircle, Info, Wind, ChevronDown, ChevronUp, ExternalLink, Clock, MapPin } from 'lucide-react';
-import { getActiveAlerts } from '../services/ForecastService';
+import { getActiveAlerts } from '@utahwind/weather';
 
 const SEVERITY_CONFIG = {
   Extreme: {

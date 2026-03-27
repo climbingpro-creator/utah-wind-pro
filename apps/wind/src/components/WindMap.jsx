@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline, Circle } from 'react-leaflet';
 import L from 'leaflet';
 import { Compass, Maximize2, X, Wind } from 'lucide-react';
-import { LAKE_CONFIGS } from '../config/lakeStations';
+import { LAKE_CONFIGS } from '@utahwind/weather';
 import { safeToFixed } from '../utils/safeToFixed';
 // Fix Leaflet default marker icon issue (use matching 1.9.4 assets)
 delete L.Icon.Default.prototype._getIconUrl;

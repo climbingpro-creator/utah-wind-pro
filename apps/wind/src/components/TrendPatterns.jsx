@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { TrendingDown, TrendingUp, Zap, Calendar } from 'lucide-react';
-import { get7DayForecast } from '../services/ForecastService';
+import { get7DayForecast } from '@utahwind/weather';
 import { analyzeDailyTrends, findPreFrontalDays, getWeekOutlook } from '../services/PatternLogic';
 import { useTheme } from '../context/ThemeContext';
 

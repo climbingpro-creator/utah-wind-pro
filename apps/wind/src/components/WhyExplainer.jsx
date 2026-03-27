@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Lightbulb, ChevronDown, ChevronUp, Wind, Thermometer, Gauge, Navigation, AlertTriangle, Sun, CloudRain } from 'lucide-react';
-import { apiUrl } from '../utils/platform';
+import { apiUrl } from '@utahwind/weather';
 import { safeToFixed } from '../utils/safeToFixed';
 
 const EVENT_CONFIG = {

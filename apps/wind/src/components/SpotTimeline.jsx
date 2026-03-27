@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Clock, Navigation, Wind, CloudSun, ChevronDown, ChevronUp, Zap, Eye } from 'lucide-react';
-import { apiUrl } from '../utils/platform';
+import { apiUrl } from '@utahwind/weather';
 
 // NWS grid mapping — must match server-side LAKE_TO_GRID in nwsForecast.js
 const LAKE_TO_GRID = {

@@ -1,5 +1,5 @@
 import { AlertTriangle, CheckCircle, AlertCircle, XCircle, Wind, Anchor, ShieldAlert, ShieldCheck } from 'lucide-react';
-import { LAKE_CONFIGS } from '../config/lakeStations';
+import { LAKE_CONFIGS } from '@utahwind/weather';
 import { safeToFixed } from '../utils/safeToFixed';
 
 /**

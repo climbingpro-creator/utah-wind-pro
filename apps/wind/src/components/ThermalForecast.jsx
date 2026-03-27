@@ -1,5 +1,5 @@
 import { Clock, Navigation, Wind, TrendingUp, AlertCircle, CheckCircle, XCircle, Calendar, BarChart3 } from 'lucide-react';
-import { predictThermal, formatTimeUntil, getDirectionInfo } from '../services/ThermalPredictor';
+import { predictThermal, formatTimeUntil, getDirectionInfo } from '@utahwind/weather';
 import { safeToFixed } from '../utils/safeToFixed';
 
 export function ThermalForecast({ lakeId, currentConditions, pressureGradient, thermalDelta, pumpActive, inversionTrapped, isLoading }) {

@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { ArrowDown, Wind, Thermometer, Radio, CheckCircle, Circle, Zap } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
-import { STATION_NODES, PROPAGATION_EDGES, LOCATION_STATIONS } from '../services/WindFieldEngine';
+import { STATION_NODES, PROPAGATION_EDGES, LOCATION_STATIONS } from '@utahwind/weather';
 
 // Build cascade paths dynamically from the WindFieldEngine's propagation graph
 function buildNorthCascade(locationId) {
