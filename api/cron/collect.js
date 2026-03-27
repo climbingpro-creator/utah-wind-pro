@@ -25,7 +25,7 @@
  *   ?action=build-models — manual statistical model rebuild
  */
 
-import { runServerLearningCycle, backfillHistorical, loadWeights, loadMeta } from '../lib/serverLearning.js';
+import { backfillHistorical, loadWeights, loadMeta } from '../lib/serverLearning.js';
 import { buildStatisticalModels } from '../lib/historicalAnalysis.js';
 import { LAKE_STATION_MAP, ALL_STATION_IDS } from '../lib/stations.js';
 import { backfillPWSHistory, getPropagationData } from '../lib/serverPropagation.js';

@@ -14,11 +14,10 @@
  * This is the heaviest stage — gets the most maxDuration.
  */
 
-import { runServerLearningCycle, loadWeights } from '../lib/serverLearning.js';
+import { runServerLearningCycle } from '../lib/serverLearning.js';
 import { analyzeFromStations, analyzeAllSpots, storePropagationSnapshot, learnFromPropagation } from '../lib/serverPropagation.js';
 import { buildStatisticalModels } from '../lib/historicalAnalysis.js';
 import { LAKE_STATION_MAP, ALL_STATION_IDS } from '../lib/stations.js';
-import { fetchNWSForecasts } from '../lib/nwsForecast.js';
 import {
   getEnv, redisCommand, redisMGet, hasRedis,
   toMountainHour, verifyInternalKey, triggerNextStage,
