@@ -39,6 +39,10 @@
     "@capacitor/splash-screen": "^8.0.1",
     "@capacitor/status-bar": "^8.0.1",
     "@supabase/supabase-js": "^2.49.1",
+    "@utahwind/database": "workspace:*",
+    "@upstash/qstash": "^2.10.1",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.37.0",
     "@tailwindcss/vite": "^4.2.1",
     "axios": "^1.13.6",
     "leaflet": "^1.9.4",
@@ -48,11 +52,13 @@
     "react-leaflet": "^5.0.0",
     "stripe": "^17.5.0",
     "tailwindcss": "^4.2.1",
-    "web-push": "^3.6.7"
+    "web-push": "^3.6.7",
+    "zustand": "^5.0.12"
   },
   "devDependencies": {
     "@capacitor/assets": "^3.0.5",
     "@eslint/js": "^9.39.1",
+    "@utahwind/config": "workspace:*",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.1",
@@ -63,6 +69,7 @@
     "sharp": "^0.34.5",
     "vite": "^7.3.1",
     "vite-plugin-pwa": "^1.2.0",
+    "turbo": "^2.5.3",
     "vitest": "^4.1.0"
   }
 }

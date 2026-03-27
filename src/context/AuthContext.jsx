@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '@utahwind/database';
 import { apiUrl } from '../utils/platform';
 
 const TRIAL_KEY = 'uwf_trial_start';
