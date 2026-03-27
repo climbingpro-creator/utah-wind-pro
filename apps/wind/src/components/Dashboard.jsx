@@ -11,14 +11,14 @@ import { ACTIVITY_CONFIGS, calculateActivityScore, calculateGlassScore } from '.
 import { predictGlass } from '../services/BoatingPredictor';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
-import { SafeComponent } from './ErrorBoundary';
+import { SafeComponent } from '@utahwind/ui';
 import ProGate from './ProGate';
 import { calculateCorrelatedWind } from '../services/CorrelationEngine';
 import { monitorSwings } from '../services/FrontalTrendPredictor';
 import { generateBriefing } from '../services/MorningBriefing';
 import TodayHero from './TodayHero';
 import ModelStepCard from './ModelStepCard';
-import Modal from './Modal';
+import { Modal } from '@utahwind/ui';
 import AppHeader from './AppHeader';
 import { Trophy, Calendar, ArrowUpRight, Users } from 'lucide-react';
 import { SPOT_SLUG_MAP } from '../config/spotSlugs';

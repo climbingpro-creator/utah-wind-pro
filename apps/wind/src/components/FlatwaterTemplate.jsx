@@ -1,7 +1,7 @@
 import React, { Suspense, lazy } from 'react';
 import { Wind, Brain, Lightbulb, Waves, Trophy, Calendar, ArrowUpRight, Users } from 'lucide-react';
 import { WindVector } from './WindVector';
-import { SafeComponent } from './ErrorBoundary';
+import { SafeComponent } from '@utahwind/ui';
 import DecisionCard from './DecisionCard';
 import TodayTimeline from './TodayTimeline';
 import ProGate from './ProGate';

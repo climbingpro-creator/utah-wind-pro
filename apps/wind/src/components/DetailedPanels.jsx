@@ -7,10 +7,10 @@ import { ThermalStatus } from './ThermalStatus';
 import { ThermalForecast } from './ThermalForecast';
 import { NorthFlowGauge } from './NorthFlowGauge';
 import { KiteSafetyIndicator } from './KiteSafety';
-import { SafeComponent } from './ErrorBoundary';
+import { SafeComponent } from '@utahwind/ui';
 import ProGate from './ProGate';
 import PrimaryWindDisplay from './PrimaryWindDisplay';
-import FactorBar from './FactorBar';
+import { FactorBar } from '@utahwind/ui';
 import { safeToFixed } from '../utils/safeToFixed';
 
 const WindMap = lazy(() => import('./WindMap').then(m => ({ default: m.WindMap })));

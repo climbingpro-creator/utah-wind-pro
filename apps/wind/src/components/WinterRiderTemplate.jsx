@@ -1,7 +1,7 @@
 import React, { Suspense, lazy } from 'react';
 import { Wind, Brain, Lightbulb, Mountain, Trophy, Calendar, ArrowUpRight, Users } from 'lucide-react';
 import { WindVector } from './WindVector';
-import { SafeComponent } from './ErrorBoundary';
+import { SafeComponent } from '@utahwind/ui';
 import DecisionCard from './DecisionCard';
 import TodayTimeline from './TodayTimeline';
 import { SPOT_SLUG_MAP } from '../config/spotSlugs';

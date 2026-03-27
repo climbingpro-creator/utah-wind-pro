@@ -4,7 +4,7 @@ import { InstallPrompt } from './components/InstallPrompt';
 import { dataCollector } from './services/DataCollector';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
-import { ErrorBoundary } from './components/ErrorBoundary';
+import { ErrorBoundary } from '@utahwind/ui';
 
 function useSWRegistration() {
   const [updateReady, setUpdateReady] = useState(false);
