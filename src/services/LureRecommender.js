@@ -8,6 +8,7 @@
  *   • Shore casting (spoons, spinners, bobber rigs, bottom rigs)
  *
  * Weather × species × method × season → ranked recommendations
+ * Ecosystem-aware: forage matching, clarity-driven colors, thermocline-adjusted trolling
  */
 
 // ─── LURE DATABASE ──────────────────────────────────────────────────
@@ -115,21 +116,40 @@ function getWalleyeSeason(waterTemp, month) {
 
 // ─── COLOR RECOMMENDATION ───────────────────────────────────────────
 
-export function getColorRecommendation(sky, waterClarity) {
+export function getColorRecommendation(sky, waterClarity, ecosystem) {
   const clear = waterClarity === 'clear';
+  const visFt = ecosystem?.waterClarity?.visibilityFt;
+  const season = _currentSeason;
+  const vis = visFt?.[season] ?? null;
+  const ultraClear = vis != null && vis >= 15;
+  const veryStained = vis != null && vis <= 3;
+
+  const forageColors = [];
+  if (ecosystem?.forage) {
+    [...(ecosystem.forage.primary || []), ...(ecosystem.forage.secondary || [])].forEach(f => {
+      (f.matchLure || []).forEach(c => { if (!forageColors.includes(c)) forageColors.push(c); });
+    });
+  }
+  const forageHint = forageColors.length > 0 ? ` [Forage match: ${forageColors.slice(0, 3).join(', ')}]` : '';
+
   if (sky === 'overcast' || sky === 'cloudy' || sky === 'rain') {
-    return { primary: 'Chartreuse / White', secondary: 'Firetiger', reason: clear ? 'Overcast + clear water — bright colors with subtlety' : 'Low light + stained — maximum visibility' };
+    if (veryStained) return { primary: 'Chartreuse / Black', secondary: 'Firetiger', reason: `Low light + very stained water (${vis} ft vis) — maximum contrast and vibration${forageHint}` };
+    return { primary: 'Chartreuse / White', secondary: 'Firetiger', reason: (clear ? 'Overcast + clear water — bright colors with subtlety' : 'Low light + stained — maximum visibility') + forageHint };
   }
   if (sky === 'clear' || sky === 'partly') {
-    return { primary: clear ? 'Natural / Smoke / Translucent' : 'Silver / Chrome', secondary: clear ? 'Watermelon / Green Pumpkin' : 'Gold / Crawfish', reason: clear ? 'Bright + clear — natural colors, let action do the work' : 'Bright sun + stained — flash and vibration' };
+    if (ultraClear) return { primary: 'Natural / Smoke / Translucent', secondary: 'Watermelon / Ghost', reason: `Ultra-clear water (${vis} ft vis) — downsize, go natural, long fluorocarbon leader essential${forageHint}` };
+    if (veryStained) return { primary: 'Chartreuse / Gold', secondary: 'Black/Blue', reason: `Bright sky but stained water (${vis} ft vis) — vibration and flash rule${forageHint}` };
+    return { primary: clear ? 'Natural / Smoke / Translucent' : 'Silver / Chrome', secondary: clear ? 'Watermelon / Green Pumpkin' : 'Gold / Crawfish', reason: (clear ? 'Bright + clear — natural colors, let action do the work' : 'Bright sun + stained — flash and vibration') + forageHint };
   }
-  return { primary: 'Natural', secondary: 'Chartreuse', reason: 'General conditions — start natural, go brighter if no bites' };
+  return { primary: 'Natural', secondary: 'Chartreuse', reason: 'General conditions — start natural, go brighter if no bites' + forageHint };
 }
+
+let _currentSeason = 'summer';
 
 
 // ─── TROLLING DEPTH CALCULATOR ──────────────────────────────────────
 
-export function getTrollingSetup(species, season, waterTemp) {
+export function getTrollingSetup(species, season, waterTemp, ecosystem) {
   const setups = {
     'Kokanee Salmon': {
       spring: { depth: [15, 30], speed: '1.0-1.5 mph', rig: 'Dodger + hoochie or wedding ring + corn', note: 'Follow 52-55°F thermocline' },
@@ -182,7 +202,18 @@ export function getTrollingSetup(species, season, waterTemp) {
     if (waterTemp < optTemp - 8) return 'Water cold — fish shallower and slower';
     return 'Water temp is in the zone — fish at listed depths';
   })() : null;
-  return { ...data, tempAdvice: tempAdjust };
+
+  const result = { ...data, tempAdvice: tempAdjust };
+
+  const thermo = ecosystem?.thermocline?.[season];
+  if (thermo?.depth) {
+    result.thermoclineDepth = thermo.depth;
+    result.thermoclineTemp = thermo.tempRange;
+    result.depth = thermo.depth;
+    result.thermoclineNote = `Real thermocline data: ${thermo.depth[0]}-${thermo.depth[1]} ft (${thermo.tempRange[0]}-${thermo.tempRange[1]}°F)`;
+  }
+
+  return result;
 }
 
 
@@ -232,7 +263,7 @@ export function getShoreStrategy(locationConfig, windDir, windSpeed, species) {
 
 // ─── RULES ENGINE: BUILD LURE CANDIDATES ────────────────────────────
 
-function buildLureCandidates({ month, waterTemp, windSpeed, sky, pressureTrend, hour, species, locationType }) {
+function buildLureCandidates({ month, waterTemp, windSpeed, sky, pressureTrend, hour, species, locationType, ecosystem }) {
   const season = getSeason(month);
   const candidates = [];
   const isDawn = hour >= 4 && hour <= 8;
@@ -245,6 +276,15 @@ function buildLureCandidates({ month, waterTemp, windSpeed, sky, pressureTrend, 
   const isRisingPressure = pressureTrend === 'rising';
   const isOvercast = ['overcast', 'cloudy', 'rain', 'drizzle'].includes(sky);
   const hasSpecies = (s) => species?.includes(s);
+
+  const eco = ecosystem || null;
+  const forageNames = (eco?.forage?.primary || []).map(f => f.name.toLowerCase());
+  const hasCrawfishForage = eco?.invertebrates?.crayfish === 'high' || eco?.invertebrates?.crayfish === 'moderate';
+  const hasShadForage = forageNames.some(n => n.includes('shad'));
+  const hasPerchForage = forageNames.some(n => n.includes('perch'));
+  const hasChubForage = forageNames.some(n => n.includes('chub'));
+  const hasBluegillForage = forageNames.some(n => n.includes('bluegill'));
+  const ecoClarity = eco?.waterClarity?.typical;
 
   function add(key, confidence, reason, timeWindow) {
     if (LURES[key]) candidates.push({ lureKey: key, confidence, reason, timeWindow: timeWindow || 'all-day' });
@@ -435,6 +475,55 @@ function buildLureCandidates({ month, waterTemp, windSpeed, sky, pressureTrend, 
     }
   }
 
+  // ── ECOSYSTEM FORAGE MATCHING ──
+  if (eco && candidates.length > 0) {
+    candidates.forEach(c => {
+      const l = LURES[c.lureKey];
+      if (!l) return;
+      const lColors = (l.colors || []).map(x => x.toLowerCase());
+
+      if (hasShadForage && lColors.some(x => x.includes('shad') || x.includes('silver') || x.includes('chrome') || x.includes('white'))) {
+        c.confidence = Math.min(100, c.confidence + 8);
+        c.reason += ' [Forage: shad-dominant ecosystem]';
+      }
+      if (hasCrawfishForage && (lColors.some(x => x.includes('craw') || x.includes('orange') || x.includes('brown')) || l.category === 'soft-plastic' && l.name.toLowerCase().includes('craw'))) {
+        c.confidence = Math.min(100, c.confidence + 8);
+        c.reason += ' [Forage: crayfish-rich water]';
+      }
+      if (hasPerchForage && lColors.some(x => x.includes('perch') || x.includes('firetiger') || x.includes('chartreuse'))) {
+        c.confidence = Math.min(100, c.confidence + 6);
+        c.reason += ' [Forage: perch present]';
+      }
+      if (hasChubForage && lColors.some(x => x.includes('natural') || x.includes('silver') || x.includes('minnow'))) {
+        c.confidence = Math.min(100, c.confidence + 5);
+        c.reason += ' [Forage: chub baitfish]';
+      }
+      if (hasBluegillForage && lColors.some(x => x.includes('bluegill') || x.includes('green'))) {
+        c.confidence = Math.min(100, c.confidence + 6);
+        c.reason += ' [Forage: bluegill present]';
+      }
+    });
+
+    if (ecoClarity === 'turbid' || (eco.waterClarity?.visibilityFt?.[season] ?? 99) <= 3) {
+      candidates.forEach(c => {
+        const l = LURES[c.lureKey];
+        if (l && (l.retrieve === 'steady' || l.retrieve === 'burn' || l.category === 'bait')) {
+          c.confidence = Math.min(100, c.confidence + 4);
+          c.reason += ' [Turbid water — vibration & scent advantage]';
+        }
+      });
+    }
+    if (ecoClarity === 'clear' && (eco.waterClarity?.visibilityFt?.[season] ?? 0) >= 12) {
+      candidates.forEach(c => {
+        const l = LURES[c.lureKey];
+        if (l && (l.retrieve === 'finesse' || l.retrieve === 'deadfall' || l.retrieve === 'drag')) {
+          c.confidence = Math.min(100, c.confidence + 4);
+          c.reason += ' [Clear water — finesse rewarded]';
+        }
+      });
+    }
+  }
+
   // ── UNIVERSAL PRESSURE RULES ──
   if (isFallingPressure && candidates.length > 0) {
     candidates.forEach(c => {
@@ -535,9 +624,10 @@ export function getBestMethod({ species, locationType, waterTemp, windSpeed, hou
 
 // ─── MAIN PUBLIC API ────────────────────────────────────────────────
 
-export function getDailyLurePick({ month, waterTemp, windSpeed, sky, pressureTrend, hour, locationId, species, locationType }) {
+export function getDailyLurePick({ month, waterTemp, windSpeed, sky, pressureTrend, hour, locationId, species, locationType, ecosystem }) {
   const season = getSeason(month);
-  const candidates = buildLureCandidates({ month, waterTemp, windSpeed, sky, pressureTrend, hour, species, locationType });
+  _currentSeason = season;
+  const candidates = buildLureCandidates({ month, waterTemp, windSpeed, sky, pressureTrend, hour, species, locationType, ecosystem });
 
   // Deduplicate and keep highest confidence per lure key
   const best = {};
@@ -557,8 +647,10 @@ export function getDailyLurePick({ month, waterTemp, windSpeed, sky, pressureTre
     byCat[cat].push(r);
   });
 
+  const eco = ecosystem || null;
   const methods = getBestMethod({ species, locationType, waterTemp, windSpeed, hour, season });
-  const colorRec = getColorRecommendation(sky, waterTemp > 50 ? 'clear' : 'stained');
+  const ecoClarity = eco?.waterClarity?.typical || (waterTemp > 50 ? 'clear' : 'stained');
+  const colorRec = getColorRecommendation(sky, ecoClarity, eco);
 
   // Bass seasonal info
   const bassInfo = (species?.some(s => s.includes('Bass') && !s.includes('White') && !s.includes('Striped')))
@@ -569,7 +661,7 @@ export function getDailyLurePick({ month, waterTemp, windSpeed, sky, pressureTre
   // Trolling setup for primary trolling species
   const trollSpecies = ['Kokanee Salmon', 'Lake Trout', 'Rainbow Trout', 'Cutthroat Trout', 'Walleye', 'Striped Bass', 'Wiper']
     .find(s => species?.includes(s));
-  const trollSetup = trollSpecies ? getTrollingSetup(trollSpecies, season, waterTemp) : null;
+  const trollSetup = trollSpecies ? getTrollingSetup(trollSpecies, season, waterTemp, eco) : null;
 
   // Time plan
   const timePlan = buildTimePlan(ranked, hour);
@@ -587,6 +679,13 @@ export function getDailyLurePick({ month, waterTemp, windSpeed, sky, pressureTre
     timePlan,
     season,
     allPicks: ranked.slice(0, 12).map(r => ({ ...r, lure: LURES[r.lureKey] })),
+    ecosystemInfo: eco ? {
+      clarity: eco.waterClarity?.typical,
+      visibilityFt: eco.waterClarity?.visibilityFt?.[season],
+      topPredator: eco.predatorPrey?.topPredator,
+      keyRelationship: eco.predatorPrey?.keyRelationship,
+      primaryForage: (eco.forage?.primary || []).map(f => f.name).slice(0, 3),
+    } : null,
   };
 }
 

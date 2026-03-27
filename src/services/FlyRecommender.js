@@ -85,7 +85,7 @@ function getMonthRange(month) {
   return 'winter';
 }
 
-function buildCandidates({ month, waterTemp, windSpeed, sky, pressureTrend, hour, locationId, locationType }) {
+function buildCandidates({ month, waterTemp, windSpeed, sky, pressureTrend, hour, locationId, locationType, ecosystem }) {
   const season = getMonthRange(month);
   const candidates = [];
 
@@ -105,6 +105,13 @@ function buildCandidates({ month, waterTemp, windSpeed, sky, pressureTrend, hour
   const isFalling = pressureTrend === 'falling';
   const isGreenRiver = locationId === 'green-river' || locationId === 'flaming-gorge';
   const isStillwater = locationType === 'reservoir' || locationType === 'lake';
+
+  const eco = ecosystem || null;
+  const inverts = eco?.invertebrates || {};
+  const ecoHatches = eco?.hatches || {};
+  const ecoForage = [...(eco?.forage?.primary || []), ...(eco?.forage?.secondary || [])];
+  const forageFlies = new Set();
+  ecoForage.forEach(f => (f.matchFly || []).forEach(k => forageFlies.add(k)));
 
   // ── COLD WATER (< 40F) — midges dominate ──
   if (isCold) {
@@ -276,6 +283,69 @@ function buildCandidates({ month, waterTemp, windSpeed, sky, pressureTrend, hour
     add('scud', 65, 'Scud under indicator near weed beds — year-round stillwater staple', 'all-day');
   }
 
+  // ── ECOSYSTEM-DRIVEN HATCH BOOSTS ──
+  if (eco && candidates.length > 0) {
+    candidates.forEach(c => {
+      const ecoH = ecoHatches[c.flyKey];
+      if (ecoH && ecoH.months?.includes(month)) {
+        const intensityBoost = ecoH.intensity === 'extreme' ? 12 : ecoH.intensity === 'heavy' ? 8 : ecoH.intensity === 'moderate' ? 4 : 0;
+        if (intensityBoost > 0) {
+          c.confidence = Math.min(100, c.confidence + intensityBoost);
+          c.reason += ` [${ecoH.intensity} local hatch${ecoH.notes ? ': ' + ecoH.notes : ''}]`;
+        }
+      }
+    });
+  }
+
+  // ── ECOSYSTEM INVERTEBRATE BOOSTS ──
+  if (eco) {
+    if (inverts.scuds === 'extreme' || inverts.scuds === 'high') {
+      const existing = candidates.find(c => c.flyKey === 'scud');
+      if (existing) {
+        existing.confidence = Math.min(100, existing.confidence + (inverts.scuds === 'extreme' ? 15 : 10));
+        existing.reason += ' [Scud-rich ecosystem]';
+      } else {
+        add('scud', inverts.scuds === 'extreme' ? 80 : 70, `${inverts.scuds === 'extreme' ? 'EXTREME' : 'High'} scud population — always productive here`, 'all-day');
+      }
+    }
+    if (inverts.leeches === 'high' || inverts.leeches === 'moderate') {
+      const existing = candidates.find(c => c.flyKey === 'balancedLeech');
+      if (existing) {
+        existing.confidence = Math.min(100, existing.confidence + 6);
+        existing.reason += ' [Leeches present in ecosystem]';
+      } else if (isStillwater) {
+        add('balancedLeech', inverts.leeches === 'high' ? 72 : 60, 'Leech population supports leech patterns here', 'all-day');
+      }
+    }
+    if (inverts.sowbugs === 'high') {
+      const existing = candidates.find(c => c.flyKey === 'scud');
+      if (existing) {
+        existing.confidence = Math.min(100, existing.confidence + 5);
+        existing.reason += ' [Sowbug-rich]';
+      }
+    }
+  }
+
+  // ── ECOSYSTEM FORAGE-MATCHED STREAMERS ──
+  if (eco && forageFlies.has('streamer')) {
+    const streamerEntry = candidates.find(c => c.flyKey === 'streamer' || c.flyKey === 'buggerStill');
+    const sculpinForage = ecoForage.some(f => f.name.toLowerCase().includes('sculpin'));
+    const crawForage = ecoForage.some(f => f.name.toLowerCase().includes('crayfish') || f.name.toLowerCase().includes('crawfish'));
+    if (streamerEntry) {
+      if (sculpinForage) {
+        streamerEntry.confidence = Math.min(100, streamerEntry.confidence + 6);
+        streamerEntry.reason += ' [Match sculpin forage — olive/brown]';
+      }
+      if (crawForage) {
+        streamerEntry.confidence = Math.min(100, streamerEntry.confidence + 4);
+        streamerEntry.reason += ' [Match crayfish forage — brown/orange]';
+      }
+    }
+    if (hasChubForage(ecoForage) && !candidates.find(c => c.flyKey === 'streamer')) {
+      add('streamer', 55, 'Chub forage present — larger streamer patterns to match', 'morning');
+    }
+  }
+
   // ── UNIVERSAL SUBSURFACE — always viable ──
   if (candidates.length < 3) {
     add('worm', 40, 'San Juan Worm — always a solid searching pattern', 'all-day');
@@ -283,6 +353,10 @@ function buildCandidates({ month, waterTemp, windSpeed, sky, pressureTrend, hour
   }
 
   return candidates;
+}
+
+function hasChubForage(forageList) {
+  return forageList.some(f => f.name.toLowerCase().includes('chub'));
 }
 
 // ─── Time window labels ──────────────────────────────────────────
@@ -326,6 +400,7 @@ export function getDailyFlyPick({
   hour = new Date().getHours(),
   locationId = 'provo-river',
   locationType = 'river',
+  ecosystem = null,
 } = {}) {
   const candidates = buildCandidates({
     month,
@@ -336,6 +411,7 @@ export function getDailyFlyPick({
     hour,
     locationId,
     locationType,
+    ecosystem,
   });
 
   // Deduplicate by flyKey, keeping highest confidence
@@ -363,6 +439,7 @@ export function getDailyFlyPick({
     }
   }
 
+  const eco = ecosystem;
   return {
     picks: ranked,
     topPick: ranked[0] || null,
@@ -371,6 +448,13 @@ export function getDailyFlyPick({
     timeGuide,
     skyLabel: SKY_LABELS[skyCondition] || skyCondition,
     skyCondition,
+    ecosystemInfo: eco ? {
+      activeHatches: Object.entries(eco.hatches || {})
+        .filter(([, h]) => h.months?.includes(month))
+        .map(([key, h]) => ({ key, name: key, intensity: h.intensity, notes: h.notes })),
+      invertebrates: eco.invertebrates,
+      predatorPrey: eco.predatorPrey,
+    } : null,
   };
 }
 
