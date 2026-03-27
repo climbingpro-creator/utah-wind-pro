@@ -315,3 +315,16 @@ CREATE TRIGGER set_updated_at_preferences
 CREATE TRIGGER set_updated_at_subscriptions
   BEFORE UPDATE ON subscriptions
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+-- ── Nearest Spot RPC (used by session-upload to match GPS → spot) ──
+
+CREATE OR REPLACE FUNCTION nearest_spot(p_lat DOUBLE PRECISION, p_lon DOUBLE PRECISION)
+RETURNS TABLE(id UUID, name TEXT, distance DOUBLE PRECISION)
+LANGUAGE sql STABLE AS $$
+  SELECT s.id, s.name,
+    sqrt(power(s.latitude - p_lat, 2) + power(s.longitude - p_lon, 2)) AS distance
+  FROM spots s
+  WHERE s.latitude IS NOT NULL AND s.longitude IS NOT NULL
+  ORDER BY distance
+  LIMIT 1;
+$$;
