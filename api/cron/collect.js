@@ -17,7 +17,7 @@
  *   ?action=propagation — propagation analysis data
  *   ?action=pws-history — PWS session data
  *
- * Admin actions redirect to /api/admin/collect-admin:
+ * Admin actions redirect to /api/internal/admin:
  *   ?action=backfill, backfill-pws, build-models
  */
 
@@ -33,7 +33,7 @@ export default async function handler(req, res) {
   const action = req.query?.action;
   if (!action) {
     return res.status(200).json({
-      message: 'Read-only API. Cron moved to /api/cron/1-ingest. Admin ops at /api/admin/collect-admin.',
+      message: 'Read-only API. Cron moved to /api/cron/1-ingest. Admin ops at /api/internal/admin.',
       availableActions: [
         'context', 'sync', 'weights', 'predictions', 'upstream',
         'nws', 'ahead', 'analogs', 'models', 'propagation', 'pws-history',
@@ -45,8 +45,8 @@ export default async function handler(req, res) {
   const ADMIN_ACTIONS = ['backfill', 'build-models', 'backfill-pws'];
   if (ADMIN_ACTIONS.includes(action)) {
     return res.status(301).json({
-      error: `Action '${action}' has moved to /api/admin/collect-admin?action=${action}`,
-      redirect: `/api/admin/collect-admin?action=${action}`,
+      error: `Action '${action}' has moved to /api/internal/admin?action=${action}`,
+      redirect: `/api/internal/admin?action=${action}`,
     });
   }
 
