@@ -3,6 +3,10 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -36,8 +40,6 @@
     "@capacitor/status-bar": "^8.0.1",
     "@supabase/supabase-js": "^2.49.1",
     "@tailwindcss/vite": "^4.2.1",
-    "@upstash/qstash": "^2.10.1",
-    "@upstash/ratelimit": "^2.0.8",
     "axios": "^1.13.6",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.577.0",
@@ -46,8 +48,7 @@
     "react-leaflet": "^5.0.0",
     "stripe": "^17.5.0",
     "tailwindcss": "^4.2.1",
-    "web-push": "^3.6.7",
-    "zustand": "^5.0.12"
+    "web-push": "^3.6.7"
   },
   "devDependencies": {
     "@capacitor/assets": "^3.0.5",
