@@ -1,0 +1,613 @@
+[ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc"; @line = 1; @symbol_usingdef<0> = [Toybox,1,6,12]; @symbol_usingdef<1> = [Communications,1,13,27]; ]
+using Toybox.Communications;
+[ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc"; @line = 2; @symbol_usingdef<0> = [Toybox,2,6,12]; @symbol_usingdef<1> = [Position,2,13,21]; ]
+using Toybox.Position;
+[ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc"; @line = 3; @symbol_usingdef<0> = [Toybox,3,6,12]; @symbol_usingdef<1> = [System,3,13,19]; ]
+using Toybox.System;
+[ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc"; @line = 4; @symbol_usingdef<0> = [Toybox,4,6,12]; @symbol_usingdef<1> = [Timer,4,13,18]; ]
+using Toybox.Timer;
+[ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc"; @line = 5; @symbol_usingdef<0> = [Toybox,5,6,12]; @symbol_usingdef<1> = [Math,5,13,17]; ]
+using Toybox.Math;
+[ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc"; @line = 6; @symbol_usingdef<0> = [Toybox,6,6,12]; @symbol_usingdef<1> = [WatchUi,6,13,20]; ]
+using Toybox.WatchUi;
+[ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc"; @line = 7; @symbol_usingdef<0> = [Toybox,7,6,12]; @symbol_usingdef<1> = [Application,7,13,24]; ]
+using Toybox.Application;
+[ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc"; @line = 8; @symbol_usingdef<0> = [Toybox,8,6,12]; @symbol_usingdef<1> = [Lang,8,13,17]; ]
+using Toybox.Lang;
+[ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc"; @line = 10; @symbol_classdef = [TopographyLoop,10,6,20]; ]
+class TopographyLoop {
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc"; @line = 10; ]
+    <init> {
+    }
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc"; @line = 10; ]
+    static
+    <init> {
+    }
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc"; @line = 12; @position = 17; @symbol_constdef = [API_URL,12,17,24]; ]
+    protected
+    const API_URL = "https://api.utahwindfinder.com/v1/topo-warning";
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc"; @line = 13; @position = 17; @symbol_constdef = [LOOP_MS,13,17,24]; ]
+    protected
+    const LOOP_MS = 30000;
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc"; @line = 14; @position = 17; @symbol_constdef = [GPS_LOG_MS,14,17,27]; ]
+    protected
+    const GPS_LOG_MS = 5000;
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc"; @line = 16; @position = 15; @symbol_vardef = [_timer,16,15,21]; ]
+    protected
+    var _timer;
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc"; @line = 17; @position = 15; @symbol_vardef = [_posInfo,17,15,23]; ]
+    protected
+    var _posInfo = null;
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc"; @line = 18; @position = 15; @symbol_vardef = [_lastGpsLogMs,18,15,28]; ]
+    protected
+    var _lastGpsLogMs = 0;
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc"; @line = 20; @position = 8; @symbol_vardef = [warningStatus,20,8,21]; ]
+    var warningStatus = "INIT";
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc"; @line = 21; @position = 8; @symbol_vardef = [warningMessage,21,8,22]; ]
+    var warningMessage = "Acquiring GPS...";
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc"; @line = 22; @position = 8; @symbol_vardef = [speedKnots,22,8,18]; ]
+    var speedKnots = 0.0;
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc"; @line = 23; @position = 8; @symbol_vardef = [headingDeg,23,8,18]; ]
+    var headingDeg = 0.0;
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc"; @line = 25; @symbol_functiondef = [initialize,25,13,23]; ]
+    function initialize() as Void {
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_25_26_27_4_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc" 26 8 ]
+        symbol [ Timer %tmp.3 26 21 26 ];
+        %tmp.3 = getm $.Toybox.Timer;
+        symbol [ Timer %tmp.4 26 27 32 ];
+        %tmp.4 = getv function ? %tmp.3 :Timer;
+        %tmp.1 = newc %tmp.4 ();
+        symbol [ _timer ? 26 8 14 ];
+        putv self :_timer %tmp.1;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_25_26_27_4_stop:
+    }
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc"; @line = 29; @symbol_functiondef = [start,29,13,18]; ]
+    function start() {
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_29_21_31_4_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc" 30 8 ]
+        symbol [ _timer %tmp.2 30 8 14 ];
+        %tmp.2 = getv ? :_timer;
+        symbol [ start %tmp.3 30 15 20 ];
+        %tmp.3 = getv function %tmp.2 :start;
+        %tmp.4 = self;
+        symbol [ method %tmp.5 30 21 27 ];
+        %tmp.5 = getv function %tmp.4 :method;
+        %tmp.7 = const :onTick;
+        symbol [ onTick %tmp.7 30 29 35 const ];
+        %tmp.8 = invoke %tmp.4 %tmp.5(%tmp.7);
+        symbol [ LOOP_MS %tmp.10 30 38 45 ];
+        %tmp.10 = getv ? :LOOP_MS;
+        %tmp.11 = true;
+        invoke %tmp.2 %tmp.3(%tmp.8, %tmp.10, %tmp.11);
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_29_21_31_4_stop:
+    }
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc"; @line = 33; @symbol_functiondef = [stop,33,13,17]; ]
+    function stop() {
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_33_20_35_4_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc" 34 8 ]
+        symbol [ _timer %tmp.2 34 8 14 ];
+        %tmp.2 = getv ? :_timer;
+        symbol [ stop %tmp.3 34 15 19 ];
+        %tmp.3 = getv function %tmp.2 :stop;
+        invoke %tmp.2 %tmp.3();
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_33_20_35_4_stop:
+    }
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc"; @line = 37; @symbol_functiondef = [updatePosition,37,13,27]; @symbol_param<0> = [info,37,28,32]; ]
+    function updatePosition(info) {
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_37_34_57_4_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc" 38 8 ]
+        %tmp.1 = lgetv %info;
+        symbol [ info %tmp.1 38 19 23 ];
+        symbol [ _posInfo ? 38 8 16 ];
+        putv self :_posInfo %tmp.1;
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc" 41 8 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_41_8_56_8_if_stmt:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_41_12_41_53_begin:
+        symbol [ _posInfo %tmp.3 41 12 20 ];
+        %tmp.3 = getv ? :_posInfo;
+        %tmp.4 = null;
+        %tmp.5 = ne %tmp.3 %tmp.4;
+        bf %tmp.5 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_41_8_56_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_41_32_41_53_true:
+        symbol [ _posInfo %tmp.7 41 32 40 ];
+        %tmp.7 = getv ? :_posInfo;
+        %tmp.8 = as %tmp.7 { (!Null) };
+        symbol [ position %tmp.9 41 41 49 ];
+        %tmp.9 = getv %tmp.8 :position;
+        %tmp.10 = null;
+        %tmp.11 = ne %tmp.9 %tmp.10;
+        push %tmp.11;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_41_32_41_53_end:
+        %tmp.12 = phi [%tmp.5 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_41_12_41_53_begin] [%tmp.11 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_41_32_41_53_true] [%tmp.12 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_41_32_41_53_end];
+        bf %tmp.12 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_41_8_56_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_41_8_56_8_if_true:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_41_59_56_8_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc" 42 12 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_41_59_56_8_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_41_59_56_8_stop" ]
+        %now.1 = local;
+        symbol [ now %now.1 42 16 19 ];
+        symbol [ System %tmp.13 42 22 28 ];
+        %tmp.13 = getm $.Toybox.System;
+        symbol [ getTimer %tmp.14 42 29 37 ];
+        %tmp.14 = getv function %tmp.13 :getTimer;
+        %tmp.15 = invoke %tmp.13 %tmp.14();
+        lputv %now.1 %tmp.15;
+        symbol [ now %now.1 42 16 19 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc" 43 12 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_43_12_55_12_if_stmt:
+        %tmp.16 = lgetv %now.1;
+        symbol [ now %tmp.16 43 16 19 ];
+        symbol [ _lastGpsLogMs %tmp.18 43 22 35 ];
+        %tmp.18 = getv ? :_lastGpsLogMs;
+        %tmp.19 = sub %tmp.16 %tmp.18;
+        symbol [ GPS_LOG_MS %tmp.21 43 39 49 ];
+        %tmp.21 = getv ? :GPS_LOG_MS;
+        %tmp.22 = gte %tmp.19 %tmp.21;
+        bf %tmp.22 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_43_12_55_12_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_43_12_55_12_if_true:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_43_51_55_12_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc" 44 16 ]
+        %tmp.23 = lgetv %now.1;
+        symbol [ now %tmp.23 44 32 35 ];
+        symbol [ _lastGpsLogMs ? 44 16 29 ];
+        putv self :_lastGpsLogMs %tmp.23;
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc" 45 16 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_43_51_55_12_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_43_51_55_12_stop" ]
+        %coords.2 = local;
+        symbol [ coords %coords.2 45 20 26 ];
+        symbol [ _posInfo %tmp.25 45 29 37 ];
+        %tmp.25 = getv ? :_posInfo;
+        symbol [ position %tmp.26 45 38 46 ];
+        %tmp.26 = getv %tmp.25 :position;
+        symbol [ toDegrees %tmp.27 45 47 56 ];
+        %tmp.27 = getv function %tmp.26 :toDegrees;
+        %tmp.28 = invoke %tmp.26 %tmp.27();
+        lputv %coords.2 %tmp.28;
+        symbol [ coords %coords.2 45 20 26 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc" 46 16 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_43_51_55_12_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_43_51_55_12_stop" ]
+        %mps.3 = local;
+        symbol [ mps %mps.3 46 20 23 ];
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_46_26_46_70_begin:
+        symbol [ _posInfo %tmp.30 46 27 35 ];
+        %tmp.30 = getv ? :_posInfo;
+        symbol [ speed %tmp.31 46 36 41 ];
+        %tmp.31 = getv %tmp.30 :speed;
+        %tmp.32 = null;
+        %tmp.33 = ne %tmp.31 %tmp.32;
+        bf %tmp.33 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_46_26_46_70_else_false;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_46_26_46_70_true:
+        symbol [ _posInfo %tmp.35 46 53 61 ];
+        %tmp.35 = getv ? :_posInfo;
+        symbol [ speed %tmp.36 46 62 67 ];
+        %tmp.36 = getv %tmp.35 :speed;
+        push %tmp.36;
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_46_26_46_70_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_46_26_46_70_else_false:
+        %tmp.37 = 0.0;
+        push %tmp.37;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_46_26_46_70_end:
+        %tmp.38 = phi [%tmp.33 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_46_26_46_70_begin] [%tmp.36 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_46_26_46_70_true] [%tmp.37 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_46_26_46_70_else_false] [%tmp.38 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_46_26_46_70_end];
+        lputv %mps.3 %tmp.38;
+        symbol [ mps %mps.3 46 20 23 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc" 47 16 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_43_51_55_12_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_43_51_55_12_stop" ]
+        %spdKts.4 = local;
+        symbol [ spdKts %spdKts.4 47 20 26 ];
+        %tmp.39 = lgetv %mps.3;
+        symbol [ mps %tmp.39 47 29 32 ];
+        %tmp.40 = 1.94384;
+        %tmp.41 = mul %tmp.39 %tmp.40;
+        lputv %spdKts.4 %tmp.41;
+        symbol [ spdKts %spdKts.4 47 20 26 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc" 49 16 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_43_51_55_12_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_43_51_55_12_stop" ]
+        %app.5 = local;
+        symbol [ app %app.5 49 20 23 ];
+        symbol [ Application %tmp.42 49 26 37 ];
+        %tmp.42 = getm $.Toybox.Application;
+        symbol [ getApp %tmp.43 49 38 44 ];
+        %tmp.43 = getv function %tmp.42 :getApp;
+        %tmp.44 = invoke %tmp.42 %tmp.43();
+        lputv %app.5 %tmp.44;
+        symbol [ app %app.5 49 20 23 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc" 50 16 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_50_16_54_16_if_stmt:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_50_20_50_73_begin:
+        %tmp.45 = lgetv %app.5;
+        symbol [ app %tmp.45 50 20 23 ];
+        symbol [ jumpTracker %tmp.46 50 24 35 ];
+        %tmp.46 = getv %tmp.45 :jumpTracker;
+        %tmp.47 = null;
+        %tmp.48 = ne %tmp.46 %tmp.47;
+        bf %tmp.48 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_50_16_54_16_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_50_47_50_73_true:
+        %tmp.49 = lgetv %app.5;
+        symbol [ app %tmp.49 50 47 50 ];
+        symbol [ jumpTracker %tmp.50 50 51 62 ];
+        %tmp.50 = getv %tmp.49 :jumpTracker;
+        symbol [ logger %tmp.51 50 63 69 ];
+        %tmp.51 = getv %tmp.50 :logger;
+        %tmp.52 = null;
+        %tmp.53 = ne %tmp.51 %tmp.52;
+        push %tmp.53;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_50_47_50_73_end:
+        %tmp.54 = phi [%tmp.48 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_50_20_50_73_begin] [%tmp.53 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_50_47_50_73_true] [%tmp.54 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_50_47_50_73_end];
+        bf %tmp.54 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_50_16_54_16_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_50_16_54_16_if_true:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_50_79_54_16_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc" 51 20 ]
+        %tmp.55 = lgetv %app.5;
+        symbol [ app %tmp.55 51 20 23 ];
+        symbol [ jumpTracker %tmp.56 51 24 35 ];
+        %tmp.56 = getv %tmp.55 :jumpTracker;
+        symbol [ logger %tmp.57 51 36 42 ];
+        %tmp.57 = getv %tmp.56 :logger;
+        symbol [ logGpsFix %tmp.58 51 43 52 ];
+        %tmp.58 = getv function %tmp.57 :logGpsFix;
+        %tmp.59 = lgetv %coords.2;
+        symbol [ coords %tmp.59 52 24 30 ];
+        %tmp.60 = 0;
+        %tmp.61 = agetv %tmp.59 %tmp.60;
+        %tmp.62 = lgetv %coords.2;
+        symbol [ coords %tmp.62 52 35 41 ];
+        %tmp.63 = 1;
+        %tmp.64 = agetv %tmp.62 %tmp.63;
+        %tmp.65 = lgetv %spdKts.4;
+        symbol [ spdKts %tmp.65 52 46 52 ];
+        %tmp.66 = lgetv %now.1;
+        symbol [ now %tmp.66 52 54 57 ];
+        invoke %tmp.57 %tmp.58(%tmp.61, %tmp.64, %tmp.65, %tmp.66);
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_50_79_54_16_stop:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_50_16_54_16_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_50_16_54_16_if_end:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_43_51_55_12_stop:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_43_12_55_12_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_43_12_55_12_if_end:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_41_59_56_8_stop:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_41_8_56_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_41_8_56_8_if_end:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_37_34_57_4_stop:
+    }
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc"; @line = 59; @symbol_functiondef = [onTick,59,13,19]; ]
+    function onTick() {
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_59_22_101_4_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc" 60 8 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_60_8_62_8_if_stmt:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_60_12_60_53_begin:
+        symbol [ _posInfo %tmp.2 60 12 20 ];
+        %tmp.2 = getv ? :_posInfo;
+        %tmp.3 = null;
+        %tmp.4 = eq %tmp.2 %tmp.3;
+        bt %tmp.4 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_60_8_62_8_if_true;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_60_32_60_53_false:
+        symbol [ _posInfo %tmp.6 60 32 40 ];
+        %tmp.6 = getv ? :_posInfo;
+        %tmp.7 = as %tmp.6 { (!Null) };
+        symbol [ position %tmp.8 60 41 49 ];
+        %tmp.8 = getv %tmp.7 :position;
+        %tmp.9 = null;
+        %tmp.10 = eq %tmp.8 %tmp.9;
+        push %tmp.10;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_60_32_60_53_end:
+        %tmp.11 = phi [%tmp.4 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_60_12_60_53_begin] [%tmp.10 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_60_32_60_53_false] [%tmp.11 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_60_32_60_53_end];
+        bf %tmp.11 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_60_8_62_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_60_8_62_8_if_true:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_60_59_62_8_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc" 61 12 ]
+        ret ?;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_60_59_62_8_stop:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_60_8_62_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_60_8_62_8_if_end:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc" 64 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_59_22_101_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_59_22_101_4_stop" ]
+        %coords.1 = local;
+        symbol [ coords %coords.1 64 12 18 ];
+        symbol [ _posInfo %tmp.13 64 21 29 ];
+        %tmp.13 = getv ? :_posInfo;
+        symbol [ position %tmp.14 64 30 38 ];
+        %tmp.14 = getv %tmp.13 :position;
+        symbol [ toDegrees %tmp.15 64 39 48 ];
+        %tmp.15 = getv function %tmp.14 :toDegrees;
+        %tmp.16 = invoke %tmp.14 %tmp.15();
+        lputv %coords.1 %tmp.16;
+        symbol [ coords %coords.1 64 12 18 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc" 65 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_59_22_101_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_59_22_101_4_stop" ]
+        %lat.2 = local;
+        symbol [ lat %lat.2 65 12 15 ];
+        %tmp.17 = lgetv %coords.1;
+        symbol [ coords %tmp.17 65 18 24 ];
+        %tmp.18 = 0;
+        %tmp.19 = agetv %tmp.17 %tmp.18;
+        lputv %lat.2 %tmp.19;
+        symbol [ lat %lat.2 65 12 15 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc" 66 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_59_22_101_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_59_22_101_4_stop" ]
+        %lon.3 = local;
+        symbol [ lon %lon.3 66 12 15 ];
+        %tmp.20 = lgetv %coords.1;
+        symbol [ coords %tmp.20 66 18 24 ];
+        %tmp.21 = 1;
+        %tmp.22 = agetv %tmp.20 %tmp.21;
+        lputv %lon.3 %tmp.22;
+        symbol [ lon %lon.3 66 12 15 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc" 68 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_59_22_101_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_59_22_101_4_stop" ]
+        %mps.4 = local;
+        symbol [ mps %mps.4 68 12 15 ];
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_68_18_68_62_begin:
+        symbol [ _posInfo %tmp.24 68 19 27 ];
+        %tmp.24 = getv ? :_posInfo;
+        symbol [ speed %tmp.25 68 28 33 ];
+        %tmp.25 = getv %tmp.24 :speed;
+        %tmp.26 = null;
+        %tmp.27 = ne %tmp.25 %tmp.26;
+        bf %tmp.27 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_68_18_68_62_else_false;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_68_18_68_62_true:
+        symbol [ _posInfo %tmp.29 68 45 53 ];
+        %tmp.29 = getv ? :_posInfo;
+        symbol [ speed %tmp.30 68 54 59 ];
+        %tmp.30 = getv %tmp.29 :speed;
+        push %tmp.30;
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_68_18_68_62_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_68_18_68_62_else_false:
+        %tmp.31 = 0.0;
+        push %tmp.31;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_68_18_68_62_end:
+        %tmp.32 = phi [%tmp.27 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_68_18_68_62_begin] [%tmp.30 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_68_18_68_62_true] [%tmp.31 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_68_18_68_62_else_false] [%tmp.32 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_68_18_68_62_end];
+        lputv %mps.4 %tmp.32;
+        symbol [ mps %mps.4 68 12 15 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc" 69 8 ]
+        %tmp.33 = lgetv %mps.4;
+        symbol [ mps %tmp.33 69 21 24 ];
+        %tmp.34 = 1.94384;
+        %tmp.35 = mul %tmp.33 %tmp.34;
+        symbol [ speedKnots ? 69 8 18 ];
+        putv self :speedKnots %tmp.35;
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc" 71 8 ]
+        %tmp.36 = 0.0;
+        symbol [ headingDeg ? 71 8 18 ];
+        putv self :headingDeg %tmp.36;
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc" 72 8 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_72_8_77_8_if_stmt:
+        symbol [ _posInfo %tmp.38 72 12 20 ];
+        %tmp.38 = getv ? :_posInfo;
+        symbol [ heading %tmp.39 72 21 28 ];
+        %tmp.39 = getv %tmp.38 :heading;
+        %tmp.40 = null;
+        %tmp.41 = ne %tmp.39 %tmp.40;
+        bf %tmp.41 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_72_8_77_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_72_8_77_8_if_true:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_72_38_77_8_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc" 73 12 ]
+        symbol [ Math %tmp.42 73 25 29 ];
+        %tmp.42 = getm $.Toybox.Math;
+        symbol [ toDegrees %tmp.43 73 30 39 ];
+        %tmp.43 = getv function %tmp.42 :toDegrees;
+        symbol [ _posInfo %tmp.45 73 40 48 ];
+        %tmp.45 = getv ? :_posInfo;
+        symbol [ heading %tmp.46 73 49 56 ];
+        %tmp.46 = getv %tmp.45 :heading;
+        %tmp.47 = invoke %tmp.42 %tmp.43(%tmp.46);
+        symbol [ headingDeg ? 73 12 22 ];
+        putv self :headingDeg %tmp.47;
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc" 74 12 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_74_12_76_12_if_stmt:
+        symbol [ headingDeg %tmp.49 74 16 26 ];
+        %tmp.49 = getv ? :headingDeg;
+        %tmp.50 = 0;
+        %tmp.51 = lt %tmp.49 %tmp.50;
+        bf %tmp.51 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_74_12_76_12_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_74_12_76_12_if_true:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_74_32_76_12_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc" 75 16 ]
+        symbol [ headingDeg %tmp.52 75 16 26 ];
+        %tmp.52 = getv self :headingDeg;
+        %tmp.53 = 360.0;
+        %tmp.54 = add %tmp.52 %tmp.53;
+        symbol [ headingDeg ? 75 16 26 ];
+        putv self :headingDeg dup %tmp.54;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_74_32_76_12_stop:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_74_12_76_12_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_74_12_76_12_if_end:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_72_38_77_8_stop:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_72_8_77_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_72_8_77_8_if_end:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc" 79 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_59_22_101_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_59_22_101_4_stop" ]
+        %payload.5 = local;
+        symbol [ payload %payload.5 79 12 19 ];
+        %tmp.55 = newd 5;
+        %tmp.56 = "lat";
+        %tmp.57 = lgetv %lat.2;
+        symbol [ lat %tmp.57 80 25 28 ];
+        %tmp.58 = dup %tmp.55;
+        %tmp.59 = aputv %tmp.58 %tmp.56 %tmp.57;
+        %tmp.60 = "lon";
+        %tmp.61 = lgetv %lon.3;
+        symbol [ lon %tmp.61 81 25 28 ];
+        %tmp.62 = dup %tmp.59;
+        %tmp.63 = aputv %tmp.62 %tmp.60 %tmp.61;
+        %tmp.64 = "speed";
+        symbol [ speedKnots %tmp.66 82 25 35 ];
+        %tmp.66 = getv ? :speedKnots;
+        %tmp.67 = dup %tmp.63;
+        %tmp.68 = aputv %tmp.67 %tmp.64 %tmp.66;
+        %tmp.69 = "heading";
+        symbol [ headingDeg %tmp.71 83 25 35 ];
+        %tmp.71 = getv ? :headingDeg;
+        %tmp.72 = dup %tmp.68;
+        %tmp.73 = aputv %tmp.72 %tmp.69 %tmp.71;
+        %tmp.74 = "ts";
+        symbol [ System %tmp.75 84 25 31 ];
+        %tmp.75 = getm $.Toybox.System;
+        symbol [ getTimer %tmp.76 84 32 40 ];
+        %tmp.76 = getv function %tmp.75 :getTimer;
+        %tmp.77 = invoke %tmp.75 %tmp.76();
+        %tmp.78 = dup %tmp.73;
+        %tmp.79 = aputv %tmp.78 %tmp.74 %tmp.77;
+        lputv %payload.5 %tmp.79;
+        symbol [ payload %payload.5 79 12 19 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc" 87 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_59_22_101_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_59_22_101_4_stop" ]
+        %options.6 = local;
+        symbol [ options %options.6 87 12 19 ];
+        %tmp.80 = newd 3;
+        %tmp.82 = const :method;
+        symbol [ method %tmp.82 88 13 19 const ];
+        symbol [ Communications %tmp.83 88 29 43 ];
+        %tmp.83 = getm $.Toybox.Communications;
+        symbol [ HTTP_REQUEST_METHOD_POST %tmp.84 88 44 68 ];
+        %tmp.84 = getv %tmp.83 :HTTP_REQUEST_METHOD_POST;
+        %tmp.85 = dup %tmp.80;
+        %tmp.86 = aputv %tmp.85 %tmp.82 %tmp.84;
+        %tmp.88 = const :headers;
+        symbol [ headers %tmp.88 89 13 20 const ];
+        %tmp.89 = newd 1;
+        %tmp.90 = "Content-Type";
+        symbol [ Communications %tmp.91 90 34 48 ];
+        %tmp.91 = getm $.Toybox.Communications;
+        symbol [ REQUEST_CONTENT_TYPE_JSON %tmp.92 90 49 74 ];
+        %tmp.92 = getv %tmp.91 :REQUEST_CONTENT_TYPE_JSON;
+        %tmp.93 = dup %tmp.89;
+        %tmp.94 = aputv %tmp.93 %tmp.90 %tmp.92;
+        %tmp.95 = dup %tmp.86;
+        %tmp.96 = aputv %tmp.95 %tmp.88 %tmp.94;
+        %tmp.98 = const :responseType;
+        symbol [ responseType %tmp.98 92 13 25 const ];
+        symbol [ Communications %tmp.99 92 29 43 ];
+        %tmp.99 = getm $.Toybox.Communications;
+        symbol [ HTTP_RESPONSE_CONTENT_TYPE_JSON %tmp.100 92 44 75 ];
+        %tmp.100 = getv %tmp.99 :HTTP_RESPONSE_CONTENT_TYPE_JSON;
+        %tmp.101 = dup %tmp.96;
+        %tmp.102 = aputv %tmp.101 %tmp.98 %tmp.100;
+        lputv %options.6 %tmp.102;
+        symbol [ options %options.6 87 12 19 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc" 95 8 ]
+        symbol [ Communications %tmp.103 95 8 22 ];
+        %tmp.103 = getm $.Toybox.Communications;
+        symbol [ makeWebRequest %tmp.104 95 23 37 ];
+        %tmp.104 = getv function %tmp.103 :makeWebRequest;
+        symbol [ API_URL %tmp.106 96 12 19 ];
+        %tmp.106 = getv ? :API_URL;
+        %tmp.107 = lgetv %payload.5;
+        symbol [ payload %tmp.107 97 12 19 ];
+        %tmp.108 = lgetv %options.6;
+        symbol [ options %tmp.108 98 12 19 ];
+        %tmp.109 = self;
+        symbol [ method %tmp.110 99 12 18 ];
+        %tmp.110 = getv function %tmp.109 :method;
+        %tmp.112 = const :onApiResponse;
+        symbol [ onApiResponse %tmp.112 99 20 33 const ];
+        %tmp.113 = invoke %tmp.109 %tmp.110(%tmp.112);
+        %tmp.114 = as %tmp.113 Lang.Method;
+        symbol [ Lang %tmp.114 99 38 42 ];
+        symbol [ Method %tmp.114 99 43 49 ];
+        invoke %tmp.103 %tmp.104(%tmp.106, %tmp.107, %tmp.108, %tmp.114);
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_59_22_101_4_stop:
+    }
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc"; @line = 103; @symbol_functiondef = [onApiResponse,103,13,26]; @symbol_param<0> = [responseCode,103,27,39]; @symbol_param<1> = [data,103,41,45]; ]
+    function onApiResponse(responseCode, data) {
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_103_47_113_4_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc" 104 8 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_104_8_110_8_if_stmt:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_104_12_104_43_begin:
+        %tmp.1 = lgetv %responseCode;
+        symbol [ responseCode %tmp.1 104 12 24 ];
+        %tmp.2 = 200;
+        %tmp.3 = eq %tmp.1 %tmp.2;
+        bf %tmp.3 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_104_8_110_8_if_else_false;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_104_35_104_43_true:
+        %tmp.4 = lgetv %data;
+        symbol [ data %tmp.4 104 35 39 ];
+        %tmp.5 = null;
+        %tmp.6 = ne %tmp.4 %tmp.5;
+        push %tmp.6;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_104_35_104_43_end:
+        %tmp.7 = phi [%tmp.3 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_104_12_104_43_begin] [%tmp.6 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_104_35_104_43_true] [%tmp.7 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_104_35_104_43_end];
+        bf %tmp.7 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_104_8_110_8_if_else_false;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_104_8_110_8_if_true:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_104_49_107_8_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc" 105 12 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_105_29_105_70_begin:
+        %tmp.8 = lgetv %data;
+        symbol [ data %tmp.8 105 29 33 ];
+        %tmp.9 = as %tmp.8 { (!Null) };
+        symbol [ hasKey %tmp.10 105 34 40 ];
+        %tmp.10 = getv function %tmp.9 :hasKey;
+        %tmp.11 = "status";
+        %tmp.12 = invoke %tmp.9 %tmp.10(%tmp.11);
+        bf %tmp.12 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_105_29_105_70_else_false;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_105_29_105_70_true:
+        %tmp.13 = lgetv %data;
+        symbol [ data %tmp.13 105 53 57 ];
+        %tmp.14 = as %tmp.13 { (!Null) };
+        %tmp.15 = "status";
+        %tmp.16 = agetv %tmp.14 %tmp.15;
+        push %tmp.16;
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_105_29_105_70_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_105_29_105_70_else_false:
+        %tmp.17 = "OK";
+        push %tmp.17;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_105_29_105_70_end:
+        %tmp.18 = phi [%tmp.12 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_105_29_105_70_begin] [%tmp.16 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_105_29_105_70_true] [%tmp.17 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_105_29_105_70_else_false] [%tmp.18 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_105_29_105_70_end];
+        symbol [ warningStatus ? 105 12 25 ];
+        putv self :warningStatus %tmp.18;
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc" 106 12 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_106_29_106_70_begin:
+        %tmp.19 = lgetv %data;
+        symbol [ data %tmp.19 106 29 33 ];
+        %tmp.20 = as %tmp.19 { (!Null) };
+        symbol [ hasKey %tmp.21 106 34 40 ];
+        %tmp.21 = getv function %tmp.20 :hasKey;
+        %tmp.22 = "msg";
+        %tmp.23 = invoke %tmp.20 %tmp.21(%tmp.22);
+        bf %tmp.23 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_106_29_106_70_else_false;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_106_29_106_70_true:
+        %tmp.24 = lgetv %data;
+        symbol [ data %tmp.24 106 53 57 ];
+        %tmp.25 = as %tmp.24 { (!Null) };
+        %tmp.26 = "msg";
+        %tmp.27 = agetv %tmp.25 %tmp.26;
+        push %tmp.27;
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_106_29_106_70_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_106_29_106_70_else_false:
+        %tmp.28 = "";
+        push %tmp.28;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_106_29_106_70_end:
+        %tmp.29 = phi [%tmp.23 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_106_29_106_70_begin] [%tmp.27 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_106_29_106_70_true] [%tmp.28 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_106_29_106_70_else_false] [%tmp.29 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_106_29_106_70_end];
+        symbol [ warningMessage ? 106 12 26 ];
+        putv self :warningMessage %tmp.29;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_104_49_107_8_stop:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_104_8_110_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_104_8_110_8_if_else_false:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_107_15_110_8_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc" 108 12 ]
+        %tmp.30 = "OFFLINE";
+        symbol [ warningStatus ? 108 12 25 ];
+        putv self :warningStatus %tmp.30;
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc" 109 12 ]
+        %tmp.31 = "No signal (";
+        %tmp.32 = lgetv %responseCode;
+        symbol [ responseCode %tmp.32 109 45 57 ];
+        %tmp.33 = add %tmp.31 %tmp.32;
+        %tmp.34 = ")";
+        %tmp.35 = add %tmp.33 %tmp.34;
+        symbol [ warningMessage ? 109 12 26 ];
+        putv self :warningMessage %tmp.35;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_107_15_110_8_stop:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_104_8_110_8_if_end:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc" 112 8 ]
+        symbol [ WatchUi %tmp.36 112 8 15 ];
+        %tmp.36 = getm $.Toybox.WatchUi;
+        symbol [ requestUpdate %tmp.37 112 16 29 ];
+        %tmp.37 = getv function %tmp.36 :requestUpdate;
+        invoke %tmp.36 %tmp.37();
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_TopographyLoop_mc_103_47_113_4_stop:
+    }
+}
+[ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\TopographyLoop.mc"; @line = 1; ]
+<init> {
+}

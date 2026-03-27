@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<!-- Connect IQ Manifest — UtahWindField Kite Session Tracker -->
+<iq:manifest xmlns:iq="http://www.garmin.com/xml/connectiq" version="3">
+    <iq:application
+        entry="KiteSessionApp"
+        id="a3421b93-0001-4000-8000-000000000001"
+        name="@Strings.AppName"
+        launcherIcon="@Drawables.LauncherIcon"
+        type="watch-app"
+        minSdkVersion="3.2.0">
+
+        <iq:permissions>
+            <!-- GPS for position, speed, heading -->
+            <iq:uses-permission id="Positioning"/>
+            <!-- Barometer + high-frequency Accelerometer -->
+            <iq:uses-permission id="Sensor"/>
+            <!-- HTTP POST to backend topo-warning API -->
+            <iq:uses-permission id="Communications"/>
+            <!-- Activity recording for timer/distance/calories/HR/maxSpeed -->
+            <iq:uses-permission id="Fit"/>
+        </iq:permissions>
+
+        <iq:products>
+            <iq:product id="fenix8pro47mm"/>
+            <iq:product id="fenix847mm"/>
+            <iq:product id="fenix7"/>
+            <iq:product id="fenix7s"/>
+            <iq:product id="fenix7x"/>
+            <iq:product id="epix2"/>
+            <iq:product id="epix2pro47mm"/>
+            <iq:product id="fr965"/>
+        </iq:products>
+
+        <iq:languages>
+            <iq:language>eng</iq:language>
+        </iq:languages>
+    </iq:application>
+</iq:manifest>

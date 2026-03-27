@@ -1,0 +1,984 @@
+[ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc"; @line = 1; @symbol_usingdef<0> = [Toybox,1,6,12]; @symbol_usingdef<1> = [WatchUi,1,13,20]; ]
+using Toybox.WatchUi;
+[ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc"; @line = 2; @symbol_usingdef<0> = [Toybox,2,6,12]; @symbol_usingdef<1> = [Graphics,2,13,21]; ]
+using Toybox.Graphics;
+[ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc"; @line = 3; @symbol_usingdef<0> = [Toybox,3,6,12]; @symbol_usingdef<1> = [Application,3,13,24]; ]
+using Toybox.Application;
+[ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc"; @line = 4; @symbol_usingdef<0> = [Toybox,4,6,12]; @symbol_usingdef<1> = [System,4,13,19]; ]
+using Toybox.System;
+[ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc"; @line = 5; @symbol_usingdef<0> = [Toybox,5,6,12]; @symbol_usingdef<1> = [Activity,5,13,21]; ]
+using Toybox.Activity;
+//! Screen 4 — Session Totals
+//!
+//!   ????????????????????????????
+//!   ?        SESSION           ?
+//!   ?                          ?
+//!   ?       01:23:45           ?  ? timer big
+//!   ?                          ?
+//!   ?   3.6 NM     496 cal    ?
+//!   ?   ?????????????????      ?
+//!   ?   avg 8.2 kts           ?
+//!   ?                          ?
+//!   ?   GPS fixes: 1154       ?
+//!   ????????????????????????????
+[ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc"; @line = 21; @symbol_classdef = [SessionView,21,6,17]; @symbol_extends<0> = [WatchUi,21,26,33]; @symbol_extends<1> = [View,21,34,38]; ]
+class SessionView extends WatchUi.View {
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc"; @line = 21; ]
+    <init> {
+    }
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc"; @line = 21; ]
+    static
+    <init> {
+    }
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc"; @line = 23; @symbol_functiondef = [initialize,23,13,23]; ]
+    function initialize() as Void {
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_23_26_25_4_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc" 24 8 ]
+        symbol [ View %tmp.2 24 8 12 ];
+        %tmp.2 = getv ? :View;
+        symbol [ initialize %tmp.3 24 13 23 ];
+        %tmp.3 = getv function %tmp.2 :initialize;
+        invoke %tmp.2 %tmp.3();
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_23_26_25_4_stop:
+    }
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc"; @line = 27; @symbol_functiondef = [onLayout,27,13,21]; @symbol_param<0> = [dc,27,22,24]; ]
+    function onLayout(dc) {
+    }
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc"; @line = 30; @symbol_functiondef = [onUpdate,30,13,21]; @symbol_param<0> = [dc,30,22,24]; ]
+    function onUpdate(dc) {
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_30_26_102_4_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc" 31 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_30_26_102_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_30_26_102_4_stop" ]
+        %W.1 = local;
+        symbol [ W %W.1 31 12 13 ];
+        %tmp.1 = lgetv %dc;
+        symbol [ dc %tmp.1 31 16 18 ];
+        symbol [ getWidth %tmp.2 31 19 27 ];
+        %tmp.2 = getv function %tmp.1 :getWidth;
+        %tmp.3 = invoke %tmp.1 %tmp.2();
+        lputv %W.1 %tmp.3;
+        symbol [ W %W.1 31 12 13 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc" 32 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_30_26_102_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_30_26_102_4_stop" ]
+        %H.2 = local;
+        symbol [ H %H.2 32 12 13 ];
+        %tmp.4 = lgetv %dc;
+        symbol [ dc %tmp.4 32 16 18 ];
+        symbol [ getHeight %tmp.5 32 19 28 ];
+        %tmp.5 = getv function %tmp.4 :getHeight;
+        %tmp.6 = invoke %tmp.4 %tmp.5();
+        lputv %H.2 %tmp.6;
+        symbol [ H %H.2 32 12 13 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc" 33 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_30_26_102_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_30_26_102_4_stop" ]
+        %cx.3 = local;
+        symbol [ cx %cx.3 33 12 14 ];
+        %tmp.7 = lgetv %W.1;
+        symbol [ W %tmp.7 33 17 18 ];
+        %tmp.8 = 2;
+        %tmp.9 = div %tmp.7 %tmp.8;
+        lputv %cx.3 %tmp.9;
+        symbol [ cx %cx.3 33 12 14 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc" 35 8 ]
+        %tmp.10 = lgetv %dc;
+        symbol [ dc %tmp.10 35 8 10 ];
+        symbol [ setColor %tmp.11 35 11 19 ];
+        %tmp.11 = getv function %tmp.10 :setColor;
+        symbol [ Graphics %tmp.12 35 20 28 ];
+        %tmp.12 = getm $.Toybox.Graphics;
+        symbol [ COLOR_BLACK %tmp.13 35 29 40 ];
+        %tmp.13 = getv %tmp.12 :COLOR_BLACK;
+        symbol [ Graphics %tmp.14 35 42 50 ];
+        %tmp.14 = getm $.Toybox.Graphics;
+        symbol [ COLOR_BLACK %tmp.15 35 51 62 ];
+        %tmp.15 = getv %tmp.14 :COLOR_BLACK;
+        invoke %tmp.10 %tmp.11(%tmp.13, %tmp.15);
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc" 36 8 ]
+        %tmp.16 = lgetv %dc;
+        symbol [ dc %tmp.16 36 8 10 ];
+        symbol [ clear %tmp.17 36 11 16 ];
+        %tmp.17 = getv function %tmp.16 :clear;
+        invoke %tmp.16 %tmp.17();
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc" 38 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_30_26_102_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_30_26_102_4_stop" ]
+        %app.4 = local;
+        symbol [ app %app.4 38 12 15 ];
+        symbol [ Application %tmp.18 38 18 29 ];
+        %tmp.18 = getm $.Toybox.Application;
+        symbol [ getApp %tmp.19 38 30 36 ];
+        %tmp.19 = getv function %tmp.18 :getApp;
+        %tmp.20 = invoke %tmp.18 %tmp.19();
+        lputv %app.4 %tmp.20;
+        symbol [ app %app.4 38 12 15 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc" 39 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_30_26_102_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_30_26_102_4_stop" ]
+        %info.5 = local;
+        symbol [ info %info.5 39 12 16 ];
+        symbol [ Activity %tmp.21 39 19 27 ];
+        %tmp.21 = getm $.Toybox.Activity;
+        symbol [ getActivityInfo %tmp.22 39 28 43 ];
+        %tmp.22 = getv function %tmp.21 :getActivityInfo;
+        %tmp.23 = invoke %tmp.21 %tmp.22();
+        lputv %info.5 %tmp.23;
+        symbol [ info %info.5 39 12 16 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc" 42 8 ]
+        %tmp.24 = lgetv %dc;
+        symbol [ dc %tmp.24 42 8 10 ];
+        symbol [ setColor %tmp.25 42 11 19 ];
+        %tmp.25 = getv function %tmp.24 :setColor;
+        symbol [ Graphics %tmp.26 42 20 28 ];
+        %tmp.26 = getm $.Toybox.Graphics;
+        symbol [ COLOR_DK_GRAY %tmp.27 42 29 42 ];
+        %tmp.27 = getv %tmp.26 :COLOR_DK_GRAY;
+        symbol [ Graphics %tmp.28 42 44 52 ];
+        %tmp.28 = getm $.Toybox.Graphics;
+        symbol [ COLOR_TRANSPARENT %tmp.29 42 53 70 ];
+        %tmp.29 = getv %tmp.28 :COLOR_TRANSPARENT;
+        invoke %tmp.24 %tmp.25(%tmp.27, %tmp.29);
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc" 43 8 ]
+        %tmp.30 = lgetv %dc;
+        symbol [ dc %tmp.30 43 8 10 ];
+        symbol [ drawText %tmp.31 43 11 19 ];
+        %tmp.31 = getv function %tmp.30 :drawText;
+        %tmp.32 = lgetv %cx.3;
+        symbol [ cx %tmp.32 43 20 22 ];
+        %tmp.33 = lgetv %H.2;
+        symbol [ H %tmp.33 43 24 25 ];
+        %tmp.34 = 4;
+        %tmp.35 = mul %tmp.33 %tmp.34;
+        %tmp.36 = 100;
+        %tmp.37 = div %tmp.35 %tmp.36;
+        symbol [ Graphics %tmp.38 43 37 45 ];
+        %tmp.38 = getm $.Toybox.Graphics;
+        symbol [ FONT_XTINY %tmp.39 43 46 56 ];
+        %tmp.39 = getv %tmp.38 :FONT_XTINY;
+        %tmp.40 = "SESSION";
+        symbol [ Graphics %tmp.41 44 23 31 ];
+        %tmp.41 = getm $.Toybox.Graphics;
+        symbol [ TEXT_JUSTIFY_CENTER %tmp.42 44 32 51 ];
+        %tmp.42 = getv %tmp.41 :TEXT_JUSTIFY_CENTER;
+        invoke %tmp.30 %tmp.31(%tmp.32, %tmp.37, %tmp.39, %tmp.40, %tmp.42);
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc" 47 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_30_26_102_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_30_26_102_4_stop" ]
+        %timerMs.6 = local;
+        symbol [ timerMs %timerMs.6 47 12 19 ];
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_47_22_47_56_begin:
+        %tmp.43 = lgetv %info.5;
+        symbol [ info %tmp.43 47 23 27 ];
+        %tmp.44 = null;
+        %tmp.45 = ne %tmp.43 %tmp.44;
+        bf %tmp.45 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_47_22_47_56_else_false;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_47_22_47_56_true:
+        %tmp.46 = lgetv %info.5;
+        symbol [ info %tmp.46 47 39 43 ];
+        %tmp.47 = as %tmp.46 { (!Null) };
+        symbol [ timerTime %tmp.48 47 44 53 ];
+        %tmp.48 = getv %tmp.47 :timerTime;
+        push %tmp.48;
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_47_22_47_56_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_47_22_47_56_else_false:
+        %tmp.49 = null;
+        push %tmp.49;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_47_22_47_56_end:
+        %tmp.50 = phi [%tmp.45 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_47_22_47_56_begin] [%tmp.48 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_47_22_47_56_true] [%tmp.49 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_47_22_47_56_else_false] [%tmp.50 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_47_22_47_56_end];
+        lputv %timerMs.6 %tmp.50;
+        symbol [ timerMs %timerMs.6 47 12 19 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc" 48 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_30_26_102_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_30_26_102_4_stop" ]
+        %timerStr.7 = local;
+        symbol [ timerStr %timerStr.7 48 12 20 ];
+        %tmp.51 = self;
+        symbol [ _fmtTimer %tmp.52 48 23 32 ];
+        %tmp.52 = getv function %tmp.51 :_fmtTimer;
+        %tmp.53 = lgetv %timerMs.6;
+        symbol [ timerMs %tmp.53 48 33 40 ];
+        %tmp.54 = invoke %tmp.51 %tmp.52(%tmp.53);
+        lputv %timerStr.7 %tmp.54;
+        symbol [ timerStr %timerStr.7 48 12 20 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc" 50 8 ]
+        %tmp.55 = lgetv %dc;
+        symbol [ dc %tmp.55 50 8 10 ];
+        symbol [ setColor %tmp.56 50 11 19 ];
+        %tmp.56 = getv function %tmp.55 :setColor;
+        symbol [ Graphics %tmp.57 50 20 28 ];
+        %tmp.57 = getm $.Toybox.Graphics;
+        symbol [ COLOR_WHITE %tmp.58 50 29 40 ];
+        %tmp.58 = getv %tmp.57 :COLOR_WHITE;
+        symbol [ Graphics %tmp.59 50 42 50 ];
+        %tmp.59 = getm $.Toybox.Graphics;
+        symbol [ COLOR_TRANSPARENT %tmp.60 50 51 68 ];
+        %tmp.60 = getv %tmp.59 :COLOR_TRANSPARENT;
+        invoke %tmp.55 %tmp.56(%tmp.58, %tmp.60);
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc" 51 8 ]
+        %tmp.61 = lgetv %dc;
+        symbol [ dc %tmp.61 51 8 10 ];
+        symbol [ drawText %tmp.62 51 11 19 ];
+        %tmp.62 = getv function %tmp.61 :drawText;
+        %tmp.63 = lgetv %cx.3;
+        symbol [ cx %tmp.63 51 20 22 ];
+        %tmp.64 = lgetv %H.2;
+        symbol [ H %tmp.64 51 24 25 ];
+        %tmp.65 = 14;
+        %tmp.66 = mul %tmp.64 %tmp.65;
+        %tmp.67 = 100;
+        %tmp.68 = div %tmp.66 %tmp.67;
+        symbol [ Graphics %tmp.69 51 38 46 ];
+        %tmp.69 = getm $.Toybox.Graphics;
+        symbol [ FONT_NUMBER_MILD %tmp.70 51 47 63 ];
+        %tmp.70 = getv %tmp.69 :FONT_NUMBER_MILD;
+        %tmp.71 = lgetv %timerStr.7;
+        symbol [ timerStr %tmp.71 52 12 20 ];
+        symbol [ Graphics %tmp.72 52 22 30 ];
+        %tmp.72 = getm $.Toybox.Graphics;
+        symbol [ TEXT_JUSTIFY_CENTER %tmp.73 52 31 50 ];
+        %tmp.73 = getv %tmp.72 :TEXT_JUSTIFY_CENTER;
+        invoke %tmp.61 %tmp.62(%tmp.63, %tmp.68, %tmp.70, %tmp.71, %tmp.73);
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc" 55 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_30_26_102_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_30_26_102_4_stop" ]
+        %distM.8 = local;
+        symbol [ distM %distM.8 55 12 17 ];
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_55_20_55_60_begin:
+        %tmp.74 = lgetv %info.5;
+        symbol [ info %tmp.74 55 21 25 ];
+        %tmp.75 = null;
+        %tmp.76 = ne %tmp.74 %tmp.75;
+        bf %tmp.76 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_55_20_55_60_else_false;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_55_20_55_60_true:
+        %tmp.77 = lgetv %info.5;
+        symbol [ info %tmp.77 55 37 41 ];
+        %tmp.78 = as %tmp.77 { (!Null) };
+        symbol [ elapsedDistance %tmp.79 55 42 57 ];
+        %tmp.79 = getv %tmp.78 :elapsedDistance;
+        push %tmp.79;
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_55_20_55_60_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_55_20_55_60_else_false:
+        %tmp.80 = null;
+        push %tmp.80;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_55_20_55_60_end:
+        %tmp.81 = phi [%tmp.76 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_55_20_55_60_begin] [%tmp.79 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_55_20_55_60_true] [%tmp.80 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_55_20_55_60_else_false] [%tmp.81 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_55_20_55_60_end];
+        lputv %distM.8 %tmp.81;
+        symbol [ distM %distM.8 55 12 17 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc" 56 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_30_26_102_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_30_26_102_4_stop" ]
+        %distNM.9 = local;
+        symbol [ distNM %distNM.9 56 12 18 ];
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_56_21_56_63_begin:
+        %tmp.82 = lgetv %distM.8;
+        symbol [ distM %tmp.82 56 22 27 ];
+        %tmp.83 = null;
+        %tmp.84 = ne %tmp.82 %tmp.83;
+        bf %tmp.84 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_56_21_56_63_else_false;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_56_21_56_63_true:
+        %tmp.85 = lgetv %distM.8;
+        symbol [ distM %tmp.85 56 40 45 ];
+        %tmp.86 = as %tmp.85 { (!Null) };
+        %tmp.87 = 0.000539957;
+        %tmp.88 = mul %tmp.86 %tmp.87;
+        push %tmp.88;
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_56_21_56_63_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_56_21_56_63_else_false:
+        %tmp.89 = 0.0;
+        push %tmp.89;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_56_21_56_63_end:
+        %tmp.90 = phi [%tmp.84 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_56_21_56_63_begin] [%tmp.88 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_56_21_56_63_true] [%tmp.89 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_56_21_56_63_else_false] [%tmp.90 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_56_21_56_63_end];
+        lputv %distNM.9 %tmp.90;
+        symbol [ distNM %distNM.9 56 12 18 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc" 57 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_30_26_102_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_30_26_102_4_stop" ]
+        %calories.10 = local;
+        symbol [ calories %calories.10 57 12 20 ];
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_57_23_57_56_begin:
+        %tmp.91 = lgetv %info.5;
+        symbol [ info %tmp.91 57 24 28 ];
+        %tmp.92 = null;
+        %tmp.93 = ne %tmp.91 %tmp.92;
+        bf %tmp.93 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_57_23_57_56_else_false;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_57_23_57_56_true:
+        %tmp.94 = lgetv %info.5;
+        symbol [ info %tmp.94 57 40 44 ];
+        %tmp.95 = as %tmp.94 { (!Null) };
+        symbol [ calories %tmp.96 57 45 53 ];
+        %tmp.96 = getv %tmp.95 :calories;
+        push %tmp.96;
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_57_23_57_56_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_57_23_57_56_else_false:
+        %tmp.97 = null;
+        push %tmp.97;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_57_23_57_56_end:
+        %tmp.98 = phi [%tmp.93 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_57_23_57_56_begin] [%tmp.96 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_57_23_57_56_true] [%tmp.97 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_57_23_57_56_else_false] [%tmp.98 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_57_23_57_56_end];
+        lputv %calories.10 %tmp.98;
+        symbol [ calories %calories.10 57 12 20 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc" 58 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_30_26_102_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_30_26_102_4_stop" ]
+        %calStr.11 = local;
+        symbol [ calStr %calStr.11 58 12 18 ];
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_58_21_58_66_begin:
+        %tmp.99 = lgetv %calories.10;
+        symbol [ calories %tmp.99 58 22 30 ];
+        %tmp.100 = null;
+        %tmp.101 = ne %tmp.99 %tmp.100;
+        bf %tmp.101 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_58_21_58_66_else_false;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_58_21_58_66_true:
+        %tmp.102 = lgetv %calories.10;
+        symbol [ calories %tmp.102 58 42 50 ];
+        %tmp.103 = as %tmp.102 { (!Null) };
+        symbol [ format %tmp.104 58 51 57 ];
+        %tmp.104 = getv function %tmp.103 :format;
+        %tmp.105 = "%d";
+        %tmp.106 = invoke %tmp.103 %tmp.104(%tmp.105);
+        push %tmp.106;
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_58_21_58_66_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_58_21_58_66_else_false:
+        %tmp.107 = "--";
+        push %tmp.107;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_58_21_58_66_end:
+        %tmp.108 = phi [%tmp.101 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_58_21_58_66_begin] [%tmp.106 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_58_21_58_66_true] [%tmp.107 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_58_21_58_66_else_false] [%tmp.108 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_58_21_58_66_end];
+        lputv %calStr.11 %tmp.108;
+        symbol [ calStr %calStr.11 58 12 18 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc" 60 8 ]
+        %tmp.109 = lgetv %dc;
+        symbol [ dc %tmp.109 60 8 10 ];
+        symbol [ setColor %tmp.110 60 11 19 ];
+        %tmp.110 = getv function %tmp.109 :setColor;
+        symbol [ Graphics %tmp.111 60 20 28 ];
+        %tmp.111 = getm $.Toybox.Graphics;
+        symbol [ COLOR_LT_GRAY %tmp.112 60 29 42 ];
+        %tmp.112 = getv %tmp.111 :COLOR_LT_GRAY;
+        symbol [ Graphics %tmp.113 60 44 52 ];
+        %tmp.113 = getm $.Toybox.Graphics;
+        symbol [ COLOR_TRANSPARENT %tmp.114 60 53 70 ];
+        %tmp.114 = getv %tmp.113 :COLOR_TRANSPARENT;
+        invoke %tmp.109 %tmp.110(%tmp.112, %tmp.114);
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc" 61 8 ]
+        %tmp.115 = lgetv %dc;
+        symbol [ dc %tmp.115 61 8 10 ];
+        symbol [ drawText %tmp.116 61 11 19 ];
+        %tmp.116 = getv function %tmp.115 :drawText;
+        %tmp.117 = lgetv %cx.3;
+        symbol [ cx %tmp.117 61 20 22 ];
+        %tmp.118 = lgetv %W.1;
+        symbol [ W %tmp.118 61 25 26 ];
+        %tmp.119 = 20;
+        %tmp.120 = mul %tmp.118 %tmp.119;
+        %tmp.121 = 100;
+        %tmp.122 = div %tmp.120 %tmp.121;
+        %tmp.123 = sub %tmp.117 %tmp.122;
+        %tmp.124 = lgetv %H.2;
+        symbol [ H %tmp.124 61 39 40 ];
+        %tmp.125 = 42;
+        %tmp.126 = mul %tmp.124 %tmp.125;
+        %tmp.127 = 100;
+        %tmp.128 = div %tmp.126 %tmp.127;
+        symbol [ Graphics %tmp.129 61 53 61 ];
+        %tmp.129 = getm $.Toybox.Graphics;
+        symbol [ FONT_XTINY %tmp.130 61 62 72 ];
+        %tmp.130 = getv %tmp.129 :FONT_XTINY;
+        %tmp.131 = "DIST";
+        symbol [ Graphics %tmp.132 62 20 28 ];
+        %tmp.132 = getm $.Toybox.Graphics;
+        symbol [ TEXT_JUSTIFY_CENTER %tmp.133 62 29 48 ];
+        %tmp.133 = getv %tmp.132 :TEXT_JUSTIFY_CENTER;
+        invoke %tmp.115 %tmp.116(%tmp.123, %tmp.128, %tmp.130, %tmp.131, %tmp.133);
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc" 63 8 ]
+        %tmp.134 = lgetv %dc;
+        symbol [ dc %tmp.134 63 8 10 ];
+        symbol [ setColor %tmp.135 63 11 19 ];
+        %tmp.135 = getv function %tmp.134 :setColor;
+        symbol [ Graphics %tmp.136 63 20 28 ];
+        %tmp.136 = getm $.Toybox.Graphics;
+        symbol [ COLOR_WHITE %tmp.137 63 29 40 ];
+        %tmp.137 = getv %tmp.136 :COLOR_WHITE;
+        symbol [ Graphics %tmp.138 63 42 50 ];
+        %tmp.138 = getm $.Toybox.Graphics;
+        symbol [ COLOR_TRANSPARENT %tmp.139 63 51 68 ];
+        %tmp.139 = getv %tmp.138 :COLOR_TRANSPARENT;
+        invoke %tmp.134 %tmp.135(%tmp.137, %tmp.139);
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc" 64 8 ]
+        %tmp.140 = lgetv %dc;
+        symbol [ dc %tmp.140 64 8 10 ];
+        symbol [ drawText %tmp.141 64 11 19 ];
+        %tmp.141 = getv function %tmp.140 :drawText;
+        %tmp.142 = lgetv %cx.3;
+        symbol [ cx %tmp.142 64 20 22 ];
+        %tmp.143 = lgetv %W.1;
+        symbol [ W %tmp.143 64 25 26 ];
+        %tmp.144 = 20;
+        %tmp.145 = mul %tmp.143 %tmp.144;
+        %tmp.146 = 100;
+        %tmp.147 = div %tmp.145 %tmp.146;
+        %tmp.148 = sub %tmp.142 %tmp.147;
+        %tmp.149 = lgetv %H.2;
+        symbol [ H %tmp.149 64 39 40 ];
+        %tmp.150 = 49;
+        %tmp.151 = mul %tmp.149 %tmp.150;
+        %tmp.152 = 100;
+        %tmp.153 = div %tmp.151 %tmp.152;
+        symbol [ Graphics %tmp.154 64 53 61 ];
+        %tmp.154 = getm $.Toybox.Graphics;
+        symbol [ FONT_MEDIUM %tmp.155 64 62 73 ];
+        %tmp.155 = getv %tmp.154 :FONT_MEDIUM;
+        %tmp.156 = lgetv %distNM.9;
+        symbol [ distNM %tmp.156 65 12 18 ];
+        symbol [ format %tmp.157 65 19 25 ];
+        %tmp.157 = getv function %tmp.156 :format;
+        %tmp.158 = "%.1f";
+        %tmp.159 = invoke %tmp.156 %tmp.157(%tmp.158);
+        symbol [ Graphics %tmp.160 65 35 43 ];
+        %tmp.160 = getm $.Toybox.Graphics;
+        symbol [ TEXT_JUSTIFY_CENTER %tmp.161 65 44 63 ];
+        %tmp.161 = getv %tmp.160 :TEXT_JUSTIFY_CENTER;
+        invoke %tmp.140 %tmp.141(%tmp.148, %tmp.153, %tmp.155, %tmp.159, %tmp.161);
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc" 66 8 ]
+        %tmp.162 = lgetv %dc;
+        symbol [ dc %tmp.162 66 8 10 ];
+        symbol [ setColor %tmp.163 66 11 19 ];
+        %tmp.163 = getv function %tmp.162 :setColor;
+        symbol [ Graphics %tmp.164 66 20 28 ];
+        %tmp.164 = getm $.Toybox.Graphics;
+        symbol [ COLOR_DK_GRAY %tmp.165 66 29 42 ];
+        %tmp.165 = getv %tmp.164 :COLOR_DK_GRAY;
+        symbol [ Graphics %tmp.166 66 44 52 ];
+        %tmp.166 = getm $.Toybox.Graphics;
+        symbol [ COLOR_TRANSPARENT %tmp.167 66 53 70 ];
+        %tmp.167 = getv %tmp.166 :COLOR_TRANSPARENT;
+        invoke %tmp.162 %tmp.163(%tmp.165, %tmp.167);
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc" 67 8 ]
+        %tmp.168 = lgetv %dc;
+        symbol [ dc %tmp.168 67 8 10 ];
+        symbol [ drawText %tmp.169 67 11 19 ];
+        %tmp.169 = getv function %tmp.168 :drawText;
+        %tmp.170 = lgetv %cx.3;
+        symbol [ cx %tmp.170 67 20 22 ];
+        %tmp.171 = lgetv %W.1;
+        symbol [ W %tmp.171 67 25 26 ];
+        %tmp.172 = 20;
+        %tmp.173 = mul %tmp.171 %tmp.172;
+        %tmp.174 = 100;
+        %tmp.175 = div %tmp.173 %tmp.174;
+        %tmp.176 = sub %tmp.170 %tmp.175;
+        %tmp.177 = lgetv %H.2;
+        symbol [ H %tmp.177 67 39 40 ];
+        %tmp.178 = 58;
+        %tmp.179 = mul %tmp.177 %tmp.178;
+        %tmp.180 = 100;
+        %tmp.181 = div %tmp.179 %tmp.180;
+        symbol [ Graphics %tmp.182 67 53 61 ];
+        %tmp.182 = getm $.Toybox.Graphics;
+        symbol [ FONT_XTINY %tmp.183 67 62 72 ];
+        %tmp.183 = getv %tmp.182 :FONT_XTINY;
+        %tmp.184 = "NM";
+        symbol [ Graphics %tmp.185 68 18 26 ];
+        %tmp.185 = getm $.Toybox.Graphics;
+        symbol [ TEXT_JUSTIFY_CENTER %tmp.186 68 27 46 ];
+        %tmp.186 = getv %tmp.185 :TEXT_JUSTIFY_CENTER;
+        invoke %tmp.168 %tmp.169(%tmp.176, %tmp.181, %tmp.183, %tmp.184, %tmp.186);
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc" 70 8 ]
+        %tmp.187 = lgetv %dc;
+        symbol [ dc %tmp.187 70 8 10 ];
+        symbol [ setColor %tmp.188 70 11 19 ];
+        %tmp.188 = getv function %tmp.187 :setColor;
+        symbol [ Graphics %tmp.189 70 20 28 ];
+        %tmp.189 = getm $.Toybox.Graphics;
+        symbol [ COLOR_LT_GRAY %tmp.190 70 29 42 ];
+        %tmp.190 = getv %tmp.189 :COLOR_LT_GRAY;
+        symbol [ Graphics %tmp.191 70 44 52 ];
+        %tmp.191 = getm $.Toybox.Graphics;
+        symbol [ COLOR_TRANSPARENT %tmp.192 70 53 70 ];
+        %tmp.192 = getv %tmp.191 :COLOR_TRANSPARENT;
+        invoke %tmp.187 %tmp.188(%tmp.190, %tmp.192);
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc" 71 8 ]
+        %tmp.193 = lgetv %dc;
+        symbol [ dc %tmp.193 71 8 10 ];
+        symbol [ drawText %tmp.194 71 11 19 ];
+        %tmp.194 = getv function %tmp.193 :drawText;
+        %tmp.195 = lgetv %cx.3;
+        symbol [ cx %tmp.195 71 20 22 ];
+        %tmp.196 = lgetv %W.1;
+        symbol [ W %tmp.196 71 25 26 ];
+        %tmp.197 = 20;
+        %tmp.198 = mul %tmp.196 %tmp.197;
+        %tmp.199 = 100;
+        %tmp.200 = div %tmp.198 %tmp.199;
+        %tmp.201 = add %tmp.195 %tmp.200;
+        %tmp.202 = lgetv %H.2;
+        symbol [ H %tmp.202 71 39 40 ];
+        %tmp.203 = 42;
+        %tmp.204 = mul %tmp.202 %tmp.203;
+        %tmp.205 = 100;
+        %tmp.206 = div %tmp.204 %tmp.205;
+        symbol [ Graphics %tmp.207 71 53 61 ];
+        %tmp.207 = getm $.Toybox.Graphics;
+        symbol [ FONT_XTINY %tmp.208 71 62 72 ];
+        %tmp.208 = getv %tmp.207 :FONT_XTINY;
+        %tmp.209 = "CAL";
+        symbol [ Graphics %tmp.210 72 19 27 ];
+        %tmp.210 = getm $.Toybox.Graphics;
+        symbol [ TEXT_JUSTIFY_CENTER %tmp.211 72 28 47 ];
+        %tmp.211 = getv %tmp.210 :TEXT_JUSTIFY_CENTER;
+        invoke %tmp.193 %tmp.194(%tmp.201, %tmp.206, %tmp.208, %tmp.209, %tmp.211);
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc" 73 8 ]
+        %tmp.212 = lgetv %dc;
+        symbol [ dc %tmp.212 73 8 10 ];
+        symbol [ setColor %tmp.213 73 11 19 ];
+        %tmp.213 = getv function %tmp.212 :setColor;
+        symbol [ Graphics %tmp.214 73 20 28 ];
+        %tmp.214 = getm $.Toybox.Graphics;
+        symbol [ COLOR_WHITE %tmp.215 73 29 40 ];
+        %tmp.215 = getv %tmp.214 :COLOR_WHITE;
+        symbol [ Graphics %tmp.216 73 42 50 ];
+        %tmp.216 = getm $.Toybox.Graphics;
+        symbol [ COLOR_TRANSPARENT %tmp.217 73 51 68 ];
+        %tmp.217 = getv %tmp.216 :COLOR_TRANSPARENT;
+        invoke %tmp.212 %tmp.213(%tmp.215, %tmp.217);
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc" 74 8 ]
+        %tmp.218 = lgetv %dc;
+        symbol [ dc %tmp.218 74 8 10 ];
+        symbol [ drawText %tmp.219 74 11 19 ];
+        %tmp.219 = getv function %tmp.218 :drawText;
+        %tmp.220 = lgetv %cx.3;
+        symbol [ cx %tmp.220 74 20 22 ];
+        %tmp.221 = lgetv %W.1;
+        symbol [ W %tmp.221 74 25 26 ];
+        %tmp.222 = 20;
+        %tmp.223 = mul %tmp.221 %tmp.222;
+        %tmp.224 = 100;
+        %tmp.225 = div %tmp.223 %tmp.224;
+        %tmp.226 = add %tmp.220 %tmp.225;
+        %tmp.227 = lgetv %H.2;
+        symbol [ H %tmp.227 74 39 40 ];
+        %tmp.228 = 49;
+        %tmp.229 = mul %tmp.227 %tmp.228;
+        %tmp.230 = 100;
+        %tmp.231 = div %tmp.229 %tmp.230;
+        symbol [ Graphics %tmp.232 74 53 61 ];
+        %tmp.232 = getm $.Toybox.Graphics;
+        symbol [ FONT_MEDIUM %tmp.233 74 62 73 ];
+        %tmp.233 = getv %tmp.232 :FONT_MEDIUM;
+        %tmp.234 = lgetv %calStr.11;
+        symbol [ calStr %tmp.234 75 12 18 ];
+        symbol [ Graphics %tmp.235 75 20 28 ];
+        %tmp.235 = getm $.Toybox.Graphics;
+        symbol [ TEXT_JUSTIFY_CENTER %tmp.236 75 29 48 ];
+        %tmp.236 = getv %tmp.235 :TEXT_JUSTIFY_CENTER;
+        invoke %tmp.218 %tmp.219(%tmp.226, %tmp.231, %tmp.233, %tmp.234, %tmp.236);
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc" 78 8 ]
+        %tmp.237 = lgetv %dc;
+        symbol [ dc %tmp.237 78 8 10 ];
+        symbol [ setColor %tmp.238 78 11 19 ];
+        %tmp.238 = getv function %tmp.237 :setColor;
+        symbol [ Graphics %tmp.239 78 20 28 ];
+        %tmp.239 = getm $.Toybox.Graphics;
+        symbol [ COLOR_BLUE %tmp.240 78 29 39 ];
+        %tmp.240 = getv %tmp.239 :COLOR_BLUE;
+        symbol [ Graphics %tmp.241 78 41 49 ];
+        %tmp.241 = getm $.Toybox.Graphics;
+        symbol [ COLOR_TRANSPARENT %tmp.242 78 50 67 ];
+        %tmp.242 = getv %tmp.241 :COLOR_TRANSPARENT;
+        invoke %tmp.237 %tmp.238(%tmp.240, %tmp.242);
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc" 79 8 ]
+        %tmp.243 = lgetv %dc;
+        symbol [ dc %tmp.243 79 8 10 ];
+        symbol [ drawLine %tmp.244 79 11 19 ];
+        %tmp.244 = getv function %tmp.243 :drawLine;
+        %tmp.245 = lgetv %W.1;
+        symbol [ W %tmp.245 79 20 21 ];
+        %tmp.246 = 12;
+        %tmp.247 = mul %tmp.245 %tmp.246;
+        %tmp.248 = 100;
+        %tmp.249 = div %tmp.247 %tmp.248;
+        %tmp.250 = lgetv %H.2;
+        symbol [ H %tmp.250 79 34 35 ];
+        %tmp.251 = 66;
+        %tmp.252 = mul %tmp.250 %tmp.251;
+        %tmp.253 = 100;
+        %tmp.254 = div %tmp.252 %tmp.253;
+        %tmp.255 = lgetv %W.1;
+        symbol [ W %tmp.255 79 48 49 ];
+        %tmp.256 = 88;
+        %tmp.257 = mul %tmp.255 %tmp.256;
+        %tmp.258 = 100;
+        %tmp.259 = div %tmp.257 %tmp.258;
+        %tmp.260 = lgetv %H.2;
+        symbol [ H %tmp.260 79 62 63 ];
+        %tmp.261 = 66;
+        %tmp.262 = mul %tmp.260 %tmp.261;
+        %tmp.263 = 100;
+        %tmp.264 = div %tmp.262 %tmp.263;
+        invoke %tmp.243 %tmp.244(%tmp.249, %tmp.254, %tmp.259, %tmp.264);
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc" 82 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_30_26_102_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_30_26_102_4_stop" ]
+        %avgSpd.12 = local;
+        symbol [ avgSpd %avgSpd.12 82 12 18 ];
+        %tmp.265 = 0.0;
+        lputv %avgSpd.12 %tmp.265;
+        symbol [ avgSpd %avgSpd.12 82 12 18 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc" 83 8 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_83_8_87_8_if_stmt:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_83_12_83_58_begin:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_83_12_83_40_begin:
+        %tmp.266 = lgetv %distM.8;
+        symbol [ distM %tmp.266 83 12 17 ];
+        %tmp.267 = null;
+        %tmp.268 = ne %tmp.266 %tmp.267;
+        bf %tmp.268 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_83_8_87_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_83_29_83_40_true:
+        %tmp.269 = lgetv %timerMs.6;
+        symbol [ timerMs %tmp.269 83 29 36 ];
+        %tmp.270 = null;
+        %tmp.271 = ne %tmp.269 %tmp.270;
+        push %tmp.271;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_83_29_83_40_end:
+        %tmp.272 = phi [%tmp.268 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_83_12_83_40_begin] [%tmp.271 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_83_29_83_40_true] [%tmp.272 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_83_29_83_40_end];
+        bf %tmp.272 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_83_8_87_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_83_48_83_58_true:
+        %tmp.273 = lgetv %timerMs.6;
+        symbol [ timerMs %tmp.273 83 48 55 ];
+        %tmp.274 = as %tmp.273 { (!Null) };
+        %tmp.275 = 0;
+        %tmp.276 = gt %tmp.274 %tmp.275;
+        push %tmp.276;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_83_48_83_58_end:
+        %tmp.277 = phi [%tmp.272 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_83_12_83_58_begin] [%tmp.276 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_83_48_83_58_true] [%tmp.277 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_83_48_83_58_end];
+        bf %tmp.277 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_83_8_87_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_83_8_87_8_if_true:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_83_61_87_8_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc" 84 12 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_83_61_87_8_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_83_61_87_8_stop" ]
+        %distNMval.13 = local;
+        symbol [ distNMval %distNMval.13 84 16 25 ];
+        %tmp.278 = lgetv %distM.8;
+        symbol [ distM %tmp.278 84 28 33 ];
+        %tmp.279 = as %tmp.278 { (!Null) };
+        %tmp.280 = 0.000539957;
+        %tmp.281 = mul %tmp.279 %tmp.280;
+        lputv %distNMval.13 %tmp.281;
+        symbol [ distNMval %distNMval.13 84 16 25 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc" 85 12 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_83_61_87_8_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_83_61_87_8_stop" ]
+        %hrs.14 = local;
+        symbol [ hrs %hrs.14 85 16 19 ];
+        %tmp.282 = lgetv %timerMs.6;
+        symbol [ timerMs %tmp.282 85 22 29 ];
+        %tmp.283 = as %tmp.282 { (!Null) };
+        %tmp.284 = 3600000.0;
+        %tmp.285 = div %tmp.283 %tmp.284;
+        lputv %hrs.14 %tmp.285;
+        symbol [ hrs %hrs.14 85 16 19 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc" 86 12 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_86_12_86_53_if_stmt:
+        %tmp.286 = lgetv %hrs.14;
+        symbol [ hrs %tmp.286 86 16 19 ];
+        %tmp.287 = 0;
+        %tmp.288 = gt %tmp.286 %tmp.287;
+        bf %tmp.288 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_86_12_86_53_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_86_12_86_53_if_true:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_86_25_86_53_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc" 86 27 ]
+        %tmp.289 = lgetv %distNMval.13;
+        symbol [ distNMval %tmp.289 86 36 45 ];
+        %tmp.290 = lgetv %hrs.14;
+        symbol [ hrs %tmp.290 86 48 51 ];
+        %tmp.291 = div %tmp.289 %tmp.290;
+        lputv %avgSpd.12 %tmp.291;
+        symbol [ avgSpd %avgSpd.12 86 27 33 ];
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_86_25_86_53_stop:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_86_12_86_53_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_86_12_86_53_if_end:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_83_61_87_8_stop:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_83_8_87_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_83_8_87_8_if_end:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc" 88 8 ]
+        %tmp.292 = lgetv %dc;
+        symbol [ dc %tmp.292 88 8 10 ];
+        symbol [ setColor %tmp.293 88 11 19 ];
+        %tmp.293 = getv function %tmp.292 :setColor;
+        symbol [ Graphics %tmp.294 88 20 28 ];
+        %tmp.294 = getm $.Toybox.Graphics;
+        symbol [ COLOR_LT_GRAY %tmp.295 88 29 42 ];
+        %tmp.295 = getv %tmp.294 :COLOR_LT_GRAY;
+        symbol [ Graphics %tmp.296 88 44 52 ];
+        %tmp.296 = getm $.Toybox.Graphics;
+        symbol [ COLOR_TRANSPARENT %tmp.297 88 53 70 ];
+        %tmp.297 = getv %tmp.296 :COLOR_TRANSPARENT;
+        invoke %tmp.292 %tmp.293(%tmp.295, %tmp.297);
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc" 89 8 ]
+        %tmp.298 = lgetv %dc;
+        symbol [ dc %tmp.298 89 8 10 ];
+        symbol [ drawText %tmp.299 89 11 19 ];
+        %tmp.299 = getv function %tmp.298 :drawText;
+        %tmp.300 = lgetv %cx.3;
+        symbol [ cx %tmp.300 89 20 22 ];
+        %tmp.301 = lgetv %H.2;
+        symbol [ H %tmp.301 89 24 25 ];
+        %tmp.302 = 69;
+        %tmp.303 = mul %tmp.301 %tmp.302;
+        %tmp.304 = 100;
+        %tmp.305 = div %tmp.303 %tmp.304;
+        symbol [ Graphics %tmp.306 89 38 46 ];
+        %tmp.306 = getm $.Toybox.Graphics;
+        symbol [ FONT_XTINY %tmp.307 89 47 57 ];
+        %tmp.307 = getv %tmp.306 :FONT_XTINY;
+        %tmp.308 = "avg speed";
+        symbol [ Graphics %tmp.309 90 25 33 ];
+        %tmp.309 = getm $.Toybox.Graphics;
+        symbol [ TEXT_JUSTIFY_CENTER %tmp.310 90 34 53 ];
+        %tmp.310 = getv %tmp.309 :TEXT_JUSTIFY_CENTER;
+        invoke %tmp.298 %tmp.299(%tmp.300, %tmp.305, %tmp.307, %tmp.308, %tmp.310);
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc" 91 8 ]
+        %tmp.311 = lgetv %dc;
+        symbol [ dc %tmp.311 91 8 10 ];
+        symbol [ setColor %tmp.312 91 11 19 ];
+        %tmp.312 = getv function %tmp.311 :setColor;
+        symbol [ Graphics %tmp.313 91 20 28 ];
+        %tmp.313 = getm $.Toybox.Graphics;
+        symbol [ COLOR_WHITE %tmp.314 91 29 40 ];
+        %tmp.314 = getv %tmp.313 :COLOR_WHITE;
+        symbol [ Graphics %tmp.315 91 42 50 ];
+        %tmp.315 = getm $.Toybox.Graphics;
+        symbol [ COLOR_TRANSPARENT %tmp.316 91 51 68 ];
+        %tmp.316 = getv %tmp.315 :COLOR_TRANSPARENT;
+        invoke %tmp.311 %tmp.312(%tmp.314, %tmp.316);
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc" 92 8 ]
+        %tmp.317 = lgetv %dc;
+        symbol [ dc %tmp.317 92 8 10 ];
+        symbol [ drawText %tmp.318 92 11 19 ];
+        %tmp.318 = getv function %tmp.317 :drawText;
+        %tmp.319 = lgetv %cx.3;
+        symbol [ cx %tmp.319 92 20 22 ];
+        %tmp.320 = lgetv %H.2;
+        symbol [ H %tmp.320 92 24 25 ];
+        %tmp.321 = 76;
+        %tmp.322 = mul %tmp.320 %tmp.321;
+        %tmp.323 = 100;
+        %tmp.324 = div %tmp.322 %tmp.323;
+        symbol [ Graphics %tmp.325 92 38 46 ];
+        %tmp.325 = getm $.Toybox.Graphics;
+        symbol [ FONT_SMALL %tmp.326 92 47 57 ];
+        %tmp.326 = getv %tmp.325 :FONT_SMALL;
+        %tmp.327 = lgetv %avgSpd.12;
+        symbol [ avgSpd %tmp.327 93 12 18 ];
+        symbol [ format %tmp.328 93 19 25 ];
+        %tmp.328 = getv function %tmp.327 :format;
+        %tmp.329 = "%.1f";
+        %tmp.330 = invoke %tmp.327 %tmp.328(%tmp.329);
+        %tmp.331 = " kts";
+        %tmp.332 = add %tmp.330 %tmp.331;
+        symbol [ Graphics %tmp.333 93 44 52 ];
+        %tmp.333 = getm $.Toybox.Graphics;
+        symbol [ TEXT_JUSTIFY_CENTER %tmp.334 93 53 72 ];
+        %tmp.334 = getv %tmp.333 :TEXT_JUSTIFY_CENTER;
+        invoke %tmp.317 %tmp.318(%tmp.319, %tmp.324, %tmp.326, %tmp.332, %tmp.334);
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc" 96 8 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_96_8_101_8_if_stmt:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_96_12_96_65_begin:
+        %tmp.335 = lgetv %app.4;
+        symbol [ app %tmp.335 96 12 15 ];
+        symbol [ jumpTracker %tmp.336 96 16 27 ];
+        %tmp.336 = getv %tmp.335 :jumpTracker;
+        %tmp.337 = null;
+        %tmp.338 = ne %tmp.336 %tmp.337;
+        bf %tmp.338 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_96_8_101_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_96_39_96_65_true:
+        %tmp.339 = lgetv %app.4;
+        symbol [ app %tmp.339 96 39 42 ];
+        symbol [ jumpTracker %tmp.340 96 43 54 ];
+        %tmp.340 = getv %tmp.339 :jumpTracker;
+        symbol [ logger %tmp.341 96 55 61 ];
+        %tmp.341 = getv %tmp.340 :logger;
+        %tmp.342 = null;
+        %tmp.343 = ne %tmp.341 %tmp.342;
+        push %tmp.343;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_96_39_96_65_end:
+        %tmp.344 = phi [%tmp.338 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_96_12_96_65_begin] [%tmp.343 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_96_39_96_65_true] [%tmp.344 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_96_39_96_65_end];
+        bf %tmp.344 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_96_8_101_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_96_8_101_8_if_true:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_96_71_101_8_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc" 97 12 ]
+        %tmp.345 = lgetv %dc;
+        symbol [ dc %tmp.345 97 12 14 ];
+        symbol [ setColor %tmp.346 97 15 23 ];
+        %tmp.346 = getv function %tmp.345 :setColor;
+        symbol [ Graphics %tmp.347 97 24 32 ];
+        %tmp.347 = getm $.Toybox.Graphics;
+        symbol [ COLOR_DK_GRAY %tmp.348 97 33 46 ];
+        %tmp.348 = getv %tmp.347 :COLOR_DK_GRAY;
+        symbol [ Graphics %tmp.349 97 48 56 ];
+        %tmp.349 = getm $.Toybox.Graphics;
+        symbol [ COLOR_TRANSPARENT %tmp.350 97 57 74 ];
+        %tmp.350 = getv %tmp.349 :COLOR_TRANSPARENT;
+        invoke %tmp.345 %tmp.346(%tmp.348, %tmp.350);
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc" 98 12 ]
+        %tmp.351 = lgetv %dc;
+        symbol [ dc %tmp.351 98 12 14 ];
+        symbol [ drawText %tmp.352 98 15 23 ];
+        %tmp.352 = getv function %tmp.351 :drawText;
+        %tmp.353 = lgetv %cx.3;
+        symbol [ cx %tmp.353 98 24 26 ];
+        %tmp.354 = lgetv %H.2;
+        symbol [ H %tmp.354 98 28 29 ];
+        %tmp.355 = 89;
+        %tmp.356 = mul %tmp.354 %tmp.355;
+        %tmp.357 = 100;
+        %tmp.358 = div %tmp.356 %tmp.357;
+        symbol [ Graphics %tmp.359 98 42 50 ];
+        %tmp.359 = getm $.Toybox.Graphics;
+        symbol [ FONT_XTINY %tmp.360 98 51 61 ];
+        %tmp.360 = getv %tmp.359 :FONT_XTINY;
+        %tmp.361 = "GPS: ";
+        %tmp.362 = lgetv %app.4;
+        symbol [ app %tmp.362 99 26 29 ];
+        symbol [ jumpTracker %tmp.363 99 30 41 ];
+        %tmp.363 = getv %tmp.362 :jumpTracker;
+        symbol [ logger %tmp.364 99 42 48 ];
+        %tmp.364 = getv %tmp.363 :logger;
+        symbol [ gpsFixes %tmp.365 99 49 57 ];
+        %tmp.365 = getv %tmp.364 :gpsFixes;
+        %tmp.366 = add %tmp.361 %tmp.365;
+        %tmp.367 = " fixes";
+        %tmp.368 = add %tmp.366 %tmp.367;
+        symbol [ Graphics %tmp.369 100 16 24 ];
+        %tmp.369 = getm $.Toybox.Graphics;
+        symbol [ TEXT_JUSTIFY_CENTER %tmp.370 100 25 44 ];
+        %tmp.370 = getv %tmp.369 :TEXT_JUSTIFY_CENTER;
+        invoke %tmp.351 %tmp.352(%tmp.353, %tmp.358, %tmp.360, %tmp.368, %tmp.370);
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_96_71_101_8_stop:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_96_8_101_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_96_8_101_8_if_end:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_30_26_102_4_stop:
+    }
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc"; @line = 104; @symbol_functiondef = [_fmtTimer,104,20,29]; @symbol_param<0> = [ms,104,30,32]; ]
+    protected
+    function _fmtTimer(ms) {
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_104_34_114_4_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc" 105 8 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_105_8_105_53_if_stmt:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_105_12_105_32_begin:
+        %tmp.1 = lgetv %ms;
+        symbol [ ms %tmp.1 105 12 14 ];
+        %tmp.2 = null;
+        %tmp.3 = eq %tmp.1 %tmp.2;
+        bt %tmp.3 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_105_8_105_53_if_true;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_105_26_105_32_false:
+        %tmp.4 = lgetv %ms;
+        symbol [ ms %tmp.4 105 26 28 ];
+        %tmp.5 = as %tmp.4 { (!Null) };
+        %tmp.6 = 0;
+        %tmp.7 = lte %tmp.5 %tmp.6;
+        push %tmp.7;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_105_26_105_32_end:
+        %tmp.8 = phi [%tmp.3 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_105_12_105_32_begin] [%tmp.7 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_105_26_105_32_false] [%tmp.8 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_105_26_105_32_end];
+        bf %tmp.8 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_105_8_105_53_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_105_8_105_53_if_true:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_105_35_105_53_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc" 105 37 ]
+        %tmp.9 = "00:00";
+        ret %tmp.9;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_105_35_105_53_stop:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_105_8_105_53_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_105_8_105_53_if_end:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc" 106 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_104_34_114_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_104_34_114_4_stop" ]
+        %totalSec.1 = local;
+        symbol [ totalSec %totalSec.1 106 12 20 ];
+        %tmp.10 = lgetv %ms;
+        symbol [ ms %tmp.10 106 24 26 ];
+        %tmp.11 = 1000;
+        %tmp.12 = div %tmp.10 %tmp.11;
+        symbol [ toNumber %tmp.13 106 35 43 ];
+        %tmp.13 = getv function %tmp.12 :toNumber;
+        %tmp.14 = invoke %tmp.12 %tmp.13();
+        lputv %totalSec.1 %tmp.14;
+        symbol [ totalSec %totalSec.1 106 12 20 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc" 107 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_104_34_114_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_104_34_114_4_stop" ]
+        %hrs.2 = local;
+        symbol [ hrs %hrs.2 107 12 15 ];
+        %tmp.15 = lgetv %totalSec.1;
+        symbol [ totalSec %tmp.15 107 19 27 ];
+        %tmp.16 = 3600;
+        %tmp.17 = div %tmp.15 %tmp.16;
+        lputv %hrs.2 %tmp.17;
+        symbol [ hrs %hrs.2 107 12 15 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc" 108 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_104_34_114_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_104_34_114_4_stop" ]
+        %mins.3 = local;
+        symbol [ mins %mins.3 108 12 16 ];
+        %tmp.18 = lgetv %totalSec.1;
+        symbol [ totalSec %tmp.18 108 20 28 ];
+        %tmp.19 = 3600;
+        %tmp.20 = mod %tmp.18 %tmp.19;
+        %tmp.21 = 60;
+        %tmp.22 = div %tmp.20 %tmp.21;
+        lputv %mins.3 %tmp.22;
+        symbol [ mins %mins.3 108 12 16 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc" 109 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_104_34_114_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_104_34_114_4_stop" ]
+        %secs.4 = local;
+        symbol [ secs %secs.4 109 12 16 ];
+        %tmp.23 = lgetv %totalSec.1;
+        symbol [ totalSec %tmp.23 109 19 27 ];
+        %tmp.24 = 60;
+        %tmp.25 = mod %tmp.23 %tmp.24;
+        lputv %secs.4 %tmp.25;
+        symbol [ secs %secs.4 109 12 16 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc" 110 8 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_110_8_112_8_if_stmt:
+        %tmp.26 = lgetv %hrs.2;
+        symbol [ hrs %tmp.26 110 12 15 ];
+        %tmp.27 = 0;
+        %tmp.28 = gt %tmp.26 %tmp.27;
+        bf %tmp.28 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_110_8_112_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_110_8_112_8_if_true:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_110_21_112_8_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc" 111 12 ]
+        %tmp.29 = lgetv %hrs.2;
+        symbol [ hrs %tmp.29 111 19 22 ];
+        symbol [ format %tmp.30 111 23 29 ];
+        %tmp.30 = getv function %tmp.29 :format;
+        %tmp.31 = "%d";
+        %tmp.32 = invoke %tmp.29 %tmp.30(%tmp.31);
+        %tmp.33 = ":";
+        %tmp.34 = add %tmp.32 %tmp.33;
+        %tmp.35 = lgetv %mins.3;
+        symbol [ mins %tmp.35 111 44 48 ];
+        symbol [ format %tmp.36 111 49 55 ];
+        %tmp.36 = getv function %tmp.35 :format;
+        %tmp.37 = "%02d";
+        %tmp.38 = invoke %tmp.35 %tmp.36(%tmp.37);
+        %tmp.39 = add %tmp.34 %tmp.38;
+        %tmp.40 = ":";
+        %tmp.41 = add %tmp.39 %tmp.40;
+        %tmp.42 = lgetv %secs.4;
+        symbol [ secs %tmp.42 111 72 76 ];
+        symbol [ format %tmp.43 111 77 83 ];
+        %tmp.43 = getv function %tmp.42 :format;
+        %tmp.44 = "%02d";
+        %tmp.45 = invoke %tmp.42 %tmp.43(%tmp.44);
+        %tmp.46 = add %tmp.41 %tmp.45;
+        ret %tmp.46;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_110_21_112_8_stop:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_110_8_112_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_110_8_112_8_if_end:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc" 113 8 ]
+        %tmp.47 = lgetv %mins.3;
+        symbol [ mins %tmp.47 113 15 19 ];
+        symbol [ format %tmp.48 113 20 26 ];
+        %tmp.48 = getv function %tmp.47 :format;
+        %tmp.49 = "%02d";
+        %tmp.50 = invoke %tmp.47 %tmp.48(%tmp.49);
+        %tmp.51 = ":";
+        %tmp.52 = add %tmp.50 %tmp.51;
+        %tmp.53 = lgetv %secs.4;
+        symbol [ secs %tmp.53 113 43 47 ];
+        symbol [ format %tmp.54 113 48 54 ];
+        %tmp.54 = getv function %tmp.53 :format;
+        %tmp.55 = "%02d";
+        %tmp.56 = invoke %tmp.53 %tmp.54(%tmp.55);
+        %tmp.57 = add %tmp.52 %tmp.56;
+        ret %tmp.57;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionView_mc_104_34_114_4_stop:
+    }
+}
+[ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionView.mc"; @line = 1; ]
+<init> {
+}

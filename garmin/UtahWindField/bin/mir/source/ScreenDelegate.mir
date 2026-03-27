@@ -1,0 +1,241 @@
+[ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\ScreenDelegate.mc"; @line = 1; @symbol_usingdef<0> = [Toybox,1,6,12]; @symbol_usingdef<1> = [WatchUi,1,13,20]; ]
+using Toybox.WatchUi;
+[ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\ScreenDelegate.mc"; @line = 2; @symbol_usingdef<0> = [Toybox,2,6,12]; @symbol_usingdef<1> = [Application,2,13,24]; ]
+using Toybox.Application;
+[ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\ScreenDelegate.mc"; @line = 3; @symbol_usingdef<0> = [Toybox,3,6,12]; @symbol_usingdef<1> = [System,3,13,19]; ]
+using Toybox.System;
+//! Shared delegate for all 4 screens in the ViewLoop.
+//! SELECT button: context-sensitive (start/pause/resume on Screen 1, diagnostics on others)
+//! BACK button: end session confirmation
+[ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\ScreenDelegate.mc"; @line = 9; @symbol_classdef = [ScreenDelegate,9,6,20]; @symbol_extends<0> = [WatchUi,9,29,36]; @symbol_extends<1> = [BehaviorDelegate,9,37,53]; ]
+class ScreenDelegate extends WatchUi.BehaviorDelegate {
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\ScreenDelegate.mc"; @line = 9; ]
+    <init> {
+    }
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\ScreenDelegate.mc"; @line = 9; ]
+    static
+    <init> {
+    }
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\ScreenDelegate.mc"; @line = 11; @symbol_functiondef = [initialize,11,13,23]; ]
+    function initialize() as Void {
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_ScreenDelegate_mc_11_26_13_4_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\ScreenDelegate.mc" 12 8 ]
+        symbol [ BehaviorDelegate %tmp.2 12 8 24 ];
+        %tmp.2 = getv ? :BehaviorDelegate;
+        symbol [ initialize %tmp.3 12 25 35 ];
+        %tmp.3 = getv function %tmp.2 :initialize;
+        invoke %tmp.2 %tmp.3();
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_ScreenDelegate_mc_11_26_13_4_stop:
+    }
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\ScreenDelegate.mc"; @line = 15; @symbol_functiondef = [onSelect,15,13,21]; ]
+    function onSelect() {
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_ScreenDelegate_mc_15_24_33_4_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\ScreenDelegate.mc" 16 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_ScreenDelegate_mc_15_24_33_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_ScreenDelegate_mc_15_24_33_4_stop" ]
+        %app.1 = local;
+        symbol [ app %app.1 16 12 15 ];
+        symbol [ Application %tmp.1 16 18 29 ];
+        %tmp.1 = getm $.Toybox.Application;
+        symbol [ getApp %tmp.2 16 30 36 ];
+        %tmp.2 = getv function %tmp.1 :getApp;
+        %tmp.3 = invoke %tmp.1 %tmp.2();
+        lputv %app.1 %tmp.3;
+        symbol [ app %app.1 16 12 15 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\ScreenDelegate.mc" 18 8 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_ScreenDelegate_mc_18_8_23_8_if_stmt:
+        %tmp.4 = lgetv %app.1;
+        symbol [ app %tmp.4 18 13 16 ];
+        symbol [ isRecording %tmp.5 18 17 28 ];
+        %tmp.5 = getv %tmp.4 :isRecording;
+        %tmp.6 = not %tmp.5;
+        bf %tmp.6 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_ScreenDelegate_mc_18_8_23_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_ScreenDelegate_mc_18_8_23_8_if_true:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_ScreenDelegate_mc_18_30_23_8_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\ScreenDelegate.mc" 20 12 ]
+        %tmp.7 = lgetv %app.1;
+        symbol [ app %tmp.7 20 12 15 ];
+        symbol [ startSession %tmp.8 20 16 28 ];
+        %tmp.8 = getv function %tmp.7 :startSession;
+        invoke %tmp.7 %tmp.8();
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\ScreenDelegate.mc" 21 12 ]
+        symbol [ WatchUi %tmp.9 21 12 19 ];
+        %tmp.9 = getm $.Toybox.WatchUi;
+        symbol [ requestUpdate %tmp.10 21 20 33 ];
+        %tmp.10 = getv function %tmp.9 :requestUpdate;
+        invoke %tmp.9 %tmp.10();
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\ScreenDelegate.mc" 22 12 ]
+        %tmp.11 = true;
+        ret %tmp.11;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_ScreenDelegate_mc_18_30_23_8_stop:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_ScreenDelegate_mc_18_8_23_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_ScreenDelegate_mc_18_8_23_8_if_end:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\ScreenDelegate.mc" 26 8 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_ScreenDelegate_mc_26_8_30_8_if_stmt:
+        %tmp.12 = lgetv %app.1;
+        symbol [ app %tmp.12 26 12 15 ];
+        symbol [ isPaused %tmp.13 26 16 24 ];
+        %tmp.13 = getv %tmp.12 :isPaused;
+        bf %tmp.13 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_ScreenDelegate_mc_26_8_30_8_if_else_false;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_ScreenDelegate_mc_26_8_30_8_if_true:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_ScreenDelegate_mc_26_26_28_8_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\ScreenDelegate.mc" 27 12 ]
+        %tmp.14 = lgetv %app.1;
+        symbol [ app %tmp.14 27 12 15 ];
+        symbol [ resumeSession %tmp.15 27 16 29 ];
+        %tmp.15 = getv function %tmp.14 :resumeSession;
+        invoke %tmp.14 %tmp.15();
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_ScreenDelegate_mc_26_26_28_8_stop:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_ScreenDelegate_mc_26_8_30_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_ScreenDelegate_mc_26_8_30_8_if_else_false:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_ScreenDelegate_mc_28_15_30_8_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\ScreenDelegate.mc" 29 12 ]
+        %tmp.16 = lgetv %app.1;
+        symbol [ app %tmp.16 29 12 15 ];
+        symbol [ pauseSession %tmp.17 29 16 28 ];
+        %tmp.17 = getv function %tmp.16 :pauseSession;
+        invoke %tmp.16 %tmp.17();
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_ScreenDelegate_mc_28_15_30_8_stop:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_ScreenDelegate_mc_26_8_30_8_if_end:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\ScreenDelegate.mc" 31 8 ]
+        symbol [ WatchUi %tmp.18 31 8 15 ];
+        %tmp.18 = getm $.Toybox.WatchUi;
+        symbol [ requestUpdate %tmp.19 31 16 29 ];
+        %tmp.19 = getv function %tmp.18 :requestUpdate;
+        invoke %tmp.18 %tmp.19();
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\ScreenDelegate.mc" 32 8 ]
+        %tmp.20 = true;
+        ret %tmp.20;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_ScreenDelegate_mc_15_24_33_4_stop:
+    }
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\ScreenDelegate.mc"; @line = 35; @symbol_functiondef = [onBack,35,13,19]; ]
+    function onBack() {
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_ScreenDelegate_mc_35_22_51_4_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\ScreenDelegate.mc" 36 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_ScreenDelegate_mc_35_22_51_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_ScreenDelegate_mc_35_22_51_4_stop" ]
+        %app.1 = local;
+        symbol [ app %app.1 36 12 15 ];
+        symbol [ Application %tmp.1 36 18 29 ];
+        %tmp.1 = getm $.Toybox.Application;
+        symbol [ getApp %tmp.2 36 30 36 ];
+        %tmp.2 = getv function %tmp.1 :getApp;
+        %tmp.3 = invoke %tmp.1 %tmp.2();
+        lputv %app.1 %tmp.3;
+        symbol [ app %app.1 36 12 15 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\ScreenDelegate.mc" 38 8 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_ScreenDelegate_mc_38_8_49_8_if_stmt:
+        %tmp.4 = lgetv %app.1;
+        symbol [ app %tmp.4 38 12 15 ];
+        symbol [ isRecording %tmp.5 38 16 27 ];
+        %tmp.5 = getv %tmp.4 :isRecording;
+        bf %tmp.5 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_ScreenDelegate_mc_38_8_49_8_if_else_false;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_ScreenDelegate_mc_38_8_49_8_if_true:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_ScreenDelegate_mc_38_29_46_8_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\ScreenDelegate.mc" 40 12 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_ScreenDelegate_mc_38_29_46_8_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_ScreenDelegate_mc_38_29_46_8_stop" ]
+        %dialog.2 = local;
+        symbol [ dialog %dialog.2 40 16 22 ];
+        symbol [ WatchUi %tmp.8 40 29 36 ];
+        %tmp.8 = getm $.Toybox.WatchUi;
+        symbol [ Confirmation %tmp.9 40 37 49 ];
+        %tmp.9 = getv function ? %tmp.8 :Confirmation;
+        %tmp.10 = "End session?";
+        %tmp.6 = newc %tmp.9 (%tmp.10);
+        lputv %dialog.2 %tmp.6;
+        symbol [ dialog %dialog.2 40 16 22 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\ScreenDelegate.mc" 41 12 ]
+        symbol [ WatchUi %tmp.11 41 12 19 ];
+        %tmp.11 = getm $.Toybox.WatchUi;
+        symbol [ pushView %tmp.12 41 20 28 ];
+        %tmp.12 = getv function %tmp.11 :pushView;
+        %tmp.13 = lgetv %dialog.2;
+        symbol [ dialog %tmp.13 42 16 22 ];
+        symbol [ EndSessionConfirmDelegate %tmp.17 43 20 45 ];
+        %tmp.17 = getv ? :EndSessionConfirmDelegate;
+        %tmp.14 = newc %tmp.17 ();
+        symbol [ WatchUi %tmp.18 44 16 23 ];
+        %tmp.18 = getm $.Toybox.WatchUi;
+        symbol [ SLIDE_IMMEDIATE %tmp.19 44 24 39 ];
+        %tmp.19 = getv %tmp.18 :SLIDE_IMMEDIATE;
+        invoke %tmp.11 %tmp.12(%tmp.13, %tmp.14, %tmp.19);
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_ScreenDelegate_mc_38_29_46_8_stop:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_ScreenDelegate_mc_38_8_49_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_ScreenDelegate_mc_38_8_49_8_if_else_false:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_ScreenDelegate_mc_46_15_49_8_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\ScreenDelegate.mc" 48 12 ]
+        symbol [ System %tmp.20 48 12 18 ];
+        %tmp.20 = getm $.Toybox.System;
+        symbol [ exit %tmp.21 48 19 23 ];
+        %tmp.21 = getv function %tmp.20 :exit;
+        invoke %tmp.20 %tmp.21();
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_ScreenDelegate_mc_46_15_49_8_stop:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_ScreenDelegate_mc_38_8_49_8_if_end:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\ScreenDelegate.mc" 50 8 ]
+        %tmp.22 = true;
+        ret %tmp.22;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_ScreenDelegate_mc_35_22_51_4_stop:
+    }
+}
+[ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\ScreenDelegate.mc"; @line = 54; @symbol_classdef = [EndSessionConfirmDelegate,54,6,31]; @symbol_extends<0> = [WatchUi,54,40,47]; @symbol_extends<1> = [ConfirmationDelegate,54,48,68]; ]
+class EndSessionConfirmDelegate extends WatchUi.ConfirmationDelegate {
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\ScreenDelegate.mc"; @line = 54; ]
+    <init> {
+    }
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\ScreenDelegate.mc"; @line = 54; ]
+    static
+    <init> {
+    }
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\ScreenDelegate.mc"; @line = 56; @symbol_functiondef = [initialize,56,13,23]; ]
+    function initialize() as Void {
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_ScreenDelegate_mc_56_26_58_4_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\ScreenDelegate.mc" 57 8 ]
+        symbol [ ConfirmationDelegate %tmp.2 57 8 28 ];
+        %tmp.2 = getv ? :ConfirmationDelegate;
+        symbol [ initialize %tmp.3 57 29 39 ];
+        %tmp.3 = getv function %tmp.2 :initialize;
+        invoke %tmp.2 %tmp.3();
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_ScreenDelegate_mc_56_26_58_4_stop:
+    }
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\ScreenDelegate.mc"; @line = 60; @symbol_functiondef = [onResponse,60,13,23]; @symbol_param<0> = [response,60,24,32]; ]
+    function onResponse(response) {
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_ScreenDelegate_mc_60_34_67_4_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\ScreenDelegate.mc" 61 8 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_ScreenDelegate_mc_61_8_65_8_if_stmt:
+        %tmp.1 = lgetv %response;
+        symbol [ response %tmp.1 61 12 20 ];
+        symbol [ WatchUi %tmp.2 61 24 31 ];
+        %tmp.2 = getm $.Toybox.WatchUi;
+        symbol [ CONFIRM_YES %tmp.3 61 32 43 ];
+        %tmp.3 = getv %tmp.2 :CONFIRM_YES;
+        %tmp.4 = eq %tmp.1 %tmp.3;
+        bf %tmp.4 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_ScreenDelegate_mc_61_8_65_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_ScreenDelegate_mc_61_8_65_8_if_true:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_ScreenDelegate_mc_61_45_65_8_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\ScreenDelegate.mc" 62 12 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_ScreenDelegate_mc_61_45_65_8_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_ScreenDelegate_mc_61_45_65_8_stop" ]
+        %app.1 = local;
+        symbol [ app %app.1 62 16 19 ];
+        symbol [ Application %tmp.5 62 22 33 ];
+        %tmp.5 = getm $.Toybox.Application;
+        symbol [ getApp %tmp.6 62 34 40 ];
+        %tmp.6 = getv function %tmp.5 :getApp;
+        %tmp.7 = invoke %tmp.5 %tmp.6();
+        lputv %app.1 %tmp.7;
+        symbol [ app %app.1 62 16 19 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\ScreenDelegate.mc" 63 12 ]
+        %tmp.8 = lgetv %app.1;
+        symbol [ app %tmp.8 63 12 15 ];
+        symbol [ stopSession %tmp.9 63 16 27 ];
+        %tmp.9 = getv function %tmp.8 :stopSession;
+        invoke %tmp.8 %tmp.9();
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_ScreenDelegate_mc_61_45_65_8_stop:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_ScreenDelegate_mc_61_8_65_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_ScreenDelegate_mc_61_8_65_8_if_end:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\ScreenDelegate.mc" 66 8 ]
+        %tmp.10 = true;
+        ret %tmp.10;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_ScreenDelegate_mc_60_34_67_4_stop:
+    }
+}
+[ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\ScreenDelegate.mc"; @line = 1; ]
+<init> {
+}

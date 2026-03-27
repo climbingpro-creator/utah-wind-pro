@@ -1,8 +1,9 @@
 /**
- * Water Temperature Service
+ * Water Temperature & River Flow Service
  * 
  * Rivers: USGS gauges where the sensor IS in the river
- *   - Provo River (10155500), Green River (09261000 & 09234500)
+ *   - Provo River (10155500), Middle Provo (10155500), Green River (09261000 & 09234500)
+ *   - Weber River (10130500 discharge, 10128500 temp)
  * 
  * Lakes/Reservoirs: Calibrated seasonal model built from multi-year
  *   NOAA/Copernicus satellite surface temperature records for each
@@ -19,6 +20,18 @@ export const WATER_TEMP_SOURCES = {
     siteId: '10155500',
     name: 'Provo River nr Charleston',
     note: 'Direct gauge on river',
+  },
+  'middle-provo': {
+    type: 'usgs',
+    siteId: '10155500',
+    name: 'Provo River nr Charleston',
+    note: 'Middle section — Jordanelle to Deer Creek',
+  },
+  'weber-river': {
+    type: 'usgs',
+    siteId: '10128500',
+    name: 'Weber River nr Oakley',
+    note: 'Upper Weber fishing corridor',
   },
   'green-river': {
     type: 'usgs',
@@ -64,61 +77,200 @@ export const WATER_TEMP_SOURCES = {
   },
 };
 
-// ─── USGS cache ──────────────────────────────────────────────────
-let usgsCache = null;
-let usgsCacheTs = 0;
+// USGS river gauges that provide discharge (cfs) — parameterCd=00060
+export const RIVER_FLOW_SOURCES = {
+  'provo-river':  { siteId: '10155500', name: 'Provo River nr Charleston' },
+  'middle-provo': { siteId: '10155500', name: 'Provo River nr Charleston' },
+  'lower-provo':  { siteId: '10159500', name: 'Provo River bl Deer Creek Dam' },
+  'weber-river':  { siteId: '10130500', name: 'Weber River nr Coalville' },
+  'green-river':  { siteId: '09261000', name: 'Green River nr Jensen' },
+  'flaming-gorge': { siteId: '09234500', name: 'Green River bl Flaming Gorge Dam' },
+};
+
+// Per-river flow thresholds based on actual river characteristics.
+// Each level array: [maxCfs, label, severity]
+// severity: 'great' | 'good' | 'ok' | 'caution' | 'warning' | 'danger'
+export const RIVER_FLOW_THRESHOLDS = {
+  'provo-river': {
+    name: 'Lower Provo',
+    unit: 'cfs',
+    levels: [
+      [80,   'Very Low',              'ok'],
+      [200,  'Low — Easy Wading',     'good'],
+      [500,  'Optimal — Prime Water',  'great'],
+      [700,  'Elevated — Strong Current', 'caution'],
+      [1200, 'High — Difficult Wading', 'warning'],
+      [Infinity, 'Dangerous — Stay Out', 'danger'],
+    ],
+  },
+  'middle-provo': {
+    name: 'Middle Provo (Jordanelle–Deer Creek)',
+    unit: 'cfs',
+    levels: [
+      [80,   'Very Low',                'ok'],
+      [200,  'Low — Easy Wading',       'good'],
+      [500,  'Optimal — Prime Tailwater', 'great'],
+      [700,  'Elevated — Fishable but Strong', 'caution'],
+      [1200, 'High — Runoff, Tough Wading', 'warning'],
+      [Infinity, 'Dangerous — Spring Flood', 'danger'],
+    ],
+  },
+  'weber-river': {
+    name: 'Weber River',
+    unit: 'cfs',
+    levels: [
+      [40,   'Very Low',                 'ok'],
+      [120,  'Low — Fishable',           'good'],
+      [350,  'Optimal — Prime Wading',   'great'],
+      [500,  'Borderline — Rising Water', 'caution'],
+      [800,  'High — Float Only',        'warning'],
+      [Infinity, 'Dangerous — Stay Off', 'danger'],
+    ],
+  },
+  'green-river': {
+    name: 'Green River (A/B/C Sections)',
+    unit: 'cfs',
+    levels: [
+      [400,  'Very Low',                     'ok'],
+      [800,  'Low — Excellent Wading',       'good'],
+      [2000, 'Optimal — Perfect for Wading & Float', 'great'],
+      [4000, 'Elevated — Float Recommended',  'caution'],
+      [8000, 'High — Drift Boat Only',       'warning'],
+      [Infinity, 'Dangerous — Extreme Flows', 'danger'],
+    ],
+  },
+  'flaming-gorge': {
+    name: 'Green River below Dam',
+    unit: 'cfs',
+    levels: [
+      [400,  'Very Low',                     'ok'],
+      [800,  'Low — Excellent Wading',       'good'],
+      [2000, 'Optimal — Perfect for Wading & Float', 'great'],
+      [4000, 'Elevated — Float Recommended',  'caution'],
+      [8000, 'High — Drift Boat Only',       'warning'],
+      [Infinity, 'Dangerous — Extreme Flows', 'danger'],
+    ],
+  },
+};
+
+export function getRiverFlowStatus(locationId, cfs) {
+  const config = RIVER_FLOW_THRESHOLDS[locationId];
+  if (!config || cfs == null) return null;
+  for (const [maxCfs, label, severity] of config.levels) {
+    if (cfs <= maxCfs) return { label, severity, maxCfs };
+  }
+  return { label: 'Unknown', severity: 'ok', maxCfs: Infinity };
+}
+
+// ─── USGS caches ─────────────────────────────────────────────────
+let usgsTempCache = null;
+let usgsTempTs = 0;
+let usgsFlowCache = null;
+let usgsFlowTs = 0;
 const USGS_CACHE_MS = 15 * 60 * 1000;
 
 function cToF(c) {
   return +(c * 9 / 5 + 32).toFixed(1);
 }
 
-const USGS_SITE_IDS = [...new Set(
+const USGS_TEMP_SITE_IDS = [...new Set(
   Object.values(WATER_TEMP_SOURCES)
     .filter(s => s.type === 'usgs')
     .map(s => s.siteId)
 )];
 
-async function fetchUSGS() {
-  if (usgsCache && Date.now() - usgsCacheTs < USGS_CACHE_MS) return usgsCache;
+const USGS_FLOW_SITE_IDS = [...new Set(
+  Object.values(RIVER_FLOW_SOURCES).map(s => s.siteId)
+)];
+
+function parseUSGSSeries(json, extractor) {
+  const result = {};
+  for (const series of (json?.value?.timeSeries || [])) {
+    const siteId = series.sourceInfo?.siteCode?.[0]?.value;
+    const paramCode = series.variable?.variableCode?.[0]?.value;
+    if (!siteId) continue;
+
+    for (const valSet of (series.values || [])) {
+      const reading = valSet.value?.[0];
+      if (!reading || reading.value === '-999999') continue;
+      const dt = new Date(reading.dateTime);
+      if (Date.now() - dt.getTime() > 7 * 24 * 60 * 60 * 1000) continue;
+
+      const val = parseFloat(reading.value);
+      if (isNaN(val)) continue;
+
+      const key = `${siteId}_${paramCode}`;
+      if (!result[key] || dt > new Date(result[key].dateTime)) {
+        result[key] = extractor(val, reading.dateTime, dt, siteId, paramCode);
+      }
+    }
+  }
+  return result;
+}
+
+async function fetchUSGSTemp() {
+  if (usgsTempCache && Date.now() - usgsTempTs < USGS_CACHE_MS) return usgsTempCache;
 
   try {
-    const url = `${USGS_BASE}?format=json&sites=${USGS_SITE_IDS.join(',')}&parameterCd=00010&siteStatus=active`;
+    const url = `${USGS_BASE}?format=json&sites=${USGS_TEMP_SITE_IDS.join(',')}&parameterCd=00010&siteStatus=active`;
     const resp = await fetch(url);
-    if (!resp.ok) throw new Error(`USGS ${resp.status}`);
+    if (!resp.ok) throw new Error(`USGS temp ${resp.status}`);
     const json = await resp.json();
+    const raw = parseUSGSSeries(json, (val, dateTime, dt, siteId) => ({
+      tempC: val,
+      tempF: cToF(val),
+      dateTime,
+      stale: Date.now() - dt.getTime() > 24 * 60 * 60 * 1000,
+    }));
+
     const result = {};
+    for (const [key, data] of Object.entries(raw)) {
+      const siteId = key.split('_')[0];
+      result[siteId] = data;
+    }
 
-    for (const series of (json?.value?.timeSeries || [])) {
-      const siteId = series.sourceInfo?.siteCode?.[0]?.value;
-      if (!siteId) continue;
+    usgsTempCache = result;
+    usgsTempTs = Date.now();
+    return result;
+  } catch (err) {
+    console.warn('[WaterTemp] USGS temp fetch failed:', err.message);
+    return usgsTempCache || {};
+  }
+}
 
-      for (const valSet of (series.values || [])) {
-        const reading = valSet.value?.[0];
-        if (!reading || reading.value === '-999999') continue;
-        const dt = new Date(reading.dateTime);
-        if (Date.now() - dt.getTime() > 7 * 24 * 60 * 60 * 1000) continue;
+async function fetchUSGSFlow() {
+  if (usgsFlowCache && Date.now() - usgsFlowTs < USGS_CACHE_MS) return usgsFlowCache;
 
-        const tempC = parseFloat(reading.value);
-        if (isNaN(tempC)) continue;
+  try {
+    const url = `${USGS_BASE}?format=json&sites=${USGS_FLOW_SITE_IDS.join(',')}&parameterCd=00060,00065&siteStatus=active`;
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(`USGS flow ${resp.status}`);
+    const json = await resp.json();
+    const raw = parseUSGSSeries(json, (val, dateTime, dt, siteId, paramCode) => ({
+      value: val,
+      dateTime,
+      stale: Date.now() - dt.getTime() > 24 * 60 * 60 * 1000,
+    }));
 
-        if (!result[siteId] || dt > new Date(result[siteId].dateTime)) {
-          result[siteId] = {
-            tempC,
-            tempF: cToF(tempC),
-            dateTime: reading.dateTime,
-            stale: Date.now() - dt.getTime() > 24 * 60 * 60 * 1000,
-          };
-        }
+    const result = {};
+    for (const [key, data] of Object.entries(raw)) {
+      const [siteId, paramCode] = key.split('_');
+      if (!result[siteId]) result[siteId] = {};
+      if (paramCode === '00060') {
+        result[siteId].dischargeCfs = data.value;
+        result[siteId].dischargeDateTime = data.dateTime;
+        result[siteId].dischargeStale = data.stale;
+      } else if (paramCode === '00065') {
+        result[siteId].gageHeightFt = data.value;
       }
     }
 
-    usgsCache = result;
-    usgsCacheTs = Date.now();
+    usgsFlowCache = result;
+    usgsFlowTs = Date.now();
     return result;
   } catch (err) {
-    console.warn('[WaterTemp] USGS fetch failed:', err.message);
-    return usgsCache || {};
+    console.warn('[WaterFlow] USGS flow fetch failed:', err.message);
+    return usgsFlowCache || {};
   }
 }
 
@@ -145,7 +297,7 @@ export async function getWaterTemp(locationId) {
   if (!config) return null;
 
   if (config.type === 'usgs') {
-    const usgsData = await fetchUSGS();
+    const usgsData = await fetchUSGSTemp();
     const reading = usgsData[config.siteId];
     if (reading) {
       return {
@@ -175,7 +327,7 @@ export async function getWaterTemp(locationId) {
 }
 
 export async function getAllWaterTemps() {
-  const usgsData = await fetchUSGS();
+  const usgsData = await fetchUSGSTemp();
   const result = {};
 
   for (const [locationId, config] of Object.entries(WATER_TEMP_SOURCES)) {
@@ -207,7 +359,48 @@ export async function getAllWaterTemps() {
   return result;
 }
 
+export async function getRiverFlow(locationId) {
+  const config = RIVER_FLOW_SOURCES[locationId];
+  if (!config) return null;
+
+  const flowData = await fetchUSGSFlow();
+  const reading = flowData[config.siteId];
+  if (!reading) return null;
+
+  return {
+    dischargeCfs: reading.dischargeCfs,
+    gageHeightFt: reading.gageHeightFt,
+    source: 'USGS',
+    sourceName: config.name,
+    stale: reading.dischargeStale,
+    dateTime: reading.dischargeDateTime,
+  };
+}
+
+export async function getAllRiverFlows() {
+  const flowData = await fetchUSGSFlow();
+  const result = {};
+
+  for (const [locationId, config] of Object.entries(RIVER_FLOW_SOURCES)) {
+    const reading = flowData[config.siteId];
+    if (reading) {
+      result[locationId] = {
+        dischargeCfs: reading.dischargeCfs,
+        gageHeightFt: reading.gageHeightFt,
+        source: 'USGS',
+        sourceName: config.name,
+        stale: reading.dischargeStale,
+        dateTime: reading.dischargeDateTime,
+      };
+    }
+  }
+
+  return result;
+}
+
 export function invalidateCache() {
-  usgsCache = null;
-  usgsCacheTs = 0;
+  usgsTempCache = null;
+  usgsTempTs = 0;
+  usgsFlowCache = null;
+  usgsFlowTs = 0;
 }

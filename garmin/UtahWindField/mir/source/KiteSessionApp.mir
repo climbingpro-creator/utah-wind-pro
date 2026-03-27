@@ -1,0 +1,304 @@
+[ @file = "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionApp.mc"; @line = 1; @symbol_usingdef<0> = [Toybox,1,6,12]; @symbol_usingdef<1> = [Application,1,13,24]; ]
+using Toybox.Application;
+[ @file = "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionApp.mc"; @line = 2; @symbol_usingdef<0> = [Toybox,2,6,12]; @symbol_usingdef<1> = [WatchUi,2,13,20]; ]
+using Toybox.WatchUi;
+[ @file = "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionApp.mc"; @line = 3; @symbol_usingdef<0> = [Toybox,3,6,12]; @symbol_usingdef<1> = [Position,3,13,21]; ]
+using Toybox.Position;
+[ @file = "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionApp.mc"; @line = 4; @symbol_usingdef<0> = [Toybox,4,6,12]; @symbol_usingdef<1> = [Sensor,4,13,19]; ]
+using Toybox.Sensor;
+[ @file = "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionApp.mc"; @line = 5; @symbol_usingdef<0> = [Toybox,5,6,12]; @symbol_usingdef<1> = [System,5,13,19]; ]
+using Toybox.System;
+[ @file = "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionApp.mc"; @line = 6; @symbol_usingdef<0> = [Toybox,6,6,12]; @symbol_usingdef<1> = [Activity,6,13,21]; ]
+using Toybox.Activity;
+[ @file = "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionApp.mc"; @line = 7; @symbol_usingdef<0> = [Toybox,7,6,12]; @symbol_usingdef<1> = [ActivityRecording,7,13,30]; ]
+using Toybox.ActivityRecording;
+//! Main application class — orchestrates GPS, sensors, API loop,
+//! and Activity recording for session metrics (timer, distance,
+//! calories, HR, max speed).
+//!
+//! Thin-client architecture: IMU math runs on-watch; topographical
+//! weather logic deferred to the UtahWindFinder backend via HTTP POST.
+[ @file = "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionApp.mc"; @line = 15; @symbol_classdef = [KiteSessionApp,15,6,20]; @symbol_extends<0> = [Application,15,29,40]; @symbol_extends<1> = [AppBase,15,41,48]; ]
+class KiteSessionApp extends Application.AppBase {
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionApp.mc"; @line = 15; ]
+    <init> {
+    }
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionApp.mc"; @line = 15; ]
+    static
+    <init> {
+    }
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionApp.mc"; @line = 17; @position = 8; @symbol_vardef = [jumpTracker,17,8,19]; ]
+    var jumpTracker;
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionApp.mc"; @line = 18; @position = 8; @symbol_vardef = [topoLoop,18,8,16]; ]
+    var topoLoop;
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionApp.mc"; @line = 19; @position = 8; @symbol_vardef = [session,19,8,15]; ]
+    var session;
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionApp.mc"; @line = 21; @symbol_functiondef = [initialize,21,13,23]; ]
+    function initialize() as Void {
+C__Users_Admin_Documents_UtahWindField_source_KiteSessionApp_mc_21_26_23_4_start:
+[ "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionApp.mc" 22 8 ]
+        symbol [ AppBase %tmp.2 22 8 15 ];
+        %tmp.2 = getv ? :AppBase;
+        symbol [ initialize %tmp.3 22 16 26 ];
+        %tmp.3 = getv function %tmp.2 :initialize;
+        invoke %tmp.2 %tmp.3();
+C__Users_Admin_Documents_UtahWindField_source_KiteSessionApp_mc_21_26_23_4_stop:
+    }
+    //! Called when the app becomes active.
+    //! Starts activity recording, enables continuous GPS,
+    //! starts the 30-second topo-warning loop, and registers
+    //! the 25 Hz accelerometer listener for jump detection.
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionApp.mc"; @line = 29; @symbol_functiondef = [onStart,29,13,20]; @symbol_param<0> = [state,29,21,26]; ]
+    function onStart(state) {
+C__Users_Admin_Documents_UtahWindField_source_KiteSessionApp_mc_29_28_56_4_start:
+[ "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionApp.mc" 31 8 ]
+C__Users_Admin_Documents_UtahWindField_source_KiteSessionApp_mc_31_8_38_8_if_stmt:
+        symbol [ ActivityRecording %tmp.1 31 12 29 ];
+        %tmp.1 = getm $.Toybox.ActivityRecording;
+        %tmp.3 = const :createSession;
+        symbol [ createSession %tmp.3 31 35 48 const ];
+        %tmp.4 = canhazplz %tmp.1 %tmp.3;
+        bf %tmp.4 @C__Users_Admin_Documents_UtahWindField_source_KiteSessionApp_mc_31_8_38_8_if_end;
+C__Users_Admin_Documents_UtahWindField_source_KiteSessionApp_mc_31_8_38_8_if_true:
+C__Users_Admin_Documents_UtahWindField_source_KiteSessionApp_mc_31_50_38_8_start:
+[ "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionApp.mc" 32 12 ]
+        symbol [ ActivityRecording %tmp.5 32 22 39 ];
+        %tmp.5 = getm $.Toybox.ActivityRecording;
+        symbol [ createSession %tmp.6 32 40 53 ];
+        %tmp.6 = getv function %tmp.5 :createSession;
+        %tmp.7 = newd 3;
+        %tmp.9 = const :name;
+        symbol [ name %tmp.9 33 17 21 const ];
+        %tmp.10 = "Kite Session";
+        %tmp.11 = dup %tmp.7;
+        %tmp.12 = aputv %tmp.11 %tmp.9 %tmp.10;
+        %tmp.14 = const :sport;
+        symbol [ sport %tmp.14 34 17 22 const ];
+        symbol [ Activity %tmp.15 34 28 36 ];
+        %tmp.15 = getm $.Toybox.Activity;
+        symbol [ SPORT_GENERIC %tmp.16 34 37 50 ];
+        %tmp.16 = getv %tmp.15 :SPORT_GENERIC;
+        %tmp.17 = dup %tmp.12;
+        %tmp.18 = aputv %tmp.17 %tmp.14 %tmp.16;
+        %tmp.20 = const :subSport;
+        symbol [ subSport %tmp.20 35 17 25 const ];
+        symbol [ Activity %tmp.21 35 29 37 ];
+        %tmp.21 = getm $.Toybox.Activity;
+        symbol [ SUB_SPORT_GENERIC %tmp.22 35 38 55 ];
+        %tmp.22 = getv %tmp.21 :SUB_SPORT_GENERIC;
+        %tmp.23 = dup %tmp.18;
+        %tmp.24 = aputv %tmp.23 %tmp.20 %tmp.22;
+        %tmp.25 = invoke %tmp.5 %tmp.6(%tmp.24);
+        symbol [ session ? 32 12 19 ];
+        putv self :session %tmp.25;
+[ "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionApp.mc" 37 12 ]
+        symbol [ session %tmp.27 37 12 19 ];
+        %tmp.27 = getv ? :session;
+        symbol [ start %tmp.28 37 20 25 ];
+        %tmp.28 = getv function %tmp.27 :start;
+        invoke %tmp.27 %tmp.28();
+C__Users_Admin_Documents_UtahWindField_source_KiteSessionApp_mc_31_50_38_8_stop:
+        goto @C__Users_Admin_Documents_UtahWindField_source_KiteSessionApp_mc_31_8_38_8_if_end;
+C__Users_Admin_Documents_UtahWindField_source_KiteSessionApp_mc_31_8_38_8_if_end:
+[ "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionApp.mc" 41 8 ]
+        symbol [ Position %tmp.29 41 8 16 ];
+        %tmp.29 = getm $.Toybox.Position;
+        symbol [ enableLocationEvents %tmp.30 41 17 37 ];
+        %tmp.30 = getv function %tmp.29 :enableLocationEvents;
+        symbol [ Position %tmp.31 42 12 20 ];
+        %tmp.31 = getm $.Toybox.Position;
+        symbol [ LOCATION_CONTINUOUS %tmp.32 42 21 40 ];
+        %tmp.32 = getv %tmp.31 :LOCATION_CONTINUOUS;
+        %tmp.33 = self;
+        symbol [ method %tmp.34 43 12 18 ];
+        %tmp.34 = getv function %tmp.33 :method;
+        %tmp.36 = const :onPosition;
+        symbol [ onPosition %tmp.36 43 20 30 const ];
+        %tmp.37 = invoke %tmp.33 %tmp.34(%tmp.36);
+        invoke %tmp.29 %tmp.30(%tmp.32, %tmp.37);
+[ "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionApp.mc" 47 8 ]
+        symbol [ Sensor %tmp.38 47 8 14 ];
+        %tmp.38 = getm $.Toybox.Sensor;
+        symbol [ setEnabledSensors %tmp.39 47 15 32 ];
+        %tmp.39 = getv function %tmp.38 :setEnabledSensors;
+        %tmp.40 = newa 2;
+        symbol [ Sensor %tmp.41 47 34 40 ];
+        %tmp.41 = getm $.Toybox.Sensor;
+        symbol [ SENSOR_HEARTRATE %tmp.42 47 41 57 ];
+        %tmp.42 = getv %tmp.41 :SENSOR_HEARTRATE;
+        %tmp.43 = dup %tmp.40;
+        %tmp.44 = aputv %tmp.43 0 %tmp.42;
+        symbol [ Sensor %tmp.45 47 59 65 ];
+        %tmp.45 = getm $.Toybox.Sensor;
+        symbol [ SENSOR_PRESSURE %tmp.46 47 66 81 ];
+        %tmp.46 = getv %tmp.45 :SENSOR_PRESSURE;
+        %tmp.47 = dup %tmp.44;
+        %tmp.48 = aputv %tmp.47 1 %tmp.46;
+        invoke %tmp.38 %tmp.39(%tmp.48);
+[ "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionApp.mc" 50 8 ]
+        symbol [ TopographyLoop %tmp.52 50 23 37 ];
+        %tmp.52 = getv ? :TopographyLoop;
+        %tmp.49 = newc %tmp.52 ();
+        symbol [ topoLoop ? 50 8 16 ];
+        putv self :topoLoop %tmp.49;
+[ "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionApp.mc" 51 8 ]
+        symbol [ topoLoop %tmp.54 51 8 16 ];
+        %tmp.54 = getv ? :topoLoop;
+        symbol [ start %tmp.55 51 17 22 ];
+        %tmp.55 = getv function %tmp.54 :start;
+        invoke %tmp.54 %tmp.55();
+[ "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionApp.mc" 54 8 ]
+        symbol [ JumpTracker %tmp.59 54 26 37 ];
+        %tmp.59 = getv ? :JumpTracker;
+        %tmp.56 = newc %tmp.59 ();
+        symbol [ jumpTracker ? 54 8 19 ];
+        putv self :jumpTracker %tmp.56;
+[ "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionApp.mc" 55 8 ]
+        symbol [ jumpTracker %tmp.61 55 8 19 ];
+        %tmp.61 = getv ? :jumpTracker;
+        symbol [ startListening %tmp.62 55 20 34 ];
+        %tmp.62 = getv function %tmp.61 :startListening;
+        invoke %tmp.61 %tmp.62();
+C__Users_Admin_Documents_UtahWindField_source_KiteSessionApp_mc_29_28_56_4_stop:
+    }
+    //! Called when the app is exiting.  Tear down listeners,
+    //! stop recording and save the activity to Garmin Connect.
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionApp.mc"; @line = 60; @symbol_functiondef = [onStop,60,13,19]; @symbol_param<0> = [state,60,20,25]; ]
+    function onStop(state) {
+C__Users_Admin_Documents_UtahWindField_source_KiteSessionApp_mc_60_27_75_4_start:
+[ "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionApp.mc" 61 8 ]
+        symbol [ Position %tmp.1 61 8 16 ];
+        %tmp.1 = getm $.Toybox.Position;
+        symbol [ enableLocationEvents %tmp.2 61 17 37 ];
+        %tmp.2 = getv function %tmp.1 :enableLocationEvents;
+        symbol [ Position %tmp.3 61 38 46 ];
+        %tmp.3 = getm $.Toybox.Position;
+        symbol [ LOCATION_DISABLE %tmp.4 61 47 63 ];
+        %tmp.4 = getv %tmp.3 :LOCATION_DISABLE;
+        %tmp.5 = null;
+        invoke %tmp.1 %tmp.2(%tmp.4, %tmp.5);
+[ "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionApp.mc" 63 8 ]
+C__Users_Admin_Documents_UtahWindField_source_KiteSessionApp_mc_63_8_65_8_if_stmt:
+        symbol [ jumpTracker %tmp.7 63 12 23 ];
+        %tmp.7 = getv ? :jumpTracker;
+        %tmp.8 = null;
+        %tmp.9 = ne %tmp.7 %tmp.8;
+        bf %tmp.9 @C__Users_Admin_Documents_UtahWindField_source_KiteSessionApp_mc_63_8_65_8_if_end;
+C__Users_Admin_Documents_UtahWindField_source_KiteSessionApp_mc_63_8_65_8_if_true:
+C__Users_Admin_Documents_UtahWindField_source_KiteSessionApp_mc_63_33_65_8_start:
+[ "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionApp.mc" 64 12 ]
+        symbol [ jumpTracker %tmp.11 64 12 23 ];
+        %tmp.11 = getv ? :jumpTracker;
+        %tmp.12 = as %tmp.11 { (!Null) };
+        symbol [ stopListening %tmp.13 64 24 37 ];
+        %tmp.13 = getv function %tmp.12 :stopListening;
+        invoke %tmp.12 %tmp.13();
+C__Users_Admin_Documents_UtahWindField_source_KiteSessionApp_mc_63_33_65_8_stop:
+        goto @C__Users_Admin_Documents_UtahWindField_source_KiteSessionApp_mc_63_8_65_8_if_end;
+C__Users_Admin_Documents_UtahWindField_source_KiteSessionApp_mc_63_8_65_8_if_end:
+[ "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionApp.mc" 66 8 ]
+C__Users_Admin_Documents_UtahWindField_source_KiteSessionApp_mc_66_8_68_8_if_stmt:
+        symbol [ topoLoop %tmp.15 66 12 20 ];
+        %tmp.15 = getv ? :topoLoop;
+        %tmp.16 = null;
+        %tmp.17 = ne %tmp.15 %tmp.16;
+        bf %tmp.17 @C__Users_Admin_Documents_UtahWindField_source_KiteSessionApp_mc_66_8_68_8_if_end;
+C__Users_Admin_Documents_UtahWindField_source_KiteSessionApp_mc_66_8_68_8_if_true:
+C__Users_Admin_Documents_UtahWindField_source_KiteSessionApp_mc_66_30_68_8_start:
+[ "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionApp.mc" 67 12 ]
+        symbol [ topoLoop %tmp.19 67 12 20 ];
+        %tmp.19 = getv ? :topoLoop;
+        %tmp.20 = as %tmp.19 { (!Null) };
+        symbol [ stop %tmp.21 67 21 25 ];
+        %tmp.21 = getv function %tmp.20 :stop;
+        invoke %tmp.20 %tmp.21();
+C__Users_Admin_Documents_UtahWindField_source_KiteSessionApp_mc_66_30_68_8_stop:
+        goto @C__Users_Admin_Documents_UtahWindField_source_KiteSessionApp_mc_66_8_68_8_if_end;
+C__Users_Admin_Documents_UtahWindField_source_KiteSessionApp_mc_66_8_68_8_if_end:
+[ "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionApp.mc" 71 8 ]
+C__Users_Admin_Documents_UtahWindField_source_KiteSessionApp_mc_71_8_74_8_if_stmt:
+C__Users_Admin_Documents_UtahWindField_source_KiteSessionApp_mc_71_12_71_51_begin:
+        symbol [ session %tmp.23 71 12 19 ];
+        %tmp.23 = getv ? :session;
+        %tmp.24 = null;
+        %tmp.25 = ne %tmp.23 %tmp.24;
+        bf %tmp.25 @C__Users_Admin_Documents_UtahWindField_source_KiteSessionApp_mc_71_8_74_8_if_end;
+C__Users_Admin_Documents_UtahWindField_source_KiteSessionApp_mc_71_31_71_51_true:
+        symbol [ session %tmp.27 71 31 38 ];
+        %tmp.27 = getv ? :session;
+        %tmp.28 = as %tmp.27 { (!Null) };
+        symbol [ isRecording %tmp.29 71 39 50 ];
+        %tmp.29 = getv function %tmp.28 :isRecording;
+        %tmp.30 = invoke %tmp.28 %tmp.29();
+        push %tmp.30;
+C__Users_Admin_Documents_UtahWindField_source_KiteSessionApp_mc_71_31_71_51_end:
+        %tmp.31 = phi [%tmp.25 @C__Users_Admin_Documents_UtahWindField_source_KiteSessionApp_mc_71_12_71_51_begin] [%tmp.30 @C__Users_Admin_Documents_UtahWindField_source_KiteSessionApp_mc_71_31_71_51_true] [%tmp.31 @C__Users_Admin_Documents_UtahWindField_source_KiteSessionApp_mc_71_31_71_51_end];
+        bf %tmp.31 @C__Users_Admin_Documents_UtahWindField_source_KiteSessionApp_mc_71_8_74_8_if_end;
+C__Users_Admin_Documents_UtahWindField_source_KiteSessionApp_mc_71_8_74_8_if_true:
+C__Users_Admin_Documents_UtahWindField_source_KiteSessionApp_mc_71_54_74_8_start:
+[ "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionApp.mc" 72 12 ]
+        symbol [ session %tmp.33 72 12 19 ];
+        %tmp.33 = getv ? :session;
+        symbol [ stop %tmp.34 72 20 24 ];
+        %tmp.34 = getv function %tmp.33 :stop;
+        invoke %tmp.33 %tmp.34();
+[ "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionApp.mc" 73 12 ]
+        symbol [ session %tmp.36 73 12 19 ];
+        %tmp.36 = getv ? :session;
+        symbol [ save %tmp.37 73 20 24 ];
+        %tmp.37 = getv function %tmp.36 :save;
+        invoke %tmp.36 %tmp.37();
+C__Users_Admin_Documents_UtahWindField_source_KiteSessionApp_mc_71_54_74_8_stop:
+        goto @C__Users_Admin_Documents_UtahWindField_source_KiteSessionApp_mc_71_8_74_8_if_end;
+C__Users_Admin_Documents_UtahWindField_source_KiteSessionApp_mc_71_8_74_8_if_end:
+C__Users_Admin_Documents_UtahWindField_source_KiteSessionApp_mc_60_27_75_4_stop:
+    }
+    //! GPS callback — forward fresh fix to topo loop.
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionApp.mc"; @line = 78; @symbol_functiondef = [onPosition,78,13,23]; @symbol_param<0> = [info,78,24,28]; ]
+    function onPosition(info) {
+C__Users_Admin_Documents_UtahWindField_source_KiteSessionApp_mc_78_30_82_4_start:
+[ "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionApp.mc" 79 8 ]
+C__Users_Admin_Documents_UtahWindField_source_KiteSessionApp_mc_79_8_81_8_if_stmt:
+        symbol [ topoLoop %tmp.2 79 12 20 ];
+        %tmp.2 = getv ? :topoLoop;
+        %tmp.3 = null;
+        %tmp.4 = ne %tmp.2 %tmp.3;
+        bf %tmp.4 @C__Users_Admin_Documents_UtahWindField_source_KiteSessionApp_mc_79_8_81_8_if_end;
+C__Users_Admin_Documents_UtahWindField_source_KiteSessionApp_mc_79_8_81_8_if_true:
+C__Users_Admin_Documents_UtahWindField_source_KiteSessionApp_mc_79_30_81_8_start:
+[ "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionApp.mc" 80 12 ]
+        symbol [ topoLoop %tmp.6 80 12 20 ];
+        %tmp.6 = getv ? :topoLoop;
+        %tmp.7 = as %tmp.6 { (!Null) };
+        symbol [ updatePosition %tmp.8 80 21 35 ];
+        %tmp.8 = getv function %tmp.7 :updatePosition;
+        %tmp.9 = lgetv %info;
+        symbol [ info %tmp.9 80 36 40 ];
+        invoke %tmp.7 %tmp.8(%tmp.9);
+C__Users_Admin_Documents_UtahWindField_source_KiteSessionApp_mc_79_30_81_8_stop:
+        goto @C__Users_Admin_Documents_UtahWindField_source_KiteSessionApp_mc_79_8_81_8_if_end;
+C__Users_Admin_Documents_UtahWindField_source_KiteSessionApp_mc_79_8_81_8_if_end:
+C__Users_Admin_Documents_UtahWindField_source_KiteSessionApp_mc_78_30_82_4_stop:
+    }
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionApp.mc"; @line = 84; @symbol_functiondef = [getInitialView,84,13,27]; ]
+    function getInitialView() {
+C__Users_Admin_Documents_UtahWindField_source_KiteSessionApp_mc_84_30_86_4_start:
+[ "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionApp.mc" 85 8 ]
+        %tmp.1 = newa 2;
+        symbol [ KiteSessionView %tmp.5 85 20 35 ];
+        %tmp.5 = getv ? :KiteSessionView;
+        %tmp.2 = newc %tmp.5 ();
+        %tmp.6 = dup %tmp.1;
+        %tmp.7 = aputv %tmp.6 0 %tmp.2;
+        symbol [ KiteSessionDelegate %tmp.11 85 43 62 ];
+        %tmp.11 = getv ? :KiteSessionDelegate;
+        %tmp.8 = newc %tmp.11 ();
+        %tmp.12 = dup %tmp.7;
+        %tmp.13 = aputv %tmp.12 1 %tmp.8;
+        ret %tmp.13;
+C__Users_Admin_Documents_UtahWindField_source_KiteSessionApp_mc_84_30_86_4_stop:
+    }
+}
+[ @file = "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionApp.mc"; @line = 1; ]
+<init> {
+}

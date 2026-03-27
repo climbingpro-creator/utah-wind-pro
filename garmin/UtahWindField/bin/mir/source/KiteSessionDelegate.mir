@@ -1,0 +1,137 @@
+[ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteSessionDelegate.mc"; @line = 1; @symbol_usingdef<0> = [Toybox,1,6,12]; @symbol_usingdef<1> = [WatchUi,1,13,20]; ]
+using Toybox.WatchUi;
+[ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteSessionDelegate.mc"; @line = 2; @symbol_usingdef<0> = [Toybox,2,6,12]; @symbol_usingdef<1> = [System,2,13,19]; ]
+using Toybox.System;
+[ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteSessionDelegate.mc"; @line = 4; @symbol_classdef = [KiteSessionDelegate,4,6,25]; @symbol_extends<0> = [WatchUi,4,34,41]; @symbol_extends<1> = [BehaviorDelegate,4,42,58]; ]
+class KiteSessionDelegate extends WatchUi.BehaviorDelegate {
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteSessionDelegate.mc"; @line = 4; ]
+    <init> {
+    }
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteSessionDelegate.mc"; @line = 4; ]
+    static
+    <init> {
+    }
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteSessionDelegate.mc"; @line = 6; @symbol_functiondef = [initialize,6,13,23]; ]
+    function initialize() as Void {
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_KiteSessionDelegate_mc_6_26_8_4_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteSessionDelegate.mc" 7 8 ]
+        symbol [ BehaviorDelegate %tmp.2 7 8 24 ];
+        %tmp.2 = getv ? :BehaviorDelegate;
+        symbol [ initialize %tmp.3 7 25 35 ];
+        %tmp.3 = getv function %tmp.2 :initialize;
+        invoke %tmp.2 %tmp.3();
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_KiteSessionDelegate_mc_6_26_8_4_stop:
+    }
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteSessionDelegate.mc"; @line = 10; @symbol_functiondef = [onBack,10,13,19]; ]
+    function onBack() {
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_KiteSessionDelegate_mc_10_22_18_4_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteSessionDelegate.mc" 11 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_KiteSessionDelegate_mc_10_22_18_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_KiteSessionDelegate_mc_10_22_18_4_stop" ]
+        %dialog.1 = local;
+        symbol [ dialog %dialog.1 11 12 18 ];
+        symbol [ WatchUi %tmp.3 11 25 32 ];
+        %tmp.3 = getm $.Toybox.WatchUi;
+        symbol [ Confirmation %tmp.4 11 33 45 ];
+        %tmp.4 = getv function ? %tmp.3 :Confirmation;
+        %tmp.5 = "End session?";
+        %tmp.1 = newc %tmp.4 (%tmp.5);
+        lputv %dialog.1 %tmp.1;
+        symbol [ dialog %dialog.1 11 12 18 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteSessionDelegate.mc" 12 8 ]
+        symbol [ WatchUi %tmp.6 12 8 15 ];
+        %tmp.6 = getm $.Toybox.WatchUi;
+        symbol [ pushView %tmp.7 12 16 24 ];
+        %tmp.7 = getv function %tmp.6 :pushView;
+        %tmp.8 = lgetv %dialog.1;
+        symbol [ dialog %tmp.8 13 12 18 ];
+        symbol [ EndSessionConfirmDelegate %tmp.12 14 16 41 ];
+        %tmp.12 = getv ? :EndSessionConfirmDelegate;
+        %tmp.9 = newc %tmp.12 ();
+        symbol [ WatchUi %tmp.13 15 12 19 ];
+        %tmp.13 = getm $.Toybox.WatchUi;
+        symbol [ SLIDE_IMMEDIATE %tmp.14 15 20 35 ];
+        %tmp.14 = getv %tmp.13 :SLIDE_IMMEDIATE;
+        invoke %tmp.6 %tmp.7(%tmp.8, %tmp.9, %tmp.14);
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteSessionDelegate.mc" 17 8 ]
+        %tmp.15 = true;
+        ret %tmp.15;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_KiteSessionDelegate_mc_10_22_18_4_stop:
+    }
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteSessionDelegate.mc"; @line = 21; @symbol_functiondef = [onSelect,21,13,21]; ]
+    function onSelect() {
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_KiteSessionDelegate_mc_21_24_28_4_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteSessionDelegate.mc" 22 8 ]
+        symbol [ WatchUi %tmp.1 22 8 15 ];
+        %tmp.1 = getm $.Toybox.WatchUi;
+        symbol [ pushView %tmp.2 22 16 24 ];
+        %tmp.2 = getv function %tmp.1 :pushView;
+        symbol [ DiagExportView %tmp.6 23 16 30 ];
+        %tmp.6 = getv ? :DiagExportView;
+        %tmp.3 = newc %tmp.6 ();
+        symbol [ DiagExportDelegate %tmp.10 24 16 34 ];
+        %tmp.10 = getv ? :DiagExportDelegate;
+        %tmp.7 = newc %tmp.10 ();
+        symbol [ WatchUi %tmp.11 25 12 19 ];
+        %tmp.11 = getm $.Toybox.WatchUi;
+        symbol [ SLIDE_LEFT %tmp.12 25 20 30 ];
+        %tmp.12 = getv %tmp.11 :SLIDE_LEFT;
+        invoke %tmp.1 %tmp.2(%tmp.3, %tmp.7, %tmp.12);
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteSessionDelegate.mc" 27 8 ]
+        %tmp.13 = true;
+        ret %tmp.13;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_KiteSessionDelegate_mc_21_24_28_4_stop:
+    }
+}
+[ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteSessionDelegate.mc"; @line = 31; @symbol_classdef = [EndSessionConfirmDelegate,31,6,31]; @symbol_extends<0> = [WatchUi,31,40,47]; @symbol_extends<1> = [ConfirmationDelegate,31,48,68]; ]
+class EndSessionConfirmDelegate extends WatchUi.ConfirmationDelegate {
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteSessionDelegate.mc"; @line = 31; ]
+    <init> {
+    }
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteSessionDelegate.mc"; @line = 31; ]
+    static
+    <init> {
+    }
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteSessionDelegate.mc"; @line = 33; @symbol_functiondef = [initialize,33,13,23]; ]
+    function initialize() as Void {
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_KiteSessionDelegate_mc_33_26_35_4_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteSessionDelegate.mc" 34 8 ]
+        symbol [ ConfirmationDelegate %tmp.2 34 8 28 ];
+        %tmp.2 = getv ? :ConfirmationDelegate;
+        symbol [ initialize %tmp.3 34 29 39 ];
+        %tmp.3 = getv function %tmp.2 :initialize;
+        invoke %tmp.2 %tmp.3();
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_KiteSessionDelegate_mc_33_26_35_4_stop:
+    }
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteSessionDelegate.mc"; @line = 37; @symbol_functiondef = [onResponse,37,13,23]; @symbol_param<0> = [response,37,24,32]; ]
+    function onResponse(response) {
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_KiteSessionDelegate_mc_37_34_42_4_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteSessionDelegate.mc" 38 8 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_KiteSessionDelegate_mc_38_8_40_8_if_stmt:
+        %tmp.1 = lgetv %response;
+        symbol [ response %tmp.1 38 12 20 ];
+        symbol [ WatchUi %tmp.2 38 24 31 ];
+        %tmp.2 = getm $.Toybox.WatchUi;
+        symbol [ CONFIRM_YES %tmp.3 38 32 43 ];
+        %tmp.3 = getv %tmp.2 :CONFIRM_YES;
+        %tmp.4 = eq %tmp.1 %tmp.3;
+        bf %tmp.4 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_KiteSessionDelegate_mc_38_8_40_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_KiteSessionDelegate_mc_38_8_40_8_if_true:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_KiteSessionDelegate_mc_38_45_40_8_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteSessionDelegate.mc" 39 12 ]
+        symbol [ System %tmp.5 39 12 18 ];
+        %tmp.5 = getm $.Toybox.System;
+        symbol [ exit %tmp.6 39 19 23 ];
+        %tmp.6 = getv function %tmp.5 :exit;
+        invoke %tmp.5 %tmp.6();
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_KiteSessionDelegate_mc_38_45_40_8_stop:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_KiteSessionDelegate_mc_38_8_40_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_KiteSessionDelegate_mc_38_8_40_8_if_end:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteSessionDelegate.mc" 41 8 ]
+        %tmp.7 = true;
+        ret %tmp.7;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_KiteSessionDelegate_mc_37_34_42_4_stop:
+    }
+}
+[ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteSessionDelegate.mc"; @line = 1; ]
+<init> {
+}

@@ -1,14 +1,25 @@
 /**
  * POST /api/session-upload
  *
- * Receives end-of-session payload from the Garmin watch (SessionUploader.mc)
+ * Receives end-of-session payload from the Garmin watch or web form
  * and writes it to the kite_sessions table in Supabase.
  *
- * The watch sends a flat JSON object with keys like duration_s, distance_nm,
- * max_speed_kts, jumps, etc.  The device_id field links to a user via
- * garmin_devices for attribution.
+ * Accepts multiple activity types:
+ *   kite_session, snowkite_session, windsurf_session, sail_session,
+ *   boat_session, paddle_session, paraglide_session, fish_session
  */
 import { getSupabase } from './lib/supabase.js';
+
+const TYPE_TO_ACTIVITY = {
+  kite_session:      'kiting',
+  snowkite_session:  'snowkiting',
+  windsurf_session:  'windsurfing',
+  sail_session:      'sailing',
+  boat_session:      'boating',
+  paddle_session:    'paddling',
+  paraglide_session: 'paragliding',
+  fish_session:      'fishing',
+};
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -19,13 +30,15 @@ export default async function handler(req, res) {
 
   try {
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
-    if (!body || body.type !== 'kite_session') {
-      return res.status(400).json({ error: 'Invalid payload: type must be kite_session' });
+    const activityType = body && TYPE_TO_ACTIVITY[body.type];
+    if (!activityType) {
+      return res.status(400).json({
+        error: `Invalid payload: type must be one of ${Object.keys(TYPE_TO_ACTIVITY).join(', ')}`,
+      });
     }
 
     const supabase = getSupabase();
 
-    // Resolve device_id → user_id via garmin_devices
     let userId = null;
     const deviceId = body.device || null;
     if (deviceId) {
@@ -37,7 +50,6 @@ export default async function handler(req, res) {
       if (link) userId = link.user_id;
     }
 
-    // Nearest spot matching (simple lat/lon proximity from track)
     let spotId = null;
     if (body.track && Array.isArray(body.track) && body.track.length > 0) {
       const mid = body.track[Math.floor(body.track.length / 2)];
@@ -54,6 +66,7 @@ export default async function handler(req, res) {
       user_id:           userId,
       device_id:         deviceId,
       spot_id:           spotId,
+      activity_type:     activityType,
       rider_name:        body.rider_name || null,
       gear_setup:        body.gear_setup || null,
       duration_s:        body.duration_s || 0,
@@ -66,6 +79,9 @@ export default async function handler(req, res) {
       total_jumps:       body.jumps || 0,
       max_jump_ft:       body.max_jump_ft || 0,
       avg_jump_ft:       body.avg_jump_ft || 0,
+      max_hangtime_s:    body.max_hangtime_s || 0,
+      ride_count:        body.ride_count || 0,
+      foil_ride_count:   body.foil_ride_count || 0,
       crashes_filtered:  body.crashes_filtered || 0,
       water_temp_c:      body.water_temp_c || null,
       track:             body.track || null,
@@ -84,7 +100,6 @@ export default async function handler(req, res) {
 
     const sessionId = data.id;
 
-    // Insert individual jump records if provided
     if (body.jump_details && Array.isArray(body.jump_details) && body.jump_details.length > 0) {
       const jumpRows = body.jump_details.map((j, i) => ({
         session_id:        sessionId,
@@ -102,11 +117,9 @@ export default async function handler(req, res) {
 
       if (jumpErr) {
         console.error('[session-upload] jumps insert error:', jumpErr.message);
-        // Non-fatal — session is already saved, just log the jump error
       }
     }
 
-    // Build day page URL from spot slug + date
     let dayUrl = null;
     if (spotId) {
       const { data: spotData } = await supabase
@@ -117,7 +130,7 @@ export default async function handler(req, res) {
       if (spotData) {
         const d = new Date();
         const dateStr = d.toISOString().split('T')[0];
-        dayUrl = `https://utahwindfinder.com/day/${spotData.slug}/${dateStr}`;
+        dayUrl = `https://utahwindfinder.com/day/${spotData.slug}/${dateStr}?activity=${activityType}`;
       }
     }
 
@@ -125,6 +138,7 @@ export default async function handler(req, res) {
       success: true,
       sessionId,
       url: `https://utahwindfinder.com/session/${sessionId}`,
+      editUrl: `https://utahwindfinder.com/session/${sessionId}/edit`,
       dayUrl,
     });
   } catch (err) {

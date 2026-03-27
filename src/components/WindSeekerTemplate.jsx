@@ -1,25 +1,13 @@
 import React, { Suspense, lazy } from 'react';
-import { Wind, Brain, Lightbulb, ShieldCheck, ShieldAlert, AlertTriangle, AlertCircle, XCircle, CheckCircle, Trophy, Users, ArrowUpRight } from 'lucide-react';
+import { Wind, Brain, Lightbulb, ShieldCheck, ShieldAlert, AlertTriangle, AlertCircle, XCircle, CheckCircle, Trophy, Users, ArrowUpRight, Calendar } from 'lucide-react';
 import { WindVector } from './WindVector';
 import { SafeComponent } from './ErrorBoundary';
 import DecisionCard from './DecisionCard';
 import TodayTimeline from './TodayTimeline';
 import { evaluateKiteSafety } from './KiteSafety';
+import { SPOT_SLUG_MAP } from '../config/spotSlugs';
 
 const SpotRanker = lazy(() => import('./SpotRanker'));
-
-const SPOT_SLUG_MAP = {
-  'utah-lake-lincoln': 'lincoln-beach',
-  'utah-lake-sandy': 'sandy-beach',
-  'utah-lake-vineyard': 'vineyard',
-  'utah-lake-zigzag': 'zig-zag',
-  'utah-lake-mm19': 'american-fork',
-  'utah-lake': 'lincoln-beach',
-  'deer-creek': 'deer-creek',
-  'willard-bay': 'willard-bay',
-  'yuba': 'yuba',
-  'sand-hollow': 'sand-hollow',
-};
 
 const SAFETY_PILL = {
   GO:      { bg: 'bg-green-500/15',  border: 'border-green-500/40', text: 'text-green-400',  icon: ShieldCheck },
@@ -168,8 +156,10 @@ export default function WindSeekerTemplate({
         const spotSlug = SPOT_SLUG_MAP[selectedLake];
         if (!spotSlug) return null;
         const today = new Date().toISOString().split('T')[0];
-        const dayUrl = `/day/${spotSlug}/${today}`;
-        return (
+        const act = selectedActivity || 'kiting';
+        const dayUrl = `/day/${spotSlug}/${today}?activity=${act}`;
+        const yearUrl = `/year/${spotSlug}/${new Date().getFullYear()}?activity=${act}`;
+        return (<>
           <button
             onClick={() => { window.location.href = dayUrl; }}
             className="card flex items-center gap-3 hover:border-amber-500/40 transition-colors group cursor-pointer w-full text-left"
@@ -191,7 +181,24 @@ export default function WindSeekerTemplate({
               <span className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase">Live</span>
             </div>
           </button>
-        );
+          <button
+            onClick={() => { window.location.href = yearUrl; }}
+            className="card flex items-center gap-3 hover:border-sky-500/30 transition-colors group cursor-pointer w-full text-left"
+          >
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-sky-500/10 border border-sky-500/20 group-hover:bg-sky-500/20 transition-colors flex-shrink-0">
+              <Calendar className="w-5 h-5 text-sky-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-bold text-[var(--text-primary)] flex items-center gap-2">
+                {new Date().getFullYear()} Season Leaderboard
+                <ArrowUpRight className="w-3.5 h-3.5 text-sky-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+              <div className="text-[11px] text-[var(--text-tertiary)]">
+                Yearly rankings — total time, sessions, and top performances
+              </div>
+            </div>
+          </button>
+        </>);
       })()}
 
       {/* ═══════ WHERE TO GO ═══════ */}

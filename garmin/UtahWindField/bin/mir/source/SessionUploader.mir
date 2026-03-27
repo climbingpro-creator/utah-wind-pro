@@ -1,0 +1,811 @@
+[ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionUploader.mc"; @line = 1; @symbol_usingdef<0> = [Toybox,1,6,12]; @symbol_usingdef<1> = [Communications,1,13,27]; ]
+using Toybox.Communications;
+[ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionUploader.mc"; @line = 2; @symbol_usingdef<0> = [Toybox,2,6,12]; @symbol_usingdef<1> = [System,2,13,19]; ]
+using Toybox.System;
+[ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionUploader.mc"; @line = 3; @symbol_usingdef<0> = [Toybox,3,6,12]; @symbol_usingdef<1> = [Activity,3,13,21]; ]
+using Toybox.Activity;
+[ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionUploader.mc"; @line = 4; @symbol_usingdef<0> = [Toybox,4,6,12]; @symbol_usingdef<1> = [Application,4,13,24]; ]
+using Toybox.Application;
+[ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionUploader.mc"; @line = 5; @symbol_usingdef<0> = [Toybox,5,6,12]; @symbol_usingdef<1> = [Lang,5,13,17]; ]
+using Toybox.Lang;
+[ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionUploader.mc"; @line = 6; @symbol_usingdef<0> = [Toybox,6,6,12]; @symbol_usingdef<1> = [Time,6,13,17]; ]
+using Toybox.Time;
+//! Uploads a session summary to utahwindfinder.com after the rider
+//! stops recording. The backend can store this for leaderboards,
+//! session history, and social sharing.
+[ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionUploader.mc"; @line = 12; @symbol_classdef = [SessionUploader,12,6,21]; ]
+class SessionUploader {
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionUploader.mc"; @line = 12; ]
+    <init> {
+    }
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionUploader.mc"; @line = 12; ]
+    static
+    <init> {
+    }
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionUploader.mc"; @line = 14; @position = 17; @symbol_constdef = [API_URL,14,17,24]; ]
+    protected
+    const API_URL = "https://utahwindfinder.com/api/session-upload";
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionUploader.mc"; @line = 16; @position = 8; @symbol_vardef = [uploadStatus,16,8,20]; ]
+    var uploadStatus = "PENDING";
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionUploader.mc"; @line = 17; @position = 8; @symbol_vardef = [uploadMsg,17,8,17]; ]
+    var uploadMsg = "";
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionUploader.mc"; @line = 19; @symbol_functiondef = [initialize,19,13,23]; ]
+    function initialize() as Void {
+    }
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionUploader.mc"; @line = 22; @symbol_functiondef = [upload,22,13,19]; @symbol_param<0> = [sessionData,22,20,31]; ]
+    function upload(sessionData) {
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_22_33_39_4_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionUploader.mc" 23 8 ]
+        %tmp.1 = "UPLOADING";
+        symbol [ uploadStatus ? 23 8 20 ];
+        putv self :uploadStatus %tmp.1;
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionUploader.mc" 25 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_22_33_39_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_22_33_39_4_stop" ]
+        %options.1 = local;
+        symbol [ options %options.1 25 12 19 ];
+        %tmp.2 = newd 3;
+        %tmp.4 = const :method;
+        symbol [ method %tmp.4 26 13 19 const ];
+        symbol [ Communications %tmp.5 26 29 43 ];
+        %tmp.5 = getm $.Toybox.Communications;
+        symbol [ HTTP_REQUEST_METHOD_POST %tmp.6 26 44 68 ];
+        %tmp.6 = getv %tmp.5 :HTTP_REQUEST_METHOD_POST;
+        %tmp.7 = dup %tmp.2;
+        %tmp.8 = aputv %tmp.7 %tmp.4 %tmp.6;
+        %tmp.10 = const :headers;
+        symbol [ headers %tmp.10 27 13 20 const ];
+        %tmp.11 = newd 1;
+        %tmp.12 = "Content-Type";
+        symbol [ Communications %tmp.13 28 34 48 ];
+        %tmp.13 = getm $.Toybox.Communications;
+        symbol [ REQUEST_CONTENT_TYPE_JSON %tmp.14 28 49 74 ];
+        %tmp.14 = getv %tmp.13 :REQUEST_CONTENT_TYPE_JSON;
+        %tmp.15 = dup %tmp.11;
+        %tmp.16 = aputv %tmp.15 %tmp.12 %tmp.14;
+        %tmp.17 = dup %tmp.8;
+        %tmp.18 = aputv %tmp.17 %tmp.10 %tmp.16;
+        %tmp.20 = const :responseType;
+        symbol [ responseType %tmp.20 30 13 25 const ];
+        symbol [ Communications %tmp.21 30 29 43 ];
+        %tmp.21 = getm $.Toybox.Communications;
+        symbol [ HTTP_RESPONSE_CONTENT_TYPE_JSON %tmp.22 30 44 75 ];
+        %tmp.22 = getv %tmp.21 :HTTP_RESPONSE_CONTENT_TYPE_JSON;
+        %tmp.23 = dup %tmp.18;
+        %tmp.24 = aputv %tmp.23 %tmp.20 %tmp.22;
+        lputv %options.1 %tmp.24;
+        symbol [ options %options.1 25 12 19 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionUploader.mc" 33 8 ]
+        symbol [ Communications %tmp.25 33 8 22 ];
+        %tmp.25 = getm $.Toybox.Communications;
+        symbol [ makeWebRequest %tmp.26 33 23 37 ];
+        %tmp.26 = getv function %tmp.25 :makeWebRequest;
+        symbol [ API_URL %tmp.28 34 12 19 ];
+        %tmp.28 = getv ? :API_URL;
+        %tmp.29 = lgetv %sessionData;
+        symbol [ sessionData %tmp.29 35 12 23 ];
+        %tmp.30 = lgetv %options.1;
+        symbol [ options %tmp.30 36 12 19 ];
+        %tmp.31 = self;
+        symbol [ method %tmp.32 37 12 18 ];
+        %tmp.32 = getv function %tmp.31 :method;
+        %tmp.34 = const :onUploadResponse;
+        symbol [ onUploadResponse %tmp.34 37 20 36 const ];
+        %tmp.35 = invoke %tmp.31 %tmp.32(%tmp.34);
+        %tmp.36 = as %tmp.35 Lang.Method;
+        symbol [ Lang %tmp.36 37 41 45 ];
+        symbol [ Method %tmp.36 37 46 52 ];
+        invoke %tmp.25 %tmp.26(%tmp.28, %tmp.29, %tmp.30, %tmp.36);
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_22_33_39_4_stop:
+    }
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionUploader.mc"; @line = 41; @symbol_functiondef = [onUploadResponse,41,13,29]; @symbol_param<0> = [responseCode,41,30,42]; @symbol_param<1> = [data,41,44,48]; ]
+    function onUploadResponse(responseCode, data) {
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_41_50_53_4_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionUploader.mc" 42 8 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_42_8_52_8_if_stmt:
+        %tmp.1 = lgetv %responseCode;
+        symbol [ responseCode %tmp.1 42 12 24 ];
+        %tmp.2 = 200;
+        %tmp.3 = eq %tmp.1 %tmp.2;
+        bf %tmp.3 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_42_8_52_8_if_else_false;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_42_8_52_8_if_true:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_42_33_49_8_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionUploader.mc" 43 12 ]
+        %tmp.4 = "SUCCESS";
+        symbol [ uploadStatus ? 43 12 24 ];
+        putv self :uploadStatus %tmp.4;
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionUploader.mc" 44 12 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_44_12_48_12_if_stmt:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_44_16_44_49_begin:
+        %tmp.5 = lgetv %data;
+        symbol [ data %tmp.5 44 16 20 ];
+        %tmp.6 = null;
+        %tmp.7 = ne %tmp.5 %tmp.6;
+        bf %tmp.7 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_44_12_48_12_if_else_false;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_44_32_44_49_true:
+        %tmp.8 = lgetv %data;
+        symbol [ data %tmp.8 44 32 36 ];
+        %tmp.9 = as %tmp.8 { (!Null) };
+        symbol [ hasKey %tmp.10 44 37 43 ];
+        %tmp.10 = getv function %tmp.9 :hasKey;
+        %tmp.11 = "url";
+        %tmp.12 = invoke %tmp.9 %tmp.10(%tmp.11);
+        push %tmp.12;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_44_32_44_49_end:
+        %tmp.13 = phi [%tmp.7 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_44_16_44_49_begin] [%tmp.12 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_44_32_44_49_true] [%tmp.13 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_44_32_44_49_end];
+        bf %tmp.13 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_44_12_48_12_if_else_false;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_44_12_48_12_if_true:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_44_52_46_12_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionUploader.mc" 45 16 ]
+        %tmp.14 = lgetv %data;
+        symbol [ data %tmp.14 45 28 32 ];
+        %tmp.15 = as %tmp.14 { (!Null) };
+        %tmp.16 = "url";
+        %tmp.17 = agetv %tmp.15 %tmp.16;
+        symbol [ uploadMsg ? 45 16 25 ];
+        putv self :uploadMsg %tmp.17;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_44_52_46_12_stop:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_44_12_48_12_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_44_12_48_12_if_else_false:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_46_19_48_12_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionUploader.mc" 47 16 ]
+        %tmp.18 = "Uploaded to UtahWindFinder";
+        symbol [ uploadMsg ? 47 16 25 ];
+        putv self :uploadMsg %tmp.18;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_46_19_48_12_stop:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_44_12_48_12_if_end:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_42_33_49_8_stop:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_42_8_52_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_42_8_52_8_if_else_false:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_49_15_52_8_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionUploader.mc" 50 12 ]
+        %tmp.19 = "FAILED";
+        symbol [ uploadStatus ? 50 12 24 ];
+        putv self :uploadStatus %tmp.19;
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionUploader.mc" 51 12 ]
+        %tmp.20 = "HTTP ";
+        %tmp.21 = lgetv %responseCode;
+        symbol [ responseCode %tmp.21 51 34 46 ];
+        %tmp.22 = add %tmp.20 %tmp.21;
+        symbol [ uploadMsg ? 51 12 21 ];
+        putv self :uploadMsg %tmp.22;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_49_15_52_8_stop:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_42_8_52_8_if_end:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_41_50_53_4_stop:
+    }
+    //! Builds the session payload from Activity info + JumpTracker + GPS track
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionUploader.mc"; @line = 56; @symbol_functiondef = [buildPayload,56,20,32]; @symbol_param<0> = [jt,56,33,35]; @symbol_param<1> = [mapLats,56,37,44]; @symbol_param<2> = [mapLons,56,46,53]; @symbol_param<3> = [mapCount,56,55,63]; ]
+    static
+    function buildPayload(jt, mapLats, mapLons, mapCount) {
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_56_65_111_4_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionUploader.mc" 57 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_56_65_111_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_56_65_111_4_stop" ]
+        %info.1 = local;
+        symbol [ info %info.1 57 12 16 ];
+        symbol [ Activity %tmp.1 57 19 27 ];
+        %tmp.1 = getm $.Toybox.Activity;
+        symbol [ getActivityInfo %tmp.2 57 28 43 ];
+        %tmp.2 = getv function %tmp.1 :getActivityInfo;
+        %tmp.3 = invoke %tmp.1 %tmp.2();
+        lputv %info.1 %tmp.3;
+        symbol [ info %info.1 57 12 16 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionUploader.mc" 59 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_56_65_111_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_56_65_111_4_stop" ]
+        %timerMs.2 = local;
+        symbol [ timerMs %timerMs.2 59 12 19 ];
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_59_25_59_85_begin:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_59_26_59_60_begin:
+        %tmp.4 = lgetv %info.1;
+        symbol [ info %tmp.4 59 26 30 ];
+        %tmp.5 = null;
+        %tmp.6 = ne %tmp.4 %tmp.5;
+        bf %tmp.6 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_59_25_59_85_else_false;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_59_42_59_60_true:
+        %tmp.7 = lgetv %info.1;
+        symbol [ info %tmp.7 59 42 46 ];
+        %tmp.8 = as %tmp.7 { (!Null) };
+        symbol [ timerTime %tmp.9 59 47 56 ];
+        %tmp.9 = getv %tmp.8 :timerTime;
+        %tmp.10 = null;
+        %tmp.11 = ne %tmp.9 %tmp.10;
+        push %tmp.11;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_59_42_59_60_end:
+        %tmp.12 = phi [%tmp.6 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_59_26_59_60_begin] [%tmp.11 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_59_42_59_60_true] [%tmp.12 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_59_42_59_60_end];
+        bf %tmp.12 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_59_25_59_85_else_false;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_59_25_59_85_true:
+        %tmp.13 = lgetv %info.1;
+        symbol [ info %tmp.13 59 68 72 ];
+        %tmp.14 = as %tmp.13 { (!Null) };
+        symbol [ timerTime %tmp.15 59 73 82 ];
+        %tmp.15 = getv %tmp.14 :timerTime;
+        push %tmp.15;
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_59_25_59_85_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_59_25_59_85_else_false:
+        %tmp.16 = 0;
+        push %tmp.16;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_59_25_59_85_end:
+        %tmp.17 = phi [%tmp.12 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_59_25_59_85_begin] [%tmp.15 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_59_25_59_85_true] [%tmp.16 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_59_25_59_85_else_false] [%tmp.17 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_59_25_59_85_end];
+        lputv %timerMs.2 %tmp.17;
+        symbol [ timerMs %timerMs.2 59 12 19 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionUploader.mc" 60 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_56_65_111_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_56_65_111_4_stop" ]
+        %distM.3 = local;
+        symbol [ distM %distM.3 60 12 17 ];
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_60_25_60_97_begin:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_60_26_60_66_begin:
+        %tmp.18 = lgetv %info.1;
+        symbol [ info %tmp.18 60 26 30 ];
+        %tmp.19 = null;
+        %tmp.20 = ne %tmp.18 %tmp.19;
+        bf %tmp.20 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_60_25_60_97_else_false;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_60_42_60_66_true:
+        %tmp.21 = lgetv %info.1;
+        symbol [ info %tmp.21 60 42 46 ];
+        %tmp.22 = as %tmp.21 { (!Null) };
+        symbol [ elapsedDistance %tmp.23 60 47 62 ];
+        %tmp.23 = getv %tmp.22 :elapsedDistance;
+        %tmp.24 = null;
+        %tmp.25 = ne %tmp.23 %tmp.24;
+        push %tmp.25;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_60_42_60_66_end:
+        %tmp.26 = phi [%tmp.20 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_60_26_60_66_begin] [%tmp.25 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_60_42_60_66_true] [%tmp.26 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_60_42_60_66_end];
+        bf %tmp.26 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_60_25_60_97_else_false;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_60_25_60_97_true:
+        %tmp.27 = lgetv %info.1;
+        symbol [ info %tmp.27 60 74 78 ];
+        %tmp.28 = as %tmp.27 { (!Null) };
+        symbol [ elapsedDistance %tmp.29 60 79 94 ];
+        %tmp.29 = getv %tmp.28 :elapsedDistance;
+        push %tmp.29;
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_60_25_60_97_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_60_25_60_97_else_false:
+        %tmp.30 = 0.0;
+        push %tmp.30;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_60_25_60_97_end:
+        %tmp.31 = phi [%tmp.26 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_60_25_60_97_begin] [%tmp.29 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_60_25_60_97_true] [%tmp.30 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_60_25_60_97_else_false] [%tmp.31 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_60_25_60_97_end];
+        lputv %distM.3 %tmp.31;
+        symbol [ distM %distM.3 60 12 17 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionUploader.mc" 61 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_56_65_111_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_56_65_111_4_stop" ]
+        %calories.4 = local;
+        symbol [ calories %calories.4 61 12 20 ];
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_61_25_61_83_begin:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_61_26_61_59_begin:
+        %tmp.32 = lgetv %info.1;
+        symbol [ info %tmp.32 61 26 30 ];
+        %tmp.33 = null;
+        %tmp.34 = ne %tmp.32 %tmp.33;
+        bf %tmp.34 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_61_25_61_83_else_false;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_61_42_61_59_true:
+        %tmp.35 = lgetv %info.1;
+        symbol [ info %tmp.35 61 42 46 ];
+        %tmp.36 = as %tmp.35 { (!Null) };
+        symbol [ calories %tmp.37 61 47 55 ];
+        %tmp.37 = getv %tmp.36 :calories;
+        %tmp.38 = null;
+        %tmp.39 = ne %tmp.37 %tmp.38;
+        push %tmp.39;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_61_42_61_59_end:
+        %tmp.40 = phi [%tmp.34 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_61_26_61_59_begin] [%tmp.39 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_61_42_61_59_true] [%tmp.40 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_61_42_61_59_end];
+        bf %tmp.40 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_61_25_61_83_else_false;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_61_25_61_83_true:
+        %tmp.41 = lgetv %info.1;
+        symbol [ info %tmp.41 61 67 71 ];
+        %tmp.42 = as %tmp.41 { (!Null) };
+        symbol [ calories %tmp.43 61 72 80 ];
+        %tmp.43 = getv %tmp.42 :calories;
+        push %tmp.43;
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_61_25_61_83_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_61_25_61_83_else_false:
+        %tmp.44 = 0;
+        push %tmp.44;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_61_25_61_83_end:
+        %tmp.45 = phi [%tmp.40 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_61_25_61_83_begin] [%tmp.43 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_61_25_61_83_true] [%tmp.44 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_61_25_61_83_else_false] [%tmp.45 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_61_25_61_83_end];
+        lputv %calories.4 %tmp.45;
+        symbol [ calories %calories.4 61 12 20 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionUploader.mc" 62 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_56_65_111_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_56_65_111_4_stop" ]
+        %maxSpeedMs.5 = local;
+        symbol [ maxSpeedMs %maxSpeedMs.5 62 12 22 ];
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_62_25_62_83_begin:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_62_26_62_59_begin:
+        %tmp.46 = lgetv %info.1;
+        symbol [ info %tmp.46 62 26 30 ];
+        %tmp.47 = null;
+        %tmp.48 = ne %tmp.46 %tmp.47;
+        bf %tmp.48 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_62_25_62_83_else_false;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_62_42_62_59_true:
+        %tmp.49 = lgetv %info.1;
+        symbol [ info %tmp.49 62 42 46 ];
+        %tmp.50 = as %tmp.49 { (!Null) };
+        symbol [ maxSpeed %tmp.51 62 47 55 ];
+        %tmp.51 = getv %tmp.50 :maxSpeed;
+        %tmp.52 = null;
+        %tmp.53 = ne %tmp.51 %tmp.52;
+        push %tmp.53;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_62_42_62_59_end:
+        %tmp.54 = phi [%tmp.48 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_62_26_62_59_begin] [%tmp.53 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_62_42_62_59_true] [%tmp.54 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_62_42_62_59_end];
+        bf %tmp.54 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_62_25_62_83_else_false;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_62_25_62_83_true:
+        %tmp.55 = lgetv %info.1;
+        symbol [ info %tmp.55 62 67 71 ];
+        %tmp.56 = as %tmp.55 { (!Null) };
+        symbol [ maxSpeed %tmp.57 62 72 80 ];
+        %tmp.57 = getv %tmp.56 :maxSpeed;
+        push %tmp.57;
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_62_25_62_83_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_62_25_62_83_else_false:
+        %tmp.58 = 0.0;
+        push %tmp.58;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_62_25_62_83_end:
+        %tmp.59 = phi [%tmp.54 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_62_25_62_83_begin] [%tmp.57 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_62_25_62_83_true] [%tmp.58 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_62_25_62_83_else_false] [%tmp.59 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_62_25_62_83_end];
+        lputv %maxSpeedMs.5 %tmp.59;
+        symbol [ maxSpeedMs %maxSpeedMs.5 62 12 22 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionUploader.mc" 63 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_56_65_111_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_56_65_111_4_stop" ]
+        %avgHR.6 = local;
+        symbol [ avgHR %avgHR.6 63 12 17 ];
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_63_25_63_99_begin:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_63_26_63_67_begin:
+        %tmp.60 = lgetv %info.1;
+        symbol [ info %tmp.60 63 26 30 ];
+        %tmp.61 = null;
+        %tmp.62 = ne %tmp.60 %tmp.61;
+        bf %tmp.62 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_63_25_63_99_else_false;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_63_42_63_67_true:
+        %tmp.63 = lgetv %info.1;
+        symbol [ info %tmp.63 63 42 46 ];
+        %tmp.64 = as %tmp.63 { (!Null) };
+        symbol [ averageHeartRate %tmp.65 63 47 63 ];
+        %tmp.65 = getv %tmp.64 :averageHeartRate;
+        %tmp.66 = null;
+        %tmp.67 = ne %tmp.65 %tmp.66;
+        push %tmp.67;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_63_42_63_67_end:
+        %tmp.68 = phi [%tmp.62 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_63_26_63_67_begin] [%tmp.67 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_63_42_63_67_true] [%tmp.68 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_63_42_63_67_end];
+        bf %tmp.68 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_63_25_63_99_else_false;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_63_25_63_99_true:
+        %tmp.69 = lgetv %info.1;
+        symbol [ info %tmp.69 63 75 79 ];
+        %tmp.70 = as %tmp.69 { (!Null) };
+        symbol [ averageHeartRate %tmp.71 63 80 96 ];
+        %tmp.71 = getv %tmp.70 :averageHeartRate;
+        push %tmp.71;
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_63_25_63_99_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_63_25_63_99_else_false:
+        %tmp.72 = 0;
+        push %tmp.72;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_63_25_63_99_end:
+        %tmp.73 = phi [%tmp.68 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_63_25_63_99_begin] [%tmp.71 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_63_25_63_99_true] [%tmp.72 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_63_25_63_99_else_false] [%tmp.73 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_63_25_63_99_end];
+        lputv %avgHR.6 %tmp.73;
+        symbol [ avgHR %avgHR.6 63 12 17 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionUploader.mc" 64 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_56_65_111_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_56_65_111_4_stop" ]
+        %maxHR.7 = local;
+        symbol [ maxHR %maxHR.7 64 12 17 ];
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_64_25_64_91_begin:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_64_26_64_63_begin:
+        %tmp.74 = lgetv %info.1;
+        symbol [ info %tmp.74 64 26 30 ];
+        %tmp.75 = null;
+        %tmp.76 = ne %tmp.74 %tmp.75;
+        bf %tmp.76 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_64_25_64_91_else_false;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_64_42_64_63_true:
+        %tmp.77 = lgetv %info.1;
+        symbol [ info %tmp.77 64 42 46 ];
+        %tmp.78 = as %tmp.77 { (!Null) };
+        symbol [ maxHeartRate %tmp.79 64 47 59 ];
+        %tmp.79 = getv %tmp.78 :maxHeartRate;
+        %tmp.80 = null;
+        %tmp.81 = ne %tmp.79 %tmp.80;
+        push %tmp.81;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_64_42_64_63_end:
+        %tmp.82 = phi [%tmp.76 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_64_26_64_63_begin] [%tmp.81 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_64_42_64_63_true] [%tmp.82 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_64_42_64_63_end];
+        bf %tmp.82 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_64_25_64_91_else_false;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_64_25_64_91_true:
+        %tmp.83 = lgetv %info.1;
+        symbol [ info %tmp.83 64 71 75 ];
+        %tmp.84 = as %tmp.83 { (!Null) };
+        symbol [ maxHeartRate %tmp.85 64 76 88 ];
+        %tmp.85 = getv %tmp.84 :maxHeartRate;
+        push %tmp.85;
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_64_25_64_91_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_64_25_64_91_else_false:
+        %tmp.86 = 0;
+        push %tmp.86;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_64_25_64_91_end:
+        %tmp.87 = phi [%tmp.82 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_64_25_64_91_begin] [%tmp.85 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_64_25_64_91_true] [%tmp.86 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_64_25_64_91_else_false] [%tmp.87 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_64_25_64_91_end];
+        lputv %maxHR.7 %tmp.87;
+        symbol [ maxHR %maxHR.7 64 12 17 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionUploader.mc" 67 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_56_65_111_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_56_65_111_4_stop" ]
+        %temp.8 = local;
+        symbol [ temp %temp.8 67 12 16 ];
+        %tmp.88 = null;
+        lputv %temp.8 %tmp.88;
+        symbol [ temp %temp.8 67 12 16 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionUploader.mc" 68 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_56_65_111_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_56_65_111_4_stop" ]
+        %si.9 = local;
+        symbol [ si %si.9 68 12 14 ];
+        symbol [ Toybox %tmp.90 68 17 23 ];
+        %tmp.90 = getv ? :Toybox;
+        symbol [ Sensor %tmp.91 68 24 30 ];
+        %tmp.91 = getv %tmp.90 :Sensor;
+        symbol [ getInfo %tmp.92 68 31 38 ];
+        %tmp.92 = getv function %tmp.91 :getInfo;
+        %tmp.93 = invoke %tmp.91 %tmp.92();
+        lputv %si.9 %tmp.93;
+        symbol [ si %si.9 68 12 14 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionUploader.mc" 69 8 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_69_8_71_8_if_stmt:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_69_12_69_44_begin:
+        %tmp.94 = lgetv %si.9;
+        symbol [ si %tmp.94 69 12 14 ];
+        %tmp.95 = null;
+        %tmp.96 = ne %tmp.94 %tmp.95;
+        bf %tmp.96 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_69_8_71_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_69_26_69_44_true:
+        %tmp.97 = lgetv %si.9;
+        symbol [ si %tmp.97 69 26 28 ];
+        %tmp.98 = as %tmp.97 { (!Null) };
+        symbol [ temperature %tmp.99 69 29 40 ];
+        %tmp.99 = getv %tmp.98 :temperature;
+        %tmp.100 = null;
+        %tmp.101 = ne %tmp.99 %tmp.100;
+        push %tmp.101;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_69_26_69_44_end:
+        %tmp.102 = phi [%tmp.96 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_69_12_69_44_begin] [%tmp.101 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_69_26_69_44_true] [%tmp.102 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_69_26_69_44_end];
+        bf %tmp.102 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_69_8_71_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_69_8_71_8_if_true:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_69_50_71_8_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionUploader.mc" 70 12 ]
+        %tmp.103 = lgetv %si.9;
+        symbol [ si %tmp.103 70 19 21 ];
+        %tmp.104 = as %tmp.103 { (!Null) };
+        symbol [ temperature %tmp.105 70 22 33 ];
+        %tmp.105 = getv %tmp.104 :temperature;
+        lputv %temp.8 %tmp.105;
+        symbol [ temp %temp.8 70 12 16 ];
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_69_50_71_8_stop:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_69_8_71_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_69_8_71_8_if_end:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionUploader.mc" 73 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_56_65_111_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_56_65_111_4_stop" ]
+        %distNM.10 = local;
+        symbol [ distNM %distNM.10 73 12 18 ];
+        %tmp.106 = lgetv %distM.3;
+        symbol [ distM %tmp.106 73 24 29 ];
+        %tmp.107 = 0.000539957;
+        %tmp.108 = mul %tmp.106 %tmp.107;
+        lputv %distNM.10 %tmp.108;
+        symbol [ distNM %distNM.10 73 12 18 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionUploader.mc" 74 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_56_65_111_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_56_65_111_4_stop" ]
+        %maxKnots.11 = local;
+        symbol [ maxKnots %maxKnots.11 74 12 20 ];
+        %tmp.109 = lgetv %maxSpeedMs.5;
+        symbol [ maxSpeedMs %tmp.109 74 24 34 ];
+        %tmp.110 = 1.94384;
+        %tmp.111 = mul %tmp.109 %tmp.110;
+        lputv %maxKnots.11 %tmp.111;
+        symbol [ maxKnots %maxKnots.11 74 12 20 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionUploader.mc" 75 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_56_65_111_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_56_65_111_4_stop" ]
+        %durationS.12 = local;
+        symbol [ durationS %durationS.12 75 12 21 ];
+        %tmp.112 = lgetv %timerMs.2;
+        symbol [ timerMs %tmp.112 75 24 31 ];
+        %tmp.113 = 1000;
+        %tmp.114 = div %tmp.112 %tmp.113;
+        lputv %durationS.12 %tmp.114;
+        symbol [ durationS %durationS.12 75 12 21 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionUploader.mc" 78 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_56_65_111_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_56_65_111_4_stop" ]
+        %trackStep.13 = local;
+        symbol [ trackStep %trackStep.13 78 12 21 ];
+        %tmp.115 = 1;
+        lputv %trackStep.13 %tmp.115;
+        symbol [ trackStep %trackStep.13 78 12 21 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionUploader.mc" 79 8 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_79_8_82_8_if_stmt:
+        %tmp.116 = lgetv %mapCount;
+        symbol [ mapCount %tmp.116 79 12 20 ];
+        %tmp.117 = 100;
+        %tmp.118 = gt %tmp.116 %tmp.117;
+        bf %tmp.118 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_79_8_82_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_79_8_82_8_if_true:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_79_28_82_8_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionUploader.mc" 80 12 ]
+        %tmp.119 = lgetv %mapCount;
+        symbol [ mapCount %tmp.119 80 24 32 ];
+        %tmp.120 = 100;
+        %tmp.121 = div %tmp.119 %tmp.120;
+        lputv %trackStep.13 %tmp.121;
+        symbol [ trackStep %trackStep.13 80 12 21 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionUploader.mc" 81 12 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_81_12_81_48_if_stmt:
+        %tmp.122 = lgetv %trackStep.13;
+        symbol [ trackStep %tmp.122 81 16 25 ];
+        %tmp.123 = 1;
+        %tmp.124 = lt %tmp.122 %tmp.123;
+        bf %tmp.124 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_81_12_81_48_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_81_12_81_48_if_true:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_81_31_81_48_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionUploader.mc" 81 33 ]
+        %tmp.125 = 1;
+        lputv %trackStep.13 %tmp.125;
+        symbol [ trackStep %trackStep.13 81 33 42 ];
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_81_31_81_48_stop:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_81_12_81_48_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_81_12_81_48_if_end:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_79_28_82_8_stop:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_79_8_82_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_79_8_82_8_if_end:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionUploader.mc" 83 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_56_65_111_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_56_65_111_4_stop" ]
+        %track.14 = local;
+        symbol [ track %track.14 83 12 17 ];
+        %tmp.126 = newa 0;
+        lputv %track.14 %tmp.126;
+        symbol [ track %track.14 83 12 17 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionUploader.mc" 84 8 ]
+        for @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_84_8_86_8_for_test @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_84_8_86_8_for_incr @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_84_8_86_8_for_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_84_8_86_8_for_init:
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_84_8_86_8_for_begin" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_84_8_86_8_for_end" ]
+        %i.15 = local;
+        symbol [ i %i.15 84 17 18 ];
+        %tmp.127 = 0;
+        lputv %i.15 %tmp.127;
+        symbol [ i %i.15 84 17 18 ];
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_84_8_86_8_for_test:
+        %tmp.128 = lgetv %i.15;
+        symbol [ i %tmp.128 84 24 25 ];
+        %tmp.129 = lgetv %mapCount;
+        symbol [ mapCount %tmp.129 84 28 36 ];
+        %tmp.130 = lt %tmp.128 %tmp.129;
+        bf %tmp.130 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_84_8_86_8_for_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_84_8_86_8_for_begin:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_84_54_86_8_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionUploader.mc" 85 12 ]
+        %tmp.131 = lgetv %track.14;
+        symbol [ track %tmp.131 85 12 17 ];
+        symbol [ add %tmp.132 85 18 21 ];
+        %tmp.132 = getv function %tmp.131 :add;
+        %tmp.133 = newa 2;
+        %tmp.134 = lgetv %mapLats;
+        symbol [ mapLats %tmp.134 85 23 30 ];
+        %tmp.135 = lgetv %i.15;
+        symbol [ i %tmp.135 85 31 32 ];
+        %tmp.136 = agetv %tmp.134 %tmp.135;
+        %tmp.137 = dup %tmp.133;
+        %tmp.138 = aputv %tmp.137 0 %tmp.136;
+        %tmp.139 = lgetv %mapLons;
+        symbol [ mapLons %tmp.139 85 35 42 ];
+        %tmp.140 = lgetv %i.15;
+        symbol [ i %tmp.140 85 43 44 ];
+        %tmp.141 = agetv %tmp.139 %tmp.140;
+        %tmp.142 = dup %tmp.138;
+        %tmp.143 = aputv %tmp.142 1 %tmp.141;
+        invoke %tmp.131 %tmp.132(%tmp.143);
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_84_54_86_8_stop:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_84_8_86_8_for_incr:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionUploader.mc" 84 ]
+        %tmp.144 = lgetv %i.15;
+        symbol [ i %tmp.144 84 38 39 ];
+        %tmp.145 = lgetv %trackStep.13;
+        symbol [ trackStep %tmp.145 84 43 52 ];
+        %tmp.146 = add %tmp.144 %tmp.145;
+        lputv %i.15 %tmp.146;
+        symbol [ i %i.15 84 38 39 ];
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_84_8_86_8_for_test;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_84_8_86_8_for_end:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionUploader.mc" 88 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_56_65_111_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_56_65_111_4_stop" ]
+        %payload.16 = local;
+        symbol [ payload %payload.16 88 12 19 ];
+        %tmp.147 = newd 15;
+        %tmp.148 = "type";
+        %tmp.149 = "kite_session";
+        %tmp.150 = dup %tmp.147;
+        %tmp.151 = aputv %tmp.150 %tmp.148 %tmp.149;
+        %tmp.152 = "duration_s";
+        %tmp.153 = lgetv %durationS.12;
+        symbol [ durationS %tmp.153 90 30 39 ];
+        %tmp.154 = dup %tmp.151;
+        %tmp.155 = aputv %tmp.154 %tmp.152 %tmp.153;
+        %tmp.156 = "distance_nm";
+        %tmp.157 = lgetv %distNM.10;
+        symbol [ distNM %tmp.157 91 30 36 ];
+        %tmp.158 = dup %tmp.155;
+        %tmp.159 = aputv %tmp.158 %tmp.156 %tmp.157;
+        %tmp.160 = "max_speed_kts";
+        %tmp.161 = lgetv %maxKnots.11;
+        symbol [ maxKnots %tmp.161 92 30 38 ];
+        %tmp.162 = dup %tmp.159;
+        %tmp.163 = aputv %tmp.162 %tmp.160 %tmp.161;
+        %tmp.164 = "calories";
+        %tmp.165 = lgetv %calories.4;
+        symbol [ calories %tmp.165 93 30 38 ];
+        %tmp.166 = dup %tmp.163;
+        %tmp.167 = aputv %tmp.166 %tmp.164 %tmp.165;
+        %tmp.168 = "avg_hr";
+        %tmp.169 = lgetv %avgHR.6;
+        symbol [ avgHR %tmp.169 94 30 35 ];
+        %tmp.170 = dup %tmp.167;
+        %tmp.171 = aputv %tmp.170 %tmp.168 %tmp.169;
+        %tmp.172 = "max_hr";
+        %tmp.173 = lgetv %maxHR.7;
+        symbol [ maxHR %tmp.173 95 30 35 ];
+        %tmp.174 = dup %tmp.171;
+        %tmp.175 = aputv %tmp.174 %tmp.172 %tmp.173;
+        %tmp.176 = "jumps";
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_96_30_96_60_begin:
+        %tmp.177 = lgetv %jt;
+        symbol [ jt %tmp.177 96 31 33 ];
+        %tmp.178 = null;
+        %tmp.179 = ne %tmp.177 %tmp.178;
+        bf %tmp.179 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_96_30_96_60_else_false;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_96_30_96_60_true:
+        %tmp.180 = lgetv %jt;
+        symbol [ jt %tmp.180 96 45 47 ];
+        %tmp.181 = as %tmp.180 { (!Null) };
+        symbol [ jumpCount %tmp.182 96 48 57 ];
+        %tmp.182 = getv %tmp.181 :jumpCount;
+        push %tmp.182;
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_96_30_96_60_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_96_30_96_60_else_false:
+        %tmp.183 = 0;
+        push %tmp.183;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_96_30_96_60_end:
+        %tmp.184 = phi [%tmp.179 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_96_30_96_60_begin] [%tmp.182 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_96_30_96_60_true] [%tmp.183 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_96_30_96_60_else_false] [%tmp.184 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_96_30_96_60_end];
+        %tmp.185 = dup %tmp.175;
+        %tmp.186 = aputv %tmp.185 %tmp.176 %tmp.184;
+        %tmp.187 = "max_jump_ft";
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_97_30_97_60_begin:
+        %tmp.188 = lgetv %jt;
+        symbol [ jt %tmp.188 97 31 33 ];
+        %tmp.189 = null;
+        %tmp.190 = ne %tmp.188 %tmp.189;
+        bf %tmp.190 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_97_30_97_60_else_false;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_97_30_97_60_true:
+        %tmp.191 = lgetv %jt;
+        symbol [ jt %tmp.191 97 45 47 ];
+        %tmp.192 = as %tmp.191 { (!Null) };
+        symbol [ maxHeight %tmp.193 97 48 57 ];
+        %tmp.193 = getv %tmp.192 :maxHeight;
+        push %tmp.193;
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_97_30_97_60_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_97_30_97_60_else_false:
+        %tmp.194 = 0.0;
+        push %tmp.194;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_97_30_97_60_end:
+        %tmp.195 = phi [%tmp.190 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_97_30_97_60_begin] [%tmp.193 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_97_30_97_60_true] [%tmp.194 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_97_30_97_60_else_false] [%tmp.195 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_97_30_97_60_end];
+        %tmp.196 = dup %tmp.186;
+        %tmp.197 = aputv %tmp.196 %tmp.187 %tmp.195;
+        %tmp.198 = "avg_jump_ft";
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_98_30_98_62_begin:
+        %tmp.199 = lgetv %jt;
+        symbol [ jt %tmp.199 98 31 33 ];
+        %tmp.200 = null;
+        %tmp.201 = ne %tmp.199 %tmp.200;
+        bf %tmp.201 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_98_30_98_62_else_false;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_98_30_98_62_true:
+        %tmp.202 = lgetv %jt;
+        symbol [ jt %tmp.202 98 45 47 ];
+        %tmp.203 = as %tmp.202 { (!Null) };
+        symbol [ avgHeight %tmp.204 98 48 57 ];
+        %tmp.204 = getv function %tmp.203 :avgHeight;
+        %tmp.205 = invoke %tmp.203 %tmp.204();
+        push %tmp.205;
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_98_30_98_62_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_98_30_98_62_else_false:
+        %tmp.206 = 0.0;
+        push %tmp.206;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_98_30_98_62_end:
+        %tmp.207 = phi [%tmp.201 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_98_30_98_62_begin] [%tmp.205 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_98_30_98_62_true] [%tmp.206 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_98_30_98_62_else_false] [%tmp.207 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_98_30_98_62_end];
+        %tmp.208 = dup %tmp.197;
+        %tmp.209 = aputv %tmp.208 %tmp.198 %tmp.207;
+        %tmp.210 = "total_air_ft";
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_99_30_99_62_begin:
+        %tmp.211 = lgetv %jt;
+        symbol [ jt %tmp.211 99 31 33 ];
+        %tmp.212 = null;
+        %tmp.213 = ne %tmp.211 %tmp.212;
+        bf %tmp.213 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_99_30_99_62_else_false;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_99_30_99_62_true:
+        %tmp.214 = lgetv %jt;
+        symbol [ jt %tmp.214 99 45 47 ];
+        %tmp.215 = as %tmp.214 { (!Null) };
+        symbol [ totalHeight %tmp.216 99 48 59 ];
+        %tmp.216 = getv %tmp.215 :totalHeight;
+        push %tmp.216;
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_99_30_99_62_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_99_30_99_62_else_false:
+        %tmp.217 = 0.0;
+        push %tmp.217;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_99_30_99_62_end:
+        %tmp.218 = phi [%tmp.213 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_99_30_99_62_begin] [%tmp.216 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_99_30_99_62_true] [%tmp.217 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_99_30_99_62_else_false] [%tmp.218 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_99_30_99_62_end];
+        %tmp.219 = dup %tmp.209;
+        %tmp.220 = aputv %tmp.219 %tmp.210 %tmp.218;
+        %tmp.221 = "crashes_filtered";
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_100_34_100_70_begin:
+        %tmp.222 = lgetv %jt;
+        symbol [ jt %tmp.222 100 35 37 ];
+        %tmp.223 = null;
+        %tmp.224 = ne %tmp.222 %tmp.223;
+        bf %tmp.224 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_100_34_100_70_else_false;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_100_34_100_70_true:
+        %tmp.225 = lgetv %jt;
+        symbol [ jt %tmp.225 100 49 51 ];
+        %tmp.226 = as %tmp.225 { (!Null) };
+        symbol [ crashesFiltered %tmp.227 100 52 67 ];
+        %tmp.227 = getv %tmp.226 :crashesFiltered;
+        push %tmp.227;
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_100_34_100_70_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_100_34_100_70_else_false:
+        %tmp.228 = 0;
+        push %tmp.228;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_100_34_100_70_end:
+        %tmp.229 = phi [%tmp.224 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_100_34_100_70_begin] [%tmp.227 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_100_34_100_70_true] [%tmp.228 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_100_34_100_70_else_false] [%tmp.229 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_100_34_100_70_end];
+        %tmp.230 = dup %tmp.220;
+        %tmp.231 = aputv %tmp.230 %tmp.221 %tmp.229;
+        %tmp.232 = "device";
+        symbol [ System %tmp.233 101 30 36 ];
+        %tmp.233 = getm $.Toybox.System;
+        symbol [ getDeviceSettings %tmp.234 101 37 54 ];
+        %tmp.234 = getv function %tmp.233 :getDeviceSettings;
+        %tmp.235 = invoke %tmp.233 %tmp.234();
+        symbol [ uniqueIdentifier %tmp.236 101 57 73 ];
+        %tmp.236 = getv %tmp.235 :uniqueIdentifier;
+        %tmp.237 = dup %tmp.231;
+        %tmp.238 = aputv %tmp.237 %tmp.232 %tmp.236;
+        %tmp.239 = "timestamp";
+        symbol [ Time %tmp.240 102 30 34 ];
+        %tmp.240 = getm $.Toybox.Time;
+        symbol [ now %tmp.241 102 35 38 ];
+        %tmp.241 = getv function %tmp.240 :now;
+        %tmp.242 = invoke %tmp.240 %tmp.241();
+        symbol [ value %tmp.243 102 41 46 ];
+        %tmp.243 = getv function %tmp.242 :value;
+        %tmp.244 = invoke %tmp.242 %tmp.243();
+        %tmp.245 = dup %tmp.238;
+        %tmp.246 = aputv %tmp.245 %tmp.239 %tmp.244;
+        %tmp.247 = "track";
+        %tmp.248 = lgetv %track.14;
+        symbol [ track %tmp.248 103 30 35 ];
+        %tmp.249 = dup %tmp.246;
+        %tmp.250 = aputv %tmp.249 %tmp.247 %tmp.248;
+        lputv %payload.16 %tmp.250;
+        symbol [ payload %payload.16 88 12 19 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionUploader.mc" 106 8 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_106_8_108_8_if_stmt:
+        %tmp.251 = lgetv %temp.8;
+        symbol [ temp %tmp.251 106 12 16 ];
+        %tmp.252 = null;
+        %tmp.253 = ne %tmp.251 %tmp.252;
+        bf %tmp.253 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_106_8_108_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_106_8_108_8_if_true:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_106_26_108_8_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionUploader.mc" 107 12 ]
+        %tmp.254 = lgetv %payload.16;
+        symbol [ payload %tmp.254 107 12 19 ];
+        symbol [ put %tmp.255 107 20 23 ];
+        %tmp.255 = getv function %tmp.254 :put;
+        %tmp.256 = "water_temp_c";
+        %tmp.257 = lgetv %temp.8;
+        symbol [ temp %tmp.257 107 40 44 ];
+        %tmp.258 = as %tmp.257 { (!Null) };
+        invoke %tmp.254 %tmp.255(%tmp.256, %tmp.258);
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_106_26_108_8_stop:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_106_8_108_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_106_8_108_8_if_end:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionUploader.mc" 110 8 ]
+        %tmp.259 = lgetv %payload.16;
+        symbol [ payload %tmp.259 110 15 22 ];
+        ret %tmp.259;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_SessionUploader_mc_56_65_111_4_stop:
+    }
+}
+[ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\SessionUploader.mc"; @line = 1; ]
+<init> {
+}

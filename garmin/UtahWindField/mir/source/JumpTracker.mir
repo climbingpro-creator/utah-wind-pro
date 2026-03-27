@@ -1,0 +1,898 @@
+[ @file = "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc"; @line = 1; @symbol_usingdef<0> = [Toybox,1,6,12]; @symbol_usingdef<1> = [Sensor,1,13,19]; ]
+using Toybox.Sensor;
+[ @file = "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc"; @line = 2; @symbol_usingdef<0> = [Toybox,2,6,12]; @symbol_usingdef<1> = [Math,2,13,17]; ]
+using Toybox.Math;
+[ @file = "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc"; @line = 3; @symbol_usingdef<0> = [Toybox,3,6,12]; @symbol_usingdef<1> = [Activity,3,13,21]; ]
+using Toybox.Activity;
+[ @file = "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc"; @line = 4; @symbol_usingdef<0> = [Toybox,4,6,12]; @symbol_usingdef<1> = [System,4,13,19]; ]
+using Toybox.System;
+[ @file = "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc"; @line = 5; @symbol_usingdef<0> = [Toybox,5,6,12]; @symbol_usingdef<1> = [WatchUi,5,13,20]; ]
+using Toybox.WatchUi;
+//! WOO-Style Jump Tracker
+//!
+//! Runs a 25 Hz accelerometer listener entirely on-watch (no phone
+//! streaming required). Detects kite jumps via a 4-state machine:
+//!
+//!   IDLE ──(pop > 2.5G)──▸ TAKEOFF ──(< 0.4G)──▸ AIRBORNE
+//!                                                     │
+//!                           record jump ◂──(> 2G)─────┘
+//!
+//! Height is captured from the barometric altimeter at takeoff vs
+//! peak altitude during the weightless phase.
+//!
+//! IMPORTANT — Wrist orientation:
+//! We CANNOT assume which accelerometer axis is "vertical" because
+//! the watch is strapped to a moving wrist. Instead we compute the
+//! acceleration magnitude  |a| = √(x² + y² + z²)  which is
+//! orientation-independent:
+//!   • Resting on Earth ≈ 1000 mG  (1 G)
+//!   • Freefall / weightless ≈ 0 mG
+//!   • Pop / landing impact ≈ 2000-5000+ mG
+[ @file = "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc"; @line = 29; ]
+enum {
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc"; @line = 30; @position = 4; @symbol_enumdec = [JS_IDLE,30,4,11]; ]
+    JS_IDLE,
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc"; @line = 31; @position = 4; @symbol_enumdec = [JS_TAKEOFF_POP,31,4,18]; ]
+    JS_TAKEOFF_POP,
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc"; @line = 32; @position = 4; @symbol_enumdec = [JS_AIRBORNE,32,4,15]; ]
+    JS_AIRBORNE,
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc"; @line = 33; @position = 4; @symbol_enumdec = [JS_COOLDOWN,33,4,15]; ]
+    JS_COOLDOWN
+}
+[ @file = "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc"; @line = 36; @symbol_classdef = [JumpTracker,36,6,17]; ]
+class JumpTracker {
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc"; @line = 36; ]
+    <init> {
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 48 15 ]
+        symbol [ JS_IDLE %tmp.2 48 30 37 ];
+        %tmp.2 = getv ? :JS_IDLE;
+        putv self :_state %tmp.2;
+    }
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc"; @line = 36; ]
+    static
+    <init> {
+    }
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc"; @line = 39; @position = 17; @symbol_constdef = [POP_G,39,17,22]; ]
+    protected
+    const POP_G = 2500;
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc"; @line = 40; @position = 17; @symbol_constdef = [WEIGHTLESS_G,40,17,29]; ]
+    protected
+    const WEIGHTLESS_G = 400;
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc"; @line = 41; @position = 17; @symbol_constdef = [LAND_G,41,17,23]; ]
+    protected
+    const LAND_G = 2000;
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc"; @line = 42; @position = 17; @symbol_constdef = [MIN_AIR_SAMP,42,17,29]; ]
+    protected
+    const MIN_AIR_SAMP = 5;
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc"; @line = 43; @position = 17; @symbol_constdef = [MAX_AIR_SAMP,43,17,29]; ]
+    protected
+    const MAX_AIR_SAMP = 250;
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc"; @line = 44; @position = 17; @symbol_constdef = [COOLDOWN_SAMP,44,17,30]; ]
+    protected
+    const COOLDOWN_SAMP = 25;
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc"; @line = 45; @position = 17; @symbol_constdef = [POP_WINDOW,45,17,27]; ]
+    protected
+    const POP_WINDOW = 8;
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc"; @line = 48; @position = 15; @symbol_vardef = [_state,48,15,21]; ]
+    protected
+    var _state;
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc"; @line = 49; @position = 15; @symbol_vardef = [_counter,49,15,23]; ]
+    protected
+    var _counter = 0;
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc"; @line = 50; @position = 15; @symbol_vardef = [_takeoffAlt,50,15,26]; ]
+    protected
+    var _takeoffAlt = 0.0;
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc"; @line = 51; @position = 15; @symbol_vardef = [_peakAlt,51,15,23]; ]
+    protected
+    var _peakAlt = 0.0;
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc"; @line = 52; @position = 15; @symbol_vardef = [_takeoffMs,52,15,25]; ]
+    protected
+    var _takeoffMs = 0;
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc"; @line = 55; @position = 8; @symbol_vardef = [jumpCount,55,8,17]; ]
+    var jumpCount = 0;
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc"; @line = 56; @position = 8; @symbol_vardef = [maxHeight,56,8,17]; ]
+    var maxHeight = 0.0;
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc"; @line = 57; @position = 8; @symbol_vardef = [lastHeight,57,8,18]; ]
+    var lastHeight = 0.0;
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc"; @line = 58; @position = 8; @symbol_vardef = [lastHang,58,8,16]; ]
+    var lastHang = 0.0;
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc"; @line = 59; @position = 8; @symbol_vardef = [totalHeight,59,8,19]; ]
+    var totalHeight = 0.0;
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc"; @line = 61; @symbol_functiondef = [initialize,61,13,23]; ]
+    function initialize() as Void {
+    }
+    //! Registers the high-frequency sensor listener.
+    //! Period = 1 second of buffered samples delivered at 25 Hz.
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc"; @line = 68; @symbol_functiondef = [startListening,68,13,27]; ]
+    function startListening() {
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_68_30_80_4_start:
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 69 8 ]
+        [ "C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_68_30_80_4_start" "C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_68_30_80_4_stop" ]
+        %opts.1 = local;
+        symbol [ opts %opts.1 69 12 16 ];
+        %tmp.1 = newd 2;
+        %tmp.3 = const :period;
+        symbol [ period %tmp.3 70 13 19 const ];
+        %tmp.4 = 1;
+        %tmp.5 = dup %tmp.1;
+        %tmp.6 = aputv %tmp.5 %tmp.3 %tmp.4;
+        %tmp.8 = const :accelerometer;
+        symbol [ accelerometer %tmp.8 71 13 26 const ];
+        %tmp.9 = newd 2;
+        %tmp.11 = const :enabled;
+        symbol [ enabled %tmp.11 72 17 24 const ];
+        %tmp.12 = true;
+        %tmp.13 = dup %tmp.9;
+        %tmp.14 = aputv %tmp.13 %tmp.11 %tmp.12;
+        %tmp.16 = const :sampleRate;
+        symbol [ sampleRate %tmp.16 73 17 27 const ];
+        %tmp.17 = 25;
+        %tmp.18 = dup %tmp.14;
+        %tmp.19 = aputv %tmp.18 %tmp.16 %tmp.17;
+        %tmp.20 = dup %tmp.6;
+        %tmp.21 = aputv %tmp.20 %tmp.8 %tmp.19;
+        lputv %opts.1 %tmp.21;
+        symbol [ opts %opts.1 69 12 16 ];
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 76 8 ]
+        symbol [ Sensor %tmp.22 76 8 14 ];
+        %tmp.22 = getm $.Toybox.Sensor;
+        symbol [ registerSensorDataListener %tmp.23 76 15 41 ];
+        %tmp.23 = getv function %tmp.22 :registerSensorDataListener;
+        %tmp.24 = self;
+        symbol [ method %tmp.25 76 42 48 ];
+        %tmp.25 = getv function %tmp.24 :method;
+        %tmp.27 = const :onSensorBatch;
+        symbol [ onSensorBatch %tmp.27 76 50 63 const ];
+        %tmp.28 = invoke %tmp.24 %tmp.25(%tmp.27);
+        %tmp.29 = lgetv %opts.1;
+        symbol [ opts %tmp.29 76 66 70 ];
+        invoke %tmp.22 %tmp.23(%tmp.28, %tmp.29);
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 79 8 ]
+        symbol [ Sensor %tmp.30 79 8 14 ];
+        %tmp.30 = getm $.Toybox.Sensor;
+        symbol [ setEnabledSensors %tmp.31 79 15 32 ];
+        %tmp.31 = getv function %tmp.30 :setEnabledSensors;
+        %tmp.32 = newa 1;
+        symbol [ Sensor %tmp.33 79 34 40 ];
+        %tmp.33 = getm $.Toybox.Sensor;
+        symbol [ SENSOR_PRESSURE %tmp.34 79 41 56 ];
+        %tmp.34 = getv %tmp.33 :SENSOR_PRESSURE;
+        %tmp.35 = dup %tmp.32;
+        %tmp.36 = aputv %tmp.35 0 %tmp.34;
+        invoke %tmp.30 %tmp.31(%tmp.36);
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_68_30_80_4_stop:
+    }
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc"; @line = 82; @symbol_functiondef = [stopListening,82,13,26]; ]
+    function stopListening() {
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_82_29_84_4_start:
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 83 8 ]
+        symbol [ Sensor %tmp.1 83 8 14 ];
+        %tmp.1 = getm $.Toybox.Sensor;
+        symbol [ unregisterSensorDataListener %tmp.2 83 15 43 ];
+        %tmp.2 = getv function %tmp.1 :unregisterSensorDataListener;
+        invoke %tmp.1 %tmp.2();
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_82_29_84_4_stop:
+    }
+    //! Each batch contains ~25 samples of [x, y, z] in milli-G.
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc"; @line = 89; @symbol_functiondef = [onSensorBatch,89,13,26]; @symbol_param<0> = [sensorData,89,27,37]; ]
+    function onSensorBatch(sensorData) {
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_89_39_108_4_start:
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 90 8 ]
+        [ "C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_89_39_108_4_start" "C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_89_39_108_4_stop" ]
+        %ad.1 = local;
+        symbol [ ad %ad.1 90 12 14 ];
+        %tmp.1 = lgetv %sensorData;
+        symbol [ sensorData %tmp.1 90 17 27 ];
+        symbol [ accelerometerData %tmp.2 90 28 45 ];
+        %tmp.2 = getv %tmp.1 :accelerometerData;
+        lputv %ad.1 %tmp.2;
+        symbol [ ad %ad.1 90 12 14 ];
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 91 8 ]
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_91_8_91_34_if_stmt:
+        %tmp.3 = lgetv %ad.1;
+        symbol [ ad %tmp.3 91 12 14 ];
+        %tmp.4 = null;
+        %tmp.5 = eq %tmp.3 %tmp.4;
+        bf %tmp.5 @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_91_8_91_34_if_end;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_91_8_91_34_if_true:
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_91_24_91_34_start:
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 91 26 ]
+        ret ?;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_91_24_91_34_stop:
+        goto @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_91_8_91_34_if_end;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_91_8_91_34_if_end:
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 93 8 ]
+        [ "C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_89_39_108_4_start" "C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_89_39_108_4_stop" ]
+        %xArr.2 = local;
+        symbol [ xArr %xArr.2 93 12 16 ];
+        %tmp.6 = lgetv %ad.1;
+        symbol [ ad %tmp.6 93 19 21 ];
+        symbol [ x %tmp.7 93 22 23 ];
+        %tmp.7 = getv %tmp.6 :x;
+        lputv %xArr.2 %tmp.7;
+        symbol [ xArr %xArr.2 93 12 16 ];
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 94 8 ]
+        [ "C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_89_39_108_4_start" "C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_89_39_108_4_stop" ]
+        %yArr.3 = local;
+        symbol [ yArr %yArr.3 94 12 16 ];
+        %tmp.8 = lgetv %ad.1;
+        symbol [ ad %tmp.8 94 19 21 ];
+        symbol [ y %tmp.9 94 22 23 ];
+        %tmp.9 = getv %tmp.8 :y;
+        lputv %yArr.3 %tmp.9;
+        symbol [ yArr %yArr.3 94 12 16 ];
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 95 8 ]
+        [ "C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_89_39_108_4_start" "C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_89_39_108_4_stop" ]
+        %zArr.4 = local;
+        symbol [ zArr %zArr.4 95 12 16 ];
+        %tmp.10 = lgetv %ad.1;
+        symbol [ ad %tmp.10 95 19 21 ];
+        symbol [ z %tmp.11 95 22 23 ];
+        %tmp.11 = getv %tmp.10 :z;
+        lputv %zArr.4 %tmp.11;
+        symbol [ zArr %zArr.4 95 12 16 ];
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 96 8 ]
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_96_8_96_68_if_stmt:
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_96_12_96_52_begin:
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_96_12_96_36_begin:
+        %tmp.12 = lgetv %xArr.2;
+        symbol [ xArr %tmp.12 96 12 16 ];
+        %tmp.13 = null;
+        %tmp.14 = eq %tmp.12 %tmp.13;
+        bt %tmp.14 @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_96_8_96_68_if_true;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_96_28_96_36_false:
+        %tmp.15 = lgetv %yArr.3;
+        symbol [ yArr %tmp.15 96 28 32 ];
+        %tmp.16 = null;
+        %tmp.17 = eq %tmp.15 %tmp.16;
+        push %tmp.17;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_96_28_96_36_end:
+        %tmp.18 = phi [%tmp.14 @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_96_12_96_36_begin] [%tmp.17 @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_96_28_96_36_false] [%tmp.18 @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_96_28_96_36_end];
+        bt %tmp.18 @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_96_8_96_68_if_true;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_96_44_96_52_false:
+        %tmp.19 = lgetv %zArr.4;
+        symbol [ zArr %tmp.19 96 44 48 ];
+        %tmp.20 = null;
+        %tmp.21 = eq %tmp.19 %tmp.20;
+        push %tmp.21;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_96_44_96_52_end:
+        %tmp.22 = phi [%tmp.18 @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_96_12_96_52_begin] [%tmp.21 @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_96_44_96_52_false] [%tmp.22 @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_96_44_96_52_end];
+        bf %tmp.22 @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_96_8_96_68_if_end;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_96_8_96_68_if_true:
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_96_58_96_68_start:
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 96 60 ]
+        ret ?;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_96_58_96_68_stop:
+        goto @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_96_8_96_68_if_end;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_96_8_96_68_if_end:
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 98 8 ]
+        [ "C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_89_39_108_4_start" "C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_89_39_108_4_stop" ]
+        %n.5 = local;
+        symbol [ n %n.5 98 12 13 ];
+        %tmp.23 = lgetv %xArr.2;
+        symbol [ xArr %tmp.23 98 16 20 ];
+        symbol [ size %tmp.24 98 21 25 ];
+        %tmp.24 = getv function %tmp.23 :size;
+        %tmp.25 = invoke %tmp.23 %tmp.24();
+        lputv %n.5 %tmp.25;
+        symbol [ n %n.5 98 12 13 ];
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 99 8 ]
+        for @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_99_8_107_8_for_test @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_99_8_107_8_for_incr @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_99_8_107_8_for_end;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_99_8_107_8_for_init:
+        [ "C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_99_8_107_8_for_begin" "C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_99_8_107_8_for_end" ]
+        %i.6 = local;
+        symbol [ i %i.6 99 17 18 ];
+        %tmp.26 = 0;
+        lputv %i.6 %tmp.26;
+        symbol [ i %i.6 99 17 18 ];
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_99_8_107_8_for_test:
+        %tmp.27 = lgetv %i.6;
+        symbol [ i %tmp.27 99 24 25 ];
+        %tmp.28 = lgetv %n.5;
+        symbol [ n %tmp.28 99 28 29 ];
+        %tmp.29 = lt %tmp.27 %tmp.28;
+        bf %tmp.29 @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_99_8_107_8_for_end;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_99_8_107_8_for_begin:
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_99_36_107_8_start:
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 101 12 ]
+        [ "C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_99_36_107_8_start" "C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_99_36_107_8_stop" ]
+        %x.7 = local;
+        symbol [ x %x.7 101 16 17 ];
+        %tmp.30 = lgetv %xArr.2;
+        symbol [ xArr %tmp.30 101 20 24 ];
+        %tmp.31 = lgetv %i.6;
+        symbol [ i %tmp.31 101 25 26 ];
+        %tmp.32 = agetv %tmp.30 %tmp.31;
+        symbol [ toFloat %tmp.33 101 28 35 ];
+        %tmp.33 = getv function %tmp.32 :toFloat;
+        %tmp.34 = invoke %tmp.32 %tmp.33();
+        lputv %x.7 %tmp.34;
+        symbol [ x %x.7 101 16 17 ];
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 102 12 ]
+        [ "C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_99_36_107_8_start" "C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_99_36_107_8_stop" ]
+        %y.8 = local;
+        symbol [ y %y.8 102 16 17 ];
+        %tmp.35 = lgetv %yArr.3;
+        symbol [ yArr %tmp.35 102 20 24 ];
+        %tmp.36 = lgetv %i.6;
+        symbol [ i %tmp.36 102 25 26 ];
+        %tmp.37 = agetv %tmp.35 %tmp.36;
+        symbol [ toFloat %tmp.38 102 28 35 ];
+        %tmp.38 = getv function %tmp.37 :toFloat;
+        %tmp.39 = invoke %tmp.37 %tmp.38();
+        lputv %y.8 %tmp.39;
+        symbol [ y %y.8 102 16 17 ];
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 103 12 ]
+        [ "C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_99_36_107_8_start" "C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_99_36_107_8_stop" ]
+        %z.9 = local;
+        symbol [ z %z.9 103 16 17 ];
+        %tmp.40 = lgetv %zArr.4;
+        symbol [ zArr %tmp.40 103 20 24 ];
+        %tmp.41 = lgetv %i.6;
+        symbol [ i %tmp.41 103 25 26 ];
+        %tmp.42 = agetv %tmp.40 %tmp.41;
+        symbol [ toFloat %tmp.43 103 28 35 ];
+        %tmp.43 = getv function %tmp.42 :toFloat;
+        %tmp.44 = invoke %tmp.42 %tmp.43();
+        lputv %z.9 %tmp.44;
+        symbol [ z %z.9 103 16 17 ];
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 104 12 ]
+        [ "C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_99_36_107_8_start" "C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_99_36_107_8_stop" ]
+        %mag.10 = local;
+        symbol [ mag %mag.10 104 16 19 ];
+        symbol [ Math %tmp.45 104 22 26 ];
+        %tmp.45 = getm $.Toybox.Math;
+        symbol [ sqrt %tmp.46 104 27 31 ];
+        %tmp.46 = getv function %tmp.45 :sqrt;
+        %tmp.47 = lgetv %x.7;
+        symbol [ x %tmp.47 104 32 33 ];
+        %tmp.48 = lgetv %x.7;
+        symbol [ x %tmp.48 104 36 37 ];
+        %tmp.49 = mul %tmp.47 %tmp.48;
+        %tmp.50 = lgetv %y.8;
+        symbol [ y %tmp.50 104 40 41 ];
+        %tmp.51 = lgetv %y.8;
+        symbol [ y %tmp.51 104 44 45 ];
+        %tmp.52 = mul %tmp.50 %tmp.51;
+        %tmp.53 = add %tmp.49 %tmp.52;
+        %tmp.54 = lgetv %z.9;
+        symbol [ z %tmp.54 104 48 49 ];
+        %tmp.55 = lgetv %z.9;
+        symbol [ z %tmp.55 104 52 53 ];
+        %tmp.56 = mul %tmp.54 %tmp.55;
+        %tmp.57 = add %tmp.53 %tmp.56;
+        %tmp.58 = invoke %tmp.45 %tmp.46(%tmp.57);
+        symbol [ toNumber %tmp.59 104 55 63 ];
+        %tmp.59 = getv function %tmp.58 :toNumber;
+        %tmp.60 = invoke %tmp.58 %tmp.59();
+        lputv %mag.10 %tmp.60;
+        symbol [ mag %mag.10 104 16 19 ];
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 106 12 ]
+        %tmp.61 = self;
+        symbol [ _processSample %tmp.62 106 12 26 ];
+        %tmp.62 = getv function %tmp.61 :_processSample;
+        %tmp.63 = lgetv %mag.10;
+        symbol [ mag %tmp.63 106 27 30 ];
+        invoke %tmp.61 %tmp.62(%tmp.63);
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_99_36_107_8_stop:
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_99_8_107_8_for_incr:
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 99 ]
+        %tmp.66 = lgetv %i.6;
+        symbol [ i %tmp.66 99 31 32 ];
+        %tmp.67 = add %tmp.66 1;
+        lputv %i.6 %tmp.67;
+        symbol [ i %i.6 99 31 32 ];
+        goto @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_99_8_107_8_for_test;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_99_8_107_8_for_end:
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_89_39_108_4_stop:
+    }
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc"; @line = 112; @symbol_functiondef = [_processSample,112,20,34]; @symbol_param<0> = [mag,112,35,38]; ]
+    protected
+    function _processSample(mag) {
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_112_40_170_4_start:
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 113 8 ]
+        symbol [ _state %tmp.2 113 16 22 ];
+        %tmp.2 = getv ? :_state;
+        push %tmp.2;
+        switch %tmp.2 @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_113_8_169_8_switchStmtEnd;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_113_8_169_8_switchStmtBegin:
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 116 12 ]
+        %tmp.3 = dup %tmp.2;
+        symbol [ JS_IDLE %tmp.5 116 17 24 ];
+        %tmp.5 = getv ? :JS_IDLE;
+        %tmp.6 = getv function %tmp.3 :equals;
+        %tmp.7 = invoke %tmp.3 %tmp.6 (%tmp.5);
+        bt %tmp.7 @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_116_12_124_21_switchCase;
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 127 12 ]
+        %tmp.8 = dup %tmp.2;
+        symbol [ JS_TAKEOFF_POP %tmp.10 127 17 31 ];
+        %tmp.10 = getv ? :JS_TAKEOFF_POP;
+        %tmp.11 = getv function %tmp.8 :equals;
+        %tmp.12 = invoke %tmp.8 %tmp.11 (%tmp.10);
+        bt %tmp.12 @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_127_12_137_21_switchCase;
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 140 12 ]
+        %tmp.13 = dup %tmp.2;
+        symbol [ JS_AIRBORNE %tmp.15 140 17 28 ];
+        %tmp.15 = getv ? :JS_AIRBORNE;
+        %tmp.16 = getv function %tmp.13 :equals;
+        %tmp.17 = invoke %tmp.13 %tmp.16 (%tmp.15);
+        bt %tmp.17 @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_140_12_160_21_switchCase;
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 163 12 ]
+        %tmp.18 = dup %tmp.2;
+        symbol [ JS_COOLDOWN %tmp.20 163 17 28 ];
+        %tmp.20 = getv ? :JS_COOLDOWN;
+        %tmp.21 = getv function %tmp.18 :equals;
+        %tmp.22 = invoke %tmp.18 %tmp.21 (%tmp.20);
+        bt %tmp.22 @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_163_12_168_21_switchCase;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_113_8_169_8_switchStmtDefault:
+        goto @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_113_8_169_8_defaultCodeBegin;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_116_12_124_21_switchCase:
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 117 16 ]
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_117_16_123_16_if_stmt:
+        %tmp.23 = lgetv %mag;
+        symbol [ mag %tmp.23 117 20 23 ];
+        symbol [ POP_G %tmp.25 117 26 31 ];
+        %tmp.25 = getv ? :POP_G;
+        %tmp.26 = gt %tmp.23 %tmp.25;
+        bf %tmp.26 @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_117_16_123_16_if_end;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_117_16_123_16_if_true:
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_117_33_123_16_start:
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 118 20 ]
+        symbol [ JS_TAKEOFF_POP %tmp.28 118 34 48 ];
+        %tmp.28 = getv ? :JS_TAKEOFF_POP;
+        symbol [ _state ? 118 20 26 ];
+        putv self :_state %tmp.28;
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 119 20 ]
+        %tmp.29 = 0;
+        symbol [ _counter ? 119 20 28 ];
+        putv self :_counter %tmp.29;
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 120 20 ]
+        %tmp.30 = self;
+        symbol [ _readAltitude %tmp.31 120 34 47 ];
+        %tmp.31 = getv function %tmp.30 :_readAltitude;
+        %tmp.32 = invoke %tmp.30 %tmp.31();
+        symbol [ _takeoffAlt ? 120 20 31 ];
+        putv self :_takeoffAlt %tmp.32;
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 121 20 ]
+        symbol [ _takeoffAlt %tmp.34 121 34 45 ];
+        %tmp.34 = getv ? :_takeoffAlt;
+        symbol [ _peakAlt ? 121 20 28 ];
+        putv self :_peakAlt %tmp.34;
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 122 20 ]
+        symbol [ System %tmp.35 122 34 40 ];
+        %tmp.35 = getm $.Toybox.System;
+        symbol [ getTimer %tmp.36 122 41 49 ];
+        %tmp.36 = getv function %tmp.35 :getTimer;
+        %tmp.37 = invoke %tmp.35 %tmp.36();
+        symbol [ _takeoffMs ? 122 20 30 ];
+        putv self :_takeoffMs %tmp.37;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_117_33_123_16_stop:
+        goto @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_117_16_123_16_if_end;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_117_16_123_16_if_end:
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 124 16 ]
+        goto break @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_113_8_169_8_switchStmtEnd;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_127_12_137_21_switchCase:
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 128 16 ]
+        symbol [ _counter %tmp.40 128 16 24 ];
+        %tmp.40 = getv ? :_counter;
+        %tmp.41 = add %tmp.40 1;
+        symbol [ _counter ? 128 16 24 ];
+        putv self :_counter dup %tmp.41;
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 129 16 ]
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_129_16_136_16_if_stmt:
+        %tmp.42 = lgetv %mag;
+        symbol [ mag %tmp.42 129 20 23 ];
+        symbol [ WEIGHTLESS_G %tmp.44 129 26 38 ];
+        %tmp.44 = getv ? :WEIGHTLESS_G;
+        %tmp.45 = lt %tmp.42 %tmp.44;
+        bf %tmp.45 @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_129_16_136_16_if_false;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_129_16_136_16_if_true:
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_129_40_133_16_start:
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 131 20 ]
+        symbol [ JS_AIRBORNE %tmp.47 131 31 42 ];
+        %tmp.47 = getv ? :JS_AIRBORNE;
+        symbol [ _state ? 131 20 26 ];
+        putv self :_state %tmp.47;
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 132 20 ]
+        %tmp.48 = 1;
+        symbol [ _counter ? 132 20 28 ];
+        putv self :_counter %tmp.48;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_129_40_133_16_stop:
+        goto @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_129_16_136_16_if_end;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_129_16_136_16_if_false:
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 133 23 ]
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_133_23_136_16_if_stmt:
+        symbol [ _counter %tmp.50 133 27 35 ];
+        %tmp.50 = getv ? :_counter;
+        symbol [ POP_WINDOW %tmp.52 133 38 48 ];
+        %tmp.52 = getv ? :POP_WINDOW;
+        %tmp.53 = gt %tmp.50 %tmp.52;
+        bf %tmp.53 @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_133_23_136_16_if_end;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_133_23_136_16_if_true:
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_133_50_136_16_start:
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 135 20 ]
+        symbol [ JS_IDLE %tmp.55 135 29 36 ];
+        %tmp.55 = getv ? :JS_IDLE;
+        symbol [ _state ? 135 20 26 ];
+        putv self :_state %tmp.55;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_133_50_136_16_stop:
+        goto @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_133_23_136_16_if_end;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_133_23_136_16_if_end:
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_129_16_136_16_if_end:
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 137 16 ]
+        goto break @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_113_8_169_8_switchStmtEnd;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_140_12_160_21_switchCase:
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 141 16 ]
+        symbol [ _counter %tmp.58 141 16 24 ];
+        %tmp.58 = getv ? :_counter;
+        %tmp.59 = add %tmp.58 1;
+        symbol [ _counter ? 141 16 24 ];
+        putv self :_counter dup %tmp.59;
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 144 16 ]
+        [ "C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_113_8_169_8_switchStmtBegin" "C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_113_8_169_8_switchStmtEnd" ]
+        %alt.1 = local;
+        symbol [ alt %alt.1 144 20 23 ];
+        %tmp.60 = self;
+        symbol [ _readAltitude %tmp.61 144 26 39 ];
+        %tmp.61 = getv function %tmp.60 :_readAltitude;
+        %tmp.62 = invoke %tmp.60 %tmp.61();
+        lputv %alt.1 %tmp.62;
+        symbol [ alt %alt.1 144 20 23 ];
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 145 16 ]
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_145_16_147_16_if_stmt:
+        %tmp.63 = lgetv %alt.1;
+        symbol [ alt %tmp.63 145 20 23 ];
+        symbol [ _peakAlt %tmp.65 145 26 34 ];
+        %tmp.65 = getv ? :_peakAlt;
+        %tmp.66 = gt %tmp.63 %tmp.65;
+        bf %tmp.66 @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_145_16_147_16_if_end;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_145_16_147_16_if_true:
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_145_36_147_16_start:
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 146 20 ]
+        %tmp.67 = lgetv %alt.1;
+        symbol [ alt %tmp.67 146 31 34 ];
+        symbol [ _peakAlt ? 146 20 28 ];
+        putv self :_peakAlt %tmp.67;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_145_36_147_16_stop:
+        goto @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_145_16_147_16_if_end;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_145_16_147_16_if_end:
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 149 16 ]
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_149_16_159_16_if_stmt:
+        %tmp.68 = lgetv %mag;
+        symbol [ mag %tmp.68 149 20 23 ];
+        symbol [ LAND_G %tmp.70 149 26 32 ];
+        %tmp.70 = getv ? :LAND_G;
+        %tmp.71 = gt %tmp.68 %tmp.70;
+        bf %tmp.71 @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_149_16_159_16_if_false;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_149_16_159_16_if_true:
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_149_34_156_16_start:
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 151 20 ]
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_151_20_153_20_if_stmt:
+        symbol [ _counter %tmp.73 151 24 32 ];
+        %tmp.73 = getv ? :_counter;
+        symbol [ MIN_AIR_SAMP %tmp.75 151 36 48 ];
+        %tmp.75 = getv ? :MIN_AIR_SAMP;
+        %tmp.76 = gte %tmp.73 %tmp.75;
+        bf %tmp.76 @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_151_20_153_20_if_end;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_151_20_153_20_if_true:
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_151_50_153_20_start:
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 152 24 ]
+        %tmp.77 = self;
+        symbol [ _recordJump %tmp.78 152 24 35 ];
+        %tmp.78 = getv function %tmp.77 :_recordJump;
+        invoke %tmp.77 %tmp.78();
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_151_50_153_20_stop:
+        goto @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_151_20_153_20_if_end;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_151_20_153_20_if_end:
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 154 20 ]
+        symbol [ JS_COOLDOWN %tmp.80 154 31 42 ];
+        %tmp.80 = getv ? :JS_COOLDOWN;
+        symbol [ _state ? 154 20 26 ];
+        putv self :_state %tmp.80;
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 155 20 ]
+        %tmp.81 = 0;
+        symbol [ _counter ? 155 20 28 ];
+        putv self :_counter %tmp.81;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_149_34_156_16_stop:
+        goto @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_149_16_159_16_if_end;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_149_16_159_16_if_false:
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 156 23 ]
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_156_23_159_16_if_stmt:
+        symbol [ _counter %tmp.83 156 27 35 ];
+        %tmp.83 = getv ? :_counter;
+        symbol [ MAX_AIR_SAMP %tmp.85 156 38 50 ];
+        %tmp.85 = getv ? :MAX_AIR_SAMP;
+        %tmp.86 = gt %tmp.83 %tmp.85;
+        bf %tmp.86 @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_156_23_159_16_if_end;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_156_23_159_16_if_true:
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_156_52_159_16_start:
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 158 20 ]
+        symbol [ JS_IDLE %tmp.88 158 29 36 ];
+        %tmp.88 = getv ? :JS_IDLE;
+        symbol [ _state ? 158 20 26 ];
+        putv self :_state %tmp.88;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_156_52_159_16_stop:
+        goto @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_156_23_159_16_if_end;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_156_23_159_16_if_end:
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_149_16_159_16_if_end:
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 160 16 ]
+        goto break @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_113_8_169_8_switchStmtEnd;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_163_12_168_21_switchCase:
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 164 16 ]
+        symbol [ _counter %tmp.91 164 16 24 ];
+        %tmp.91 = getv ? :_counter;
+        %tmp.92 = add %tmp.91 1;
+        symbol [ _counter ? 164 16 24 ];
+        putv self :_counter dup %tmp.92;
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 165 16 ]
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_165_16_167_16_if_stmt:
+        symbol [ _counter %tmp.94 165 20 28 ];
+        %tmp.94 = getv ? :_counter;
+        symbol [ COOLDOWN_SAMP %tmp.96 165 32 45 ];
+        %tmp.96 = getv ? :COOLDOWN_SAMP;
+        %tmp.97 = gte %tmp.94 %tmp.96;
+        bf %tmp.97 @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_165_16_167_16_if_end;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_165_16_167_16_if_true:
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_165_47_167_16_start:
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 166 20 ]
+        symbol [ JS_IDLE %tmp.99 166 29 36 ];
+        %tmp.99 = getv ? :JS_IDLE;
+        symbol [ _state ? 166 20 26 ];
+        putv self :_state %tmp.99;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_165_47_167_16_stop:
+        goto @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_165_16_167_16_if_end;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_165_16_167_16_if_end:
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 168 16 ]
+        goto break @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_113_8_169_8_switchStmtEnd;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_113_8_169_8_defaultCodeBegin:
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_113_8_169_8_switchStmtEnd:
+        pop;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_112_40_170_4_stop:
+    }
+    //! Returns barometric altitude in meters.
+    //! Prefers Activity.getActivityInfo() (more precise during recording)
+    //! with fallback to Sensor.getInfo().
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc"; @line = 177; @symbol_functiondef = [_readAltitude,177,20,33]; ]
+    protected
+    function _readAltitude() {
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_177_36_187_4_start:
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 178 8 ]
+        [ "C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_177_36_187_4_start" "C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_177_36_187_4_stop" ]
+        %ai.1 = local;
+        symbol [ ai %ai.1 178 12 14 ];
+        symbol [ Activity %tmp.1 178 17 25 ];
+        %tmp.1 = getm $.Toybox.Activity;
+        symbol [ getActivityInfo %tmp.2 178 26 41 ];
+        %tmp.2 = getv function %tmp.1 :getActivityInfo;
+        %tmp.3 = invoke %tmp.1 %tmp.2();
+        lputv %ai.1 %tmp.3;
+        symbol [ ai %ai.1 178 12 14 ];
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 179 8 ]
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_179_8_181_8_if_stmt:
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_179_12_179_41_begin:
+        %tmp.4 = lgetv %ai.1;
+        symbol [ ai %tmp.4 179 12 14 ];
+        %tmp.5 = null;
+        %tmp.6 = ne %tmp.4 %tmp.5;
+        bf %tmp.6 @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_179_8_181_8_if_end;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_179_26_179_41_true:
+        %tmp.7 = lgetv %ai.1;
+        symbol [ ai %tmp.7 179 26 28 ];
+        %tmp.8 = as %tmp.7 { (!Null) };
+        symbol [ altitude %tmp.9 179 29 37 ];
+        %tmp.9 = getv %tmp.8 :altitude;
+        %tmp.10 = null;
+        %tmp.11 = ne %tmp.9 %tmp.10;
+        push %tmp.11;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_179_26_179_41_end:
+        %tmp.12 = phi [%tmp.6 @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_179_12_179_41_begin] [%tmp.11 @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_179_26_179_41_true] [%tmp.12 @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_179_26_179_41_end];
+        bf %tmp.12 @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_179_8_181_8_if_end;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_179_8_181_8_if_true:
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_179_47_181_8_start:
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 180 12 ]
+        %tmp.13 = lgetv %ai.1;
+        symbol [ ai %tmp.13 180 19 21 ];
+        %tmp.14 = as %tmp.13 { (!Null) };
+        symbol [ altitude %tmp.15 180 22 30 ];
+        %tmp.15 = getv %tmp.14 :altitude;
+        symbol [ toFloat %tmp.16 180 31 38 ];
+        %tmp.16 = getv function %tmp.15 :toFloat;
+        %tmp.17 = invoke %tmp.15 %tmp.16();
+        ret %tmp.17;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_179_47_181_8_stop:
+        goto @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_179_8_181_8_if_end;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_179_8_181_8_if_end:
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 182 8 ]
+        [ "C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_177_36_187_4_start" "C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_177_36_187_4_stop" ]
+        %si.2 = local;
+        symbol [ si %si.2 182 12 14 ];
+        symbol [ Sensor %tmp.18 182 17 23 ];
+        %tmp.18 = getm $.Toybox.Sensor;
+        symbol [ getInfo %tmp.19 182 24 31 ];
+        %tmp.19 = getv function %tmp.18 :getInfo;
+        %tmp.20 = invoke %tmp.18 %tmp.19();
+        lputv %si.2 %tmp.20;
+        symbol [ si %si.2 182 12 14 ];
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 183 8 ]
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_183_8_185_8_if_stmt:
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_183_12_183_41_begin:
+        %tmp.21 = lgetv %si.2;
+        symbol [ si %tmp.21 183 12 14 ];
+        %tmp.22 = null;
+        %tmp.23 = ne %tmp.21 %tmp.22;
+        bf %tmp.23 @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_183_8_185_8_if_end;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_183_26_183_41_true:
+        %tmp.24 = lgetv %si.2;
+        symbol [ si %tmp.24 183 26 28 ];
+        %tmp.25 = as %tmp.24 { (!Null) };
+        symbol [ altitude %tmp.26 183 29 37 ];
+        %tmp.26 = getv %tmp.25 :altitude;
+        %tmp.27 = null;
+        %tmp.28 = ne %tmp.26 %tmp.27;
+        push %tmp.28;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_183_26_183_41_end:
+        %tmp.29 = phi [%tmp.23 @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_183_12_183_41_begin] [%tmp.28 @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_183_26_183_41_true] [%tmp.29 @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_183_26_183_41_end];
+        bf %tmp.29 @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_183_8_185_8_if_end;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_183_8_185_8_if_true:
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_183_47_185_8_start:
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 184 12 ]
+        %tmp.30 = lgetv %si.2;
+        symbol [ si %tmp.30 184 19 21 ];
+        %tmp.31 = as %tmp.30 { (!Null) };
+        symbol [ altitude %tmp.32 184 22 30 ];
+        %tmp.32 = getv %tmp.31 :altitude;
+        symbol [ toFloat %tmp.33 184 31 38 ];
+        %tmp.33 = getv function %tmp.32 :toFloat;
+        %tmp.34 = invoke %tmp.32 %tmp.33();
+        ret %tmp.34;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_183_47_185_8_stop:
+        goto @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_183_8_185_8_if_end;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_183_8_185_8_if_end:
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 186 8 ]
+        %tmp.35 = 0.0;
+        ret %tmp.35;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_177_36_187_4_stop:
+    }
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc"; @line = 191; @symbol_functiondef = [_recordJump,191,20,31]; ]
+    protected
+    function _recordJump() {
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_191_34_212_4_start:
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 192 8 ]
+        [ "C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_191_34_212_4_start" "C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_191_34_212_4_stop" ]
+        %heightM.1 = local;
+        symbol [ heightM %heightM.1 192 12 19 ];
+        symbol [ _peakAlt %tmp.2 192 22 30 ];
+        %tmp.2 = getv ? :_peakAlt;
+        symbol [ _takeoffAlt %tmp.4 192 33 44 ];
+        %tmp.4 = getv ? :_takeoffAlt;
+        %tmp.5 = sub %tmp.2 %tmp.4;
+        lputv %heightM.1 %tmp.5;
+        symbol [ heightM %heightM.1 192 12 19 ];
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 193 8 ]
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_193_8_195_8_if_stmt:
+        %tmp.6 = lgetv %heightM.1;
+        symbol [ heightM %tmp.6 193 12 19 ];
+        %tmp.7 = 0.3;
+        %tmp.8 = lt %tmp.6 %tmp.7;
+        bf %tmp.8 @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_193_8_195_8_if_end;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_193_8_195_8_if_true:
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_193_27_195_8_start:
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 194 12 ]
+        ret ?;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_193_27_195_8_stop:
+        goto @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_193_8_195_8_if_end;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_193_8_195_8_if_end:
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 197 8 ]
+        [ "C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_191_34_212_4_start" "C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_191_34_212_4_stop" ]
+        %heightFt.2 = local;
+        symbol [ heightFt %heightFt.2 197 12 20 ];
+        %tmp.9 = lgetv %heightM.1;
+        symbol [ heightM %tmp.9 197 24 31 ];
+        %tmp.10 = 3.28084;
+        %tmp.11 = mul %tmp.9 %tmp.10;
+        lputv %heightFt.2 %tmp.11;
+        symbol [ heightFt %heightFt.2 197 12 20 ];
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 198 8 ]
+        [ "C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_191_34_212_4_start" "C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_191_34_212_4_stop" ]
+        %hangMs.3 = local;
+        symbol [ hangMs %hangMs.3 198 12 18 ];
+        symbol [ System %tmp.12 198 24 30 ];
+        %tmp.12 = getm $.Toybox.System;
+        symbol [ getTimer %tmp.13 198 31 39 ];
+        %tmp.13 = getv function %tmp.12 :getTimer;
+        %tmp.14 = invoke %tmp.12 %tmp.13();
+        symbol [ _takeoffMs %tmp.16 198 44 54 ];
+        %tmp.16 = getv ? :_takeoffMs;
+        %tmp.17 = sub %tmp.14 %tmp.16;
+        lputv %hangMs.3 %tmp.17;
+        symbol [ hangMs %hangMs.3 198 12 18 ];
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 199 8 ]
+        [ "C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_191_34_212_4_start" "C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_191_34_212_4_stop" ]
+        %hangSec.4 = local;
+        symbol [ hangSec %hangSec.4 199 12 19 ];
+        %tmp.18 = lgetv %hangMs.3;
+        symbol [ hangMs %tmp.18 199 24 30 ];
+        %tmp.19 = 1000.0;
+        %tmp.20 = div %tmp.18 %tmp.19;
+        lputv %hangSec.4 %tmp.20;
+        symbol [ hangSec %hangSec.4 199 12 19 ];
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 201 8 ]
+        symbol [ jumpCount %tmp.23 201 8 17 ];
+        %tmp.23 = getv ? :jumpCount;
+        %tmp.24 = add %tmp.23 1;
+        symbol [ jumpCount ? 201 8 17 ];
+        putv self :jumpCount dup %tmp.24;
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 202 8 ]
+        %tmp.25 = lgetv %heightFt.2;
+        symbol [ heightFt %tmp.25 202 22 30 ];
+        symbol [ lastHeight ? 202 8 18 ];
+        putv self :lastHeight %tmp.25;
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 203 8 ]
+        %tmp.26 = lgetv %hangSec.4;
+        symbol [ hangSec %tmp.26 203 22 29 ];
+        symbol [ lastHang ? 203 8 16 ];
+        putv self :lastHang %tmp.26;
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 204 8 ]
+        symbol [ totalHeight %tmp.27 204 8 19 ];
+        %tmp.27 = getv self :totalHeight;
+        %tmp.28 = lgetv %heightFt.2;
+        symbol [ heightFt %tmp.28 204 23 31 ];
+        %tmp.29 = add %tmp.27 %tmp.28;
+        symbol [ totalHeight ? 204 8 19 ];
+        putv self :totalHeight dup %tmp.29;
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 206 8 ]
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_206_8_208_8_if_stmt:
+        %tmp.30 = lgetv %heightFt.2;
+        symbol [ heightFt %tmp.30 206 12 20 ];
+        symbol [ maxHeight %tmp.32 206 23 32 ];
+        %tmp.32 = getv ? :maxHeight;
+        %tmp.33 = gt %tmp.30 %tmp.32;
+        bf %tmp.33 @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_206_8_208_8_if_end;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_206_8_208_8_if_true:
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_206_34_208_8_start:
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 207 12 ]
+        %tmp.34 = lgetv %heightFt.2;
+        symbol [ heightFt %tmp.34 207 24 32 ];
+        symbol [ maxHeight ? 207 12 21 ];
+        putv self :maxHeight %tmp.34;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_206_34_208_8_stop:
+        goto @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_206_8_208_8_if_end;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_206_8_208_8_if_end:
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 211 8 ]
+        symbol [ WatchUi %tmp.35 211 8 15 ];
+        %tmp.35 = getm $.Toybox.WatchUi;
+        symbol [ requestUpdate %tmp.36 211 16 29 ];
+        %tmp.36 = getv function %tmp.35 :requestUpdate;
+        invoke %tmp.35 %tmp.36();
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_191_34_212_4_stop:
+    }
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc"; @line = 215; @symbol_functiondef = [avgHeight,215,13,22]; ]
+    function avgHeight() {
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_215_25_217_4_start:
+[ "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc" 216 8 ]
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_216_15_216_61_begin:
+        symbol [ jumpCount %tmp.2 216 16 25 ];
+        %tmp.2 = getv ? :jumpCount;
+        %tmp.3 = 0;
+        %tmp.4 = gt %tmp.2 %tmp.3;
+        bf %tmp.4 @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_216_15_216_61_else_false;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_216_15_216_61_true:
+        symbol [ totalHeight %tmp.6 216 34 45 ];
+        %tmp.6 = getv ? :totalHeight;
+        symbol [ jumpCount %tmp.8 216 48 57 ];
+        %tmp.8 = getv ? :jumpCount;
+        %tmp.9 = div %tmp.6 %tmp.8;
+        push %tmp.9;
+        goto @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_216_15_216_61_end;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_216_15_216_61_else_false:
+        %tmp.10 = 0.0;
+        push %tmp.10;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_216_15_216_61_end:
+        %tmp.11 = phi [%tmp.4 @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_216_15_216_61_begin] [%tmp.9 @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_216_15_216_61_true] [%tmp.10 @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_216_15_216_61_else_false] [%tmp.11 @C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_216_15_216_61_end];
+        ret %tmp.11;
+C__Users_Admin_Documents_UtahWindField_source_JumpTracker_mc_215_25_217_4_stop:
+    }
+}
+[ @file = "C:\Users\Admin\Documents\UtahWindField\source\JumpTracker.mc"; @line = 1; ]
+<init> {
+}

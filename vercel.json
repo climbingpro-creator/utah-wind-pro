@@ -22,8 +22,10 @@
   ],
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api/:path*" },
+    { "source": "/session/:id/edit", "destination": "/api/session/:id/form" },
     { "source": "/session/:id", "destination": "/api/session/:id" },
     { "source": "/day/:spot/:date", "destination": "/api/day/:spot/:date" },
+    { "source": "/year/:spot/:year", "destination": "/api/year/:spot/:year" },
     { "source": "/privacy", "destination": "/privacy.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],

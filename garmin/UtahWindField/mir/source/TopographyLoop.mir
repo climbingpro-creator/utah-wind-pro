@@ -1,0 +1,443 @@
+[ @file = "C:\Users\Admin\Documents\UtahWindField\source\TopographyLoop.mc"; @line = 1; @symbol_usingdef<0> = [Toybox,1,6,12]; @symbol_usingdef<1> = [Communications,1,13,27]; ]
+using Toybox.Communications;
+[ @file = "C:\Users\Admin\Documents\UtahWindField\source\TopographyLoop.mc"; @line = 2; @symbol_usingdef<0> = [Toybox,2,6,12]; @symbol_usingdef<1> = [Position,2,13,21]; ]
+using Toybox.Position;
+[ @file = "C:\Users\Admin\Documents\UtahWindField\source\TopographyLoop.mc"; @line = 3; @symbol_usingdef<0> = [Toybox,3,6,12]; @symbol_usingdef<1> = [System,3,13,19]; ]
+using Toybox.System;
+[ @file = "C:\Users\Admin\Documents\UtahWindField\source\TopographyLoop.mc"; @line = 4; @symbol_usingdef<0> = [Toybox,4,6,12]; @symbol_usingdef<1> = [Timer,4,13,18]; ]
+using Toybox.Timer;
+[ @file = "C:\Users\Admin\Documents\UtahWindField\source\TopographyLoop.mc"; @line = 5; @symbol_usingdef<0> = [Toybox,5,6,12]; @symbol_usingdef<1> = [Math,5,13,17]; ]
+using Toybox.Math;
+[ @file = "C:\Users\Admin\Documents\UtahWindField\source\TopographyLoop.mc"; @line = 6; @symbol_usingdef<0> = [Toybox,6,6,12]; @symbol_usingdef<1> = [WatchUi,6,13,20]; ]
+using Toybox.WatchUi;
+//! Topography Warning Loop
+//!
+//! Every 30 seconds, packages the rider's [lat, lon, speed, heading]
+//! into a JSON POST to the UtahWindFinder backend. The backend returns
+//! a simple { "status": "OK|CAUTION|DANGER", "msg": "..." } response
+//! that the watch UI renders as a color-coded banner.
+//!
+//! This is the "thin client" leg — all topographical wind math
+//! (fetch zones, coastline geometry, front propagation) lives server-side.
+[ @file = "C:\Users\Admin\Documents\UtahWindField\source\TopographyLoop.mc"; @line = 17; @symbol_classdef = [TopographyLoop,17,6,20]; ]
+class TopographyLoop {
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\TopographyLoop.mc"; @line = 17; ]
+    <init> {
+    }
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\TopographyLoop.mc"; @line = 17; ]
+    static
+    <init> {
+    }
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\TopographyLoop.mc"; @line = 19; @position = 17; @symbol_constdef = [API_URL,19,17,24]; ]
+    protected
+    const API_URL = "https://api.utahwindfinder.com/v1/topo-warning";
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\TopographyLoop.mc"; @line = 20; @position = 17; @symbol_constdef = [LOOP_MS,20,17,24]; ]
+    protected
+    const LOOP_MS = 30000;
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\TopographyLoop.mc"; @line = 22; @position = 15; @symbol_vardef = [_timer,22,15,21]; ]
+    protected
+    var _timer;
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\TopographyLoop.mc"; @line = 23; @position = 15; @symbol_vardef = [_posInfo,23,15,23]; ]
+    protected
+    var _posInfo = null;
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\TopographyLoop.mc"; @line = 26; @position = 8; @symbol_vardef = [warningStatus,26,8,21]; ]
+    var warningStatus = "INIT";
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\TopographyLoop.mc"; @line = 27; @position = 8; @symbol_vardef = [warningMessage,27,8,22]; ]
+    var warningMessage = "Acquiring GPS...";
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\TopographyLoop.mc"; @line = 28; @position = 8; @symbol_vardef = [speedKnots,28,8,18]; ]
+    var speedKnots = 0.0;
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\TopographyLoop.mc"; @line = 29; @position = 8; @symbol_vardef = [headingDeg,29,8,18]; ]
+    var headingDeg = 0.0;
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\TopographyLoop.mc"; @line = 31; @symbol_functiondef = [initialize,31,13,23]; ]
+    function initialize() as Void {
+C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_31_26_33_4_start:
+[ "C:\Users\Admin\Documents\UtahWindField\source\TopographyLoop.mc" 32 8 ]
+        symbol [ Timer %tmp.3 32 21 26 ];
+        %tmp.3 = getm $.Toybox.Timer;
+        symbol [ Timer %tmp.4 32 27 32 ];
+        %tmp.4 = getv function ? %tmp.3 :Timer;
+        %tmp.1 = newc %tmp.4 ();
+        symbol [ _timer ? 32 8 14 ];
+        putv self :_timer %tmp.1;
+C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_31_26_33_4_stop:
+    }
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\TopographyLoop.mc"; @line = 35; @symbol_functiondef = [start,35,13,18]; ]
+    function start() {
+C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_35_21_37_4_start:
+[ "C:\Users\Admin\Documents\UtahWindField\source\TopographyLoop.mc" 36 8 ]
+        symbol [ _timer %tmp.2 36 8 14 ];
+        %tmp.2 = getv ? :_timer;
+        symbol [ start %tmp.3 36 15 20 ];
+        %tmp.3 = getv function %tmp.2 :start;
+        %tmp.4 = self;
+        symbol [ method %tmp.5 36 21 27 ];
+        %tmp.5 = getv function %tmp.4 :method;
+        %tmp.7 = const :onTick;
+        symbol [ onTick %tmp.7 36 29 35 const ];
+        %tmp.8 = invoke %tmp.4 %tmp.5(%tmp.7);
+        symbol [ LOOP_MS %tmp.10 36 38 45 ];
+        %tmp.10 = getv ? :LOOP_MS;
+        %tmp.11 = true;
+        invoke %tmp.2 %tmp.3(%tmp.8, %tmp.10, %tmp.11);
+C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_35_21_37_4_stop:
+    }
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\TopographyLoop.mc"; @line = 39; @symbol_functiondef = [stop,39,13,17]; ]
+    function stop() {
+C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_39_20_41_4_start:
+[ "C:\Users\Admin\Documents\UtahWindField\source\TopographyLoop.mc" 40 8 ]
+        symbol [ _timer %tmp.2 40 8 14 ];
+        %tmp.2 = getv ? :_timer;
+        symbol [ stop %tmp.3 40 15 19 ];
+        %tmp.3 = getv function %tmp.2 :stop;
+        invoke %tmp.2 %tmp.3();
+C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_39_20_41_4_stop:
+    }
+    //! Called from KiteSessionApp.onPosition()
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\TopographyLoop.mc"; @line = 44; @symbol_functiondef = [updatePosition,44,13,27]; @symbol_param<0> = [info,44,28,32]; ]
+    function updatePosition(info) {
+C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_44_34_46_4_start:
+[ "C:\Users\Admin\Documents\UtahWindField\source\TopographyLoop.mc" 45 8 ]
+        %tmp.1 = lgetv %info;
+        symbol [ info %tmp.1 45 19 23 ];
+        symbol [ _posInfo ? 45 8 16 ];
+        putv self :_posInfo %tmp.1;
+C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_44_34_46_4_stop:
+    }
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\TopographyLoop.mc"; @line = 50; @symbol_functiondef = [onTick,50,13,19]; ]
+    function onTick() {
+C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_50_22_95_4_start:
+[ "C:\Users\Admin\Documents\UtahWindField\source\TopographyLoop.mc" 51 8 ]
+C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_51_8_53_8_if_stmt:
+C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_51_12_51_53_begin:
+        symbol [ _posInfo %tmp.2 51 12 20 ];
+        %tmp.2 = getv ? :_posInfo;
+        %tmp.3 = null;
+        %tmp.4 = eq %tmp.2 %tmp.3;
+        bt %tmp.4 @C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_51_8_53_8_if_true;
+C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_51_32_51_53_false:
+        symbol [ _posInfo %tmp.6 51 32 40 ];
+        %tmp.6 = getv ? :_posInfo;
+        %tmp.7 = as %tmp.6 { (!Null) };
+        symbol [ position %tmp.8 51 41 49 ];
+        %tmp.8 = getv %tmp.7 :position;
+        %tmp.9 = null;
+        %tmp.10 = eq %tmp.8 %tmp.9;
+        push %tmp.10;
+C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_51_32_51_53_end:
+        %tmp.11 = phi [%tmp.4 @C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_51_12_51_53_begin] [%tmp.10 @C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_51_32_51_53_false] [%tmp.11 @C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_51_32_51_53_end];
+        bf %tmp.11 @C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_51_8_53_8_if_end;
+C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_51_8_53_8_if_true:
+C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_51_59_53_8_start:
+[ "C:\Users\Admin\Documents\UtahWindField\source\TopographyLoop.mc" 52 12 ]
+        ret ?;
+C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_51_59_53_8_stop:
+        goto @C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_51_8_53_8_if_end;
+C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_51_8_53_8_if_end:
+[ "C:\Users\Admin\Documents\UtahWindField\source\TopographyLoop.mc" 55 8 ]
+        [ "C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_50_22_95_4_start" "C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_50_22_95_4_stop" ]
+        %coords.1 = local;
+        symbol [ coords %coords.1 55 12 18 ];
+        symbol [ _posInfo %tmp.13 55 21 29 ];
+        %tmp.13 = getv ? :_posInfo;
+        symbol [ position %tmp.14 55 30 38 ];
+        %tmp.14 = getv %tmp.13 :position;
+        symbol [ toDegrees %tmp.15 55 39 48 ];
+        %tmp.15 = getv function %tmp.14 :toDegrees;
+        %tmp.16 = invoke %tmp.14 %tmp.15();
+        lputv %coords.1 %tmp.16;
+        symbol [ coords %coords.1 55 12 18 ];
+[ "C:\Users\Admin\Documents\UtahWindField\source\TopographyLoop.mc" 56 8 ]
+        [ "C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_50_22_95_4_start" "C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_50_22_95_4_stop" ]
+        %lat.2 = local;
+        symbol [ lat %lat.2 56 12 15 ];
+        %tmp.17 = lgetv %coords.1;
+        symbol [ coords %tmp.17 56 18 24 ];
+        %tmp.18 = 0;
+        %tmp.19 = agetv %tmp.17 %tmp.18;
+        lputv %lat.2 %tmp.19;
+        symbol [ lat %lat.2 56 12 15 ];
+[ "C:\Users\Admin\Documents\UtahWindField\source\TopographyLoop.mc" 57 8 ]
+        [ "C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_50_22_95_4_start" "C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_50_22_95_4_stop" ]
+        %lon.3 = local;
+        symbol [ lon %lon.3 57 12 15 ];
+        %tmp.20 = lgetv %coords.1;
+        symbol [ coords %tmp.20 57 18 24 ];
+        %tmp.21 = 1;
+        %tmp.22 = agetv %tmp.20 %tmp.21;
+        lputv %lon.3 %tmp.22;
+        symbol [ lon %lon.3 57 12 15 ];
+[ "C:\Users\Admin\Documents\UtahWindField\source\TopographyLoop.mc" 60 8 ]
+        [ "C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_50_22_95_4_start" "C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_50_22_95_4_stop" ]
+        %mps.4 = local;
+        symbol [ mps %mps.4 60 12 15 ];
+C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_60_18_60_62_begin:
+        symbol [ _posInfo %tmp.24 60 19 27 ];
+        %tmp.24 = getv ? :_posInfo;
+        symbol [ speed %tmp.25 60 28 33 ];
+        %tmp.25 = getv %tmp.24 :speed;
+        %tmp.26 = null;
+        %tmp.27 = ne %tmp.25 %tmp.26;
+        bf %tmp.27 @C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_60_18_60_62_else_false;
+C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_60_18_60_62_true:
+        symbol [ _posInfo %tmp.29 60 45 53 ];
+        %tmp.29 = getv ? :_posInfo;
+        symbol [ speed %tmp.30 60 54 59 ];
+        %tmp.30 = getv %tmp.29 :speed;
+        push %tmp.30;
+        goto @C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_60_18_60_62_end;
+C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_60_18_60_62_else_false:
+        %tmp.31 = 0.0;
+        push %tmp.31;
+C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_60_18_60_62_end:
+        %tmp.32 = phi [%tmp.27 @C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_60_18_60_62_begin] [%tmp.30 @C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_60_18_60_62_true] [%tmp.31 @C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_60_18_60_62_else_false] [%tmp.32 @C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_60_18_60_62_end];
+        lputv %mps.4 %tmp.32;
+        symbol [ mps %mps.4 60 12 15 ];
+[ "C:\Users\Admin\Documents\UtahWindField\source\TopographyLoop.mc" 61 8 ]
+        %tmp.33 = lgetv %mps.4;
+        symbol [ mps %tmp.33 61 21 24 ];
+        %tmp.34 = 1.94384;
+        %tmp.35 = mul %tmp.33 %tmp.34;
+        symbol [ speedKnots ? 61 8 18 ];
+        putv self :speedKnots %tmp.35;
+[ "C:\Users\Admin\Documents\UtahWindField\source\TopographyLoop.mc" 64 8 ]
+        %tmp.36 = 0.0;
+        symbol [ headingDeg ? 64 8 18 ];
+        putv self :headingDeg %tmp.36;
+[ "C:\Users\Admin\Documents\UtahWindField\source\TopographyLoop.mc" 65 8 ]
+C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_65_8_70_8_if_stmt:
+        symbol [ _posInfo %tmp.38 65 12 20 ];
+        %tmp.38 = getv ? :_posInfo;
+        symbol [ heading %tmp.39 65 21 28 ];
+        %tmp.39 = getv %tmp.38 :heading;
+        %tmp.40 = null;
+        %tmp.41 = ne %tmp.39 %tmp.40;
+        bf %tmp.41 @C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_65_8_70_8_if_end;
+C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_65_8_70_8_if_true:
+C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_65_38_70_8_start:
+[ "C:\Users\Admin\Documents\UtahWindField\source\TopographyLoop.mc" 66 12 ]
+        symbol [ Math %tmp.42 66 25 29 ];
+        %tmp.42 = getm $.Toybox.Math;
+        symbol [ toDegrees %tmp.43 66 30 39 ];
+        %tmp.43 = getv function %tmp.42 :toDegrees;
+        symbol [ _posInfo %tmp.45 66 40 48 ];
+        %tmp.45 = getv ? :_posInfo;
+        symbol [ heading %tmp.46 66 49 56 ];
+        %tmp.46 = getv %tmp.45 :heading;
+        %tmp.47 = invoke %tmp.42 %tmp.43(%tmp.46);
+        symbol [ headingDeg ? 66 12 22 ];
+        putv self :headingDeg %tmp.47;
+[ "C:\Users\Admin\Documents\UtahWindField\source\TopographyLoop.mc" 67 12 ]
+C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_67_12_69_12_if_stmt:
+        symbol [ headingDeg %tmp.49 67 16 26 ];
+        %tmp.49 = getv ? :headingDeg;
+        %tmp.50 = 0;
+        %tmp.51 = lt %tmp.49 %tmp.50;
+        bf %tmp.51 @C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_67_12_69_12_if_end;
+C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_67_12_69_12_if_true:
+C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_67_32_69_12_start:
+[ "C:\Users\Admin\Documents\UtahWindField\source\TopographyLoop.mc" 68 16 ]
+        symbol [ headingDeg %tmp.52 68 16 26 ];
+        %tmp.52 = getv self :headingDeg;
+        %tmp.53 = 360.0;
+        %tmp.54 = add %tmp.52 %tmp.53;
+        symbol [ headingDeg ? 68 16 26 ];
+        putv self :headingDeg dup %tmp.54;
+C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_67_32_69_12_stop:
+        goto @C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_67_12_69_12_if_end;
+C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_67_12_69_12_if_end:
+C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_65_38_70_8_stop:
+        goto @C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_65_8_70_8_if_end;
+C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_65_8_70_8_if_end:
+[ "C:\Users\Admin\Documents\UtahWindField\source\TopographyLoop.mc" 73 8 ]
+        [ "C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_50_22_95_4_start" "C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_50_22_95_4_stop" ]
+        %payload.5 = local;
+        symbol [ payload %payload.5 73 12 19 ];
+        %tmp.55 = newd 5;
+        %tmp.56 = "lat";
+        %tmp.57 = lgetv %lat.2;
+        symbol [ lat %tmp.57 74 25 28 ];
+        %tmp.58 = dup %tmp.55;
+        %tmp.59 = aputv %tmp.58 %tmp.56 %tmp.57;
+        %tmp.60 = "lon";
+        %tmp.61 = lgetv %lon.3;
+        symbol [ lon %tmp.61 75 25 28 ];
+        %tmp.62 = dup %tmp.59;
+        %tmp.63 = aputv %tmp.62 %tmp.60 %tmp.61;
+        %tmp.64 = "speed";
+        symbol [ speedKnots %tmp.66 76 25 35 ];
+        %tmp.66 = getv ? :speedKnots;
+        %tmp.67 = dup %tmp.63;
+        %tmp.68 = aputv %tmp.67 %tmp.64 %tmp.66;
+        %tmp.69 = "heading";
+        symbol [ headingDeg %tmp.71 77 25 35 ];
+        %tmp.71 = getv ? :headingDeg;
+        %tmp.72 = dup %tmp.68;
+        %tmp.73 = aputv %tmp.72 %tmp.69 %tmp.71;
+        %tmp.74 = "ts";
+        symbol [ System %tmp.75 78 25 31 ];
+        %tmp.75 = getm $.Toybox.System;
+        symbol [ getTimer %tmp.76 78 32 40 ];
+        %tmp.76 = getv function %tmp.75 :getTimer;
+        %tmp.77 = invoke %tmp.75 %tmp.76();
+        %tmp.78 = dup %tmp.73;
+        %tmp.79 = aputv %tmp.78 %tmp.74 %tmp.77;
+        lputv %payload.5 %tmp.79;
+        symbol [ payload %payload.5 73 12 19 ];
+[ "C:\Users\Admin\Documents\UtahWindField\source\TopographyLoop.mc" 81 8 ]
+        [ "C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_50_22_95_4_start" "C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_50_22_95_4_stop" ]
+        %options.6 = local;
+        symbol [ options %options.6 81 12 19 ];
+        %tmp.80 = newd 3;
+        %tmp.82 = const :method;
+        symbol [ method %tmp.82 82 13 19 const ];
+        symbol [ Communications %tmp.83 82 29 43 ];
+        %tmp.83 = getm $.Toybox.Communications;
+        symbol [ HTTP_REQUEST_METHOD_POST %tmp.84 82 44 68 ];
+        %tmp.84 = getv %tmp.83 :HTTP_REQUEST_METHOD_POST;
+        %tmp.85 = dup %tmp.80;
+        %tmp.86 = aputv %tmp.85 %tmp.82 %tmp.84;
+        %tmp.88 = const :headers;
+        symbol [ headers %tmp.88 83 13 20 const ];
+        %tmp.89 = newd 1;
+        %tmp.90 = "Content-Type";
+        symbol [ Communications %tmp.91 84 34 48 ];
+        %tmp.91 = getm $.Toybox.Communications;
+        symbol [ REQUEST_CONTENT_TYPE_JSON %tmp.92 84 49 74 ];
+        %tmp.92 = getv %tmp.91 :REQUEST_CONTENT_TYPE_JSON;
+        %tmp.93 = dup %tmp.89;
+        %tmp.94 = aputv %tmp.93 %tmp.90 %tmp.92;
+        %tmp.95 = dup %tmp.86;
+        %tmp.96 = aputv %tmp.95 %tmp.88 %tmp.94;
+        %tmp.98 = const :responseType;
+        symbol [ responseType %tmp.98 86 13 25 const ];
+        symbol [ Communications %tmp.99 86 29 43 ];
+        %tmp.99 = getm $.Toybox.Communications;
+        symbol [ HTTP_RESPONSE_CONTENT_TYPE_JSON %tmp.100 86 44 75 ];
+        %tmp.100 = getv %tmp.99 :HTTP_RESPONSE_CONTENT_TYPE_JSON;
+        %tmp.101 = dup %tmp.96;
+        %tmp.102 = aputv %tmp.101 %tmp.98 %tmp.100;
+        lputv %options.6 %tmp.102;
+        symbol [ options %options.6 81 12 19 ];
+[ "C:\Users\Admin\Documents\UtahWindField\source\TopographyLoop.mc" 89 8 ]
+        symbol [ Communications %tmp.103 89 8 22 ];
+        %tmp.103 = getm $.Toybox.Communications;
+        symbol [ makeWebRequest %tmp.104 89 23 37 ];
+        %tmp.104 = getv function %tmp.103 :makeWebRequest;
+        symbol [ API_URL %tmp.106 90 12 19 ];
+        %tmp.106 = getv ? :API_URL;
+        %tmp.107 = lgetv %payload.5;
+        symbol [ payload %tmp.107 91 12 19 ];
+        %tmp.108 = lgetv %options.6;
+        symbol [ options %tmp.108 92 12 19 ];
+        %tmp.109 = self;
+        symbol [ method %tmp.110 93 12 18 ];
+        %tmp.110 = getv function %tmp.109 :method;
+        %tmp.112 = const :onApiResponse;
+        symbol [ onApiResponse %tmp.112 93 20 33 const ];
+        %tmp.113 = invoke %tmp.109 %tmp.110(%tmp.112);
+        invoke %tmp.103 %tmp.104(%tmp.106, %tmp.107, %tmp.108, %tmp.113);
+C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_50_22_95_4_stop:
+    }
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\TopographyLoop.mc"; @line = 99; @symbol_functiondef = [onApiResponse,99,13,26]; @symbol_param<0> = [responseCode,99,27,39]; @symbol_param<1> = [data,99,41,45]; ]
+    function onApiResponse(responseCode, data) {
+C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_99_47_109_4_start:
+[ "C:\Users\Admin\Documents\UtahWindField\source\TopographyLoop.mc" 100 8 ]
+C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_100_8_106_8_if_stmt:
+C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_100_12_100_43_begin:
+        %tmp.1 = lgetv %responseCode;
+        symbol [ responseCode %tmp.1 100 12 24 ];
+        %tmp.2 = 200;
+        %tmp.3 = eq %tmp.1 %tmp.2;
+        bf %tmp.3 @C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_100_8_106_8_if_else_false;
+C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_100_35_100_43_true:
+        %tmp.4 = lgetv %data;
+        symbol [ data %tmp.4 100 35 39 ];
+        %tmp.5 = null;
+        %tmp.6 = ne %tmp.4 %tmp.5;
+        push %tmp.6;
+C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_100_35_100_43_end:
+        %tmp.7 = phi [%tmp.3 @C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_100_12_100_43_begin] [%tmp.6 @C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_100_35_100_43_true] [%tmp.7 @C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_100_35_100_43_end];
+        bf %tmp.7 @C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_100_8_106_8_if_else_false;
+C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_100_8_106_8_if_true:
+C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_100_49_103_8_start:
+[ "C:\Users\Admin\Documents\UtahWindField\source\TopographyLoop.mc" 101 12 ]
+C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_101_29_101_70_begin:
+        %tmp.8 = lgetv %data;
+        symbol [ data %tmp.8 101 29 33 ];
+        %tmp.9 = as %tmp.8 { (!Null) };
+        symbol [ hasKey %tmp.10 101 34 40 ];
+        %tmp.10 = getv function %tmp.9 :hasKey;
+        %tmp.11 = "status";
+        %tmp.12 = invoke %tmp.9 %tmp.10(%tmp.11);
+        bf %tmp.12 @C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_101_29_101_70_else_false;
+C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_101_29_101_70_true:
+        %tmp.13 = lgetv %data;
+        symbol [ data %tmp.13 101 53 57 ];
+        %tmp.14 = as %tmp.13 { (!Null) };
+        %tmp.15 = "status";
+        %tmp.16 = agetv %tmp.14 %tmp.15;
+        push %tmp.16;
+        goto @C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_101_29_101_70_end;
+C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_101_29_101_70_else_false:
+        %tmp.17 = "OK";
+        push %tmp.17;
+C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_101_29_101_70_end:
+        %tmp.18 = phi [%tmp.12 @C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_101_29_101_70_begin] [%tmp.16 @C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_101_29_101_70_true] [%tmp.17 @C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_101_29_101_70_else_false] [%tmp.18 @C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_101_29_101_70_end];
+        symbol [ warningStatus ? 101 12 25 ];
+        putv self :warningStatus %tmp.18;
+[ "C:\Users\Admin\Documents\UtahWindField\source\TopographyLoop.mc" 102 12 ]
+C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_102_29_102_70_begin:
+        %tmp.19 = lgetv %data;
+        symbol [ data %tmp.19 102 29 33 ];
+        %tmp.20 = as %tmp.19 { (!Null) };
+        symbol [ hasKey %tmp.21 102 34 40 ];
+        %tmp.21 = getv function %tmp.20 :hasKey;
+        %tmp.22 = "msg";
+        %tmp.23 = invoke %tmp.20 %tmp.21(%tmp.22);
+        bf %tmp.23 @C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_102_29_102_70_else_false;
+C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_102_29_102_70_true:
+        %tmp.24 = lgetv %data;
+        symbol [ data %tmp.24 102 53 57 ];
+        %tmp.25 = as %tmp.24 { (!Null) };
+        %tmp.26 = "msg";
+        %tmp.27 = agetv %tmp.25 %tmp.26;
+        push %tmp.27;
+        goto @C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_102_29_102_70_end;
+C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_102_29_102_70_else_false:
+        %tmp.28 = "";
+        push %tmp.28;
+C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_102_29_102_70_end:
+        %tmp.29 = phi [%tmp.23 @C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_102_29_102_70_begin] [%tmp.27 @C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_102_29_102_70_true] [%tmp.28 @C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_102_29_102_70_else_false] [%tmp.29 @C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_102_29_102_70_end];
+        symbol [ warningMessage ? 102 12 26 ];
+        putv self :warningMessage %tmp.29;
+C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_100_49_103_8_stop:
+        goto @C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_100_8_106_8_if_end;
+C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_100_8_106_8_if_else_false:
+C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_103_15_106_8_start:
+[ "C:\Users\Admin\Documents\UtahWindField\source\TopographyLoop.mc" 104 12 ]
+        %tmp.30 = "OFFLINE";
+        symbol [ warningStatus ? 104 12 25 ];
+        putv self :warningStatus %tmp.30;
+[ "C:\Users\Admin\Documents\UtahWindField\source\TopographyLoop.mc" 105 12 ]
+        %tmp.31 = "No signal (";
+        %tmp.32 = lgetv %responseCode;
+        symbol [ responseCode %tmp.32 105 45 57 ];
+        %tmp.33 = add %tmp.31 %tmp.32;
+        %tmp.34 = ")";
+        %tmp.35 = add %tmp.33 %tmp.34;
+        symbol [ warningMessage ? 105 12 26 ];
+        putv self :warningMessage %tmp.35;
+C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_103_15_106_8_stop:
+C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_100_8_106_8_if_end:
+[ "C:\Users\Admin\Documents\UtahWindField\source\TopographyLoop.mc" 108 8 ]
+        symbol [ WatchUi %tmp.36 108 8 15 ];
+        %tmp.36 = getm $.Toybox.WatchUi;
+        symbol [ requestUpdate %tmp.37 108 16 29 ];
+        %tmp.37 = getv function %tmp.36 :requestUpdate;
+        invoke %tmp.36 %tmp.37();
+C__Users_Admin_Documents_UtahWindField_source_TopographyLoop_mc_99_47_109_4_stop:
+    }
+}
+[ @file = "C:\Users\Admin\Documents\UtahWindField\source\TopographyLoop.mc"; @line = 1; ]
+<init> {
+}

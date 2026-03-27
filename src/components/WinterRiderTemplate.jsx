@@ -1,9 +1,10 @@
 import React, { Suspense, lazy } from 'react';
-import { Wind, Brain, Lightbulb, Mountain } from 'lucide-react';
+import { Wind, Brain, Lightbulb, Mountain, Trophy, Calendar, ArrowUpRight, Users } from 'lucide-react';
 import { WindVector } from './WindVector';
 import { SafeComponent } from './ErrorBoundary';
 import DecisionCard from './DecisionCard';
 import TodayTimeline from './TodayTimeline';
+import { SPOT_SLUG_MAP } from '../config/spotSlugs';
 
 const SpotRanker = lazy(() => import('./SpotRanker'));
 const SnowkiteForecast = lazy(() => import('./SnowkiteForecast'));
@@ -110,6 +111,45 @@ export default function WinterRiderTemplate({
           </div>
         )}
       </div>
+
+      {/* ═══════ SESSION DAY LEADERBOARD ═══════ */}
+      {(() => {
+        const spotSlug = SPOT_SLUG_MAP[selectedLake];
+        if (!spotSlug) return null;
+        const today = new Date().toISOString().split('T')[0];
+        const dayUrl = `/day/${spotSlug}/${today}?activity=snowkiting`;
+        const yearUrl = `/year/${spotSlug}/${new Date().getFullYear()}?activity=snowkiting`;
+        return (<>
+          <button onClick={() => { window.location.href = dayUrl; }} className="card flex items-center gap-3 hover:border-sky-500/40 transition-colors group cursor-pointer w-full text-left">
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-sky-500/10 border border-sky-500/20 group-hover:bg-sky-500/20 transition-colors flex-shrink-0">
+              <Trophy className="w-5 h-5 text-sky-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-bold text-[var(--text-primary)] flex items-center gap-2">
+                Session Day Leaderboard
+                <ArrowUpRight className="w-3.5 h-3.5 text-sky-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+              <div className="text-[11px] text-[var(--text-tertiary)]">Compare jumps &amp; speed with other snowkiters at {locName} today</div>
+            </div>
+            <div className="flex items-center gap-1 flex-shrink-0">
+              <Users className="w-3.5 h-3.5 text-[var(--text-tertiary)]" />
+              <span className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase">Live</span>
+            </div>
+          </button>
+          <button onClick={() => { window.location.href = yearUrl; }} className="card flex items-center gap-3 hover:border-sky-500/30 transition-colors group cursor-pointer w-full text-left">
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-sky-500/10 border border-sky-500/20 group-hover:bg-sky-500/20 transition-colors flex-shrink-0">
+              <Calendar className="w-5 h-5 text-sky-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-bold text-[var(--text-primary)] flex items-center gap-2">
+                {new Date().getFullYear()} Season Leaderboard
+                <ArrowUpRight className="w-3.5 h-3.5 text-sky-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+              <div className="text-[11px] text-[var(--text-tertiary)]">Yearly rankings — total time, sessions, top performances</div>
+            </div>
+          </button>
+        </>);
+      })()}
 
       {/* ═══════ SNOWKITE FORECAST ═══════ */}
       {isSnowSpot && (

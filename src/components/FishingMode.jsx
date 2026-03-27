@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Fish, Moon, Thermometer, Gauge, Clock, MapPin, TrendingUp, TrendingDown, Minus, Sun, Sunset, CloudRain, Wind, Waves, Calendar, Target, AlertTriangle, CheckCircle, Anchor, Navigation, Egg, Mountain, Brain, Zap, Droplets } from 'lucide-react';
+import { Fish, Moon, Thermometer, Gauge, Clock, MapPin, TrendingUp, TrendingDown, Minus, Sun, Sunset, CloudRain, Wind, Waves, Calendar, Target, AlertTriangle, CheckCircle, Anchor, Navigation, Egg, Mountain, Brain, Zap, Droplets, CloudSun, Bug } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { predictFishing } from '../services/FishingPredictor';
-import { getAllWaterTemps } from '../services/USGSWaterService';
+import { getAllWaterTemps, getAllRiverFlows, getRiverFlowStatus } from '../services/USGSWaterService';
+import { getDailyFlyPick, parseSkyCondition, TIME_WINDOW_LABELS } from '../services/FlyRecommender';
 import WaterForecast from './WaterForecast';
 import { safeToFixed } from '../utils/safeToFixed';
 
@@ -154,6 +155,76 @@ export const FISHING_LOCATIONS = {
     ],
     regulations: 'Lower section: Artificial flies/lures only, catch & release',
     tips: 'Blue Winged Olive hatches in March-May. Match the hatch!',
+  },
+  'middle-provo': {
+    id: 'middle-provo',
+    name: 'Middle Provo River',
+    region: 'Wasatch',
+    elevation: 5600,
+    coordinates: { lat: 40.4800, lng: -111.4600 },
+    type: 'river',
+    species: ['Brown Trout', 'Rainbow Trout', 'Mountain Whitefish', 'Cutthroat Trout'],
+    primarySpecies: 'Brown Trout',
+    bestMonths: [3, 4, 5, 9, 10, 11],
+    sections: {
+      upper: { description: 'Below Jordanelle Dam — cold tailwater, consistent flows' },
+      middle: { description: 'Midway reach — meadow water, great dry fly' },
+      lower: { description: 'Near Deer Creek Reservoir — deeper pools, bigger fish' },
+    },
+    spawning: {
+      'Brown Trout': { months: [10, 11], location: 'Gravel runs throughout middle section', behavior: 'Build redds in moderate current — avoid wading on gravel Oct-Dec' },
+      'Rainbow Trout': { months: [3, 4, 5], location: 'Riffles and gravel bars', behavior: 'Spring spawners, active in faster water' },
+      'Mountain Whitefish': { months: [10, 11], location: 'Deep runs', behavior: 'Spawn alongside browns in deeper water' },
+    },
+    structure: [
+      { type: 'Tailwater Pools', description: 'Cold deep pools below Jordanelle Dam', bestFor: ['Brown Trout', 'Rainbow Trout'] },
+      { type: 'Meadow Bends', description: 'Undercut banks along meadow curves', bestFor: ['Brown Trout'] },
+      { type: 'Riffle-Pool Transitions', description: 'Classic holding water', bestFor: ['Rainbow Trout', 'Mountain Whitefish'] },
+      { type: 'Log Jams', description: 'Woody debris creating cover', bestFor: ['Brown Trout'] },
+    ],
+    hotspots: [
+      { name: 'Below Jordanelle Dam', description: 'Cold tailwater, consistent year-round', species: ['Brown Trout', 'Rainbow Trout'], coordinates: { lat: 40.575, lng: -111.425 } },
+      { name: 'Midway Stretch', description: 'Meadow water, excellent dry fly fishing', species: ['Brown Trout', 'Rainbow Trout'], coordinates: { lat: 40.515, lng: -111.468 } },
+      { name: 'River Road Access', description: 'Easy wade access, good pocket water', species: ['Rainbow Trout', 'Brown Trout'], coordinates: { lat: 40.495, lng: -111.480 } },
+      { name: 'Upper Deer Creek Inlet', description: 'Fish stack here pre-spawn', species: ['Brown Trout'], coordinates: { lat: 40.445, lng: -111.465 } },
+    ],
+    regulations: 'Artificial flies and lures only on some sections. Check UDWR for current regs.',
+    tips: 'Tailwater section below Jordanelle fishes well year-round. BWO hatches in March–May are outstanding. Flow-dependent — check USGS gauge before going.',
+  },
+  'weber-river': {
+    id: 'weber-river',
+    name: 'Weber River',
+    region: 'Summit/Morgan',
+    elevation: 5600,
+    coordinates: { lat: 40.7300, lng: -111.4100 },
+    type: 'river',
+    species: ['Brown Trout', 'Rainbow Trout', 'Mountain Whitefish', 'Cutthroat Trout'],
+    primarySpecies: 'Brown Trout',
+    bestMonths: [3, 4, 5, 6, 9, 10, 11],
+    sections: {
+      upper: { description: 'Oakley to Wanship — small water, wild trout, less pressure' },
+      middle: { description: 'Wanship to Coalville — great wade fishing, accessible' },
+      lower: { description: 'Coalville to Echo — bigger water, bigger fish, float-friendly' },
+    },
+    spawning: {
+      'Brown Trout': { months: [10, 11], location: 'Gravel bars and tailouts', behavior: 'Aggressive pre-spawn, build redds in moderate current' },
+      'Rainbow Trout': { months: [3, 4, 5], location: 'Riffle gravel', behavior: 'Spring spawners, actively feeding pre-spawn' },
+      'Mountain Whitefish': { months: [10, 11], location: 'Deep runs and pools', behavior: 'Spawn in deeper water alongside browns' },
+    },
+    structure: [
+      { type: 'Undercut Banks', description: 'Eroded banks with deep pockets — hold the biggest browns', bestFor: ['Brown Trout'] },
+      { type: 'Bridge Pools', description: 'Deep scoured pools below bridges', bestFor: ['Brown Trout', 'Rainbow Trout'] },
+      { type: 'Riffles', description: 'Fast shallow water over gravel', bestFor: ['Rainbow Trout', 'Mountain Whitefish'] },
+      { type: 'Beaver Ponds', description: 'Backed-up slow sections', bestFor: ['Brown Trout', 'Cutthroat Trout'] },
+    ],
+    hotspots: [
+      { name: 'Peoa Stretch', description: 'Upper Weber, wild fish, less pressure', species: ['Brown Trout', 'Cutthroat Trout'], coordinates: { lat: 40.725, lng: -111.355 } },
+      { name: 'Wanship to Coalville', description: 'Best wade access, public land stretches', species: ['Brown Trout', 'Rainbow Trout'], coordinates: { lat: 40.790, lng: -111.400 } },
+      { name: 'Below Rockport Dam', description: 'Tailwater section, consistent flows', species: ['Brown Trout', 'Rainbow Trout'], coordinates: { lat: 40.782, lng: -111.385 } },
+      { name: 'Echo to Henefer', description: 'Bigger water, float fishing, trophy potential', species: ['Brown Trout', 'Rainbow Trout'], coordinates: { lat: 40.905, lng: -111.475 } },
+    ],
+    regulations: 'Check UDWR for current section-specific regulations',
+    tips: 'Underrated fishery with less pressure than the Provo. Fall streamer fishing for browns is exceptional. Hopper-dropper rigs in summer are deadly along grassy banks.',
   },
   'green-river': {
     id: 'green-river',
@@ -754,11 +825,12 @@ function getCurrentSeason() {
 }
 
 // Location Card Component
-const LocationCard = ({ location, isSelected, onSelect, theme, waterTemp }) => {
+const LocationCard = ({ location, isSelected, onSelect, theme, waterTemp, riverFlow }) => {
   const isDark = theme === 'dark';
   const config = FISHING_LOCATIONS[location];
   const currentMonth = new Date().getMonth() + 1;
   const isBestMonth = config.bestMonths.includes(currentMonth);
+  const isRiver = config.type === 'river';
   
   return (
     <button
@@ -776,31 +848,36 @@ const LocationCard = ({ location, isSelected, onSelect, theme, waterTemp }) => {
           {config.name}
         </span>
         <div className="flex items-center gap-1.5">
+          {isRiver && riverFlow?.dischargeCfs != null && (
+            <span className={`text-[10px] px-1.5 py-0.5 rounded ${isDark ? 'bg-cyan-500/15 text-cyan-400' : 'bg-cyan-50 text-cyan-600'}`}>
+              {Math.round(riverFlow.dischargeCfs)} cfs
+            </span>
+          )}
           {waterTemp?.tempF != null && (
             <span className={`text-[10px] px-1.5 py-0.5 rounded ${
               waterTemp.source === 'Seasonal Model' 
                 ? (isDark ? 'bg-slate-600/30 text-slate-400' : 'bg-slate-100 text-slate-500')
                 : (isDark ? 'bg-cyan-500/15 text-cyan-400' : 'bg-cyan-50 text-cyan-600')
             }`}>
-              💧 {waterTemp.tempF}°F
+              {waterTemp.tempF}°F
             </span>
           )}
           {isBestMonth && (
             <span className={`text-[10px] px-1.5 py-0.5 rounded ${isDark ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-700'}`}>
-              Peak Season
+              Peak
             </span>
           )}
         </div>
       </div>
       <div className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-        {config.primarySpecies} • {config.type}
+        {config.primarySpecies} • {config.type === 'river' ? '🏞️ river' : config.type}
       </div>
     </button>
   );
 };
 
 // Main Fishing Mode Component
-const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamData = {} }) => {
+const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamData = {}, hourlyForecast }) => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const [selectedLocation, setSelectedLocation] = useState('strawberry');
@@ -816,10 +893,12 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
   const pressure = pressureData?.slcPressure || 30.0;
   const pressureTrend = pressureData?.gradient > 0 ? 'rising' : pressureData?.gradient < 0 ? 'falling' : 'stable';
   
-  // Fetch all USGS water temps once for all location cards
+  // Fetch all USGS water temps and river flows once
   const [allWaterTemps, setAllWaterTemps] = useState({});
+  const [allRiverFlows, setAllRiverFlows] = useState({});
   useEffect(() => {
     getAllWaterTemps().then(setAllWaterTemps).catch(() => {});
+    getAllRiverFlows().then(setAllRiverFlows).catch(() => {});
   }, []);
 
   const waterTempData = allWaterTemps[selectedLocation] || null;
@@ -918,6 +997,32 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
       displayScore: score, badge: null,
     };
   }, [fishingScore, aiPrediction, location, isDark]);
+
+  // ── Daily Fly Recommendation ──
+  const flyPick = useMemo(() => {
+    const now = new Date();
+    const currentHourObj = hourlyForecast?.find(h => {
+      if (h.time) {
+        const dt = new Date(h.time);
+        return dt.getHours() === now.getHours();
+      }
+      return false;
+    }) || hourlyForecast?.[0];
+
+    const skyText = currentHourObj?.shortForecast || currentHourObj?.text || '';
+    const sky = parseSkyCondition(skyText);
+
+    return getDailyFlyPick({
+      month: now.getMonth() + 1,
+      waterTemp,
+      windSpeed,
+      skyCondition: sky,
+      pressure,
+      pressureTrend,
+      hour: now.getHours(),
+      locationId: selectedLocation,
+    });
+  }, [hourlyForecast, waterTemp, windSpeed, pressure, pressureTrend, selectedLocation]);
 
   const fishBannerColors = {
     green: isDark ? 'bg-gradient-to-r from-green-900/50 to-emerald-900/50 border-green-500/40' : 'bg-gradient-to-r from-green-100 to-emerald-100 border-green-300',
@@ -1062,6 +1167,234 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
         </div>
       )}
 
+      {/* River Conditions — shown for river locations with USGS flow data */}
+      {location.type === 'river' && (() => {
+        const flow = allRiverFlows[selectedLocation];
+        const temp = allWaterTemps[selectedLocation];
+        if (!flow && !temp) return null;
+        const cfs = flow?.dischargeCfs;
+        const gage = flow?.gageHeightFt;
+        const status = getRiverFlowStatus(selectedLocation, cfs);
+
+        const SEVERITY_STYLES = {
+          great:   { bg: isDark ? 'bg-emerald-500/15 border-emerald-500/40' : 'bg-emerald-50 border-emerald-300', text: isDark ? 'text-emerald-400' : 'text-emerald-600', badge: isDark ? 'bg-emerald-500/25 text-emerald-400' : 'bg-emerald-100 text-emerald-700' },
+          good:    { bg: isDark ? 'bg-cyan-500/15 border-cyan-500/40' : 'bg-cyan-50 border-cyan-300', text: isDark ? 'text-cyan-400' : 'text-cyan-600', badge: isDark ? 'bg-cyan-500/25 text-cyan-400' : 'bg-cyan-100 text-cyan-700' },
+          ok:      { bg: isDark ? 'bg-slate-700/50 border-slate-600' : 'bg-slate-50 border-slate-300', text: isDark ? 'text-slate-400' : 'text-slate-500', badge: isDark ? 'bg-slate-600/40 text-slate-400' : 'bg-slate-200 text-slate-600' },
+          caution: { bg: isDark ? 'bg-amber-500/15 border-amber-500/40' : 'bg-amber-50 border-amber-300', text: isDark ? 'text-amber-400' : 'text-amber-600', badge: isDark ? 'bg-amber-500/25 text-amber-400' : 'bg-amber-100 text-amber-700' },
+          warning: { bg: isDark ? 'bg-orange-500/15 border-orange-500/40' : 'bg-orange-50 border-orange-300', text: isDark ? 'text-orange-400' : 'text-orange-600', badge: isDark ? 'bg-orange-500/25 text-orange-400' : 'bg-orange-100 text-orange-700' },
+          danger:  { bg: isDark ? 'bg-red-500/15 border-red-500/40' : 'bg-red-50 border-red-300', text: isDark ? 'text-red-400' : 'text-red-600', badge: isDark ? 'bg-red-500/25 text-red-400' : 'bg-red-100 text-red-700' },
+        };
+        const sev = status ? SEVERITY_STYLES[status.severity] || SEVERITY_STYLES.ok : SEVERITY_STYLES.ok;
+
+        const updatedAgo = flow?.dateTime ? (() => {
+          const mins = Math.round((Date.now() - new Date(flow.dateTime).getTime()) / 60000);
+          return mins < 60 ? `${mins}m ago` : `${Math.round(mins / 60)}h ago`;
+        })() : null;
+
+        return (
+          <div className={`rounded-xl p-4 border ${sev.bg}`}>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className={`text-sm font-medium flex items-center gap-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                <Waves className="w-4 h-4 text-cyan-400" />
+                River Conditions — {location.name}
+              </h3>
+              <div className="flex items-center gap-2">
+                {status && (
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${sev.badge}`}>
+                    {status.label}
+                  </span>
+                )}
+                <span className="text-[9px] bg-cyan-500/20 text-cyan-400 px-1.5 py-0.5 rounded">USGS LIVE</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              {cfs != null && (
+                <div>
+                  <div className={`text-xs mb-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Flow Rate</div>
+                  <div className={`text-3xl font-black ${sev.text}`}>
+                    {Math.round(cfs)}
+                  </div>
+                  <div className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>cfs</div>
+                </div>
+              )}
+              {gage != null && (
+                <div>
+                  <div className={`text-xs mb-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Gage Height</div>
+                  <div className={`text-3xl font-black ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                    {gage.toFixed(2)}
+                  </div>
+                  <div className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>ft</div>
+                </div>
+              )}
+              {temp?.tempF != null && (
+                <div>
+                  <div className={`text-xs mb-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Water Temp</div>
+                  <div className={`text-3xl font-black ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                    {temp.tempF}°
+                  </div>
+                  <div className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>°F</div>
+                </div>
+              )}
+            </div>
+
+            {(status?.severity === 'danger' || status?.severity === 'warning') && (
+              <div className={`mt-3 p-2 rounded-lg flex items-center gap-2 text-xs ${
+                status.severity === 'danger'
+                  ? (isDark ? 'bg-red-500/20 text-red-300' : 'bg-red-100 text-red-700')
+                  : (isDark ? 'bg-orange-500/20 text-orange-300' : 'bg-orange-100 text-orange-700')
+              }`}>
+                <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                {status.severity === 'danger'
+                  ? 'Flows are dangerously high. Do not wade. Check conditions before floating.'
+                  : 'Elevated flows — wading is difficult. Consider drift boat or wait for flows to drop.'}
+              </div>
+            )}
+
+            <div className={`flex items-center justify-between mt-3 pt-2 border-t ${isDark ? 'border-slate-700' : 'border-slate-200'}`}>
+              <div className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                {flow?.sourceName || temp?.sourceName} • USGS
+              </div>
+              {updatedAgo && (
+                <div className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                  Updated {updatedAgo}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* ═══════ DAILY FLY PICK ═══════ */}
+      {(location.type === 'river' || ['deer-creek', 'strawberry', 'scofield'].includes(selectedLocation)) && flyPick?.topPick && (
+        <div className={`rounded-xl border overflow-hidden ${isDark ? 'bg-gradient-to-br from-emerald-900/30 to-slate-800/50 border-emerald-500/30' : 'bg-gradient-to-br from-emerald-50 to-white border-emerald-200 shadow-sm'}`}>
+          {/* Header */}
+          <div className="p-4 pb-3">
+            <div className="flex items-center justify-between mb-1">
+              <h3 className={`text-sm font-bold flex items-center gap-2 ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>
+                <Bug className="w-4 h-4" />
+                Today's Fly Pick
+              </h3>
+              <div className="flex items-center gap-2">
+                <span className={`text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1 ${isDark ? 'bg-slate-700/60 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
+                  <CloudSun className="w-3 h-3" />
+                  {flyPick.skyLabel}
+                </span>
+                {/* Nymph vs Dry badge */}
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                  flyPick.nymphVsDry.pick === 'dry' ? (isDark ? 'bg-amber-500/25 text-amber-400' : 'bg-amber-100 text-amber-700')
+                  : flyPick.nymphVsDry.pick === 'nymph' ? (isDark ? 'bg-cyan-500/25 text-cyan-400' : 'bg-cyan-100 text-cyan-700')
+                  : (isDark ? 'bg-purple-500/25 text-purple-400' : 'bg-purple-100 text-purple-700')
+                }`}>
+                  {flyPick.nymphVsDry.pick === 'dry-dropper' ? 'DRY-DROPPER' : flyPick.nymphVsDry.pick.toUpperCase()}
+                </span>
+              </div>
+            </div>
+            <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+              {flyPick.nymphVsDry.reason}
+            </p>
+          </div>
+
+          {/* Top Pick */}
+          <div className={`mx-4 mb-3 p-4 rounded-xl border ${isDark ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-emerald-50 border-emerald-200'}`}>
+            <div className="flex items-start justify-between mb-2">
+              <div>
+                <div className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                  {flyPick.topPick.name}
+                </div>
+                <div className={`text-sm font-medium ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>
+                  {flyPick.topPick.size}
+                </div>
+              </div>
+              <div className="text-right">
+                <div className={`text-2xl font-black ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>
+                  {flyPick.topPick.confidence}%
+                </div>
+                <div className={`text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>confidence</div>
+              </div>
+            </div>
+            <div className={`text-xs mb-2 ${isDark ? 'text-emerald-300' : 'text-emerald-700'}`}>
+              {flyPick.topPick.reason}
+            </div>
+            <div className={`text-xs ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+              <span className="font-medium">Patterns:</span> {flyPick.topPick.patterns.join(', ')}
+            </div>
+            <div className={`text-xs mt-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+              <span className="font-medium">Method:</span> {flyPick.topPick.method}
+            </div>
+            <div className="flex items-center gap-2 mt-2">
+              <span className={`text-[10px] px-2 py-0.5 rounded-full ${isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-700'}`}>
+                {TIME_WINDOW_LABELS[flyPick.topPick.timeWindow] || flyPick.topPick.timeWindow}
+              </span>
+              <span className={`text-[10px] px-2 py-0.5 rounded-full capitalize ${isDark ? 'bg-slate-600/40 text-slate-300' : 'bg-slate-200 text-slate-600'}`}>
+                {flyPick.topPick.category}
+              </span>
+            </div>
+          </div>
+
+          {/* Alternatives */}
+          {flyPick.alternatives.length > 0 && (
+            <div className="px-4 pb-3">
+              <div className={`text-[10px] font-medium uppercase mb-2 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                Also try
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {flyPick.alternatives.map((alt, i) => (
+                  <div
+                    key={i}
+                    className={`p-2.5 rounded-lg border ${isDark ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-200'}`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className={`text-xs font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                        {alt.name}
+                      </span>
+                      <span className={`text-[10px] font-bold ${
+                        alt.confidence >= 70 ? (isDark ? 'text-emerald-400' : 'text-emerald-600')
+                        : alt.confidence >= 50 ? (isDark ? 'text-yellow-400' : 'text-yellow-600')
+                        : (isDark ? 'text-slate-400' : 'text-slate-500')
+                      }`}>
+                        {alt.confidence}%
+                      </span>
+                    </div>
+                    <div className={`text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                      {alt.size} • {alt.patterns[0]}
+                    </div>
+                    <div className={`text-[10px] mt-1 italic ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                      {alt.reason.length > 60 ? alt.reason.slice(0, 57) + '...' : alt.reason}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Time-of-Day Guide */}
+          {flyPick.timeGuide.length > 1 && (
+            <div className={`mx-4 mb-4 p-3 rounded-lg ${isDark ? 'bg-slate-800/40' : 'bg-slate-50'}`}>
+              <div className={`text-[10px] font-medium uppercase mb-2 flex items-center gap-1.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                <Clock className="w-3 h-3" />
+                Pattern schedule
+              </div>
+              <div className="flex flex-wrap gap-x-4 gap-y-1">
+                {flyPick.timeGuide.map((tw, i) => (
+                  <div key={i} className="flex items-center gap-1.5">
+                    <span className={`text-[10px] font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                      {tw.label}:
+                    </span>
+                    <span className={`text-[10px] font-semibold ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>
+                      {tw.fly} {tw.size}
+                    </span>
+                    {i < flyPick.timeGuide.length - 1 && (
+                      <span className={`text-[10px] ${isDark ? 'text-slate-600' : 'text-slate-300'}`}>→</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Location Selector */}
       <div className={`rounded-xl p-4 border ${isDark ? 'bg-slate-800/30 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`}>
         <h3 className={`text-sm font-medium mb-3 flex items-center gap-2 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
@@ -1077,6 +1410,7 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
               onSelect={setSelectedLocation}
               theme={theme}
               waterTemp={allWaterTemps[loc]}
+              riverFlow={allRiverFlows[loc]}
             />
           ))}
         </div>

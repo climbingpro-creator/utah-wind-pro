@@ -167,6 +167,7 @@ CREATE TABLE IF NOT EXISTS spots (
 );
 
 INSERT INTO spots (slug, name, latitude, longitude, safe_wind_arc) VALUES
+  -- Original kite / water spots
   ('lincoln-beach',  'Lincoln Beach',  40.3020, -111.8810, '[270, 90]'),
   ('sandy-beach',    'Sandy Beach',    40.2580, -111.7920, '[270, 90]'),
   ('vineyard',       'Vineyard',       40.3100, -111.7480, '[180, 360]'),
@@ -175,16 +176,54 @@ INSERT INTO spots (slug, name, latitude, longitude, safe_wind_arc) VALUES
   ('deer-creek',     'Deer Creek',     40.4097, -111.5097, '[160, 240]'),
   ('willard-bay',    'Willard Bay',    41.3686, -112.0772, '[160, 240]'),
   ('yuba',           'Yuba',           39.4265, -111.9155, '[140, 220]'),
-  ('sand-hollow',    'Sand Hollow',    37.1077, -113.3967, '[320, 45]')
+  ('sand-hollow',    'Sand Hollow',    37.1077, -113.3967, '[320, 45]'),
+  -- Kite extras
+  ('rush-lake',      'Rush Lake',      40.5300, -112.3600, NULL),
+  ('grantsville',    'Grantsville Reservoir', 40.5800, -112.4800, NULL),
+  -- Snowkite spots
+  ('strawberry-reservoir', 'Strawberry Reservoir', 40.1700, -111.1500, NULL),
+  ('skyline-drive',  'Skyline Drive',  39.6700, -111.3700, NULL),
+  ('powder-mountain','Powder Mountain', 41.3800, -111.7800, NULL),
+  ('monte-cristo',   'Monte Cristo',   41.4600, -111.5000, NULL),
+  -- Paragliding sites
+  ('potm-south',     'Point of the Mountain South', 40.4500, -111.9100, NULL),
+  ('potm-north',     'Point of the Mountain North', 40.4600, -111.9100, NULL),
+  ('inspiration-point','Inspiration Point', 40.2600, -111.6300, NULL),
+  ('west-mountain',  'West Mountain',  40.1200, -111.7700, NULL),
+  ('stockton-bar',   'Stockton Bar',   40.4500, -112.3700, NULL),
+  -- Regional lakes (fishing / boating / paddling)
+  ('pineview',       'Pineview Reservoir', 41.2500, -111.8000, NULL),
+  ('jordanelle',     'Jordanelle',     40.6000, -111.4300, NULL),
+  ('east-canyon',    'East Canyon',    40.8700, -111.5900, NULL),
+  ('echo',           'Echo Reservoir', 40.9700, -111.4400, NULL),
+  ('rockport',       'Rockport',       40.7700, -111.4000, NULL),
+  ('bear-lake',      'Bear Lake',      41.9500, -111.3300, NULL),
+  ('hyrum',          'Hyrum Reservoir', 41.6300, -111.8700, NULL),
+  ('starvation',     'Starvation Reservoir', 40.1900, -110.4500, NULL),
+  ('flaming-gorge',  'Flaming Gorge',  40.9200, -109.5300, NULL),
+  ('steinaker',      'Steinaker',      40.5200, -109.5400, NULL),
+  ('red-fleet',      'Red Fleet',      40.5700, -109.4700, NULL),
+  ('scofield',       'Scofield',       39.7800, -111.1500, NULL),
+  ('otter-creek',    'Otter Creek',    38.2100, -111.9300, NULL),
+  ('fish-lake',      'Fish Lake',      38.5400, -111.7000, NULL),
+  ('minersville',    'Minersville',    38.2200, -112.8800, NULL),
+  ('lake-powell',    'Lake Powell',    37.0700, -111.2400, NULL),
+  ('quail-creek',    'Quail Creek',    37.2000, -113.3800, NULL),
+  ('mantua',         'Mantua Reservoir', 41.4900, -111.9500, NULL),
+  ('lost-creek',     'Lost Creek',     41.0200, -111.3700, NULL),
+  ('causey',         'Causey Reservoir', 41.2800, -111.5800, NULL),
+  ('panguitch',      'Panguitch Lake', 37.7200, -112.6400, NULL),
+  ('piute',          'Piute Reservoir', 38.3200, -112.1400, NULL)
 ON CONFLICT (slug) DO NOTHING;
 
--- ── Kite Sessions (Garmin watch uploads) ────────────────────────
+-- ── Sessions (Garmin watch uploads + web form) ─────────────────
 
 CREATE TABLE IF NOT EXISTS kite_sessions (
   id                 UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id            UUID REFERENCES auth.users(id) ON DELETE SET NULL,
   device_id          TEXT,
   spot_id            UUID REFERENCES spots(id) ON DELETE SET NULL,
+  activity_type      TEXT NOT NULL DEFAULT 'kiting',
   rider_name         TEXT,
   gear_setup         TEXT,
   started_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -199,6 +238,8 @@ CREATE TABLE IF NOT EXISTS kite_sessions (
   max_jump_ft        DOUBLE PRECISION DEFAULT 0,
   avg_jump_ft        DOUBLE PRECISION DEFAULT 0,
   max_hangtime_s     DOUBLE PRECISION DEFAULT 0,
+  ride_count         INTEGER DEFAULT 0,
+  foil_ride_count    INTEGER DEFAULT 0,
   crashes_filtered   INTEGER DEFAULT 0,
   water_temp_c       DOUBLE PRECISION,
   track              JSONB,
@@ -220,6 +261,10 @@ CREATE POLICY "Service role inserts sessions"
   ON kite_sessions FOR INSERT
   WITH CHECK (true);
 
+CREATE POLICY "Service role updates sessions"
+  ON kite_sessions FOR UPDATE
+  USING (true);
+
 CREATE INDEX IF NOT EXISTS idx_kite_sessions_user
   ON kite_sessions(user_id);
 
@@ -232,7 +277,8 @@ CREATE INDEX IF NOT EXISTS idx_kite_sessions_spot
 CREATE INDEX IF NOT EXISTS idx_kite_sessions_started
   ON kite_sessions(started_at DESC);
 
--- Day page queries use the individual spot_id and started_at indexes together
+CREATE INDEX IF NOT EXISTS idx_kite_sessions_activity
+  ON kite_sessions(activity_type);
 
 -- ── Individual Jumps (for deep-dive charts / leaderboards) ──────
 
@@ -272,6 +318,55 @@ CREATE INDEX IF NOT EXISTS idx_jumps_session
 
 CREATE INDEX IF NOT EXISTS idx_jumps_height
   ON jumps(height_ft DESC);
+
+-- ── Session Photos (user-uploaded images per session) ──────────
+
+CREATE TABLE IF NOT EXISTS session_photos (
+  id          UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  session_id  UUID REFERENCES kite_sessions(id) ON DELETE CASCADE NOT NULL,
+  photo_url   TEXT NOT NULL,
+  caption     TEXT,
+  is_cover    BOOLEAN DEFAULT false,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE session_photos ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Public can read session photos"
+  ON session_photos FOR SELECT
+  USING (true);
+
+CREATE POLICY "Service role inserts session photos"
+  ON session_photos FOR INSERT
+  WITH CHECK (true);
+
+CREATE INDEX IF NOT EXISTS idx_session_photos_session
+  ON session_photos(session_id);
+
+-- ── Fish Catches (per-session catch log for fishing) ───────────
+
+CREATE TABLE IF NOT EXISTS fish_catches (
+  id          UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  session_id  UUID REFERENCES kite_sessions(id) ON DELETE CASCADE NOT NULL,
+  species     TEXT,
+  weight_lbs  DOUBLE PRECISION,
+  length_in   DOUBLE PRECISION,
+  photo_url   TEXT,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE fish_catches ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Public can read fish catches"
+  ON fish_catches FOR SELECT
+  USING (true);
+
+CREATE POLICY "Service role inserts fish catches"
+  ON fish_catches FOR INSERT
+  WITH CHECK (true);
+
+CREATE INDEX IF NOT EXISTS idx_fish_catches_session
+  ON fish_catches(session_id);
 
 -- ── Emergency Location Alerts ───────────────────────────────────
 

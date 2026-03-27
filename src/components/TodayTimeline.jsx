@@ -288,7 +288,9 @@ export default function TodayTimeline({ locationId = 'utah-lake', activity = 'ki
   useEffect(() => {
     if (scrollRef.current) {
       const nowEl = scrollRef.current.querySelector('[data-now="true"]');
-      if (nowEl) nowEl.scrollIntoView({ inline: 'start', behavior: 'smooth', block: 'nearest' });
+      if (nowEl) {
+        scrollRef.current.scrollLeft = nowEl.offsetLeft - scrollRef.current.offsetLeft;
+      }
     }
   }, [todayHours]);
 

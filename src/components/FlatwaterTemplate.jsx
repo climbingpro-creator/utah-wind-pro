@@ -1,11 +1,12 @@
 import React, { Suspense, lazy } from 'react';
-import { Wind, Brain, Lightbulb, Waves } from 'lucide-react';
+import { Wind, Brain, Lightbulb, Waves, Trophy, Calendar, ArrowUpRight, Users } from 'lucide-react';
 import { WindVector } from './WindVector';
 import { SafeComponent } from './ErrorBoundary';
 import DecisionCard from './DecisionCard';
 import TodayTimeline from './TodayTimeline';
 import ProGate from './ProGate';
 import { safeToFixed } from '../utils/safeToFixed';
+import { SPOT_SLUG_MAP } from '../config/spotSlugs';
 
 const SpotRanker = lazy(() => import('./SpotRanker'));
 const FishingMode = lazy(() => import('./FishingMode'));
@@ -116,6 +117,49 @@ export default function FlatwaterTemplate({
         )}
       </div>
 
+      {/* ═══════ SESSION DAY LEADERBOARD ═══════ */}
+      {(() => {
+        const spotSlug = SPOT_SLUG_MAP[selectedLake];
+        if (!spotSlug) return null;
+        const today = new Date().toISOString().split('T')[0];
+        const act = selectedActivity || 'boating';
+        const dayUrl = `/day/${spotSlug}/${today}?activity=${act}`;
+        const yearUrl = `/year/${spotSlug}/${new Date().getFullYear()}?activity=${act}`;
+        const accent = isFishing ? 'emerald' : 'indigo';
+        return (<>
+          <button onClick={() => { window.location.href = dayUrl; }} className={`card flex items-center gap-3 hover:border-${accent}-500/40 transition-colors group cursor-pointer w-full text-left`}>
+            <div className={`flex items-center justify-center w-10 h-10 rounded-xl bg-${accent}-500/10 border border-${accent}-500/20 group-hover:bg-${accent}-500/20 transition-colors flex-shrink-0`}>
+              <Trophy className={`w-5 h-5 text-${accent}-400`} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-bold text-[var(--text-primary)] flex items-center gap-2">
+                {isFishing ? 'Fishing' : selectedActivity === 'paddling' ? 'Paddling' : 'Boating'} Day Leaderboard
+                <ArrowUpRight className={`w-3.5 h-3.5 text-${accent}-400 opacity-0 group-hover:opacity-100 transition-opacity`} />
+              </div>
+              <div className="text-[11px] text-[var(--text-tertiary)]">
+                {isFishing ? 'Compare catches, biggest fish & time on water' : 'Compare distance, speed & time on water'} at {locName} today
+              </div>
+            </div>
+            <div className="flex items-center gap-1 flex-shrink-0">
+              <Users className="w-3.5 h-3.5 text-[var(--text-tertiary)]" />
+              <span className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase">Live</span>
+            </div>
+          </button>
+          <button onClick={() => { window.location.href = yearUrl; }} className={`card flex items-center gap-3 hover:border-${accent}-500/30 transition-colors group cursor-pointer w-full text-left`}>
+            <div className={`flex items-center justify-center w-10 h-10 rounded-xl bg-${accent}-500/10 border border-${accent}-500/20 group-hover:bg-${accent}-500/20 transition-colors flex-shrink-0`}>
+              <Calendar className={`w-5 h-5 text-${accent}-400`} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-bold text-[var(--text-primary)] flex items-center gap-2">
+                {new Date().getFullYear()} Season Leaderboard
+                <ArrowUpRight className={`w-3.5 h-3.5 text-${accent}-400 opacity-0 group-hover:opacity-100 transition-opacity`} />
+              </div>
+              <div className="text-[11px] text-[var(--text-tertiary)]">Yearly rankings — total time, sessions, top performances</div>
+            </div>
+          </button>
+        </>);
+      })()}
+
       {/* ═══════ FISHING: Bite Score / Pressure / Temp ═══════ */}
       {isFishing && (
         <ProGate feature="Fishing Intelligence" preview="Bite rating, moon phase & more">
@@ -128,6 +172,7 @@ export default function FlatwaterTemplate({
                 kslcSpeed: lakeState?.kslcStation?.speed, kslcDirection: lakeState?.kslcStation?.direction,
                 kpvuSpeed: lakeState?.kpvuStation?.speed, kpvuDirection: lakeState?.kpvuStation?.direction,
               }}
+              hourlyForecast={prediction?.hourly}
             />
           </SafeComponent>
         </ProGate>

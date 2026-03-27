@@ -1,0 +1,243 @@
+[ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteViewFactory.mc"; @line = 1; @symbol_usingdef<0> = [Toybox,1,6,12]; @symbol_usingdef<1> = [WatchUi,1,13,20]; ]
+using Toybox.WatchUi;
+//! Factory providing 7 kite session screens to ViewLoop.
+//! Screen order is designed for rider priority:
+//!   1. Control (start/pause/stop)
+//!   2. Speed + HR
+//!   3. Jumps
+//!   4. Counters (fish, rides, foil rides)
+//!   5. Session totals
+//!   6. Live map
+//!   7. Emergency location sender
+[ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteViewFactory.mc"; @line = 13; @symbol_classdef = [KiteViewFactory,13,6,21]; @symbol_extends<0> = [WatchUi,13,30,37]; @symbol_extends<1> = [ViewLoopFactory,13,38,53]; ]
+class KiteViewFactory extends WatchUi.ViewLoopFactory {
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteViewFactory.mc"; @line = 13; ]
+    <init> {
+    }
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteViewFactory.mc"; @line = 13; ]
+    static
+    <init> {
+    }
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteViewFactory.mc"; @line = 15; @position = 15; @symbol_vardef = [_emergencyView,15,15,29]; ]
+    protected
+    var _emergencyView = null;
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteViewFactory.mc"; @line = 16; @position = 8; @symbol_vardef = [counterView,16,8,19]; ]
+    var counterView = null;
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteViewFactory.mc"; @line = 18; @symbol_functiondef = [initialize,18,13,23]; ]
+    function initialize() as Void {
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_KiteViewFactory_mc_18_26_21_4_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteViewFactory.mc" 19 8 ]
+        symbol [ ViewLoopFactory %tmp.2 19 8 23 ];
+        %tmp.2 = getv ? :ViewLoopFactory;
+        symbol [ initialize %tmp.3 19 24 34 ];
+        %tmp.3 = getv function %tmp.2 :initialize;
+        invoke %tmp.2 %tmp.3();
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteViewFactory.mc" 20 8 ]
+        symbol [ CounterView %tmp.7 20 26 37 ];
+        %tmp.7 = getv ? :CounterView;
+        %tmp.4 = newc %tmp.7 ();
+        symbol [ counterView ? 20 8 19 ];
+        putv self :counterView %tmp.4;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_KiteViewFactory_mc_18_26_21_4_stop:
+    }
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteViewFactory.mc"; @line = 23; @symbol_functiondef = [getSize,23,13,20]; ]
+    function getSize() {
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_KiteViewFactory_mc_23_23_25_4_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteViewFactory.mc" 24 8 ]
+        %tmp.1 = 7;
+        ret %tmp.1;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_KiteViewFactory_mc_23_23_25_4_stop:
+    }
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteViewFactory.mc"; @line = 27; @symbol_functiondef = [getView,27,13,20]; @symbol_param<0> = [page,27,21,25]; ]
+    function getView(page) {
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_KiteViewFactory_mc_27_27_42_4_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteViewFactory.mc" 28 8 ]
+        %tmp.1 = lgetv %page;
+        symbol [ page %tmp.1 28 16 20 ];
+        push %tmp.1;
+        switch %tmp.1 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_KiteViewFactory_mc_28_8_40_8_switchStmtEnd;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_KiteViewFactory_mc_28_8_40_8_switchStmtBegin:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteViewFactory.mc" 29 12 ]
+        %tmp.2 = dup %tmp.1;
+        %tmp.3 = 0;
+        %tmp.4 = getv function %tmp.2 :equals;
+        %tmp.5 = invoke %tmp.2 %tmp.4 (%tmp.3);
+        bt %tmp.5 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_KiteViewFactory_mc_29_12_29_68_switchCase;
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteViewFactory.mc" 30 12 ]
+        %tmp.6 = dup %tmp.1;
+        %tmp.7 = 1;
+        %tmp.8 = getv function %tmp.6 :equals;
+        %tmp.9 = invoke %tmp.6 %tmp.8 (%tmp.7);
+        bt %tmp.9 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_KiteViewFactory_mc_30_12_30_68_switchCase;
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteViewFactory.mc" 31 12 ]
+        %tmp.10 = dup %tmp.1;
+        %tmp.11 = 2;
+        %tmp.12 = getv function %tmp.10 :equals;
+        %tmp.13 = invoke %tmp.10 %tmp.12 (%tmp.11);
+        bt %tmp.13 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_KiteViewFactory_mc_31_12_31_68_switchCase;
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteViewFactory.mc" 32 12 ]
+        %tmp.14 = dup %tmp.1;
+        %tmp.15 = 3;
+        %tmp.16 = getv function %tmp.14 :equals;
+        %tmp.17 = invoke %tmp.14 %tmp.16 (%tmp.15);
+        bt %tmp.17 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_KiteViewFactory_mc_32_12_32_80_switchCase;
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteViewFactory.mc" 33 12 ]
+        %tmp.18 = dup %tmp.1;
+        %tmp.19 = 4;
+        %tmp.20 = getv function %tmp.18 :equals;
+        %tmp.21 = invoke %tmp.18 %tmp.20 (%tmp.19);
+        bt %tmp.21 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_KiteViewFactory_mc_33_12_33_68_switchCase;
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteViewFactory.mc" 34 12 ]
+        %tmp.22 = dup %tmp.1;
+        %tmp.23 = 5;
+        %tmp.24 = getv function %tmp.22 :equals;
+        %tmp.25 = invoke %tmp.22 %tmp.24 (%tmp.23);
+        bt %tmp.25 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_KiteViewFactory_mc_34_12_34_68_switchCase;
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteViewFactory.mc" 35 12 ]
+        %tmp.26 = dup %tmp.1;
+        %tmp.27 = 6;
+        %tmp.28 = getv function %tmp.26 :equals;
+        %tmp.29 = invoke %tmp.26 %tmp.28 (%tmp.27);
+        bt %tmp.29 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_KiteViewFactory_mc_35_12_39_78_switchCase;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_KiteViewFactory_mc_28_8_40_8_switchStmtDefault:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_KiteViewFactory_mc_28_8_40_8_defaultCodeBegin;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_KiteViewFactory_mc_29_12_29_68_switchCase:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteViewFactory.mc" 29 20 ]
+        %tmp.30 = newa 2;
+        symbol [ ControlView %tmp.34 29 32 43 ];
+        %tmp.34 = getv ? :ControlView;
+        %tmp.31 = newc %tmp.34 ();
+        %tmp.35 = dup %tmp.30;
+        %tmp.36 = aputv %tmp.35 0 %tmp.31;
+        symbol [ ScreenDelegate %tmp.40 29 51 65 ];
+        %tmp.40 = getv ? :ScreenDelegate;
+        %tmp.37 = newc %tmp.40 ();
+        %tmp.41 = dup %tmp.36;
+        %tmp.42 = aputv %tmp.41 1 %tmp.37;
+        ret %tmp.42;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_KiteViewFactory_mc_30_12_30_68_switchCase:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteViewFactory.mc" 30 20 ]
+        %tmp.43 = newa 2;
+        symbol [ SpeedView %tmp.47 30 32 41 ];
+        %tmp.47 = getv ? :SpeedView;
+        %tmp.44 = newc %tmp.47 ();
+        %tmp.48 = dup %tmp.43;
+        %tmp.49 = aputv %tmp.48 0 %tmp.44;
+        symbol [ ScreenDelegate %tmp.53 30 51 65 ];
+        %tmp.53 = getv ? :ScreenDelegate;
+        %tmp.50 = newc %tmp.53 ();
+        %tmp.54 = dup %tmp.49;
+        %tmp.55 = aputv %tmp.54 1 %tmp.50;
+        ret %tmp.55;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_KiteViewFactory_mc_31_12_31_68_switchCase:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteViewFactory.mc" 31 20 ]
+        %tmp.56 = newa 2;
+        symbol [ JumpView %tmp.60 31 32 40 ];
+        %tmp.60 = getv ? :JumpView;
+        %tmp.57 = newc %tmp.60 ();
+        %tmp.61 = dup %tmp.56;
+        %tmp.62 = aputv %tmp.61 0 %tmp.57;
+        symbol [ ScreenDelegate %tmp.66 31 51 65 ];
+        %tmp.66 = getv ? :ScreenDelegate;
+        %tmp.63 = newc %tmp.66 ();
+        %tmp.67 = dup %tmp.62;
+        %tmp.68 = aputv %tmp.67 1 %tmp.63;
+        ret %tmp.68;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_KiteViewFactory_mc_32_12_32_80_switchCase:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteViewFactory.mc" 32 20 ]
+        %tmp.69 = newa 2;
+        symbol [ counterView %tmp.71 32 28 39 ];
+        %tmp.71 = getv ? :counterView;
+        %tmp.72 = dup %tmp.69;
+        %tmp.73 = aputv %tmp.72 0 %tmp.71;
+        symbol [ CounterDelegate %tmp.77 32 51 66 ];
+        %tmp.77 = getv ? :CounterDelegate;
+        symbol [ counterView %tmp.79 32 67 78 ];
+        %tmp.79 = getv ? :counterView;
+        %tmp.74 = newc %tmp.77 (%tmp.79);
+        %tmp.80 = dup %tmp.73;
+        %tmp.81 = aputv %tmp.80 1 %tmp.74;
+        ret %tmp.81;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_KiteViewFactory_mc_33_12_33_68_switchCase:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteViewFactory.mc" 33 20 ]
+        %tmp.82 = newa 2;
+        symbol [ SessionView %tmp.86 33 32 43 ];
+        %tmp.86 = getv ? :SessionView;
+        %tmp.83 = newc %tmp.86 ();
+        %tmp.87 = dup %tmp.82;
+        %tmp.88 = aputv %tmp.87 0 %tmp.83;
+        symbol [ ScreenDelegate %tmp.92 33 51 65 ];
+        %tmp.92 = getv ? :ScreenDelegate;
+        %tmp.89 = newc %tmp.92 ();
+        %tmp.93 = dup %tmp.88;
+        %tmp.94 = aputv %tmp.93 1 %tmp.89;
+        ret %tmp.94;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_KiteViewFactory_mc_34_12_34_68_switchCase:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteViewFactory.mc" 34 20 ]
+        %tmp.95 = newa 2;
+        symbol [ MapView %tmp.99 34 32 39 ];
+        %tmp.99 = getv ? :MapView;
+        %tmp.96 = newc %tmp.99 ();
+        %tmp.100 = dup %tmp.95;
+        %tmp.101 = aputv %tmp.100 0 %tmp.96;
+        symbol [ ScreenDelegate %tmp.105 34 51 65 ];
+        %tmp.105 = getv ? :ScreenDelegate;
+        %tmp.102 = newc %tmp.105 ();
+        %tmp.106 = dup %tmp.101;
+        %tmp.107 = aputv %tmp.106 1 %tmp.102;
+        ret %tmp.107;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_KiteViewFactory_mc_35_12_39_78_switchCase:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteViewFactory.mc" 36 16 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_KiteViewFactory_mc_36_16_38_16_if_stmt:
+        symbol [ _emergencyView %tmp.109 36 20 34 ];
+        %tmp.109 = getv ? :_emergencyView;
+        %tmp.110 = null;
+        %tmp.111 = eq %tmp.109 %tmp.110;
+        bf %tmp.111 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_KiteViewFactory_mc_36_16_38_16_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_KiteViewFactory_mc_36_16_38_16_if_true:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_KiteViewFactory_mc_36_44_38_16_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteViewFactory.mc" 37 20 ]
+        symbol [ EmergencyView %tmp.115 37 41 54 ];
+        %tmp.115 = getv ? :EmergencyView;
+        %tmp.112 = newc %tmp.115 ();
+        symbol [ _emergencyView ? 37 20 34 ];
+        putv self :_emergencyView %tmp.112;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_KiteViewFactory_mc_36_44_38_16_stop:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_KiteViewFactory_mc_36_16_38_16_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_KiteViewFactory_mc_36_16_38_16_if_end:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteViewFactory.mc" 39 16 ]
+        %tmp.116 = newa 2;
+        symbol [ _emergencyView %tmp.118 39 24 38 ];
+        %tmp.118 = getv ? :_emergencyView;
+        %tmp.119 = dup %tmp.116;
+        %tmp.120 = aputv %tmp.119 0 %tmp.118;
+        symbol [ EmergencyDelegate %tmp.124 39 44 61 ];
+        %tmp.124 = getv ? :EmergencyDelegate;
+        symbol [ _emergencyView %tmp.126 39 62 76 ];
+        %tmp.126 = getv ? :_emergencyView;
+        %tmp.121 = newc %tmp.124 (%tmp.126);
+        %tmp.127 = dup %tmp.120;
+        %tmp.128 = aputv %tmp.127 1 %tmp.121;
+        ret %tmp.128;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_KiteViewFactory_mc_28_8_40_8_defaultCodeBegin:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_KiteViewFactory_mc_28_8_40_8_switchStmtEnd:
+        pop;
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteViewFactory.mc" 41 8 ]
+        %tmp.129 = newa 2;
+        symbol [ ControlView %tmp.133 41 20 31 ];
+        %tmp.133 = getv ? :ControlView;
+        %tmp.130 = newc %tmp.133 ();
+        %tmp.134 = dup %tmp.129;
+        %tmp.135 = aputv %tmp.134 0 %tmp.130;
+        symbol [ ScreenDelegate %tmp.139 41 39 53 ];
+        %tmp.139 = getv ? :ScreenDelegate;
+        %tmp.136 = newc %tmp.139 ();
+        %tmp.140 = dup %tmp.135;
+        %tmp.141 = aputv %tmp.140 1 %tmp.136;
+        ret %tmp.141;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_KiteViewFactory_mc_27_27_42_4_stop:
+    }
+}
+[ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\KiteViewFactory.mc"; @line = 1; ]
+<init> {
+}

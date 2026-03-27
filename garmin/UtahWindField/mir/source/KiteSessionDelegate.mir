@@ -1,0 +1,114 @@
+[ @file = "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionDelegate.mc"; @line = 1; @symbol_usingdef<0> = [Toybox,1,6,12]; @symbol_usingdef<1> = [WatchUi,1,13,20]; ]
+using Toybox.WatchUi;
+[ @file = "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionDelegate.mc"; @line = 2; @symbol_usingdef<0> = [Toybox,2,6,12]; @symbol_usingdef<1> = [System,2,13,19]; ]
+using Toybox.System;
+//! Input delegate for the Kite Session view.
+//! Prevents accidental exits during a live session.
+[ @file = "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionDelegate.mc"; @line = 6; @symbol_classdef = [KiteSessionDelegate,6,6,25]; @symbol_extends<0> = [WatchUi,6,34,41]; @symbol_extends<1> = [BehaviorDelegate,6,42,58]; ]
+class KiteSessionDelegate extends WatchUi.BehaviorDelegate {
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionDelegate.mc"; @line = 6; ]
+    <init> {
+    }
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionDelegate.mc"; @line = 6; ]
+    static
+    <init> {
+    }
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionDelegate.mc"; @line = 8; @symbol_functiondef = [initialize,8,13,23]; ]
+    function initialize() as Void {
+C__Users_Admin_Documents_UtahWindField_source_KiteSessionDelegate_mc_8_26_10_4_start:
+[ "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionDelegate.mc" 9 8 ]
+        symbol [ BehaviorDelegate %tmp.2 9 8 24 ];
+        %tmp.2 = getv ? :BehaviorDelegate;
+        symbol [ initialize %tmp.3 9 25 35 ];
+        %tmp.3 = getv function %tmp.2 :initialize;
+        invoke %tmp.2 %tmp.3();
+C__Users_Admin_Documents_UtahWindField_source_KiteSessionDelegate_mc_8_26_10_4_stop:
+    }
+    //! Back button: show a confirmation dialog instead of instant exit.
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionDelegate.mc"; @line = 13; @symbol_functiondef = [onBack,13,13,19]; ]
+    function onBack() {
+C__Users_Admin_Documents_UtahWindField_source_KiteSessionDelegate_mc_13_22_21_4_start:
+[ "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionDelegate.mc" 14 8 ]
+        [ "C__Users_Admin_Documents_UtahWindField_source_KiteSessionDelegate_mc_13_22_21_4_start" "C__Users_Admin_Documents_UtahWindField_source_KiteSessionDelegate_mc_13_22_21_4_stop" ]
+        %dialog.1 = local;
+        symbol [ dialog %dialog.1 14 12 18 ];
+        symbol [ WatchUi %tmp.3 14 25 32 ];
+        %tmp.3 = getm $.Toybox.WatchUi;
+        symbol [ Confirmation %tmp.4 14 33 45 ];
+        %tmp.4 = getv function ? %tmp.3 :Confirmation;
+        %tmp.5 = "End session?";
+        %tmp.1 = newc %tmp.4 (%tmp.5);
+        lputv %dialog.1 %tmp.1;
+        symbol [ dialog %dialog.1 14 12 18 ];
+[ "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionDelegate.mc" 15 8 ]
+        symbol [ WatchUi %tmp.6 15 8 15 ];
+        %tmp.6 = getm $.Toybox.WatchUi;
+        symbol [ pushView %tmp.7 15 16 24 ];
+        %tmp.7 = getv function %tmp.6 :pushView;
+        %tmp.8 = lgetv %dialog.1;
+        symbol [ dialog %tmp.8 16 12 18 ];
+        symbol [ EndSessionConfirmDelegate %tmp.12 17 16 41 ];
+        %tmp.12 = getv ? :EndSessionConfirmDelegate;
+        %tmp.9 = newc %tmp.12 ();
+        symbol [ WatchUi %tmp.13 18 12 19 ];
+        %tmp.13 = getm $.Toybox.WatchUi;
+        symbol [ SLIDE_IMMEDIATE %tmp.14 18 20 35 ];
+        %tmp.14 = getv %tmp.13 :SLIDE_IMMEDIATE;
+        invoke %tmp.6 %tmp.7(%tmp.8, %tmp.9, %tmp.14);
+[ "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionDelegate.mc" 20 8 ]
+        %tmp.15 = true;
+        ret %tmp.15;
+C__Users_Admin_Documents_UtahWindField_source_KiteSessionDelegate_mc_13_22_21_4_stop:
+    }
+}
+//! Handles the "End session?" confirmation result.
+[ @file = "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionDelegate.mc"; @line = 25; @symbol_classdef = [EndSessionConfirmDelegate,25,6,31]; @symbol_extends<0> = [WatchUi,25,40,47]; @symbol_extends<1> = [ConfirmationDelegate,25,48,68]; ]
+class EndSessionConfirmDelegate extends WatchUi.ConfirmationDelegate {
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionDelegate.mc"; @line = 25; ]
+    <init> {
+    }
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionDelegate.mc"; @line = 25; ]
+    static
+    <init> {
+    }
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionDelegate.mc"; @line = 27; @symbol_functiondef = [initialize,27,13,23]; ]
+    function initialize() as Void {
+C__Users_Admin_Documents_UtahWindField_source_KiteSessionDelegate_mc_27_26_29_4_start:
+[ "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionDelegate.mc" 28 8 ]
+        symbol [ ConfirmationDelegate %tmp.2 28 8 28 ];
+        %tmp.2 = getv ? :ConfirmationDelegate;
+        symbol [ initialize %tmp.3 28 29 39 ];
+        %tmp.3 = getv function %tmp.2 :initialize;
+        invoke %tmp.2 %tmp.3();
+C__Users_Admin_Documents_UtahWindField_source_KiteSessionDelegate_mc_27_26_29_4_stop:
+    }
+    [ @file = "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionDelegate.mc"; @line = 31; @symbol_functiondef = [onResponse,31,13,23]; @symbol_param<0> = [response,31,24,32]; ]
+    function onResponse(response) {
+C__Users_Admin_Documents_UtahWindField_source_KiteSessionDelegate_mc_31_34_35_4_start:
+[ "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionDelegate.mc" 32 8 ]
+C__Users_Admin_Documents_UtahWindField_source_KiteSessionDelegate_mc_32_8_34_8_if_stmt:
+        %tmp.1 = lgetv %response;
+        symbol [ response %tmp.1 32 12 20 ];
+        symbol [ WatchUi %tmp.2 32 24 31 ];
+        %tmp.2 = getm $.Toybox.WatchUi;
+        symbol [ CONFIRM_YES %tmp.3 32 32 43 ];
+        %tmp.3 = getv %tmp.2 :CONFIRM_YES;
+        %tmp.4 = eq %tmp.1 %tmp.3;
+        bf %tmp.4 @C__Users_Admin_Documents_UtahWindField_source_KiteSessionDelegate_mc_32_8_34_8_if_end;
+C__Users_Admin_Documents_UtahWindField_source_KiteSessionDelegate_mc_32_8_34_8_if_true:
+C__Users_Admin_Documents_UtahWindField_source_KiteSessionDelegate_mc_32_45_34_8_start:
+[ "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionDelegate.mc" 33 12 ]
+        symbol [ System %tmp.5 33 12 18 ];
+        %tmp.5 = getm $.Toybox.System;
+        symbol [ exit %tmp.6 33 19 23 ];
+        %tmp.6 = getv function %tmp.5 :exit;
+        invoke %tmp.5 %tmp.6();
+C__Users_Admin_Documents_UtahWindField_source_KiteSessionDelegate_mc_32_45_34_8_stop:
+        goto @C__Users_Admin_Documents_UtahWindField_source_KiteSessionDelegate_mc_32_8_34_8_if_end;
+C__Users_Admin_Documents_UtahWindField_source_KiteSessionDelegate_mc_32_8_34_8_if_end:
+C__Users_Admin_Documents_UtahWindField_source_KiteSessionDelegate_mc_31_34_35_4_stop:
+    }
+}
+[ @file = "C:\Users\Admin\Documents\UtahWindField\source\KiteSessionDelegate.mc"; @line = 1; ]
+<init> {
+}
