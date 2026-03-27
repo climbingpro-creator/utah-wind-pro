@@ -64,6 +64,16 @@ const FLIES = {
   cicada:       { name: 'Cicada',               size: '#4-8',   patterns: ['Foam Cicada', 'Club Sandwich'], method: 'Slap cast, let sit, twitch — Green River only', category: 'terrestrial' },
   damsel:       { name: 'Damselfly',            size: '#10-12', patterns: ['Damsel Nymph', 'Marabou Damsel'], method: 'Slow strip in stillwaters near weeds', category: 'nymph' },
   mouse:        { name: 'Mouse Pattern',        size: '#2-6',   patterns: ['Morrish Mouse', 'Whitlock Mouse'], method: 'Dead of night — swing across current for trophy browns', category: 'dry' },
+
+  // ── Stillwater-specific patterns ──
+  chironomid:   { name: 'Chironomid',           size: '#14-18', patterns: ['Chromie', 'Ice Cream Cone', 'Copper Top', 'Snow Cone'], method: 'Under indicator at exact depth, 6X tippet, stillwater', category: 'nymph' },
+  balancedLeech:{ name: 'Balanced Leech',        size: '#10-14', patterns: ['Balanced Leech (maroon)', 'Balanced Leech (olive)', 'Balance Leech (black)'], method: 'Under indicator, let it hang and undulate — deadly in stillwater', category: 'nymph' },
+  boatman:      { name: 'Water Boatman',         size: '#14-16', patterns: ['Glass Bead Boatman', 'Foam Boatman'], method: 'Slow strip near weed beds, fall migration triggers', category: 'nymph' },
+  callibaetis:  { name: 'Callibaetis',           size: '#14-16', patterns: ['Parachute Callibaetis', 'Callibaetis Spinner', 'Callibaetis Nymph'], method: 'Dead drift on calm surface or nymph under indicator', category: 'dry' },
+  blob:         { name: 'Blob / Booby',          size: '#10-12', patterns: ['FAB Blob', 'Booby', 'Mini Egg'], method: 'Fast strip near weed beds — triggers reaction strikes', category: 'attractor' },
+  buggerStill:  { name: 'Woolly Bugger (Stillwater)', size: '#8-12', patterns: ['Olive Bugger', 'Black Bugger', 'Crystal Bugger'], method: 'Slow strip off drop-offs and weed edges from float tube', category: 'streamer' },
+  dragonfly:    { name: 'Dragonfly Nymph',       size: '#8-10',  patterns: ['Carey Special', 'Dragonfly Nymph', 'Bead-Head Dragon'], method: 'Slow strip near bottom structure in shallow bays', category: 'nymph' },
+  backswimmer:  { name: 'Backswimmer',           size: '#14-16', patterns: ['Foam Backswimmer', 'Flashback Backswimmer'], method: 'Strip-pause near surface — mimics darting swim pattern', category: 'nymph' },
 };
 
 // ─── Weather-to-fly rules engine ─────────────────────────────────
@@ -75,7 +85,7 @@ function getMonthRange(month) {
   return 'winter';
 }
 
-function buildCandidates({ month, waterTemp, windSpeed, sky, pressureTrend, hour, locationId }) {
+function buildCandidates({ month, waterTemp, windSpeed, sky, pressureTrend, hour, locationId, locationType }) {
   const season = getMonthRange(month);
   const candidates = [];
 
@@ -94,6 +104,7 @@ function buildCandidates({ month, waterTemp, windSpeed, sky, pressureTrend, hour
   const isWarm = waterTemp != null && waterTemp > 65;
   const isFalling = pressureTrend === 'falling';
   const isGreenRiver = locationId === 'green-river' || locationId === 'flaming-gorge';
+  const isStillwater = locationType === 'reservoir' || locationType === 'lake';
 
   // ── COLD WATER (< 40F) — midges dominate ──
   if (isCold) {
@@ -214,6 +225,57 @@ function buildCandidates({ month, waterTemp, windSpeed, sky, pressureTrend, hour
     }
   }
 
+  // ── STILLWATER PATTERNS (reservoirs & lakes) ──
+  if (isStillwater) {
+    // Chironomids dominate cold stillwater (ice-off through late spring, and fall)
+    if (isCool || isCold) {
+      add('chironomid', 92, 'Cold stillwater — chironomids are the primary food source. Indicator at exact depth.', 'all-day');
+      add('balancedLeech', 78, 'Balanced leech under indicator — deadly in cold stillwater', 'all-day');
+    } else if (isPrime) {
+      add('chironomid', 70, 'Chironomids still active in prime temps — especially mornings', 'morning');
+    }
+
+    // Callibaetis on calm sunny days (May-Sep)
+    if ([5, 6, 7, 8, 9].includes(month) && isCalm && isClear) {
+      add('callibaetis', 85, 'Calm + sunny stillwater — callibaetis hatch. Dead drift on surface or nymph underneath.', 'midday');
+    } else if ([5, 6, 7, 8, 9].includes(month)) {
+      add('callibaetis', 55, 'Callibaetis nymph under indicator — productive in reservoirs', 'midday');
+    }
+
+    // Leeches for overcast/windy stillwater days
+    if (isOvercast || isWindy) {
+      add('balancedLeech', 85, 'Overcast/windy stillwater — leech patterns are top producers', 'all-day');
+      add('buggerStill', 80, 'Woolly Bugger stripped along weed edges and drop-offs', 'all-day');
+    }
+
+    // Damselflies warm-water weedy reservoirs (Jun-Aug)
+    if ([6, 7, 8].includes(month) && (isPrime || isWarm)) {
+      add('damsel', 82, 'Summer stillwater near weed beds — damsel nymph migration is on', 'midday');
+      add('dragonfly', 65, 'Dragon nymph slow-stripped near bottom in shallow bays', 'morning');
+    }
+
+    // Boatman (Sep-Oct fall migration)
+    if ([9, 10].includes(month)) {
+      add('boatman', 72, 'Fall water boatman migration — slow strip near weed beds', 'afternoon');
+    }
+
+    // Backswimmer (summer, warm shallows)
+    if ([6, 7, 8].includes(month) && isClear) {
+      add('backswimmer', 55, 'Backswimmer near surface in warm shallows — strip-pause', 'afternoon');
+    }
+
+    // Blob/attractor when nothing else works
+    if (candidates.length < 4) {
+      add('blob', 50, 'Blob/attractor pattern — fast strip triggers reaction strikes in stillwater', 'all-day');
+    }
+
+    // Stillwater streamer is always an option
+    add('buggerStill', 60, 'Woolly Bugger slow strip from float tube — always works in stillwater', 'all-day');
+
+    // Scud in weedy reservoirs year-round
+    add('scud', 65, 'Scud under indicator near weed beds — year-round stillwater staple', 'all-day');
+  }
+
   // ── UNIVERSAL SUBSURFACE — always viable ──
   if (candidates.length < 3) {
     add('worm', 40, 'San Juan Worm — always a solid searching pattern', 'all-day');
@@ -263,6 +325,7 @@ export function getDailyFlyPick({
   pressureTrend = 'stable',
   hour = new Date().getHours(),
   locationId = 'provo-river',
+  locationType = 'river',
 } = {}) {
   const candidates = buildCandidates({
     month,
@@ -272,6 +335,7 @@ export function getDailyFlyPick({
     pressureTrend,
     hour,
     locationId,
+    locationType,
   });
 
   // Deduplicate by flyKey, keeping highest confidence

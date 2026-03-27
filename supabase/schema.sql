@@ -352,6 +352,7 @@ CREATE TABLE IF NOT EXISTS fish_catches (
   weight_lbs  DOUBLE PRECISION,
   length_in   DOUBLE PRECISION,
   photo_url   TEXT,
+  method      TEXT DEFAULT NULL,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
