@@ -316,6 +316,8 @@ export function Dashboard() {
         activityConfig={activityConfig}
         error={error}
         formatTime={formatTime}
+        selectedLake={selectedLake}
+        selectedActivity={selectedActivity}
         lastUpdated={lastUpdated}
         isLoading={isLoading}
         isPro={isPro}

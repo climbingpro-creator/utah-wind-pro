@@ -517,6 +517,28 @@ function renderDayPage(spot, dateStr, riders) {
     .rl-sub{font-size:0.6rem;color:#475569}
     .rl-arrow{font-size:1.2rem;color:#475569;font-weight:300}
 
+    /* Share bar */
+    .share-bar{display:flex;gap:0.5rem;flex-wrap:wrap;padding:0.5rem 0}
+    .share-btn{display:inline-flex;align-items:center;gap:0.4rem;padding:0.5rem 1rem;border-radius:10px;
+      font-size:0.75rem;font-weight:700;border:none;cursor:pointer;transition:all 0.15s;text-decoration:none;color:#fff}
+    .share-btn:hover{transform:scale(1.03);filter:brightness(1.15)}
+    .share-btn.copy{background:linear-gradient(135deg,#334155,#475569)}
+    .share-btn.twitter{background:linear-gradient(135deg,#0c4a6e,#0ea5e9)}
+    .share-btn.sms-share{background:linear-gradient(135deg,#065f46,#10b981)}
+    .share-copied{font-size:0.65rem;color:#22c55e;font-weight:600;margin-left:0.5rem;opacity:0;transition:opacity 0.3s}
+
+    /* Rider setup CTA */
+    .setup-card{background:linear-gradient(145deg,#111827,#0f172a);border:1px solid rgba(234,179,8,0.15);
+      border-radius:16px;padding:1.2rem;margin-top:0.5rem}
+    .setup-card h3{font-size:0.85rem;font-weight:800;color:#eab308;margin-bottom:0.3rem}
+    .setup-card p{font-size:0.7rem;color:#64748b;margin-bottom:1rem;line-height:1.5}
+    .setup-steps{display:flex;flex-direction:column;gap:0.6rem}
+    .setup-step{display:flex;align-items:flex-start;gap:0.6rem}
+    .step-num{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+      font-size:0.65rem;font-weight:800;color:#000;background:#eab308;flex-shrink:0}
+    .step-text{font-size:0.7rem;color:#94a3b8;line-height:1.5}
+    .step-text strong{color:#f1f5f9}
+
     footer{text-align:center;padding:2.5rem 0 1.5rem;font-size:0.7rem;color:#1e293b}
     footer a{color:#38bdf8;text-decoration:none;font-weight:600}
 
@@ -586,6 +608,37 @@ function renderDayPage(spot, dateStr, riders) {
   <div class="section-sub">Tap to view full session details</div>
   ${riderLinks}
 
+  <div class="section-title">Share This Day</div>
+  <div class="share-bar">
+    <button class="share-btn copy" onclick="copyLink()">&#128203; Copy Link <span id="copied-msg" class="share-copied">Copied!</span></button>
+    <a class="share-btn twitter" href="https://twitter.com/intent/tweet?text=${encodeURIComponent(`Session Day at ${spot.name}! ${riders.length} riders, ${totalJumps} jumps, day record ${dayRecord.toFixed(1)}ft`)}&url=${encodeURIComponent(`https://utahwindfinder.com/day/${spotSlug}/${dateStr}`)}" target="_blank" rel="noopener">&#120143; Post</a>
+    <a class="share-btn sms-share" href="sms:?body=${encodeURIComponent(`Check out today's kite session leaderboard at ${spot.name}! ${totalJumps} jumps, ${riders.length} riders. https://utahwindfinder.com/day/${spotSlug}/${dateStr}`)}">&#128172; Text</a>
+  </div>
+
+  <div class="section-title">Join the Leaderboard</div>
+  <div class="setup-card">
+    <h3>&#127942; Get on the Board</h3>
+    <p>Ride with the UtahWindFinder Garmin app and your sessions automatically appear here.</p>
+    <div class="setup-steps">
+      <div class="setup-step">
+        <div class="step-num">1</div>
+        <div class="step-text"><strong>Install the app</strong> on your Garmin watch from the Connect IQ store (search "UtahWindField")</div>
+      </div>
+      <div class="setup-step">
+        <div class="step-num">2</div>
+        <div class="step-text"><strong>Set your rider name &amp; gear</strong> in the app settings via Garmin Connect Mobile</div>
+      </div>
+      <div class="setup-step">
+        <div class="step-num">3</div>
+        <div class="step-text"><strong>Start a session</strong> and ride! When you stop, your jumps, speed, and hangtime upload automatically</div>
+      </div>
+      <div class="setup-step">
+        <div class="step-num">4</div>
+        <div class="step-text"><strong>Compare &amp; compete</strong> with everyone who rode the same spot today</div>
+      </div>
+    </div>
+  </div>
+
   <footer>
     <a href="/">UtahWindFinder.com</a> &middot; Session Day &middot; ${esc(spot.name)}
   </footer>
@@ -599,6 +652,22 @@ function switchBoard(id) {
   var tabs = document.querySelectorAll('.lb-tab');
   var map = { height: 0, hang: 1, distance: 2, speed: 3, jumps: 4, duration: 5 };
   if (map[id] !== undefined) tabs[map[id]].classList.add('active');
+}
+
+function copyLink() {
+  var url = window.location.href;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(url).then(function() { showCopied(); });
+  } else {
+    var t = document.createElement('textarea');
+    t.value = url; document.body.appendChild(t); t.select();
+    document.execCommand('copy'); document.body.removeChild(t);
+    showCopied();
+  }
+}
+function showCopied() {
+  var el = document.getElementById('copied-msg');
+  if (el) { el.style.opacity = '1'; setTimeout(function() { el.style.opacity = '0'; }, 2000); }
 }
 </script>
 

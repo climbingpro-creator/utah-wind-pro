@@ -1,5 +1,18 @@
-import { Bell, Brain, RefreshCw, Wifi, WifiOff } from 'lucide-react';
+import { Bell, Brain, RefreshCw, Wifi, WifiOff, Trophy } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
+
+const SPOT_SLUG_MAP = {
+  'utah-lake-lincoln': 'lincoln-beach',
+  'utah-lake-sandy': 'sandy-beach',
+  'utah-lake-vineyard': 'vineyard',
+  'utah-lake-zigzag': 'zig-zag',
+  'utah-lake-mm19': 'american-fork',
+  'utah-lake': 'lincoln-beach',
+  'deer-creek': 'deer-creek',
+  'willard-bay': 'willard-bay',
+  'yuba': 'yuba',
+  'sand-hollow': 'sand-hollow',
+};
 
 export default function AppHeader({
   theme,
@@ -13,6 +26,8 @@ export default function AppHeader({
   trialDaysLeft,
   showLearningDashboard,
   lakeState,
+  selectedLake,
+  selectedActivity,
   getSMSPrefs,
   onSMSClick,
   onPhotoClick,
@@ -21,6 +36,7 @@ export default function AppHeader({
   onRefresh,
   onUpgradeClick,
 }) {
+  const isWindSport = ['kiting', 'windsurfing', 'sailing'].includes(selectedActivity);
   const btnBase = `flex flex-col items-center gap-0.5 px-1.5 py-1 rounded-lg transition-colors`;
   const btnColors = theme === 'dark'
     ? 'hover:bg-white/5 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
@@ -56,6 +72,25 @@ export default function AppHeader({
               )}
               <span>{formatTime(lastUpdated)}</span>
             </div>
+
+            {isWindSport && (() => {
+              const slug = SPOT_SLUG_MAP[selectedLake];
+              if (!slug) return null;
+              const today = new Date().toISOString().split('T')[0];
+              return (
+                <button
+                  onClick={() => { window.location.href = `/day/${slug}/${today}`; }}
+                  aria-label="Session Day Leaderboard"
+                  className={`${btnBase} ${theme === 'dark'
+                    ? 'hover:bg-amber-500/10 text-amber-400/70 hover:text-amber-400'
+                    : 'hover:bg-amber-50 text-amber-500/60 hover:text-amber-600'
+                  }`}
+                >
+                  <Trophy className="w-4 h-4" />
+                  <span className="text-[8px] leading-none font-medium">Board</span>
+                </button>
+              );
+            })()}
 
             <button onClick={onSMSClick} aria-label="Text Alerts" className={`${btnBase} relative ${btnColors}`}>
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">

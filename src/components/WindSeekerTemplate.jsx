@@ -170,10 +170,9 @@ export default function WindSeekerTemplate({
         const today = new Date().toISOString().split('T')[0];
         const dayUrl = `/day/${spotSlug}/${today}`;
         return (
-          <a
-            href={dayUrl}
-            className="card flex items-center gap-3 no-underline hover:border-amber-500/40 transition-colors group cursor-pointer"
-            style={{ textDecoration: 'none' }}
+          <button
+            onClick={() => { window.location.href = dayUrl; }}
+            className="card flex items-center gap-3 hover:border-amber-500/40 transition-colors group cursor-pointer w-full text-left"
           >
             <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 group-hover:bg-amber-500/20 transition-colors flex-shrink-0">
               <Trophy className="w-5 h-5 text-amber-400" />
@@ -191,7 +190,7 @@ export default function WindSeekerTemplate({
               <Users className="w-3.5 h-3.5 text-[var(--text-tertiary)]" />
               <span className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase">Live</span>
             </div>
-          </a>
+          </button>
         );
       })()}
 
