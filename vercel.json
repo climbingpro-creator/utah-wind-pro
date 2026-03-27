@@ -3,8 +3,17 @@
   "outputDirectory": "dist",
   "framework": "vite",
   "functions": {
+    "api/cron/1-ingest.js": {
+      "maxDuration": 60
+    },
+    "api/internal/2-process-models.js": {
+      "maxDuration": 120
+    },
+    "api/internal/3-dispatch-alerts.js": {
+      "maxDuration": 60
+    },
     "api/cron/collect.js": {
-      "maxDuration": 300
+      "maxDuration": 60
     },
     "api/cron/push-check.js": {
       "maxDuration": 60
@@ -12,11 +21,7 @@
   },
   "crons": [
     {
-      "path": "/api/cron/collect",
-      "schedule": "*/15 * * * *"
-    },
-    {
-      "path": "/api/cron/push-check",
+      "path": "/api/cron/1-ingest",
       "schedule": "*/15 * * * *"
     }
   ],
