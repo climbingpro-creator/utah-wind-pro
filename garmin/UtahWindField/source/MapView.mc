@@ -24,18 +24,11 @@ using Toybox.System;
 
 class MapView extends WatchUi.View {
 
-    // Store breadcrumbs as parallel arrays (lighter than dictionaries)
-    hidden var _lats;
-    hidden var _lons;
-    hidden var _count = 0;
-    hidden const MAX_POINTS = 600;   // ~10 min at 1pt/sec
-    hidden const SAMPLE_MS  = 2000;  // record a point every 2 seconds
+    hidden const SAMPLE_MS  = 2000;
     hidden var _lastSampleMs = 0;
 
     function initialize() {
         View.initialize();
-        _lats = new [MAX_POINTS];
-        _lons = new [MAX_POINTS];
     }
 
     function onLayout(dc) {
@@ -63,7 +56,8 @@ class MapView extends WatchUi.View {
         dc.drawLine(12, H * 11 / 100, 9, H * 14 / 100);
         dc.drawLine(12, H * 11 / 100, 15, H * 14 / 100);
 
-        // Sample current position
+        // Sample current position → push to app-level track
+        var app = Application.getApp();
         var info = Activity.getActivityInfo();
         var curLat = null;
         var curLon = null;
@@ -75,9 +69,13 @@ class MapView extends WatchUi.View {
             var now = System.getTimer();
             if (now - _lastSampleMs >= SAMPLE_MS) {
                 _lastSampleMs = now;
-                _addPoint(curLat, curLon);
+                app.addTrackPoint(curLat, curLon);
             }
         }
+
+        var _count = app.trackCount;
+        var _lats  = app.trackLats;
+        var _lons  = app.trackLons;
 
         if (_count < 2) {
             // Not enough points yet
@@ -183,17 +181,4 @@ class MapView extends WatchUi.View {
             Graphics.TEXT_JUSTIFY_CENTER);
     }
 
-    hidden function _addPoint(lat, lon) {
-        if (_count >= MAX_POINTS) {
-            // Shift array left (drop oldest point)
-            for (var i = 0; i < MAX_POINTS - 1; i++) {
-                _lats[i] = _lats[i + 1];
-                _lons[i] = _lons[i + 1];
-            }
-            _count = MAX_POINTS - 1;
-        }
-        _lats[_count] = lat;
-        _lons[_count] = lon;
-        _count++;
-    }
 }

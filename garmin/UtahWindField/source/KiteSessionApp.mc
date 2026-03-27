@@ -18,23 +18,47 @@ class KiteSessionApp extends Application.AppBase {
     var isPaused    = false;
     var uploader    = null;
 
+    // ── App-level GPS track (shared by MapView + ReviewView) ────
+    hidden const MAX_TRACK = 600;
+    var trackLats;
+    var trackLons;
+    var trackCount = 0;
+
+    // ── Battery throttle state ──────────────────────────────────
+    hidden const THROTTLE_SPEED_KTS = 4.0;
+    hidden const THROTTLE_DELAY_MS  = 15000;
+    hidden var _lowSpeedSince = 0;
+    hidden var _isThrottled   = false;
+
     function initialize() {
         AppBase.initialize();
     }
 
     function onStart(state) {
-        // Enable GPS immediately so it can lock while rigging
+        trackLats = new [MAX_TRACK];
+        trackLons = new [MAX_TRACK];
+
         Position.enableLocationEvents(
             Position.LOCATION_CONTINUOUS,
             method(:onPosition) as Lang.Method
         );
         Sensor.setEnabledSensors([Sensor.SENSOR_HEARTRATE]);
 
-        // Topo loop for GPS position tracking (no HTTP until session starts)
         topoLoop = new TopographyLoop();
-
-        // Jump tracker initialized but not listening until START
         jumpTracker = new JumpTracker();
+    }
+
+    function addTrackPoint(lat, lon) {
+        if (trackCount >= MAX_TRACK) {
+            for (var i = 0; i < MAX_TRACK - 1; i++) {
+                trackLats[i] = trackLats[i + 1];
+                trackLons[i] = trackLons[i + 1];
+            }
+            trackCount = MAX_TRACK - 1;
+        }
+        trackLats[trackCount] = lat;
+        trackLons[trackCount] = lon;
+        trackCount++;
     }
 
     function startSession() {
@@ -48,6 +72,10 @@ class KiteSessionApp extends Application.AppBase {
             });
             session.start();
         }
+
+        trackCount = 0;
+        _lowSpeedSince = 0;
+        _isThrottled = false;
 
         topoLoop.start();
         jumpTracker.startListening();
@@ -112,14 +140,11 @@ class KiteSessionApp extends Application.AppBase {
             tempC = si.temperature.toFloat();
         }
 
-        // Get map track from the ViewLoop's MapView
-        // (MapView stores track in its instance — grab via factory)
-        var mapLats = null;
-        var mapLons = null;
-        var mapCount = 0;
-
         // Build review screen
         var review = new ReviewView();
+        review.trackLats  = trackLats;
+        review.trackLons  = trackLons;
+        review.trackCount = trackCount;
         review.durationStr = _fmtTimer(timerMs);
         review.distNM      = distNM;
         review.maxKnots    = maxKnots;
@@ -216,6 +241,25 @@ class KiteSessionApp extends Application.AppBase {
     function onPosition(info) {
         if (topoLoop != null) {
             topoLoop.updatePosition(info);
+        }
+
+        // Fix 3: Smart battery throttling — disable 25Hz accel when resting
+        if (isRecording && !isPaused && jumpTracker != null && info != null && info.speed != null) {
+            var speedKts = info.speed.toFloat() * 1.94384;
+            if (speedKts < THROTTLE_SPEED_KTS) {
+                if (_lowSpeedSince == 0) {
+                    _lowSpeedSince = System.getTimer();
+                } else if (!_isThrottled && (System.getTimer() - _lowSpeedSince) > THROTTLE_DELAY_MS) {
+                    jumpTracker.setThrottled(true);
+                    _isThrottled = true;
+                }
+            } else {
+                _lowSpeedSince = 0;
+                if (_isThrottled) {
+                    jumpTracker.setThrottled(false);
+                    _isThrottled = false;
+                }
+            }
         }
     }
 

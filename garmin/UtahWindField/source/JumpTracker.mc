@@ -39,6 +39,13 @@ class JumpTracker {
     // meters between consecutive reads, clamp it (submersion spike)
     hidden const ALT_RATE_MAX_M = 8.0;
 
+    // ── Horizontal crash detection ─────────────────────────────────
+    hidden const DECEL_THRESHOLD_KTS = 10.0;
+    hidden const SPD_BUF_SIZE = 4;
+    hidden var _spdBuf;
+    hidden var _spdBufIdx  = 0;
+    hidden var _spdBufFull = false;
+
     // ── Altitude smoothing (rolling 2-second baseline) ────────────
     hidden const ALT_BUF_SIZE   = 50;    // ~2s at 25Hz
     hidden var _altBuf;
@@ -73,6 +80,10 @@ class JumpTracker {
         for (var i = 0; i < ALT_BUF_SIZE; i++) {
             _altBuf[i] = 0.0;
         }
+        _spdBuf = new [SPD_BUF_SIZE];
+        for (var i = 0; i < SPD_BUF_SIZE; i++) {
+            _spdBuf[i] = 0.0;
+        }
     }
 
     function startListening() {
@@ -91,6 +102,33 @@ class JumpTracker {
         if (logger != null) {
             logger.flush();
         }
+    }
+
+    // Fix 3: Battery throttle — disable accel when resting, re-enable when moving
+    function setThrottled(throttled) {
+        Sensor.unregisterSensorDataListener();
+        if (!throttled) {
+            startListening();
+        }
+    }
+
+    // Fix 2: Record GPS speed once per sensor batch for deceleration tracking
+    hidden function _updateSpeedBuffer() {
+        var spd = _getCurrentSpeedKts();
+        _spdBuf[_spdBufIdx] = spd;
+        _spdBufIdx = (_spdBufIdx + 1) % SPD_BUF_SIZE;
+        if (_spdBufIdx == 0) { _spdBufFull = true; }
+    }
+
+    // Returns true if a sudden deceleration + accel spike indicates a horizontal crash
+    hidden function _isHorizontalCrash() {
+        var currentSpd = _getCurrentSpeedKts();
+        var maxRecent = 0.0;
+        var count = _spdBufFull ? SPD_BUF_SIZE : _spdBufIdx;
+        for (var i = 0; i < count; i++) {
+            if (_spdBuf[i] > maxRecent) { maxRecent = _spdBuf[i]; }
+        }
+        return (maxRecent - currentSpd) > DECEL_THRESHOLD_KTS;
     }
 
     // ── Smoothed altitude read ────────────────────────────────────
@@ -165,6 +203,8 @@ class JumpTracker {
         var zArr = ad.z;
         if (xArr == null || yArr == null || zArr == null) { return; }
 
+        _updateSpeedBuffer();
+
         var ts = System.getTimer();
         var n = xArr.size();
         for (var i = 0; i < n; i++) {
@@ -192,15 +232,21 @@ class JumpTracker {
 
             case JS_IDLE:
                 if (mag > POP_G) {
-                    // Speed gate: must be moving to consider a jump
                     var spdKts = _getCurrentSpeedKts();
                     if (spdKts < MIN_SPEED_KTS) {
                         break;
                     }
 
+                    // Fix 2: Sudden decel + accel spike = horizontal crash, not a jump
+                    if (_isHorizontalCrash()) {
+                        crashesFiltered++;
+                        _state   = JS_COOLDOWN;
+                        _counter = 0;
+                        break;
+                    }
+
                     _state       = JS_TAKEOFF_POP;
                     _counter     = 0;
-                    // Use the smoothed 2-second baseline, not a single snapshot
                     _takeoffAlt  = _getBaselineAltitude();
                     _peakAlt     = _takeoffAlt;
                     _takeoffMs   = System.getTimer();

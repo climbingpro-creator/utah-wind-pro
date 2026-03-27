@@ -53,6 +53,7 @@ class EmergencyView extends WatchUi.View {
     hidden var _lastLat = 0.0;
     hidden var _lastLon = 0.0;
     hidden var _responseMsg = "";
+    hidden var _phoneWarning = false;
 
     function initialize() {
         View.initialize();
@@ -97,6 +98,28 @@ class EmergencyView extends WatchUi.View {
         dc.setColor(Graphics.COLOR_YELLOW, Graphics.COLOR_TRANSPARENT);
         dc.drawText(cx, H * 8 / 100, Graphics.FONT_SMALL,
             "SEND LOCATION", Graphics.TEXT_JUSTIFY_CENTER);
+
+        // Fix 4: Phone connection warning — blocks arming
+        if (_phoneWarning) {
+            dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_RED);
+            dc.fillRectangle(0, H * 25 / 100, W, H * 30 / 100);
+            dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_RED);
+            dc.drawText(cx, H * 30 / 100, Graphics.FONT_SMALL,
+                "NO PHONE", Graphics.TEXT_JUSTIFY_CENTER);
+            dc.drawText(cx, H * 42 / 100, Graphics.FONT_XTINY,
+                "CONNECTION", Graphics.TEXT_JUSTIFY_CENTER);
+            dc.setColor(Graphics.COLOR_YELLOW, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(cx, H * 62 / 100, Graphics.FONT_XTINY,
+                "CANNOT SEND.", Graphics.TEXT_JUSTIFY_CENTER);
+            dc.drawText(cx, H * 72 / 100, Graphics.FONT_XTINY,
+                "Connect phone via BT", Graphics.TEXT_JUSTIFY_CENTER);
+            dc.drawText(cx, H * 80 / 100, Graphics.FONT_XTINY,
+                "and try again.", Graphics.TEXT_JUSTIFY_CENTER);
+            dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(cx, H * 91 / 100, Graphics.FONT_XTINY,
+                "Not a PLB replacement", Graphics.TEXT_JUSTIFY_CENTER);
+            return;
+        }
 
         // Instructions
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
@@ -213,6 +236,16 @@ class EmergencyView extends WatchUi.View {
 
     function armAlert() {
         if (_state != ST_IDLE) { return; }
+
+        // Fix 4: Block arming if phone is not connected via Bluetooth
+        var ds = System.getDeviceSettings();
+        if (ds == null || !ds.phoneConnected) {
+            _phoneWarning = true;
+            WatchUi.requestUpdate();
+            return;
+        }
+
+        _phoneWarning = false;
         _state = ST_ARMED;
         _countdown = 3;
         _timer.start(method(:onCountdown), 1000, true);
@@ -225,6 +258,7 @@ class EmergencyView extends WatchUi.View {
         _state = ST_IDLE;
         _sendCount = 0;
         _responseMsg = "";
+        _phoneWarning = false;
         WatchUi.requestUpdate();
     }
 
