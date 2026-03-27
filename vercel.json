@@ -16,7 +16,7 @@
     "api/cron/collect.js": {
       "maxDuration": 30
     },
-    "api/admin/collect-admin.js": {
+    "api/internal/admin.js": {
       "maxDuration": 300
     },
     "api/cron/push-check.js": {

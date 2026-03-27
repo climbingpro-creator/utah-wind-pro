@@ -1,5 +1,5 @@
 /**
- * /api/admin/collect-admin — Protected Admin Operations
+ * /api/internal/admin — Protected Admin Operations
  *
  * Heavy ML imports (serverLearning 83KB, historicalAnalysis 39KB) are isolated
  * here to keep the public read API (api/cron/collect.js) cold-start fast.
@@ -10,6 +10,7 @@
  *   ?action=backfill      — historical observation backfill (max 7 days)
  *   ?action=backfill-pws  — PWS history backfill (max 1095 days)
  *   ?action=build-models  — manual statistical model rebuild (max 365 days)
+ *   ?action=weights       — server-learned weights + accuracy stats
  */
 
 import { backfillHistorical, loadWeights, loadMeta } from '../lib/serverLearning.js';

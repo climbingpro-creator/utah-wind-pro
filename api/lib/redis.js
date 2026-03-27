@@ -2,10 +2,11 @@
  * Shared infrastructure for the serverless backend.
  *
  * - Redis helpers (Upstash REST)
- * - Rate limiting (Upstash Ratelimit)
+ * - Rate limiting (@upstash/ratelimit + @upstash/redis SDK)
  * - Re-exports QStash chain trigger + verification
  */
 
+import { Redis } from '@upstash/redis';
 import { Ratelimit } from '@upstash/ratelimit';
 
 // ── Re-export QStash functions so existing imports still work ──
@@ -26,7 +27,7 @@ export function hasRedis() {
   return !!(upstashUrl && upstashToken);
 }
 
-// ── Redis commands ─────────────────────────────────────────────
+// ── Redis commands (raw REST — used by ML pipeline) ────────────
 
 export async function redisCommand(command, ...args) {
   const { upstashUrl, upstashToken } = getEnv();
@@ -96,7 +97,7 @@ export function toMountainHour(date) {
   }
 }
 
-// ── Rate Limiting ──────────────────────────────────────────────
+// ── Rate Limiting (@upstash/redis SDK) ─────────────────────────
 
 let _rateLimiter = null;
 
@@ -106,23 +107,10 @@ function getRateLimiter() {
   const token = process.env.UPSTASH_REDIS_REST_TOKEN;
   if (!url || !token) return null;
 
+  const redis = new Redis({ url, token });
+
   _rateLimiter = new Ratelimit({
-    redis: {
-      // Minimal Redis client compatible with @upstash/ratelimit
-      async eval(script, keys, args) {
-        // Ratelimit uses a Lua script internally — Upstash REST supports EVAL
-        const resp = await fetch(url, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(['EVAL', script, String(keys.length), ...keys, ...args]),
-        });
-        const json = await resp.json();
-        return json.result;
-      },
-    },
+    redis,
     limiter: Ratelimit.slidingWindow(20, '10 s'),
     prefix: 'rl:api',
   });
