@@ -10,7 +10,8 @@ async function axiosWithRetry(config, retries = 2, baseDelay = 1000) {
       return await axios(config);
     } catch (err) {
       const status = err.response?.status;
-      const retryable = !status || status >= 500 || status === 429;
+      if (status === 429) throw err;
+      const retryable = !status || status >= 500;
       if (attempt >= retries || !retryable) throw err;
       await new Promise(r => setTimeout(r, baseDelay * 2 ** attempt));
     }
