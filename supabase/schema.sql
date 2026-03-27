@@ -232,8 +232,7 @@ CREATE INDEX IF NOT EXISTS idx_kite_sessions_spot
 CREATE INDEX IF NOT EXISTS idx_kite_sessions_started
   ON kite_sessions(started_at DESC);
 
-CREATE INDEX IF NOT EXISTS idx_kite_sessions_spot_date
-  ON kite_sessions(spot_id, (started_at::date));
+-- Day page queries use the individual spot_id and started_at indexes together
 
 -- ── Individual Jumps (for deep-dive charts / leaderboards) ──────
 
