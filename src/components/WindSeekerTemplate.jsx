@@ -1,5 +1,5 @@
 import React, { Suspense, lazy } from 'react';
-import { Wind, Brain, Lightbulb, ShieldCheck, ShieldAlert, AlertTriangle, AlertCircle, XCircle, CheckCircle } from 'lucide-react';
+import { Wind, Brain, Lightbulb, ShieldCheck, ShieldAlert, AlertTriangle, AlertCircle, XCircle, CheckCircle, Trophy, Users, ArrowUpRight } from 'lucide-react';
 import { WindVector } from './WindVector';
 import { SafeComponent } from './ErrorBoundary';
 import DecisionCard from './DecisionCard';
@@ -7,6 +7,19 @@ import TodayTimeline from './TodayTimeline';
 import { evaluateKiteSafety } from './KiteSafety';
 
 const SpotRanker = lazy(() => import('./SpotRanker'));
+
+const SPOT_SLUG_MAP = {
+  'utah-lake-lincoln': 'lincoln-beach',
+  'utah-lake-sandy': 'sandy-beach',
+  'utah-lake-vineyard': 'vineyard',
+  'utah-lake-zigzag': 'zig-zag',
+  'utah-lake-mm19': 'american-fork',
+  'utah-lake': 'lincoln-beach',
+  'deer-creek': 'deer-creek',
+  'willard-bay': 'willard-bay',
+  'yuba': 'yuba',
+  'sand-hollow': 'sand-hollow',
+};
 
 const SAFETY_PILL = {
   GO:      { bg: 'bg-green-500/15',  border: 'border-green-500/40', text: 'text-green-400',  icon: ShieldCheck },
@@ -149,6 +162,38 @@ export default function WindSeekerTemplate({
           </div>
         )}
       </div>
+
+      {/* ═══════ SESSION DAY LEADERBOARD LINK ═══════ */}
+      {(() => {
+        const spotSlug = SPOT_SLUG_MAP[selectedLake];
+        if (!spotSlug) return null;
+        const today = new Date().toISOString().split('T')[0];
+        const dayUrl = `/day/${spotSlug}/${today}`;
+        return (
+          <a
+            href={dayUrl}
+            className="card flex items-center gap-3 no-underline hover:border-amber-500/40 transition-colors group cursor-pointer"
+            style={{ textDecoration: 'none' }}
+          >
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 group-hover:bg-amber-500/20 transition-colors flex-shrink-0">
+              <Trophy className="w-5 h-5 text-amber-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-bold text-[var(--text-primary)] flex items-center gap-2">
+                Session Day Leaderboard
+                <ArrowUpRight className="w-3.5 h-3.5 text-amber-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+              <div className="text-[11px] text-[var(--text-tertiary)]">
+                Compare jumps, speed &amp; hangtime with other riders at {locName} today
+              </div>
+            </div>
+            <div className="flex items-center gap-1 flex-shrink-0">
+              <Users className="w-3.5 h-3.5 text-[var(--text-tertiary)]" />
+              <span className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase">Live</span>
+            </div>
+          </a>
+        );
+      })()}
 
       {/* ═══════ WHERE TO GO ═══════ */}
       <div ref={contentRef} className="scroll-mt-4">

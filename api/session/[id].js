@@ -310,6 +310,19 @@ function renderPage(s, jumps, spot) {
     })();
   </script>` : ''}
 
+  ${spot?.name ? (() => {
+    const slug = (spot.name || '').toLowerCase().replace(/\s+/g, '-');
+    const d = s.started_at ? new Date(s.started_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+    return `<div style="text-align:center;padding:1.5rem 0 0">
+      <a href="/day/${slug}/${d}" style="display:inline-flex;align-items:center;gap:0.5rem;padding:0.7rem 1.5rem;
+        border-radius:12px;background:linear-gradient(135deg,#854d0e,#eab308);color:#000;font-weight:800;
+        font-size:0.8rem;text-decoration:none;text-transform:uppercase;letter-spacing:0.05em;
+        transition:transform 0.15s" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
+        &#127942; View Day Leaderboard
+      </a>
+    </div>`;
+  })() : ''}
+
   <footer>
     <a href="/">UtahWindFinder.com</a> &middot; Kite Session Tracker
   </footer>
