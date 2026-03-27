@@ -1,7 +1,17 @@
 /**
- * Shared Redis helpers for the event-driven cron chain.
- * Used by 1-ingest, 2-process-models, 3-dispatch-alerts, and collect (read API).
+ * Shared infrastructure for the serverless backend.
+ *
+ * - Redis helpers (Upstash REST)
+ * - Rate limiting (Upstash Ratelimit)
+ * - Re-exports QStash chain trigger + verification
  */
+
+import { Ratelimit } from '@upstash/ratelimit';
+
+// ── Re-export QStash functions so existing imports still work ──
+export { triggerNextStage, verifyQStashSignature } from './qstash.js';
+
+// ── Environment ────────────────────────────────────────────────
 
 export function getEnv() {
   return {
@@ -15,6 +25,8 @@ export function hasRedis() {
   const { upstashUrl, upstashToken } = getEnv();
   return !!(upstashUrl && upstashToken);
 }
+
+// ── Redis commands ─────────────────────────────────────────────
 
 export async function redisCommand(command, ...args) {
   const { upstashUrl, upstashToken } = getEnv();
@@ -66,6 +78,8 @@ export async function redisMGet(keys) {
   }
 }
 
+// ── Utilities ──────────────────────────────────────────────────
+
 export function normalizeToMb(val) {
   if (val == null) return null;
   return val < 50 ? val * 33.864 : val;
@@ -82,41 +96,51 @@ export function toMountainHour(date) {
   }
 }
 
-/**
- * Fire-and-forget chain trigger to the next stage in the pipeline.
- * Uses the request host or VERCEL_URL to build the target URL.
- */
-export function triggerNextStage(path, req) {
-  const host = req?.headers?.['x-forwarded-host'] || req?.headers?.host;
-  const proto = req?.headers?.['x-forwarded-proto'] || 'https';
-  const baseUrl = host
-    ? `${proto}://${host}`
-    : process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : 'https://utahwindfinder.com';
+// ── Rate Limiting ──────────────────────────────────────────────
 
-  const internalKey = process.env.INTERNAL_API_KEY;
-  const headers = { 'Content-Type': 'application/json' };
-  if (internalKey) headers['x-internal-key'] = internalKey;
+let _rateLimiter = null;
 
-  fetch(`${baseUrl}${path}`, {
-    method: 'POST',
-    headers,
-    signal: AbortSignal.timeout(5000),
-  }).catch(err => {
-    console.warn(`[chain] Failed to trigger ${path}: ${err.message}`);
+function getRateLimiter() {
+  if (_rateLimiter) return _rateLimiter;
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url || !token) return null;
+
+  _rateLimiter = new Ratelimit({
+    redis: {
+      // Minimal Redis client compatible with @upstash/ratelimit
+      async eval(script, keys, args) {
+        // Ratelimit uses a Lua script internally — Upstash REST supports EVAL
+        const resp = await fetch(url, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(['EVAL', script, String(keys.length), ...keys, ...args]),
+        });
+        const json = await resp.json();
+        return json.result;
+      },
+    },
+    limiter: Ratelimit.slidingWindow(20, '10 s'),
+    prefix: 'rl:api',
   });
+  return _rateLimiter;
 }
 
 /**
- * Verify the internal API key for chain-only endpoints.
- * Returns true if authorized, false otherwise.
+ * Check rate limit for a given identifier (typically client IP).
+ * Returns { limited: false } if ratelimit is not configured.
  */
-export function verifyInternalKey(req) {
-  const key = process.env.INTERNAL_API_KEY;
-  if (!key) {
-    console.warn('[auth] INTERNAL_API_KEY not set — blocking internal request');
-    return false;
+export async function checkRateLimit(identifier) {
+  const limiter = getRateLimiter();
+  if (!limiter) return { limited: false };
+  try {
+    const result = await limiter.limit(identifier);
+    return { limited: !result.success, reset: result.reset, remaining: result.remaining };
+  } catch (err) {
+    console.warn('[ratelimit] Check failed:', err.message);
+    return { limited: false };
   }
-  return req.headers['x-internal-key'] === key;
 }

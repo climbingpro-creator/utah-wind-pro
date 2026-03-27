@@ -2,7 +2,7 @@
  * Stage 3 of 3 — Alert Dispatch
  * 
  * Internal endpoint: POST /api/internal/3-dispatch-alerts
- * Secured by INTERNAL_API_KEY header.
+ * Secured by QStash signature verification (falls back to INTERNAL_API_KEY).
  * 
  * Responsibilities:
  *   1. Read freshly processed data from Redis
@@ -19,7 +19,8 @@ import { getSupabase } from '../lib/supabase.js';
 import { getLakeConfig } from '../lib/stations.js';
 import { splitStations, fetchNwsLatest } from '../lib/nwsAdapter.js';
 import { isUdotStation, fetchUdotLatest } from '../lib/udotAdapter.js';
-import { redisCommand, verifyInternalKey } from '../lib/redis.js';
+import { redisCommand } from '../lib/redis.js';
+import { verifyQStashSignature } from '../lib/qstash.js';
 
 const VAPID_PUBLIC  = process.env.VAPID_PUBLIC_KEY;
 const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY;
@@ -37,8 +38,9 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'POST only' });
   }
 
-  if (!verifyInternalKey(req)) {
-    return res.status(401).json({ error: 'Unauthorized — invalid internal key' });
+  const verified = await verifyQStashSignature(req);
+  if (!verified) {
+    return res.status(401).json({ error: 'Unauthorized — invalid signature' });
   }
 
   if (!VAPID_PUBLIC || !VAPID_PRIVATE) {

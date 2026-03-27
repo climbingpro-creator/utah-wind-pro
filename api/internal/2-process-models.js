@@ -2,14 +2,14 @@
  * Stage 2 of 3 — ML Processing & Model Learning
  * 
  * Internal endpoint: POST /api/internal/2-process-models
- * Secured by INTERNAL_API_KEY header.
+ * Secured by QStash signature verification (falls back to INTERNAL_API_KEY).
  * 
  * Responsibilities:
  *   1. Read fresh raw observations from Redis
  *   2. Run propagation analysis for all spots
  *   3. Run the server learning cycle (predict → verify → learn)
  *   4. Auto-rebuild statistical models on schedule
- *   5. Trigger Stage 3 (dispatch-alerts) via async HTTP POST
+ *   5. Trigger Stage 3 (dispatch-alerts) via QStash
  * 
  * This is the heaviest stage — gets the most maxDuration.
  */
@@ -18,10 +18,8 @@ import { runServerLearningCycle } from '../lib/serverLearning.js';
 import { analyzeFromStations, analyzeAllSpots, storePropagationSnapshot, learnFromPropagation } from '../lib/serverPropagation.js';
 import { buildStatisticalModels } from '../lib/historicalAnalysis.js';
 import { LAKE_STATION_MAP, ALL_STATION_IDS } from '../lib/stations.js';
-import {
-  getEnv, redisCommand, redisMGet, hasRedis,
-  toMountainHour, verifyInternalKey, triggerNextStage,
-} from '../lib/redis.js';
+import { getEnv, redisCommand, redisMGet, hasRedis, toMountainHour } from '../lib/redis.js';
+import { triggerNextStage, verifyQStashSignature } from '../lib/qstash.js';
 
 const ALL_STATIONS = ALL_STATION_IDS;
 
@@ -33,8 +31,9 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'POST only' });
   }
 
-  if (!verifyInternalKey(req)) {
-    return res.status(401).json({ error: 'Unauthorized — invalid internal key' });
+  const verified = await verifyQStashSignature(req);
+  if (!verified) {
+    return res.status(401).json({ error: 'Unauthorized — invalid signature' });
   }
 
   if (!hasRedis()) {

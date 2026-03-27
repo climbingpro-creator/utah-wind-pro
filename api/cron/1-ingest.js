@@ -20,7 +20,8 @@ import { LAKE_STATION_MAP, ALL_STATION_IDS } from '../lib/stations.js';
 import { fetchNWSForecasts } from '../lib/nwsForecast.js';
 import { splitStations, fetchNwsLatest } from '../lib/nwsAdapter.js';
 import { isUdotStation, fetchUdotLatest } from '../lib/udotAdapter.js';
-import { getEnv, redisCommand, normalizeToMb, hasRedis, triggerNextStage } from '../lib/redis.js';
+import { getEnv, redisCommand, normalizeToMb, hasRedis } from '../lib/redis.js';
+import { triggerNextStage } from '../lib/qstash.js';
 
 const ALL_STATIONS = ALL_STATION_IDS;
 

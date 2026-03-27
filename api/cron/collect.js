@@ -1,12 +1,10 @@
 /**
- * /api/cron/collect — Read-Only Data API
- * 
- * This file has been refactored. The cron job logic has been moved to:
- *   - api/cron/1-ingest.js       (Stage 1: data fetching)
- *   - api/internal/2-process-models.js  (Stage 2: ML processing)
- *   - api/internal/3-dispatch-alerts.js (Stage 3: notifications)
- * 
- * This file now ONLY serves client-facing read endpoints:
+ * /api/cron/collect — Read-Only Data API (lightweight)
+ *
+ * Client-facing read endpoints only. All heavy ML imports have been moved
+ * to api/admin/collect-admin.js to optimize cold starts.
+ *
+ * Read actions (public):
  *   ?action=context     — model context for frontend prediction engine
  *   ?action=sync        — last 24hr of raw observations
  *   ?action=weights     — server-learned weights + accuracy stats
@@ -18,20 +16,13 @@
  *   ?action=models      — statistical models summary
  *   ?action=propagation — propagation analysis data
  *   ?action=pws-history — PWS session data
- * 
- * Protected (auth required):
- *   ?action=backfill     — historical observation backfill
- *   ?action=backfill-pws — PWS history backfill
- *   ?action=build-models — manual statistical model rebuild
+ *
+ * Admin actions redirect to /api/admin/collect-admin:
+ *   ?action=backfill, backfill-pws, build-models
  */
 
-import { backfillHistorical, loadWeights, loadMeta } from '../lib/serverLearning.js';
-import { buildStatisticalModels } from '../lib/historicalAnalysis.js';
-import { LAKE_STATION_MAP, ALL_STATION_IDS } from '../lib/stations.js';
-import { backfillPWSHistory, getPropagationData } from '../lib/serverPropagation.js';
-import { getEnv, redisCommand, redisMGet } from '../lib/redis.js';
-
-const ALL_STATIONS = ALL_STATION_IDS;
+import { getPropagationData } from '../lib/serverPropagation.js';
+import { getEnv, redisCommand, redisMGet, checkRateLimit } from '../lib/redis.js';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -42,23 +33,29 @@ export default async function handler(req, res) {
   const action = req.query?.action;
   if (!action) {
     return res.status(200).json({
-      message: 'Read-only API. Cron moved to /api/cron/1-ingest.',
+      message: 'Read-only API. Cron moved to /api/cron/1-ingest. Admin ops at /api/admin/collect-admin.',
       availableActions: [
         'context', 'sync', 'weights', 'predictions', 'upstream',
-        'nws', 'ahead', 'analogs', 'models', 'propagation',
-        'pws-history', 'backfill', 'backfill-pws', 'build-models',
+        'nws', 'ahead', 'analogs', 'models', 'propagation', 'pws-history',
       ],
     });
   }
 
-  // Expensive manual-trigger actions require auth
-  const PROTECTED_ACTIONS = ['backfill', 'build-models', 'backfill-pws'];
-  if (PROTECTED_ACTIONS.includes(action)) {
-    const authHeader = req.headers['authorization'];
-    const cronSecret = process.env.CRON_SECRET;
-    if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
+  // Admin actions → redirect to the separate admin endpoint
+  const ADMIN_ACTIONS = ['backfill', 'build-models', 'backfill-pws'];
+  if (ADMIN_ACTIONS.includes(action)) {
+    return res.status(301).json({
+      error: `Action '${action}' has moved to /api/admin/collect-admin?action=${action}`,
+      redirect: `/api/admin/collect-admin?action=${action}`,
+    });
+  }
+
+  // Rate limit public read endpoints
+  const clientIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 'unknown';
+  const rl = await checkRateLimit(`collect:${clientIp}`);
+  if (rl.limited) {
+    res.setHeader('Retry-After', '10');
+    return res.status(429).json({ error: 'Rate limit exceeded. Try again shortly.' });
   }
 
   switch (action) {
@@ -73,15 +70,12 @@ export default async function handler(req, res) {
     case 'models':       return handleModels(res);
     case 'propagation':  return handlePropagation(res);
     case 'pws-history':  return handlePWSHistory(res);
-    case 'backfill':     return handleBackfill(req, res);
-    case 'backfill-pws': return handleBackfillPWS(req, res);
-    case 'build-models': return handleBuildModels(req, res);
     default:
       return res.status(400).json({ error: `Unknown action: ${action}` });
   }
 }
 
-// ── Read Handlers ───────────────────────────────────────────
+// ── Read Handlers (no heavy imports needed) ─────────────────
 
 async function handleContext(res) {
   const { upstashUrl, upstashToken } = getEnv();
@@ -197,8 +191,13 @@ async function handleWeights(res) {
   }
 
   try {
-    const weights = await loadWeights(redisCommand);
-    const meta = await loadMeta(redisCommand);
+    // Read weights directly from Redis — no heavy serverLearning import needed
+    const [weightsRaw, metaRaw] = await Promise.all([
+      redisCommand('GET', 'weights:server'),
+      redisCommand('GET', 'learning:meta'),
+    ]);
+    const weights = weightsRaw ? JSON.parse(weightsRaw) : null;
+    const meta = metaRaw ? JSON.parse(metaRaw) : null;
     res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
     return res.status(200).json({ weights, meta });
   } catch (error) {
@@ -390,60 +389,6 @@ async function handlePWSHistory(res) {
       sessionThresholds: { kiting: 10, foil_kiting: 8, paragliding: 5, light_wind: 6 },
     });
   } catch (error) {
-    return res.status(500).json({ error: error.message });
-  }
-}
-
-// ── Protected Handlers ──────────────────────────────────────
-
-async function handleBackfill(req, res) {
-  const env = getEnv();
-  if (!env.synopticToken) return res.status(500).json({ error: 'SYNOPTIC_TOKEN not set' });
-  if (!env.upstashUrl || !env.upstashToken) return res.status(500).json({ error: 'Redis not configured' });
-
-  const days = Math.min(parseInt(req.query?.days || '3', 10), 7);
-  try {
-    const result = await backfillHistorical(redisCommand, env.synopticToken, ALL_STATIONS, LAKE_STATION_MAP, days);
-    return res.status(200).json({ ok: true, ...result });
-  } catch (error) {
-    console.error('Backfill error:', error);
-    return res.status(500).json({ error: error.message });
-  }
-}
-
-async function handleBackfillPWS(req, res) {
-  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
-  const days = Math.min(parseInt(req.query?.days || '90', 10), 1095);
-  try {
-    const result = await backfillPWSHistory(redisCommand, days);
-    return res.status(200).json({ ok: true, ...result });
-  } catch (error) {
-    console.error('PWS backfill error:', error);
-    return res.status(500).json({ error: error.message });
-  }
-}
-
-async function handleBuildModels(req, res) {
-  const env = getEnv();
-  if (!env.synopticToken) return res.status(500).json({ error: 'SYNOPTIC_TOKEN not set' });
-  if (!env.upstashUrl || !env.upstashToken) return res.status(500).json({ error: 'Redis not configured' });
-
-  const days = Math.min(parseInt(req.query?.days || '365', 10), 365);
-  try {
-    const { models, log } = await buildStatisticalModels(redisCommand, env.synopticToken, { days });
-    return res.status(200).json({
-      ok: true,
-      daysAnalyzed: models.daysAnalyzed,
-      stationCount: models.stationCount,
-      totalReadings: models.totalReadings,
-      eventCounts: models.eventCounts,
-      correlationCount: Object.keys(models.lagCorrelations).length,
-      thermalProfileCount: Object.keys(models.thermalProfiles).length,
-      fingerprintCount: Object.keys(models.fingerprints).length,
-      log,
-    });
-  } catch (error) {
-    console.error('Build models error:', error);
     return res.status(500).json({ error: error.message });
   }
 }

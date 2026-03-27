@@ -17,26 +17,7 @@
 
 import { splitStations, fetchNwsLatest, fetchNwsHistory } from './lib/nwsAdapter.js';
 import { isUdotStation, fetchUdotLatest } from './lib/udotAdapter.js';
-
-const rateLimitMap = new Map();
-const RATE_LIMIT_WINDOW = 60_000;
-const RATE_LIMIT_MAX = 120;
-
-function isRateLimited(ip) {
-  const now = Date.now();
-  const entry = rateLimitMap.get(ip);
-  if (!entry || now - entry.start > RATE_LIMIT_WINDOW) {
-    rateLimitMap.set(ip, { start: now, count: 1 });
-    if (rateLimitMap.size > 1000) {
-      for (const [k, v] of rateLimitMap) {
-        if (now - v.start > RATE_LIMIT_WINDOW) rateLimitMap.delete(k);
-      }
-    }
-    return false;
-  }
-  entry.count++;
-  return entry.count > RATE_LIMIT_MAX;
-}
+import { checkRateLimit } from './lib/redis.js';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -49,9 +30,10 @@ export default async function handler(req, res) {
   }
 
   const clientIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 'unknown';
-  if (isRateLimited(clientIp)) {
-    res.setHeader('Retry-After', '60');
-    return res.status(429).json({ error: 'Rate limit exceeded. Max 120 requests per minute.' });
+  const rl = await checkRateLimit(`weather:${clientIp}`);
+  if (rl.limited) {
+    res.setHeader('Retry-After', '10');
+    return res.status(429).json({ error: 'Rate limit exceeded. Try again shortly.' });
   }
 
   const { source, stids, hours } = req.query;
