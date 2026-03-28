@@ -37,4 +37,4 @@ jobs:
           VITE_SYNOPTIC_TOKEN: ${{ secrets.VITE_SYNOPTIC_TOKEN }}
 
       - name: Check build output
-        run: ls -la dist/
+        run: ls -la apps/wind/dist/
