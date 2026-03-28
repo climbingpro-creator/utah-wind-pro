@@ -1,11 +1,71 @@
 @import "tailwindcss";
 @source "../../../packages/ui/src";
 
+:root {
+  --bg-primary: #0c1220;
+  --bg-secondary: #0a1628;
+  --bg-card: #111827;
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-tertiary: #64748b;
+  --border-color: #1e293b;
+  --border-subtle: #1e293b;
+  --card-radius: 1rem;
+}
+
 body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   margin: 0;
   min-height: 100vh;
-  background: linear-gradient(135deg, #0c1220 0%, #0a1628 50%, #0d1f3c 100%);
-  color: #f1f5f9;
+  background: var(--bg-primary);
+  color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
 }
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--card-radius);
+  padding: 1rem;
+}
+
+.hero-water {
+  position: relative;
+  border-radius: var(--card-radius);
+  overflow: hidden;
+  min-height: 14rem;
+}
+@media (min-width: 640px) { .hero-water { min-height: 16rem; } }
+@media (min-width: 768px) { .hero-water { min-height: 18rem; } }
+
+.hero-water img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hero-water .hero-overlay {
+  position: absolute;
+  inset: 0;
+}
+
+.data-number {
+  font-size: 2.25rem;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  font-variant-numeric: tabular-nums;
+}
+
+.data-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-tertiary);
+}
+
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
