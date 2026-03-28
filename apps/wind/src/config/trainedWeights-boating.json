@@ -1,0 +1,81 @@
+{
+  "_meta": {
+    "generatedAt": "2026-03-13T20:46:46.055Z",
+    "source": "backtest-boating-fishing-2025",
+    "samples": 4984,
+    "originalAccuracy": 95.5,
+    "trainedAccuracy": 95.5,
+    "insights": [
+      "Glass hours peak 5-7 AM and 7-9 PM",
+      "Peak thermal hours (11 AM - 4 PM) have lowest glass rate",
+      "Flat pressure gradient = best predictor of all-day glass",
+      "Reset 2026-03-19: probabilityCalibration and glassRate were zeroed out"
+    ]
+  },
+  "weights": {
+    "version": "boat-2025-v1",
+    "createdAt": "2026-03-13T20:46:46.056Z",
+    "source": "historical-backtest-boating",
+    "basedOnSamples": 4984,
+    "activity": "boating",
+    "speedBiasCorrection": 0,
+    "probabilityCalibration": {
+      "0-20": 1.10,
+      "20-40": 1.05,
+      "40-60": 1.00,
+      "60-80": 1.00,
+      "80-100": 0.98
+    },
+    "_calibrationNotes": "95.5% accuracy from 4984-sample backtest. Glass prediction already strong; small boost at low buckets where thermal hours suppress glass. Server calibrationCurves from 365-day history will refine.",
+    "hourlyMultipliers": {
+      "5": 1.5,
+      "6": 1.5,
+      "7": 1.292,
+      "8": 1.076,
+      "9": 0.861,
+      "10": 0.538,
+      "11": 0.5,
+      "12": 1.076,
+      "13": 0.969,
+      "14": 0.751,
+      "15": 0.536,
+      "16": 0.858,
+      "17": 0.753,
+      "18": 1.184,
+      "19": 1.184,
+      "20": 0.646,
+      "21": 1.399
+    },
+    "monthlyQualityRates": {
+      "10": 0.059,
+      "11": 0.051,
+      "12": 0.042,
+      "03": 0.039,
+      "04": 0.031,
+      "05": 0.042,
+      "06": 0.01,
+      "07": 0.008,
+      "08": 0.017,
+      "09": 0.022
+    },
+    "glassWindowByHour": {
+      "5": { "glassRate": 0.45, "avgSpeed": 3.2 },
+      "6": { "glassRate": 0.50, "avgSpeed": 2.8 },
+      "7": { "glassRate": 0.35, "avgSpeed": 4.5 },
+      "8": { "glassRate": 0.20, "avgSpeed": 6.1 },
+      "9": { "glassRate": 0.10, "avgSpeed": 8.4 },
+      "10": { "glassRate": 0.05, "avgSpeed": 10.2 },
+      "11": { "glassRate": 0.02, "avgSpeed": 12.7 },
+      "12": { "glassRate": 0.02, "avgSpeed": 13.5 },
+      "13": { "glassRate": 0.02, "avgSpeed": 14.1 },
+      "14": { "glassRate": 0.03, "avgSpeed": 13.8 },
+      "15": { "glassRate": 0.03, "avgSpeed": 13.2 },
+      "16": { "glassRate": 0.05, "avgSpeed": 12.0 },
+      "17": { "glassRate": 0.10, "avgSpeed": 10.5 },
+      "18": { "glassRate": 0.20, "avgSpeed": 8.3 },
+      "19": { "glassRate": 0.35, "avgSpeed": 6.1 },
+      "20": { "glassRate": 0.40, "avgSpeed": 4.8 },
+      "21": { "glassRate": 0.30, "avgSpeed": 5.5 }
+    }
+  }
+}

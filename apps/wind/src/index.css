@@ -1,0 +1,319 @@
+@import "tailwindcss";
+@source "../../../packages/ui/src";
+@import "leaflet/dist/leaflet.css";
+
+@theme {
+  --color-primary: #0ea5e9;
+  --color-primary-dark: #0284c7;
+  --color-primary-light: #38bdf8;
+}
+
+:root {
+  --color-success: #22c55e;
+  --color-warning: #eab308;
+  --color-danger: #ef4444;
+
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f8fafc;
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+  --text-tertiary: #94a3b8;
+  --border-color: #e2e8f0;
+  --border-subtle: #f1f5f9;
+
+  --section-gap: 2rem;
+  --card-padding: 1.5rem;
+  --card-radius: 0.75rem;
+}
+
+.dark {
+  --bg-primary: #0b1120;
+  --bg-secondary: #0f172a;
+  --bg-card: #131c2e;
+  --bg-card-hover: #1a2540;
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-tertiary: #64748b;
+  --border-color: #1e293b;
+  --border-subtle: #162032;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  overscroll-behavior: none;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* ─── Card primitives ─── */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--card-radius);
+  padding: var(--card-padding);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.card:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 4px 24px -4px rgba(14, 165, 233, 0.08);
+}
+
+.dark .card:hover {
+  box-shadow: 0 4px 24px -4px rgba(14, 165, 233, 0.12);
+}
+
+/* ─── Section spacing ─── */
+.section-stack > * + * {
+  margin-top: var(--section-gap);
+}
+
+/* ─── Data number — large hero metric ─── */
+.data-number {
+  font-size: 2.25rem;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  font-variant-numeric: tabular-nums;
+}
+
+.data-number-sm {
+  font-size: 1.5rem;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  font-variant-numeric: tabular-nums;
+}
+
+.data-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.075em;
+  color: var(--text-tertiary);
+}
+
+/* ─── Subtle animations ─── */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in-up 0.4s ease-out both;
+}
+
+.animate-fade-in-delay {
+  animation: fade-in-up 0.4s ease-out 0.1s both;
+}
+
+@keyframes slide-in {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in {
+  animation: slide-in 0.3s ease-out;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px currentColor;
+  }
+  50% {
+    box-shadow: 0 0 20px currentColor, 0 0 30px currentColor;
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.35s ease-out;
+}
+
+/* ─── Gauge ─── */
+.gauge-gradient {
+  background: conic-gradient(
+    from 180deg,
+    #ef4444 0deg,
+    #f59e0b 90deg,
+    #22c55e 180deg,
+    #22c55e 270deg,
+    #f59e0b 315deg,
+    #ef4444 360deg
+  );
+}
+
+/* ─── Leaflet — Dark mode ─── */
+.dark .leaflet-container {
+  background: #0f172a;
+  font-family: inherit;
+}
+
+.dark .leaflet-popup-content-wrapper {
+  background: #1e293b;
+  color: #e2e8f0;
+  border-radius: 8px;
+}
+
+.dark .leaflet-popup-tip {
+  background: #1e293b;
+}
+
+.dark .leaflet-control-zoom a {
+  background: #1e293b !important;
+  color: #94a3b8 !important;
+  border-color: #334155 !important;
+}
+
+.dark .leaflet-control-zoom a:hover {
+  background: #334155 !important;
+  color: #e2e8f0 !important;
+}
+
+.dark .leaflet-control-attribution {
+  background: rgba(15, 23, 42, 0.8) !important;
+  color: #64748b !important;
+}
+
+.dark .leaflet-control-attribution a {
+  color: #94a3b8 !important;
+}
+
+/* ─── Leaflet — Light mode ─── */
+.light .leaflet-container {
+  background: #f1f5f9;
+  font-family: inherit;
+}
+
+.light .leaflet-popup-content-wrapper {
+  background: #ffffff;
+  color: #1e293b;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.light .leaflet-popup-tip {
+  background: #ffffff;
+}
+
+.light .leaflet-control-zoom a {
+  background: #ffffff !important;
+  color: #475569 !important;
+  border-color: #e2e8f0 !important;
+}
+
+.light .leaflet-control-zoom a:hover {
+  background: #f1f5f9 !important;
+  color: #1e293b !important;
+}
+
+.light .leaflet-control-attribution {
+  background: rgba(255, 255, 255, 0.9) !important;
+  color: #64748b !important;
+}
+
+.light .leaflet-control-attribution a {
+  color: #3b82f6 !important;
+}
+
+.leaflet-popup-content {
+  margin: 10px 12px;
+}
+
+.leaflet-control-attribution {
+  font-size: 10px;
+}
+
+.custom-marker {
+  background: transparent;
+  border: none;
+}
+
+/* ─── Hero image system ───
+   .hero-banner = aspect-ratio driven activity hero (photo + bottom overlay)
+   .hero-mood   = min-height outlook hero (photo + content overlay)
+   Both scale proportionally — no fixed px/rem heights that crop photos.
+*/
+.hero-banner,
+.hero-mood {
+  position: relative;
+  border-radius: var(--card-radius);
+  overflow: hidden;
+}
+
+/* hero-banner: aspect-ratio scales with container width so photos never get
+   over-cropped.  Taller on mobile so small screens still see the subject. */
+.hero-banner { aspect-ratio: 16 / 9; }
+
+@media (min-width: 640px)  { .hero-banner { aspect-ratio: 2 / 1; } }
+@media (min-width: 1024px) { .hero-banner { aspect-ratio: 5 / 2; } }
+@media (min-width: 1280px) { .hero-banner { aspect-ratio: 8 / 3; } }
+
+/* hero-mood: uses min-height because it wraps variable text content */
+.hero-mood { min-height: 14rem; }
+
+@media (min-width: 640px)  { .hero-mood { min-height: 16rem; } }
+@media (min-width: 768px)  { .hero-mood { min-height: 18rem; } }
+@media (min-width: 1024px) { .hero-mood { min-height: 20rem; } }
+@media (min-width: 1280px) { .hero-mood { min-height: 22rem; } }
+
+/* Shared image styling */
+.hero-banner img,
+.hero-mood img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+}
+
+/* Gradient overlays */
+.hero-banner .hero-overlay,
+.hero-mood .hero-overlay {
+  position: absolute;
+  inset: 0;
+}
+
+/* ─── Safe area insets ─── */
+@supports (padding: env(safe-area-inset-top)) {
+  body {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+}

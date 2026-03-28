@@ -1,0 +1,10 @@
+{
+  "name": "@utahwind/config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./eslint.config.js",
+  "exports": {
+    "./eslint": "./eslint.config.js"
+  }
+}
