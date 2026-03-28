@@ -198,7 +198,7 @@ const WaterForecast = ({ locationId = 'utah-lake', currentWind = {}, pressureDat
 
   const allWarnings = useMemo(() => {
     const combined = [...warnings];
-    for (const pa of pressureAlerts) {
+    for (const pa of pressureAlerts?.alerts || []) {
       combined.push({
         id: `pressure-${pa.severity}`,
         station: 'barometer',
