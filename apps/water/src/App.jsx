@@ -1,7 +1,9 @@
-import { useState, Suspense, lazy } from 'react';
+import { useState, useMemo, Suspense, lazy } from 'react';
 import { Fish, Ship, Waves } from 'lucide-react';
 import { ErrorBoundary } from '@utahwind/ui';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
+import { useWeatherData, calculateCorrelatedWind } from '@utahwind/weather';
+import { predictGlass } from './services/BoatingPredictor';
 
 const FishingMode = lazy(() => import('./components/FishingMode'));
 const FlatwaterTemplate = lazy(() => import('./components/FlatwaterTemplate'));
@@ -12,10 +14,52 @@ const WATER_ACTIVITIES = [
   { id: 'paddling', name: 'Paddling', icon: Waves, color: 'cyan' },
 ];
 
+const DEFAULT_LAKE = 'utah-lake';
+
 function WaterApp() {
   const { theme } = useTheme();
   const [selectedActivity, setSelectedActivity] = useState('fishing');
   const isFishing = selectedActivity === 'fishing';
+
+  const { lakeState, history, isLoading } = useWeatherData(DEFAULT_LAKE);
+
+  const currentWindSpeed = lakeState?.pws?.windSpeed || lakeState?.wind?.stations?.[0]?.speed;
+  const currentWindGust = lakeState?.pws?.windGust || lakeState?.wind?.stations?.[0]?.gust;
+  const currentWindDirection = lakeState?.pws?.windDirection || lakeState?.wind?.stations?.[0]?.direction;
+
+  const pressureData = useMemo(() => lakeState?.pressure ? {
+    gradient: lakeState.pressure.gradient,
+    slcPressure: lakeState.pressure.high?.value,
+    provoPressure: lakeState.pressure.low?.value,
+    highName: lakeState.pressure.high?.name,
+    lowName: lakeState.pressure.low?.name,
+  } : null, [lakeState?.pressure]);
+
+  const boatingPrediction = useMemo(() => {
+    try {
+      return predictGlass(
+        { speed: currentWindSpeed, gust: currentWindGust },
+        { slcPressure: pressureData?.slcPressure, provoPressure: pressureData?.provoPressure, gradient: pressureData?.gradient },
+        selectedActivity,
+      );
+    } catch (_e) { return null; }
+  }, [currentWindSpeed, currentWindGust, pressureData, selectedActivity]);
+
+  const upstreamData = useMemo(() => ({
+    kslcSpeed: lakeState?.kslcStation?.speed,
+    kslcDirection: lakeState?.kslcStation?.direction,
+    kpvuSpeed: lakeState?.kpvuStation?.speed,
+    kpvuDirection: lakeState?.kpvuStation?.direction,
+  }), [lakeState?.kslcStation, lakeState?.kpvuStation]);
+
+  const mesoData = useMemo(() => {
+    if (!lakeState) return {};
+    const data = { stations: lakeState.wind?.stations || [] };
+    if (lakeState.kslcStation) data.KSLC = lakeState.kslcStation;
+    if (lakeState.kpvuStation) data.KPVU = lakeState.kpvuStation;
+    if (lakeState.earlyIndicator) data.QSF = lakeState.earlyIndicator;
+    return data;
+  }, [lakeState]);
 
   return (
     <div className="min-h-screen px-4 py-6 max-w-2xl mx-auto space-y-6">
@@ -59,44 +103,33 @@ function WaterApp() {
       }>
         {isFishing ? (
           <FishingMode
-            windData={{ stations: [], speed: null }}
-            pressureData={null}
-            isLoading={false}
-            upstreamData={{}}
+            windData={{ stations: lakeState?.wind?.stations || [], speed: currentWindSpeed }}
+            pressureData={pressureData}
+            isLoading={isLoading}
+            upstreamData={upstreamData}
           />
         ) : (
           <FlatwaterTemplate
             selectedActivity={selectedActivity}
-            selectedLake={null}
+            selectedLake={DEFAULT_LAKE}
             activityConfig={{ name: selectedActivity === 'boating' ? 'Boating' : 'Paddling' }}
             theme={theme}
-            currentWindSpeed={null}
-            currentWindGust={null}
-            currentWindDirection={null}
-            effectiveDecision={{}}
-            lakeState={null}
-            effectiveBoatingPrediction={null}
-            effectiveActivityScore={null}
+            currentWindSpeed={currentWindSpeed}
+            currentWindGust={currentWindGust}
+            currentWindDirection={currentWindDirection}
+            effectiveDecision={{ windSpeed: currentWindSpeed, windGust: currentWindGust, windDirection: currentWindDirection }}
+            lakeState={lakeState}
+            effectiveBoatingPrediction={boatingPrediction}
+            effectiveActivityScore={boatingPrediction ? { score: boatingPrediction.probability, message: boatingPrediction.verdict } : null}
             effectiveBriefing={null}
-            pressureData={null}
-            isLoading={false}
+            pressureData={pressureData}
+            upstreamData={upstreamData}
+            mesoData={mesoData}
+            history={history}
+            isLoading={isLoading}
           />
         )}
       </Suspense>
-
-      {/* Status Footer */}
-      <div className="text-center space-y-2 pt-4 pb-8">
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20">
-          <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-          <span className="text-xs font-medium text-amber-400">
-            Weather data pending @utahwind/weather package
-          </span>
-        </div>
-        <p className="text-[11px] text-[var(--text-tertiary)]">
-          Domain logic is live — USGS water temps, fly/lure recommenders, fishing predictor.
-          <br />Live weather feed requires extracting WeatherService into a shared package.
-        </p>
-      </div>
     </div>
   );
 }
