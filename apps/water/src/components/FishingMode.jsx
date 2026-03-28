@@ -825,63 +825,10 @@ function getCurrentSeason() {
   return 'winter';
 }
 
-// Location Card Component
-const LocationCard = ({ location, isSelected, onSelect, theme, waterTemp, riverFlow }) => {
-  const isDark = theme === 'dark';
-  const config = FISHING_LOCATIONS[location];
-  const currentMonth = new Date().getMonth() + 1;
-  const isBestMonth = config.bestMonths.includes(currentMonth);
-  const isRiver = config.type === 'river';
-  
-  return (
-    <button
-      onClick={() => onSelect(location)}
-      className={`
-        p-3 rounded-lg border transition-all text-left
-        ${isSelected 
-          ? (isDark ? 'bg-cyan-500/20 border-cyan-500' : 'bg-cyan-100 border-cyan-500')
-          : (isDark ? 'bg-slate-800/50 border-slate-700 hover:border-slate-500' : 'bg-white border-slate-200 hover:border-slate-400 shadow-sm')
-        }
-      `}
-    >
-      <div className="flex items-center justify-between mb-1">
-        <span className={`font-medium ${isSelected ? (isDark ? 'text-cyan-400' : 'text-cyan-700') : (isDark ? 'text-white' : 'text-slate-800')}`}>
-          {config.name}
-        </span>
-        <div className="flex items-center gap-1.5">
-          {isRiver && riverFlow?.dischargeCfs != null && (
-            <span className={`text-[10px] px-1.5 py-0.5 rounded ${isDark ? 'bg-cyan-500/15 text-cyan-400' : 'bg-cyan-50 text-cyan-600'}`}>
-              {Math.round(riverFlow.dischargeCfs)} cfs
-            </span>
-          )}
-          {waterTemp?.tempF != null && (
-            <span className={`text-[10px] px-1.5 py-0.5 rounded ${
-              waterTemp.source === 'Seasonal Model' 
-                ? (isDark ? 'bg-slate-600/30 text-slate-400' : 'bg-slate-100 text-slate-500')
-                : (isDark ? 'bg-cyan-500/15 text-cyan-400' : 'bg-cyan-50 text-cyan-600')
-            }`}>
-              {waterTemp.tempF}°F
-            </span>
-          )}
-          {isBestMonth && (
-            <span className={`text-[10px] px-1.5 py-0.5 rounded ${isDark ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-700'}`}>
-              Peak
-            </span>
-          )}
-        </div>
-      </div>
-      <div className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-        {config.primarySpecies} • {config.type === 'river' ? '🏞️ river' : config.type}
-      </div>
-    </button>
-  );
-};
-
 // Main Fishing Mode Component
-const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamData = {}, hourlyForecast = [] }) => {
+const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamData = {}, hourlyForecast, selectedLocation = 'strawberry' }) => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
-  const [selectedLocation, setSelectedLocation] = useState('strawberry');
   
   const location = FISHING_LOCATIONS[selectedLocation];
   const season = getCurrentSeason();
@@ -1670,29 +1617,7 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
             </div>
           )}
         </div>
-      )}
-
-      {/* Location Selector */}
-      <div className={`rounded-xl p-4 border ${isDark ? 'bg-slate-800/30 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`}>
-        <h3 className={`text-sm font-medium mb-3 flex items-center gap-2 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
-          <MapPin className="w-4 h-4" />
-          Select Location
-        </h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-          {Object.keys(FISHING_LOCATIONS).map(loc => (
-            <LocationCard
-              key={loc}
-              location={loc}
-              isSelected={selectedLocation === loc}
-              onSelect={setSelectedLocation}
-              theme={theme}
-              waterTemp={allWaterTemps[loc]}
-              riverFlow={allRiverFlows[loc]}
-            />
-          ))}
-        </div>
-      </div>
-      
+      )}      
       {/* Key Factors Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {/* Moon Phase */}
