@@ -13,9 +13,9 @@ const FishingMode = lazy(() => import('./components/FishingMode'));
 const FlatwaterTemplate = lazy(() => import('./components/FlatwaterTemplate'));
 
 const WATER_ACTIVITIES = [
-  { id: 'fishing', name: 'Fishing', icon: Fish, description: 'Lakes & rivers ΓÇö pressure, hatches, solunar', wantsCalm: true },
-  { id: 'boating', name: 'Boating', icon: Ship, description: 'Powerboats & cruising ΓÇö calm water is best', wantsCalm: true },
-  { id: 'paddling', name: 'Paddling', icon: Waves, description: 'SUP, kayak, canoe ΓÇö glass water ideal', wantsCalm: true },
+  { id: 'fishing', name: 'Fishing', icon: Fish, description: 'Lakes & rivers — pressure, hatches, solunar', wantsCalm: true },
+  { id: 'boating', name: 'Boating', icon: Ship, description: 'Powerboats & cruising — calm water is best', wantsCalm: true },
+  { id: 'paddling', name: 'Paddling', icon: Waves, description: 'SUP, kayak, canoe — glass water ideal', wantsCalm: true },
 ];
 
 const HERO_IMAGES = [
@@ -35,22 +35,22 @@ function getWaterVerdict(activity, speed, gust) {
   const s = speed ?? 0;
   const _g = gust ?? s;
   if (activity === 'fishing') {
-    if (s <= 3) return { status: 'go', label: 'GO FISH', reason: 'Calm water ΓÇö fish are active', color: 'emerald' };
-    if (s <= 8) return { status: 'go', label: 'GOOD', reason: `Light ripple (${Math.round(s)} mph) ΓÇö great casting`, color: 'lime' };
-    if (s <= 15) return { status: 'caution', label: 'MODERATE', reason: `${Math.round(s)} mph ΓÇö switch to jigs or deep bait`, color: 'amber' };
-    return { status: 'off', label: 'ROUGH', reason: `${Math.round(s)} mph ΓÇö fish from shore`, color: 'red' };
+    if (s <= 3) return { status: 'go', label: 'GO FISH', reason: 'Calm water — fish are active', color: 'emerald' };
+    if (s <= 8) return { status: 'go', label: 'GOOD', reason: `Light ripple (${Math.round(s)} mph) — great casting`, color: 'lime' };
+    if (s <= 15) return { status: 'caution', label: 'MODERATE', reason: `${Math.round(s)} mph — switch to jigs or deep bait`, color: 'amber' };
+    return { status: 'off', label: 'ROUGH', reason: `${Math.round(s)} mph — fish from shore`, color: 'red' };
   }
   if (activity === 'paddling') {
-    if (s <= 2) return { status: 'go', label: 'GLASS', reason: 'Mirror-flat ΓÇö perfect paddle', color: 'emerald' };
-    if (s <= 6) return { status: 'go', label: 'GOOD', reason: `Light wind (${Math.round(s)} mph) ΓÇö easy paddle`, color: 'lime' };
-    if (s <= 10) return { status: 'caution', label: 'CHOPPY', reason: `${Math.round(s)} mph ΓÇö experienced only`, color: 'amber' };
-    return { status: 'off', label: 'ROUGH', reason: `${Math.round(s)} mph ΓÇö not recommended`, color: 'red' };
+    if (s <= 2) return { status: 'go', label: 'GLASS', reason: 'Mirror-flat — perfect paddle', color: 'emerald' };
+    if (s <= 6) return { status: 'go', label: 'GOOD', reason: `Light wind (${Math.round(s)} mph) — easy paddle`, color: 'lime' };
+    if (s <= 10) return { status: 'caution', label: 'CHOPPY', reason: `${Math.round(s)} mph — experienced only`, color: 'amber' };
+    return { status: 'off', label: 'ROUGH', reason: `${Math.round(s)} mph — not recommended`, color: 'red' };
   }
   // boating
-  if (s <= 2) return { status: 'go', label: 'GLASS', reason: 'Perfect glass ΓÇö smooth cruising', color: 'emerald' };
-  if (s <= 8) return { status: 'go', label: 'GOOD', reason: `Light wind (${Math.round(s)} mph) ΓÇö great conditions`, color: 'lime' };
-  if (s <= 15) return { status: 'caution', label: 'CHOPPY', reason: `${Math.round(s)} mph ΓÇö noticeable waves`, color: 'amber' };
-  return { status: 'off', label: 'ROUGH', reason: `${Math.round(s)} mph ΓÇö stay close to shore`, color: 'red' };
+  if (s <= 2) return { status: 'go', label: 'GLASS', reason: 'Perfect glass — smooth cruising', color: 'emerald' };
+  if (s <= 8) return { status: 'go', label: 'GOOD', reason: `Light wind (${Math.round(s)} mph) — great conditions`, color: 'lime' };
+  if (s <= 15) return { status: 'caution', label: 'CHOPPY', reason: `${Math.round(s)} mph — noticeable waves`, color: 'amber' };
+  return { status: 'off', label: 'ROUGH', reason: `${Math.round(s)} mph — stay close to shore`, color: 'red' };
 }
 
 function getSkillRec(activity, speed) {
@@ -58,13 +58,13 @@ function getSkillRec(activity, speed) {
   if (activity === 'paddling') {
     return {
       beginner: s <= 5 ? { label: 'GO', msg: 'Perfect for beginners', color: 'emerald' } : s <= 8 ? { label: 'CAUTION', msg: 'Stay near shore', color: 'amber' } : { label: 'NO', msg: 'Too windy', color: 'red' },
-      expert: s <= 10 ? { label: 'GO', msg: s <= 3 ? 'Glass touring' : 'Light chop ΓÇö fun paddle', color: 'emerald' } : s <= 15 ? { label: 'POSSIBLE', msg: 'Downwind runs only', color: 'amber' } : { label: 'NO', msg: 'Dangerous conditions', color: 'red' },
+      expert: s <= 10 ? { label: 'GO', msg: s <= 3 ? 'Glass touring' : 'Light chop — fun paddle', color: 'emerald' } : s <= 15 ? { label: 'POSSIBLE', msg: 'Downwind runs only', color: 'amber' } : { label: 'NO', msg: 'Dangerous conditions', color: 'red' },
     };
   }
   if (activity === 'boating') {
     return {
       beginner: s <= 8 ? { label: 'GO', msg: 'Calm enough for everyone', color: 'emerald' } : s <= 12 ? { label: 'CAUTION', msg: 'Small boat advisory', color: 'amber' } : { label: 'NO', msg: 'Too rough', color: 'red' },
-      expert: s <= 15 ? { label: 'GO', msg: s <= 5 ? 'Glass ΓÇö perfect ski day' : 'Manageable chop', color: 'emerald' } : s <= 20 ? { label: 'CAUTION', msg: 'Large boats only', color: 'amber' } : { label: 'NO', msg: 'Dangerous', color: 'red' },
+      expert: s <= 15 ? { label: 'GO', msg: s <= 5 ? 'Glass — perfect ski day' : 'Manageable chop', color: 'emerald' } : s <= 20 ? { label: 'CAUTION', msg: 'Large boats only', color: 'amber' } : { label: 'NO', msg: 'Dangerous', color: 'red' },
     };
   }
   return null;
@@ -80,23 +80,23 @@ function generateWaterBriefing(activity, speed, gust, pressureData, boatingPred)
   const bullets = [];
 
   if (s <= 3) {
-    headline = activity === 'fishing' ? 'Prime fishing conditions' : 'Glass conditions ΓÇö get out now';
-    body = `Current wind is just ${Math.round(s)} mph. ${hour < 10 ? 'Morning calm should hold for a few hours before thermals build.' : hour > 17 ? 'Evening calm settling in nicely.' : 'Calm pocket ΓÇö thermals may build by midday.'}`;
-    bestAction = activity === 'fishing' ? 'Hit the water now ΓÇö topwater lures will be effective' : `Best window is now${glassEnd ? ` until ~${glassEnd > 12 ? glassEnd - 12 + ' PM' : glassEnd + ' AM'}` : ''}`;
+    headline = activity === 'fishing' ? 'Prime fishing conditions' : 'Glass conditions — get out now';
+    body = `Current wind is just ${Math.round(s)} mph. ${hour < 10 ? 'Morning calm should hold for a few hours before thermals build.' : hour > 17 ? 'Evening calm settling in nicely.' : 'Calm pocket — thermals may build by midday.'}`;
+    bestAction = activity === 'fishing' ? 'Hit the water now — topwater lures will be effective' : `Best window is now${glassEnd ? ` until ~${glassEnd > 12 ? glassEnd - 12 + ' PM' : glassEnd + ' AM'}` : ''}`;
   } else if (s <= 8) {
-    headline = 'Light conditions ΓÇö still good';
+    headline = 'Light conditions — still good';
     body = `${Math.round(s)} mph with ${gust && gust > s * 1.2 ? `gusts to ${Math.round(gust)}` : 'steady winds'}. Manageable for most activities.`;
-    bestAction = activity === 'fishing' ? 'Try subsurface lures ΓÇö surface bite may be off' : 'Good conditions but watch for afternoon thermals';
+    bestAction = activity === 'fishing' ? 'Try subsurface lures — surface bite may be off' : 'Good conditions but watch for afternoon thermals';
   } else {
-    headline = 'Wind advisory ΓÇö plan accordingly';
+    headline = 'Wind advisory — plan accordingly';
     body = `${Math.round(s)} mph winds making conditions challenging. ${hour < 17 ? 'May calm by evening.' : 'Conditions unlikely to improve tonight.'}`;
     bestAction = activity === 'fishing' ? 'Fish sheltered coves or switch to shore' : 'Wait for calmer conditions or stick to sheltered areas';
   }
 
-  if (Math.abs(gradient) > 1.5) bullets.push({ icon: '≡ƒôè', text: `Pressure gradient ${safeToFixed(Math.abs(gradient), 1)} mb ΓÇö ${gradient > 0 ? 'rising' : 'falling'} trend` });
-  if (glassEnd) bullets.push({ icon: '≡ƒ¬₧', text: `Glass window predicted until ~${glassEnd > 12 ? (glassEnd - 12) + ' PM' : glassEnd + ' AM'}` });
-  if (hour < 7) bullets.push({ icon: '≡ƒîà', text: 'Dawn patrol ΓÇö best conditions of the day' });
-  else if (hour >= 17) bullets.push({ icon: '≡ƒîç', text: 'Evening calm settling in' });
+  if (Math.abs(gradient) > 1.5) bullets.push({ icon: '📊', text: `Pressure gradient ${safeToFixed(Math.abs(gradient), 1)} mb — ${gradient > 0 ? 'rising' : 'falling'} trend` });
+  if (glassEnd) bullets.push({ icon: '🪞', text: `Glass window predicted until ~${glassEnd > 12 ? (glassEnd - 12) + ' PM' : glassEnd + ' AM'}` });
+  if (hour < 7) bullets.push({ icon: '🌅', text: 'Dawn patrol — best conditions of the day' });
+  else if (hour >= 17) bullets.push({ icon: '🌇', text: 'Evening calm settling in' });
 
   return { headline, body, bestAction, bullets, excitement: s <= 3 ? 5 : s <= 8 ? 3 : 1 };
 }
@@ -204,7 +204,7 @@ function WaterApp() {
         <div className="max-w-2xl mx-auto px-4">
           <div className="flex items-center justify-between h-12">
             <div className="flex items-center gap-2">
-              <h1 className="text-base font-extrabold tracking-tight bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
+              <h1 className="text-base sm:text-lg lg:text-xl font-extrabold tracking-tight bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
                 Utah Water & Glass
               </h1>
             </div>
@@ -224,7 +224,7 @@ function WaterApp() {
         </div>
       </header>
 
-      <div className="max-w-2xl mx-auto px-4 py-4 space-y-4">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-4">
         {/* ═══════ LOCATION SELECTOR ═══════ */}
         <LocationSelector
           selectedLocation={selectedLocation}
@@ -236,18 +236,18 @@ function WaterApp() {
           <img src={heroImage} alt="" loading="eager" />
           <div className="hero-overlay bg-gradient-to-r from-black/80 via-black/50 to-black/30" />
 
-          <div className="relative z-10 p-5 sm:p-6">
+          <div className="relative z-10 p-5 sm:p-6 lg:p-8">
             <div className="flex items-start justify-between gap-4 mb-5">
               <div className="flex-1 min-w-0">
                 <p className="text-[11px] font-semibold uppercase tracking-widest mb-2 text-white/50 flex items-center gap-2">
                   <span className={`w-1.5 h-1.5 rounded-full ${selectedVerdict?.status === 'go' ? 'bg-emerald-500' : selectedVerdict?.status === 'caution' ? 'bg-amber-500' : 'bg-slate-400'}`} />
-                  {getGreeting()} ΓÇö Today's Outlook
+                  {getGreeting()} — Today's Outlook
                 </p>
-                <h2 className="text-xl sm:text-2xl font-extrabold leading-snug tracking-tight text-white">
+                <h2 className="text-xl sm:text-2xl lg:text-3xl font-extrabold leading-snug tracking-tight text-white">
                   {selectedVerdict?.reason || 'Loading conditions...'}
                 </h2>
                 <p className="text-sm mt-1.5 font-medium text-white/60">
-                  {currentWindSpeed != null ? `${Math.round(currentWindSpeed)} mph` : '--'}{currentWindDirection != null ? ` ${dirLabel(currentWindDirection)}` : ''} ΓÇö {selectedVerdict?.label?.toLowerCase() || 'checking'} for {WATER_ACTIVITIES.find(a => a.id === selectedActivity)?.name}
+                  {currentWindSpeed != null ? `${Math.round(currentWindSpeed)} mph` : '--'}{currentWindDirection != null ? ` ${dirLabel(currentWindDirection)}` : ''} — {selectedVerdict?.label?.toLowerCase() || 'checking'} for {WATER_ACTIVITIES.find(a => a.id === selectedActivity)?.name}
                 </p>
               </div>
               <div className="text-right flex-shrink-0">
@@ -264,7 +264,7 @@ function WaterApp() {
             </div>
 
             {/* Activity Cards */}
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-2 sm:gap-3 lg:gap-4">
               {verdicts.map((act) => {
                 const isSelected = selectedActivity === act.id;
                 const ActIcon = act.icon;
@@ -273,7 +273,7 @@ function WaterApp() {
                   <button
                     key={act.id}
                     onClick={() => setSelectedActivity(act.id)}
-                    className={`relative flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-all text-left cursor-pointer ${
+                    className={`relative flex flex-col items-center gap-1.5 p-3 sm:p-4 rounded-xl border transition-all text-left cursor-pointer ${
                       isSelected
                         ? 'bg-sky-500/25 border-sky-400 backdrop-blur-sm ring-2 ring-sky-400/60 shadow-lg scale-[1.03]'
                         : verdict.status === 'go'
@@ -313,7 +313,7 @@ function WaterApp() {
               <div className="flex items-center gap-2">
                 <Shield className={`w-5 h-5 ${selectedVerdict.status === 'go' ? 'text-emerald-500' : selectedVerdict.status === 'caution' ? 'text-amber-500' : 'text-red-500'}`} />
                 <span className="text-sm font-bold text-[var(--text-primary)]">
-                  {selectedVerdict.label} ΓÇö {currentWindSpeed != null ? `${Math.round(currentWindSpeed)} mph` : '--'}
+                  {selectedVerdict.label} — {currentWindSpeed != null ? `${Math.round(currentWindSpeed)} mph` : '--'}
                 </span>
               </div>
               {boatingPrediction?.probability != null && (
@@ -410,7 +410,7 @@ function WaterApp() {
           </div>
         )}
 
-        {/* ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ SPORT INTELLIGENCE ΓÇö Optimal Time Windows ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ */}
+        {/* ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ SPORT INTELLIGENCE — Optimal Time Windows ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ */}
         {sportWindows && Object.keys(sportWindows).length > 0 && (
           <IntelligentRecommendations
             windows={sportWindows}

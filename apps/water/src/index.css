@@ -37,6 +37,7 @@ body {
 }
 @media (min-width: 640px) { .hero-water { min-height: 16rem; } }
 @media (min-width: 768px) { .hero-water { min-height: 18rem; } }
+@media (min-width: 1024px) { .hero-water { min-height: 22rem; } }
 
 .hero-water img {
   position: absolute;
@@ -52,6 +53,8 @@ body {
 }
 
 .data-number {
+  /* responsive sizing handled below */
+
   font-size: 2.25rem;
   line-height: 1;
   font-weight: 800;
@@ -69,3 +72,5 @@ body {
 
 .hide-scrollbar::-webkit-scrollbar { display: none; }
 .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+@media (min-width: 1024px) { .data-number { font-size: 3rem; } }
