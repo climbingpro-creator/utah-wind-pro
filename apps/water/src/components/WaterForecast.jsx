@@ -160,7 +160,7 @@ const WindEventsList = ({ events }) => {
  * Shows hourly glass timeline, glass window predictions, upstream warnings,
  * and pressure alerts for boaters and fishermen.
  */
-const WaterForecast = ({ locationId = 'utah-lake', currentWind = {}, pressureData = {}, activity = 'boating', upstreamData = {}, lakeState = {}, mesoData = {} }) => {
+const WaterForecast = ({ locationId = 'utah-lake', currentWind = {}, pressureData = {}, activity = 'boating', upstreamData = {}, lakeState = {}, mesoData = {}, isNowcastActive = false }) => {
   const [forecast, setForecast] = useState(null);
   const [warnings, setWarnings] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -287,6 +287,11 @@ const WaterForecast = ({ locationId = 'utah-lake', currentWind = {}, pressureDat
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4 text-slate-400" />
               <span className="text-sm font-medium text-white">Hour-by-Hour Forecast</span>
+              {isNowcastActive && (
+                <span className="text-amber-400 bg-amber-900/30 text-xs font-bold px-2 py-0.5 rounded-full">
+                  ⚡ Live Adjusted
+                </span>
+              )}
             </div>
             <button
               onClick={() => setExpanded(!expanded)}

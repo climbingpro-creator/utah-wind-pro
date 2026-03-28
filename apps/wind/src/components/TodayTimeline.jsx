@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Clock, Wind, Navigation, ChevronRight } from 'lucide-react';
-import { apiUrl } from '@utahwind/weather';
+import { apiUrl, useWeatherStore } from '@utahwind/weather';
 import { ACTIVITY_CONFIGS } from './ActivityMode';
 import { getHourlyForecast } from '@utahwind/weather';
 
@@ -170,6 +170,9 @@ function findBestWindow(hours, activity) {
 const MPH_TO_KT = 0.868976;
 
 export default function TodayTimeline({ locationId = 'utah-lake', activity = 'kiting', unifiedHourly }) {
+  const isNowcastActive = useWeatherStore((s) => s.isNowcastActive);
+  const hourlyForecast = useWeatherStore((s) => s.hourlyForecast);
+  const setHourlyForecast = useWeatherStore((s) => s.setHourlyForecast);
   const [nwsData, setNwsData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [useKnots, setUseKnots] = useState(() => localStorage.getItem('windUnit') === 'kt');
@@ -194,6 +197,19 @@ export default function TodayTimeline({ locationId = 'utah-lake', activity = 'ki
 
   useEffect(() => {
     let cancelled = false;
+    const mapClientHours = (hours) => hours.map(h => {
+      const dt = new Date(h.startTime);
+      return {
+        time: h.startTime,
+        localHour: dt.getHours(),
+        speed: h.windSpeed,
+        dir: h.windDirection,
+        dirDeg: dirToDeg(h.windDirection),
+        temp: h.temperature,
+        text: h.shortForecast,
+      };
+    });
+
     const load = async () => {
       try {
         const resp = await fetch(apiUrl('/api/cron/collect?action=nws'));
@@ -202,20 +218,14 @@ export default function TodayTimeline({ locationId = 'utah-lake', activity = 'ki
 
         const gridId = LAKE_TO_GRID[locationId] || 'utah-lake';
         const serverHourly = data?.grids?.[gridId]?.hourly;
-        if ((!serverHourly || serverHourly.length === 0) && !cancelled) {
+        if (serverHourly?.length > 0 && !cancelled) {
+          setHourlyForecast(serverHourly);
+        } else if (!cancelled) {
           const hours = await getHourlyForecast(locationId);
           if (hours && !cancelled) {
-            setClientHourly(hours.map(h => {
-              const dt = new Date(h.startTime);
-              return {
-                localHour: dt.getHours(),
-                speed: h.windSpeed,
-                dir: h.windDirection,
-                dirDeg: dirToDeg(h.windDirection),
-                temp: h.temperature,
-                text: h.shortForecast,
-              };
-            }));
+            const mapped = mapClientHours(hours);
+            setClientHourly(mapped);
+            setHourlyForecast(mapped);
           }
         }
       } catch (e) {
@@ -223,17 +233,9 @@ export default function TodayTimeline({ locationId = 'utah-lake', activity = 'ki
         try {
           const hours = await getHourlyForecast(locationId);
           if (hours && !cancelled) {
-            setClientHourly(hours.map(h => {
-              const dt = new Date(h.startTime);
-              return {
-                localHour: dt.getHours(),
-                speed: h.windSpeed,
-                dir: h.windDirection,
-                dirDeg: dirToDeg(h.windDirection),
-                temp: h.temperature,
-                text: h.shortForecast,
-              };
-            }));
+            const mapped = mapClientHours(hours);
+            setClientHourly(mapped);
+            setHourlyForecast(mapped);
           }
         } catch (e2) {
           console.error('TodayTimeline client fallback error:', e2);
@@ -244,11 +246,35 @@ export default function TodayTimeline({ locationId = 'utah-lake', activity = 'ki
     load();
     const interval = setInterval(load, 300000);
     return () => { cancelled = true; clearInterval(interval); };
-  }, [locationId]);
+  }, [locationId, setHourlyForecast]);
+
+  // When the UnifiedPredictor delivers hourly data, push it through NowcastEngine
+  useEffect(() => {
+    if (unifiedHourly?.length > 0) {
+      setHourlyForecast(unifiedHourly);
+    }
+  }, [unifiedHourly, setHourlyForecast]);
 
   const gridId = LAKE_TO_GRID[locationId] || 'utah-lake';
 
-  // Prefer unified hourly (from UnifiedPredictor) when available
+  // Map store-corrected forecast (nowcast-adjusted or passthrough)
+  const nowcastMapped = useMemo(() => {
+    if (!hourlyForecast || hourlyForecast.length === 0) return null;
+    return hourlyForecast.map(h => {
+      const dt = h.time ? new Date(h.time) : h.startTime ? new Date(h.startTime) : null;
+      return {
+        localHour: h.localHour ?? (dt ? dt.getHours() : 0),
+        speed: h.speed ?? h.windSpeed ?? h.nwsSpeed ?? 0,
+        gust: h.gust ?? h.windGust ?? null,
+        dir: h.dir ?? h.windDirection ?? '',
+        dirDeg: typeof h.dirDeg === 'number' ? h.dirDeg : dirToDeg(h.dir || h.windDirection || ''),
+        temp: h.temp ?? h.temperature,
+        text: h.text ?? h.shortForecast ?? '',
+      };
+    });
+  }, [hourlyForecast]);
+
+  // Fallback: map unifiedHourly locally (used before store is populated)
   const unifiedMapped = useMemo(() => {
     if (!unifiedHourly || unifiedHourly.length === 0) return null;
     return unifiedHourly.map(h => {
@@ -265,7 +291,8 @@ export default function TodayTimeline({ locationId = 'utah-lake', activity = 'ki
     });
   }, [unifiedHourly]);
 
-  const allHourly = unifiedMapped
+  const allHourly = nowcastMapped
+    || unifiedMapped
     || (nwsData?.grids?.[gridId]?.hourly?.length > 0 ? nwsData.grids[gridId].hourly : clientHourly)
     || [];
   const nowHour = new Date().getHours();
@@ -320,6 +347,11 @@ export default function TodayTimeline({ locationId = 'utah-lake', activity = 'ki
             <h3 className="font-bold text-white text-base">{isCalmActivity ? `${activityName} Conditions` : "Today's Wind"}</h3>
             <span className="text-sm text-slate-400">—</span>
             <span className="text-sm font-medium text-sky-400">{SPOT_NAMES[locationId] || locationId}</span>
+            {isNowcastActive && (
+              <span className="text-xs font-bold px-2 py-1 rounded-full bg-amber-900/30 text-amber-400">
+                ⚡ Live Adjusted
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <button
