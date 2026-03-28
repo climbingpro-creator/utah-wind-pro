@@ -22,6 +22,7 @@ import { splitStations, fetchNwsLatest } from '../lib/nwsAdapter.js';
 import { isUdotStation, fetchUdotLatest } from '../lib/udotAdapter.js';
 import { getEnv, redisCommand, normalizeToMb, hasRedis } from '../lib/redis.js';
 import { triggerNextStage } from '../lib/qstash.js';
+import { WindPredictor, getModelPath } from '@utahwind/ml';
 
 const ALL_STATIONS = ALL_STATION_IDS;
 
@@ -240,11 +241,49 @@ export default async function handler(req, res) {
       await redisCommand('SET', 'ingest:gradient', JSON.stringify(gradient), 'EX', '1200');
     }
 
+    // ── ML Forecast Correction ──────────────────────────────────────
+    // Apply XGBoost Wind_Error model to every grid's hourly forecast.
+    // Saves both the raw NWS and ML-corrected versions to Redis so
+    // every consumer (frontend, stage 2, alerts) gets the smart data.
+    let mlApplied = false;
+    if (nwsData?.grids && slc?.pressure && pvu?.pressure) {
+      try {
+        const predictor = new WindPredictor();
+        await predictor.loadModel(getModelPath());
+
+        const localTemp = ambientPWS?.temperature
+          ?? stations.find(s => s.stationId === 'KPVU')?.temperature
+          ?? null;
+
+        if (predictor.isReady && localTemp != null) {
+          for (const gridId of Object.keys(nwsData.grids)) {
+            const grid = nwsData.grids[gridId];
+            if (grid.hourly?.length > 0) {
+              grid.mlHourly = predictor.correctHourlyForecast(
+                grid.hourly,
+                { pressure: slc.pressure },
+                { pressure: pvu.pressure },
+                localTemp,
+              );
+            }
+          }
+          nwsData.mlApplied = true;
+          mlApplied = true;
+
+          // Overwrite the Redis cache with ML-enriched version
+          await redisCommand('SET', 'nws:forecasts', JSON.stringify(nwsData), 'EX', '86400');
+          console.log(`[1-ingest] ML correction applied to ${Object.keys(nwsData.grids).length} grids`);
+        }
+      } catch (mlErr) {
+        console.error('[1-ingest] ML correction failed (non-fatal):', mlErr.message);
+      }
+    }
+
     const nwsDiag = nwsData
-      ? { status: 'ok', grids: Object.keys(nwsData?.grids || {}).length, fetchedAt: nwsData?.fetchedAt }
+      ? { status: 'ok', grids: Object.keys(nwsData?.grids || {}).length, fetchedAt: nwsData?.fetchedAt, mlApplied }
       : { status: nwsResult.reason?.message || 'error' };
 
-    console.log(`[1-ingest] Stored ${key} — ${stations.length} stations, gradient=${gradient ?? 'N/A'}`);
+    console.log(`[1-ingest] Stored ${key} — ${stations.length} stations, gradient=${gradient ?? 'N/A'}, ml=${mlApplied}`);
 
     // ── Trigger Stage 2: Process Models ──
     triggerNextStage('/api/internal/2-process-models', req);
@@ -259,6 +298,7 @@ export default async function handler(req, res) {
       pressureGradient: gradient ?? 'NO DATA',
       ambientPWS: ambientPWS ? 'ok' : 'unavailable',
       nws: nwsDiag,
+      ml: mlApplied ? 'applied' : 'skipped',
       storedAs: key,
       chainTriggered: '/api/internal/2-process-models',
     });

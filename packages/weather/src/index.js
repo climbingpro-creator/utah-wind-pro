@@ -92,6 +92,9 @@ export {
   SPORT_PROFILES,
 } from './SportIntelligenceEngine.js';
 
+// ─── Nowcasting ──────────────────────────────────────────────
+export { applyLiveCorrections } from './services/NowcastEngine.js';
+
 // ─── Utils ────────────────────────────────────────────────────
 export { apiUrl, isNativeApp, isIOS, isAndroid, isWeb } from './utils/platform.js';
 export { safeToFixed } from './utils/safeToFixed.js';

@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { create } from 'zustand';
 import { weatherService } from '../services/WeatherService';
 import { LakeState, getProbabilityStatus } from '../services/DataNormalizer';
+import { applyLiveCorrections } from '../services/NowcastEngine';
 
 const REFRESH_INTERVAL = 60 * 1000;
 const HISTORY_REFRESH_INTERVAL = 5 * 60 * 1000;
@@ -18,6 +19,12 @@ export const useWeatherStore = create((set, get) => ({
   _previousProbability: {},
   _dataInterval: null,
   _historyInterval: null,
+
+  // ── Nowcast state (non-destructive forecast overlay) ────────
+  rawForecast: null,
+  hourlyForecast: null,
+  isNowcastActive: false,
+  nowcastReason: null,
 
   fetchData: async (lakeId, forceRefresh = false) => {
     const state = get();
@@ -136,6 +143,42 @@ export const useWeatherStore = create((set, get) => ({
     set({ _dataInterval: null, _historyInterval: null });
   },
 
+  /**
+   * Ingest a raw NWS/unified hourly forecast, run it through NowcastEngine
+   * using the current live sensors + history, and publish both raw and
+   * corrected arrays.  Components consume `hourlyForecast`; the untouched
+   * original is always available as `rawForecast`.
+   *
+   * @param {Array}  raw              — hourly forecast array (NWS or unified)
+   * @param {string} [targetStationId] — sensor id to anchor against ('PWS' default)
+   */
+  setHourlyForecast: (raw, targetStationId = 'PWS') => {
+    if (!Array.isArray(raw)) {
+      set({ rawForecast: raw, hourlyForecast: raw, isNowcastActive: false, nowcastReason: null });
+      return;
+    }
+
+    const { activeLake, lakeStates, history } = get();
+    const lake = lakeStates[activeLake];
+    const sensors = lake?.wind?.stations ?? [];
+    const lakeHistory = history[activeLake];
+    const stationHistory = lakeHistory
+      ? (lakeHistory[targetStationId] || lakeHistory['PWS'] || [])
+      : [];
+    const lastUpdated = lake?.pws?.timestamp || lake?.timestamp || null;
+
+    const { correctedForecast, isNowcastActive, reason } = applyLiveCorrections(
+      raw, sensors, targetStationId, { stationHistory, lastUpdated }
+    );
+
+    set({
+      rawForecast: raw,
+      hourlyForecast: correctedForecast,
+      isNowcastActive,
+      nowcastReason: reason,
+    });
+  },
+
   refresh: () => {
     const { activeLake } = get();
     if (activeLake) get().fetchData(activeLake, true);
@@ -156,6 +199,13 @@ export function useWeatherData(lakeId) {
   const startPolling = useWeatherStore((s) => s.startPolling);
   const stopPolling = useWeatherStore((s) => s.stopPolling);
 
+  // Nowcast slices
+  const rawForecast = useWeatherStore((s) => s.rawForecast);
+  const hourlyForecast = useWeatherStore((s) => s.hourlyForecast);
+  const isNowcastActive = useWeatherStore((s) => s.isNowcastActive);
+  const nowcastReason = useWeatherStore((s) => s.nowcastReason);
+  const setHourlyForecast = useWeatherStore((s) => s.setHourlyForecast);
+
   const prevLakeRef = useRef(null);
 
   useEffect(() => {
@@ -171,5 +221,8 @@ export function useWeatherData(lakeId) {
 
   const status = lakeState ? getProbabilityStatus(lakeState.probability, lakeState.thermalPrediction) : null;
 
-  return { lakeState, history, status, isLoading, error, lastUpdated, refresh };
+  return {
+    lakeState, history, status, isLoading, error, lastUpdated, refresh,
+    rawForecast, hourlyForecast, isNowcastActive, nowcastReason, setHourlyForecast,
+  };
 }

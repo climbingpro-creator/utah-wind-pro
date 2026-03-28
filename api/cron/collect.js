@@ -139,6 +139,7 @@ async function handleContext(res) {
       thermalProfiles: models?.thermalProfiles || null,
       learnedWeights: weights || null,
       nwsHourly: nws?.grids || null,
+      mlApplied: nws?.mlApplied || false,
       learnedLags: propLags || null,
       learnedSessions: propSessions || null,
       analogs: analogs || null,
@@ -277,12 +278,13 @@ async function handleUpstream(res) {
 async function handleNWS(res) {
   const { upstashUrl, upstashToken } = getEnv();
   if (!upstashUrl || !upstashToken) {
-    return res.status(200).json({ forecasts: null, message: 'Redis not configured' });
+    return res.status(200).json({ forecasts: null, mlApplied: false, message: 'Redis not configured' });
   }
   try {
     const raw = await redisCommand('GET', 'nws:forecasts');
-    if (!raw) return res.status(200).json({ forecasts: null, message: 'No NWS data cached yet' });
+    if (!raw) return res.status(200).json({ forecasts: null, mlApplied: false, message: 'No NWS data cached yet' });
     const data = JSON.parse(raw);
+    if (!('mlApplied' in data)) data.mlApplied = false;
     res.setHeader('Cache-Control', 's-maxage=120, stale-while-revalidate=600');
     return res.status(200).json(data);
   } catch (error) {
