@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Clock, ChevronRight, ArrowUpRight, Zap, CheckCircle, XCircle } from 'lucide-react';
+import { ChevronRight, CheckCircle, MapPin, Zap } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { ACTIVITY_CONFIGS } from './ActivityMode';
 import { getRotatingImage } from '../config/imagePool';
@@ -46,8 +46,6 @@ function getActivityVerdict(id, speed, gust, thermalPrediction, _boatingPredicti
   const isNonThermalWind = isNorthFlow || (prob < 20 && speed >= (cfg.thresholds?.tooLight || 6));
 
   const actualSpeed = speed;
-  // Proxy mismatch only applies to lake sports where upstream != launch site.
-  // For paragliding, FPS/UTALP ARE the launch-site sensors — never treat as proxy.
   const proxyWarning = id !== 'paragliding' && estTargetSpeed != null && estTargetSpeed < speed * 0.8;
 
   if (good && cfg.wantsWind) {
@@ -123,7 +121,6 @@ function getActivityVerdict(id, speed, gust, thermalPrediction, _boatingPredicti
       return { status: 'caution', label: 'GUSTY', reason: `${Math.round(speed)}G${Math.round(gust)} mph — gusty`, color: 'amber' };
     }
 
-    // Between tooLight and goodCondition — not "OFF", it's rideable or building
     if (!good) {
       const tooLight = cfg.thresholds?.tooLight || 6;
       const sessionStr = session ? ` — ${sessionLabel(session.avgMinutes)} session` : '';
@@ -160,10 +157,10 @@ function getActivityVerdict(id, speed, gust, thermalPrediction, _boatingPredicti
   return { status: 'off', label: 'OFF', reason: 'Not ideal right now', color: 'slate' };
 }
 
-function buildOutlook(windSpeed, windGust, thermalPrediction, boatingPrediction, fpsStation, utalpStation, propagation, selectedActivity) {
+// Step 1: Build heuristic cards from raw wind + thermal + propagation
+function buildCards(windSpeed, windGust, thermalPrediction, boatingPrediction, fpsStation, utalpStation, propagation) {
   const speed = windSpeed ?? 0;
   const gust = windGust ?? speed;
-
   const fpsSpeed = fpsStation?.speed ?? fpsStation?.windSpeed;
   const fpsGust = fpsStation?.gust ?? fpsStation?.windGust;
   const utalpSpeed = utalpStation?.speed ?? utalpStation?.windSpeed;
@@ -182,6 +179,36 @@ function buildOutlook(windSpeed, windGust, thermalPrediction, boatingPrediction,
     };
   });
 
+  return { cards, speed, gust };
+}
+
+// Step 2: Overlay unified scores — only override when they disagree on go/not-go
+function applyUnifiedOverrides(cards, unifiedActivities) {
+  if (!unifiedActivities) return cards;
+  return cards.map(card => {
+    const ua = unifiedActivities[card.id];
+    if (!ua || !ua.message || ua.score <= 0) return card;
+
+    const hStatus = card.verdict?.status;
+    const uStatus = ua.status === 'dangerous' ? 'off' : ua.status;
+    const hIsGo = hStatus === 'go';
+    const uIsGo = uStatus === 'go';
+    if (hIsGo === uIsGo) return card;
+
+    return {
+      ...card,
+      verdict: {
+        status: uStatus,
+        label: uStatus === 'go' ? 'GO' : uStatus === 'wait' ? 'WAIT' : ua.status === 'dangerous' ? 'DANGER' : card.verdict?.label || 'OFF',
+        reason: ua.message,
+        color: uStatus === 'go' ? 'emerald' : uStatus === 'wait' ? 'amber' : ua.status === 'dangerous' ? 'red' : 'slate',
+      },
+    };
+  });
+}
+
+// Step 3: Compute headline from final cards + full unified prediction intelligence
+function buildHeadline(cards, speed, selectedActivity, prediction) {
   const selectedCard = cards.find(c => c.id === selectedActivity);
   const selectedVerdict = selectedCard?.verdict;
   const selectedName = selectedCard?.cfg?.name || 'Activity';
@@ -192,51 +219,102 @@ function buildOutlook(windSpeed, windGust, thermalPrediction, boatingPrediction,
   const selectedIsGo = selectedVerdict?.status === 'go';
   const selectedIsWait = selectedVerdict?.status === 'wait' || selectedVerdict?.status === 'caution';
 
+  const ub = prediction?.briefing;
+  const up = prediction?.propagation;
+  const uPressure = prediction?.pressure;
+
   let mood = 'neutral';
   let headline = '';
   let subline = '';
+  let context = '';
 
-  if (selectedIsGo && goCount >= 4) {
-    mood = 'epic';
-    headline = `${selectedName} is ON — everything is firing`;
-    subline = selectedVerdict.reason;
-  } else if (selectedIsGo) {
-    mood = 'good';
-    headline = `${selectedName} is GO`;
-    subline = selectedVerdict.reason;
-  } else if (selectedIsWait && goCount > 0) {
-    mood = 'mixed';
-    const goNames = goCards.filter(c => c.id !== selectedActivity).slice(0, 2).map(c => c.cfg.name);
-    headline = `${selectedVerdict.label} for ${selectedName}`;
-    subline = selectedVerdict.reason + (goNames.length ? ` — ${goNames.join(' & ')} are GO now` : '');
-  } else if (selectedIsWait) {
-    mood = 'mixed';
-    headline = `${selectedVerdict.label} for ${selectedName}`;
-    subline = selectedVerdict.reason;
-  } else if (selectedVerdict?.status === 'off' && goCount > 0) {
-    mood = 'calm';
-    const goNames = goCards.slice(0, 3).map(c => c.cfg.name);
-    headline = `Too ${speed < 5 ? 'light' : 'strong'} for ${selectedName}`;
-    subline = `${Math.round(speed)} mph — ${goNames.join(', ')} ${goNames.length === 1 ? 'is' : 'are'} ideal right now`;
-  } else if (waitCount > 0) {
-    mood = 'mixed';
-    const waitCard = cards.find(c => c.verdict?.status === 'wait');
-    headline = `Wind building — watching for ${selectedName}`;
-    subline = waitCard.verdict.reason;
-  } else if (speed <= 3) {
-    mood = 'calm';
-    const calmActivities = goCards.map(c => c.cfg.name);
-    headline = calmActivities.length > 0
-      ? `Glassy & calm — ideal for ${calmActivities.slice(0, 2).join(' & ')}`
-      : 'Glass conditions — calm water';
-    subline = `${Math.round(speed)} mph — too light for ${selectedName}`;
-  } else {
-    mood = 'neutral';
-    headline = 'Quiet conditions';
-    subline = selectedVerdict?.reason || 'No strong signals right now — check back later';
+  // Build upstream intelligence context from live prediction signals
+  if (up?.phase === 'building' || up?.phase === 'approaching') {
+    const src = up.dominantSource || 'upstream';
+    context = up.eta
+      ? `Wind propagating from ${src} — ETA ~${up.eta} min`
+      : `Wind detected at ${src} — propagating toward you`;
+  } else if (up?.phase === 'arrived') {
+    context = 'Wind has arrived at your station';
   }
 
-  return { headline, subline, mood, cards, speed, gust };
+  if (uPressure?.gradient != null && !context) {
+    const grad = uPressure.gradient;
+    if (uPressure.thermalBusted) {
+      context = `Gradient +${Math.abs(grad).toFixed(1)} mb — thermal busted, north flow dominant`;
+    } else if (uPressure.northFlowRisk) {
+      context = `North flow risk — gradient ${grad > 0 ? '+' : ''}${grad.toFixed(1)} mb`;
+    } else if (Math.abs(grad) < 0.5) {
+      context = `Flat gradient (${grad.toFixed(1)} mb) — no strong thermal driver`;
+    } else if (grad < -0.5) {
+      context = `Favorable gradient (${grad.toFixed(1)} mb) — thermal building`;
+    }
+  }
+
+  // Prefer the unified prediction's smart headline when available
+  if (ub?.headline && prediction?.decision) {
+    const dec = prediction.decision;
+    if (dec === 'GO') {
+      mood = goCount >= 4 ? 'epic' : 'good';
+      headline = ub.headline;
+      subline = ub.body || selectedVerdict?.reason || '';
+    } else if (dec === 'WAIT') {
+      mood = 'mixed';
+      headline = ub.headline;
+      subline = ub.body || selectedVerdict?.reason || '';
+    } else if (dec === 'PASS') {
+      mood = speed <= 3 ? 'calm' : 'neutral';
+      headline = ub.headline;
+      subline = ub.body || selectedVerdict?.reason || '';
+    } else {
+      headline = '';
+    }
+  }
+
+  // Fallback to card-based headline
+  if (!headline) {
+    if (selectedIsGo && goCount >= 4) {
+      mood = 'epic';
+      headline = `${selectedName} is ON — everything is firing`;
+      subline = selectedVerdict.reason;
+    } else if (selectedIsGo) {
+      mood = 'good';
+      headline = `${selectedName} is GO`;
+      subline = selectedVerdict.reason;
+    } else if (selectedIsWait && goCount > 0) {
+      mood = 'mixed';
+      const goNames = goCards.filter(c => c.id !== selectedActivity).slice(0, 2).map(c => c.cfg.name);
+      headline = `${selectedVerdict.label} for ${selectedName}`;
+      subline = selectedVerdict.reason + (goNames.length ? ` — ${goNames.join(' & ')} are GO now` : '');
+    } else if (selectedIsWait) {
+      mood = 'mixed';
+      headline = `${selectedVerdict.label} for ${selectedName}`;
+      subline = selectedVerdict.reason;
+    } else if (selectedVerdict?.status === 'off' && goCount > 0) {
+      mood = 'calm';
+      const goNames = goCards.slice(0, 3).map(c => c.cfg.name);
+      headline = `Too ${speed < 5 ? 'light' : 'strong'} for ${selectedName}`;
+      subline = `${Math.round(speed)} mph — ${goNames.join(', ')} ${goNames.length === 1 ? 'is' : 'are'} ideal right now`;
+    } else if (waitCount > 0) {
+      mood = 'mixed';
+      const waitCard = cards.find(c => c.verdict?.status === 'wait');
+      headline = `Wind building — watching for ${selectedName}`;
+      subline = waitCard.verdict.reason;
+    } else if (speed <= 3) {
+      mood = 'calm';
+      const calmActivities = goCards.map(c => c.cfg.name);
+      headline = calmActivities.length > 0
+        ? `Glassy & calm — ideal for ${calmActivities.slice(0, 2).join(' & ')}`
+        : 'Glass conditions — calm water';
+      subline = `${Math.round(speed)} mph — too light for ${selectedName}`;
+    } else {
+      mood = 'neutral';
+      headline = 'Quiet conditions';
+      subline = selectedVerdict?.reason || 'No strong signals right now — check back later';
+    }
+  }
+
+  return { headline, subline, mood, context };
 }
 
 const MOOD_ACCENT = {
@@ -282,37 +360,23 @@ function dirLabel(deg) {
   return dirs[Math.round(deg / 22.5) % 16];
 }
 
-export default function TodayHero({ windSpeed, windGust, windDirection, thermalPrediction, boatingPrediction, onSelectActivity, selectedActivity, fpsStation, utalpStation, propagation, unifiedActivities }) {
+export default function TodayHero({ windSpeed, windGust, windDirection, thermalPrediction, boatingPrediction, onSelectActivity, selectedActivity, fpsStation, utalpStation, propagation, unifiedActivities, locationName, prediction }) {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 
-  const outlook = useMemo(
-    () => buildOutlook(windSpeed, windGust, thermalPrediction, boatingPrediction, fpsStation, utalpStation, propagation, selectedActivity),
-    [windSpeed, windGust, thermalPrediction, boatingPrediction, fpsStation, utalpStation, propagation, selectedActivity]
+  const { cards: rawCards, speed: outlookSpeed, gust: outlookGust } = useMemo(
+    () => buildCards(windSpeed, windGust, thermalPrediction, boatingPrediction, fpsStation, utalpStation, propagation),
+    [windSpeed, windGust, thermalPrediction, boatingPrediction, fpsStation, utalpStation, propagation]
   );
 
-  // Overlay unified activity scores onto the outlook cards when available
-  const augmentedCards = useMemo(() => {
-    if (!unifiedActivities) return outlook.cards;
-    return outlook.cards.map(card => {
-      const ua = unifiedActivities[card.id];
-      if (!ua) return card;
-      const verdictFromUnified = {
-        status: ua.status === 'dangerous' ? 'off' : ua.status,
-        label: ua.status === 'go' ? 'GO' : ua.status === 'wait' ? 'WAIT' : ua.status === 'dangerous' ? 'DANGER' : 'OFF',
-        reason: ua.message,
-        color: ua.status === 'go' ? 'emerald' : ua.status === 'wait' ? 'amber' : ua.status === 'dangerous' ? 'red' : 'slate',
-      };
-      // Only override if unified is more informative (e.g. has a clear go/wait with message)
-      if (ua.message && ua.score > 0) {
-        return { ...card, verdict: verdictFromUnified };
-      }
-      return card;
-    });
-  }, [outlook.cards, unifiedActivities]);
+  const finalCards = useMemo(() => applyUnifiedOverrides(rawCards, unifiedActivities), [rawCards, unifiedActivities]);
+  const { headline, subline, mood, context } = useMemo(
+    () => buildHeadline(finalCards, outlookSpeed, selectedActivity, prediction),
+    [finalCards, outlookSpeed, selectedActivity, prediction]
+  );
 
-  const accent = MOOD_ACCENT[outlook.mood] || MOOD_ACCENT.neutral;
-  const bgImage = getRotatingImage(outlook.mood, 'mood') || MOOD_IMAGE_FALLBACK[outlook.mood];
+  const accent = MOOD_ACCENT[mood] || MOOD_ACCENT.neutral;
+  const bgImage = getRotatingImage(mood, 'mood') || MOOD_IMAGE_FALLBACK[mood];
   const styles = isDark ? STATUS_STYLES : STATUS_STYLES_LIGHT;
 
   return (
@@ -329,36 +393,89 @@ export default function TodayHero({ windSpeed, windGust, windDirection, thermalP
         <div className="flex items-start justify-between gap-6 mb-6">
           <div className="min-w-0 flex-1">
             <p className={`text-[11px] font-semibold uppercase tracking-widest mb-3 flex items-center gap-2 ${bgImage ? 'text-white/50' : 'data-label'}`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${MOOD_DOT[outlook.mood]}`} />
+              <span className={`w-1.5 h-1.5 rounded-full ${MOOD_DOT[mood]}`} />
               {getGreeting()} — Today's Outlook
             </p>
             <h2 className={`text-xl sm:text-2xl lg:text-3xl font-extrabold leading-snug tracking-tight ${bgImage ? 'text-white' : accent}`}>
-              {outlook.headline}
+              {headline}
             </h2>
-            {outlook.subline && (
+            {subline && (
               <p className={`text-sm sm:text-base mt-2 font-medium leading-relaxed ${bgImage ? 'text-white/70' : 'text-[var(--text-secondary)]'}`}>
-                {outlook.subline}
+                {subline}
               </p>
             )}
           </div>
           <div className="text-right flex-shrink-0">
             <div className={`data-number ${bgImage ? 'text-white' : accent}`}>
-              {outlook.speed > 0 ? Math.round(outlook.speed) : '--'}
+              {outlookSpeed > 0 ? Math.round(outlookSpeed) : '--'}
             </div>
             <p className={`text-[11px] font-semibold uppercase tracking-widest mt-1 ${bgImage ? 'text-white/50' : 'text-[var(--text-tertiary)]'}`}>
               mph{windDirection != null ? ` ${dirLabel(windDirection)}` : ''}
             </p>
-            {outlook.gust > outlook.speed * 1.2 && (
+            {outlookGust > outlookSpeed * 1.2 && (
               <p className={`text-xs mt-1 font-medium ${bgImage ? 'text-white/40' : 'text-[var(--text-tertiary)]'}`}>
-                G{Math.round(outlook.gust)}
+                G{Math.round(outlookGust)}
               </p>
             )}
           </div>
         </div>
 
+        {/* Location + upstream intelligence */}
+        {(locationName || context) && (
+          <div className="flex flex-wrap items-center gap-2 mb-4">
+            {locationName && (
+              <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${
+                bgImage ? 'bg-white/10 backdrop-blur-sm' : 'bg-[var(--bg-card)] border border-[var(--border-color)]'
+              }`}>
+                <MapPin className={`w-3.5 h-3.5 flex-shrink-0 ${bgImage ? 'text-sky-400' : 'text-sky-500'}`} />
+                <span className={`text-xs font-bold ${bgImage ? 'text-white/90' : 'text-[var(--text-primary)]'}`}>
+                  {locationName}
+                </span>
+              </div>
+            )}
+            {context && (
+              <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${
+                bgImage ? 'bg-amber-500/15 backdrop-blur-sm' : 'bg-amber-500/10 border border-amber-500/20'
+              }`}>
+                <Zap className={`w-3.5 h-3.5 flex-shrink-0 ${bgImage ? 'text-amber-400' : 'text-amber-500'}`} />
+                <span className={`text-xs font-bold ${bgImage ? 'text-amber-200' : 'text-amber-600'}`}>
+                  {context}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Propagation chain — upstream station flow when wind is building */}
+        {prediction?.propagation?.chains?.length > 0 && (prediction?.propagation?.phase === 'building' || prediction?.propagation?.phase === 'approaching') && (
+          <div className={`flex items-center gap-1.5 mb-4 px-3 py-2 rounded-lg text-[11px] font-medium overflow-x-auto ${
+            bgImage ? 'bg-white/5 backdrop-blur-sm' : 'bg-[var(--bg-card)] border border-[var(--border-color)]'
+          }`}>
+            {prediction.propagation.chains.map((chain, i) => (
+              <span key={chain.source || i} className="flex items-center gap-1 whitespace-nowrap">
+                {i > 0 && <span className={bgImage ? 'text-white/30' : 'text-[var(--text-tertiary)]'}>→</span>}
+                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full ${
+                  chain.status === 'strong'
+                    ? (bgImage ? 'bg-emerald-500/20 text-emerald-300' : 'bg-emerald-500/10 text-emerald-600')
+                    : chain.status === 'active'
+                      ? (bgImage ? 'bg-amber-500/20 text-amber-300' : 'bg-amber-500/10 text-amber-600')
+                      : (bgImage ? 'bg-white/10 text-white/40' : 'bg-slate-100 text-slate-400')
+                }`}>
+                  {chain.name || chain.source}
+                  {chain.speed != null && <span className="font-bold">{Math.round(chain.speed)}</span>}
+                </span>
+              </span>
+            ))}
+            <span className={bgImage ? 'text-white/30' : 'text-[var(--text-tertiary)]'}>→</span>
+            <span className={`px-2 py-0.5 rounded-full ${
+              bgImage ? 'bg-sky-500/20 text-sky-300' : 'bg-sky-500/10 text-sky-600'
+            }`}>Your Station</span>
+          </div>
+        )}
+
         {/* Activity Cards Grid — fixed order, selected highlighted */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-          {augmentedCards.map(({ id, cfg, verdict }) => {
+          {finalCards.map(({ id, cfg, verdict }) => {
             if (!verdict || !cfg) return null;
             const isSelected = selectedActivity === id;
             const isGo = verdict.status === 'go';

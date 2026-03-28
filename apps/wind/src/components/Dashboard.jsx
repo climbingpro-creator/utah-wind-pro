@@ -478,6 +478,8 @@ export function Dashboard() {
           utalpStation={lakeState?.utalpStation || lakeState?.wind?.stations?.find(s => s.id === 'UTALP')}
           propagation={prediction?.propagation || lakeState?.propagation}
           unifiedActivities={prediction?.activities}
+          locationName={lakeState?.config?.name || lakeState?.config?.shortName}
+          prediction={prediction}
         />
 
         {/* ═══════════ SPORT INTELLIGENCE — Optimal Time Windows ═══════════ */}
