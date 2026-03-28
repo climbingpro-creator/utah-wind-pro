@@ -1,6 +1,0 @@
-{
-  "buildCommand": "cd ../.. && npx turbo build --filter=@utahwind/water",
-  "outputDirectory": "dist",
-  "framework": null,
-  "installCommand": "cd ../.. && npm install"
-}
