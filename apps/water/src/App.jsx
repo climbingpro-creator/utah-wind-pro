@@ -33,7 +33,7 @@ function getGreeting() {
 
 function getWaterVerdict(activity, speed, gust) {
   const s = speed ?? 0;
-  const g = gust ?? s;
+  const _g = gust ?? s;
   if (activity === 'fishing') {
     if (s <= 3) return { status: 'go', label: 'GO FISH', reason: 'Calm water — fish are active', color: 'emerald' };
     if (s <= 8) return { status: 'go', label: 'GOOD', reason: `Light ripple (${Math.round(s)} mph) — great casting`, color: 'lime' };
@@ -238,12 +238,14 @@ function WaterApp() {
 
             {/* Activity Cards */}
             <div className="grid grid-cols-3 gap-2">
-              {verdicts.map(({ id, name, icon: Icon, verdict }) => {
-                const isSelected = selectedActivity === id;
+              {verdicts.map((act) => {
+                const isSelected = selectedActivity === act.id;
+                const ActIcon = act.icon;
+                const { verdict } = act;
                 return (
                   <button
-                    key={id}
-                    onClick={() => setSelectedActivity(id)}
+                    key={act.id}
+                    onClick={() => setSelectedActivity(act.id)}
                     className={`relative flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-all text-left cursor-pointer ${
                       isSelected
                         ? 'bg-sky-500/25 border-sky-400 backdrop-blur-sm ring-2 ring-sky-400/60 shadow-lg scale-[1.03]'
@@ -260,12 +262,12 @@ function WaterApp() {
                       </span>
                     )}
                     <div className="flex items-center justify-between w-full">
-                      <Icon className={`w-5 h-5 ${isSelected ? 'text-sky-300' : 'text-white/70'}`} />
+                      <ActIcon className={`w-5 h-5 ${isSelected ? 'text-sky-300' : 'text-white/70'}`} />
                       <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded-full uppercase tracking-wider ${STATUS_BADGE[verdict.status] || STATUS_BADGE.off}`}>
                         {verdict.label}
                       </span>
                     </div>
-                    <span className={`text-sm font-bold w-full ${isSelected ? 'text-sky-300' : 'text-white'}`}>{name}</span>
+                    <span className={`text-sm font-bold w-full ${isSelected ? 'text-sky-300' : 'text-white'}`}>{act.name}</span>
                     <span className="text-[10px] leading-tight text-white/50 w-full line-clamp-1">{verdict.reason}</span>
                     {isSelected && <CheckCircle className="absolute top-2.5 right-2 w-3.5 h-3.5 text-sky-400" />}
                   </button>

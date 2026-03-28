@@ -10,8 +10,8 @@ export default function FlatwaterTemplate({
   currentWindSpeed, currentWindGust: _currentWindGust, currentWindDirection: _currentWindDirection,
   effectiveDecision, lakeState,
   effectiveBoatingPrediction, effectiveActivityScore,
-  effectiveBriefing, pressureData, upstreamData, mesoData,
-  isLoading,
+  effectiveBriefing,   pressureData, upstreamData, mesoData,
+  isLoading: _isLoading,
 }) {
   const locName = lakeState?.config?.shortName || lakeState?.config?.name || selectedLake || 'Utah Lake';
   const score = effectiveActivityScore?.score;

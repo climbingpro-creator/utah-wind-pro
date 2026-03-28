@@ -41,7 +41,7 @@ function formatHour(h) {
  * Build an hourly glass forecast from the current wind state + upstream indicators.
  * Produces a 24-hour hour-by-hour timeline with glass windows and wind events.
  */
-export async function getHourlyGlassForecast(locationId, currentWind, upstreamData, lakeState, _mesoData) {
+export async function getHourlyGlassForecast(locationId, currentWind, upstreamData, _lakeState, _mesoData) {
   const now = new Date();
   const currentHour = now.getHours();
   const speed = currentWind?.speed ?? 0;
