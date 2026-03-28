@@ -878,7 +878,7 @@ const LocationCard = ({ location, isSelected, onSelect, theme, waterTemp, riverF
 };
 
 // Main Fishing Mode Component
-const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamData = {}, hourlyForecast }) => {
+const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamData = {}, hourlyForecast = [] }) => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const [selectedLocation, setSelectedLocation] = useState('strawberry');
