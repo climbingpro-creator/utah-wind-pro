@@ -85,6 +85,13 @@ export {
   normalizeWuHistoryObs,
 } from './config/wuPwsNetwork.js';
 
+// ─── Sport Intelligence ──────────────────────────────────────
+export {
+  findOptimalWindows,
+  findAllSportWindows,
+  SPORT_PROFILES,
+} from './SportIntelligenceEngine.js';
+
 // ─── Utils ────────────────────────────────────────────────────
 export { apiUrl, isNativeApp, isIOS, isAndroid, isWeb } from './utils/platform.js';
 export { safeToFixed } from './utils/safeToFixed.js';

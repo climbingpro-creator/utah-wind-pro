@@ -1,9 +1,10 @@
-import { useState, useMemo, Suspense, lazy, useCallback } from 'react';
+import { useState, useEffect, useMemo, Suspense, lazy, useCallback } from 'react';
 import { Fish, Ship, Waves, RefreshCw, Wifi, WifiOff, Sun, Moon, CheckCircle,
   Shield, Clock, Lightbulb, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { ErrorBoundary } from '@utahwind/ui';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
-import { useWeatherData } from '@utahwind/weather';
+import { useWeatherData, getHourlyForecast, findAllSportWindows } from '@utahwind/weather';
+import { IntelligentRecommendations } from '@utahwind/ui';
 import { predictGlass } from './services/BoatingPredictor';
 import { safeToFixed } from './utils/safeToFixed';
 
@@ -157,6 +158,19 @@ function WaterApp() {
   const heroImage = useMemo(() => {
     const day = new Date().getDate();
     return HERO_IMAGES[day % HERO_IMAGES.length];
+  }, []);
+
+  const [sportWindows, setSportWindows] = useState(null);
+  useEffect(() => {
+    let cancelled = false;
+    async function loadWindows() {
+      try {
+        const hourly = await getHourlyForecast(DEFAULT_LAKE);
+        if (!cancelled && hourly) setSportWindows(findAllSportWindows(DEFAULT_LAKE, hourly));
+      } catch (_e) { /* forecast unavailable */ }
+    }
+    loadWindows();
+    return () => { cancelled = true; };
   }, []);
 
   const dirLabel = useCallback((deg) => {
@@ -381,6 +395,19 @@ function WaterApp() {
               )}
             </div>
           </div>
+        )}
+
+        {/* ═══════ SPORT INTELLIGENCE — Optimal Time Windows ═══════ */}
+        {sportWindows && Object.keys(sportWindows).length > 0 && (
+          <IntelligentRecommendations
+            windows={sportWindows}
+            sportFilter={
+              selectedActivity === 'fishing' ? ['fishing', 'boating', 'paddling'] :
+              selectedActivity === 'boating' ? ['boating', 'paddling', 'fishing'] :
+              ['paddling', 'boating', 'fishing']
+            }
+            title="Best Time Windows Today"
+          />
         )}
 
         {/* ═══════ MAIN CONTENT ═══════ */}

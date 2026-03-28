@@ -2,7 +2,7 @@ import { useState, useRef, Suspense, lazy } from 'react';
 import * as React from 'react';
 import { LakeSelector } from './LakeSelector';
 import { ToastContainer } from './ToastNotification';
-import { useWeatherData } from '@utahwind/weather';
+import { useWeatherData, getHourlyForecast, findAllSportWindows } from '@utahwind/weather';
 import { useModelContext } from '../hooks/useModelContext';
 import { predict as unifiedPredict } from '../services/UnifiedPredictor';
 import { checkAndNotify } from '../services/NotificationService';
@@ -11,7 +11,7 @@ import { ACTIVITY_CONFIGS, calculateActivityScore, calculateGlassScore } from '.
 import { predictGlass } from '../services/BoatingPredictor';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
-import { SafeComponent } from '@utahwind/ui';
+import { SafeComponent, IntelligentRecommendations } from '@utahwind/ui';
 import ProGate from './ProGate';
 import { calculateCorrelatedWind } from '@utahwind/weather';
 import { monitorSwings } from '@utahwind/weather';
@@ -341,6 +341,19 @@ export function Dashboard() {
     windDirection: decisionWindDirection,
   };
 
+  const [sportWindows, setSportWindows] = React.useState(null);
+  React.useEffect(() => {
+    let cancelled = false;
+    async function loadWindows() {
+      try {
+        const hourly = await getHourlyForecast(selectedLake);
+        if (!cancelled && hourly) setSportWindows(findAllSportWindows(selectedLake, hourly));
+      } catch (_e) { /* forecast unavailable */ }
+    }
+    loadWindows();
+    return () => { cancelled = true; };
+  }, [selectedLake]);
+
   return (
     <div className={`min-h-screen transition-colors duration-200 ${
       theme === 'dark' 
@@ -466,6 +479,24 @@ export function Dashboard() {
           propagation={prediction?.propagation || lakeState?.propagation}
           unifiedActivities={prediction?.activities}
         />
+
+        {/* ═══════════ SPORT INTELLIGENCE — Optimal Time Windows ═══════════ */}
+        {sportWindows && Object.keys(sportWindows).length > 0 && (
+          <SafeComponent name="Sport Intelligence">
+            <IntelligentRecommendations
+              windows={sportWindows}
+              sportFilter={
+                selectedActivity === 'kiting' ? ['foil-kite', 'windsurfing', 'sailing'] :
+                selectedActivity === 'paragliding' ? ['paragliding'] :
+                selectedActivity === 'sailing' ? ['sailing', 'foil-kite', 'windsurfing'] :
+                selectedActivity === 'snowkiting' ? ['snowkiting', 'foil-kite'] :
+                selectedActivity === 'windsurfing' ? ['windsurfing', 'foil-kite', 'sailing'] :
+                null
+              }
+              title="Best Time Windows Today"
+            />
+          </SafeComponent>
+        )}
 
         {/* ═══════════ 2. SPORT TEMPLATE ROUTER ═══════════ */}
         {selectedActivity === 'paragliding' ? (<>
