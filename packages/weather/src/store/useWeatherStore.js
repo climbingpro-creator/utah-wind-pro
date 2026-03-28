@@ -5,6 +5,7 @@ import { LakeState, getProbabilityStatus } from '../services/DataNormalizer';
 
 const REFRESH_INTERVAL = 60 * 1000;
 const HISTORY_REFRESH_INTERVAL = 5 * 60 * 1000;
+const EMPTY_HISTORY = {};
 
 export const useWeatherStore = create((set, get) => ({
   lakeStates: {},
@@ -21,22 +22,13 @@ export const useWeatherStore = create((set, get) => ({
   fetchData: async (lakeId, forceRefresh = false) => {
     const state = get();
     if (state._isFetching && !forceRefresh) return;
-    set({ _isFetching: true });
 
     const cachedState = state.lakeStates[lakeId];
-    if (!cachedState) {
-      set({ isLoading: true });
-    }
+    set({ _isFetching: true, ...(cachedState ? {} : { isLoading: true }) });
 
     try {
       const rawData = await weatherService.getDataForLake(lakeId);
       const hasData = rawData.ambient || rawData.synoptic?.length > 0;
-
-      if (!hasData && !cachedState) {
-        set({ error: 'Unable to fetch weather data. Check API keys.' });
-      } else {
-        set({ error: null });
-      }
 
       const lakeHistory = get().history[lakeId];
       const historyArray = lakeHistory
@@ -68,6 +60,7 @@ export const useWeatherStore = create((set, get) => ({
         lastUpdated: new Date(),
         isLoading: false,
         _isFetching: false,
+        error: (!hasData && !cachedState) ? 'Unable to fetch weather data. Check API keys.' : null,
         _previousProbability: { ...s._previousProbability, [lakeId]: newState.probability },
       }));
     } catch (err) {
@@ -122,15 +115,18 @@ export const useWeatherStore = create((set, get) => ({
     if (state._dataInterval) clearInterval(state._dataInterval);
     if (state._historyInterval) clearInterval(state._historyInterval);
 
-    set({ activeLake: lakeId, isLoading: !state.lakeStates[lakeId] });
-
     get().fetchData(lakeId, true);
     get().fetchHistory(lakeId);
 
     const dataInterval = setInterval(() => get().fetchData(lakeId), REFRESH_INTERVAL);
     const historyInterval = setInterval(() => get().fetchHistory(lakeId), HISTORY_REFRESH_INTERVAL);
 
-    set({ _dataInterval: dataInterval, _historyInterval: historyInterval });
+    set({
+      activeLake: lakeId,
+      isLoading: !state.lakeStates[lakeId],
+      _dataInterval: dataInterval,
+      _historyInterval: historyInterval,
+    });
   },
 
   stopPolling: () => {
@@ -152,24 +148,22 @@ export const useWeatherStore = create((set, get) => ({
  */
 export function useWeatherData(lakeId) {
   const lakeState = useWeatherStore((s) => s.lakeStates[lakeId] ?? null);
-  const history = useWeatherStore((s) => s.history[lakeId] ?? {});
+  const history = useWeatherStore((s) => s.history[lakeId] ?? EMPTY_HISTORY);
   const isLoading = useWeatherStore((s) => s.isLoading);
   const error = useWeatherStore((s) => s.error);
   const lastUpdated = useWeatherStore((s) => s.lastUpdated);
   const refresh = useWeatherStore((s) => s.refresh);
   const startPolling = useWeatherStore((s) => s.startPolling);
   const stopPolling = useWeatherStore((s) => s.stopPolling);
-  const activeLake = useWeatherStore((s) => s.activeLake);
 
-  const prevLakeRef = useRef(lakeId);
+  const prevLakeRef = useRef(null);
 
   useEffect(() => {
-    if (lakeId !== activeLake || lakeId !== prevLakeRef.current) {
-      startPolling(lakeId);
+    if (lakeId && lakeId !== prevLakeRef.current) {
       prevLakeRef.current = lakeId;
+      startPolling(lakeId);
     }
-    return () => {};
-  }, [lakeId, activeLake, startPolling]);
+  }, [lakeId, startPolling]);
 
   useEffect(() => {
     return () => stopPolling();
