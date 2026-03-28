@@ -5,14 +5,15 @@
   "type": "module",
   "main": "./src/index.js",
   "exports": {
-    ".": "./src/index.js"
+    ".": "./src/index.js",
+    "./model": "./models/xgboost_model.json"
   },
   "scripts": {
     "prepare": "python scripts/prepare_data.py",
     "train": "python scripts/train_model.py",
     "pipeline": "python scripts/prepare_data.py && python scripts/train_model.py",
-    "build": "echo '@utahwind/ml — no JS build step'",
-    "lint": "echo '@utahwind/ml — no JS lint step'"
+    "build": "echo '@utahwind/ml -- no JS build step'",
+    "lint": "echo '@utahwind/ml -- no JS lint step'"
   },
   "dependencies": {}
 }

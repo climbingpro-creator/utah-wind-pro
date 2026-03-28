@@ -1,9 +1,8 @@
 /**
- * @utahwind/ml — Machine Learning package for NWS forecast error prediction.
+ * @utahwind/ml -- Machine Learning package for NWS forecast error prediction.
  *
- * Training:  Python (XGBoost) — see scripts/
- * Inference: Node.js — loads the trained xgboost_model.json and predicts
- *            the Wind_Error correction for a given set of features.
+ * Training:  Python (XGBoost) -- see scripts/
+ * Inference: Pure JS -- loads xgboost_model.json, walks decision trees natively
  */
 
-export { predict, loadModel, FEATURES } from './inference.js';
+export { WindPredictor } from './InferenceEngine.js';
