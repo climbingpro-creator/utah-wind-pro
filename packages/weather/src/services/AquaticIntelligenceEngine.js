@@ -287,9 +287,11 @@ export async function fetchMarineTelemetry(lat, lng) {
 async function fetchDynamicBioProfile(name, lat, lng, type = 'lake') {
   try {
     const params = new URLSearchParams({ name, lat: String(lat), lng: String(lng), type });
-    const baseUrl = typeof import.meta !== 'undefined' && import.meta.env?.PROD
-      ? '' : (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_ORIGIN) || '';
-    const res = await fetch(`${baseUrl}/api/biology?${params}`, { signal: AbortSignal.timeout(10000) });
+    // The /api/biology route lives on the main (wind) Vercel project.
+    // The water app is a separate deployment, so we need the absolute origin.
+    const origin = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_ORIGIN)
+      || 'https://utah-wind-pro.vercel.app';
+    const res = await fetch(`${origin}/api/biology?${params}`, { signal: AbortSignal.timeout(10000) });
     if (!res.ok) return null;
     return await res.json();
   } catch {
