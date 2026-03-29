@@ -116,18 +116,12 @@ function RiverTelemetryGrid({ data }) {
 
 function OceanTelemetryGrid({ ocean }) {
   if (!ocean) return null;
+  const hasAnyData = ocean.waveHeightFt != null || ocean.maxWaveHeightFt != null || ocean.waveDirection != null;
+  if (!hasAnyData) return null;
+
   return (
     <div className="px-3 pb-1.5">
       <div className="grid grid-cols-2 gap-1.5">
-        {ocean.seaSurfaceTempF != null && (
-          <div className="rounded-lg bg-white/[0.03] border border-cyan-500/10 px-2.5 py-1.5">
-            <div className="flex items-center gap-1 mb-0.5">
-              <Thermometer className="w-2.5 h-2.5 text-cyan-500/70" />
-              <span className="text-[8px] font-bold uppercase tracking-wider text-slate-500">Sea Temp</span>
-            </div>
-            <p className="text-sm font-extrabold text-cyan-300">{Math.round(ocean.seaSurfaceTempF)}°F</p>
-          </div>
-        )}
         {ocean.waveHeightFt != null && (
           <div className="rounded-lg bg-white/[0.03] border border-blue-500/10 px-2.5 py-1.5">
             <div className="flex items-center gap-1 mb-0.5">
@@ -136,17 +130,26 @@ function OceanTelemetryGrid({ ocean }) {
             </div>
             <p className="text-sm font-extrabold text-blue-300">
               {ocean.waveHeightFt} ft
-              {ocean.wavePeriodS ? ` @ ${ocean.wavePeriodS}s` : ''}
+              {ocean.wavePeriodS ? ` @ ${Math.round(ocean.wavePeriodS)}s` : ''}
             </p>
           </div>
         )}
-        {ocean.currentVelocity != null && (
+        {ocean.maxWaveHeightFt != null && (
+          <div className="rounded-lg bg-white/[0.03] border border-blue-500/10 px-2.5 py-1.5">
+            <div className="flex items-center gap-1 mb-0.5">
+              <Activity className="w-2.5 h-2.5 text-blue-500/70" />
+              <span className="text-[8px] font-bold uppercase tracking-wider text-slate-500">Max Swell</span>
+            </div>
+            <p className="text-sm font-extrabold text-blue-300">{ocean.maxWaveHeightFt} ft</p>
+          </div>
+        )}
+        {ocean.waveDirection != null && (
           <div className="rounded-lg bg-white/[0.03] border border-indigo-500/10 px-2.5 py-1.5 col-span-2">
             <div className="flex items-center gap-1 mb-0.5">
               <Navigation className="w-2.5 h-2.5 text-indigo-500/70" />
-              <span className="text-[8px] font-bold uppercase tracking-wider text-slate-500">Current</span>
+              <span className="text-[8px] font-bold uppercase tracking-wider text-slate-500">Wave Direction</span>
             </div>
-            <p className="text-[10px] font-semibold text-indigo-300">{ocean.currentVelocity} m/s ocean current</p>
+            <p className="text-[10px] font-semibold text-indigo-300">{Math.round(ocean.waveDirection)}° swell direction</p>
           </div>
         )}
       </div>

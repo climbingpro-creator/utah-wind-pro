@@ -72,7 +72,7 @@ const OCEAN_TYPES = new Set(['ocean', 'sea', 'bay', 'strait', 'gulf', 'coastline
 
 export async function reverseGeocodeWater(lat, lng) {
   try {
-    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10&addressdetails=1`;
+    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10&addressdetails=1&namedetails=1`;
     const res = await fetch(url, {
       headers: { 'User-Agent': 'UtahWaterGlass/1.0' },
       signal: AbortSignal.timeout(5000),
@@ -80,31 +80,33 @@ export async function reverseGeocodeWater(lat, lng) {
     if (!res.ok) return null;
     const data = await res.json();
 
+    if (data.error) return null;
+
     const addr = data.address || {};
     const typeStr = (data.type || '').toLowerCase();
     const classStr = (data.class || '').toLowerCase();
-    const combined = `${typeStr} ${classStr} ${addr.natural || ''} ${addr.water || ''}`.toLowerCase();
+    const displayName = (data.display_name || '').toLowerCase();
+    const nameStr = (data.name || '').toLowerCase();
 
-    // Detect ocean/sea/bay
+    // Build a wide search string from all available fields
+    const combined = `${typeStr} ${classStr} ${displayName} ${nameStr} ${addr.natural || ''} ${addr.water || ''}`.toLowerCase();
+
+    // Detect ocean/sea/bay/gulf/strait
+    if (addr.ocean || addr.sea) {
+      return { isLake: false, isOcean: true, isRiver: false,
+        name: addr.ocean || addr.sea || data.name || 'Ocean' };
+    }
     for (const key of OCEAN_TYPES) {
-      if (combined.includes(key) || addr.ocean || addr.sea) {
-        return {
-          isLake: false,
-          isOcean: true,
-          isRiver: false,
-          name: addr.ocean || addr.sea || addr.bay || data.name || 'Ocean',
-        };
+      if (combined.includes(key)) {
+        return { isLake: false, isOcean: true, isRiver: false,
+          name: addr.ocean || addr.sea || addr.bay || data.name || displayName.split(',')[0] || 'Ocean' };
       }
     }
 
-    // Detect lake/reservoir
-    if (combined.includes('lake') || combined.includes('reservoir') || combined.includes('pond')) {
-      return {
-        isLake: true,
-        isOcean: false,
-        isRiver: false,
-        name: addr.water || data.name || 'Unknown Lake',
-      };
+    // Detect lake/reservoir/pond
+    if (combined.includes('lake') || combined.includes('reservoir') || combined.includes('pond') || combined.includes('lago')) {
+      const bestName = addr.water || data.name || displayName.split(',')[0] || 'Unknown Lake';
+      return { isLake: true, isOcean: false, isRiver: false, name: bestName };
     }
 
     // Default: assume river/land
@@ -123,24 +125,37 @@ export async function reverseGeocodeWater(lat, lng) {
 
 export async function fetchMarineTelemetry(lat, lng) {
   try {
-    const url = `https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lng}&hourly=wave_height,wave_period,ocean_current_velocity&daily=ocean_temperature_max&timezone=auto`;
+    // Use only documented Open-Meteo Marine parameters
+    const url = `https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lng}&hourly=wave_height,wave_period,wave_direction,swell_wave_height,swell_wave_period&current=wave_height,wave_period,wave_direction&daily=wave_height_max,wave_period_max&timezone=auto`;
     const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
     if (!res.ok) return null;
     const data = await res.json();
 
-    const hourly = data.hourly || {};
+    if (data.error) return null;
+
+    const current = data.current || {};
     const daily = data.daily || {};
-    const nowIdx = Math.min(new Date().getHours(), (hourly.wave_height || []).length - 1);
+
+    // Prefer "current" block (most recent observation), fall back to hourly
+    let waveHeightM = current.wave_height;
+    let wavePeriodS = current.wave_period;
+
+    if (waveHeightM == null) {
+      const hourly = data.hourly || {};
+      const len = (hourly.wave_height || []).length;
+      const nowIdx = Math.min(new Date().getUTCHours(), len - 1);
+      waveHeightM = hourly.wave_height?.[nowIdx] ?? null;
+      wavePeriodS = hourly.wave_period?.[nowIdx] ?? null;
+    }
 
     return {
-      waveHeightFt: hourly.wave_height?.[nowIdx] != null
-        ? Math.round(hourly.wave_height[nowIdx] * 3.281 * 10) / 10
-        : null,
-      wavePeriodS: hourly.wave_period?.[nowIdx] ?? null,
-      currentVelocity: hourly.ocean_current_velocity?.[nowIdx] ?? null,
-      seaSurfaceTempF: daily.ocean_temperature_max?.[0] != null
-        ? Math.round((daily.ocean_temperature_max[0] * 9 / 5 + 32) * 10) / 10
-        : null,
+      waveHeightFt: waveHeightM != null ? Math.round(waveHeightM * 3.281 * 10) / 10 : null,
+      wavePeriodS: wavePeriodS ?? null,
+      waveDirection: current.wave_direction ?? null,
+      currentVelocity: null,
+      seaSurfaceTempF: null,
+      maxWaveHeightFt: daily.wave_height_max?.[0] != null
+        ? Math.round(daily.wave_height_max[0] * 3.281 * 10) / 10 : null,
     };
   } catch {
     return null;
@@ -421,22 +436,22 @@ export async function generateFisheryProfile(lat, lng, elevation = 4500, current
     return buildDynamicLakeProfile(lat, lng, geo.name, elevation, ambientTemp);
   }
 
-  // ── Tier 2: If geocoder failed (null) or returned river, try USGS first.
-  //    If no USGS gauge found, probe the marine API as a last resort —
-  //    if it returns valid ocean data, this is open water the geocoder missed. ──
-  if (!geo || geo.isRiver) {
-    const usgs = await fetchNearestUSGSData(lat, lng, 15);
-    if (!usgs) {
-      const marine = await fetchMarineTelemetry(lat, lng);
-      if (marine && (marine.waveHeightFt != null || marine.seaSurfaceTempF != null)) {
-        const oceanName = geo?.name || 'Ocean';
-        return buildOceanProfile(lat, lng, oceanName, ambientTemp);
-      }
-    }
+  // ── Tier 2: Geocoder returned null or river. Probe USGS + Marine in parallel
+  //    to determine if this is a river (has USGS gauge) or open water (has waves). ──
+  const [usgs, marine] = await Promise.all([
+    fetchNearestUSGSData(lat, lng, 15),
+    fetchMarineTelemetry(lat, lng),
+  ]);
+
+  // If marine API returned wave data but no USGS gauge → open water
+  const hasMarineData = marine && (marine.waveHeightFt != null || marine.maxWaveHeightFt != null);
+  if (hasMarineData && !usgs) {
+    const oceanName = geo?.name || 'Ocean';
+    return buildOceanProfile(lat, lng, oceanName, ambientTemp);
   }
 
-  // ── River/Stream fallback ──
-  return buildRiverProfile(lat, lng, elevation, ambientTemp);
+  // ── River/Stream fallback (pass pre-fetched USGS to avoid duplicate call) ──
+  return buildRiverProfileWithData(lat, lng, elevation, ambientTemp, usgs);
 }
 
 function buildLakeProfile(lake, elevation, ambientTemp) {
@@ -501,22 +516,25 @@ async function buildOceanProfile(lat, lng, name, ambientTemp) {
     fetchDynamicBioProfile(name, lat, lng, 'ocean'),
   ]);
 
-  const waterTemp = marine?.seaSurfaceTempF ?? inferWaterTemp(0, ambientTemp);
+  // SST not available from Open-Meteo Marine — use lat-based estimation
+  const waterTemp = inferWaterTemp(0, ambientTemp);
 
   return {
     coordinates: { lat, lng },
     elevation: 0,
     waterTemp,
     waterTempUnit: '°F',
-    dataSource: marine ? `Open-Meteo Marine — ${name}` : `Thermal Inference — ${name}`,
+    dataSource: marine?.waveHeightFt != null ? `Open-Meteo Marine — ${name}` : `Thermal Inference — ${name}`,
     waterType: 'ocean',
 
     oceanData: {
       name,
       waveHeightFt: marine?.waveHeightFt ?? null,
       wavePeriodS: marine?.wavePeriodS ?? null,
+      waveDirection: marine?.waveDirection ?? null,
+      maxWaveHeightFt: marine?.maxWaveHeightFt ?? null,
       currentVelocity: marine?.currentVelocity ?? null,
-      seaSurfaceTempF: marine?.seaSurfaceTempF ?? null,
+      seaSurfaceTempF: null,
     },
 
     lakeIntel: bio ? {
@@ -611,7 +629,11 @@ async function buildDynamicLakeProfile(lat, lng, name, elevation, ambientTemp) {
 }
 
 async function buildRiverProfile(lat, lng, elevation, ambientTemp) {
-  const usgs = await fetchNearestUSGSData(lat, lng, 15);
+  return buildRiverProfileWithData(lat, lng, elevation, ambientTemp, null);
+}
+
+async function buildRiverProfileWithData(lat, lng, elevation, ambientTemp, prefetchedUsgs) {
+  const usgs = prefetchedUsgs ?? await fetchNearestUSGSData(lat, lng, 15);
 
   let waterTemp;
   let dataSource;
