@@ -35,7 +35,7 @@ export default async function handler(req, res) {
     };
 
     const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.0-flash',
       generationConfig: {
         responseMimeType: 'application/json',
         responseSchema,
@@ -43,7 +43,8 @@ export default async function handler(req, res) {
       },
     });
 
-    const prompt = `You are a marine biologist API. Generate the biological profile for the ${type} named: ${name}`;
+    const typeLabel = type === 'ocean' ? 'ocean/sea' : type;
+    const prompt = `You are a marine biologist and fisheries expert API. Generate the biological profile for the ${typeLabel} named: "${name}". Include region-specific sport fish species, local forage/baitfish, recommended angling depths or structure, and any notable fishing regulations for this specific body of water.`;
     const result = await model.generateContent(prompt);
 
     const profile = JSON.parse(result.response.text());

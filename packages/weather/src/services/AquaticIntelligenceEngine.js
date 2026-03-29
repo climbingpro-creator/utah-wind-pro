@@ -421,6 +421,20 @@ export async function generateFisheryProfile(lat, lng, elevation = 4500, current
     return buildDynamicLakeProfile(lat, lng, geo.name, elevation, ambientTemp);
   }
 
+  // ── Tier 2: If geocoder failed (null) or returned river, try USGS first.
+  //    If no USGS gauge found, probe the marine API as a last resort —
+  //    if it returns valid ocean data, this is open water the geocoder missed. ──
+  if (!geo || geo.isRiver) {
+    const usgs = await fetchNearestUSGSData(lat, lng, 15);
+    if (!usgs) {
+      const marine = await fetchMarineTelemetry(lat, lng);
+      if (marine && (marine.waveHeightFt != null || marine.seaSurfaceTempF != null)) {
+        const oceanName = geo?.name || 'Ocean';
+        return buildOceanProfile(lat, lng, oceanName, ambientTemp);
+      }
+    }
+  }
+
   // ── River/Stream fallback ──
   return buildRiverProfile(lat, lng, elevation, ambientTemp);
 }
