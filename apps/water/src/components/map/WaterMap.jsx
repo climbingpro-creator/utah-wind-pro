@@ -91,7 +91,7 @@ export function WaterMap({ currentWeatherData = {} }) {
       )}
 
       {/* Map */}
-      <div className="h-80 sm:h-96 cursor-crosshair">
+      <div className="h-[28rem] sm:h-[36rem] cursor-crosshair">
         <MapContainer
           center={UTAH_CENTER}
           zoom={DEFAULT_ZOOM}
@@ -115,7 +115,7 @@ export function WaterMap({ currentWeatherData = {} }) {
 
       {/* Floating card */}
       {(isLoading || fishProfile) && (
-        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-[9999]">
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-[9999] max-h-[calc(100%-16px)] overflow-y-auto rounded-2xl scrollbar-thin">
           <SyntheticFishingCard
             data={fishProfile}
             isLoading={isLoading}
