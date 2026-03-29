@@ -1,9 +1,11 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline, Circle } from 'react-leaflet';
 import L from 'leaflet';
 import { Compass, Maximize2, X, Wind } from 'lucide-react';
-import { LAKE_CONFIGS } from '@utahwind/weather';
+import { LAKE_CONFIGS, SpatialInterpolator } from '@utahwind/weather';
 import { safeToFixed } from '../utils/safeToFixed';
+import PinDropListener from './map/PinDropListener';
+import SyntheticForecastCard from './map/SyntheticForecastCard';
 // Fix Leaflet default marker icon issue (use matching 1.9.4 assets)
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -130,6 +132,20 @@ const createStationIcon = (type, isRidge, hasData, isEarlyIndicator, isNorthFlow
     iconAnchor: [isIndicator ? 8 : 7, isIndicator ? 8 : 7],
   });
 };
+
+const createPinDropIcon = () => L.divIcon({
+  className: 'custom-marker',
+  html: `<div style="
+    width: 22px; height: 22px;
+    background: linear-gradient(135deg, #a855f7, #6366f1);
+    border: 3px solid #c084fc;
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    box-shadow: 0 3px 10px rgba(139,92,246,0.5);
+  "></div>`,
+  iconSize: [22, 22],
+  iconAnchor: [11, 22],
+});
 
 // Wind arrow component that updates on the map
 function WindArrow({ position, direction, speed, color = '#22d3ee', label: _label }) {
@@ -311,6 +327,9 @@ export function WindMap({
 }) {
   const [mapArea, setMapArea] = useState(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [droppedPin, setDroppedPin] = useState(null);
+  const [syntheticData, setSyntheticData] = useState(null);
+  const [hasDroppedPin, setHasDroppedPin] = useState(false);
   const mapRef = useRef(null);
   
   // Determine which map area to show
@@ -325,6 +344,32 @@ export function WindMap({
       setMapArea(MAP_AREAS['utah-lake']);
     }
   }, [selectedLake]);
+
+  // Merge MAP_AREAS station configs (lat/lng) with live readings from stationData
+  const liveStationsWithCoords = useMemo(() => {
+    if (!mapArea) return [];
+    return mapArea.stations
+      .map(cfg => {
+        const live = stationData?.find(s =>
+          s.id === cfg.id || s.name?.includes(cfg.name)
+        );
+        if (!live || live.speed == null) return null;
+        return { ...cfg, ...live, lat: cfg.lat, lng: cfg.lng };
+      })
+      .filter(Boolean);
+  }, [mapArea, stationData]);
+
+  const handlePinDrop = useCallback((coords) => {
+    setDroppedPin(coords);
+    setHasDroppedPin(true);
+    const result = SpatialInterpolator.interpolateConditions(coords, liveStationsWithCoords);
+    setSyntheticData(result);
+  }, [liveStationsWithCoords]);
+
+  const handleClearPin = useCallback(() => {
+    setDroppedPin(null);
+    setSyntheticData(null);
+  }, []);
   
   if (!mapArea) return null;
   
@@ -346,7 +391,7 @@ export function WindMap({
   const mapHeight = isFullscreen ? 'h-[85vh]' : 'h-72 sm:h-96';
   
   return (
-    <div className={`bg-slate-800/50 rounded-xl border border-slate-700 overflow-hidden ${
+    <div className={`relative bg-slate-800/50 rounded-xl border border-slate-700 ${
       isFullscreen ? 'fixed inset-4 z-50 bg-slate-900' : ''
     }`}>
       {/* Header */}
@@ -373,7 +418,7 @@ export function WindMap({
       </div>
       
       {/* Map Container */}
-      <div className={`relative ${mapHeight}`}>
+      <div className={`relative overflow-hidden cursor-crosshair ${mapHeight}`}>
         <MapContainer
           center={mapArea.center}
           zoom={mapArea.zoom}
@@ -436,6 +481,24 @@ export function WindMap({
             </Marker>
           ))}
           
+          {/* Pin Drop listener — lets users tap anywhere to synthesize forecast */}
+          <PinDropListener onPinDrop={handlePinDrop} />
+
+          {/* Dropped pin marker */}
+          {droppedPin && (
+            <Marker position={droppedPin} icon={createPinDropIcon()}>
+              <Popup>
+                <div className="text-center text-sm">
+                  <strong className="text-purple-600">Pin Drop</strong>
+                  <br />
+                  <span className="text-xs text-gray-500">
+                    {droppedPin[0].toFixed(4)}, {droppedPin[1].toFixed(4)}
+                  </span>
+                </div>
+              </Popup>
+            </Marker>
+          )}
+
           {/* Weather station markers */}
           {mapArea.stations.map(station => {
             const stationWind = stationData?.find(s => 
@@ -526,8 +589,23 @@ export function WindMap({
           </div>
         )}
         
+        {/* Instructional banner — disappears after first pin drop */}
+        {!hasDroppedPin && (
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] pointer-events-none animate-fade-in">
+            <div className="bg-black/70 backdrop-blur-md text-white px-4 py-2 rounded-full shadow-lg border border-white/10 flex items-center gap-2 whitespace-nowrap">
+              <span className="relative flex h-2.5 w-2.5 shrink-0">
+                <span className="animate-ping absolute inset-0 rounded-full bg-purple-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-purple-500" />
+              </span>
+              <span className="text-xs sm:text-sm font-medium">
+                Tap anywhere to generate a custom AI forecast
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Legend */}
-        <div className="absolute bottom-2 left-2 bg-slate-900/90 rounded-lg px-3 py-2 text-xs text-slate-300 z-[1000]">
+        <div className={`absolute bottom-2 left-2 bg-slate-900/90 rounded-lg px-3 py-2 text-xs text-slate-300 z-[1000] ${syntheticData ? 'opacity-0 pointer-events-none' : ''}`}>
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-1.5">
               <div className="w-3 h-3 rounded-full bg-cyan-400 border border-cyan-300" />
@@ -571,6 +649,16 @@ export function WindMap({
           </div>
         )}
       </div>
+
+      {/* Synthetic forecast card — MUST be outside the map's stacking context */}
+      {syntheticData && (
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[9999] w-full max-w-sm px-4">
+          <SyntheticForecastCard
+            data={syntheticData}
+            onClose={handleClearPin}
+          />
+        </div>
+      )}
     </div>
   );
 }
