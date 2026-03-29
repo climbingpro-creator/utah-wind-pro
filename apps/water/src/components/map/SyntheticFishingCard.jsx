@@ -1,4 +1,4 @@
-import { X, Thermometer, Droplets, Activity, Waves, Fish, Gauge, Anchor, MapPin, Shield, Navigation, Zap } from 'lucide-react';
+import { X, Thermometer, Droplets, Activity, Waves, Fish, Gauge, Anchor, MapPin, Shield, Navigation, Zap, Eye, Crosshair, Satellite } from 'lucide-react';
 
 const CLARITY_STYLE = {
   'blown out':       { color: 'text-red-400',     bg: 'bg-red-500/10',     border: 'border-red-500/20',     dot: 'bg-red-500' },
@@ -168,6 +168,74 @@ function OceanTelemetryGrid({ ocean }) {
   );
 }
 
+function HabitatBar({ value }) {
+  if (value == null) return null;
+  const clamped = Math.max(1, Math.min(10, Math.round(value)));
+  const pct = clamped * 10;
+  const color = clamped >= 7 ? 'bg-emerald-500' : clamped >= 4 ? 'bg-amber-500' : 'bg-red-500';
+  const label = clamped >= 7 ? 'Complex' : clamped >= 4 ? 'Moderate' : 'Simple';
+  return (
+    <div className="flex items-center gap-2">
+      <div className="flex-1 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+        <div className={`h-full rounded-full ${color} transition-all`} style={{ width: `${pct}%` }} />
+      </div>
+      <span className="text-[9px] font-bold text-slate-400 w-16 text-right">{clamped}/10 {label}</span>
+    </div>
+  );
+}
+
+function VisualIntelSection({ visual }) {
+  if (!visual) return null;
+  const hasContent = visual.analysis || visual.clue || visual.habitatComplexity != null;
+  if (!hasContent) return null;
+
+  return (
+    <div className="px-3 pb-1.5">
+      {/* Header with satellite thumbnail */}
+      <div className="flex items-center gap-2 mb-1.5">
+        <div className="flex items-center gap-1">
+          <Eye className="w-3 h-3 text-violet-400" />
+          <span className="text-[9px] font-bold uppercase tracking-wider text-violet-400/80">Visual Intel</span>
+        </div>
+        {visual.satelliteUrl && (
+          <div className="ml-auto w-8 h-8 rounded overflow-hidden border border-white/10 shrink-0">
+            <img src={visual.satelliteUrl} alt="" className="w-full h-full object-cover" loading="lazy" />
+          </div>
+        )}
+      </div>
+
+      {/* Visual Analysis */}
+      {visual.analysis && (
+        <div className="rounded-lg bg-violet-500/[0.06] border border-violet-500/15 px-2.5 py-1.5 mb-1.5">
+          <p className="text-[10px] text-violet-200/80 leading-relaxed">{visual.analysis}</p>
+        </div>
+      )}
+
+      {/* Tactical Clue */}
+      {visual.clue && (
+        <div className="rounded-lg bg-amber-500/[0.08] border border-amber-500/20 px-2.5 py-1.5 mb-1.5">
+          <div className="flex items-center gap-1 mb-0.5">
+            <Crosshair className="w-2.5 h-2.5 text-amber-400" />
+            <span className="text-[8px] font-bold uppercase tracking-wider text-amber-400/70">Tactical Clue</span>
+          </div>
+          <p className="text-[10px] font-semibold text-amber-200/90 leading-snug">{visual.clue}</p>
+        </div>
+      )}
+
+      {/* Habitat Complexity */}
+      {visual.habitatComplexity != null && (
+        <div className="rounded-lg bg-white/[0.02] border border-white/[0.06] px-2.5 py-1.5">
+          <div className="flex items-center gap-1 mb-1">
+            <Satellite className="w-2.5 h-2.5 text-slate-500" />
+            <span className="text-[8px] font-bold uppercase tracking-wider text-slate-500">Habitat Complexity</span>
+          </div>
+          <HabitatBar value={visual.habitatComplexity} />
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function SyntheticFishingCard({ data, isLoading, onClose }) {
   if (isLoading) {
     return (
@@ -186,6 +254,7 @@ export default function SyntheticFishingCard({ data, isLoading, onClose }) {
   const isOcean = data.waterType === 'ocean';
   const isUSGS = data.dataSource?.includes('USGS');
   const isAI = data.dataSource?.includes('AI Synthesized');
+  const hasVisual = data.visualIntel != null;
   const clarityStyle = CLARITY_STYLE[data.clarity] || CLARITY_STYLE['unknown'];
 
   const borderClass = isOcean ? 'border-blue-500/20' : isLake ? 'border-emerald-500/20' : 'border-cyan-500/15';
@@ -235,17 +304,24 @@ export default function SyntheticFishingCard({ data, isLoading, onClose }) {
       {/* Trust Badge */}
       <div className="px-3 pb-1.5">
         <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-          isOcean
-            ? 'bg-blue-500/15 text-blue-400 border border-blue-500/20'
-            : isAI
-              ? 'bg-purple-500/15 text-purple-400 border border-purple-500/20'
-              : isLake
-                ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20'
-                : isUSGS
-                  ? 'bg-blue-500/15 text-blue-400 border border-blue-500/20'
-                  : 'bg-slate-500/15 text-slate-400 border border-slate-500/20'
+          hasVisual
+            ? 'bg-violet-500/15 text-violet-400 border border-violet-500/20'
+            : isOcean
+              ? 'bg-blue-500/15 text-blue-400 border border-blue-500/20'
+              : isAI
+                ? 'bg-purple-500/15 text-purple-400 border border-purple-500/20'
+                : isLake
+                  ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20'
+                  : isUSGS
+                    ? 'bg-blue-500/15 text-blue-400 border border-blue-500/20'
+                    : 'bg-slate-500/15 text-slate-400 border border-slate-500/20'
         }`}>
-          {isOcean ? (
+          {hasVisual ? (
+            <>
+              <Eye className="w-3 h-3" />
+              <span>Multimodal Intel</span>
+            </>
+          ) : isOcean ? (
             <>
               <Waves className="w-3 h-3" />
               <span>Marine Intel</span>
@@ -286,6 +362,9 @@ export default function SyntheticFishingCard({ data, isLoading, onClose }) {
       ) : (
         <RiverTelemetryGrid data={data} />
       )}
+
+      {/* Visual Intelligence (satellite multimodal analysis) */}
+      <VisualIntelSection visual={data.visualIntel} />
 
       {/* Clarity / Flow Safety */}
       <div className="px-3 pb-1.5">

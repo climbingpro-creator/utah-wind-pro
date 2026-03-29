@@ -337,22 +337,42 @@ export async function fetchMarineTelemetry(lat, lng) {
   }
 }
 
+// ─── Satellite Imagery URL Generator ─────────────────────────
+
+/**
+ * Build an Esri World Imagery static export URL for a coordinate.
+ * Returns a ~512x512 satellite JPEG centered on [lat, lng].
+ * No API key required.
+ */
+function buildSatelliteUrl(lat, lng, spanDeg = 0.015) {
+  const west  = lng - spanDeg;
+  const south = lat - spanDeg;
+  const east  = lng + spanDeg;
+  const north = lat + spanDeg;
+  return `https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/export?bbox=${west},${south},${east},${north}&bboxSR=4326&size=512,512&format=jpg&f=image`;
+}
+
 // ─── Dynamic Bio Profile via /api/biology ────────────────────
 
 async function fetchDynamicBioProfile(name, lat, lng, type = 'lake') {
   try {
-    const params = new URLSearchParams({ name, lat: String(lat), lng: String(lng), type });
+    const imageUrl = buildSatelliteUrl(lat, lng);
+    const params = new URLSearchParams({
+      name, lat: String(lat), lng: String(lng), type, imageUrl,
+    });
     const origin = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_ORIGIN)
       || 'https://utah-wind-pro.vercel.app';
     const url = `${origin}/api/biology?${params}`;
     console.log('[BioProfile] Calling:', url);
-    const res = await fetch(url, { signal: AbortSignal.timeout(12000) });
+    const res = await fetch(url, { signal: AbortSignal.timeout(18000) });
     if (!res.ok) {
       console.warn('[BioProfile] Non-OK response:', res.status, res.statusText);
       return null;
     }
     const data = await res.json();
-    console.log('[BioProfile] Result:', data);
+    // Attach the satellite thumbnail URL for the UI
+    data._satelliteUrl = imageUrl;
+    console.log('[BioProfile] Result:', data._visual ? 'multimodal' : 'text-only', data);
     return data;
   } catch (err) {
     console.warn('[BioProfile] Failed:', err?.message || err);
@@ -732,6 +752,13 @@ async function buildOceanProfile(lat, lng, name, ambientTemp) {
       forage: bio.forage || null,
     } : { name, species: [], targetDepth: null, regulations: null, forage: null },
 
+    visualIntel: bio?._visual ? {
+      analysis: bio.visualAnalysis || null,
+      clue: bio.clue || null,
+      habitatComplexity: bio.habitatComplexity ?? null,
+      satelliteUrl: bio._satelliteUrl || null,
+    } : null,
+
     usgsGauge: null,
 
     clarity: 'clear',
@@ -790,6 +817,13 @@ async function buildDynamicLakeProfile(lat, lng, name, elevation, ambientTemp) {
       forage: bio?.forage || null,
       season,
     },
+
+    visualIntel: bio?._visual ? {
+      analysis: bio.visualAnalysis || null,
+      clue: bio.clue || null,
+      habitatComplexity: bio.habitatComplexity ?? null,
+      satelliteUrl: bio._satelliteUrl || null,
+    } : null,
 
     usgsGauge: usgs ? {
       siteId: usgs.siteId,
