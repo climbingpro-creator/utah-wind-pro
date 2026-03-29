@@ -360,7 +360,7 @@ function dirLabel(deg) {
   return dirs[Math.round(deg / 22.5) % 16];
 }
 
-export default function TodayHero({ windSpeed, windGust, windDirection, thermalPrediction, boatingPrediction, onSelectActivity, selectedActivity, fpsStation, utalpStation, propagation, unifiedActivities, locationName, prediction, selectedLake, onSelectSpot, mesoData, lakeState }) {
+export default function TodayHero({ windSpeed, windGust, windDirection, thermalPrediction, boatingPrediction, onSelectActivity, selectedActivity, fpsStation, utalpStation, propagation, unifiedActivities, locationName, prediction, selectedLake, onSelectSpot, mesoData, lakeState: _lakeState }) {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 
