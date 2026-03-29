@@ -229,12 +229,9 @@ export async function reverseGeocodeWater(lat, lng) {
       if (result) return result;
     }
 
-    // Pass 3: Coordinate-based ocean detection — if Nominatim returned
-    // a country name instead of ocean, check known ocean bounding boxes.
-    const oceanName = inferOceanName(lat, lng, null);
-    if (oceanName && !oceanName.startsWith('Ocean near')) {
-      return { isLake: false, isOcean: true, isRiver: false, name: oceanName };
-    }
+    // Do NOT use coordinate-based ocean detection here — bounding boxes
+    // cover entire hemispheres including land. Ocean detection must come
+    // from actual marine telemetry data in the orchestrator.
 
     // Last resort: return what Nominatim gave us as a river/stream default
     if (loData) {
