@@ -46,6 +46,23 @@ const KNOWN_WATER_BODIES = [
   { id: 'yuba',           name: 'Yuba Reservoir (Sevier Bridge)', lat: 39.39, lng: -111.95, radiusMi: 8, type: 'reservoir', elevation: 5100, species: ['Northern Pike', 'Tiger Muskie', 'Walleye', 'Wiper', 'Yellow Perch'], regulations: 'No limit on northern pike', targetDepth: '10-25 ft (weed edges)', forage: 'Utah Chub, Yellow Perch, Crayfish' },
   { id: 'scofield',       name: 'Scofield Reservoir',   lat: 39.78, lng: -111.13, radiusMi: 3, type: 'reservoir', elevation: 7600, species: ['Cutthroat Trout', 'Tiger Trout', 'Rainbow Trout'], regulations: 'Trout limit 4', targetDepth: '15-25 ft (thermocline)', forage: 'Chironomids, Utah Chub, Scuds' },
   { id: 'sand-hollow',    name: 'Sand Hollow Reservoir',lat: 37.11, lng: -113.38, radiusMi: 3, type: 'reservoir', elevation: 3000, species: ['Largemouth Bass', 'Bluegill', 'Crappie'], regulations: 'Bass limit 6', targetDepth: '10-25 ft (sandstone ledges)', forage: 'Bluegill, Crayfish' },
+  { id: 'gunnison',       name: 'Gunnison Reservoir',   lat: 39.26, lng: -111.69, radiusMi: 4, type: 'reservoir', elevation: 5300, species: ['Rainbow Trout', 'Brown Trout', 'Cutthroat Trout', 'Yellow Perch'], regulations: 'Trout limit 4', targetDepth: '10-25 ft (inflow channels)', forage: 'Chironomids, Scuds, Utah Chub' },
+  { id: 'palisade',       name: 'Palisade Reservoir',   lat: 39.20, lng: -111.57, radiusMi: 3, type: 'reservoir', elevation: 5600, species: ['Rainbow Trout', 'Tiger Trout', 'Cutthroat Trout'], regulations: 'Trout limit 4', targetDepth: '10-20 ft (weed beds)', forage: 'Chironomids, Scuds, Leeches' },
+  { id: 'otter-creek',    name: 'Otter Creek Reservoir', lat: 38.23, lng: -111.96, radiusMi: 4, type: 'reservoir', elevation: 6400, species: ['Rainbow Trout', 'Brown Trout', 'Smallmouth Bass', 'Wiper'], regulations: 'Trout limit 4', targetDepth: '10-25 ft (dam face, inflow)', forage: 'Utah Chub, Crayfish, Chironomids' },
+  { id: 'piute',          name: 'Piute Reservoir',      lat: 38.31, lng: -112.11, radiusMi: 3, type: 'reservoir', elevation: 6100, species: ['Rainbow Trout', 'Brown Trout', 'Tiger Trout'], regulations: 'Trout limit 4', targetDepth: '10-20 ft', forage: 'Chironomids, Scuds, Leeches' },
+  { id: 'minersville',    name: 'Minersville Reservoir', lat: 38.22, lng: -112.88, radiusMi: 4, type: 'reservoir', elevation: 5500, species: ['Rainbow Trout', 'Brown Trout', 'Smallmouth Bass', 'Wiper'], regulations: 'Trout limit 4', targetDepth: '12-30 ft (dam, rocky points)', forage: 'Utah Chub, Crayfish' },
+  { id: 'fish-lake',      name: 'Fish Lake',            lat: 38.56, lng: -111.72, radiusMi: 4, type: 'lake',      elevation: 8850, species: ['Lake Trout (Mackinaw)', 'Splake', 'Rainbow Trout', 'Yellow Perch'], regulations: 'Lake trout limit 4, only 1 over 25"', targetDepth: '30-60 ft (summer), 15-25 ft (spring/fall)', forage: 'Utah Chub, Crayfish, Perch' },
+  { id: 'rockport',       name: 'Rockport Reservoir',   lat: 40.78, lng: -111.40, radiusMi: 4, type: 'reservoir', elevation: 6000, species: ['Rainbow Trout', 'Brown Trout', 'Smallmouth Bass', 'Yellow Perch'], regulations: 'Trout limit 4', targetDepth: '15-30 ft (old river channel)', forage: 'Crayfish, Yellow Perch, Utah Chub' },
+  { id: 'echo',           name: 'Echo Reservoir',       lat: 40.97, lng: -111.44, radiusMi: 4, type: 'reservoir', elevation: 5500, species: ['Rainbow Trout', 'Smallmouth Bass', 'Yellow Perch', 'Brown Trout'], regulations: 'Trout limit 4, bass limit 6', targetDepth: '12-25 ft (rocky points, weed edges)', forage: 'Crayfish, Yellow Perch, Utah Chub' },
+  { id: 'east-canyon',    name: 'East Canyon Reservoir', lat: 40.88, lng: -111.59, radiusMi: 3, type: 'reservoir', elevation: 5700, species: ['Rainbow Trout', 'Kokanee Salmon', 'Smallmouth Bass'], regulations: 'Trout limit 4', targetDepth: '15-30 ft (dam, thermocline)', forage: 'Kokanee fry, Crayfish, Chironomids' },
+  { id: 'mantua',         name: 'Mantua Reservoir',     lat: 41.50, lng: -111.94, radiusMi: 2, type: 'reservoir', elevation: 5000, species: ['Bluegill', 'Rainbow Trout', 'Largemouth Bass', 'Yellow Perch'], regulations: 'Trout limit 4, bass limit 6', targetDepth: '8-15 ft (weed edges)', forage: 'Bluegill, Crayfish, Damselflies' },
+  { id: 'hyrum',          name: 'Hyrum Reservoir',      lat: 41.63, lng: -111.86, radiusMi: 2, type: 'reservoir', elevation: 4700, species: ['Rainbow Trout', 'Largemouth Bass', 'Bluegill', 'Yellow Perch'], regulations: 'Trout limit 4', targetDepth: '10-20 ft (weed beds, dam)', forage: 'Bluegill, Crayfish, Chironomids' },
+  { id: 'causey',         name: 'Causey Reservoir',     lat: 41.28, lng: -111.59, radiusMi: 2, type: 'reservoir', elevation: 5700, species: ['Tiger Trout', 'Cutthroat Trout', 'Rainbow Trout'], regulations: 'Artificial flies and lures only. Trout limit 2', targetDepth: '15-35 ft (steep canyon walls)', forage: 'Chironomids, Scuds, Terrestrials' },
+  { id: 'red-fleet',      name: 'Red Fleet Reservoir',  lat: 40.59, lng: -109.47, radiusMi: 3, type: 'reservoir', elevation: 5600, species: ['Rainbow Trout', 'Brown Trout', 'Bluegill', 'Largemouth Bass'], regulations: 'Trout limit 4', targetDepth: '10-25 ft (red sandstone ledges)', forage: 'Bluegill, Crayfish, Chironomids' },
+  { id: 'steinaker',      name: 'Steinaker Reservoir',  lat: 40.52, lng: -109.53, radiusMi: 3, type: 'reservoir', elevation: 5500, species: ['Rainbow Trout', 'Largemouth Bass', 'Bluegill'], regulations: 'Trout limit 4, bass limit 6', targetDepth: '10-20 ft (dam face, weed beds)', forage: 'Bluegill, Crayfish, Chironomids' },
+  { id: 'pelican-lake',   name: 'Pelican Lake',         lat: 40.22, lng: -109.70, radiusMi: 3, type: 'lake',      elevation: 4800, species: ['Bluegill', 'Largemouth Bass', 'Channel Catfish', 'Green Sunfish'], regulations: 'Bass limit 6', targetDepth: '5-15 ft (entire lake shallow, weed mats)', forage: 'Bluegill, Damselflies, Dragonflies' },
+  { id: 'currant-creek',  name: 'Currant Creek Reservoir', lat: 40.36, lng: -111.09, radiusMi: 3, type: 'reservoir', elevation: 8000, species: ['Cutthroat Trout', 'Rainbow Trout', 'Tiger Trout'], regulations: 'Trout limit 4', targetDepth: '12-25 ft (inflow delta, thermocline)', forage: 'Chironomids, Scuds, Utah Chub' },
+  { id: 'lost-creek',     name: 'Lost Creek Reservoir',  lat: 41.12, lng: -111.39, radiusMi: 3, type: 'reservoir', elevation: 6000, species: ['Cutthroat Trout', 'Rainbow Trout'], regulations: 'Trout limit 2, artificial flies and lures only', targetDepth: '15-30 ft (submerged timber)', forage: 'Chironomids, Scuds, Zooplankton' },
 ];
 
 /**
@@ -71,74 +88,89 @@ export function identifyWaterBody(lat, lng) {
 const OCEAN_TYPES = new Set(['ocean', 'sea', 'bay', 'strait', 'gulf', 'coastline']);
 
 export async function reverseGeocodeWater(lat, lng) {
-  try {
-    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10&addressdetails=1&namedetails=1`;
-    const res = await fetch(url, {
-      headers: { 'User-Agent': 'UtahWaterGlass/1.0' },
-      signal: AbortSignal.timeout(5000),
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
+  const LAKE_KEYWORDS = ['lake', 'reservoir', 'pond', 'lago', 'laguna', 'loch', 'lac', 'see', 'embalse'];
 
-    if (data.error) return null;
+  // Helper: classify a single Nominatim response
+  function classify(data) {
+    if (!data || data.error) return null;
 
     const addr = data.address || {};
-    const typeStr = (data.type || '').toLowerCase();
     const classStr = (data.class || '').toLowerCase();
-    const displayName = (data.display_name || '').toLowerCase();
-    const nameStr = (data.name || '').toLowerCase();
+    const typeStr = (data.type || '').toLowerCase();
+    const nameStr = (data.name || '');
+    const displayName = (data.display_name || '');
+    const all = `${classStr} ${typeStr} ${nameStr} ${displayName} ${addr.natural || ''} ${addr.water || ''}`.toLowerCase();
 
-    // Build a wide search string from all available fields
-    const combined = `${typeStr} ${classStr} ${displayName} ${nameStr} ${addr.natural || ''} ${addr.water || ''}`.toLowerCase();
-
-    // Detect ocean/sea/bay/gulf/strait
-    const extractOceanName = () => {
-      // Prefer explicit address fields
-      if (addr.ocean) return addr.ocean;
-      if (addr.sea) return addr.sea;
-      if (addr.bay) return addr.bay;
-      // Scan display_name parts for a water body name
-      const parts = (data.display_name || '').split(',').map(s => s.trim());
-      for (const part of parts) {
-        const lower = part.toLowerCase();
-        if (OCEAN_TYPES.has(lower)) continue; // skip bare keyword
-        for (const keyword of OCEAN_TYPES) {
-          if (lower.includes(keyword)) return part;
-        }
-      }
-      // Check data.name (but skip bare country names)
-      if (data.name && data.name.length > 3) {
-        const nl = data.name.toLowerCase();
-        for (const keyword of OCEAN_TYPES) {
-          if (nl.includes(keyword)) return data.name;
-        }
-      }
-      // Last resort: geo-descriptive name so Gemini can identify the area
-      return `Ocean near ${lat.toFixed(1)}°, ${lng.toFixed(1)}°`;
-    };
-
+    // ── Ocean / Sea / Bay / Gulf ──
     if (addr.ocean || addr.sea) {
-      return { isLake: false, isOcean: true, isRiver: false, name: extractOceanName() };
+      return { isLake: false, isOcean: true, isRiver: false,
+        name: addr.ocean || addr.sea || addr.bay || nameStr || 'Ocean' };
     }
     for (const key of OCEAN_TYPES) {
-      if (combined.includes(key)) {
-        return { isLake: false, isOcean: true, isRiver: false, name: extractOceanName() };
+      if (all.includes(key)) {
+        // Extract best name from display_name parts
+        const parts = displayName.split(',').map(s => s.trim());
+        let bestName = null;
+        for (const part of parts) {
+          const pl = part.toLowerCase();
+          for (const kw of OCEAN_TYPES) {
+            if (pl.includes(kw) && part.length > 3) { bestName = part; break; }
+          }
+          if (bestName) break;
+        }
+        return { isLake: false, isOcean: true, isRiver: false,
+          name: bestName || nameStr || `Ocean near ${lat.toFixed(1)}, ${lng.toFixed(1)}` };
       }
     }
 
-    // Detect lake/reservoir/pond
-    if (combined.includes('lake') || combined.includes('reservoir') || combined.includes('pond') || combined.includes('lago')) {
-      const bestName = addr.water || data.name || displayName.split(',')[0] || 'Unknown Lake';
+    // ── Lake / Reservoir ──
+    // Check class=natural&type=water (Nominatim's way of saying "this is a water body")
+    const isWaterFeature = classStr === 'natural' && typeStr === 'water';
+    const nameHasLake = LAKE_KEYWORDS.some(kw => all.includes(kw));
+
+    if (isWaterFeature || nameHasLake) {
+      const bestName = (isWaterFeature ? nameStr : null)
+        || addr.water
+        || (nameHasLake ? nameStr : null)
+        || displayName.split(',')[0]
+        || 'Unknown Lake';
       return { isLake: true, isOcean: false, isRiver: false, name: bestName };
     }
 
-    // Default: assume river/land
-    return {
-      isLake: false,
-      isOcean: false,
-      isRiver: true,
-      name: addr.water || addr.river || data.name || null,
-    };
+    return null; // Couldn't classify as water
+  }
+
+  try {
+    // Pass 1: High zoom (14) to detect specific water features (lakes, reservoirs)
+    const hiRes = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=14&addressdetails=1&accept-language=en`,
+      { headers: { 'User-Agent': 'UtahWaterGlass/1.0' }, signal: AbortSignal.timeout(5000) }
+    );
+    if (hiRes.ok) {
+      const hiData = await hiRes.json();
+      const result = classify(hiData);
+      if (result) return result;
+    }
+
+    // Pass 2: Low zoom (3) to detect oceans/seas that don't appear at high zoom
+    const loRes = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=3&addressdetails=1&accept-language=en`,
+      { headers: { 'User-Agent': 'UtahWaterGlass/1.0' }, signal: AbortSignal.timeout(5000) }
+    );
+    if (loRes.ok) {
+      const loData = await loRes.json();
+      const result = classify(loData);
+      if (result) return result;
+
+      // If low-zoom returned something but it's not water, it's land → river default
+      const addr = loData.address || {};
+      return {
+        isLake: false, isOcean: false, isRiver: true,
+        name: addr.water || addr.river || loData.name || null,
+      };
+    }
+
+    return null;
   } catch {
     return null;
   }
