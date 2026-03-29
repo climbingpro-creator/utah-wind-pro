@@ -3,6 +3,7 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
+      "inputs": ["src/**", "index.js", "index.html", "vite.config.*", "package.json", "../../packages/**"],
       "outputs": ["dist/**", ".next/**", "!.next/cache/**"]
     },
     "lint": {
