@@ -117,8 +117,11 @@ export default async function handler(req, res) {
     res.setHeader('Cache-Control', 's-maxage=86400, stale-while-revalidate=172800');
     return res.status(200).json(profile);
   } catch (error) {
-    console.error('Gemini Biology Agent Error:', error.message || error);
-    return res.status(200).json(buildFallback(name, type));
+    const errMsg = error?.message || String(error);
+    console.error('Gemini Biology Agent Error:', errMsg);
+    const fb = buildFallback(name, type);
+    fb._error = errMsg;
+    return res.status(200).json(fb);
   }
 }
 
