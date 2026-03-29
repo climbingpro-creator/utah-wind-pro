@@ -39,17 +39,30 @@ function LoadingSkeleton() {
   );
 }
 
-function LakeIntelGrid({ intel }) {
+function LakeIntelGrid({ intel, isOcean }) {
   if (!intel) return null;
+
+  const hasAnyData = intel.species?.length > 0 || intel.targetDepth || intel.forage || intel.regulations;
+  const accentColor = isOcean ? 'text-blue-500/70' : 'text-emerald-500/70';
+
+  if (!hasAnyData) {
+    return (
+      <div className="px-3 pb-1.5">
+        <div className="rounded-lg bg-white/[0.02] border border-white/[0.06] px-3 py-2.5 text-center">
+          <Zap className="w-4 h-4 text-purple-400/60 mx-auto mb-1" />
+          <p className="text-[10px] text-slate-500">AI species data loading or unavailable for this location</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="px-3 pb-1.5">
-      {/* Top row: 2-column compact grid */}
       <div className="grid grid-cols-2 gap-1.5 mb-1.5">
         {intel.targetDepth && (
           <div className="rounded-lg bg-white/[0.03] border border-white/[0.06] px-2.5 py-1.5">
             <div className="flex items-center gap-1 mb-0.5">
-              <Anchor className="w-2.5 h-2.5 text-emerald-500/70" />
+              <Anchor className={`w-2.5 h-2.5 ${accentColor}`} />
               <span className="text-[8px] font-bold uppercase tracking-wider text-slate-500">Depth</span>
             </div>
             <p className="text-[10px] font-semibold text-slate-200 leading-snug">{intel.targetDepth}</p>
@@ -58,24 +71,22 @@ function LakeIntelGrid({ intel }) {
         {intel.forage && (
           <div className="rounded-lg bg-white/[0.03] border border-white/[0.06] px-2.5 py-1.5">
             <div className="flex items-center gap-1 mb-0.5">
-              <MapPin className="w-2.5 h-2.5 text-emerald-500/70" />
+              <MapPin className={`w-2.5 h-2.5 ${accentColor}`} />
               <span className="text-[8px] font-bold uppercase tracking-wider text-slate-500">Forage</span>
             </div>
             <p className="text-[10px] font-semibold text-slate-200 leading-snug">{intel.forage}</p>
           </div>
         )}
       </div>
-      {/* Species */}
       {intel.species?.length > 0 && (
         <div className="rounded-lg bg-white/[0.03] border border-white/[0.06] px-2.5 py-1.5 mb-1.5">
           <div className="flex items-center gap-1 mb-0.5">
-            <Fish className="w-2.5 h-2.5 text-emerald-500/70" />
+            <Fish className={`w-2.5 h-2.5 ${accentColor}`} />
             <span className="text-[8px] font-bold uppercase tracking-wider text-slate-500">Species</span>
           </div>
           <p className="text-[10px] font-semibold text-slate-200 leading-snug">{intel.species.join(', ')}</p>
         </div>
       )}
-      {/* Regulations */}
       {intel.regulations && (
         <div className="rounded-lg bg-amber-500/[0.06] border border-amber-500/15 px-2.5 py-1.5">
           <div className="flex items-center gap-1 mb-0.5">
@@ -268,10 +279,10 @@ export default function SyntheticFishingCard({ data, isLoading, onClose }) {
       {isOcean ? (
         <>
           <OceanTelemetryGrid ocean={data.oceanData} />
-          <LakeIntelGrid intel={data.lakeIntel} />
+          <LakeIntelGrid intel={data.lakeIntel} isOcean />
         </>
       ) : isLake ? (
-        <LakeIntelGrid intel={data.lakeIntel} />
+        <LakeIntelGrid intel={data.lakeIntel} isOcean={false} />
       ) : (
         <RiverTelemetryGrid data={data} />
       )}

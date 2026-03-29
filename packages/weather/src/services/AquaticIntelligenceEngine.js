@@ -218,16 +218,26 @@ export async function reverseGeocodeWater(lat, lng) {
     }
 
     // Pass 2: Low zoom (3) to detect oceans/seas that don't appear at high zoom
+    let loData = null;
     const loRes = await fetch(
       `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=3&addressdetails=1&accept-language=en`,
       { headers: { 'User-Agent': 'UtahWaterGlass/1.0' }, signal: AbortSignal.timeout(5000) }
     );
     if (loRes.ok) {
-      const loData = await loRes.json();
+      loData = await loRes.json();
       const result = classify(loData);
       if (result) return result;
+    }
 
-      // If low-zoom returned something but it's not water, it's land → river default
+    // Pass 3: Coordinate-based ocean detection — if Nominatim returned
+    // a country name instead of ocean, check known ocean bounding boxes.
+    const oceanName = inferOceanName(lat, lng, null);
+    if (oceanName && !oceanName.startsWith('Ocean near')) {
+      return { isLake: false, isOcean: true, isRiver: false, name: oceanName };
+    }
+
+    // Last resort: return what Nominatim gave us as a river/stream default
+    if (loData) {
       const addr = loData.address || {};
       return {
         isLake: false, isOcean: false, isRiver: true,
@@ -239,6 +249,54 @@ export async function reverseGeocodeWater(lat, lng) {
   } catch {
     return null;
   }
+}
+
+// ─── Ocean Name Inference by Coordinates ─────────────────────
+
+const OCEAN_REGIONS = [
+  { name: 'Gulf of Mexico',       latMin: 18, latMax: 31, lngMin: -98,  lngMax: -80 },
+  { name: 'Caribbean Sea',        latMin: 9,  latMax: 22, lngMin: -89,  lngMax: -59 },
+  { name: 'Gulf of California',   latMin: 22, latMax: 32, lngMin: -115, lngMax: -106 },
+  { name: 'Chesapeake Bay',       latMin: 36.8, latMax: 39.5, lngMin: -76.5, lngMax: -75.5 },
+  { name: 'Puget Sound',          latMin: 47, latMax: 49, lngMin: -123.5, lngMax: -122 },
+  { name: 'San Francisco Bay',    latMin: 37.4, latMax: 38.2, lngMin: -122.6, lngMax: -121.8 },
+  { name: 'Long Island Sound',    latMin: 40.8, latMax: 41.3, lngMin: -73.8, lngMax: -72 },
+  { name: 'North Atlantic Ocean', latMin: 24, latMax: 60, lngMin: -80,  lngMax: -5 },
+  { name: 'South Atlantic Ocean', latMin: -60, latMax: 0, lngMin: -70,  lngMax: 20 },
+  { name: 'North Pacific Ocean',  latMin: 0,  latMax: 60, lngMin: -180, lngMax: -100 },
+  { name: 'South Pacific Ocean',  latMin: -60, latMax: 0, lngMin: -180, lngMax: -70 },
+  { name: 'Indian Ocean',         latMin: -60, latMax: 30, lngMin: 20,  lngMax: 120 },
+  { name: 'Mediterranean Sea',    latMin: 30, latMax: 46, lngMin: -6,   lngMax: 36 },
+  { name: 'North Sea',            latMin: 51, latMax: 62, lngMin: -5,   lngMax: 10 },
+  { name: 'Baltic Sea',           latMin: 53, latMax: 66, lngMin: 10,   lngMax: 30 },
+  { name: 'South China Sea',      latMin: 0,  latMax: 23, lngMin: 100,  lngMax: 121 },
+  { name: 'Sea of Japan',         latMin: 33, latMax: 52, lngMin: 127,  lngMax: 142 },
+  { name: 'Coral Sea',            latMin: -30, latMax: -10, lngMin: 142, lngMax: 175 },
+  { name: 'Arctic Ocean',         latMin: 66, latMax: 90, lngMin: -180, lngMax: 180 },
+];
+
+// Country/state names that are NOT useful as ocean names
+const GENERIC_NAMES = new Set([
+  'united states', 'mexico', 'canada', 'brazil', 'australia', 'japan', 'china',
+  'india', 'russia', 'united kingdom', 'france', 'spain', 'italy', 'germany',
+  'texas', 'california', 'florida', 'louisiana', 'alabama', 'mississippi',
+  'north carolina', 'south carolina', 'virginia', 'maine', 'oregon', 'washington',
+  'new york', 'new jersey', 'massachusetts', 'connecticut', 'hawaii', 'alaska',
+]);
+
+function inferOceanName(lat, lng, geoName) {
+  // If geocoder returned a real ocean/sea name, use it
+  if (geoName && !GENERIC_NAMES.has(geoName.toLowerCase())) {
+    return geoName;
+  }
+  // Look up by coordinate bounding box (checked in order, more specific first)
+  for (const region of OCEAN_REGIONS) {
+    if (lat >= region.latMin && lat <= region.latMax &&
+        lng >= region.lngMin && lng <= region.lngMax) {
+      return region.name;
+    }
+  }
+  return `Ocean near ${lat.toFixed(1)}, ${lng.toFixed(1)}`;
 }
 
 // ─── Marine Telemetry via Open-Meteo ─────────────────────────
@@ -287,14 +345,20 @@ export async function fetchMarineTelemetry(lat, lng) {
 async function fetchDynamicBioProfile(name, lat, lng, type = 'lake') {
   try {
     const params = new URLSearchParams({ name, lat: String(lat), lng: String(lng), type });
-    // The /api/biology route lives on the main (wind) Vercel project.
-    // The water app is a separate deployment, so we need the absolute origin.
     const origin = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_ORIGIN)
       || 'https://utah-wind-pro.vercel.app';
-    const res = await fetch(`${origin}/api/biology?${params}`, { signal: AbortSignal.timeout(10000) });
-    if (!res.ok) return null;
-    return await res.json();
-  } catch {
+    const url = `${origin}/api/biology?${params}`;
+    console.log('[BioProfile] Calling:', url);
+    const res = await fetch(url, { signal: AbortSignal.timeout(12000) });
+    if (!res.ok) {
+      console.warn('[BioProfile] Non-OK response:', res.status, res.statusText);
+      return null;
+    }
+    const data = await res.json();
+    console.log('[BioProfile] Result:', data);
+    return data;
+  } catch (err) {
+    console.warn('[BioProfile] Failed:', err?.message || err);
     return null;
   }
 }
@@ -550,7 +614,8 @@ export async function generateFisheryProfile(lat, lng, elevation = 4500, current
 
   // ── Ocean / Sea path ──
   if (geo?.isOcean) {
-    return buildOceanProfile(lat, lng, geo.name, ambientTemp);
+    const name = inferOceanName(lat, lng, geo.name);
+    return buildOceanProfile(lat, lng, name, ambientTemp);
   }
 
   // ── Unknown lake (not in hardcoded list) — try dynamic bio ──
@@ -568,7 +633,7 @@ export async function generateFisheryProfile(lat, lng, elevation = 4500, current
   // If marine API returned wave data but no USGS gauge → open water
   const hasMarineData = marine && (marine.waveHeightFt != null || marine.maxWaveHeightFt != null);
   if (hasMarineData && !usgs) {
-    const oceanName = geo?.name || 'Ocean';
+    const oceanName = inferOceanName(lat, lng, geo?.name);
     return buildOceanProfile(lat, lng, oceanName, ambientTemp);
   }
 
@@ -638,8 +703,11 @@ async function buildOceanProfile(lat, lng, name, ambientTemp) {
     fetchDynamicBioProfile(name, lat, lng, 'ocean'),
   ]);
 
-  // SST not available from Open-Meteo Marine — use lat-based estimation
-  const waterTemp = inferWaterTemp(0, ambientTemp);
+  // Latitude-based SST estimation for ocean (tropical ≈ 82°F, polar ≈ 35°F)
+  const absLat = Math.abs(lat);
+  const waterTemp = ambientTemp != null
+    ? ambientTemp * 0.85 + 10
+    : Math.max(35, 85 - absLat * 1.1);
 
   return {
     coordinates: { lat, lng },
