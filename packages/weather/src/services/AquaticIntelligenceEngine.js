@@ -340,40 +340,73 @@ export async function fetchMarineTelemetry(lat, lng) {
 // ─── Satellite Imagery URL Generator ─────────────────────────
 
 /**
- * Build an Esri World Imagery static export URL for a coordinate.
- * Returns a ~512x512 satellite JPEG centered on [lat, lng].
- * No API key required.
+ * Build a pre-cached Esri World Imagery tile URL near a coordinate.
+ * Uses slippy-map tile math at zoom 15 (~1 km coverage).
+ * Pre-cached tiles serve in <100ms vs 5-8s for the export API.
  */
-function buildSatelliteUrl(lat, lng, spanDeg = 0.015) {
-  const west  = lng - spanDeg;
-  const south = lat - spanDeg;
-  const east  = lng + spanDeg;
-  const north = lat + spanDeg;
-  return `https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/export?bbox=${west},${south},${east},${north}&bboxSR=4326&size=512,512&format=jpg&f=image`;
+function buildSatelliteUrl(lat, lng) {
+  const zoom = 15;
+  const n = Math.pow(2, zoom);
+  const x = Math.floor((lng + 180) / 360 * n);
+  const latRad = lat * Math.PI / 180;
+  const y = Math.floor((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2 * n);
+  return `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${zoom}/${y}/${x}`;
 }
 
 // ─── Dynamic Bio Profile via /api/biology ────────────────────
 
+function _buildBioUrl(name, lat, lng, type, imageUrl) {
+  const params = new URLSearchParams({ name, lat: String(lat), lng: String(lng), type });
+  if (imageUrl) params.set('imageUrl', imageUrl);
+  const origin = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_ORIGIN)
+    || 'https://utah-wind-pro.vercel.app';
+  return `${origin}/api/biology?${params}`;
+}
+
+/**
+ * Two-tier fetch: fast text-only call first (species, forage, etc.),
+ * then a parallel visual call with satellite imagery when available.
+ * The text result is returned immediately; visual data is merged if it
+ * arrives before the timeout.
+ */
 async function fetchDynamicBioProfile(name, lat, lng, type = 'lake') {
+  const satUrl = buildSatelliteUrl(lat, lng);
+
   try {
-    const imageUrl = buildSatelliteUrl(lat, lng);
-    const params = new URLSearchParams({
-      name, lat: String(lat), lng: String(lng), type, imageUrl,
-    });
-    const origin = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_ORIGIN)
-      || 'https://utah-wind-pro.vercel.app';
-    const url = `${origin}/api/biology?${params}`;
-    console.log('[BioProfile] Calling:', url);
-    const res = await fetch(url, { signal: AbortSignal.timeout(18000) });
-    if (!res.ok) {
-      console.warn('[BioProfile] Non-OK response:', res.status, res.statusText);
+    // Tier 1: Fast text-only call (~1-3s)
+    const textUrl = _buildBioUrl(name, lat, lng, type, null);
+    console.log('[BioProfile] Text call:', textUrl);
+
+    // Tier 2: Multimodal call with satellite image (fires in parallel)
+    const visualUrl = _buildBioUrl(name, lat, lng, type, satUrl);
+    const visualPromise = fetch(visualUrl, { signal: AbortSignal.timeout(25000) })
+      .then(r => r.ok ? r.json() : null)
+      .catch(() => null);
+
+    const textRes = await fetch(textUrl, { signal: AbortSignal.timeout(12000) });
+    if (!textRes.ok) {
+      console.warn('[BioProfile] Text call failed:', textRes.status);
       return null;
     }
-    const data = await res.json();
-    // Attach the satellite thumbnail URL for the UI
-    data._satelliteUrl = imageUrl;
-    console.log('[BioProfile] Result:', data._visual ? 'multimodal' : 'text-only', data);
-    return data;
+    const textData = await textRes.json();
+    textData._satelliteUrl = satUrl;
+
+    // Race: wait up to 8 more seconds for the visual call to finish
+    const visual = await Promise.race([
+      visualPromise,
+      new Promise(resolve => setTimeout(() => resolve(null), 8000)),
+    ]);
+
+    if (visual?.visualAnalysis) {
+      textData._visual = true;
+      textData.visualAnalysis = visual.visualAnalysis;
+      textData.clue = visual.clue;
+      textData.habitatComplexity = visual.habitatComplexity;
+      console.log('[BioProfile] Visual intel merged');
+    }
+
+    console.log('[BioProfile] Result:', textData._visual ? 'multimodal' : 'text-only');
+    return textData;
   } catch (err) {
     console.warn('[BioProfile] Failed:', err?.message || err);
     return null;
