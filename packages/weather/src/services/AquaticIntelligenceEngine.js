@@ -31,6 +31,41 @@ function haversine([lat1, lng1], [lat2, lng2]) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
+// ─── Known Water Bodies (coordinates + metadata) ────────────
+const KNOWN_WATER_BODIES = [
+  { id: 'strawberry',     name: 'Strawberry Reservoir', lat: 40.17, lng: -111.12, radiusMi: 5, type: 'reservoir', elevation: 7600, species: ['Cutthroat Trout', 'Kokanee Salmon', 'Rainbow Trout'], regulations: 'Cutthroat slot limit active (15-22" must be released)', targetDepth: '15-30 ft (thermocline zone)', forage: 'Utah Chub, Chironomids, Scuds' },
+  { id: 'deer-creek',     name: 'Deer Creek Reservoir', lat: 40.40, lng: -111.51, radiusMi: 3, type: 'reservoir', elevation: 5400, species: ['Walleye', 'Brown Trout', 'Yellow Perch', 'Smallmouth Bass'], regulations: 'Walleye limit 10, only 1 over 24"', targetDepth: '18-30 ft (summer thermocline)', forage: 'Threadfin Shad, Crayfish, Perch' },
+  { id: 'jordanelle',     name: 'Jordanelle Reservoir', lat: 40.60, lng: -111.42, radiusMi: 3, type: 'reservoir', elevation: 6200, species: ['Smallmouth Bass', 'Brown Trout', 'Yellow Perch', 'Splake'], regulations: 'Bass limit 6, only 1 over 12"', targetDepth: '18-30 ft (rocky structure)', forage: 'Crayfish, Yellow Perch, Sculpin' },
+  { id: 'utah-lake',      name: 'Utah Lake',            lat: 40.23, lng: -111.80, radiusMi: 8, type: 'lake',      elevation: 4489, species: ['Channel Catfish', 'White Bass', 'Walleye', 'Carp'], regulations: 'No limit on carp. Walleye limit 10', targetDepth: '6-14 ft (entire lake is shallow)', forage: 'Gizzard Shad, Carp, Utah Sucker' },
+  { id: 'flaming-gorge',  name: 'Flaming Gorge Reservoir', lat: 40.91, lng: -109.42, radiusMi: 8, type: 'reservoir', elevation: 6040, species: ['Lake Trout', 'Kokanee Salmon', 'Rainbow Trout', 'Smallmouth Bass'], regulations: 'Lake trout limit 8, no size restriction (removal encouraged)', targetDepth: '40-80 ft (summer), 20-40 ft (spring/fall)', forage: 'Kokanee Salmon, Crayfish, Utah Chub' },
+  { id: 'bear-lake',      name: 'Bear Lake',            lat: 41.95, lng: -111.33, radiusMi: 6, type: 'lake',      elevation: 5924, species: ['Bonneville Cutthroat', 'Lake Trout', 'Bonneville Cisco'], regulations: 'Cutthroat limit 2. Cisco dip-netting in Jan', targetDepth: '30-60 ft (summer)', forage: 'Bonneville Cisco, Bonneville Whitefish, Sculpin' },
+  { id: 'lake-powell',    name: 'Lake Powell',          lat: 37.07, lng: -111.25, radiusMi: 15, type: 'reservoir', elevation: 3700, species: ['Striped Bass', 'Largemouth Bass', 'Smallmouth Bass', 'Walleye', 'Crappie'], regulations: 'No limit on striped bass (removal encouraged)', targetDepth: '15-40 ft (follow shad schools)', forage: 'Threadfin Shad, Gizzard Shad, Crayfish' },
+  { id: 'pineview',       name: 'Pineview Reservoir',   lat: 41.26, lng: -111.80, radiusMi: 3, type: 'reservoir', elevation: 4900, species: ['Tiger Muskie', 'Largemouth Bass', 'Yellow Perch', 'Bluegill'], regulations: 'Tiger muskie limit 1, must be over 40"', targetDepth: '10-25 ft (weed edges)', forage: 'Yellow Perch, Utah Chub, Bluegill' },
+  { id: 'willard-bay',    name: 'Willard Bay Reservoir',lat: 41.38, lng: -112.08, radiusMi: 4, type: 'reservoir', elevation: 4200, species: ['Wiper', 'Walleye', 'Channel Catfish', 'Crappie'], regulations: 'Wiper limit 6', targetDepth: '8-20 ft (along dikes)', forage: 'Gizzard Shad, Crayfish' },
+  { id: 'starvation',     name: 'Starvation Reservoir', lat: 40.19, lng: -110.45, radiusMi: 3, type: 'reservoir', elevation: 5700, species: ['Walleye', 'Brown Trout', 'Yellow Perch', 'Smallmouth Bass'], regulations: 'Walleye limit 6', targetDepth: '15-30 ft (old river channel)', forage: 'Yellow Perch, Utah Chub, Crayfish' },
+  { id: 'yuba',           name: 'Yuba Reservoir',       lat: 39.42, lng: -111.90, radiusMi: 4, type: 'reservoir', elevation: 5100, species: ['Northern Pike', 'Tiger Muskie', 'Walleye', 'Wiper', 'Yellow Perch'], regulations: 'No limit on northern pike', targetDepth: '10-25 ft (weed edges)', forage: 'Utah Chub, Yellow Perch, Crayfish' },
+  { id: 'scofield',       name: 'Scofield Reservoir',   lat: 39.78, lng: -111.13, radiusMi: 3, type: 'reservoir', elevation: 7600, species: ['Cutthroat Trout', 'Tiger Trout', 'Rainbow Trout'], regulations: 'Trout limit 4', targetDepth: '15-25 ft (thermocline)', forage: 'Chironomids, Utah Chub, Scuds' },
+  { id: 'sand-hollow',    name: 'Sand Hollow Reservoir',lat: 37.11, lng: -113.38, radiusMi: 3, type: 'reservoir', elevation: 3000, species: ['Largemouth Bass', 'Bluegill', 'Crappie'], regulations: 'Bass limit 6', targetDepth: '10-25 ft (sandstone ledges)', forage: 'Bluegill, Crayfish' },
+];
+
+/**
+ * Identify if a coordinate is within a known lake/reservoir.
+ * Returns the water body profile or null if no match.
+ */
+export function identifyWaterBody(lat, lng) {
+  let closest = null;
+  let closestDist = Infinity;
+
+  for (const wb of KNOWN_WATER_BODIES) {
+    const dist = haversine([lat, lng], [wb.lat, wb.lng]);
+    if (dist <= wb.radiusMi && dist < closestDist) {
+      closestDist = dist;
+      closest = wb;
+    }
+  }
+  return closest ? { ...closest, distanceMiles: Math.round(closestDist * 10) / 10 } : null;
+}
+
 // ─── Step 1: USGS API Fetcher ────────────────────────────────
 
 /**
@@ -270,9 +305,75 @@ function estimateHatchActivity(waterTempF) {
  */
 export async function generateFisheryProfile(lat, lng, elevation = 4500, currentWeatherData = {}) {
   const ambientTemp = currentWeatherData.ambientTemp ?? null;
-  const waterBodyType = currentWeatherData.waterBodyType ?? 'river';
 
-  // ── Tier 1: Live USGS gauge data ──
+  // ── Geospatial Intercept: Is this a known lake/reservoir? ──
+  const lakeMatch = identifyWaterBody(lat, lng);
+
+  if (lakeMatch) {
+    return buildLakeProfile(lakeMatch, elevation, ambientTemp);
+  }
+
+  // ── River/Stream path: Use USGS streamflow data ──
+  return buildRiverProfile(lat, lng, elevation, ambientTemp);
+}
+
+function buildLakeProfile(lake, elevation, ambientTemp) {
+  const effectiveElevation = lake.elevation || elevation;
+  const waterTemp = inferWaterTemp(effectiveElevation, ambientTemp);
+
+  const { hatch, feedingActivity } = estimateHatchActivity(waterTemp);
+
+  let thermalStress = 'none';
+  let thermalAdvice = null;
+  if (waterTemp >= 68) {
+    thermalStress = 'critical';
+    thermalAdvice = 'Water temperature is stressful to trout. Avoid catch-and-release in afternoon. Fish early morning or switch to warm-water species.';
+  } else if (waterTemp >= 64) {
+    thermalStress = 'elevated';
+    thermalAdvice = 'Water warming — trout may be sluggish mid-afternoon. Best fishing at dawn/dusk.';
+  }
+
+  const month = new Date().getMonth() + 1;
+  const season = month <= 3 || month >= 11 ? 'winter' : month <= 5 ? 'spring' : month <= 8 ? 'summer' : 'fall';
+
+  return {
+    coordinates: { lat: lake.lat, lng: lake.lng },
+    elevation: effectiveElevation,
+    waterTemp,
+    waterTempUnit: '°F',
+    dataSource: `Lake Intelligence — ${lake.name}`,
+    waterType: 'lake',
+
+    lakeIntel: {
+      id: lake.id,
+      name: lake.name,
+      species: lake.species,
+      targetDepth: lake.targetDepth,
+      regulations: lake.regulations,
+      forage: lake.forage,
+      distanceMiles: lake.distanceMiles,
+      season,
+    },
+
+    usgsGauge: null,
+
+    clarity: 'clear',
+    flowCategory: 'stillwater',
+    safeForWading: true,
+    reason: `${lake.name} — stillwater fishery. Target ${lake.targetDepth}.`,
+
+    hatch,
+    feedingActivity,
+    thermalStress,
+    thermalAdvice,
+
+    ambientTemp,
+    waterBodyType: lake.type,
+    generatedAt: new Date().toISOString(),
+  };
+}
+
+async function buildRiverProfile(lat, lng, elevation, ambientTemp) {
   const usgs = await fetchNearestUSGSData(lat, lng, 15);
 
   let waterTemp;
@@ -282,24 +383,19 @@ export async function generateFisheryProfile(lat, lng, elevation = 4500, current
     waterTemp = usgs.waterTemp;
     dataSource = `USGS Live Gauge (Site ${usgs.siteId} — ${usgs.siteName}, ${usgs.distanceMiles} mi)`;
   } else {
-    // ── Tier 2: Fallback inference ──
     waterTemp = inferWaterTemp(elevation, ambientTemp);
     dataSource = 'Elevation/Thermal Inference';
   }
 
-  // ── Flow physics ──
-  const flow = assessFlowConditions(usgs?.dischargeCFS ?? null, waterBodyType);
+  const flow = assessFlowConditions(usgs?.dischargeCFS ?? null, 'river');
 
-  // Override clarity if USGS reports extreme discharge
-  if (usgs?.dischargeCFS != null && usgs.dischargeCFS > 1000 && waterBodyType === 'river') {
+  if (usgs?.dischargeCFS != null && usgs.dischargeCFS > 1000) {
     flow.clarity = 'stained/blown out';
     flow.reason = `USGS reports ${usgs.dischargeCFS} CFS — river likely muddy and high. ${flow.reason}`;
   }
 
-  // ── Hatch / feeding intelligence ──
   const { hatch, feedingActivity } = estimateHatchActivity(waterTemp);
 
-  // ── Thermal stress assessment ──
   let thermalStress = 'none';
   let thermalAdvice = null;
   if (waterTemp >= 68) {
@@ -316,8 +412,10 @@ export async function generateFisheryProfile(lat, lng, elevation = 4500, current
     waterTemp,
     waterTempUnit: '°F',
     dataSource,
+    waterType: 'river',
 
-    // USGS gauge details (null if inference was used)
+    lakeIntel: null,
+
     usgsGauge: usgs ? {
       siteId: usgs.siteId,
       siteName: usgs.siteName,
@@ -326,19 +424,15 @@ export async function generateFisheryProfile(lat, lng, elevation = 4500, current
       gaugeHeightFt: usgs.gaugeHeightFt,
     } : null,
 
-    // Flow / clarity
     ...flow,
 
-    // Ecology
     hatch,
     feedingActivity,
     thermalStress,
     thermalAdvice,
 
-    // Ambient context
     ambientTemp,
-    waterBodyType,
-
+    waterBodyType: 'river',
     generatedAt: new Date().toISOString(),
   };
 }
@@ -348,4 +442,5 @@ export const AquaticIntelligenceEngine = {
   inferWaterTemp,
   assessFlowConditions,
   generateFisheryProfile,
+  identifyWaterBody,
 };

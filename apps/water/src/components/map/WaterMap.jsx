@@ -81,9 +81,9 @@ export function WaterMap({ currentWeatherData = {} }) {
       {/* Instructional banner */}
       {!hasDroppedPin && (
         <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] pointer-events-none">
-          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-900/80 backdrop-blur-sm border border-emerald-500/20 shadow-lg">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-[11px] font-semibold text-emerald-200">
+          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/90 backdrop-blur-sm border border-emerald-500/30 shadow-lg">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-[11px] font-semibold text-emerald-800">
               Tap anywhere to analyze water conditions
             </span>
           </div>
@@ -98,8 +98,13 @@ export function WaterMap({ currentWeatherData = {} }) {
           style={{ height: '100%', width: '100%' }}
           zoomControl={false}
           attributionControl={false}
+          minZoom={3}
+          worldCopyJump={true}
         >
-          <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
+          <TileLayer
+            url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"
+            attribution='Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ, TomTom, Intermap, iPC, USGS, FAO, NPS, NRCAN, GeoBase, Kadaster NL, Ordnance Survey, Esri Japan, METI, Esri China (Hong Kong), and the GIS User Community'
+          />
           <PinDropListener onPinDrop={handlePinDrop} />
 
           {droppedPin && (

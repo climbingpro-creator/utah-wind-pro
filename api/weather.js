@@ -43,6 +43,8 @@ export default async function handler(req, res) {
       return await handleAmbient(res);
     } else if (source === 'ambient-history') {
       return await handleAmbientHistory(res, req.query);
+    } else if (source === 'synoptic-radial') {
+      return await handleSynopticRadial(res, req.query);
     } else if (source === 'synoptic') {
       return await handleSynopticLatest(res, stids);
     } else if (source === 'synoptic-history') {
@@ -56,7 +58,7 @@ export default async function handler(req, res) {
     } else if (source === 'wu-pws-date') {
       return await handleWuPwsDate(res, req.query);
     } else {
-      return res.status(400).json({ error: 'Invalid source. Use: ambient, ambient-history, synoptic, synoptic-history, wu-nearby, wu-pws, wu-pws-history' });
+      return res.status(400).json({ error: 'Invalid source. Use: ambient, ambient-history, synoptic, synoptic-radial, synoptic-history, wu-nearby, wu-pws, wu-pws-history' });
     }
   } catch (error) {
     console.error(`[API Proxy] ${source} error:`, error.message);
@@ -216,6 +218,44 @@ async function fetchSynopticDirect(stidsStr, token) {
   }
   const data = await response.json();
   return (data.STATION || []).map(s => ({ ...s, _source: 'synoptic' }));
+}
+
+async function handleSynopticRadial(res, query) {
+  const { lat, lng, radius } = query;
+  if (!lat || !lng) {
+    return res.status(400).json({ error: 'lat and lng parameters required' });
+  }
+  const radiusMiles = Math.min(parseFloat(radius) || 50, 150);
+  const token = process.env.SYNOPTIC_TOKEN;
+  if (!token) {
+    return res.status(500).json({ error: 'Synoptic API token not configured' });
+  }
+
+  const params = new URLSearchParams({
+    token,
+    radius: `${lat},${lng},${radiusMiles}`,
+    vars: 'air_temp,wind_speed,wind_direction,wind_gust,altimeter,sea_level_pressure',
+    units: 'english',
+    limit: '15',
+  });
+  const url = `https://api.synopticdata.com/v2/stations/latest?${params}`;
+  const response = await fetch(url, { signal: AbortSignal.timeout(10000) });
+  if (!response.ok) {
+    console.warn(`[Synoptic Radial] returned ${response.status}`);
+    return res.status(response.status).json({ error: `Synoptic API returned ${response.status}` });
+  }
+  const data = await response.json();
+  const stations = (data.STATION || []).map(s => ({ ...s, _source: 'synoptic-radial' }));
+
+  res.setHeader('Cache-Control', 's-maxage=10, stale-while-revalidate=30');
+  return res.status(200).json({
+    SUMMARY: {
+      RESPONSE_CODE: 1,
+      RESPONSE_MESSAGE: 'OK',
+      NUMBER_OF_OBJECTS: stations.length,
+    },
+    STATION: stations,
+  });
 }
 
 async function handleSynopticHistory(res, stids, hours = '3') {

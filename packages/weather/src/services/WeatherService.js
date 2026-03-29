@@ -228,6 +228,56 @@ class WeatherService {
     }
   }
 
+  async fetchNearbyStations(lat, lng, radiusMiles = 50) {
+    try {
+      let responseData;
+
+      if (IS_PRODUCTION) {
+        const response = await axiosWithRetry({
+          method: 'get', url: apiUrl('/api/weather'),
+          params: { source: 'synoptic-radial', lat, lng, radius: radiusMiles },
+        });
+        responseData = response.data;
+      } else {
+        const token = SYNOPTIC_TOKEN;
+        if (!token) return [];
+        const response = await axios.get(`${SYNOPTIC_BASE_URL}/stations/latest`, {
+          params: {
+            token,
+            radius: `${lat},${lng},${radiusMiles}`,
+            vars: 'air_temp,wind_speed,wind_direction,wind_gust,altimeter,sea_level_pressure',
+            units: 'english',
+            limit: '15',
+          },
+        });
+        responseData = response.data;
+      }
+
+      if (responseData?.STATION) {
+        return responseData.STATION.map((station) => ({
+          id: station.STID,
+          name: station.NAME,
+          lat: parseFloat(station.LATITUDE),
+          lng: parseFloat(station.LONGITUDE),
+          elevation: parseFloat(station.ELEVATION) || null,
+          speed: station.OBSERVATIONS?.wind_speed_value_1?.value ?? null,
+          direction: station.OBSERVATIONS?.wind_direction_value_1?.value ?? null,
+          gust: station.OBSERVATIONS?.wind_gust_value_1?.value ?? null,
+          temperature: station.OBSERVATIONS?.air_temp_value_1?.value ?? null,
+          pressure: station.OBSERVATIONS?.altimeter_value_1?.value
+            ?? station.OBSERVATIONS?.sea_level_pressure_value_1?.value ?? null,
+          windSpeed: station.OBSERVATIONS?.wind_speed_value_1?.value ?? null,
+          windDirection: station.OBSERVATIONS?.wind_direction_value_1?.value ?? null,
+          _source: 'synoptic-radial',
+        })).filter(s => s.lat && s.lng);
+      }
+      return [];
+    } catch (error) {
+      console.error('Synoptic radial fetch error:', error.message);
+      return [];
+    }
+  }
+
   async getWuPwsCurrent(stationIds) {
     if (!stationIds || stationIds.length === 0) return [];
     try {

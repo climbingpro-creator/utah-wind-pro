@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline, Circle } from 'react-leaflet';
 import L from 'leaflet';
 import { Compass, Maximize2, X, Wind } from 'lucide-react';
-import { LAKE_CONFIGS, SpatialInterpolator, applySurfacePhysics, calculateFetchMultiplier, calculateVenturiMultiplier } from '@utahwind/weather';
+import { LAKE_CONFIGS, SpatialInterpolator, applySurfacePhysics, calculateFetchMultiplier, calculateVenturiMultiplier, weatherService } from '@utahwind/weather';
 import { safeToFixed } from '../utils/safeToFixed';
 import PinDropListener from './map/PinDropListener';
 import SyntheticForecastCard from './map/SyntheticForecastCard';
@@ -359,29 +359,49 @@ export function WindMap({
       .filter(Boolean);
   }, [mapArea, stationData]);
 
-  const handlePinDrop = useCallback((coords) => {
+  const abortRef = useRef(0);
+  const handlePinDrop = useCallback(async (coords) => {
+    const requestId = ++abortRef.current;
     setDroppedPin(coords);
     setHasDroppedPin(true);
-    const result = SpatialInterpolator.interpolateConditions(coords, liveStationsWithCoords);
+    setSyntheticData(null);
+
+    let stations = liveStationsWithCoords;
+
+    // If local stations are empty or pin is far from the map area, do a radial fetch
+    const areaCenter = mapArea?.center;
+    const isOutsideLocal = !areaCenter || Math.abs(coords[0] - areaCenter[0]) > 1.5 || Math.abs(coords[1] - areaCenter[1]) > 1.5;
+
+    if (stations.length === 0 || isOutsideLocal) {
+      try {
+        const radial = await weatherService.fetchNearbyStations(coords[0], coords[1], 50);
+        if (requestId !== abortRef.current) return;
+        if (radial.length > 0) stations = radial;
+      } catch (_e) { /* fall through to local stations */ }
+    }
+
+    const result = SpatialInterpolator.interpolateConditions(coords, stations);
+    if (requestId !== abortRef.current) return;
     if (result?.interpolated) {
       const waterTemp = windData?.waterTemp ?? null;
       applySurfacePhysics(result.interpolated, { waterTemp });
     }
     setSyntheticData(result);
-  }, [liveStationsWithCoords, windData]);
+  }, [liveStationsWithCoords, windData, mapArea]);
 
   const handleClearPin = useCallback(() => {
     setDroppedPin(null);
     setSyntheticData(null);
   }, []);
   
-  if (!mapArea) return null;
-  
+  const fallbackCenter = [40.35, -111.75];
+  const fallbackZoom = 7;
+
   const currentDirection = windData?.direction;
   const currentSpeed = windData?.speed;
   
   // Get launch data
-  const launches = mapArea.launches.map(id => {
+  const launches = (mapArea?.launches || []).map(id => {
     const config = LAKE_CONFIGS[id];
     if (!config?.coordinates) return null;
     return {
@@ -402,7 +422,7 @@ export function WindMap({
       <div className="px-4 py-2 border-b border-slate-700 flex items-center justify-between bg-slate-800/80">
         <div className="flex items-center gap-2">
           <Compass className="w-4 h-4 text-cyan-400" />
-          <span className="text-sm font-medium text-slate-300">{mapArea.name} Wind Map</span>
+          <span className="text-sm font-medium text-slate-300">{mapArea?.name ? `${mapArea.name} Wind Map` : 'Global Wind Map'}</span>
         </div>
         <div className="flex items-center gap-3">
           {currentDirection != null && (
@@ -424,12 +444,14 @@ export function WindMap({
       {/* Map Container */}
       <div className={`relative overflow-hidden cursor-crosshair ${mapHeight}`}>
         <MapContainer
-          center={mapArea.center}
-          zoom={mapArea.zoom}
+          center={mapArea?.center || fallbackCenter}
+          zoom={mapArea?.zoom || fallbackZoom}
           className="h-full w-full"
           ref={mapRef}
           zoomControl={true}
           attributionControl={true}
+          minZoom={3}
+          worldCopyJump={true}
         >
           {/* Base map tiles - using OpenStreetMap */}
           <TileLayer
@@ -449,11 +471,13 @@ export function WindMap({
           <WindFlowOverlay direction={currentDirection} speed={currentSpeed} />
           
           {/* Main wind arrow at center */}
-          <MainWindArrow 
-            center={mapArea.center} 
-            direction={currentDirection} 
-            speed={currentSpeed} 
-          />
+          {mapArea && (
+            <MainWindArrow 
+              center={mapArea.center} 
+              direction={currentDirection} 
+              speed={currentSpeed} 
+            />
+          )}
           
           {/* Launch markers */}
           {launches.map(launch => (
@@ -504,7 +528,7 @@ export function WindMap({
           )}
 
           {/* Weather station markers */}
-          {mapArea.stations.map(station => {
+          {(mapArea?.stations || []).map(station => {
             const stationWind = stationData?.find(s => 
               s.id === station.id || s.name?.includes(station.name)
             );

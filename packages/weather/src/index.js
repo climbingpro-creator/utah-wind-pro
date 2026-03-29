@@ -119,6 +119,7 @@ export {
   inferWaterTemp,
   assessFlowConditions,
   generateFisheryProfile,
+  identifyWaterBody,
 } from './services/AquaticIntelligenceEngine.js';
 
 // ─── Utils ────────────────────────────────────────────────────
