@@ -1949,10 +1949,238 @@ async function backfillHistorical(redisCmd, synopticToken, allStations, lakeStat
   };
 }
 
+// ══════════════════════════════════════════════════════════════
+// TRIPLE VALIDATION — Window Forecast Grading & Auto-Healing
+// ══════════════════════════════════════════════════════════════
+
+/**
+ * Evaluate predicted sport windows against actual sensor data
+ * and apply targeted weight adjustments.
+ *
+ * @param {Function} redisCmd
+ * @param {Object} currentWeights - live server weights
+ * @param {Object} nwsData - NWS forecasts (for getting predicted windows)
+ * @returns {{ windowScores: Array, adjustments: Array, updatedWeights: Object }}
+ */
+async function evaluateAndAdjustWindows(redisCmd, currentWeights, nwsData) {
+  const results = { windowScores: [], adjustments: [], updatedWeights: currentWeights };
+
+  // 1. Load yesterday's predicted windows from Redis
+  let predictedWindows = [];
+  try {
+    const raw = await redisCmd('GET', 'windows:predicted');
+    if (raw) predictedWindows = JSON.parse(raw);
+  } catch { /* no prior windows */ }
+
+  if (predictedWindows.length === 0) return results;
+
+  // 2. Load actual observation snapshots from the last 24 hours
+  const obsKeys = await redisCmd('LRANGE', 'obs:index', '0', '96'); // ~24h at 15-min intervals
+  if (!obsKeys?.length) return results;
+
+  const obsValues = await redisCmd('MGET', ...obsKeys);
+  const allObs = [];
+  const cutoff24h = Date.now() - 24 * 3600000;
+  for (const raw of (obsValues || [])) {
+    if (!raw) continue;
+    try {
+      const snap = JSON.parse(raw);
+      if (new Date(snap.timestamp).getTime() > cutoff24h) {
+        for (const s of (snap.stations || [])) {
+          allObs.push({
+            timestamp: snap.timestamp,
+            stationId: s.stationId,
+            windSpeed: s.windSpeed ?? null,
+            windGust: s.windGust ?? null,
+            windDirection: s.windDirection ?? null,
+            temperature: s.temperature ?? null,
+          });
+        }
+      }
+    } catch { /* skip malformed */ }
+  }
+
+  if (allObs.length === 0) return results;
+
+  // 3. Grade each predicted window
+  const weights = JSON.parse(JSON.stringify(currentWeights));
+  if (!weights.windowWeights) weights.windowWeights = {};
+  if (!weights.terrainMultipliers) weights.terrainMultipliers = {};
+
+  for (const win of predictedWindows) {
+    const lakeId = win.locationId;
+    const sportType = win.sportType;
+
+    // Get the primary station for this lake
+    const thermalCfg = LAKE_THERMAL[lakeId];
+    const primaryStationId = thermalCfg?.station || null;
+    if (!primaryStationId) continue;
+
+    // Filter observations to this station
+    const stationObs = allObs.filter(o => o.stationId === primaryStationId);
+    if (stationObs.length === 0) continue;
+
+    const predStart = new Date(win.windowStart);
+    const predEnd = new Date(win.windowEnd);
+    if (isNaN(predStart.getTime()) || isNaN(predEnd.getTime())) continue;
+
+    const predDuration = win.durationHours ?? ((predEnd - predStart) / 3600000);
+    const predictedPeak = parseFloat(String(win.peakCondition).match(/([\d.]+)/)?.[1] || '0');
+    const speedThreshold = win.sportType?.includes('boating') ? 3 : 8;
+
+    // Generous observation window: ±3 hrs
+    const bufferMs = 3 * 3600000;
+    const relevantObs = stationObs.filter(o => {
+      const t = new Date(o.timestamp).getTime();
+      return t >= predStart.getTime() - bufferMs && t <= predEnd.getTime() + bufferMs;
+    });
+
+    if (relevantObs.length === 0) continue;
+
+    // Find actual active period
+    const activeObs = relevantObs.filter(o => (o.windSpeed ?? 0) >= speedThreshold);
+    const actualStart = activeObs.length > 0 ? new Date(activeObs[0].timestamp) : null;
+    const actualEnd = activeObs.length > 0 ? new Date(activeObs[activeObs.length - 1].timestamp) : null;
+    const actualDuration = actualStart && actualEnd
+      ? Math.max(1, Math.round((actualEnd - actualStart) / 3600000))
+      : 0;
+    const actualPeak = Math.max(0, ...relevantObs.map(o => o.windSpeed ?? 0));
+
+    // ── Triple Validation Metrics ──
+
+    // Start Time Delta (hours)
+    const startDelta = actualStart
+      ? (actualStart.getTime() - predStart.getTime()) / 3600000
+      : NaN;
+
+    // Duration Delta (hours)
+    const durationDelta = actualDuration > 0
+      ? actualDuration - predDuration
+      : -predDuration;
+
+    // Peak Magnitude Error (fractional)
+    const peakError = predictedPeak > 0
+      ? Math.abs(actualPeak - predictedPeak) / predictedPeak
+      : (actualPeak > 0 ? 1 : 0);
+
+    // Composite score (0-100)
+    const startScore = isNaN(startDelta) ? 0 : Math.max(0, 35 - Math.abs(startDelta) * 10);
+    const durScore = actualDuration > 0 ? Math.max(0, 30 - Math.abs(durationDelta) * 8) : 0;
+    const peakScore = peakError <= 0.15 ? 35 : Math.max(0, 35 - ((peakError - 0.15) / 0.5) * 35);
+    const composite = Math.round(startScore + durScore + peakScore);
+
+    const verdict = composite >= 75 ? 'accurate' : composite >= 40 ? 'shifted' : 'busted';
+
+    results.windowScores.push({
+      locationId: lakeId, sportType, composite, verdict,
+      startDelta: isNaN(startDelta) ? null : Math.round(startDelta * 10) / 10,
+      durationDelta: Math.round(durationDelta * 10) / 10,
+      peakError: Math.round(peakError * 1000) / 1000,
+      predictedPeak, actualPeak: Math.round(actualPeak * 10) / 10,
+    });
+
+    // ── Weight Adjustment Loop ──
+
+    const lwKey = `${lakeId}:window`;
+    if (!weights.windowWeights[lwKey]) {
+      weights.windowWeights[lwKey] = { thermalMultiplier: 1.0, terrainConfidence: 1.0, count: 0, totalScore: 0 };
+    }
+    const ww = weights.windowWeights[lwKey];
+    ww.count++;
+    ww.totalScore += composite;
+    const lerpRate = Math.min(0.08, 1 / (ww.count + 10));
+
+    if (composite < 75) {
+      // ── Thermal Penalty ──
+      // Predicted high wind but got low wind → busted thermal
+      if (predictedPeak >= 12 && actualPeak < 8) {
+        const decay = lerpRate * 1.5;
+        ww.thermalMultiplier = Math.max(0.5, ww.thermalMultiplier - decay);
+        results.adjustments.push({
+          locationId: lakeId, type: 'thermal_penalty',
+          reason: `Predicted ${predictedPeak}mph, got ${Math.round(actualPeak)}mph — busted thermal`,
+          delta: -decay,
+          newValue: Math.round(ww.thermalMultiplier * 1000) / 1000,
+        });
+      }
+
+      // General window accuracy decay: nudge down if consistently bad
+      if (composite < 40) {
+        ww.terrainConfidence = Math.max(0.5, ww.terrainConfidence - lerpRate);
+      }
+    }
+
+    // ── Fetch/Venturi Reward ──
+    // Predicted speed and got it within 15% → terrain multipliers are working
+    if (peakError <= 0.15 && predictedPeak >= 10) {
+      const reward = lerpRate * 0.5;
+      const tmKey = `${lakeId}:terrain`;
+      if (!weights.terrainMultipliers[tmKey]) {
+        weights.terrainMultipliers[tmKey] = { confidence: 1.0, count: 0 };
+      }
+      const tm = weights.terrainMultipliers[tmKey];
+      tm.count++;
+      tm.confidence = Math.min(1.5, tm.confidence + reward);
+      results.adjustments.push({
+        locationId: lakeId, type: 'terrain_reward',
+        reason: `Predicted ${predictedPeak}mph, got ${Math.round(actualPeak)}mph — terrain physics validated`,
+        delta: reward,
+        newValue: Math.round(tm.confidence * 1000) / 1000,
+      });
+    }
+
+    // ── Thermal Recovery ──
+    // If the thermal multiplier was penalized but we're now getting accurate windows,
+    // slowly recover (seasonal adaptation)
+    if (composite >= 75 && ww.thermalMultiplier < 1.0) {
+      const recovery = lerpRate * 0.3;
+      ww.thermalMultiplier = Math.min(1.0, ww.thermalMultiplier + recovery);
+      results.adjustments.push({
+        locationId: lakeId, type: 'thermal_recovery',
+        reason: `Window accurate (${composite}/100) — thermal trust recovering`,
+        delta: recovery,
+        newValue: Math.round(ww.thermalMultiplier * 1000) / 1000,
+      });
+    }
+  }
+
+  // Update meta
+  weights.meta = weights.meta || {};
+  weights.meta.lastWindowValidation = new Date().toISOString();
+  weights.meta.windowValidationCount = (weights.meta.windowValidationCount || 0) + results.windowScores.length;
+  const avgWindow = results.windowScores.length > 0
+    ? Math.round(results.windowScores.reduce((s, w) => s + w.composite, 0) / results.windowScores.length)
+    : null;
+  weights.meta.avgWindowAccuracy = avgWindow;
+
+  results.updatedWeights = weights;
+  return results;
+}
+
+/**
+ * Store predicted sport windows in Redis so they can be graded tomorrow.
+ * Called after findAllSportWindows during ingest or the learning cycle.
+ */
+async function storeWindowPredictions(redisCmd, windowsByLake) {
+  const flat = [];
+  for (const [locationId, windows] of Object.entries(windowsByLake)) {
+    for (const [sportType, win] of Object.entries(windows)) {
+      flat.push({ ...win, locationId, sportType });
+    }
+  }
+  if (flat.length > 0) {
+    await redisCmd('SET', 'windows:predicted', JSON.stringify(flat), 'EX', '172800'); // 48h TTL
+  }
+  return flat.length;
+}
+
 export {
   runServerLearningCycle,
   backfillHistorical,
+  evaluateAndAdjustWindows,
+  storeWindowPredictions,
   loadWeights,
+  saveWeights,
   loadMeta,
   toMountainHour,
   normalizeToMb,

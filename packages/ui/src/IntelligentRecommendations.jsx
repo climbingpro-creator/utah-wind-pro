@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock, Zap, Wind, Target, TrendingUp, Waves, Anchor, Ship, Fish, Mountain } from 'lucide-react';
+import { Clock, Zap, Wind, Target, TrendingUp, Waves, Anchor, Ship, Fish, Mountain, ArrowUpRight } from 'lucide-react';
 
 const SPORT_ICONS = {
   'foil-kite': Wind,
@@ -24,6 +24,17 @@ const SPORT_COLORS = {
 };
 
 const DEFAULT_COLORS = { bg: 'bg-slate-500/10', border: 'border-slate-500/30', text: 'text-slate-400', badge: 'bg-slate-500' };
+
+const SPORT_APP_OWNER = {
+  'foil-kite': 'wind',
+  'windsurfing': 'wind',
+  'sailing': 'wind',
+  'paragliding': 'wind',
+  'snowkiting': 'wind',
+  'boating': 'water',
+  'paddling': 'water',
+  'fishing': 'water',
+};
 
 function TimelineBar({ hours, wantsWind }) {
   if (!hours?.length) return null;
@@ -57,15 +68,23 @@ function TimelineBar({ hours, wantsWind }) {
   );
 }
 
-function WindowCard({ window: w }) {
+function WindowCard({ window: w, currentApp, crossAppUrls, onLocalClick }) {
   if (!w) return null;
 
   const colors = SPORT_COLORS[w.sportType] || DEFAULT_COLORS;
   const IconComponent = SPORT_ICONS[w.sportType] || Target;
   const wantsWind = ['foil-kite', 'windsurfing', 'sailing', 'paragliding', 'snowkiting'].includes(w.sportType);
 
-  return (
-    <div className={`rounded-xl border p-4 space-y-3 ${colors.bg} ${colors.border}`}>
+  const ownerApp = SPORT_APP_OWNER[w.sportType] || 'wind';
+  const isCrossApp = currentApp && ownerApp !== currentApp;
+  const targetUrl = isCrossApp && crossAppUrls?.[ownerApp]
+    ? `${crossAppUrls[ownerApp]}${w.locationId ? `?spot=${w.locationId}` : ''}`
+    : null;
+
+  const cardContent = (
+    <div className={`rounded-xl border p-4 space-y-3 transition-all ${colors.bg} ${colors.border} ${
+      targetUrl ? 'hover:ring-1 hover:ring-white/20 cursor-pointer' : ''
+    } ${!targetUrl && onLocalClick ? 'cursor-pointer' : ''}`}>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -77,9 +96,19 @@ function WindowCard({ window: w }) {
             <div className="text-[10px] text-[var(--text-tertiary,#64748b)]">{w.durationHours}h window found</div>
           </div>
         </div>
-        <div className="text-right">
-          <div className={`text-2xl font-black tabular-nums ${colors.text}`}>{w.avgScore}</div>
-          <div className="text-[9px] font-bold text-[var(--text-tertiary,#64748b)] uppercase">score</div>
+        <div className="flex items-center gap-2">
+          {targetUrl && (
+            <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-white/[0.06] border border-white/[0.08]">
+              <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--text-tertiary,#64748b)]">
+                {ownerApp === 'water' ? 'Glass App' : 'Wind App'}
+              </span>
+              <ArrowUpRight className="w-3 h-3 text-[var(--text-tertiary,#64748b)]" />
+            </div>
+          )}
+          <div className="text-right">
+            <div className={`text-2xl font-black tabular-nums ${colors.text}`}>{w.avgScore}</div>
+            <div className="text-[9px] font-bold text-[var(--text-tertiary,#64748b)] uppercase">score</div>
+          </div>
         </div>
       </div>
 
@@ -108,6 +137,20 @@ function WindowCard({ window: w }) {
       <p className="text-xs text-[var(--text-secondary,#94a3b8)] leading-relaxed">{w.reason}</p>
     </div>
   );
+
+  if (targetUrl) {
+    return (
+      <a href={targetUrl} className="block no-underline" rel="noopener noreferrer">
+        {cardContent}
+      </a>
+    );
+  }
+
+  if (onLocalClick) {
+    return <div onClick={() => onLocalClick(w)} role="button" tabIndex={0}>{cardContent}</div>;
+  }
+
+  return cardContent;
 }
 
 /**
@@ -117,8 +160,11 @@ function WindowCard({ window: w }) {
  * @param {Object} props.windows — Map of sportType → window result from findAllSportWindows
  * @param {string[]} [props.sportFilter] — Optional list of sport keys to display (shows all if omitted)
  * @param {string} [props.title] — Section title
+ * @param {'wind'|'water'} [props.currentApp] — Which app is rendering this component
+ * @param {Object} [props.crossAppUrls] — URLs to sister apps, e.g. { water: 'https://...', wind: 'https://...' }
+ * @param {Function} [props.onLocalClick] — Callback when a local-sport card is clicked
  */
-export function IntelligentRecommendations({ windows, sportFilter, title = 'Best Time Windows' }) {
+export function IntelligentRecommendations({ windows, sportFilter, title = 'Best Time Windows', currentApp, crossAppUrls, onLocalClick }) {
   if (!windows || Object.keys(windows).length === 0) {
     return (
       <div className="rounded-xl border border-[var(--border-color,#1e293b)] p-4 text-center">
@@ -144,7 +190,13 @@ export function IntelligentRecommendations({ windows, sportFilter, title = 'Best
       </div>
       <div className="space-y-3">
         {entries.map(([key, w]) => (
-          <WindowCard key={key} window={w} />
+          <WindowCard
+            key={key}
+            window={w}
+            currentApp={currentApp}
+            crossAppUrls={crossAppUrls}
+            onLocalClick={onLocalClick}
+          />
         ))}
       </div>
     </div>

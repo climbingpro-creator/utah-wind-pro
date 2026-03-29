@@ -275,16 +275,202 @@ export function findOptimalWindows(locationId, hourlyForecast, sportType) {
   };
 }
 
+// ─── Specialized evaluators ─────────────────────────────────────
+
+function angleDiff(a, b) {
+  const d = Math.abs(((a - b) % 360 + 360) % 360);
+  return d > 180 ? 360 - d : d;
+}
+
+function buildWindowResult(locationId, sportName, sportType, hours, wantsWind) {
+  if (!hours || hours.length < 2) return null;
+
+  const peakHour = wantsWind
+    ? hours.reduce((a, b) => (b.windSpeed ?? 0) > (a.windSpeed ?? 0) ? b : a)
+    : hours.reduce((a, b) => (b.windSpeed ?? 99) < (a.windSpeed ?? 99) ? b : a);
+
+  return {
+    locationId,
+    sport: sportName,
+    sportType,
+    windowStart: hours[0].startTime,
+    windowEnd: hours[hours.length - 1].startTime,
+    windowStartLabel: formatHourLabel(hours[0].startTime),
+    windowEndLabel: formatHourLabel(hours[hours.length - 1].startTime),
+    durationHours: hours.length,
+    peakTime: peakHour.startTime,
+    peakTimeLabel: formatHourLabel(peakHour.startTime),
+    peakCondition: `${Math.round(peakHour.windSpeed ?? 0)} mph`,
+    peakScore: 90,
+    avgScore: 85,
+    peakHour,
+    hours: hours.map(h => ({
+      time: formatHourLabel(h.startTime),
+      startTime: h.startTime,
+      windSpeed: h.windSpeed,
+      windDirection: h.windDirection,
+      score: 85,
+      temperature: h.temperature,
+      shortForecast: h.shortForecast,
+    })),
+  };
+}
+
+/**
+ * Paragliding: strict direction alignment + gust safety cutoff.
+ * @param {Array} hourlyForecast
+ * @param {{ idealAxis?: number }} locationInfo
+ */
+export function evaluateParaglidingWindow(hourlyForecast, locationInfo = {}) {
+  if (!hourlyForecast?.length) return null;
+  const axis = locationInfo.idealAxis ?? null;
+  const tolerance = 25;
+
+  const blocks = [];
+  let run = [];
+
+  for (const h of hourlyForecast) {
+    const s = h.windSpeed ?? 0;
+    const g = h.gust ?? h.windGust ?? s;
+    const dir = h.windDirection ?? h.direction;
+    const dirOk = axis == null || (dir != null && angleDiff(dir, axis) <= tolerance);
+
+    if (s >= 7 && s <= 14 && g < 18 && dirOk) {
+      run.push(h);
+    } else {
+      if (run.length >= 2) blocks.push([...run]);
+      run = [];
+    }
+  }
+  if (run.length >= 2) blocks.push(run);
+  if (blocks.length === 0) return null;
+
+  const best = blocks.reduce((a, b) => b.length > a.length ? b : a);
+  const result = buildWindowResult(null, 'Paragliding (Precision)', 'paragliding-precision', best, true);
+  if (!result) return null;
+
+  const pk = result.peakHour;
+  const axisStr = axis != null ? ` perfectly aligned with the ${axis}° launch face` : '';
+  result.reason = `Perfect ${Math.round(pk.windSpeed)}mph ridge lift${axisStr}. Low gust variance.`;
+  delete result.peakHour;
+  return result;
+}
+
+/**
+ * Snowkiting: wind + cold/snowpack requirement.
+ * @param {Array} hourlyForecast
+ * @param {{ hasSnowpack?: boolean }} locationInfo
+ */
+export function evaluateSnowkiteWindow(hourlyForecast, locationInfo = {}) {
+  if (!hourlyForecast?.length) return null;
+  const needsCold = !locationInfo.hasSnowpack;
+
+  const blocks = [];
+  let run = [];
+
+  for (const h of hourlyForecast) {
+    const s = h.windSpeed ?? 0;
+    const temp = h.temperature ?? 999;
+    const tempOk = !needsCold || temp < 35;
+
+    if (s >= 10 && s <= 25 && tempOk) {
+      run.push(h);
+    } else {
+      if (run.length >= 2) blocks.push([...run]);
+      run = [];
+    }
+  }
+  if (run.length >= 2) blocks.push(run);
+  if (blocks.length === 0) return null;
+
+  const best = blocks.reduce((a, b) => b.length > a.length ? b : a);
+  const result = buildWindowResult(null, 'Snowkiting (Precision)', 'snowkiting-precision', best, true);
+  if (!result) return null;
+
+  const pk = result.peakHour;
+  result.reason = `Optimal ${Math.round(pk.windSpeed)}mph flow over snowpack. Dense, cold air will provide roughly 15% more kite power than summer winds.`;
+  delete result.peakHour;
+  return result;
+}
+
+/**
+ * Sailing: steady laminar flow with tight gust delta.
+ * @param {Array} hourlyForecast
+ */
+export function evaluateSailingWindow(hourlyForecast) {
+  if (!hourlyForecast?.length) return null;
+
+  const blocks = [];
+  let run = [];
+
+  for (const h of hourlyForecast) {
+    const s = h.windSpeed ?? 0;
+    const g = h.gust ?? h.windGust ?? s;
+    const delta = g - s;
+
+    if (s >= 8 && s <= 20 && delta < 8) {
+      run.push(h);
+    } else {
+      if (run.length >= 2) blocks.push([...run]);
+      run = [];
+    }
+  }
+  if (run.length >= 2) blocks.push(run);
+  if (blocks.length === 0) return null;
+
+  const best = blocks.reduce((a, b) => b.length > a.length ? b : a);
+  const result = buildWindowResult(null, 'Sailing (Precision)', 'sailing-precision', best, true);
+  if (!result) return null;
+
+  const pk = result.peakHour;
+  const maxGust = Math.round(Math.max(...best.map(h => h.gust ?? h.windGust ?? h.windSpeed ?? 0)));
+  result.reason = `Steady ${Math.round(pk.windSpeed)}mph sustained flow. Low gust variance (max ${maxGust}mph) provides ideal, smooth sailing conditions.`;
+  delete result.peakHour;
+  return result;
+}
+
+// ─── Main aggregators ───────────────────────────────────────────
+
 /**
  * Scan all sport profiles against the forecast and return windows for each.
- * Useful for a "best activity right now" overview.
+ * Includes both generic profile-based windows and specialized precision evaluators.
+ *
+ * @param {string} locationId
+ * @param {Array} hourlyForecast
+ * @param {{ idealAxis?: number, hasSnowpack?: boolean }} [locationInfo]
  */
-export function findAllSportWindows(locationId, hourlyForecast) {
+export function findAllSportWindows(locationId, hourlyForecast, locationInfo) {
   const results = {};
+
   for (const sportType of Object.keys(SPORT_PROFILES)) {
     const window = findOptimalWindows(locationId, hourlyForecast, sportType);
     if (window) results[sportType] = window;
   }
+
+  const pg = evaluateParaglidingWindow(hourlyForecast, locationInfo);
+  if (pg) {
+    pg.locationId = locationId;
+    if (!results['paragliding'] || pg.durationHours > results['paragliding'].durationHours) {
+      results['paragliding'] = pg;
+    }
+  }
+
+  const sk = evaluateSnowkiteWindow(hourlyForecast, locationInfo);
+  if (sk) {
+    sk.locationId = locationId;
+    if (!results['snowkiting'] || sk.durationHours > results['snowkiting'].durationHours) {
+      results['snowkiting'] = sk;
+    }
+  }
+
+  const sail = evaluateSailingWindow(hourlyForecast);
+  if (sail) {
+    sail.locationId = locationId;
+    if (!results['sailing'] || sail.durationHours > results['sailing'].durationHours) {
+      results['sailing'] = sail;
+    }
+  }
+
   return results;
 }
 

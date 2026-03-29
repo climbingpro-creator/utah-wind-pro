@@ -2,7 +2,7 @@ import { useState, useRef, Suspense, lazy } from 'react';
 import * as React from 'react';
 import { LakeSelector } from './LakeSelector';
 import { ToastContainer } from './ToastNotification';
-import { useWeatherData, getHourlyForecast, findAllSportWindows } from '@utahwind/weather';
+import { useWeatherData, getHourlyForecast, findAllSportWindows, LAKE_CONFIGS } from '@utahwind/weather';
 import { useModelContext } from '../hooks/useModelContext';
 import { predict as unifiedPredict } from '../services/UnifiedPredictor';
 import { checkAndNotify } from '../services/NotificationService';
@@ -11,13 +11,12 @@ import { ACTIVITY_CONFIGS, calculateActivityScore, calculateGlassScore } from '.
 import { predictGlass } from '../services/BoatingPredictor';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
-import { SafeComponent, IntelligentRecommendations } from '@utahwind/ui';
+import { SafeComponent, IntelligentRecommendations, ModuleLoader } from '@utahwind/ui';
 import ProGate from './ProGate';
 import { calculateCorrelatedWind } from '@utahwind/weather';
 import { monitorSwings } from '@utahwind/weather';
 import { generateBriefing } from '../services/MorningBriefing';
 import TodayHero from './TodayHero';
-import ModelStepCard from './ModelStepCard';
 import { Modal } from '@utahwind/ui';
 import AppHeader from './AppHeader';
 import { Trophy, Calendar, ArrowUpRight, Users } from 'lucide-react';
@@ -90,8 +89,10 @@ import { getSMSPrefs, processConditions } from '../services/SMSNotificationServi
 import { getParaglidingScore } from '../utils/paraglidingScore';
 import { safeToFixed } from '../utils/safeToFixed';
 import { synthesize } from '../services/WindIntelligence';
+const ModelStepCard = lazy(() => import('./ModelStepCard'));
 const SignalConvergence = lazy(() => import('./SignalConvergence'));
 const PropagationTracker = lazy(() => import('./PropagationTracker'));
+const SpotRanker = lazy(() => import('./SpotRanker'));
 
 export function Dashboard() {
   const [selectedLake, setSelectedLake] = useState(() => localStorage.getItem('uwf_default_spot') || 'utah-lake');
@@ -351,7 +352,14 @@ export function Dashboard() {
     async function loadWindows() {
       try {
         const hourly = await getHourlyForecast(selectedLake);
-        if (!cancelled && hourly) setSportWindows(findAllSportWindows(selectedLake, hourly));
+        if (!cancelled && hourly) {
+          const cfg = LAKE_CONFIGS[selectedLake];
+          const locationInfo = {
+            idealAxis: cfg?.thermal?.optimalDirection?.min,
+            hasSnowpack: !!cfg?.snowkite,
+          };
+          setSportWindows(findAllSportWindows(selectedLake, hourly, locationInfo));
+        }
       } catch (_e) { /* forecast unavailable */ }
     }
     loadWindows();
@@ -466,7 +474,7 @@ export function Dashboard() {
       )}
 
       {!showOnboarding && (
-      <Suspense fallback={<div className="max-w-6xl mx-auto px-5 sm:px-8 py-8 space-y-4"><ChunkFallback className="h-48" /><ChunkFallback className="h-64" /><ChunkFallback /></div>}>
+      <Suspense fallback={<div className="max-w-6xl mx-auto px-5 sm:px-8 py-8 space-y-4"><ModuleLoader variant="section" className="h-48" /><ModuleLoader variant="section" className="h-64" /><ModuleLoader /></div>}>
       <main className="max-w-6xl mx-auto px-5 sm:px-8 py-8 section-stack">
 
         {/* ═══════════ 1. THE VERDICT — Activity Matrix ═══════════ */}
@@ -484,7 +492,25 @@ export function Dashboard() {
           unifiedActivities={prediction?.activities}
           locationName={lakeState?.config?.name || lakeState?.config?.shortName}
           prediction={prediction}
+          selectedLake={selectedLake}
+          onSelectSpot={handleSelectLake}
+          mesoData={mesoData}
+          lakeState={lakeState}
         />
+
+        {/* ═══════════ 1.5. THE SCOUT — Where To Go (elevated) ═══════════ */}
+        <Suspense fallback={<ChunkFallback className="h-48" />}>
+          <SafeComponent name="Spot Ranker">
+            <SpotRanker
+              activity={selectedActivity}
+              currentWind={{ speed: currentWindSpeed, gust: currentWindGust, direction: currentWindDirection }}
+              lakeState={lakeState}
+              mesoData={mesoData}
+              thermalPrediction={effectiveThermalPrediction}
+              onSelectSpot={handleSelectLake}
+            />
+          </SafeComponent>
+        </Suspense>
 
         {/* ═══════════ 2. THE PLAYGROUND — Interactive Wind Map ═══════════ */}
         <Suspense fallback={<ChunkFallback className="h-96" />}>
@@ -516,6 +542,8 @@ export function Dashboard() {
                 null
               }
               title="Best Time Windows Today"
+              currentApp="wind"
+              crossAppUrls={{ water: import.meta.env.VITE_WATER_APP_URL }}
             />
           </SafeComponent>
         )}
@@ -602,7 +630,7 @@ export function Dashboard() {
 
         {/* ═══════════ 5. THE APPENDIX — Heavy Meteorological Math ═══════════ */}
         {showDeepDive && (
-          <Suspense fallback={<ChunkFallback className="h-64" />}>
+          <Suspense fallback={<ModuleLoader variant="section" label="Loading deep dive..." className="h-64" />}>
             <div className="flex flex-col gap-8 mt-2 animate-in fade-in slide-in-from-top-4 duration-500">
 
               <SignalConvergence intelligence={intelligence} unifiedPrediction={prediction} />

@@ -14,7 +14,8 @@
  * This is the heaviest stage — gets the most maxDuration.
  */
 
-import { runServerLearningCycle } from '../lib/serverLearning.js';
+import { runServerLearningCycle, evaluateAndAdjustWindows, storeWindowPredictions, loadWeights, saveWeights } from '../lib/serverLearning.js';
+import { findAllSportWindows } from '@utahwind/weather';
 import { analyzeFromStations, analyzeAllSpots, storePropagationSnapshot, learnFromPropagation } from '../lib/serverPropagation.js';
 import { buildStatisticalModels } from '../lib/historicalAnalysis.js';
 import { LAKE_STATION_MAP, ALL_STATION_IDS } from '../lib/stations.js';
@@ -144,6 +145,51 @@ export default async function handler(req, res) {
     } catch (err) {
       console.error('[2-process] Learning cycle error (non-fatal):', err.message);
       diagnostics.learning = { error: err.message };
+    }
+
+    // ── TRIPLE VALIDATION: Grade yesterday's window predictions ──
+    try {
+      const weights = await loadWeights(redisCommand) || { eventWeights: {}, lakeWeights: {}, meta: {} };
+
+      // Read NWS data for window generation (may already be loaded above)
+      let nwsForWindows = null;
+      try {
+        const nwsRaw = await redisCommand('GET', 'nws:forecasts');
+        if (nwsRaw) nwsForWindows = JSON.parse(nwsRaw);
+      } catch { /* non-fatal */ }
+
+      const windowResult = await evaluateAndAdjustWindows(redisCommand, weights, nwsForWindows);
+
+      if (windowResult.windowScores.length > 0) {
+        await saveWeights(redisCommand, windowResult.updatedWeights);
+        console.log(`[2-process] Window validation: ${windowResult.windowScores.length} windows graded, ` +
+          `${windowResult.adjustments.length} weight adjustments, ` +
+          `avg accuracy: ${windowResult.updatedWeights.meta?.avgWindowAccuracy ?? '?'}/100`);
+      }
+
+      // Store today's predicted windows so they can be graded tomorrow
+      if (nwsForWindows?.grids) {
+        let totalStored = 0;
+        for (const [gridId, grid] of Object.entries(nwsForWindows.grids)) {
+          const hourly = grid.mlHourly || grid.hourly;
+          if (hourly?.length > 0) {
+            const windows = findAllSportWindows(gridId, hourly);
+            if (Object.keys(windows).length > 0) {
+              totalStored += await storeWindowPredictions(redisCommand, { [gridId]: windows });
+            }
+          }
+        }
+        if (totalStored > 0) console.log(`[2-process] Stored ${totalStored} window predictions for tomorrow's grading`);
+      }
+
+      diagnostics.windowValidation = {
+        scored: windowResult.windowScores.length,
+        adjustments: windowResult.adjustments.length,
+        avgAccuracy: windowResult.updatedWeights.meta?.avgWindowAccuracy ?? null,
+      };
+    } catch (err) {
+      console.error('[2-process] Window validation error (non-fatal):', err.message);
+      diagnostics.windowValidation = { error: err.message };
     }
 
     // ── AUTO-REBUILD STATISTICAL MODELS ──

@@ -49,6 +49,9 @@ export default defineConfig({
           ) {
             return 'maps';
           }
+          if (id.includes('node_modules/lucide-react/')) {
+            return 'vendor-icons';
+          }
         },
       },
     },

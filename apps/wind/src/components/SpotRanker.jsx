@@ -2,7 +2,7 @@ import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { MapPin, ChevronDown, ChevronUp, Trophy, Radio, AlertTriangle } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { ACTIVITY_CONFIGS } from './ActivityMode';
-import { LAKE_CONFIGS } from '@utahwind/weather';
+import { LAKE_CONFIGS, applySurfacePhysics } from '@utahwind/weather';
 import { STATION_NODES, PROPAGATION_EDGES, LOCATION_STATIONS } from '@utahwind/weather';
 import { safeToFixed } from '../utils/safeToFixed';
 
@@ -329,7 +329,24 @@ function SpotRanker({ activity, currentWind, lakeState, mesoData, thermalPredict
       .filter(spot => spot.bestFor.includes(activity))
       .map(spot => {
         const { score, reason, wind, shoreZone } = scoreSpot(spot, activity, currentWind, lakeState, stableData, unifiedThermal);
-        return { ...spot, score, reason, wind, shoreZone };
+        const cfg = LAKE_CONFIGS[spot.id];
+        const coords = cfg?.coordinates;
+        const enriched = { ...spot, score, reason, wind, shoreZone, physicsReasons: [] };
+
+        if (wind?.speed > 0 && coords) {
+          const station = {
+            lat: coords.lat, lng: coords.lng,
+            speed: wind.speed, windSpeed: wind.speed,
+            direction: wind.dir, windDirection: wind.dir,
+            temperature: lakeState?.pws?.temperature ?? null,
+          };
+          applySurfacePhysics(station, { waterTemp: lakeState?.pws?.waterTemp ?? null });
+          if (station.physicsReasons?.length > 0) {
+            enriched.physicsReasons = station.physicsReasons;
+            enriched.wind = { ...wind, speed: station.speed, gust: wind.gust };
+          }
+        }
+        return enriched;
       })
       .sort((a, b) => b.score - a.score);
   }, [activity, currentWind, lakeState, stableData]);
@@ -446,6 +463,19 @@ function SpotRanker({ activity, currentWind, lakeState, mesoData, thermalPredict
                     </span>
                   )}
                 </div>
+
+                {spot.physicsReasons?.length > 0 && (
+                  <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
+                    {spot.physicsReasons.map((r, i) => {
+                      const boost = r.startsWith('+');
+                      return (
+                        <span key={i} className={`text-[10px] font-medium ${boost ? 'text-emerald-500' : 'text-rose-400'}`}>
+                          {boost ? '▲' : '▼'} {r}
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </button>
           );

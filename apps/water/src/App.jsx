@@ -11,6 +11,7 @@ import LocationSelector from './components/LocationSelector';
 
 const FishingMode = lazy(() => import('./components/FishingMode'));
 const FlatwaterTemplate = lazy(() => import('./components/FlatwaterTemplate'));
+const WaterMap = lazy(() => import('./components/map/WaterMap'));
 
 const WATER_ACTIVITIES = [
   { id: 'fishing', name: 'Fishing', icon: Fish, description: 'Lakes & rivers — pressure, hatches, solunar', wantsCalm: true },
@@ -410,6 +411,15 @@ function WaterApp() {
           </div>
         )}
 
+        {/* ═══════ THE PLAYGROUND — Interactive Water Map ═══════ */}
+        <Suspense fallback={<div className="card animate-pulse h-80 flex items-center justify-center text-slate-500 text-sm">Loading map...</div>}>
+          <WaterMap currentWeatherData={{
+            ambientTemp: lakeState?.pws?.temperature ?? null,
+            windSpeed: currentWindSpeed ?? null,
+            windDirection: currentWindDirection ?? null,
+          }} />
+        </Suspense>
+
         {/* ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ SPORT INTELLIGENCE — Optimal Time Windows ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ */}
         {sportWindows && Object.keys(sportWindows).length > 0 && (
           <IntelligentRecommendations
@@ -420,6 +430,8 @@ function WaterApp() {
               ['paddling', 'boating', 'fishing']
             }
             title="Best Time Windows Today"
+            currentApp="water"
+            crossAppUrls={{ wind: import.meta.env.VITE_WIND_APP_URL }}
           />
         )}
 

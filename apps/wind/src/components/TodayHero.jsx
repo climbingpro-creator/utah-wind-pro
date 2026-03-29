@@ -1,9 +1,9 @@
 import React, { useMemo } from 'react';
-import { ChevronRight, CheckCircle, MapPin, Zap } from 'lucide-react';
+import { ChevronRight, CheckCircle, MapPin, Zap, ArrowRight } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { ACTIVITY_CONFIGS } from './ActivityMode';
 import { getRotatingImage } from '../config/imagePool';
-import { estimateSessionDuration } from '@utahwind/weather';
+import { estimateSessionDuration, LAKE_CONFIGS } from '@utahwind/weather';
 
 const ALL_ACTIVITIES = ['kiting', 'paragliding', 'sailing', 'snowkiting', 'boating', 'paddling', 'fishing', 'windsurfing'];
 
@@ -360,7 +360,7 @@ function dirLabel(deg) {
   return dirs[Math.round(deg / 22.5) % 16];
 }
 
-export default function TodayHero({ windSpeed, windGust, windDirection, thermalPrediction, boatingPrediction, onSelectActivity, selectedActivity, fpsStation, utalpStation, propagation, unifiedActivities, locationName, prediction }) {
+export default function TodayHero({ windSpeed, windGust, windDirection, thermalPrediction, boatingPrediction, onSelectActivity, selectedActivity, fpsStation, utalpStation, propagation, unifiedActivities, locationName, prediction, selectedLake, onSelectSpot, mesoData, lakeState }) {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 
@@ -375,12 +375,55 @@ export default function TodayHero({ windSpeed, windGust, windDirection, thermalP
     [finalCards, outlookSpeed, selectedActivity, prediction]
   );
 
+  // Scout banner: detect if another spot is significantly better
+  const scoutBanner = useMemo(() => {
+    if (!mesoData || !selectedLake) return null;
+    const currentSpeed = windSpeed ?? 0;
+    if (currentSpeed >= 8) return null; // current spot is fine
+
+    const stations = mesoData.stations || [];
+    const candidates = [];
+    for (const [id, cfg] of Object.entries(LAKE_CONFIGS)) {
+      if (id === selectedLake || id === 'utah-lake' || !cfg.coordinates) continue;
+      const gt = cfg.stations?.groundTruth;
+      const primaryId = gt?.id || null;
+      if (!primaryId) continue;
+      const reading = mesoData[primaryId] || stations.find(s => s.id === primaryId);
+      const speed = reading?.speed ?? reading?.windSpeed ?? 0;
+      if (speed >= 12) {
+        candidates.push({ id, name: cfg.shortName || cfg.name, speed: Math.round(speed) });
+      }
+    }
+    if (candidates.length === 0) return null;
+    candidates.sort((a, b) => b.speed - a.speed);
+    return candidates[0];
+  }, [mesoData, selectedLake, windSpeed]);
+
   const accent = MOOD_ACCENT[mood] || MOOD_ACCENT.neutral;
   const bgImage = getRotatingImage(mood, 'mood') || MOOD_IMAGE_FALLBACK[mood];
   const styles = isDark ? STATUS_STYLES : STATUS_STYLES_LIGHT;
 
   return (
     <div className={`animate-fade-in ${bgImage ? 'hero-mood' : ''}`}>
+      {/* Scout banner — another spot is firing */}
+      {scoutBanner && (
+        <button
+          onClick={() => onSelectSpot?.(scoutBanner.id)}
+          className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl mb-3 text-left transition-all group border ${
+            isDark
+              ? 'bg-emerald-500/10 border-emerald-500/25 hover:bg-emerald-500/15 hover:border-emerald-500/40'
+              : 'bg-emerald-50 border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300'
+          }`}
+        >
+          <div className={`w-2 h-2 rounded-full animate-pulse ${isDark ? 'bg-emerald-400' : 'bg-emerald-500'}`} />
+          <p className={`text-sm font-semibold flex-1 ${isDark ? 'text-emerald-300' : 'text-emerald-700'}`}>
+            <span className="opacity-60">{locationName || 'Selected spot'} is quiet</span>
+            {' — '}
+            <span className="font-extrabold">{scoutBanner.name}</span> is firing at <span className="font-extrabold">{scoutBanner.speed} mph</span>
+          </p>
+          <ArrowRight className={`w-4 h-4 shrink-0 group-hover:translate-x-0.5 transition-transform ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`} />
+        </button>
+      )}
       {bgImage && (
         <>
           <img src={bgImage} alt="" />

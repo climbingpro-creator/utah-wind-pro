@@ -1849,6 +1849,184 @@ class LearningSystem {
   }
 }
 
+// ══════════════════════════════════════════════════════════════
+// TRIPLE VALIDATION — Window Accuracy Grading
+//
+// Pure math: compares predicted time windows (from SportIntelligenceEngine)
+// against actual sensor observations for the same hours.
+// Used by both the client learning loop and the server cron.
+// ══════════════════════════════════════════════════════════════
+
+/**
+ * @typedef {Object} PredictedWindow
+ * @property {string} locationId
+ * @property {string} sportType
+ * @property {string} windowStart  - ISO timestamp or parseable date string
+ * @property {string} windowEnd    - ISO timestamp or parseable date string
+ * @property {number} durationHours
+ * @property {string} peakTime     - ISO timestamp
+ * @property {string} peakCondition - e.g. "18 mph"
+ */
+
+/**
+ * @typedef {Object} Observation
+ * @property {string} timestamp   - ISO timestamp
+ * @property {number} windSpeed
+ * @property {number} [windGust]
+ * @property {number} [windDirection]
+ * @property {number} [temperature]
+ */
+
+/**
+ * @typedef {Object} WindowScore
+ * @property {string} locationId
+ * @property {string} sportType
+ * @property {number} startTimeDelta   - hours (actual onset − predicted start)
+ * @property {number} durationDelta    - hours (actual duration − predicted duration)
+ * @property {number} peakMagnitudeError - fractional (|actual − predicted| / predicted)
+ * @property {number} compositeScore   - 0..100 overall accuracy
+ * @property {string} verdict          - 'accurate' | 'shifted' | 'busted'
+ * @property {Object} details
+ */
+
+function parseHour(ts) {
+  const d = new Date(ts);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+function extractPeakSpeed(peakCondition) {
+  const m = String(peakCondition).match(/([\d.]+)/);
+  return m ? parseFloat(m[1]) : 0;
+}
+
+/**
+ * Grade predicted time windows against actual sensor observations.
+ *
+ * @param {PredictedWindow[]} predictedWindows - windows from SportIntelligenceEngine
+ * @param {Observation[]} actualObservations - hourly (or sub-hourly) sensor data
+ * @param {Object} [options]
+ * @param {number} [options.speedThreshold=8] - min speed to consider "active"
+ * @param {number} [options.peakMargin=0.15] - acceptable fractional peak error
+ * @returns {WindowScore[]}
+ */
+export function evaluateHistoricalWindows(predictedWindows, actualObservations, options = {}) {
+  const speedThreshold = options.speedThreshold ?? 8;
+  const peakMargin = options.peakMargin ?? 0.15;
+
+  if (!predictedWindows?.length || !actualObservations?.length) return [];
+
+  const sorted = [...actualObservations].sort(
+    (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
+  );
+
+  const scores = [];
+
+  for (const win of predictedWindows) {
+    const predStart = parseHour(win.windowStart);
+    const predEnd = parseHour(win.windowEnd);
+    if (!predStart || !predEnd) continue;
+
+    const predDuration = win.durationHours ?? ((predEnd - predStart) / 3600000);
+    const predictedPeak = extractPeakSpeed(win.peakCondition);
+
+    // Extract observations within a generous window (±3 hrs of predicted range)
+    const bufferMs = 3 * 3600000;
+    const relevantObs = sorted.filter(o => {
+      const t = new Date(o.timestamp).getTime();
+      return t >= predStart.getTime() - bufferMs && t <= predEnd.getTime() + bufferMs;
+    });
+
+    if (relevantObs.length === 0) {
+      scores.push({
+        locationId: win.locationId,
+        sportType: win.sportType,
+        startTimeDelta: NaN,
+        durationDelta: NaN,
+        peakMagnitudeError: NaN,
+        compositeScore: 0,
+        verdict: 'busted',
+        details: { reason: 'No observations available for this window' },
+      });
+      continue;
+    }
+
+    // Find actual "active" period (contiguous hours above threshold)
+    const activeObs = relevantObs.filter(o => (o.windSpeed ?? 0) >= speedThreshold);
+    const actualStart = activeObs.length > 0 ? new Date(activeObs[0].timestamp) : null;
+    const actualEnd = activeObs.length > 0 ? new Date(activeObs[activeObs.length - 1].timestamp) : null;
+    const actualDuration = actualStart && actualEnd
+      ? Math.max(1, Math.round((actualEnd - actualStart) / 3600000))
+      : 0;
+
+    // Actual peak speed
+    const actualPeak = Math.max(...relevantObs.map(o => o.windSpeed ?? 0));
+
+    // ── Metric 1: Start Time Delta (hours) ──
+    const startTimeDelta = actualStart
+      ? (actualStart.getTime() - predStart.getTime()) / 3600000
+      : NaN;
+
+    // ── Metric 2: Duration Delta (hours) ──
+    const durationDelta = actualDuration > 0
+      ? actualDuration - predDuration
+      : -predDuration;
+
+    // ── Metric 3: Peak Magnitude Error (fractional) ──
+    const peakMagnitudeError = predictedPeak > 0
+      ? Math.abs(actualPeak - predictedPeak) / predictedPeak
+      : (actualPeak > 0 ? 1 : 0);
+
+    // ── Composite Score (0-100) ──
+    // Start accuracy: 35 pts. Perfect = 0 delta, lose 10 pts per hour off.
+    const startScore = isNaN(startTimeDelta)
+      ? 0
+      : Math.max(0, 35 - Math.abs(startTimeDelta) * 10);
+
+    // Duration accuracy: 30 pts. Perfect = 0 delta, lose 8 pts per hour off.
+    const durationScore = actualDuration > 0
+      ? Math.max(0, 30 - Math.abs(durationDelta) * 8)
+      : 0;
+
+    // Peak accuracy: 35 pts. Within margin = full, degrade linearly beyond.
+    let peakScore;
+    if (peakMagnitudeError <= peakMargin) {
+      peakScore = 35;
+    } else {
+      peakScore = Math.max(0, 35 - ((peakMagnitudeError - peakMargin) / 0.5) * 35);
+    }
+
+    const compositeScore = Math.round(startScore + durationScore + peakScore);
+
+    const verdict = compositeScore >= 75
+      ? 'accurate'
+      : compositeScore >= 40
+        ? 'shifted'
+        : 'busted';
+
+    scores.push({
+      locationId: win.locationId,
+      sportType: win.sportType,
+      startTimeDelta: isNaN(startTimeDelta) ? null : Math.round(startTimeDelta * 10) / 10,
+      durationDelta: Math.round(durationDelta * 10) / 10,
+      peakMagnitudeError: Math.round(peakMagnitudeError * 1000) / 1000,
+      compositeScore,
+      verdict,
+      predictedPeak,
+      actualPeak: Math.round(actualPeak * 10) / 10,
+      actualDurationHours: actualDuration,
+      details: {
+        startScore: Math.round(startScore),
+        durationScore: Math.round(durationScore),
+        peakScore: Math.round(peakScore),
+        observationCount: relevantObs.length,
+        activeHours: actualDuration,
+      },
+    });
+  }
+
+  return scores;
+}
+
 // Singleton instance
 export const learningSystem = new LearningSystem();
 export default learningSystem;

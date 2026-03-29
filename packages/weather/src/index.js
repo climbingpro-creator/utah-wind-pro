@@ -55,6 +55,7 @@ export * from './services/ThermalPropagation.js';
 // ─── Learning & Session ───────────────────────────────────────
 export { learningSystem } from './services/LearningSystem.js';
 export { default as learningSystemDefault } from './services/LearningSystem.js';
+export { evaluateHistoricalWindows } from './services/LearningSystem.js';
 export { sessionService } from './services/SessionValidation.js';
 
 // ─── Config: Lake Stations ────────────────────────────────────
@@ -89,6 +90,9 @@ export {
 export {
   findOptimalWindows,
   findAllSportWindows,
+  evaluateParaglidingWindow,
+  evaluateSnowkiteWindow,
+  evaluateSailingWindow,
   SPORT_PROFILES,
 } from './SportIntelligenceEngine.js';
 
@@ -107,6 +111,15 @@ export {
   WATER_POLYGONS,
   VENTURI_CORRIDORS,
 } from './services/SurfacePhysics.js';
+
+// ─── Aquatic Intelligence ─────────────────────────────────────
+export {
+  AquaticIntelligenceEngine,
+  fetchNearestUSGSData,
+  inferWaterTemp,
+  assessFlowConditions,
+  generateFisheryProfile,
+} from './services/AquaticIntelligenceEngine.js';
 
 // ─── Utils ────────────────────────────────────────────────────
 export { apiUrl, isNativeApp, isIOS, isAndroid, isWeb } from './utils/platform.js';

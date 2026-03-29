@@ -25,8 +25,8 @@ enum {
 class JumpTracker {
     [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 15; ]
     <init> {
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 51 15 ]
-        symbol [ JS_IDLE %tmp.2 51 30 37 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 58 15 ]
+        symbol [ JS_IDLE %tmp.2 58 30 37 ];
         %tmp.2 = getv ? :JS_IDLE;
         putv self :_state %tmp.2;
     }
@@ -67,1356 +67,1629 @@ class JumpTracker {
     [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 40; @position = 17; @symbol_constdef = [ALT_RATE_MAX_M,40,17,31]; ]
     protected
     const ALT_RATE_MAX_M = 8.0;
-    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 43; @position = 17; @symbol_constdef = [ALT_BUF_SIZE,43,17,29]; ]
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 43; @position = 17; @symbol_constdef = [DECEL_THRESHOLD_KTS,43,17,36]; ]
+    protected
+    const DECEL_THRESHOLD_KTS = 10.0;
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 44; @position = 17; @symbol_constdef = [SPD_BUF_SIZE,44,17,29]; ]
+    protected
+    const SPD_BUF_SIZE = 4;
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 45; @position = 15; @symbol_vardef = [_spdBuf,45,15,22]; ]
+    protected
+    var _spdBuf;
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 46; @position = 15; @symbol_vardef = [_spdBufIdx,46,15,25]; ]
+    protected
+    var _spdBufIdx = 0;
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 47; @position = 15; @symbol_vardef = [_spdBufFull,47,15,26]; ]
+    protected
+    var _spdBufFull = false;
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 50; @position = 17; @symbol_constdef = [ALT_BUF_SIZE,50,17,29]; ]
     protected
     const ALT_BUF_SIZE = 50;
-    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 44; @position = 15; @symbol_vardef = [_altBuf,44,15,22]; ]
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 51; @position = 15; @symbol_vardef = [_altBuf,51,15,22]; ]
     protected
     var _altBuf;
-    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 45; @position = 15; @symbol_vardef = [_altBufIdx,45,15,25]; ]
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 52; @position = 15; @symbol_vardef = [_altBufIdx,52,15,25]; ]
     protected
     var _altBufIdx = 0;
-    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 46; @position = 15; @symbol_vardef = [_altBufFull,46,15,26]; ]
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 53; @position = 15; @symbol_vardef = [_altBufFull,53,15,26]; ]
     protected
     var _altBufFull = false;
-    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 47; @position = 15; @symbol_vardef = [_lastRawAlt,47,15,26]; ]
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 54; @position = 15; @symbol_vardef = [_lastRawAlt,54,15,26]; ]
     protected
     var _lastRawAlt = 0.0;
-    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 48; @position = 15; @symbol_vardef = [_altInited,48,15,25]; ]
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 55; @position = 15; @symbol_vardef = [_altInited,55,15,25]; ]
     protected
     var _altInited = false;
-    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 51; @position = 15; @symbol_vardef = [_state,51,15,21]; ]
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 58; @position = 15; @symbol_vardef = [_state,58,15,21]; ]
     protected
     var _state;
-    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 52; @position = 15; @symbol_vardef = [_counter,52,15,23]; ]
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 59; @position = 15; @symbol_vardef = [_counter,59,15,23]; ]
     protected
     var _counter = 0;
-    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 53; @position = 15; @symbol_vardef = [_takeoffAlt,53,15,26]; ]
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 60; @position = 15; @symbol_vardef = [_takeoffAlt,60,15,26]; ]
     protected
     var _takeoffAlt = 0.0;
-    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 54; @position = 15; @symbol_vardef = [_peakAlt,54,15,23]; ]
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 61; @position = 15; @symbol_vardef = [_peakAlt,61,15,23]; ]
     protected
     var _peakAlt = 0.0;
-    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 55; @position = 15; @symbol_vardef = [_takeoffMs,55,15,25]; ]
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 62; @position = 15; @symbol_vardef = [_takeoffMs,62,15,25]; ]
     protected
     var _takeoffMs = 0;
-    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 56; @position = 15; @symbol_vardef = [_takeoffSpd,56,15,26]; ]
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 63; @position = 15; @symbol_vardef = [_takeoffSpd,63,15,26]; ]
     protected
     var _takeoffSpd = 0.0;
-    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 59; @position = 8; @symbol_vardef = [jumpCount,59,8,17]; ]
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 66; @position = 8; @symbol_vardef = [jumpCount,66,8,17]; ]
     var jumpCount = 0;
-    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 60; @position = 8; @symbol_vardef = [maxHeight,60,8,17]; ]
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 67; @position = 8; @symbol_vardef = [maxHeight,67,8,17]; ]
     var maxHeight = 0.0;
-    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 61; @position = 8; @symbol_vardef = [lastHeight,61,8,18]; ]
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 68; @position = 8; @symbol_vardef = [lastHeight,68,8,18]; ]
     var lastHeight = 0.0;
-    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 62; @position = 8; @symbol_vardef = [lastHang,62,8,16]; ]
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 69; @position = 8; @symbol_vardef = [lastHang,69,8,16]; ]
     var lastHang = 0.0;
-    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 63; @position = 8; @symbol_vardef = [totalHeight,63,8,19]; ]
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 70; @position = 8; @symbol_vardef = [totalHeight,70,8,19]; ]
     var totalHeight = 0.0;
-    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 66; @position = 8; @symbol_vardef = [crashesFiltered,66,8,23]; ]
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 73; @position = 8; @symbol_vardef = [crashesFiltered,73,8,23]; ]
     var crashesFiltered = 0;
-    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 68; @position = 8; @symbol_vardef = [logger,68,8,14]; ]
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 75; @position = 8; @symbol_vardef = [logger,75,8,14]; ]
     var logger;
-    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 70; @symbol_functiondef = [initialize,70,13,23]; ]
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 77; @symbol_functiondef = [initialize,77,13,23]; ]
     function initialize() as Void {
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_70_26_76_4_start:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 71 8 ]
-        symbol [ DiagnosticLogger %tmp.4 71 21 37 ];
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_77_26_87_4_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 78 8 ]
+        symbol [ DiagnosticLogger %tmp.4 78 21 37 ];
         %tmp.4 = getv ? :DiagnosticLogger;
         %tmp.1 = newc %tmp.4 ();
-        symbol [ logger ? 71 8 14 ];
+        symbol [ logger ? 78 8 14 ];
         putv self :logger %tmp.1;
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 72 8 ]
-        symbol [ ALT_BUF_SIZE %tmp.7 72 23 35 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 79 8 ]
+        symbol [ ALT_BUF_SIZE %tmp.7 79 23 35 ];
         %tmp.7 = getv ? :ALT_BUF_SIZE;
         %tmp.5 = newa %tmp.7;
-        symbol [ _altBuf ? 72 8 15 ];
+        symbol [ _altBuf ? 79 8 15 ];
         putv self :_altBuf %tmp.5;
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 73 8 ]
-        for @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_73_8_75_8_for_test @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_73_8_75_8_for_incr @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_73_8_75_8_for_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_73_8_75_8_for_init:
-        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_73_8_75_8_for_begin" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_73_8_75_8_for_end" ]
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 80 8 ]
+        for @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_80_8_82_8_for_test @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_80_8_82_8_for_incr @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_80_8_82_8_for_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_80_8_82_8_for_init:
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_80_8_82_8_for_begin" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_80_8_82_8_for_end" ]
         %i.1 = local;
-        symbol [ i %i.1 73 17 18 ];
+        symbol [ i %i.1 80 17 18 ];
         %tmp.8 = 0;
         lputv %i.1 %tmp.8;
-        symbol [ i %i.1 73 17 18 ];
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_73_8_75_8_for_test:
+        symbol [ i %i.1 80 17 18 ];
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_80_8_82_8_for_test:
         %tmp.9 = lgetv %i.1;
-        symbol [ i %tmp.9 73 24 25 ];
-        symbol [ ALT_BUF_SIZE %tmp.11 73 28 40 ];
+        symbol [ i %tmp.9 80 24 25 ];
+        symbol [ ALT_BUF_SIZE %tmp.11 80 28 40 ];
         %tmp.11 = getv ? :ALT_BUF_SIZE;
         %tmp.12 = lt %tmp.9 %tmp.11;
-        bf %tmp.12 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_73_8_75_8_for_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_73_8_75_8_for_begin:
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_73_47_75_8_start:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 74 12 ]
-        symbol [ _altBuf %tmp.13 74 12 19 ];
+        bf %tmp.12 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_80_8_82_8_for_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_80_8_82_8_for_begin:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_80_47_82_8_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 81 12 ]
+        symbol [ _altBuf %tmp.13 81 12 19 ];
         %tmp.13 = getv self :_altBuf;
         %tmp.14 = 0.0;
         %tmp.15 = lgetv %i.1;
-        symbol [ i %tmp.15 74 20 21 ];
+        symbol [ i %tmp.15 81 20 21 ];
         aputv %tmp.13 %tmp.15 %tmp.14;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_73_47_75_8_stop:
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_73_8_75_8_for_incr:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 73 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_80_47_82_8_stop:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_80_8_82_8_for_incr:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 80 ]
         %tmp.18 = lgetv %i.1;
-        symbol [ i %tmp.18 73 42 43 ];
+        symbol [ i %tmp.18 80 42 43 ];
         %tmp.19 = add %tmp.18 1;
         lputv %i.1 %tmp.19;
-        symbol [ i %i.1 73 42 43 ];
-        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_73_8_75_8_for_test;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_73_8_75_8_for_end:
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_70_26_76_4_stop:
+        symbol [ i %i.1 80 42 43 ];
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_80_8_82_8_for_test;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_80_8_82_8_for_end:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 83 8 ]
+        symbol [ SPD_BUF_SIZE %tmp.22 83 23 35 ];
+        %tmp.22 = getv ? :SPD_BUF_SIZE;
+        %tmp.20 = newa %tmp.22;
+        symbol [ _spdBuf ? 83 8 15 ];
+        putv self :_spdBuf %tmp.20;
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 84 8 ]
+        for @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_84_8_86_8_for_test @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_84_8_86_8_for_incr @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_84_8_86_8_for_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_84_8_86_8_for_init:
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_84_8_86_8_for_begin" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_84_8_86_8_for_end" ]
+        %i.2 = local;
+        symbol [ i %i.2 84 17 18 ];
+        %tmp.23 = 0;
+        lputv %i.2 %tmp.23;
+        symbol [ i %i.2 84 17 18 ];
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_84_8_86_8_for_test:
+        %tmp.24 = lgetv %i.2;
+        symbol [ i %tmp.24 84 24 25 ];
+        symbol [ SPD_BUF_SIZE %tmp.26 84 28 40 ];
+        %tmp.26 = getv ? :SPD_BUF_SIZE;
+        %tmp.27 = lt %tmp.24 %tmp.26;
+        bf %tmp.27 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_84_8_86_8_for_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_84_8_86_8_for_begin:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_84_47_86_8_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 85 12 ]
+        symbol [ _spdBuf %tmp.28 85 12 19 ];
+        %tmp.28 = getv self :_spdBuf;
+        %tmp.29 = 0.0;
+        %tmp.30 = lgetv %i.2;
+        symbol [ i %tmp.30 85 20 21 ];
+        aputv %tmp.28 %tmp.30 %tmp.29;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_84_47_86_8_stop:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_84_8_86_8_for_incr:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 84 ]
+        %tmp.33 = lgetv %i.2;
+        symbol [ i %tmp.33 84 42 43 ];
+        %tmp.34 = add %tmp.33 1;
+        lputv %i.2 %tmp.34;
+        symbol [ i %i.2 84 42 43 ];
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_84_8_86_8_for_test;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_84_8_86_8_for_end:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_77_26_87_4_stop:
     }
-    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 78; @symbol_functiondef = [startListening,78,13,27]; ]
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 89; @symbol_functiondef = [startListening,89,13,27]; ]
     function startListening() {
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_78_30_87_4_start:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 79 8 ]
-        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_78_30_87_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_78_30_87_4_stop" ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_89_30_98_4_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 90 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_89_30_98_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_89_30_98_4_stop" ]
         %opts.1 = local;
-        symbol [ opts %opts.1 79 12 16 ];
+        symbol [ opts %opts.1 90 12 16 ];
         %tmp.1 = newd 2;
         %tmp.3 = const :period;
-        symbol [ period %tmp.3 80 13 19 const ];
+        symbol [ period %tmp.3 91 13 19 const ];
         %tmp.4 = 1;
         %tmp.5 = dup %tmp.1;
         %tmp.6 = aputv %tmp.5 %tmp.3 %tmp.4;
         %tmp.8 = const :accelerometer;
-        symbol [ accelerometer %tmp.8 81 13 26 const ];
+        symbol [ accelerometer %tmp.8 92 13 26 const ];
         %tmp.9 = newd 2;
         %tmp.11 = const :enabled;
-        symbol [ enabled %tmp.11 82 17 24 const ];
+        symbol [ enabled %tmp.11 93 17 24 const ];
         %tmp.12 = true;
         %tmp.13 = dup %tmp.9;
         %tmp.14 = aputv %tmp.13 %tmp.11 %tmp.12;
         %tmp.16 = const :sampleRate;
-        symbol [ sampleRate %tmp.16 83 17 27 const ];
+        symbol [ sampleRate %tmp.16 94 17 27 const ];
         %tmp.17 = 25;
         %tmp.18 = dup %tmp.14;
         %tmp.19 = aputv %tmp.18 %tmp.16 %tmp.17;
         %tmp.20 = dup %tmp.6;
         %tmp.21 = aputv %tmp.20 %tmp.8 %tmp.19;
         lputv %opts.1 %tmp.21;
-        symbol [ opts %opts.1 79 12 16 ];
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 86 8 ]
-        symbol [ Sensor %tmp.22 86 8 14 ];
+        symbol [ opts %opts.1 90 12 16 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 97 8 ]
+        symbol [ Sensor %tmp.22 97 8 14 ];
         %tmp.22 = getm $.Toybox.Sensor;
-        symbol [ registerSensorDataListener %tmp.23 86 15 41 ];
+        symbol [ registerSensorDataListener %tmp.23 97 15 41 ];
         %tmp.23 = getv function %tmp.22 :registerSensorDataListener;
         %tmp.24 = self;
-        symbol [ method %tmp.25 86 42 48 ];
+        symbol [ method %tmp.25 97 42 48 ];
         %tmp.25 = getv function %tmp.24 :method;
         %tmp.27 = const :onSensorBatch;
-        symbol [ onSensorBatch %tmp.27 86 50 63 const ];
+        symbol [ onSensorBatch %tmp.27 97 50 63 const ];
         %tmp.28 = invoke %tmp.24 %tmp.25(%tmp.27);
         %tmp.29 = as %tmp.28 Lang.Method;
-        symbol [ Lang %tmp.29 86 68 72 ];
-        symbol [ Method %tmp.29 86 73 79 ];
+        symbol [ Lang %tmp.29 97 68 72 ];
+        symbol [ Method %tmp.29 97 73 79 ];
         %tmp.30 = lgetv %opts.1;
-        symbol [ opts %tmp.30 86 81 85 ];
+        symbol [ opts %tmp.30 97 81 85 ];
         invoke %tmp.22 %tmp.23(%tmp.29, %tmp.30);
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_78_30_87_4_stop:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_89_30_98_4_stop:
     }
-    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 89; @symbol_functiondef = [stopListening,89,13,26]; ]
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 100; @symbol_functiondef = [stopListening,100,13,26]; ]
     function stopListening() {
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_89_29_94_4_start:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 90 8 ]
-        symbol [ Sensor %tmp.1 90 8 14 ];
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_100_29_105_4_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 101 8 ]
+        symbol [ Sensor %tmp.1 101 8 14 ];
         %tmp.1 = getm $.Toybox.Sensor;
-        symbol [ unregisterSensorDataListener %tmp.2 90 15 43 ];
+        symbol [ unregisterSensorDataListener %tmp.2 101 15 43 ];
         %tmp.2 = getv function %tmp.1 :unregisterSensorDataListener;
         invoke %tmp.1 %tmp.2();
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 91 8 ]
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_91_8_93_8_if_stmt:
-        symbol [ logger %tmp.4 91 12 18 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 102 8 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_102_8_104_8_if_stmt:
+        symbol [ logger %tmp.4 102 12 18 ];
         %tmp.4 = getv ? :logger;
         %tmp.5 = null;
         %tmp.6 = ne %tmp.4 %tmp.5;
-        bf %tmp.6 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_91_8_93_8_if_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_91_8_93_8_if_true:
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_91_28_93_8_start:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 92 12 ]
-        symbol [ logger %tmp.8 92 12 18 ];
+        bf %tmp.6 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_102_8_104_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_102_8_104_8_if_true:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_102_28_104_8_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 103 12 ]
+        symbol [ logger %tmp.8 103 12 18 ];
         %tmp.8 = getv ? :logger;
         %tmp.9 = as %tmp.8 { (!Null) };
-        symbol [ flush %tmp.10 92 19 24 ];
+        symbol [ flush %tmp.10 103 19 24 ];
         %tmp.10 = getv function %tmp.9 :flush;
         invoke %tmp.9 %tmp.10();
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_91_28_93_8_stop:
-        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_91_8_93_8_if_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_91_8_93_8_if_end:
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_89_29_94_4_stop:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_102_28_104_8_stop:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_102_8_104_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_102_8_104_8_if_end:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_100_29_105_4_stop:
     }
-    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 99; @symbol_functiondef = [_readSmoothedAltitude,99,20,41]; ]
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 108; @symbol_functiondef = [setThrottled,108,13,25]; @symbol_param<0> = [throttled,108,26,35]; ]
+    function setThrottled(throttled) {
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_108_37_113_4_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 109 8 ]
+        symbol [ Sensor %tmp.1 109 8 14 ];
+        %tmp.1 = getm $.Toybox.Sensor;
+        symbol [ unregisterSensorDataListener %tmp.2 109 15 43 ];
+        %tmp.2 = getv function %tmp.1 :unregisterSensorDataListener;
+        invoke %tmp.1 %tmp.2();
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 110 8 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_110_8_112_8_if_stmt:
+        %tmp.3 = lgetv %throttled;
+        symbol [ throttled %tmp.3 110 13 22 ];
+        %tmp.4 = not %tmp.3;
+        bf %tmp.4 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_110_8_112_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_110_8_112_8_if_true:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_110_24_112_8_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 111 12 ]
+        %tmp.5 = self;
+        symbol [ startListening %tmp.6 111 12 26 ];
+        %tmp.6 = getv function %tmp.5 :startListening;
+        invoke %tmp.5 %tmp.6();
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_110_24_112_8_stop:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_110_8_112_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_110_8_112_8_if_end:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_108_37_113_4_stop:
+    }
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 116; @symbol_functiondef = [_updateSpeedBuffer,116,20,38]; ]
+    protected
+    function _updateSpeedBuffer() {
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_116_41_121_4_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 117 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_116_41_121_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_116_41_121_4_stop" ]
+        %spd.1 = local;
+        symbol [ spd %spd.1 117 12 15 ];
+        %tmp.1 = self;
+        symbol [ _getCurrentSpeedKts %tmp.2 117 18 37 ];
+        %tmp.2 = getv function %tmp.1 :_getCurrentSpeedKts;
+        %tmp.3 = invoke %tmp.1 %tmp.2();
+        lputv %spd.1 %tmp.3;
+        symbol [ spd %spd.1 117 12 15 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 118 8 ]
+        symbol [ _spdBuf %tmp.4 118 8 15 ];
+        %tmp.4 = getv self :_spdBuf;
+        %tmp.5 = lgetv %spd.1;
+        symbol [ spd %tmp.5 118 30 33 ];
+        symbol [ _spdBufIdx %tmp.7 118 16 26 ];
+        %tmp.7 = getv ? :_spdBufIdx;
+        aputv %tmp.4 %tmp.7 %tmp.5;
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 119 8 ]
+        symbol [ _spdBufIdx %tmp.9 119 22 32 ];
+        %tmp.9 = getv ? :_spdBufIdx;
+        %tmp.10 = 1;
+        %tmp.11 = add %tmp.9 %tmp.10;
+        symbol [ SPD_BUF_SIZE %tmp.13 119 40 52 ];
+        %tmp.13 = getv ? :SPD_BUF_SIZE;
+        %tmp.14 = mod %tmp.11 %tmp.13;
+        symbol [ _spdBufIdx ? 119 8 18 ];
+        putv self :_spdBufIdx %tmp.14;
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 120 8 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_120_8_120_51_if_stmt:
+        symbol [ _spdBufIdx %tmp.16 120 12 22 ];
+        %tmp.16 = getv ? :_spdBufIdx;
+        %tmp.17 = 0;
+        %tmp.18 = eq %tmp.16 %tmp.17;
+        bf %tmp.18 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_120_8_120_51_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_120_8_120_51_if_true:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_120_29_120_51_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 120 31 ]
+        %tmp.19 = true;
+        symbol [ _spdBufFull ? 120 31 42 ];
+        putv self :_spdBufFull %tmp.19;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_120_29_120_51_stop:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_120_8_120_51_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_120_8_120_51_if_end:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_116_41_121_4_stop:
+    }
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 124; @symbol_functiondef = [_isHorizontalCrash,124,20,38]; ]
+    protected
+    function _isHorizontalCrash() {
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_124_41_132_4_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 125 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_124_41_132_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_124_41_132_4_stop" ]
+        %currentSpd.1 = local;
+        symbol [ currentSpd %currentSpd.1 125 12 22 ];
+        %tmp.1 = self;
+        symbol [ _getCurrentSpeedKts %tmp.2 125 25 44 ];
+        %tmp.2 = getv function %tmp.1 :_getCurrentSpeedKts;
+        %tmp.3 = invoke %tmp.1 %tmp.2();
+        lputv %currentSpd.1 %tmp.3;
+        symbol [ currentSpd %currentSpd.1 125 12 22 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 126 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_124_41_132_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_124_41_132_4_stop" ]
+        %maxRecent.2 = local;
+        symbol [ maxRecent %maxRecent.2 126 12 21 ];
+        %tmp.4 = 0.0;
+        lputv %maxRecent.2 %tmp.4;
+        symbol [ maxRecent %maxRecent.2 126 12 21 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 127 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_124_41_132_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_124_41_132_4_stop" ]
+        %count.3 = local;
+        symbol [ count %count.3 127 12 17 ];
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_127_20_127_49_begin:
+        symbol [ _spdBufFull %tmp.6 127 20 31 ];
+        %tmp.6 = getv ? :_spdBufFull;
+        bf %tmp.6 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_127_20_127_49_else_false;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_127_20_127_49_true:
+        symbol [ SPD_BUF_SIZE %tmp.8 127 34 46 ];
+        %tmp.8 = getv ? :SPD_BUF_SIZE;
+        push %tmp.8;
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_127_20_127_49_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_127_20_127_49_else_false:
+        symbol [ _spdBufIdx %tmp.10 127 49 59 ];
+        %tmp.10 = getv ? :_spdBufIdx;
+        push %tmp.10;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_127_20_127_49_end:
+        %tmp.11 = phi [%tmp.6 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_127_20_127_49_begin] [%tmp.8 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_127_20_127_49_true] [%tmp.10 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_127_20_127_49_else_false] [%tmp.11 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_127_20_127_49_end];
+        lputv %count.3 %tmp.11;
+        symbol [ count %count.3 127 12 17 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 128 8 ]
+        for @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_128_8_130_8_for_test @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_128_8_130_8_for_incr @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_128_8_130_8_for_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_128_8_130_8_for_init:
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_128_8_130_8_for_begin" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_128_8_130_8_for_end" ]
+        %i.4 = local;
+        symbol [ i %i.4 128 17 18 ];
+        %tmp.12 = 0;
+        lputv %i.4 %tmp.12;
+        symbol [ i %i.4 128 17 18 ];
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_128_8_130_8_for_test:
+        %tmp.13 = lgetv %i.4;
+        symbol [ i %tmp.13 128 24 25 ];
+        %tmp.14 = lgetv %count.3;
+        symbol [ count %tmp.14 128 28 33 ];
+        %tmp.15 = lt %tmp.13 %tmp.14;
+        bf %tmp.15 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_128_8_130_8_for_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_128_8_130_8_for_begin:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_128_40_130_8_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 129 12 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_129_12_129_66_if_stmt:
+        symbol [ _spdBuf %tmp.17 129 16 23 ];
+        %tmp.17 = getv ? :_spdBuf;
+        %tmp.18 = lgetv %i.4;
+        symbol [ i %tmp.18 129 24 25 ];
+        %tmp.19 = agetv %tmp.17 %tmp.18;
+        %tmp.20 = lgetv %maxRecent.2;
+        symbol [ maxRecent %tmp.20 129 29 38 ];
+        %tmp.21 = gt %tmp.19 %tmp.20;
+        bf %tmp.21 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_129_12_129_66_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_129_12_129_66_if_true:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_129_40_129_66_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 129 42 ]
+        symbol [ _spdBuf %tmp.23 129 54 61 ];
+        %tmp.23 = getv ? :_spdBuf;
+        %tmp.24 = lgetv %i.4;
+        symbol [ i %tmp.24 129 62 63 ];
+        %tmp.25 = agetv %tmp.23 %tmp.24;
+        lputv %maxRecent.2 %tmp.25;
+        symbol [ maxRecent %maxRecent.2 129 42 51 ];
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_129_40_129_66_stop:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_129_12_129_66_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_129_12_129_66_if_end:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_128_40_130_8_stop:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_128_8_130_8_for_incr:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 128 ]
+        %tmp.28 = lgetv %i.4;
+        symbol [ i %tmp.28 128 35 36 ];
+        %tmp.29 = add %tmp.28 1;
+        lputv %i.4 %tmp.29;
+        symbol [ i %i.4 128 35 36 ];
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_128_8_130_8_for_test;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_128_8_130_8_for_end:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 131 8 ]
+        %tmp.30 = lgetv %maxRecent.2;
+        symbol [ maxRecent %tmp.30 131 16 25 ];
+        %tmp.31 = lgetv %currentSpd.1;
+        symbol [ currentSpd %tmp.31 131 28 38 ];
+        %tmp.32 = sub %tmp.30 %tmp.31;
+        symbol [ DECEL_THRESHOLD_KTS %tmp.34 131 42 61 ];
+        %tmp.34 = getv ? :DECEL_THRESHOLD_KTS;
+        %tmp.35 = gt %tmp.32 %tmp.34;
+        ret %tmp.35;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_124_41_132_4_stop:
+    }
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 137; @symbol_functiondef = [_readSmoothedAltitude,137,20,41]; ]
     protected
     function _readSmoothedAltitude() {
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_99_44_123_4_start:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 100 8 ]
-        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_99_44_123_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_99_44_123_4_stop" ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_137_44_161_4_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 138 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_137_44_161_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_137_44_161_4_stop" ]
         %raw.1 = local;
-        symbol [ raw %raw.1 100 12 15 ];
+        symbol [ raw %raw.1 138 12 15 ];
         %tmp.1 = self;
-        symbol [ _readRawAltitude %tmp.2 100 18 34 ];
+        symbol [ _readRawAltitude %tmp.2 138 18 34 ];
         %tmp.2 = getv function %tmp.1 :_readRawAltitude;
         %tmp.3 = invoke %tmp.1 %tmp.2();
         lputv %raw.1 %tmp.3;
-        symbol [ raw %raw.1 100 12 15 ];
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 103 8 ]
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_103_8_110_8_if_stmt:
-        symbol [ _altInited %tmp.5 103 12 22 ];
+        symbol [ raw %raw.1 138 12 15 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 141 8 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_141_8_148_8_if_stmt:
+        symbol [ _altInited %tmp.5 141 12 22 ];
         %tmp.5 = getv ? :_altInited;
-        bf %tmp.5 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_103_8_110_8_if_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_103_8_110_8_if_true:
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_103_24_110_8_start:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 104 12 ]
-        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_103_24_110_8_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_103_24_110_8_stop" ]
+        bf %tmp.5 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_141_8_148_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_141_8_148_8_if_true:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_141_24_148_8_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 142 12 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_141_24_148_8_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_141_24_148_8_stop" ]
         %delta.2 = local;
-        symbol [ delta %delta.2 104 16 21 ];
+        symbol [ delta %delta.2 142 16 21 ];
         %tmp.6 = lgetv %raw.1;
-        symbol [ raw %tmp.6 104 24 27 ];
-        symbol [ _lastRawAlt %tmp.8 104 30 41 ];
+        symbol [ raw %tmp.6 142 24 27 ];
+        symbol [ _lastRawAlt %tmp.8 142 30 41 ];
         %tmp.8 = getv ? :_lastRawAlt;
         %tmp.9 = sub %tmp.6 %tmp.8;
         lputv %delta.2 %tmp.9;
-        symbol [ delta %delta.2 104 16 21 ];
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 105 12 ]
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_105_12_109_12_if_stmt:
+        symbol [ delta %delta.2 142 16 21 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 143 12 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_143_12_147_12_if_stmt:
         %tmp.10 = lgetv %delta.2;
-        symbol [ delta %tmp.10 105 16 21 ];
-        symbol [ ALT_RATE_MAX_M %tmp.12 105 24 38 ];
+        symbol [ delta %tmp.10 143 16 21 ];
+        symbol [ ALT_RATE_MAX_M %tmp.12 143 24 38 ];
         %tmp.12 = getv ? :ALT_RATE_MAX_M;
         %tmp.13 = gt %tmp.10 %tmp.12;
-        bf %tmp.13 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_105_12_109_12_if_false;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_105_12_109_12_if_true:
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_105_40_107_12_start:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 106 16 ]
-        symbol [ _lastRawAlt %tmp.15 106 22 33 ];
+        bf %tmp.13 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_143_12_147_12_if_false;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_143_12_147_12_if_true:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_143_40_145_12_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 144 16 ]
+        symbol [ _lastRawAlt %tmp.15 144 22 33 ];
         %tmp.15 = getv ? :_lastRawAlt;
-        symbol [ ALT_RATE_MAX_M %tmp.17 106 36 50 ];
+        symbol [ ALT_RATE_MAX_M %tmp.17 144 36 50 ];
         %tmp.17 = getv ? :ALT_RATE_MAX_M;
         %tmp.18 = add %tmp.15 %tmp.17;
         lputv %raw.1 %tmp.18;
-        symbol [ raw %raw.1 106 16 19 ];
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_105_40_107_12_stop:
-        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_105_12_109_12_if_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_105_12_109_12_if_false:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 107 19 ]
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_107_19_109_12_if_stmt:
+        symbol [ raw %raw.1 144 16 19 ];
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_143_40_145_12_stop:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_143_12_147_12_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_143_12_147_12_if_false:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 145 19 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_145_19_147_12_if_stmt:
         %tmp.19 = lgetv %delta.2;
-        symbol [ delta %tmp.19 107 23 28 ];
-        symbol [ ALT_RATE_MAX_M %tmp.21 107 32 46 ];
+        symbol [ delta %tmp.19 145 23 28 ];
+        symbol [ ALT_RATE_MAX_M %tmp.21 145 32 46 ];
         %tmp.21 = getv ? :ALT_RATE_MAX_M;
         %tmp.22 = sub 0 %tmp.21;
         %tmp.23 = lt %tmp.19 %tmp.22;
-        bf %tmp.23 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_107_19_109_12_if_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_107_19_109_12_if_true:
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_107_48_109_12_start:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 108 16 ]
-        symbol [ _lastRawAlt %tmp.25 108 22 33 ];
+        bf %tmp.23 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_145_19_147_12_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_145_19_147_12_if_true:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_145_48_147_12_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 146 16 ]
+        symbol [ _lastRawAlt %tmp.25 146 22 33 ];
         %tmp.25 = getv ? :_lastRawAlt;
-        symbol [ ALT_RATE_MAX_M %tmp.27 108 36 50 ];
+        symbol [ ALT_RATE_MAX_M %tmp.27 146 36 50 ];
         %tmp.27 = getv ? :ALT_RATE_MAX_M;
         %tmp.28 = sub %tmp.25 %tmp.27;
         lputv %raw.1 %tmp.28;
-        symbol [ raw %raw.1 108 16 19 ];
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_107_48_109_12_stop:
-        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_107_19_109_12_if_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_107_19_109_12_if_end:
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_105_12_109_12_if_end:
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_103_24_110_8_stop:
-        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_103_8_110_8_if_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_103_8_110_8_if_end:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 111 8 ]
+        symbol [ raw %raw.1 146 16 19 ];
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_145_48_147_12_stop:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_145_19_147_12_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_145_19_147_12_if_end:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_143_12_147_12_if_end:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_141_24_148_8_stop:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_141_8_148_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_141_8_148_8_if_end:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 149 8 ]
         %tmp.29 = lgetv %raw.1;
-        symbol [ raw %tmp.29 111 22 25 ];
-        symbol [ _lastRawAlt ? 111 8 19 ];
+        symbol [ raw %tmp.29 149 22 25 ];
+        symbol [ _lastRawAlt ? 149 8 19 ];
         putv self :_lastRawAlt %tmp.29;
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 112 8 ]
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 150 8 ]
         %tmp.30 = true;
-        symbol [ _altInited ? 112 8 18 ];
+        symbol [ _altInited ? 150 8 18 ];
         putv self :_altInited %tmp.30;
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 115 8 ]
-        symbol [ _altBuf %tmp.31 115 8 15 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 153 8 ]
+        symbol [ _altBuf %tmp.31 153 8 15 ];
         %tmp.31 = getv self :_altBuf;
         %tmp.32 = lgetv %raw.1;
-        symbol [ raw %tmp.32 115 30 33 ];
-        symbol [ _altBufIdx %tmp.34 115 16 26 ];
+        symbol [ raw %tmp.32 153 30 33 ];
+        symbol [ _altBufIdx %tmp.34 153 16 26 ];
         %tmp.34 = getv ? :_altBufIdx;
         aputv %tmp.31 %tmp.34 %tmp.32;
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 116 8 ]
-        symbol [ _altBufIdx %tmp.37 116 8 18 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 154 8 ]
+        symbol [ _altBufIdx %tmp.37 154 8 18 ];
         %tmp.37 = getv ? :_altBufIdx;
         %tmp.38 = add %tmp.37 1;
-        symbol [ _altBufIdx ? 116 8 18 ];
+        symbol [ _altBufIdx ? 154 8 18 ];
         putv self :_altBufIdx dup %tmp.38;
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 117 8 ]
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_117_8_120_8_if_stmt:
-        symbol [ _altBufIdx %tmp.40 117 12 22 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 155 8 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_155_8_158_8_if_stmt:
+        symbol [ _altBufIdx %tmp.40 155 12 22 ];
         %tmp.40 = getv ? :_altBufIdx;
-        symbol [ ALT_BUF_SIZE %tmp.42 117 26 38 ];
+        symbol [ ALT_BUF_SIZE %tmp.42 155 26 38 ];
         %tmp.42 = getv ? :ALT_BUF_SIZE;
         %tmp.43 = gte %tmp.40 %tmp.42;
-        bf %tmp.43 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_117_8_120_8_if_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_117_8_120_8_if_true:
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_117_40_120_8_start:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 118 12 ]
+        bf %tmp.43 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_155_8_158_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_155_8_158_8_if_true:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_155_40_158_8_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 156 12 ]
         %tmp.44 = 0;
-        symbol [ _altBufIdx ? 118 12 22 ];
+        symbol [ _altBufIdx ? 156 12 22 ];
         putv self :_altBufIdx %tmp.44;
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 119 12 ]
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 157 12 ]
         %tmp.45 = true;
-        symbol [ _altBufFull ? 119 12 23 ];
+        symbol [ _altBufFull ? 157 12 23 ];
         putv self :_altBufFull %tmp.45;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_117_40_120_8_stop:
-        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_117_8_120_8_if_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_117_8_120_8_if_end:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 122 8 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_155_40_158_8_stop:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_155_8_158_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_155_8_158_8_if_end:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 160 8 ]
         %tmp.46 = lgetv %raw.1;
-        symbol [ raw %tmp.46 122 15 18 ];
+        symbol [ raw %tmp.46 160 15 18 ];
         ret %tmp.46;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_99_44_123_4_stop:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_137_44_161_4_stop:
     }
-    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 126; @symbol_functiondef = [_getBaselineAltitude,126,20,40]; ]
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 164; @symbol_functiondef = [_getBaselineAltitude,164,20,40]; ]
     protected
     function _getBaselineAltitude() {
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_126_43_135_4_start:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 127 8 ]
-        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_126_43_135_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_126_43_135_4_stop" ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_164_43_173_4_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 165 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_164_43_173_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_164_43_173_4_stop" ]
         %count.1 = local;
-        symbol [ count %count.1 127 12 17 ];
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_127_20_127_49_begin:
-        symbol [ _altBufFull %tmp.2 127 20 31 ];
+        symbol [ count %count.1 165 12 17 ];
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_165_20_165_49_begin:
+        symbol [ _altBufFull %tmp.2 165 20 31 ];
         %tmp.2 = getv ? :_altBufFull;
-        bf %tmp.2 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_127_20_127_49_else_false;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_127_20_127_49_true:
-        symbol [ ALT_BUF_SIZE %tmp.4 127 34 46 ];
+        bf %tmp.2 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_165_20_165_49_else_false;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_165_20_165_49_true:
+        symbol [ ALT_BUF_SIZE %tmp.4 165 34 46 ];
         %tmp.4 = getv ? :ALT_BUF_SIZE;
         push %tmp.4;
-        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_127_20_127_49_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_127_20_127_49_else_false:
-        symbol [ _altBufIdx %tmp.6 127 49 59 ];
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_165_20_165_49_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_165_20_165_49_else_false:
+        symbol [ _altBufIdx %tmp.6 165 49 59 ];
         %tmp.6 = getv ? :_altBufIdx;
         push %tmp.6;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_127_20_127_49_end:
-        %tmp.7 = phi [%tmp.2 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_127_20_127_49_begin] [%tmp.4 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_127_20_127_49_true] [%tmp.6 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_127_20_127_49_else_false] [%tmp.7 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_127_20_127_49_end];
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_165_20_165_49_end:
+        %tmp.7 = phi [%tmp.2 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_165_20_165_49_begin] [%tmp.4 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_165_20_165_49_true] [%tmp.6 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_165_20_165_49_else_false] [%tmp.7 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_165_20_165_49_end];
         lputv %count.1 %tmp.7;
-        symbol [ count %count.1 127 12 17 ];
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 128 8 ]
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_128_8_128_46_if_stmt:
+        symbol [ count %count.1 165 12 17 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 166 8 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_166_8_166_46_if_stmt:
         %tmp.8 = lgetv %count.1;
-        symbol [ count %tmp.8 128 12 17 ];
+        symbol [ count %tmp.8 166 12 17 ];
         %tmp.9 = 0;
         %tmp.10 = eq %tmp.8 %tmp.9;
-        bf %tmp.10 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_128_8_128_46_if_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_128_8_128_46_if_true:
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_128_24_128_46_start:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 128 26 ]
-        symbol [ _lastRawAlt %tmp.12 128 33 44 ];
+        bf %tmp.10 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_166_8_166_46_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_166_8_166_46_if_true:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_166_24_166_46_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 166 26 ]
+        symbol [ _lastRawAlt %tmp.12 166 33 44 ];
         %tmp.12 = getv ? :_lastRawAlt;
         ret %tmp.12;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_128_24_128_46_stop:
-        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_128_8_128_46_if_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_128_8_128_46_if_end:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 130 8 ]
-        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_126_43_135_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_126_43_135_4_stop" ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_166_24_166_46_stop:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_166_8_166_46_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_166_8_166_46_if_end:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 168 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_164_43_173_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_164_43_173_4_stop" ]
         %sum.2 = local;
-        symbol [ sum %sum.2 130 12 15 ];
+        symbol [ sum %sum.2 168 12 15 ];
         %tmp.13 = 0.0;
         lputv %sum.2 %tmp.13;
-        symbol [ sum %sum.2 130 12 15 ];
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 131 8 ]
-        for @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_131_8_133_8_for_test @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_131_8_133_8_for_incr @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_131_8_133_8_for_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_131_8_133_8_for_init:
-        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_131_8_133_8_for_begin" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_131_8_133_8_for_end" ]
+        symbol [ sum %sum.2 168 12 15 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 169 8 ]
+        for @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_169_8_171_8_for_test @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_169_8_171_8_for_incr @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_169_8_171_8_for_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_169_8_171_8_for_init:
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_169_8_171_8_for_begin" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_169_8_171_8_for_end" ]
         %i.3 = local;
-        symbol [ i %i.3 131 17 18 ];
+        symbol [ i %i.3 169 17 18 ];
         %tmp.14 = 0;
         lputv %i.3 %tmp.14;
-        symbol [ i %i.3 131 17 18 ];
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_131_8_133_8_for_test:
+        symbol [ i %i.3 169 17 18 ];
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_169_8_171_8_for_test:
         %tmp.15 = lgetv %i.3;
-        symbol [ i %tmp.15 131 24 25 ];
+        symbol [ i %tmp.15 169 24 25 ];
         %tmp.16 = lgetv %count.1;
-        symbol [ count %tmp.16 131 28 33 ];
+        symbol [ count %tmp.16 169 28 33 ];
         %tmp.17 = lt %tmp.15 %tmp.16;
-        bf %tmp.17 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_131_8_133_8_for_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_131_8_133_8_for_begin:
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_131_40_133_8_start:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 132 12 ]
+        bf %tmp.17 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_169_8_171_8_for_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_169_8_171_8_for_begin:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_169_40_171_8_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 170 12 ]
         %tmp.18 = lgetv %sum.2;
-        symbol [ sum %tmp.18 132 12 15 ];
-        symbol [ _altBuf %tmp.20 132 19 26 ];
+        symbol [ sum %tmp.18 170 12 15 ];
+        symbol [ _altBuf %tmp.20 170 19 26 ];
         %tmp.20 = getv ? :_altBuf;
         %tmp.21 = lgetv %i.3;
-        symbol [ i %tmp.21 132 27 28 ];
+        symbol [ i %tmp.21 170 27 28 ];
         %tmp.22 = agetv %tmp.20 %tmp.21;
         %tmp.23 = add %tmp.18 %tmp.22;
         lputv %sum.2 %tmp.23;
-        symbol [ sum %sum.2 132 12 15 ];
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_131_40_133_8_stop:
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_131_8_133_8_for_incr:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 131 ]
+        symbol [ sum %sum.2 170 12 15 ];
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_169_40_171_8_stop:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_169_8_171_8_for_incr:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 169 ]
         %tmp.26 = lgetv %i.3;
-        symbol [ i %tmp.26 131 35 36 ];
+        symbol [ i %tmp.26 169 35 36 ];
         %tmp.27 = add %tmp.26 1;
         lputv %i.3 %tmp.27;
-        symbol [ i %i.3 131 35 36 ];
-        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_131_8_133_8_for_test;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_131_8_133_8_for_end:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 134 8 ]
+        symbol [ i %i.3 169 35 36 ];
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_169_8_171_8_for_test;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_169_8_171_8_for_end:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 172 8 ]
         %tmp.28 = lgetv %sum.2;
-        symbol [ sum %tmp.28 134 15 18 ];
+        symbol [ sum %tmp.28 172 15 18 ];
         %tmp.29 = lgetv %count.1;
-        symbol [ count %tmp.29 134 21 26 ];
+        symbol [ count %tmp.29 172 21 26 ];
         %tmp.30 = div %tmp.28 %tmp.29;
         ret %tmp.30;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_126_43_135_4_stop:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_164_43_173_4_stop:
     }
-    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 137; @symbol_functiondef = [_readRawAltitude,137,20,36]; ]
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 175; @symbol_functiondef = [_readRawAltitude,175,20,36]; ]
     protected
     function _readRawAltitude() {
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_137_39_147_4_start:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 138 8 ]
-        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_137_39_147_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_137_39_147_4_stop" ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_175_39_185_4_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 176 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_175_39_185_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_175_39_185_4_stop" ]
         %ai.1 = local;
-        symbol [ ai %ai.1 138 12 14 ];
-        symbol [ Activity %tmp.1 138 17 25 ];
+        symbol [ ai %ai.1 176 12 14 ];
+        symbol [ Activity %tmp.1 176 17 25 ];
         %tmp.1 = getm $.Toybox.Activity;
-        symbol [ getActivityInfo %tmp.2 138 26 41 ];
+        symbol [ getActivityInfo %tmp.2 176 26 41 ];
         %tmp.2 = getv function %tmp.1 :getActivityInfo;
         %tmp.3 = invoke %tmp.1 %tmp.2();
         lputv %ai.1 %tmp.3;
-        symbol [ ai %ai.1 138 12 14 ];
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 139 8 ]
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_139_8_141_8_if_stmt:
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_139_12_139_41_begin:
+        symbol [ ai %ai.1 176 12 14 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 177 8 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_177_8_179_8_if_stmt:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_177_12_177_41_begin:
         %tmp.4 = lgetv %ai.1;
-        symbol [ ai %tmp.4 139 12 14 ];
+        symbol [ ai %tmp.4 177 12 14 ];
         %tmp.5 = null;
         %tmp.6 = ne %tmp.4 %tmp.5;
-        bf %tmp.6 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_139_8_141_8_if_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_139_26_139_41_true:
+        bf %tmp.6 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_177_8_179_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_177_26_177_41_true:
         %tmp.7 = lgetv %ai.1;
-        symbol [ ai %tmp.7 139 26 28 ];
+        symbol [ ai %tmp.7 177 26 28 ];
         %tmp.8 = as %tmp.7 { (!Null) };
-        symbol [ altitude %tmp.9 139 29 37 ];
+        symbol [ altitude %tmp.9 177 29 37 ];
         %tmp.9 = getv %tmp.8 :altitude;
         %tmp.10 = null;
         %tmp.11 = ne %tmp.9 %tmp.10;
         push %tmp.11;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_139_26_139_41_end:
-        %tmp.12 = phi [%tmp.6 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_139_12_139_41_begin] [%tmp.11 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_139_26_139_41_true] [%tmp.12 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_139_26_139_41_end];
-        bf %tmp.12 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_139_8_141_8_if_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_139_8_141_8_if_true:
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_139_47_141_8_start:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 140 12 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_177_26_177_41_end:
+        %tmp.12 = phi [%tmp.6 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_177_12_177_41_begin] [%tmp.11 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_177_26_177_41_true] [%tmp.12 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_177_26_177_41_end];
+        bf %tmp.12 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_177_8_179_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_177_8_179_8_if_true:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_177_47_179_8_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 178 12 ]
         %tmp.13 = lgetv %ai.1;
-        symbol [ ai %tmp.13 140 19 21 ];
+        symbol [ ai %tmp.13 178 19 21 ];
         %tmp.14 = as %tmp.13 { (!Null) };
-        symbol [ altitude %tmp.15 140 22 30 ];
+        symbol [ altitude %tmp.15 178 22 30 ];
         %tmp.15 = getv %tmp.14 :altitude;
-        symbol [ toFloat %tmp.16 140 31 38 ];
+        symbol [ toFloat %tmp.16 178 31 38 ];
         %tmp.16 = getv function %tmp.15 :toFloat;
         %tmp.17 = invoke %tmp.15 %tmp.16();
         ret %tmp.17;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_139_47_141_8_stop:
-        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_139_8_141_8_if_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_139_8_141_8_if_end:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 142 8 ]
-        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_137_39_147_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_137_39_147_4_stop" ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_177_47_179_8_stop:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_177_8_179_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_177_8_179_8_if_end:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 180 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_175_39_185_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_175_39_185_4_stop" ]
         %si.2 = local;
-        symbol [ si %si.2 142 12 14 ];
-        symbol [ Sensor %tmp.18 142 17 23 ];
+        symbol [ si %si.2 180 12 14 ];
+        symbol [ Sensor %tmp.18 180 17 23 ];
         %tmp.18 = getm $.Toybox.Sensor;
-        symbol [ getInfo %tmp.19 142 24 31 ];
+        symbol [ getInfo %tmp.19 180 24 31 ];
         %tmp.19 = getv function %tmp.18 :getInfo;
         %tmp.20 = invoke %tmp.18 %tmp.19();
         lputv %si.2 %tmp.20;
-        symbol [ si %si.2 142 12 14 ];
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 143 8 ]
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_143_8_145_8_if_stmt:
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_143_12_143_41_begin:
+        symbol [ si %si.2 180 12 14 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 181 8 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_181_8_183_8_if_stmt:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_181_12_181_41_begin:
         %tmp.21 = lgetv %si.2;
-        symbol [ si %tmp.21 143 12 14 ];
+        symbol [ si %tmp.21 181 12 14 ];
         %tmp.22 = null;
         %tmp.23 = ne %tmp.21 %tmp.22;
-        bf %tmp.23 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_143_8_145_8_if_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_143_26_143_41_true:
+        bf %tmp.23 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_181_8_183_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_181_26_181_41_true:
         %tmp.24 = lgetv %si.2;
-        symbol [ si %tmp.24 143 26 28 ];
+        symbol [ si %tmp.24 181 26 28 ];
         %tmp.25 = as %tmp.24 { (!Null) };
-        symbol [ altitude %tmp.26 143 29 37 ];
+        symbol [ altitude %tmp.26 181 29 37 ];
         %tmp.26 = getv %tmp.25 :altitude;
         %tmp.27 = null;
         %tmp.28 = ne %tmp.26 %tmp.27;
         push %tmp.28;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_143_26_143_41_end:
-        %tmp.29 = phi [%tmp.23 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_143_12_143_41_begin] [%tmp.28 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_143_26_143_41_true] [%tmp.29 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_143_26_143_41_end];
-        bf %tmp.29 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_143_8_145_8_if_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_143_8_145_8_if_true:
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_143_47_145_8_start:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 144 12 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_181_26_181_41_end:
+        %tmp.29 = phi [%tmp.23 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_181_12_181_41_begin] [%tmp.28 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_181_26_181_41_true] [%tmp.29 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_181_26_181_41_end];
+        bf %tmp.29 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_181_8_183_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_181_8_183_8_if_true:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_181_47_183_8_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 182 12 ]
         %tmp.30 = lgetv %si.2;
-        symbol [ si %tmp.30 144 19 21 ];
+        symbol [ si %tmp.30 182 19 21 ];
         %tmp.31 = as %tmp.30 { (!Null) };
-        symbol [ altitude %tmp.32 144 22 30 ];
+        symbol [ altitude %tmp.32 182 22 30 ];
         %tmp.32 = getv %tmp.31 :altitude;
-        symbol [ toFloat %tmp.33 144 31 38 ];
+        symbol [ toFloat %tmp.33 182 31 38 ];
         %tmp.33 = getv function %tmp.32 :toFloat;
         %tmp.34 = invoke %tmp.32 %tmp.33();
         ret %tmp.34;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_143_47_145_8_stop:
-        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_143_8_145_8_if_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_143_8_145_8_if_end:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 146 8 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_181_47_183_8_stop:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_181_8_183_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_181_8_183_8_if_end:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 184 8 ]
         %tmp.35 = 0.0;
         ret %tmp.35;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_137_39_147_4_stop:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_175_39_185_4_stop:
     }
-    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 150; @symbol_functiondef = [_getCurrentSpeedKts,150,20,39]; ]
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 188; @symbol_functiondef = [_getCurrentSpeedKts,188,20,39]; ]
     protected
     function _getCurrentSpeedKts() {
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_150_42_156_4_start:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 151 8 ]
-        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_150_42_156_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_150_42_156_4_stop" ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_188_42_194_4_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 189 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_188_42_194_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_188_42_194_4_stop" ]
         %ai.1 = local;
-        symbol [ ai %ai.1 151 12 14 ];
-        symbol [ Activity %tmp.1 151 17 25 ];
+        symbol [ ai %ai.1 189 12 14 ];
+        symbol [ Activity %tmp.1 189 17 25 ];
         %tmp.1 = getm $.Toybox.Activity;
-        symbol [ getActivityInfo %tmp.2 151 26 41 ];
+        symbol [ getActivityInfo %tmp.2 189 26 41 ];
         %tmp.2 = getv function %tmp.1 :getActivityInfo;
         %tmp.3 = invoke %tmp.1 %tmp.2();
         lputv %ai.1 %tmp.3;
-        symbol [ ai %ai.1 151 12 14 ];
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 152 8 ]
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_152_8_154_8_if_stmt:
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_152_12_152_45_begin:
+        symbol [ ai %ai.1 189 12 14 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 190 8 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_190_8_192_8_if_stmt:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_190_12_190_45_begin:
         %tmp.4 = lgetv %ai.1;
-        symbol [ ai %tmp.4 152 12 14 ];
+        symbol [ ai %tmp.4 190 12 14 ];
         %tmp.5 = null;
         %tmp.6 = ne %tmp.4 %tmp.5;
-        bf %tmp.6 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_152_8_154_8_if_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_152_26_152_45_true:
+        bf %tmp.6 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_190_8_192_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_190_26_190_45_true:
         %tmp.7 = lgetv %ai.1;
-        symbol [ ai %tmp.7 152 26 28 ];
+        symbol [ ai %tmp.7 190 26 28 ];
         %tmp.8 = as %tmp.7 { (!Null) };
-        symbol [ currentSpeed %tmp.9 152 29 41 ];
+        symbol [ currentSpeed %tmp.9 190 29 41 ];
         %tmp.9 = getv %tmp.8 :currentSpeed;
         %tmp.10 = null;
         %tmp.11 = ne %tmp.9 %tmp.10;
         push %tmp.11;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_152_26_152_45_end:
-        %tmp.12 = phi [%tmp.6 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_152_12_152_45_begin] [%tmp.11 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_152_26_152_45_true] [%tmp.12 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_152_26_152_45_end];
-        bf %tmp.12 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_152_8_154_8_if_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_152_8_154_8_if_true:
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_152_51_154_8_start:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 153 12 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_190_26_190_45_end:
+        %tmp.12 = phi [%tmp.6 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_190_12_190_45_begin] [%tmp.11 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_190_26_190_45_true] [%tmp.12 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_190_26_190_45_end];
+        bf %tmp.12 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_190_8_192_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_190_8_192_8_if_true:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_190_51_192_8_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 191 12 ]
         %tmp.13 = lgetv %ai.1;
-        symbol [ ai %tmp.13 153 19 21 ];
+        symbol [ ai %tmp.13 191 19 21 ];
         %tmp.14 = as %tmp.13 { (!Null) };
-        symbol [ currentSpeed %tmp.15 153 22 34 ];
+        symbol [ currentSpeed %tmp.15 191 22 34 ];
         %tmp.15 = getv %tmp.14 :currentSpeed;
-        symbol [ toFloat %tmp.16 153 35 42 ];
+        symbol [ toFloat %tmp.16 191 35 42 ];
         %tmp.16 = getv function %tmp.15 :toFloat;
         %tmp.17 = invoke %tmp.15 %tmp.16();
         %tmp.18 = 1.94384;
         %tmp.19 = mul %tmp.17 %tmp.18;
         ret %tmp.19;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_152_51_154_8_stop:
-        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_152_8_154_8_if_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_152_8_154_8_if_end:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 155 8 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_190_51_192_8_stop:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_190_8_192_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_190_8_192_8_if_end:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 193 8 ]
         %tmp.20 = 0.0;
         ret %tmp.20;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_150_42_156_4_stop:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_188_42_194_4_stop:
     }
-    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 159; @symbol_functiondef = [onSensorBatch,159,13,26]; @symbol_param<0> = [sensorData,159,27,37]; ]
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 197; @symbol_functiondef = [onSensorBatch,197,13,26]; @symbol_param<0> = [sensorData,197,27,37]; ]
     function onSensorBatch(sensorData) {
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_159_39_185_4_start:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 160 8 ]
-        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_159_39_185_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_159_39_185_4_stop" ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_197_39_225_4_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 198 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_197_39_225_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_197_39_225_4_stop" ]
         %ad.1 = local;
-        symbol [ ad %ad.1 160 12 14 ];
+        symbol [ ad %ad.1 198 12 14 ];
         %tmp.1 = lgetv %sensorData;
-        symbol [ sensorData %tmp.1 160 17 27 ];
-        symbol [ accelerometerData %tmp.2 160 28 45 ];
+        symbol [ sensorData %tmp.1 198 17 27 ];
+        symbol [ accelerometerData %tmp.2 198 28 45 ];
         %tmp.2 = getv %tmp.1 :accelerometerData;
         lputv %ad.1 %tmp.2;
-        symbol [ ad %ad.1 160 12 14 ];
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 161 8 ]
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_161_8_161_34_if_stmt:
+        symbol [ ad %ad.1 198 12 14 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 199 8 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_199_8_199_34_if_stmt:
         %tmp.3 = lgetv %ad.1;
-        symbol [ ad %tmp.3 161 12 14 ];
+        symbol [ ad %tmp.3 199 12 14 ];
         %tmp.4 = null;
         %tmp.5 = eq %tmp.3 %tmp.4;
-        bf %tmp.5 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_161_8_161_34_if_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_161_8_161_34_if_true:
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_161_24_161_34_start:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 161 26 ]
+        bf %tmp.5 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_199_8_199_34_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_199_8_199_34_if_true:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_199_24_199_34_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 199 26 ]
         ret ?;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_161_24_161_34_stop:
-        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_161_8_161_34_if_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_161_8_161_34_if_end:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 163 8 ]
-        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_159_39_185_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_159_39_185_4_stop" ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_199_24_199_34_stop:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_199_8_199_34_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_199_8_199_34_if_end:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 201 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_197_39_225_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_197_39_225_4_stop" ]
         %xArr.2 = local;
-        symbol [ xArr %xArr.2 163 12 16 ];
+        symbol [ xArr %xArr.2 201 12 16 ];
         %tmp.6 = lgetv %ad.1;
-        symbol [ ad %tmp.6 163 19 21 ];
-        symbol [ x %tmp.7 163 22 23 ];
+        symbol [ ad %tmp.6 201 19 21 ];
+        symbol [ x %tmp.7 201 22 23 ];
         %tmp.7 = getv %tmp.6 :x;
         lputv %xArr.2 %tmp.7;
-        symbol [ xArr %xArr.2 163 12 16 ];
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 164 8 ]
-        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_159_39_185_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_159_39_185_4_stop" ]
+        symbol [ xArr %xArr.2 201 12 16 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 202 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_197_39_225_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_197_39_225_4_stop" ]
         %yArr.3 = local;
-        symbol [ yArr %yArr.3 164 12 16 ];
+        symbol [ yArr %yArr.3 202 12 16 ];
         %tmp.8 = lgetv %ad.1;
-        symbol [ ad %tmp.8 164 19 21 ];
-        symbol [ y %tmp.9 164 22 23 ];
+        symbol [ ad %tmp.8 202 19 21 ];
+        symbol [ y %tmp.9 202 22 23 ];
         %tmp.9 = getv %tmp.8 :y;
         lputv %yArr.3 %tmp.9;
-        symbol [ yArr %yArr.3 164 12 16 ];
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 165 8 ]
-        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_159_39_185_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_159_39_185_4_stop" ]
+        symbol [ yArr %yArr.3 202 12 16 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 203 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_197_39_225_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_197_39_225_4_stop" ]
         %zArr.4 = local;
-        symbol [ zArr %zArr.4 165 12 16 ];
+        symbol [ zArr %zArr.4 203 12 16 ];
         %tmp.10 = lgetv %ad.1;
-        symbol [ ad %tmp.10 165 19 21 ];
-        symbol [ z %tmp.11 165 22 23 ];
+        symbol [ ad %tmp.10 203 19 21 ];
+        symbol [ z %tmp.11 203 22 23 ];
         %tmp.11 = getv %tmp.10 :z;
         lputv %zArr.4 %tmp.11;
-        symbol [ zArr %zArr.4 165 12 16 ];
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 166 8 ]
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_166_8_166_68_if_stmt:
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_166_12_166_52_begin:
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_166_12_166_36_begin:
+        symbol [ zArr %zArr.4 203 12 16 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 204 8 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_204_8_204_68_if_stmt:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_204_12_204_52_begin:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_204_12_204_36_begin:
         %tmp.12 = lgetv %xArr.2;
-        symbol [ xArr %tmp.12 166 12 16 ];
+        symbol [ xArr %tmp.12 204 12 16 ];
         %tmp.13 = null;
         %tmp.14 = eq %tmp.12 %tmp.13;
-        bt %tmp.14 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_166_8_166_68_if_true;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_166_28_166_36_false:
+        bt %tmp.14 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_204_8_204_68_if_true;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_204_28_204_36_false:
         %tmp.15 = lgetv %yArr.3;
-        symbol [ yArr %tmp.15 166 28 32 ];
+        symbol [ yArr %tmp.15 204 28 32 ];
         %tmp.16 = null;
         %tmp.17 = eq %tmp.15 %tmp.16;
         push %tmp.17;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_166_28_166_36_end:
-        %tmp.18 = phi [%tmp.14 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_166_12_166_36_begin] [%tmp.17 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_166_28_166_36_false] [%tmp.18 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_166_28_166_36_end];
-        bt %tmp.18 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_166_8_166_68_if_true;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_166_44_166_52_false:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_204_28_204_36_end:
+        %tmp.18 = phi [%tmp.14 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_204_12_204_36_begin] [%tmp.17 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_204_28_204_36_false] [%tmp.18 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_204_28_204_36_end];
+        bt %tmp.18 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_204_8_204_68_if_true;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_204_44_204_52_false:
         %tmp.19 = lgetv %zArr.4;
-        symbol [ zArr %tmp.19 166 44 48 ];
+        symbol [ zArr %tmp.19 204 44 48 ];
         %tmp.20 = null;
         %tmp.21 = eq %tmp.19 %tmp.20;
         push %tmp.21;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_166_44_166_52_end:
-        %tmp.22 = phi [%tmp.18 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_166_12_166_52_begin] [%tmp.21 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_166_44_166_52_false] [%tmp.22 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_166_44_166_52_end];
-        bf %tmp.22 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_166_8_166_68_if_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_166_8_166_68_if_true:
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_166_58_166_68_start:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 166 60 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_204_44_204_52_end:
+        %tmp.22 = phi [%tmp.18 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_204_12_204_52_begin] [%tmp.21 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_204_44_204_52_false] [%tmp.22 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_204_44_204_52_end];
+        bf %tmp.22 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_204_8_204_68_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_204_8_204_68_if_true:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_204_58_204_68_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 204 60 ]
         ret ?;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_166_58_166_68_stop:
-        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_166_8_166_68_if_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_166_8_166_68_if_end:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 168 8 ]
-        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_159_39_185_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_159_39_185_4_stop" ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_204_58_204_68_stop:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_204_8_204_68_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_204_8_204_68_if_end:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 206 8 ]
+        %tmp.23 = self;
+        symbol [ _updateSpeedBuffer %tmp.24 206 8 26 ];
+        %tmp.24 = getv function %tmp.23 :_updateSpeedBuffer;
+        invoke %tmp.23 %tmp.24();
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 208 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_197_39_225_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_197_39_225_4_stop" ]
         %ts.5 = local;
-        symbol [ ts %ts.5 168 12 14 ];
-        symbol [ System %tmp.23 168 17 23 ];
-        %tmp.23 = getm $.Toybox.System;
-        symbol [ getTimer %tmp.24 168 24 32 ];
-        %tmp.24 = getv function %tmp.23 :getTimer;
-        %tmp.25 = invoke %tmp.23 %tmp.24();
-        lputv %ts.5 %tmp.25;
-        symbol [ ts %ts.5 168 12 14 ];
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 169 8 ]
-        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_159_39_185_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_159_39_185_4_stop" ]
+        symbol [ ts %ts.5 208 12 14 ];
+        symbol [ System %tmp.25 208 17 23 ];
+        %tmp.25 = getm $.Toybox.System;
+        symbol [ getTimer %tmp.26 208 24 32 ];
+        %tmp.26 = getv function %tmp.25 :getTimer;
+        %tmp.27 = invoke %tmp.25 %tmp.26();
+        lputv %ts.5 %tmp.27;
+        symbol [ ts %ts.5 208 12 14 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 209 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_197_39_225_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_197_39_225_4_stop" ]
         %n.6 = local;
-        symbol [ n %n.6 169 12 13 ];
-        %tmp.26 = lgetv %xArr.2;
-        symbol [ xArr %tmp.26 169 16 20 ];
-        symbol [ size %tmp.27 169 21 25 ];
-        %tmp.27 = getv function %tmp.26 :size;
-        %tmp.28 = invoke %tmp.26 %tmp.27();
-        lputv %n.6 %tmp.28;
-        symbol [ n %n.6 169 12 13 ];
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 170 8 ]
-        for @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_170_8_184_8_for_test @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_170_8_184_8_for_incr @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_170_8_184_8_for_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_170_8_184_8_for_init:
-        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_170_8_184_8_for_begin" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_170_8_184_8_for_end" ]
+        symbol [ n %n.6 209 12 13 ];
+        %tmp.28 = lgetv %xArr.2;
+        symbol [ xArr %tmp.28 209 16 20 ];
+        symbol [ size %tmp.29 209 21 25 ];
+        %tmp.29 = getv function %tmp.28 :size;
+        %tmp.30 = invoke %tmp.28 %tmp.29();
+        lputv %n.6 %tmp.30;
+        symbol [ n %n.6 209 12 13 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 210 8 ]
+        for @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_210_8_224_8_for_test @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_210_8_224_8_for_incr @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_210_8_224_8_for_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_210_8_224_8_for_init:
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_210_8_224_8_for_begin" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_210_8_224_8_for_end" ]
         %i.7 = local;
-        symbol [ i %i.7 170 17 18 ];
-        %tmp.29 = 0;
-        lputv %i.7 %tmp.29;
-        symbol [ i %i.7 170 17 18 ];
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_170_8_184_8_for_test:
-        %tmp.30 = lgetv %i.7;
-        symbol [ i %tmp.30 170 24 25 ];
-        %tmp.31 = lgetv %n.6;
-        symbol [ n %tmp.31 170 28 29 ];
-        %tmp.32 = lt %tmp.30 %tmp.31;
-        bf %tmp.32 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_170_8_184_8_for_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_170_8_184_8_for_begin:
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_170_36_184_8_start:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 171 12 ]
-        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_170_36_184_8_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_170_36_184_8_stop" ]
+        symbol [ i %i.7 210 17 18 ];
+        %tmp.31 = 0;
+        lputv %i.7 %tmp.31;
+        symbol [ i %i.7 210 17 18 ];
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_210_8_224_8_for_test:
+        %tmp.32 = lgetv %i.7;
+        symbol [ i %tmp.32 210 24 25 ];
+        %tmp.33 = lgetv %n.6;
+        symbol [ n %tmp.33 210 28 29 ];
+        %tmp.34 = lt %tmp.32 %tmp.33;
+        bf %tmp.34 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_210_8_224_8_for_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_210_8_224_8_for_begin:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_210_36_224_8_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 211 12 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_210_36_224_8_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_210_36_224_8_stop" ]
         %x.8 = local;
-        symbol [ x %x.8 171 16 17 ];
-        %tmp.33 = lgetv %xArr.2;
-        symbol [ xArr %tmp.33 171 20 24 ];
-        %tmp.34 = lgetv %i.7;
-        symbol [ i %tmp.34 171 25 26 ];
-        %tmp.35 = agetv %tmp.33 %tmp.34;
-        symbol [ toFloat %tmp.36 171 28 35 ];
-        %tmp.36 = getv function %tmp.35 :toFloat;
-        %tmp.37 = invoke %tmp.35 %tmp.36();
-        lputv %x.8 %tmp.37;
-        symbol [ x %x.8 171 16 17 ];
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 172 12 ]
-        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_170_36_184_8_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_170_36_184_8_stop" ]
+        symbol [ x %x.8 211 16 17 ];
+        %tmp.35 = lgetv %xArr.2;
+        symbol [ xArr %tmp.35 211 20 24 ];
+        %tmp.36 = lgetv %i.7;
+        symbol [ i %tmp.36 211 25 26 ];
+        %tmp.37 = agetv %tmp.35 %tmp.36;
+        symbol [ toFloat %tmp.38 211 28 35 ];
+        %tmp.38 = getv function %tmp.37 :toFloat;
+        %tmp.39 = invoke %tmp.37 %tmp.38();
+        lputv %x.8 %tmp.39;
+        symbol [ x %x.8 211 16 17 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 212 12 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_210_36_224_8_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_210_36_224_8_stop" ]
         %y.9 = local;
-        symbol [ y %y.9 172 16 17 ];
-        %tmp.38 = lgetv %yArr.3;
-        symbol [ yArr %tmp.38 172 20 24 ];
-        %tmp.39 = lgetv %i.7;
-        symbol [ i %tmp.39 172 25 26 ];
-        %tmp.40 = agetv %tmp.38 %tmp.39;
-        symbol [ toFloat %tmp.41 172 28 35 ];
-        %tmp.41 = getv function %tmp.40 :toFloat;
-        %tmp.42 = invoke %tmp.40 %tmp.41();
-        lputv %y.9 %tmp.42;
-        symbol [ y %y.9 172 16 17 ];
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 173 12 ]
-        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_170_36_184_8_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_170_36_184_8_stop" ]
+        symbol [ y %y.9 212 16 17 ];
+        %tmp.40 = lgetv %yArr.3;
+        symbol [ yArr %tmp.40 212 20 24 ];
+        %tmp.41 = lgetv %i.7;
+        symbol [ i %tmp.41 212 25 26 ];
+        %tmp.42 = agetv %tmp.40 %tmp.41;
+        symbol [ toFloat %tmp.43 212 28 35 ];
+        %tmp.43 = getv function %tmp.42 :toFloat;
+        %tmp.44 = invoke %tmp.42 %tmp.43();
+        lputv %y.9 %tmp.44;
+        symbol [ y %y.9 212 16 17 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 213 12 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_210_36_224_8_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_210_36_224_8_stop" ]
         %z.10 = local;
-        symbol [ z %z.10 173 16 17 ];
-        %tmp.43 = lgetv %zArr.4;
-        symbol [ zArr %tmp.43 173 20 24 ];
-        %tmp.44 = lgetv %i.7;
-        symbol [ i %tmp.44 173 25 26 ];
-        %tmp.45 = agetv %tmp.43 %tmp.44;
-        symbol [ toFloat %tmp.46 173 28 35 ];
-        %tmp.46 = getv function %tmp.45 :toFloat;
-        %tmp.47 = invoke %tmp.45 %tmp.46();
-        lputv %z.10 %tmp.47;
-        symbol [ z %z.10 173 16 17 ];
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 174 12 ]
-        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_170_36_184_8_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_170_36_184_8_stop" ]
+        symbol [ z %z.10 213 16 17 ];
+        %tmp.45 = lgetv %zArr.4;
+        symbol [ zArr %tmp.45 213 20 24 ];
+        %tmp.46 = lgetv %i.7;
+        symbol [ i %tmp.46 213 25 26 ];
+        %tmp.47 = agetv %tmp.45 %tmp.46;
+        symbol [ toFloat %tmp.48 213 28 35 ];
+        %tmp.48 = getv function %tmp.47 :toFloat;
+        %tmp.49 = invoke %tmp.47 %tmp.48();
+        lputv %z.10 %tmp.49;
+        symbol [ z %z.10 213 16 17 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 214 12 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_210_36_224_8_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_210_36_224_8_stop" ]
         %mag.11 = local;
-        symbol [ mag %mag.11 174 16 19 ];
-        symbol [ Math %tmp.48 174 22 26 ];
-        %tmp.48 = getm $.Toybox.Math;
-        symbol [ sqrt %tmp.49 174 27 31 ];
-        %tmp.49 = getv function %tmp.48 :sqrt;
-        %tmp.50 = lgetv %x.8;
-        symbol [ x %tmp.50 174 32 33 ];
-        %tmp.51 = lgetv %x.8;
-        symbol [ x %tmp.51 174 36 37 ];
-        %tmp.52 = mul %tmp.50 %tmp.51;
-        %tmp.53 = lgetv %y.9;
-        symbol [ y %tmp.53 174 40 41 ];
-        %tmp.54 = lgetv %y.9;
-        symbol [ y %tmp.54 174 44 45 ];
-        %tmp.55 = mul %tmp.53 %tmp.54;
-        %tmp.56 = add %tmp.52 %tmp.55;
-        %tmp.57 = lgetv %z.10;
-        symbol [ z %tmp.57 174 48 49 ];
-        %tmp.58 = lgetv %z.10;
-        symbol [ z %tmp.58 174 52 53 ];
-        %tmp.59 = mul %tmp.57 %tmp.58;
-        %tmp.60 = add %tmp.56 %tmp.59;
-        %tmp.61 = invoke %tmp.48 %tmp.49(%tmp.60);
-        symbol [ toNumber %tmp.62 174 55 63 ];
-        %tmp.62 = getv function %tmp.61 :toNumber;
-        %tmp.63 = invoke %tmp.61 %tmp.62();
-        lputv %mag.11 %tmp.63;
-        symbol [ mag %mag.11 174 16 19 ];
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 177 12 ]
-        %tmp.64 = self;
-        symbol [ _readSmoothedAltitude %tmp.65 177 12 33 ];
-        %tmp.65 = getv function %tmp.64 :_readSmoothedAltitude;
-        invoke %tmp.64 %tmp.65();
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 179 12 ]
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_179_12_181_12_if_stmt:
-        symbol [ logger %tmp.67 179 16 22 ];
-        %tmp.67 = getv ? :logger;
-        %tmp.68 = null;
-        %tmp.69 = ne %tmp.67 %tmp.68;
-        bf %tmp.69 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_179_12_181_12_if_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_179_12_181_12_if_true:
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_179_32_181_12_start:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 180 16 ]
-        symbol [ logger %tmp.71 180 16 22 ];
-        %tmp.71 = getv ? :logger;
-        %tmp.72 = as %tmp.71 { (!Null) };
-        symbol [ logAccelSample %tmp.73 180 23 37 ];
-        %tmp.73 = getv function %tmp.72 :logAccelSample;
-        %tmp.74 = lgetv %mag.11;
-        symbol [ mag %tmp.74 180 38 41 ];
-        %tmp.75 = lgetv %ts.5;
-        symbol [ ts %tmp.75 180 43 45 ];
-        invoke %tmp.72 %tmp.73(%tmp.74, %tmp.75);
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_179_32_181_12_stop:
-        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_179_12_181_12_if_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_179_12_181_12_if_end:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 183 12 ]
-        %tmp.76 = self;
-        symbol [ _processSample %tmp.77 183 12 26 ];
-        %tmp.77 = getv function %tmp.76 :_processSample;
-        %tmp.78 = lgetv %mag.11;
-        symbol [ mag %tmp.78 183 27 30 ];
-        invoke %tmp.76 %tmp.77(%tmp.78);
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_170_36_184_8_stop:
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_170_8_184_8_for_incr:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 170 ]
-        %tmp.81 = lgetv %i.7;
-        symbol [ i %tmp.81 170 31 32 ];
-        %tmp.82 = add %tmp.81 1;
-        lputv %i.7 %tmp.82;
-        symbol [ i %i.7 170 31 32 ];
-        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_170_8_184_8_for_test;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_170_8_184_8_for_end:
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_159_39_185_4_stop:
+        symbol [ mag %mag.11 214 16 19 ];
+        symbol [ Math %tmp.50 214 22 26 ];
+        %tmp.50 = getm $.Toybox.Math;
+        symbol [ sqrt %tmp.51 214 27 31 ];
+        %tmp.51 = getv function %tmp.50 :sqrt;
+        %tmp.52 = lgetv %x.8;
+        symbol [ x %tmp.52 214 32 33 ];
+        %tmp.53 = lgetv %x.8;
+        symbol [ x %tmp.53 214 36 37 ];
+        %tmp.54 = mul %tmp.52 %tmp.53;
+        %tmp.55 = lgetv %y.9;
+        symbol [ y %tmp.55 214 40 41 ];
+        %tmp.56 = lgetv %y.9;
+        symbol [ y %tmp.56 214 44 45 ];
+        %tmp.57 = mul %tmp.55 %tmp.56;
+        %tmp.58 = add %tmp.54 %tmp.57;
+        %tmp.59 = lgetv %z.10;
+        symbol [ z %tmp.59 214 48 49 ];
+        %tmp.60 = lgetv %z.10;
+        symbol [ z %tmp.60 214 52 53 ];
+        %tmp.61 = mul %tmp.59 %tmp.60;
+        %tmp.62 = add %tmp.58 %tmp.61;
+        %tmp.63 = invoke %tmp.50 %tmp.51(%tmp.62);
+        symbol [ toNumber %tmp.64 214 55 63 ];
+        %tmp.64 = getv function %tmp.63 :toNumber;
+        %tmp.65 = invoke %tmp.63 %tmp.64();
+        lputv %mag.11 %tmp.65;
+        symbol [ mag %mag.11 214 16 19 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 217 12 ]
+        %tmp.66 = self;
+        symbol [ _readSmoothedAltitude %tmp.67 217 12 33 ];
+        %tmp.67 = getv function %tmp.66 :_readSmoothedAltitude;
+        invoke %tmp.66 %tmp.67();
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 219 12 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_219_12_221_12_if_stmt:
+        symbol [ logger %tmp.69 219 16 22 ];
+        %tmp.69 = getv ? :logger;
+        %tmp.70 = null;
+        %tmp.71 = ne %tmp.69 %tmp.70;
+        bf %tmp.71 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_219_12_221_12_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_219_12_221_12_if_true:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_219_32_221_12_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 220 16 ]
+        symbol [ logger %tmp.73 220 16 22 ];
+        %tmp.73 = getv ? :logger;
+        %tmp.74 = as %tmp.73 { (!Null) };
+        symbol [ logAccelSample %tmp.75 220 23 37 ];
+        %tmp.75 = getv function %tmp.74 :logAccelSample;
+        %tmp.76 = lgetv %mag.11;
+        symbol [ mag %tmp.76 220 38 41 ];
+        %tmp.77 = lgetv %ts.5;
+        symbol [ ts %tmp.77 220 43 45 ];
+        invoke %tmp.74 %tmp.75(%tmp.76, %tmp.77);
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_219_32_221_12_stop:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_219_12_221_12_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_219_12_221_12_if_end:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 223 12 ]
+        %tmp.78 = self;
+        symbol [ _processSample %tmp.79 223 12 26 ];
+        %tmp.79 = getv function %tmp.78 :_processSample;
+        %tmp.80 = lgetv %mag.11;
+        symbol [ mag %tmp.80 223 27 30 ];
+        invoke %tmp.78 %tmp.79(%tmp.80);
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_210_36_224_8_stop:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_210_8_224_8_for_incr:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 210 ]
+        %tmp.83 = lgetv %i.7;
+        symbol [ i %tmp.83 210 31 32 ];
+        %tmp.84 = add %tmp.83 1;
+        lputv %i.7 %tmp.84;
+        symbol [ i %i.7 210 31 32 ];
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_210_8_224_8_for_test;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_210_8_224_8_for_end:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_197_39_225_4_stop:
     }
-    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 188; @symbol_functiondef = [_processSample,188,20,34]; @symbol_param<0> = [mag,188,35,38]; ]
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 228; @symbol_functiondef = [_processSample,228,20,34]; @symbol_param<0> = [mag,228,35,38]; ]
     protected
     function _processSample(mag) {
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_188_40_251_4_start:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 189 8 ]
-        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_188_40_251_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_188_40_251_4_stop" ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_228_40_297_4_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 229 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_228_40_297_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_228_40_297_4_stop" ]
         %oldState.1 = local;
-        symbol [ oldState %oldState.1 189 12 20 ];
-        symbol [ _state %tmp.2 189 23 29 ];
+        symbol [ oldState %oldState.1 229 12 20 ];
+        symbol [ _state %tmp.2 229 23 29 ];
         %tmp.2 = getv ? :_state;
         lputv %oldState.1 %tmp.2;
-        symbol [ oldState %oldState.1 189 12 20 ];
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 191 8 ]
-        symbol [ _state %tmp.4 191 16 22 ];
+        symbol [ oldState %oldState.1 229 12 20 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 231 8 ]
+        symbol [ _state %tmp.4 231 16 22 ];
         %tmp.4 = getv ? :_state;
         push %tmp.4;
-        switch %tmp.4 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_191_8_246_8_switchStmtEnd;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_191_8_246_8_switchStmtBegin:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 193 12 ]
+        switch %tmp.4 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_231_8_292_8_switchStmtEnd;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_231_8_292_8_switchStmtBegin:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 233 12 ]
         %tmp.5 = dup %tmp.4;
-        symbol [ JS_IDLE %tmp.7 193 17 24 ];
+        symbol [ JS_IDLE %tmp.7 233 17 24 ];
         %tmp.7 = getv ? :JS_IDLE;
         %tmp.8 = getv function %tmp.5 :equals;
         %tmp.9 = invoke %tmp.5 %tmp.8 (%tmp.7);
-        bt %tmp.9 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_193_12_209_21_switchCase;
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 211 12 ]
+        bt %tmp.9 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_233_12_255_21_switchCase;
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 257 12 ]
         %tmp.10 = dup %tmp.4;
-        symbol [ JS_TAKEOFF_POP %tmp.12 211 17 31 ];
+        symbol [ JS_TAKEOFF_POP %tmp.12 257 17 31 ];
         %tmp.12 = getv ? :JS_TAKEOFF_POP;
         %tmp.13 = getv function %tmp.10 :equals;
         %tmp.14 = invoke %tmp.10 %tmp.13 (%tmp.12);
-        bt %tmp.14 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_211_12_219_21_switchCase;
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 221 12 ]
+        bt %tmp.14 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_257_12_265_21_switchCase;
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 267 12 ]
         %tmp.15 = dup %tmp.4;
-        symbol [ JS_AIRBORNE %tmp.17 221 17 28 ];
+        symbol [ JS_AIRBORNE %tmp.17 267 17 28 ];
         %tmp.17 = getv ? :JS_AIRBORNE;
         %tmp.18 = getv function %tmp.15 :equals;
         %tmp.19 = invoke %tmp.15 %tmp.18 (%tmp.17);
-        bt %tmp.19 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_221_12_238_21_switchCase;
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 240 12 ]
+        bt %tmp.19 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_267_12_284_21_switchCase;
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 286 12 ]
         %tmp.20 = dup %tmp.4;
-        symbol [ JS_COOLDOWN %tmp.22 240 17 28 ];
+        symbol [ JS_COOLDOWN %tmp.22 286 17 28 ];
         %tmp.22 = getv ? :JS_COOLDOWN;
         %tmp.23 = getv function %tmp.20 :equals;
         %tmp.24 = invoke %tmp.20 %tmp.23 (%tmp.22);
-        bt %tmp.24 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_240_12_245_21_switchCase;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_191_8_246_8_switchStmtDefault:
-        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_191_8_246_8_defaultCodeBegin;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_193_12_209_21_switchCase:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 194 16 ]
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_194_16_208_16_if_stmt:
+        bt %tmp.24 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_286_12_291_21_switchCase;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_231_8_292_8_switchStmtDefault:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_231_8_292_8_defaultCodeBegin;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_233_12_255_21_switchCase:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 234 16 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_234_16_254_16_if_stmt:
         %tmp.25 = lgetv %mag;
-        symbol [ mag %tmp.25 194 20 23 ];
-        symbol [ POP_G %tmp.27 194 26 31 ];
+        symbol [ mag %tmp.25 234 20 23 ];
+        symbol [ POP_G %tmp.27 234 26 31 ];
         %tmp.27 = getv ? :POP_G;
         %tmp.28 = gt %tmp.25 %tmp.27;
-        bf %tmp.28 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_194_16_208_16_if_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_194_16_208_16_if_true:
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_194_33_208_16_start:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 196 20 ]
-        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_194_33_208_16_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_194_33_208_16_stop" ]
+        bf %tmp.28 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_234_16_254_16_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_234_16_254_16_if_true:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_234_33_254_16_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 235 20 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_234_33_254_16_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_234_33_254_16_stop" ]
         %spdKts.2 = local;
-        symbol [ spdKts %spdKts.2 196 24 30 ];
+        symbol [ spdKts %spdKts.2 235 24 30 ];
         %tmp.29 = self;
-        symbol [ _getCurrentSpeedKts %tmp.30 196 33 52 ];
+        symbol [ _getCurrentSpeedKts %tmp.30 235 33 52 ];
         %tmp.30 = getv function %tmp.29 :_getCurrentSpeedKts;
         %tmp.31 = invoke %tmp.29 %tmp.30();
         lputv %spdKts.2 %tmp.31;
-        symbol [ spdKts %spdKts.2 196 24 30 ];
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 197 20 ]
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_197_20_199_20_if_stmt:
+        symbol [ spdKts %spdKts.2 235 24 30 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 236 20 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_236_20_238_20_if_stmt:
         %tmp.32 = lgetv %spdKts.2;
-        symbol [ spdKts %tmp.32 197 24 30 ];
-        symbol [ MIN_SPEED_KTS %tmp.34 197 33 46 ];
+        symbol [ spdKts %tmp.32 236 24 30 ];
+        symbol [ MIN_SPEED_KTS %tmp.34 236 33 46 ];
         %tmp.34 = getv ? :MIN_SPEED_KTS;
         %tmp.35 = lt %tmp.32 %tmp.34;
-        bf %tmp.35 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_197_20_199_20_if_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_197_20_199_20_if_true:
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_197_48_199_20_start:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 198 24 ]
-        goto break @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_191_8_246_8_switchStmtEnd;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_197_48_199_20_stop:
-        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_197_20_199_20_if_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_197_20_199_20_if_end:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 201 20 ]
-        symbol [ JS_TAKEOFF_POP %tmp.37 201 35 49 ];
-        %tmp.37 = getv ? :JS_TAKEOFF_POP;
-        symbol [ _state ? 201 20 26 ];
-        putv self :_state %tmp.37;
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 202 20 ]
-        %tmp.38 = 0;
-        symbol [ _counter ? 202 20 28 ];
-        putv self :_counter %tmp.38;
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 204 20 ]
-        %tmp.39 = self;
-        symbol [ _getBaselineAltitude %tmp.40 204 35 55 ];
-        %tmp.40 = getv function %tmp.39 :_getBaselineAltitude;
-        %tmp.41 = invoke %tmp.39 %tmp.40();
-        symbol [ _takeoffAlt ? 204 20 31 ];
-        putv self :_takeoffAlt %tmp.41;
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 205 20 ]
-        symbol [ _takeoffAlt %tmp.43 205 35 46 ];
-        %tmp.43 = getv ? :_takeoffAlt;
-        symbol [ _peakAlt ? 205 20 28 ];
-        putv self :_peakAlt %tmp.43;
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 206 20 ]
-        symbol [ System %tmp.44 206 35 41 ];
-        %tmp.44 = getm $.Toybox.System;
-        symbol [ getTimer %tmp.45 206 42 50 ];
-        %tmp.45 = getv function %tmp.44 :getTimer;
-        %tmp.46 = invoke %tmp.44 %tmp.45();
-        symbol [ _takeoffMs ? 206 20 30 ];
-        putv self :_takeoffMs %tmp.46;
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 207 20 ]
-        %tmp.47 = lgetv %spdKts.2;
-        symbol [ spdKts %tmp.47 207 35 41 ];
-        symbol [ _takeoffSpd ? 207 20 31 ];
-        putv self :_takeoffSpd %tmp.47;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_194_33_208_16_stop:
-        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_194_16_208_16_if_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_194_16_208_16_if_end:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 209 16 ]
-        goto break @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_191_8_246_8_switchStmtEnd;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_211_12_219_21_switchCase:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 212 16 ]
-        symbol [ _counter %tmp.50 212 16 24 ];
-        %tmp.50 = getv ? :_counter;
-        %tmp.51 = add %tmp.50 1;
-        symbol [ _counter ? 212 16 24 ];
-        putv self :_counter dup %tmp.51;
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 213 16 ]
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_213_16_218_16_if_stmt:
-        %tmp.52 = lgetv %mag;
-        symbol [ mag %tmp.52 213 20 23 ];
-        symbol [ WEIGHTLESS_G %tmp.54 213 26 38 ];
-        %tmp.54 = getv ? :WEIGHTLESS_G;
-        %tmp.55 = lt %tmp.52 %tmp.54;
-        bf %tmp.55 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_213_16_218_16_if_false;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_213_16_218_16_if_true:
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_213_40_216_16_start:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 214 20 ]
-        symbol [ JS_AIRBORNE %tmp.57 214 31 42 ];
-        %tmp.57 = getv ? :JS_AIRBORNE;
-        symbol [ _state ? 214 20 26 ];
-        putv self :_state %tmp.57;
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 215 20 ]
-        %tmp.58 = 1;
-        symbol [ _counter ? 215 20 28 ];
-        putv self :_counter %tmp.58;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_213_40_216_16_stop:
-        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_213_16_218_16_if_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_213_16_218_16_if_false:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 216 23 ]
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_216_23_218_16_if_stmt:
-        symbol [ _counter %tmp.60 216 27 35 ];
+        bf %tmp.35 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_236_20_238_20_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_236_20_238_20_if_true:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_236_48_238_20_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 237 24 ]
+        goto break @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_231_8_292_8_switchStmtEnd;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_236_48_238_20_stop:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_236_20_238_20_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_236_20_238_20_if_end:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 241 20 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_241_20_246_20_if_stmt:
+        %tmp.36 = self;
+        symbol [ _isHorizontalCrash %tmp.37 241 24 42 ];
+        %tmp.37 = getv function %tmp.36 :_isHorizontalCrash;
+        %tmp.38 = invoke %tmp.36 %tmp.37();
+        bf %tmp.38 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_241_20_246_20_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_241_20_246_20_if_true:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_241_46_246_20_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 242 24 ]
+        symbol [ crashesFiltered %tmp.41 242 24 39 ];
+        %tmp.41 = getv ? :crashesFiltered;
+        %tmp.42 = add %tmp.41 1;
+        symbol [ crashesFiltered ? 242 24 39 ];
+        putv self :crashesFiltered dup %tmp.42;
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 243 24 ]
+        symbol [ JS_COOLDOWN %tmp.44 243 35 46 ];
+        %tmp.44 = getv ? :JS_COOLDOWN;
+        symbol [ _state ? 243 24 30 ];
+        putv self :_state %tmp.44;
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 244 24 ]
+        %tmp.45 = 0;
+        symbol [ _counter ? 244 24 32 ];
+        putv self :_counter %tmp.45;
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 245 24 ]
+        goto break @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_231_8_292_8_switchStmtEnd;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_241_46_246_20_stop:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_241_20_246_20_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_241_20_246_20_if_end:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 248 20 ]
+        symbol [ JS_TAKEOFF_POP %tmp.47 248 35 49 ];
+        %tmp.47 = getv ? :JS_TAKEOFF_POP;
+        symbol [ _state ? 248 20 26 ];
+        putv self :_state %tmp.47;
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 249 20 ]
+        %tmp.48 = 0;
+        symbol [ _counter ? 249 20 28 ];
+        putv self :_counter %tmp.48;
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 250 20 ]
+        %tmp.49 = self;
+        symbol [ _getBaselineAltitude %tmp.50 250 35 55 ];
+        %tmp.50 = getv function %tmp.49 :_getBaselineAltitude;
+        %tmp.51 = invoke %tmp.49 %tmp.50();
+        symbol [ _takeoffAlt ? 250 20 31 ];
+        putv self :_takeoffAlt %tmp.51;
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 251 20 ]
+        symbol [ _takeoffAlt %tmp.53 251 35 46 ];
+        %tmp.53 = getv ? :_takeoffAlt;
+        symbol [ _peakAlt ? 251 20 28 ];
+        putv self :_peakAlt %tmp.53;
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 252 20 ]
+        symbol [ System %tmp.54 252 35 41 ];
+        %tmp.54 = getm $.Toybox.System;
+        symbol [ getTimer %tmp.55 252 42 50 ];
+        %tmp.55 = getv function %tmp.54 :getTimer;
+        %tmp.56 = invoke %tmp.54 %tmp.55();
+        symbol [ _takeoffMs ? 252 20 30 ];
+        putv self :_takeoffMs %tmp.56;
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 253 20 ]
+        %tmp.57 = lgetv %spdKts.2;
+        symbol [ spdKts %tmp.57 253 35 41 ];
+        symbol [ _takeoffSpd ? 253 20 31 ];
+        putv self :_takeoffSpd %tmp.57;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_234_33_254_16_stop:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_234_16_254_16_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_234_16_254_16_if_end:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 255 16 ]
+        goto break @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_231_8_292_8_switchStmtEnd;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_257_12_265_21_switchCase:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 258 16 ]
+        symbol [ _counter %tmp.60 258 16 24 ];
         %tmp.60 = getv ? :_counter;
-        symbol [ POP_WINDOW %tmp.62 216 38 48 ];
-        %tmp.62 = getv ? :POP_WINDOW;
-        %tmp.63 = gt %tmp.60 %tmp.62;
-        bf %tmp.63 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_216_23_218_16_if_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_216_23_218_16_if_true:
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_216_50_218_16_start:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 217 20 ]
-        symbol [ JS_IDLE %tmp.65 217 29 36 ];
-        %tmp.65 = getv ? :JS_IDLE;
-        symbol [ _state ? 217 20 26 ];
-        putv self :_state %tmp.65;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_216_50_218_16_stop:
-        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_216_23_218_16_if_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_216_23_218_16_if_end:
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_213_16_218_16_if_end:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 219 16 ]
-        goto break @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_191_8_246_8_switchStmtEnd;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_221_12_238_21_switchCase:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 222 16 ]
-        symbol [ _counter %tmp.68 222 16 24 ];
-        %tmp.68 = getv ? :_counter;
-        %tmp.69 = add %tmp.68 1;
-        symbol [ _counter ? 222 16 24 ];
-        putv self :_counter dup %tmp.69;
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 224 16 ]
-        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_191_8_246_8_switchStmtBegin" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_191_8_246_8_switchStmtEnd" ]
+        %tmp.61 = add %tmp.60 1;
+        symbol [ _counter ? 258 16 24 ];
+        putv self :_counter dup %tmp.61;
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 259 16 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_259_16_264_16_if_stmt:
+        %tmp.62 = lgetv %mag;
+        symbol [ mag %tmp.62 259 20 23 ];
+        symbol [ WEIGHTLESS_G %tmp.64 259 26 38 ];
+        %tmp.64 = getv ? :WEIGHTLESS_G;
+        %tmp.65 = lt %tmp.62 %tmp.64;
+        bf %tmp.65 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_259_16_264_16_if_false;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_259_16_264_16_if_true:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_259_40_262_16_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 260 20 ]
+        symbol [ JS_AIRBORNE %tmp.67 260 31 42 ];
+        %tmp.67 = getv ? :JS_AIRBORNE;
+        symbol [ _state ? 260 20 26 ];
+        putv self :_state %tmp.67;
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 261 20 ]
+        %tmp.68 = 1;
+        symbol [ _counter ? 261 20 28 ];
+        putv self :_counter %tmp.68;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_259_40_262_16_stop:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_259_16_264_16_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_259_16_264_16_if_false:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 262 23 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_262_23_264_16_if_stmt:
+        symbol [ _counter %tmp.70 262 27 35 ];
+        %tmp.70 = getv ? :_counter;
+        symbol [ POP_WINDOW %tmp.72 262 38 48 ];
+        %tmp.72 = getv ? :POP_WINDOW;
+        %tmp.73 = gt %tmp.70 %tmp.72;
+        bf %tmp.73 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_262_23_264_16_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_262_23_264_16_if_true:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_262_50_264_16_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 263 20 ]
+        symbol [ JS_IDLE %tmp.75 263 29 36 ];
+        %tmp.75 = getv ? :JS_IDLE;
+        symbol [ _state ? 263 20 26 ];
+        putv self :_state %tmp.75;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_262_50_264_16_stop:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_262_23_264_16_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_262_23_264_16_if_end:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_259_16_264_16_if_end:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 265 16 ]
+        goto break @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_231_8_292_8_switchStmtEnd;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_267_12_284_21_switchCase:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 268 16 ]
+        symbol [ _counter %tmp.78 268 16 24 ];
+        %tmp.78 = getv ? :_counter;
+        %tmp.79 = add %tmp.78 1;
+        symbol [ _counter ? 268 16 24 ];
+        putv self :_counter dup %tmp.79;
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 270 16 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_231_8_292_8_switchStmtBegin" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_231_8_292_8_switchStmtEnd" ]
         %alt.3 = local;
-        symbol [ alt %alt.3 224 20 23 ];
-        %tmp.70 = self;
-        symbol [ _readSmoothedAltitude %tmp.71 224 26 47 ];
-        %tmp.71 = getv function %tmp.70 :_readSmoothedAltitude;
-        %tmp.72 = invoke %tmp.70 %tmp.71();
-        lputv %alt.3 %tmp.72;
-        symbol [ alt %alt.3 224 20 23 ];
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 225 16 ]
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_225_16_227_16_if_stmt:
-        %tmp.73 = lgetv %alt.3;
-        symbol [ alt %tmp.73 225 20 23 ];
-        symbol [ _peakAlt %tmp.75 225 26 34 ];
-        %tmp.75 = getv ? :_peakAlt;
-        %tmp.76 = gt %tmp.73 %tmp.75;
-        bf %tmp.76 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_225_16_227_16_if_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_225_16_227_16_if_true:
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_225_36_227_16_start:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 226 20 ]
-        %tmp.77 = lgetv %alt.3;
-        symbol [ alt %tmp.77 226 31 34 ];
-        symbol [ _peakAlt ? 226 20 28 ];
-        putv self :_peakAlt %tmp.77;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_225_36_227_16_stop:
-        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_225_16_227_16_if_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_225_16_227_16_if_end:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 229 16 ]
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_229_16_237_16_if_stmt:
-        %tmp.78 = lgetv %mag;
-        symbol [ mag %tmp.78 229 20 23 ];
-        symbol [ LAND_G %tmp.80 229 26 32 ];
-        %tmp.80 = getv ? :LAND_G;
-        %tmp.81 = gt %tmp.78 %tmp.80;
-        bf %tmp.81 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_229_16_237_16_if_false;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_229_16_237_16_if_true:
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_229_34_235_16_start:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 230 20 ]
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_230_20_232_20_if_stmt:
-        symbol [ _counter %tmp.83 230 24 32 ];
-        %tmp.83 = getv ? :_counter;
-        symbol [ MIN_AIR_SAMP %tmp.85 230 36 48 ];
-        %tmp.85 = getv ? :MIN_AIR_SAMP;
-        %tmp.86 = gte %tmp.83 %tmp.85;
-        bf %tmp.86 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_230_20_232_20_if_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_230_20_232_20_if_true:
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_230_50_232_20_start:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 231 24 ]
-        %tmp.87 = self;
-        symbol [ _recordJump %tmp.88 231 24 35 ];
-        %tmp.88 = getv function %tmp.87 :_recordJump;
-        invoke %tmp.87 %tmp.88();
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_230_50_232_20_stop:
-        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_230_20_232_20_if_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_230_20_232_20_if_end:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 233 20 ]
-        symbol [ JS_COOLDOWN %tmp.90 233 31 42 ];
-        %tmp.90 = getv ? :JS_COOLDOWN;
-        symbol [ _state ? 233 20 26 ];
-        putv self :_state %tmp.90;
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 234 20 ]
-        %tmp.91 = 0;
-        symbol [ _counter ? 234 20 28 ];
-        putv self :_counter %tmp.91;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_229_34_235_16_stop:
-        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_229_16_237_16_if_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_229_16_237_16_if_false:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 235 23 ]
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_235_23_237_16_if_stmt:
-        symbol [ _counter %tmp.93 235 27 35 ];
+        symbol [ alt %alt.3 270 20 23 ];
+        %tmp.80 = self;
+        symbol [ _readSmoothedAltitude %tmp.81 270 26 47 ];
+        %tmp.81 = getv function %tmp.80 :_readSmoothedAltitude;
+        %tmp.82 = invoke %tmp.80 %tmp.81();
+        lputv %alt.3 %tmp.82;
+        symbol [ alt %alt.3 270 20 23 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 271 16 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_271_16_273_16_if_stmt:
+        %tmp.83 = lgetv %alt.3;
+        symbol [ alt %tmp.83 271 20 23 ];
+        symbol [ _peakAlt %tmp.85 271 26 34 ];
+        %tmp.85 = getv ? :_peakAlt;
+        %tmp.86 = gt %tmp.83 %tmp.85;
+        bf %tmp.86 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_271_16_273_16_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_271_16_273_16_if_true:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_271_36_273_16_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 272 20 ]
+        %tmp.87 = lgetv %alt.3;
+        symbol [ alt %tmp.87 272 31 34 ];
+        symbol [ _peakAlt ? 272 20 28 ];
+        putv self :_peakAlt %tmp.87;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_271_36_273_16_stop:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_271_16_273_16_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_271_16_273_16_if_end:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 275 16 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_275_16_283_16_if_stmt:
+        %tmp.88 = lgetv %mag;
+        symbol [ mag %tmp.88 275 20 23 ];
+        symbol [ LAND_G %tmp.90 275 26 32 ];
+        %tmp.90 = getv ? :LAND_G;
+        %tmp.91 = gt %tmp.88 %tmp.90;
+        bf %tmp.91 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_275_16_283_16_if_false;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_275_16_283_16_if_true:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_275_34_281_16_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 276 20 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_276_20_278_20_if_stmt:
+        symbol [ _counter %tmp.93 276 24 32 ];
         %tmp.93 = getv ? :_counter;
-        symbol [ MAX_AIR_SAMP %tmp.95 235 38 50 ];
-        %tmp.95 = getv ? :MAX_AIR_SAMP;
-        %tmp.96 = gt %tmp.93 %tmp.95;
-        bf %tmp.96 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_235_23_237_16_if_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_235_23_237_16_if_true:
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_235_52_237_16_start:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 236 20 ]
-        symbol [ JS_IDLE %tmp.98 236 29 36 ];
-        %tmp.98 = getv ? :JS_IDLE;
-        symbol [ _state ? 236 20 26 ];
-        putv self :_state %tmp.98;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_235_52_237_16_stop:
-        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_235_23_237_16_if_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_235_23_237_16_if_end:
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_229_16_237_16_if_end:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 238 16 ]
-        goto break @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_191_8_246_8_switchStmtEnd;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_240_12_245_21_switchCase:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 241 16 ]
-        symbol [ _counter %tmp.101 241 16 24 ];
-        %tmp.101 = getv ? :_counter;
-        %tmp.102 = add %tmp.101 1;
-        symbol [ _counter ? 241 16 24 ];
-        putv self :_counter dup %tmp.102;
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 242 16 ]
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_242_16_244_16_if_stmt:
-        symbol [ _counter %tmp.104 242 20 28 ];
-        %tmp.104 = getv ? :_counter;
-        symbol [ COOLDOWN_SAMP %tmp.106 242 32 45 ];
-        %tmp.106 = getv ? :COOLDOWN_SAMP;
-        %tmp.107 = gte %tmp.104 %tmp.106;
-        bf %tmp.107 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_242_16_244_16_if_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_242_16_244_16_if_true:
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_242_47_244_16_start:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 243 20 ]
-        symbol [ JS_IDLE %tmp.109 243 29 36 ];
-        %tmp.109 = getv ? :JS_IDLE;
-        symbol [ _state ? 243 20 26 ];
-        putv self :_state %tmp.109;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_242_47_244_16_stop:
-        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_242_16_244_16_if_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_242_16_244_16_if_end:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 245 16 ]
-        goto break @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_191_8_246_8_switchStmtEnd;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_191_8_246_8_defaultCodeBegin:
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_191_8_246_8_switchStmtEnd:
+        symbol [ MIN_AIR_SAMP %tmp.95 276 36 48 ];
+        %tmp.95 = getv ? :MIN_AIR_SAMP;
+        %tmp.96 = gte %tmp.93 %tmp.95;
+        bf %tmp.96 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_276_20_278_20_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_276_20_278_20_if_true:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_276_50_278_20_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 277 24 ]
+        %tmp.97 = self;
+        symbol [ _recordJump %tmp.98 277 24 35 ];
+        %tmp.98 = getv function %tmp.97 :_recordJump;
+        invoke %tmp.97 %tmp.98();
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_276_50_278_20_stop:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_276_20_278_20_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_276_20_278_20_if_end:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 279 20 ]
+        symbol [ JS_COOLDOWN %tmp.100 279 31 42 ];
+        %tmp.100 = getv ? :JS_COOLDOWN;
+        symbol [ _state ? 279 20 26 ];
+        putv self :_state %tmp.100;
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 280 20 ]
+        %tmp.101 = 0;
+        symbol [ _counter ? 280 20 28 ];
+        putv self :_counter %tmp.101;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_275_34_281_16_stop:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_275_16_283_16_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_275_16_283_16_if_false:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 281 23 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_281_23_283_16_if_stmt:
+        symbol [ _counter %tmp.103 281 27 35 ];
+        %tmp.103 = getv ? :_counter;
+        symbol [ MAX_AIR_SAMP %tmp.105 281 38 50 ];
+        %tmp.105 = getv ? :MAX_AIR_SAMP;
+        %tmp.106 = gt %tmp.103 %tmp.105;
+        bf %tmp.106 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_281_23_283_16_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_281_23_283_16_if_true:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_281_52_283_16_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 282 20 ]
+        symbol [ JS_IDLE %tmp.108 282 29 36 ];
+        %tmp.108 = getv ? :JS_IDLE;
+        symbol [ _state ? 282 20 26 ];
+        putv self :_state %tmp.108;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_281_52_283_16_stop:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_281_23_283_16_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_281_23_283_16_if_end:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_275_16_283_16_if_end:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 284 16 ]
+        goto break @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_231_8_292_8_switchStmtEnd;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_286_12_291_21_switchCase:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 287 16 ]
+        symbol [ _counter %tmp.111 287 16 24 ];
+        %tmp.111 = getv ? :_counter;
+        %tmp.112 = add %tmp.111 1;
+        symbol [ _counter ? 287 16 24 ];
+        putv self :_counter dup %tmp.112;
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 288 16 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_288_16_290_16_if_stmt:
+        symbol [ _counter %tmp.114 288 20 28 ];
+        %tmp.114 = getv ? :_counter;
+        symbol [ COOLDOWN_SAMP %tmp.116 288 32 45 ];
+        %tmp.116 = getv ? :COOLDOWN_SAMP;
+        %tmp.117 = gte %tmp.114 %tmp.116;
+        bf %tmp.117 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_288_16_290_16_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_288_16_290_16_if_true:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_288_47_290_16_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 289 20 ]
+        symbol [ JS_IDLE %tmp.119 289 29 36 ];
+        %tmp.119 = getv ? :JS_IDLE;
+        symbol [ _state ? 289 20 26 ];
+        putv self :_state %tmp.119;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_288_47_290_16_stop:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_288_16_290_16_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_288_16_290_16_if_end:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 291 16 ]
+        goto break @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_231_8_292_8_switchStmtEnd;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_231_8_292_8_defaultCodeBegin:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_231_8_292_8_switchStmtEnd:
         pop;
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 248 8 ]
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_248_8_250_8_if_stmt:
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_248_12_248_44_begin:
-        symbol [ _state %tmp.111 248 12 18 ];
-        %tmp.111 = getv ? :_state;
-        %tmp.112 = lgetv %oldState.1;
-        symbol [ oldState %tmp.112 248 22 30 ];
-        %tmp.113 = ne %tmp.111 %tmp.112;
-        bf %tmp.113 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_248_8_250_8_if_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_248_34_248_44_true:
-        symbol [ logger %tmp.115 248 34 40 ];
-        %tmp.115 = getv ? :logger;
-        %tmp.116 = null;
-        %tmp.117 = ne %tmp.115 %tmp.116;
-        push %tmp.117;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_248_34_248_44_end:
-        %tmp.118 = phi [%tmp.113 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_248_12_248_44_begin] [%tmp.117 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_248_34_248_44_true] [%tmp.118 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_248_34_248_44_end];
-        bf %tmp.118 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_248_8_250_8_if_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_248_8_250_8_if_true:
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_248_50_250_8_start:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 249 12 ]
-        symbol [ logger %tmp.120 249 12 18 ];
-        %tmp.120 = getv ? :logger;
-        %tmp.121 = as %tmp.120 { (!Null) };
-        symbol [ logStateTransition %tmp.122 249 19 37 ];
-        %tmp.122 = getv function %tmp.121 :logStateTransition;
-        %tmp.123 = lgetv %oldState.1;
-        symbol [ oldState %tmp.123 249 38 46 ];
-        symbol [ _state %tmp.125 249 48 54 ];
-        %tmp.125 = getv ? :_state;
-        %tmp.126 = lgetv %mag;
-        symbol [ mag %tmp.126 249 56 59 ];
-        symbol [ _lastRawAlt %tmp.128 249 61 72 ];
-        %tmp.128 = getv ? :_lastRawAlt;
-        invoke %tmp.121 %tmp.122(%tmp.123, %tmp.125, %tmp.126, %tmp.128);
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_248_50_250_8_stop:
-        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_248_8_250_8_if_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_248_8_250_8_if_end:
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_188_40_251_4_stop:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 294 8 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_294_8_296_8_if_stmt:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_294_12_294_44_begin:
+        symbol [ _state %tmp.121 294 12 18 ];
+        %tmp.121 = getv ? :_state;
+        %tmp.122 = lgetv %oldState.1;
+        symbol [ oldState %tmp.122 294 22 30 ];
+        %tmp.123 = ne %tmp.121 %tmp.122;
+        bf %tmp.123 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_294_8_296_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_294_34_294_44_true:
+        symbol [ logger %tmp.125 294 34 40 ];
+        %tmp.125 = getv ? :logger;
+        %tmp.126 = null;
+        %tmp.127 = ne %tmp.125 %tmp.126;
+        push %tmp.127;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_294_34_294_44_end:
+        %tmp.128 = phi [%tmp.123 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_294_12_294_44_begin] [%tmp.127 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_294_34_294_44_true] [%tmp.128 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_294_34_294_44_end];
+        bf %tmp.128 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_294_8_296_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_294_8_296_8_if_true:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_294_50_296_8_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 295 12 ]
+        symbol [ logger %tmp.130 295 12 18 ];
+        %tmp.130 = getv ? :logger;
+        %tmp.131 = as %tmp.130 { (!Null) };
+        symbol [ logStateTransition %tmp.132 295 19 37 ];
+        %tmp.132 = getv function %tmp.131 :logStateTransition;
+        %tmp.133 = lgetv %oldState.1;
+        symbol [ oldState %tmp.133 295 38 46 ];
+        symbol [ _state %tmp.135 295 48 54 ];
+        %tmp.135 = getv ? :_state;
+        %tmp.136 = lgetv %mag;
+        symbol [ mag %tmp.136 295 56 59 ];
+        symbol [ _lastRawAlt %tmp.138 295 61 72 ];
+        %tmp.138 = getv ? :_lastRawAlt;
+        invoke %tmp.131 %tmp.132(%tmp.133, %tmp.135, %tmp.136, %tmp.138);
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_294_50_296_8_stop:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_294_8_296_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_294_8_296_8_if_end:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_228_40_297_4_stop:
     }
-    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 254; @symbol_functiondef = [_recordJump,254,20,31]; ]
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 300; @symbol_functiondef = [_recordJump,300,20,31]; ]
     protected
     function _recordJump() {
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_254_34_293_4_start:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 255 8 ]
-        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_254_34_293_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_254_34_293_4_stop" ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_300_34_339_4_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 301 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_300_34_339_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_300_34_339_4_stop" ]
         %heightM.1 = local;
-        symbol [ heightM %heightM.1 255 12 19 ];
-        symbol [ _peakAlt %tmp.2 255 22 30 ];
+        symbol [ heightM %heightM.1 301 12 19 ];
+        symbol [ _peakAlt %tmp.2 301 22 30 ];
         %tmp.2 = getv ? :_peakAlt;
-        symbol [ _takeoffAlt %tmp.4 255 33 44 ];
+        symbol [ _takeoffAlt %tmp.4 301 33 44 ];
         %tmp.4 = getv ? :_takeoffAlt;
         %tmp.5 = sub %tmp.2 %tmp.4;
         lputv %heightM.1 %tmp.5;
-        symbol [ heightM %heightM.1 255 12 19 ];
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 259 8 ]
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_259_8_262_8_if_stmt:
+        symbol [ heightM %heightM.1 301 12 19 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 305 8 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_305_8_308_8_if_stmt:
         %tmp.6 = lgetv %heightM.1;
-        symbol [ heightM %tmp.6 259 12 19 ];
-        symbol [ MIN_HEIGHT_M %tmp.8 259 22 34 ];
+        symbol [ heightM %tmp.6 305 12 19 ];
+        symbol [ MIN_HEIGHT_M %tmp.8 305 22 34 ];
         %tmp.8 = getv ? :MIN_HEIGHT_M;
         %tmp.9 = lt %tmp.6 %tmp.8;
-        bf %tmp.9 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_259_8_262_8_if_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_259_8_262_8_if_true:
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_259_36_262_8_start:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 260 12 ]
-        symbol [ crashesFiltered %tmp.12 260 12 27 ];
+        bf %tmp.9 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_305_8_308_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_305_8_308_8_if_true:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_305_36_308_8_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 306 12 ]
+        symbol [ crashesFiltered %tmp.12 306 12 27 ];
         %tmp.12 = getv ? :crashesFiltered;
         %tmp.13 = add %tmp.12 1;
-        symbol [ crashesFiltered ? 260 12 27 ];
+        symbol [ crashesFiltered ? 306 12 27 ];
         putv self :crashesFiltered dup %tmp.13;
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 261 12 ]
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 307 12 ]
         ret ?;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_259_36_262_8_stop:
-        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_259_8_262_8_if_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_259_8_262_8_if_end:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 264 8 ]
-        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_254_34_293_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_254_34_293_4_stop" ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_305_36_308_8_stop:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_305_8_308_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_305_8_308_8_if_end:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 310 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_300_34_339_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_300_34_339_4_stop" ]
         %heightFt.2 = local;
-        symbol [ heightFt %heightFt.2 264 12 20 ];
+        symbol [ heightFt %heightFt.2 310 12 20 ];
         %tmp.14 = lgetv %heightM.1;
-        symbol [ heightM %tmp.14 264 23 30 ];
+        symbol [ heightM %tmp.14 310 23 30 ];
         %tmp.15 = 3.28084;
         %tmp.16 = mul %tmp.14 %tmp.15;
         lputv %heightFt.2 %tmp.16;
-        symbol [ heightFt %heightFt.2 264 12 20 ];
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 268 8 ]
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_268_8_271_8_if_stmt:
+        symbol [ heightFt %heightFt.2 310 12 20 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 314 8 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_314_8_317_8_if_stmt:
         %tmp.17 = lgetv %heightFt.2;
-        symbol [ heightFt %tmp.17 268 12 20 ];
-        symbol [ MAX_JUMP_FT %tmp.19 268 23 34 ];
+        symbol [ heightFt %tmp.17 314 12 20 ];
+        symbol [ MAX_JUMP_FT %tmp.19 314 23 34 ];
         %tmp.19 = getv ? :MAX_JUMP_FT;
         %tmp.20 = gt %tmp.17 %tmp.19;
-        bf %tmp.20 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_268_8_271_8_if_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_268_8_271_8_if_true:
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_268_36_271_8_start:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 269 12 ]
-        symbol [ crashesFiltered %tmp.23 269 12 27 ];
+        bf %tmp.20 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_314_8_317_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_314_8_317_8_if_true:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_314_36_317_8_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 315 12 ]
+        symbol [ crashesFiltered %tmp.23 315 12 27 ];
         %tmp.23 = getv ? :crashesFiltered;
         %tmp.24 = add %tmp.23 1;
-        symbol [ crashesFiltered ? 269 12 27 ];
+        symbol [ crashesFiltered ? 315 12 27 ];
         putv self :crashesFiltered dup %tmp.24;
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 270 12 ]
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 316 12 ]
         ret ?;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_268_36_271_8_stop:
-        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_268_8_271_8_if_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_268_8_271_8_if_end:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 273 8 ]
-        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_254_34_293_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_254_34_293_4_stop" ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_314_36_317_8_stop:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_314_8_317_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_314_8_317_8_if_end:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 319 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_300_34_339_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_300_34_339_4_stop" ]
         %hangMs.3 = local;
-        symbol [ hangMs %hangMs.3 273 12 18 ];
-        symbol [ System %tmp.25 273 22 28 ];
+        symbol [ hangMs %hangMs.3 319 12 18 ];
+        symbol [ System %tmp.25 319 22 28 ];
         %tmp.25 = getm $.Toybox.System;
-        symbol [ getTimer %tmp.26 273 29 37 ];
+        symbol [ getTimer %tmp.26 319 29 37 ];
         %tmp.26 = getv function %tmp.25 :getTimer;
         %tmp.27 = invoke %tmp.25 %tmp.26();
-        symbol [ _takeoffMs %tmp.29 273 42 52 ];
+        symbol [ _takeoffMs %tmp.29 319 42 52 ];
         %tmp.29 = getv ? :_takeoffMs;
         %tmp.30 = sub %tmp.27 %tmp.29;
         lputv %hangMs.3 %tmp.30;
-        symbol [ hangMs %hangMs.3 273 12 18 ];
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 274 8 ]
-        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_254_34_293_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_254_34_293_4_stop" ]
+        symbol [ hangMs %hangMs.3 319 12 18 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 320 8 ]
+        [ "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_300_34_339_4_start" "C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_300_34_339_4_stop" ]
         %hangSec.4 = local;
-        symbol [ hangSec %hangSec.4 274 12 19 ];
+        symbol [ hangSec %hangSec.4 320 12 19 ];
         %tmp.31 = lgetv %hangMs.3;
-        symbol [ hangMs %tmp.31 274 22 28 ];
+        symbol [ hangMs %tmp.31 320 22 28 ];
         %tmp.32 = 1000.0;
         %tmp.33 = div %tmp.31 %tmp.32;
         lputv %hangSec.4 %tmp.33;
-        symbol [ hangSec %hangSec.4 274 12 19 ];
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 278 8 ]
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_278_8_281_8_if_stmt:
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_278_12_278_39_begin:
+        symbol [ hangSec %hangSec.4 320 12 19 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 324 8 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_324_8_327_8_if_stmt:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_324_12_324_39_begin:
         %tmp.34 = lgetv %hangSec.4;
-        symbol [ hangSec %tmp.34 278 12 19 ];
+        symbol [ hangSec %tmp.34 324 12 19 ];
         %tmp.35 = 0.3;
         %tmp.36 = lt %tmp.34 %tmp.35;
-        bt %tmp.36 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_278_8_281_8_if_true;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_278_29_278_39_false:
+        bt %tmp.36 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_324_8_327_8_if_true;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_324_29_324_39_false:
         %tmp.37 = lgetv %hangSec.4;
-        symbol [ hangSec %tmp.37 278 29 36 ];
+        symbol [ hangSec %tmp.37 324 29 36 ];
         %tmp.38 = 10.0;
         %tmp.39 = gt %tmp.37 %tmp.38;
         push %tmp.39;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_278_29_278_39_end:
-        %tmp.40 = phi [%tmp.36 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_278_12_278_39_begin] [%tmp.39 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_278_29_278_39_false] [%tmp.40 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_278_29_278_39_end];
-        bf %tmp.40 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_278_8_281_8_if_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_278_8_281_8_if_true:
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_278_45_281_8_start:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 279 12 ]
-        symbol [ crashesFiltered %tmp.43 279 12 27 ];
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_324_29_324_39_end:
+        %tmp.40 = phi [%tmp.36 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_324_12_324_39_begin] [%tmp.39 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_324_29_324_39_false] [%tmp.40 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_324_29_324_39_end];
+        bf %tmp.40 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_324_8_327_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_324_8_327_8_if_true:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_324_45_327_8_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 325 12 ]
+        symbol [ crashesFiltered %tmp.43 325 12 27 ];
         %tmp.43 = getv ? :crashesFiltered;
         %tmp.44 = add %tmp.43 1;
-        symbol [ crashesFiltered ? 279 12 27 ];
+        symbol [ crashesFiltered ? 325 12 27 ];
         putv self :crashesFiltered dup %tmp.44;
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 280 12 ]
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 326 12 ]
         ret ?;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_278_45_281_8_stop:
-        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_278_8_281_8_if_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_278_8_281_8_if_end:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 283 8 ]
-        symbol [ jumpCount %tmp.47 283 8 17 ];
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_324_45_327_8_stop:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_324_8_327_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_324_8_327_8_if_end:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 329 8 ]
+        symbol [ jumpCount %tmp.47 329 8 17 ];
         %tmp.47 = getv ? :jumpCount;
         %tmp.48 = add %tmp.47 1;
-        symbol [ jumpCount ? 283 8 17 ];
+        symbol [ jumpCount ? 329 8 17 ];
         putv self :jumpCount dup %tmp.48;
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 284 8 ]
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 330 8 ]
         %tmp.49 = lgetv %heightFt.2;
-        symbol [ heightFt %tmp.49 284 22 30 ];
-        symbol [ lastHeight ? 284 8 18 ];
+        symbol [ heightFt %tmp.49 330 22 30 ];
+        symbol [ lastHeight ? 330 8 18 ];
         putv self :lastHeight %tmp.49;
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 285 8 ]
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 331 8 ]
         %tmp.50 = lgetv %hangSec.4;
-        symbol [ hangSec %tmp.50 285 22 29 ];
-        symbol [ lastHang ? 285 8 16 ];
+        symbol [ hangSec %tmp.50 331 22 29 ];
+        symbol [ lastHang ? 331 8 16 ];
         putv self :lastHang %tmp.50;
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 286 8 ]
-        symbol [ totalHeight %tmp.51 286 8 19 ];
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 332 8 ]
+        symbol [ totalHeight %tmp.51 332 8 19 ];
         %tmp.51 = getv self :totalHeight;
         %tmp.52 = lgetv %heightFt.2;
-        symbol [ heightFt %tmp.52 286 23 31 ];
+        symbol [ heightFt %tmp.52 332 23 31 ];
         %tmp.53 = add %tmp.51 %tmp.52;
-        symbol [ totalHeight ? 286 8 19 ];
+        symbol [ totalHeight ? 332 8 19 ];
         putv self :totalHeight dup %tmp.53;
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 288 8 ]
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_288_8_290_8_if_stmt:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 334 8 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_334_8_336_8_if_stmt:
         %tmp.54 = lgetv %heightFt.2;
-        symbol [ heightFt %tmp.54 288 12 20 ];
-        symbol [ maxHeight %tmp.56 288 23 32 ];
+        symbol [ heightFt %tmp.54 334 12 20 ];
+        symbol [ maxHeight %tmp.56 334 23 32 ];
         %tmp.56 = getv ? :maxHeight;
         %tmp.57 = gt %tmp.54 %tmp.56;
-        bf %tmp.57 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_288_8_290_8_if_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_288_8_290_8_if_true:
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_288_34_290_8_start:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 289 12 ]
+        bf %tmp.57 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_334_8_336_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_334_8_336_8_if_true:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_334_34_336_8_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 335 12 ]
         %tmp.58 = lgetv %heightFt.2;
-        symbol [ heightFt %tmp.58 289 24 32 ];
-        symbol [ maxHeight ? 289 12 21 ];
+        symbol [ heightFt %tmp.58 335 24 32 ];
+        symbol [ maxHeight ? 335 12 21 ];
         putv self :maxHeight %tmp.58;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_288_34_290_8_stop:
-        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_288_8_290_8_if_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_288_8_290_8_if_end:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 292 8 ]
-        symbol [ WatchUi %tmp.59 292 8 15 ];
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_334_34_336_8_stop:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_334_8_336_8_if_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_334_8_336_8_if_end:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 338 8 ]
+        symbol [ WatchUi %tmp.59 338 8 15 ];
         %tmp.59 = getm $.Toybox.WatchUi;
-        symbol [ requestUpdate %tmp.60 292 16 29 ];
+        symbol [ requestUpdate %tmp.60 338 16 29 ];
         %tmp.60 = getv function %tmp.59 :requestUpdate;
         invoke %tmp.59 %tmp.60();
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_254_34_293_4_stop:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_300_34_339_4_stop:
     }
-    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 295; @symbol_functiondef = [avgHeight,295,13,22]; ]
+    [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 341; @symbol_functiondef = [avgHeight,341,13,22]; ]
     function avgHeight() {
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_295_25_297_4_start:
-[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 296 8 ]
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_296_15_296_61_begin:
-        symbol [ jumpCount %tmp.2 296 16 25 ];
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_341_25_343_4_start:
+[ "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc" 342 8 ]
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_342_15_342_61_begin:
+        symbol [ jumpCount %tmp.2 342 16 25 ];
         %tmp.2 = getv ? :jumpCount;
         %tmp.3 = 0;
         %tmp.4 = gt %tmp.2 %tmp.3;
-        bf %tmp.4 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_296_15_296_61_else_false;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_296_15_296_61_true:
-        symbol [ totalHeight %tmp.6 296 34 45 ];
+        bf %tmp.4 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_342_15_342_61_else_false;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_342_15_342_61_true:
+        symbol [ totalHeight %tmp.6 342 34 45 ];
         %tmp.6 = getv ? :totalHeight;
-        symbol [ jumpCount %tmp.8 296 48 57 ];
+        symbol [ jumpCount %tmp.8 342 48 57 ];
         %tmp.8 = getv ? :jumpCount;
         %tmp.9 = div %tmp.6 %tmp.8;
         push %tmp.9;
-        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_296_15_296_61_end;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_296_15_296_61_else_false:
+        goto @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_342_15_342_61_end;
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_342_15_342_61_else_false:
         %tmp.10 = 0.0;
         push %tmp.10;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_296_15_296_61_end:
-        %tmp.11 = phi [%tmp.4 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_296_15_296_61_begin] [%tmp.9 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_296_15_296_61_true] [%tmp.10 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_296_15_296_61_else_false] [%tmp.11 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_296_15_296_61_end];
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_342_15_342_61_end:
+        %tmp.11 = phi [%tmp.4 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_342_15_342_61_begin] [%tmp.9 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_342_15_342_61_true] [%tmp.10 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_342_15_342_61_else_false] [%tmp.11 @C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_342_15_342_61_end];
         ret %tmp.11;
-C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_295_25_297_4_stop:
+C__Users_Admin_Documents_GitHub_?WIND_APP_garmin_UtahWindField_source_JumpTracker_mc_341_25_343_4_stop:
     }
 }
 [ @file = "C:\Users\Admin\Documents\GitHub\?WIND APP\garmin\UtahWindField\source\JumpTracker.mc"; @line = 1; ]

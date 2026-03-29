@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline, Circle } from 'react-leaflet';
 import L from 'leaflet';
 import { Compass, Maximize2, X, Wind } from 'lucide-react';
-import { LAKE_CONFIGS, SpatialInterpolator, applySurfacePhysics } from '@utahwind/weather';
+import { LAKE_CONFIGS, SpatialInterpolator, applySurfacePhysics, calculateFetchMultiplier, calculateVenturiMultiplier } from '@utahwind/weather';
 import { safeToFixed } from '../utils/safeToFixed';
 import PinDropListener from './map/PinDropListener';
 import SyntheticForecastCard from './map/SyntheticForecastCard';
@@ -509,8 +509,16 @@ export function WindMap({
               s.id === station.id || s.name?.includes(station.name)
             );
             const hasData = stationWind?.speed != null;
-            
-            // Determine label color based on station type
+
+            // Compute physics hints for this station's location
+            let physicsHints = [];
+            if (hasData && stationWind.direction != null) {
+              const fetch = calculateFetchMultiplier(station.lat, station.lng, stationWind.direction);
+              if (fetch.multiplier > 1) physicsHints.push(`+${Math.round((fetch.multiplier - 1) * 100)}% Fetch (${fetch.fetchMiles} mi)`);
+              const venturi = calculateVenturiMultiplier(station.lat, station.lng, stationWind.direction);
+              if (venturi.multiplier > 1) physicsHints.push(`+${Math.round((venturi.multiplier - 1) * 100)}% Venturi (${venturi.corridorId})`);
+            }
+
             const labelColor = station.type === 'pws' ? '#22d3ee' 
               : station.isNorthFlowIndicator ? '#3b82f6'
               : station.isEarlyIndicator ? '#10b981'
@@ -565,6 +573,13 @@ export function WindMap({
                             <span className="font-medium text-gray-800">
                               {safeToFixed(stationWind.temp, 0)}°F
                             </span>
+                          </div>
+                        )}
+                        {physicsHints.length > 0 && (
+                          <div className="mt-1.5 pt-1.5 border-t border-gray-200">
+                            {physicsHints.map((h, i) => (
+                              <div key={i} className="text-[10px] font-medium text-emerald-600">▲ {h}</div>
+                            ))}
                           </div>
                         )}
                       </div>
