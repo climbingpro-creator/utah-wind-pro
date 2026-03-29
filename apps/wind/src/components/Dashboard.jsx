@@ -64,6 +64,10 @@ function ParaglidingLeaderboardCard({ selectedLake, theme: _theme }) {
   </>);
 }
 
+function ChunkFallback({ className = 'h-32' }) {
+  return <div className={`animate-pulse rounded-xl bg-[var(--bg-card)] border border-[var(--border-color)] ${className}`} />;
+}
+
 const FREE_LAKES = new Set([
   'utah-lake', 'utah-lake-zigzag', 'utah-lake-lincoln', 'utah-lake-vineyard',
   'potm-south', 'potm-north', 'inspo',
@@ -85,8 +89,7 @@ import { getSMSPrefs, processConditions } from '../services/SMSNotificationServi
 import { getParaglidingScore } from '../utils/paraglidingScore';
 import { safeToFixed } from '../utils/safeToFixed';
 import { synthesize } from '../services/WindIntelligence';
-import SignalConvergence from './SignalConvergence';
-
+const SignalConvergence = lazy(() => import('./SignalConvergence'));
 const PropagationTracker = lazy(() => import('./PropagationTracker'));
 
 export function Dashboard() {
@@ -462,7 +465,7 @@ export function Dashboard() {
       )}
 
       {!showOnboarding && (
-      <Suspense fallback={null}>
+      <Suspense fallback={<div className="max-w-6xl mx-auto px-5 sm:px-8 py-8 space-y-4"><ChunkFallback className="h-48" /><ChunkFallback className="h-64" /><ChunkFallback /></div>}>
       <main className="max-w-6xl mx-auto px-5 sm:px-8 py-8 section-stack">
 
         {/* ═══════════ 1. ACTIVITY MATRIX (pinned at top) ═══════════ */}
@@ -583,7 +586,7 @@ export function Dashboard() {
         </button>
 
         {showDetails && (
-          <>
+          <Suspense fallback={<ChunkFallback className="h-64" />}>
             {/* Weather Pattern — moved from main flow */}
             <SignalConvergence intelligence={intelligence} unifiedPrediction={prediction} />
 
@@ -681,7 +684,7 @@ export function Dashboard() {
               theme={theme}
               setSelectedLake={handleSelectLake}
             />
-          </>
+          </Suspense>
         )}
 
       </main>

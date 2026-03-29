@@ -9,9 +9,9 @@
     "./model": "./models/xgboost_model.json"
   },
   "scripts": {
-    "prepare": "python scripts/prepare_data.py",
+    "prepare-data": "python scripts/prepare_data.py",
     "train": "python scripts/train_model.py",
-    "pipeline": "python scripts/prepare_data.py && python scripts/train_model.py",
+    "pipeline": "npm run prepare-data && npm run train",
     "build": "echo '@utahwind/ml -- no JS build step'",
     "lint": "echo '@utahwind/ml -- no JS lint step'"
   },

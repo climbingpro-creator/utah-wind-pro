@@ -203,16 +203,18 @@ export default function WindSeekerTemplate({
 
       {/* ═══════ WHERE TO GO ═══════ */}
       <div ref={contentRef} className="scroll-mt-4">
-        <SafeComponent name="Spot Ranker">
-          <SpotRanker
-            activity={selectedActivity}
-            currentWind={{ speed: currentWindSpeed, gust: currentWindGust, direction: currentWindDirection }}
-            lakeState={lakeState}
-            mesoData={mesoData}
-            thermalPrediction={effectiveThermalPrediction}
-            onSelectSpot={onSelectSpot}
-          />
-        </SafeComponent>
+        <Suspense fallback={<div className="animate-pulse rounded-xl bg-[var(--bg-card)] border border-[var(--border-color)] h-48" />}>
+          <SafeComponent name="Spot Ranker">
+            <SpotRanker
+              activity={selectedActivity}
+              currentWind={{ speed: currentWindSpeed, gust: currentWindGust, direction: currentWindDirection }}
+              lakeState={lakeState}
+              mesoData={mesoData}
+              thermalPrediction={effectiveThermalPrediction}
+              onSelectSpot={onSelectSpot}
+            />
+          </SafeComponent>
+        </Suspense>
       </div>
 
       {/* ═══════ LIVE SENSOR NETWORK ═══════ */}

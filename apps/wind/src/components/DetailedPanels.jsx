@@ -35,6 +35,10 @@ const SessionReplay = lazy(() => import('./SessionReplay'));
 const TrendPatterns = lazy(() => import('./TrendPatterns'));
 const AccuracyScoreboard = lazy(() => import('./AccuracyScoreboard'));
 
+function ChunkFallback({ className = 'h-32' }) {
+  return <div className={`animate-pulse rounded-xl bg-[var(--bg-card)] border border-[var(--border-color)] ${className}`} />;
+}
+
 export default function DetailedPanels({
   selectedActivity,
   selectedLake,
@@ -430,16 +434,18 @@ export default function DetailedPanels({
           </div>
         )}
 
-        <WindMap
-          selectedLake={selectedLake}
-          windData={{
-            direction: lakeState?.pws?.windDirection || lakeState?.wind?.stations?.[0]?.direction,
-            speed: lakeState?.pws?.windSpeed || lakeState?.wind?.stations?.[0]?.speed,
-          }}
-          stationData={lakeState?.wind?.stations}
-          isLoading={isLoading}
-          onSelectLaunch={setSelectedLake}
-        />
+        <Suspense fallback={<ChunkFallback className="h-72 sm:h-96" />}>
+          <WindMap
+            selectedLake={selectedLake}
+            windData={{
+              direction: lakeState?.pws?.windDirection || lakeState?.wind?.stations?.[0]?.direction,
+              speed: lakeState?.pws?.windSpeed || lakeState?.wind?.stations?.[0]?.speed,
+            }}
+            stationData={lakeState?.wind?.stations}
+            isLoading={isLoading}
+            onSelectLaunch={setSelectedLake}
+          />
+        </Suspense>
 
         <ProGate feature="5-Day Forecast" preview="Plan your week ahead">
           <FiveDayForecast
