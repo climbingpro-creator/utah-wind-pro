@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline, Circle } from 'react-leaflet';
 import L from 'leaflet';
 import { Compass, Maximize2, X, Wind } from 'lucide-react';
-import { LAKE_CONFIGS, SpatialInterpolator } from '@utahwind/weather';
+import { LAKE_CONFIGS, SpatialInterpolator, applySurfacePhysics } from '@utahwind/weather';
 import { safeToFixed } from '../utils/safeToFixed';
 import PinDropListener from './map/PinDropListener';
 import SyntheticForecastCard from './map/SyntheticForecastCard';
@@ -363,8 +363,12 @@ export function WindMap({
     setDroppedPin(coords);
     setHasDroppedPin(true);
     const result = SpatialInterpolator.interpolateConditions(coords, liveStationsWithCoords);
+    if (result?.interpolated) {
+      const waterTemp = windData?.waterTemp ?? null;
+      applySurfacePhysics(result.interpolated, { waterTemp });
+    }
     setSyntheticData(result);
-  }, [liveStationsWithCoords]);
+  }, [liveStationsWithCoords, windData]);
 
   const handleClearPin = useCallback(() => {
     setDroppedPin(null);

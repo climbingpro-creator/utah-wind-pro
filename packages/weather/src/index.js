@@ -98,6 +98,16 @@ export { applyLiveCorrections } from './services/NowcastEngine.js';
 // ─── Spatial Interpolation ───────────────────────────────────
 export { SpatialInterpolator } from './services/SpatialInterpolator.js';
 
+// ─── Surface Physics ─────────────────────────────────────────
+export {
+  applySurfacePhysics,
+  calculateFetchMultiplier,
+  calculateVenturiMultiplier,
+  calculateThermalMultiplier,
+  WATER_POLYGONS,
+  VENTURI_CORRIDORS,
+} from './services/SurfacePhysics.js';
+
 // ─── Utils ────────────────────────────────────────────────────
 export { apiUrl, isNativeApp, isIOS, isAndroid, isWeb } from './utils/platform.js';
 export { safeToFixed } from './utils/safeToFixed.js';

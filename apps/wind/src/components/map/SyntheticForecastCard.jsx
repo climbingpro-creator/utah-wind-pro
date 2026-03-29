@@ -1,4 +1,4 @@
-import { X, Navigation, Thermometer, Gauge } from 'lucide-react';
+import { X, Navigation, Thermometer, Gauge, Waves } from 'lucide-react';
 import { safeToFixed } from '../../utils/safeToFixed';
 
 function getCardinalDirection(deg) {
@@ -85,6 +85,31 @@ export default function SyntheticForecastCard({ data, onClose }) {
                 <span className="text-xs font-bold text-white">{safeToFixed(d.pressure, 2)} hPa</span>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Microclimate Physics */}
+        {d.physicsReasons?.length > 0 && (
+          <div className="px-3 pb-2">
+            <div className="rounded-lg bg-white/[0.03] border border-white/[0.06] px-2.5 py-2 space-y-1">
+              <div className="flex items-center gap-1.5 mb-1">
+                <Waves className="w-3 h-3 text-cyan-500" />
+                <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Microclimate Physics</span>
+              </div>
+              {d.physicsReasons.map((reason, i) => {
+                const isBoost = reason.startsWith('+');
+                return (
+                  <div key={i} className="flex items-start gap-1.5">
+                    <span className={`text-[10px] font-mono font-bold shrink-0 ${isBoost ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      {isBoost ? '▲' : '▼'}
+                    </span>
+                    <span className={`text-[10px] leading-tight ${isBoost ? 'text-emerald-300/80' : 'text-rose-300/80'}`}>
+                      {reason}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
 
