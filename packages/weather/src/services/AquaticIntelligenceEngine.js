@@ -66,6 +66,102 @@ export function identifyWaterBody(lat, lng) {
   return closest ? { ...closest, distanceMiles: Math.round(closestDist * 10) / 10 } : null;
 }
 
+// ─── Reverse Geocode: Identify water body type via OSM ───────
+
+const OCEAN_TYPES = new Set(['ocean', 'sea', 'bay', 'strait', 'gulf', 'coastline']);
+
+export async function reverseGeocodeWater(lat, lng) {
+  try {
+    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10&addressdetails=1`;
+    const res = await fetch(url, {
+      headers: { 'User-Agent': 'UtahWaterGlass/1.0' },
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+
+    const addr = data.address || {};
+    const typeStr = (data.type || '').toLowerCase();
+    const classStr = (data.class || '').toLowerCase();
+    const combined = `${typeStr} ${classStr} ${addr.natural || ''} ${addr.water || ''}`.toLowerCase();
+
+    // Detect ocean/sea/bay
+    for (const key of OCEAN_TYPES) {
+      if (combined.includes(key) || addr.ocean || addr.sea) {
+        return {
+          isLake: false,
+          isOcean: true,
+          isRiver: false,
+          name: addr.ocean || addr.sea || addr.bay || data.name || 'Ocean',
+        };
+      }
+    }
+
+    // Detect lake/reservoir
+    if (combined.includes('lake') || combined.includes('reservoir') || combined.includes('pond')) {
+      return {
+        isLake: true,
+        isOcean: false,
+        isRiver: false,
+        name: addr.water || data.name || 'Unknown Lake',
+      };
+    }
+
+    // Default: assume river/land
+    return {
+      isLake: false,
+      isOcean: false,
+      isRiver: true,
+      name: addr.water || addr.river || data.name || null,
+    };
+  } catch {
+    return null;
+  }
+}
+
+// ─── Marine Telemetry via Open-Meteo ─────────────────────────
+
+export async function fetchMarineTelemetry(lat, lng) {
+  try {
+    const url = `https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lng}&hourly=wave_height,wave_period,ocean_current_velocity&daily=ocean_temperature_max&timezone=auto`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
+    if (!res.ok) return null;
+    const data = await res.json();
+
+    const hourly = data.hourly || {};
+    const daily = data.daily || {};
+    const nowIdx = Math.min(new Date().getHours(), (hourly.wave_height || []).length - 1);
+
+    return {
+      waveHeightFt: hourly.wave_height?.[nowIdx] != null
+        ? Math.round(hourly.wave_height[nowIdx] * 3.281 * 10) / 10
+        : null,
+      wavePeriodS: hourly.wave_period?.[nowIdx] ?? null,
+      currentVelocity: hourly.ocean_current_velocity?.[nowIdx] ?? null,
+      seaSurfaceTempF: daily.ocean_temperature_max?.[0] != null
+        ? Math.round((daily.ocean_temperature_max[0] * 9 / 5 + 32) * 10) / 10
+        : null,
+    };
+  } catch {
+    return null;
+  }
+}
+
+// ─── Dynamic Bio Profile via /api/biology ────────────────────
+
+async function fetchDynamicBioProfile(name, lat, lng, type = 'lake') {
+  try {
+    const params = new URLSearchParams({ name, lat: String(lat), lng: String(lng), type });
+    const baseUrl = typeof import.meta !== 'undefined' && import.meta.env?.PROD
+      ? '' : (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_ORIGIN) || '';
+    const res = await fetch(`${baseUrl}/api/biology?${params}`, { signal: AbortSignal.timeout(10000) });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
 // ─── Step 1: USGS API Fetcher ────────────────────────────────
 
 /**
@@ -306,14 +402,26 @@ function estimateHatchActivity(waterTempF) {
 export async function generateFisheryProfile(lat, lng, elevation = 4500, currentWeatherData = {}) {
   const ambientTemp = currentWeatherData.ambientTemp ?? null;
 
-  // ── Geospatial Intercept: Is this a known lake/reservoir? ──
+  // ── Tier 0: Hardcoded known Utah lakes (fastest, no network) ──
   const lakeMatch = identifyWaterBody(lat, lng);
-
   if (lakeMatch) {
     return buildLakeProfile(lakeMatch, elevation, ambientTemp);
   }
 
-  // ── River/Stream path: Use USGS streamflow data ──
+  // ── Tier 1: Reverse geocode to determine water body type ──
+  const geo = await reverseGeocodeWater(lat, lng);
+
+  // ── Ocean / Sea path ──
+  if (geo?.isOcean) {
+    return buildOceanProfile(lat, lng, geo.name, ambientTemp);
+  }
+
+  // ── Unknown lake (not in hardcoded list) — try dynamic bio ──
+  if (geo?.isLake && geo.name) {
+    return buildDynamicLakeProfile(lat, lng, geo.name, elevation, ambientTemp);
+  }
+
+  // ── River/Stream fallback ──
   return buildRiverProfile(lat, lng, elevation, ambientTemp);
 }
 
@@ -369,6 +477,121 @@ function buildLakeProfile(lake, elevation, ambientTemp) {
 
     ambientTemp,
     waterBodyType: lake.type,
+    generatedAt: new Date().toISOString(),
+  };
+}
+
+async function buildOceanProfile(lat, lng, name, ambientTemp) {
+  const [marine, bio] = await Promise.all([
+    fetchMarineTelemetry(lat, lng),
+    fetchDynamicBioProfile(name, lat, lng, 'ocean'),
+  ]);
+
+  const waterTemp = marine?.seaSurfaceTempF ?? inferWaterTemp(0, ambientTemp);
+
+  return {
+    coordinates: { lat, lng },
+    elevation: 0,
+    waterTemp,
+    waterTempUnit: '°F',
+    dataSource: marine ? `Open-Meteo Marine — ${name}` : `Thermal Inference — ${name}`,
+    waterType: 'ocean',
+
+    oceanData: {
+      name,
+      waveHeightFt: marine?.waveHeightFt ?? null,
+      wavePeriodS: marine?.wavePeriodS ?? null,
+      currentVelocity: marine?.currentVelocity ?? null,
+      seaSurfaceTempF: marine?.seaSurfaceTempF ?? null,
+    },
+
+    lakeIntel: bio ? {
+      name,
+      species: bio.species ? (Array.isArray(bio.species) ? bio.species : bio.species.split(', ')) : [],
+      targetDepth: bio.targetDepth || null,
+      regulations: bio.regulations || null,
+      forage: bio.forage || null,
+    } : { name, species: [], targetDepth: null, regulations: null, forage: null },
+
+    usgsGauge: null,
+
+    clarity: 'clear',
+    flowCategory: 'ocean',
+    safeForWading: true,
+    reason: marine?.waveHeightFt > 6
+      ? `Large swell (${marine.waveHeightFt} ft) — exercise caution near shore`
+      : `${name} — marine environment`,
+
+    hatch: bio?.forage || 'Baitfish, crustaceans, plankton',
+    feedingActivity: waterTemp > 75 ? 'high — warm water, active pelagics' : waterTemp > 60 ? 'moderate — temperate zone feeding' : 'low — cold water, bottom dwellers active',
+    thermalStress: 'none',
+    thermalAdvice: null,
+
+    ambientTemp,
+    waterBodyType: 'ocean',
+    generatedAt: new Date().toISOString(),
+  };
+}
+
+async function buildDynamicLakeProfile(lat, lng, name, elevation, ambientTemp) {
+  const [bio, usgs] = await Promise.all([
+    fetchDynamicBioProfile(name, lat, lng),
+    fetchNearestUSGSData(lat, lng, 15),
+  ]);
+
+  const waterTemp = usgs?.waterTemp ?? inferWaterTemp(elevation, ambientTemp);
+  const { hatch, feedingActivity } = estimateHatchActivity(waterTemp);
+
+  let thermalStress = 'none';
+  let thermalAdvice = null;
+  if (waterTemp >= 68) {
+    thermalStress = 'critical';
+    thermalAdvice = 'Water temperature is stressful to trout. Avoid catch-and-release in afternoon. Fish early morning or switch to warm-water species.';
+  } else if (waterTemp >= 64) {
+    thermalStress = 'elevated';
+    thermalAdvice = 'Water warming — trout may be sluggish mid-afternoon. Best fishing at dawn/dusk.';
+  }
+
+  const month = new Date().getMonth() + 1;
+  const season = month <= 3 || month >= 11 ? 'winter' : month <= 5 ? 'spring' : month <= 8 ? 'summer' : 'fall';
+
+  return {
+    coordinates: { lat, lng },
+    elevation,
+    waterTemp,
+    waterTempUnit: '°F',
+    dataSource: bio ? `AI Synthesized Lake Profile — ${name}` : (usgs ? `USGS + Inference — ${name}` : `Thermal Inference — ${name}`),
+    waterType: 'lake',
+
+    lakeIntel: {
+      name,
+      species: bio?.species ? (Array.isArray(bio.species) ? bio.species : bio.species.split(', ')) : [],
+      targetDepth: bio?.targetDepth || null,
+      regulations: bio?.regulations || null,
+      forage: bio?.forage || null,
+      season,
+    },
+
+    usgsGauge: usgs ? {
+      siteId: usgs.siteId,
+      siteName: usgs.siteName,
+      distanceMiles: usgs.distanceMiles,
+      dischargeCFS: usgs.dischargeCFS,
+      gaugeHeightFt: usgs.gaugeHeightFt,
+    } : null,
+
+    clarity: 'clear',
+    flowCategory: 'stillwater',
+    safeForWading: true,
+    reason: `${name} — stillwater fishery.${bio?.targetDepth ? ` Target ${bio.targetDepth}.` : ''}`,
+
+    hatch,
+    feedingActivity,
+    thermalStress,
+    thermalAdvice,
+
+    ambientTemp,
+    waterBodyType: 'lake',
     generatedAt: new Date().toISOString(),
   };
 }
@@ -443,4 +666,6 @@ export const AquaticIntelligenceEngine = {
   assessFlowConditions,
   generateFisheryProfile,
   identifyWaterBody,
+  reverseGeocodeWater,
+  fetchMarineTelemetry,
 };

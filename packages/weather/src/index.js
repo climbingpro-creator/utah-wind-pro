@@ -120,6 +120,8 @@ export {
   assessFlowConditions,
   generateFisheryProfile,
   identifyWaterBody,
+  reverseGeocodeWater,
+  fetchMarineTelemetry,
 } from './services/AquaticIntelligenceEngine.js';
 
 // ─── Utils ────────────────────────────────────────────────────

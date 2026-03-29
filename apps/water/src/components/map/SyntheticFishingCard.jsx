@@ -1,4 +1,4 @@
-import { X, Thermometer, Droplets, Activity, Waves, Fish, Gauge, Anchor, MapPin, Shield } from 'lucide-react';
+import { X, Thermometer, Droplets, Activity, Waves, Fish, Gauge, Anchor, MapPin, Shield, Navigation, Zap } from 'lucide-react';
 
 const CLARITY_STYLE = {
   'blown out':       { color: 'text-red-400',     bg: 'bg-red-500/10',     border: 'border-red-500/20',     dot: 'bg-red-500' },
@@ -114,6 +114,46 @@ function RiverTelemetryGrid({ data }) {
   );
 }
 
+function OceanTelemetryGrid({ ocean }) {
+  if (!ocean) return null;
+  return (
+    <div className="px-3 pb-1.5">
+      <div className="grid grid-cols-2 gap-1.5">
+        {ocean.seaSurfaceTempF != null && (
+          <div className="rounded-lg bg-white/[0.03] border border-cyan-500/10 px-2.5 py-1.5">
+            <div className="flex items-center gap-1 mb-0.5">
+              <Thermometer className="w-2.5 h-2.5 text-cyan-500/70" />
+              <span className="text-[8px] font-bold uppercase tracking-wider text-slate-500">Sea Temp</span>
+            </div>
+            <p className="text-sm font-extrabold text-cyan-300">{Math.round(ocean.seaSurfaceTempF)}°F</p>
+          </div>
+        )}
+        {ocean.waveHeightFt != null && (
+          <div className="rounded-lg bg-white/[0.03] border border-blue-500/10 px-2.5 py-1.5">
+            <div className="flex items-center gap-1 mb-0.5">
+              <Waves className="w-2.5 h-2.5 text-blue-500/70" />
+              <span className="text-[8px] font-bold uppercase tracking-wider text-slate-500">Swell</span>
+            </div>
+            <p className="text-sm font-extrabold text-blue-300">
+              {ocean.waveHeightFt} ft
+              {ocean.wavePeriodS ? ` @ ${ocean.wavePeriodS}s` : ''}
+            </p>
+          </div>
+        )}
+        {ocean.currentVelocity != null && (
+          <div className="rounded-lg bg-white/[0.03] border border-indigo-500/10 px-2.5 py-1.5 col-span-2">
+            <div className="flex items-center gap-1 mb-0.5">
+              <Navigation className="w-2.5 h-2.5 text-indigo-500/70" />
+              <span className="text-[8px] font-bold uppercase tracking-wider text-slate-500">Current</span>
+            </div>
+            <p className="text-[10px] font-semibold text-indigo-300">{ocean.currentVelocity} m/s ocean current</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function SyntheticFishingCard({ data, isLoading, onClose }) {
   if (isLoading) {
     return (
@@ -129,41 +169,51 @@ export default function SyntheticFishingCard({ data, isLoading, onClose }) {
   if (!data) return null;
 
   const isLake = data.waterType === 'lake';
+  const isOcean = data.waterType === 'ocean';
   const isUSGS = data.dataSource?.includes('USGS');
+  const isAI = data.dataSource?.includes('AI Synthesized');
   const clarityStyle = CLARITY_STYLE[data.clarity] || CLARITY_STYLE['unknown'];
 
+  const borderClass = isOcean ? 'border-blue-500/20' : isLake ? 'border-emerald-500/20' : 'border-cyan-500/15';
+  const accentClass = isOcean ? 'text-blue-400' : isLake ? 'text-emerald-400' : 'text-cyan-400';
+  const accentBg = isOcean ? 'bg-blue-500/10 border border-blue-500/20' : isLake ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-cyan-500/10 border border-cyan-500/20';
+
+  const displayName = isOcean
+    ? (data.oceanData?.name || 'Ocean')
+    : isLake
+      ? (data.lakeIntel?.name || 'Lake')
+      : (data.usgsGauge?.siteName || 'River / Stream');
+
+  const subtitle = isOcean
+    ? `${data.coordinates?.lat?.toFixed(2)}, ${data.coordinates?.lng?.toFixed(2)}`
+    : isLake
+      ? `${data.lakeIntel?.season || ''} · ${data.elevation?.toLocaleString() || '?'} ft elevation`
+      : `${data.coordinates?.lat?.toFixed(3)}, ${data.coordinates?.lng?.toFixed(3)}`;
+
   return (
-    <div className={`rounded-2xl border bg-[#0c1a12]/90 backdrop-blur-xl shadow-2xl overflow-hidden w-[300px] ${
-      isLake ? 'border-emerald-500/20' : 'border-cyan-500/15'
-    }`}>
-      {/* Header: Name + Water Temp */}
+    <div className={`rounded-2xl border bg-[#0c1a12]/90 backdrop-blur-xl shadow-2xl overflow-hidden w-[300px] ${borderClass}`}>
+      {/* Header */}
       <div className="px-3 pt-3 pb-1.5">
         <div className="flex items-start justify-between mb-2">
           <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-extrabold text-white truncate">
-              {isLake ? data.lakeIntel?.name : (data.usgsGauge?.siteName || 'River / Stream')}
-            </h3>
-            <p className="text-[9px] text-slate-500 truncate">
-              {isLake ? `${data.lakeIntel?.season} · ${data.elevation?.toLocaleString()} ft elevation` : `${data.coordinates?.lat?.toFixed(3)}, ${data.coordinates?.lng?.toFixed(3)}`}
-            </p>
+            <h3 className="text-sm font-extrabold text-white truncate">{displayName}</h3>
+            <p className="text-[9px] text-slate-500 truncate">{subtitle}</p>
           </div>
           <button onClick={onClose} className="p-1 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] transition-colors ml-2 shrink-0">
             <X className="w-3.5 h-3.5 text-white/50" />
           </button>
         </div>
         <div className="flex items-center gap-2.5">
-          <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
-            isLake
-              ? 'bg-emerald-500/10 border border-emerald-500/20'
-              : 'bg-cyan-500/10 border border-cyan-500/20'
-          }`}>
-            <Thermometer className={`w-5 h-5 ${isLake ? 'text-emerald-400' : 'text-cyan-400'}`} />
+          <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${accentBg}`}>
+            <Thermometer className={`w-5 h-5 ${accentClass}`} />
           </div>
           <div>
             <div className="text-xl font-black text-white tracking-tight">
               {data.waterTemp != null ? `${Math.round(data.waterTemp)}°F` : '--'}
             </div>
-            <div className="text-[9px] font-medium text-slate-400">Estimated Water Temp</div>
+            <div className="text-[9px] font-medium text-slate-400">
+              {isOcean ? 'Sea Surface Temp' : 'Estimated Water Temp'}
+            </div>
           </div>
         </div>
       </div>
@@ -171,13 +221,27 @@ export default function SyntheticFishingCard({ data, isLoading, onClose }) {
       {/* Trust Badge */}
       <div className="px-3 pb-1.5">
         <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-          isLake
-            ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20'
-            : isUSGS
-              ? 'bg-blue-500/15 text-blue-400 border border-blue-500/20'
-              : 'bg-slate-500/15 text-slate-400 border border-slate-500/20'
+          isOcean
+            ? 'bg-blue-500/15 text-blue-400 border border-blue-500/20'
+            : isAI
+              ? 'bg-purple-500/15 text-purple-400 border border-purple-500/20'
+              : isLake
+                ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20'
+                : isUSGS
+                  ? 'bg-blue-500/15 text-blue-400 border border-blue-500/20'
+                  : 'bg-slate-500/15 text-slate-400 border border-slate-500/20'
         }`}>
-          {isLake ? (
+          {isOcean ? (
+            <>
+              <Waves className="w-3 h-3" />
+              <span>Marine Intel</span>
+            </>
+          ) : isAI ? (
+            <>
+              <Zap className="w-3 h-3" />
+              <span>AI Synthesized</span>
+            </>
+          ) : isLake ? (
             <>
               <Fish className="w-3 h-3" />
               <span>Lake Intel</span>
@@ -197,8 +261,13 @@ export default function SyntheticFishingCard({ data, isLoading, onClose }) {
         <div className="text-[9px] text-slate-500 mt-1 leading-tight">{data.dataSource}</div>
       </div>
 
-      {/* Conditional: Lake Intelligence OR River Telemetry */}
-      {isLake ? (
+      {/* Conditional: Ocean Marine Grid OR Lake Intelligence OR River Telemetry */}
+      {isOcean ? (
+        <>
+          <OceanTelemetryGrid ocean={data.oceanData} />
+          <LakeIntelGrid intel={data.lakeIntel} />
+        </>
+      ) : isLake ? (
         <LakeIntelGrid intel={data.lakeIntel} />
       ) : (
         <RiverTelemetryGrid data={data} />
@@ -256,13 +325,15 @@ export default function SyntheticFishingCard({ data, isLoading, onClose }) {
       {/* Footer */}
       <div className="px-3 pb-2 pt-0.5 flex items-center justify-between">
         <div className="flex items-center gap-1.5">
-          <Waves className="w-3 h-3 text-emerald-500/50" />
-          <span className="text-[9px] text-slate-500">Aquatic Intelligence Engine</span>
+          <Waves className={`w-3 h-3 ${isOcean ? 'text-blue-500/50' : 'text-emerald-500/50'}`} />
+          <span className="text-[9px] text-slate-500">
+            {isOcean ? 'Global Marine Intelligence' : 'Aquatic Intelligence Engine'}
+          </span>
         </div>
         {data.usgsGauge && (
           <span className="text-[9px] text-slate-600">{data.usgsGauge.distanceMiles} mi to gauge</span>
         )}
-        {isLake && data.lakeIntel && (
+        {isLake && data.lakeIntel?.distanceMiles != null && (
           <span className="text-[9px] text-slate-600">{data.lakeIntel.distanceMiles} mi to center</span>
         )}
       </div>
