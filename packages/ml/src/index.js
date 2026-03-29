@@ -5,4 +5,4 @@
  * Inference: Pure JS -- loads xgboost_model.json, walks decision trees natively
  */
 
-export { WindPredictor } from './InferenceEngine.js';
+export { WindPredictor, getModelPath } from './InferenceEngine.js';

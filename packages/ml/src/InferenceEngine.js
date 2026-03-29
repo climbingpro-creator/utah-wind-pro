@@ -8,9 +8,22 @@
  */
 
 import { readFile } from 'fs/promises';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // ── Utah Lake seasonal water temperature model (deg F, index 0 = Jan) ────
 const WATER_TEMP_F = [36, 39, 43, 48, 55, 65, 72, 72, 68, 55, 46, 37];
+
+/**
+ * Resolve the path to the bundled xgboost_model.json
+ * so callers don't have to know the internal file layout.
+ */
+export function getModelPath() {
+  return join(__dirname, '..', 'models', 'xgboost_model.json');
+}
+
 
 // ══════════════════════════════════════════════════════════════════════════
 //  PURE-JS XGBOOST TREE EVALUATOR
@@ -204,10 +217,13 @@ export class WindPredictor {
 
     return hourlyForecast.map(entry => {
       const entryTime = entry.time ? new Date(entry.time) : new Date();
+      const rawDir = entry.windDirection ?? entry.dirDeg ?? entry.dir;
+      const numericDir = typeof rawDir === 'number' ? rawDir : 0;
+
       const result = this.predictForecast(
         {
           windSpeed: entry.windSpeed ?? entry.speed ?? 0,
-          windDirection: entry.windDirection ?? entry.dir ?? 0,
+          windDirection: numericDir,
           windGust: entry.windGust ?? entry.gust ?? 0,
           temperature: entry.temperature ?? entry.temp ?? localAirTemp,
         },

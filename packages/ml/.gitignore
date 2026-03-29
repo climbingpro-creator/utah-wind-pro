@@ -1,0 +1,5 @@
+data/hrrr_cache.json
+data/pressure_cache.json
+data/training_data.csv
+__pycache__/
+*.pyc

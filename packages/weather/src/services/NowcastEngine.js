@@ -21,7 +21,8 @@ const SHIFT_HOURS         = 2;
 
 function readSpeed(entry) {
   if (entry == null) return 0;
-  const v = entry.speed ?? entry.windSpeed ?? entry.nwsSpeed;
+  // Prefer ML-corrected wind (adjustedWind) so Nowcast stacks on top of ML
+  const v = entry.adjustedWind ?? entry.speed ?? entry.windSpeed ?? entry.nwsSpeed;
   return typeof v === 'string' ? parseFloat(v) || 0 : v ?? 0;
 }
 

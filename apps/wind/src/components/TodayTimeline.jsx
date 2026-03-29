@@ -174,6 +174,7 @@ export default function TodayTimeline({ locationId = 'utah-lake', activity = 'ki
   const hourlyForecast = useWeatherStore((s) => s.hourlyForecast);
   const setHourlyForecast = useWeatherStore((s) => s.setHourlyForecast);
   const [nwsData, setNwsData] = useState(null);
+  const [mlActive, setMlActive] = useState(false);
   const [loading, setLoading] = useState(true);
   const [useKnots, setUseKnots] = useState(() => localStorage.getItem('windUnit') === 'kt');
   const scrollRef = useRef(null);
@@ -214,10 +215,14 @@ export default function TodayTimeline({ locationId = 'utah-lake', activity = 'ki
       try {
         const resp = await fetch(apiUrl('/api/cron/collect?action=nws'));
         const data = await resp.json();
-        if (!cancelled) setNwsData(data);
+        if (!cancelled) {
+          setNwsData(data);
+          setMlActive(data?.mlApplied === true);
+        }
 
         const gridId = LAKE_TO_GRID[locationId] || 'utah-lake';
-        const serverHourly = data?.grids?.[gridId]?.hourly;
+        const grid = data?.grids?.[gridId];
+        const serverHourly = grid?.mlHourly || grid?.hourly;
         if (serverHourly?.length > 0 && !cancelled) {
           setHourlyForecast(serverHourly);
         } else if (!cancelled) {
@@ -264,12 +269,13 @@ export default function TodayTimeline({ locationId = 'utah-lake', activity = 'ki
       const dt = h.time ? new Date(h.time) : h.startTime ? new Date(h.startTime) : null;
       return {
         localHour: h.localHour ?? (dt ? dt.getHours() : 0),
-        speed: h.speed ?? h.windSpeed ?? h.nwsSpeed ?? 0,
+        speed: h.adjustedWind ?? h.speed ?? h.windSpeed ?? h.nwsSpeed ?? 0,
         gust: h.gust ?? h.windGust ?? null,
         dir: h.dir ?? h.windDirection ?? '',
         dirDeg: typeof h.dirDeg === 'number' ? h.dirDeg : dirToDeg(h.dir || h.windDirection || ''),
         temp: h.temp ?? h.temperature,
         text: h.text ?? h.shortForecast ?? '',
+        mlCorrected: h.mlCorrected || false,
       };
     });
   }, [hourlyForecast]);
@@ -347,9 +353,14 @@ export default function TodayTimeline({ locationId = 'utah-lake', activity = 'ki
             <h3 className="font-bold text-white text-base">{isCalmActivity ? `${activityName} Conditions` : "Today's Wind"}</h3>
             <span className="text-sm text-slate-400">—</span>
             <span className="text-sm font-medium text-sky-400">{SPOT_NAMES[locationId] || locationId}</span>
+            {mlActive && (
+              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-purple-900/30 text-purple-400">
+                AI Enhanced
+              </span>
+            )}
             {isNowcastActive && (
-              <span className="text-xs font-bold px-2 py-1 rounded-full bg-amber-900/30 text-amber-400">
-                ⚡ Live Adjusted
+              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-900/30 text-amber-400">
+                Live Adjusted
               </span>
             )}
           </div>
