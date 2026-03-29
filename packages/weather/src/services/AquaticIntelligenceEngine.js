@@ -92,14 +92,37 @@ export async function reverseGeocodeWater(lat, lng) {
     const combined = `${typeStr} ${classStr} ${displayName} ${nameStr} ${addr.natural || ''} ${addr.water || ''}`.toLowerCase();
 
     // Detect ocean/sea/bay/gulf/strait
+    const extractOceanName = () => {
+      // Prefer explicit address fields
+      if (addr.ocean) return addr.ocean;
+      if (addr.sea) return addr.sea;
+      if (addr.bay) return addr.bay;
+      // Scan display_name parts for a water body name
+      const parts = (data.display_name || '').split(',').map(s => s.trim());
+      for (const part of parts) {
+        const lower = part.toLowerCase();
+        if (OCEAN_TYPES.has(lower)) continue; // skip bare keyword
+        for (const keyword of OCEAN_TYPES) {
+          if (lower.includes(keyword)) return part;
+        }
+      }
+      // Check data.name (but skip bare country names)
+      if (data.name && data.name.length > 3) {
+        const nl = data.name.toLowerCase();
+        for (const keyword of OCEAN_TYPES) {
+          if (nl.includes(keyword)) return data.name;
+        }
+      }
+      // Last resort: geo-descriptive name so Gemini can identify the area
+      return `Ocean near ${lat.toFixed(1)}°, ${lng.toFixed(1)}°`;
+    };
+
     if (addr.ocean || addr.sea) {
-      return { isLake: false, isOcean: true, isRiver: false,
-        name: addr.ocean || addr.sea || data.name || 'Ocean' };
+      return { isLake: false, isOcean: true, isRiver: false, name: extractOceanName() };
     }
     for (const key of OCEAN_TYPES) {
       if (combined.includes(key)) {
-        return { isLake: false, isOcean: true, isRiver: false,
-          name: addr.ocean || addr.sea || addr.bay || data.name || displayName.split(',')[0] || 'Ocean' };
+        return { isLake: false, isOcean: true, isRiver: false, name: extractOceanName() };
       }
     }
 

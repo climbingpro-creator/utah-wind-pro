@@ -1,7 +1,7 @@
 /**
  * Vercel Serverless — Gemini-powered biological profile generator.
  *
- * GET /api/biology?name=Lake+Tahoe&type=lake
+ * GET /api/biology?name=Sea+of+Cortez&type=ocean&lat=24.11&lng=-109.98
  *
  * Uses Gemini's structured JSON output to generate species, forage,
  * depth, and regulation data for any named body of water on Earth.
@@ -19,17 +19,22 @@ export default async function handler(req, res) {
 
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const { name, type = 'lake' } = req.query;
+  const { name, type = 'lake', lat, lng } = req.query;
   if (!name) return res.status(400).json({ error: 'Water body name is required' });
+
+  if (!process.env.GEMINI_API_KEY) {
+    console.warn('[biology] GEMINI_API_KEY not set — returning fallback');
+    return res.status(200).json(buildFallback(name, type));
+  }
 
   try {
     const responseSchema = {
       type: SchemaType.OBJECT,
       properties: {
-        species:     { type: SchemaType.STRING, description: 'Dominant sport fish species' },
-        forage:      { type: SchemaType.STRING, description: 'Primary food source or baitfish' },
-        targetDepth: { type: SchemaType.STRING, description: 'Recommended depth or structure' },
-        regulations: { type: SchemaType.STRING, description: 'Brief note on limits or rules' },
+        species:     { type: SchemaType.STRING, description: 'Comma-separated list of 3-6 primary sport fish species for this specific location' },
+        forage:      { type: SchemaType.STRING, description: 'Comma-separated list of primary forage organisms and baitfish' },
+        targetDepth: { type: SchemaType.STRING, description: 'Recommended angling depth range with units, or structure type' },
+        regulations: { type: SchemaType.STRING, description: 'Key fishing regulations, seasons, or permit requirements' },
       },
       required: ['species', 'forage', 'targetDepth', 'regulations'],
     };
@@ -44,20 +49,35 @@ export default async function handler(req, res) {
     });
 
     const typeLabel = type === 'ocean' ? 'ocean/sea' : type;
-    const prompt = `You are a marine biologist and fisheries expert API. Generate the biological profile for the ${typeLabel} named: "${name}". Include region-specific sport fish species, local forage/baitfish, recommended angling depths or structure, and any notable fishing regulations for this specific body of water.`;
-    const result = await model.generateContent(prompt);
+    const coordContext = lat && lng ? ` The coordinates are ${lat}, ${lng}.` : '';
+    const prompt = `You are a marine biologist and fisheries expert. Generate a detailed biological and angling profile for the ${typeLabel} at or near: "${name}".${coordContext} Include the most important regional sport fish species that anglers target in this specific area, the primary local forage/baitfish, recommended depth or structure to fish, and any notable fishing regulations or permit requirements. Be specific to this exact geographic location — not generic.`;
 
+    const result = await model.generateContent(prompt);
     const profile = JSON.parse(result.response.text());
 
     res.setHeader('Cache-Control', 's-maxage=86400, stale-while-revalidate=172800');
     return res.status(200).json(profile);
   } catch (error) {
-    console.error('Gemini Biology Agent Error:', error);
-    return res.status(200).json({
-      species: 'Unknown species',
-      forage: 'Local baitfish and insects',
-      targetDepth: 'Variable',
-      regulations: 'Check local wildlife department.',
-    });
+    console.error('Gemini Biology Agent Error:', error.message || error);
+    return res.status(200).json(buildFallback(name, type));
   }
+}
+
+function buildFallback(name, type) {
+  if (type === 'ocean') {
+    return {
+      species: 'Roosterfish, Dorado (Mahi-Mahi), Yellowtail, Marlin, Snapper',
+      forage: 'Sardines, mackerel, squid, flying fish',
+      targetDepth: '30-200 ft (nearshore reefs to blue water)',
+      regulations: 'Check local marine authority for permits and bag limits',
+      _fallback: true,
+    };
+  }
+  return {
+    species: 'Local game fish',
+    forage: 'Regional baitfish and aquatic insects',
+    targetDepth: 'Variable — check local reports',
+    regulations: 'Check local wildlife department for limits and seasons',
+    _fallback: true,
+  };
 }
