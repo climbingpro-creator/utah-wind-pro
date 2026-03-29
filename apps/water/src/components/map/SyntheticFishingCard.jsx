@@ -50,13 +50,13 @@ function LakeIntelGrid({ intel }) {
 
   return (
     <div className="px-4 pb-2 space-y-1.5">
-      {items.map(({ label, value, icon: Icon }) => (
-        <div key={label} className="rounded-lg bg-white/[0.03] border border-white/[0.06] px-3 py-2">
+      {items.map((item) => (
+        <div key={item.label} className="rounded-lg bg-white/[0.03] border border-white/[0.06] px-3 py-2">
           <div className="flex items-center gap-1.5 mb-0.5">
-            <Icon className="w-3 h-3 text-emerald-500/70" />
-            <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500">{label}</span>
+            <item.icon className="w-3 h-3 text-emerald-500/70" />
+            <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500">{item.label}</span>
           </div>
-          <p className="text-[11px] font-semibold text-slate-200 leading-snug">{value}</p>
+          <p className="text-[11px] font-semibold text-slate-200 leading-snug">{item.value}</p>
         </div>
       ))}
     </div>
