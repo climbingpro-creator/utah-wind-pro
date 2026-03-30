@@ -1,6 +1,9 @@
-import { Bell, Brain, RefreshCw, Wifi, WifiOff, Trophy } from 'lucide-react';
+import { Bell, Brain, RefreshCw, Wifi, WifiOff, Trophy, LogIn, LogOut, Shield } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
+import { useAuth } from '../context/AuthContext';
 import { SPOT_SLUG_MAP } from '../config/spotSlugs';
+
+const ADMIN_EMAILS = ['tyler@aspenearth.com', 'climbingpro@gmail.com'];
 
 export default function AppHeader({
   theme,
@@ -24,6 +27,8 @@ export default function AppHeader({
   onRefresh,
   onUpgradeClick,
 }) {
+  const { user, signOut } = useAuth();
+  const isAdmin = user && ADMIN_EMAILS.includes(user.email?.toLowerCase());
   const btnBase = `flex flex-col items-center gap-0.5 px-1.5 py-1 rounded-lg transition-colors`;
   const btnColors = theme === 'dark'
     ? 'hover:bg-white/5 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
@@ -133,6 +138,46 @@ export default function AppHeader({
             </button>
 
             <ThemeToggle />
+
+            {isAdmin && (
+              <button
+                onClick={() => { window.location.hash = '#admin'; }}
+                aria-label="Admin Dashboard"
+                className={`${btnBase} ${theme === 'dark'
+                  ? 'hover:bg-violet-500/10 text-violet-400/70 hover:text-violet-400'
+                  : 'hover:bg-violet-50 text-violet-500/60 hover:text-violet-600'
+                }`}
+              >
+                <Shield className="w-4 h-4" />
+                <span className="text-[8px] leading-none font-medium">Admin</span>
+              </button>
+            )}
+
+            {user ? (
+              <button
+                onClick={signOut}
+                aria-label="Sign Out"
+                className={`${btnBase} ${theme === 'dark'
+                  ? 'hover:bg-red-500/10 text-slate-400 hover:text-red-400'
+                  : 'hover:bg-red-50 text-slate-400 hover:text-red-500'
+                }`}
+              >
+                <LogOut className="w-4 h-4" />
+                <span className="text-[8px] leading-none font-medium">Out</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => { window.location.hash = '#login'; }}
+                aria-label="Log In"
+                className={`${btnBase} ${theme === 'dark'
+                  ? 'hover:bg-sky-500/10 text-sky-400/70 hover:text-sky-400'
+                  : 'hover:bg-sky-50 text-sky-500/60 hover:text-sky-600'
+                }`}
+              >
+                <LogIn className="w-4 h-4" />
+                <span className="text-[8px] leading-none font-medium">Log In</span>
+              </button>
+            )}
 
             {!isPro && (
               <button

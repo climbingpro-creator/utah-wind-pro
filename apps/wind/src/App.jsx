@@ -9,6 +9,7 @@ import { ErrorBoundary, FeedbackWidget } from '@utahwind/ui';
 import { supabase } from '@utahwind/database';
 
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const Login = lazy(() => import('./pages/Login'));
 
 function useSWRegistration() {
   const [updateReady, setUpdateReady] = useState(false);
@@ -65,6 +66,14 @@ function AppShell() {
     return (
       <Suspense fallback={<div className="flex items-center justify-center min-h-screen text-white/50">Loading admin...</div>}>
         <AdminDashboard />
+      </Suspense>
+    );
+  }
+
+  if (hash === '#login') {
+    return (
+      <Suspense fallback={<div className="flex items-center justify-center min-h-screen text-white/50">Loading...</div>}>
+        <Login />
       </Suspense>
     );
   }
