@@ -363,52 +363,24 @@ function _buildBioUrl(name, lat, lng, type, imageUrl) {
   return `${origin}/api/biology?${params}`;
 }
 
-/**
- * Two-tier fetch: fast text-only call first (species, forage, etc.),
- * then a parallel visual call with satellite imagery when available.
- * The text result is returned immediately; visual data is merged if it
- * arrives before the timeout.
- */
 async function fetchDynamicBioProfile(name, lat, lng, type = 'lake') {
-  const satUrl = buildSatelliteUrl(lat, lng);
-
+  const origin = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_ORIGIN)
+    || 'https://utah-wind-pro.vercel.app';
+  const url = `${origin}/api/biology?name=${encodeURIComponent(name)}&lat=${lat}&lng=${lng}&type=${type}`;
+  console.error('[BioProfile] Fetching:', url);
   try {
-    // Tier 1: Fast text-only call (~1-3s)
-    const textUrl = _buildBioUrl(name, lat, lng, type, null);
-    console.log('[BioProfile] Text call:', textUrl);
-
-    // Tier 2: Multimodal call with satellite image (fires in parallel)
-    const visualUrl = _buildBioUrl(name, lat, lng, type, satUrl);
-    const visualPromise = fetch(visualUrl, { signal: AbortSignal.timeout(25000) })
-      .then(r => r.ok ? r.json() : null)
-      .catch(() => null);
-
-    const textRes = await fetch(textUrl, { signal: AbortSignal.timeout(12000) });
-    if (!textRes.ok) {
-      console.warn('[BioProfile] Text call failed:', textRes.status);
-      return null;
-    }
-    const textData = await textRes.json();
-    textData._satelliteUrl = satUrl;
-
-    // Race: wait up to 8 more seconds for the visual call to finish
-    const visual = await Promise.race([
-      visualPromise,
-      new Promise(resolve => setTimeout(() => resolve(null), 8000)),
-    ]);
-
-    if (visual?.visualAnalysis) {
-      textData._visual = true;
-      textData.visualAnalysis = visual.visualAnalysis;
-      textData.clue = visual.clue;
-      textData.habitatComplexity = visual.habitatComplexity;
-      console.log('[BioProfile] Visual intel merged');
-    }
-
-    console.log('[BioProfile] Result:', textData._visual ? 'multimodal' : 'text-only');
-    return textData;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 15000);
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timer);
+    console.error('[BioProfile] Status:', res.status);
+    if (!res.ok) return null;
+    const data = await res.json();
+    data._satelliteUrl = buildSatelliteUrl(lat, lng);
+    console.error('[BioProfile] Got data:', Object.keys(data));
+    return data;
   } catch (err) {
-    console.warn('[BioProfile] Failed:', err?.message || err);
+    console.error('[BioProfile] Error:', err?.name, err?.message);
     return null;
   }
 }
