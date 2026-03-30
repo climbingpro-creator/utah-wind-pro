@@ -121,7 +121,6 @@ function generateWaterBriefing(activity, speed, gust, pressureData, boatingPred)
 
 function AppShell() {
   const hash = useHashRoute();
-  const { user } = useAuth();
 
   if (hash === '#admin') {
     return (
