@@ -849,8 +849,8 @@ async function buildDynamicLakeProfile(lat, lng, name, elevation, ambientTemp) {
     safeForWading: true,
     reason: `${name} — stillwater fishery.${bio?.targetDepth ? ` Target ${bio.targetDepth}.` : ''}`,
 
-    hatch,
-    feedingActivity,
+    hatch: bio?.forage || hatch,
+    feedingActivity: bio?.forage ? 'active — based on AI forage analysis' : feedingActivity,
     thermalStress,
     thermalAdvice,
 
