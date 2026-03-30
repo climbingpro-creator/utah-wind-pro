@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo, Suspense, lazy, useCallback } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import { Fish, Ship, Waves, RefreshCw, Wifi, WifiOff, Sun, Moon, CheckCircle,
   Shield, Clock, Lightbulb, TrendingUp, TrendingDown, Minus } from 'lucide-react';
-import { ErrorBoundary } from '@utahwind/ui';
+import { ErrorBoundary, FeedbackWidget } from '@utahwind/ui';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { useWeatherData, getHourlyForecast, findAllSportWindows } from '@utahwind/weather';
 import { IntelligentRecommendations } from '@utahwind/ui';
@@ -472,6 +473,7 @@ function WaterApp() {
           )}
         </Suspense>
       </div>
+      <FeedbackWidget />
     </div>
   );
 }
@@ -481,6 +483,7 @@ export default function App() {
     <ErrorBoundary name="Utah Water">
       <ThemeProvider>
         <WaterApp />
+        <Analytics />
       </ThemeProvider>
     </ErrorBoundary>
   );
