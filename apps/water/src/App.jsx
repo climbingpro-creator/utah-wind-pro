@@ -14,7 +14,7 @@ import LocationSelector from './components/LocationSelector';
 
 const FishingMode = lazy(() => import('./components/FishingMode'));
 const FlatwaterTemplate = lazy(() => import('./components/FlatwaterTemplate'));
-const WaterMap = lazy(() => import('./components/map/WaterMap'));
+const VectorWaterMap = lazy(() => import('./components/map/VectorWaterMap'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const Login = lazy(() => import('./pages/Login'));
 
@@ -488,7 +488,7 @@ function WaterApp() {
 
         {/* ═══════ THE PLAYGROUND — Interactive Water Map ═══════ */}
         <Suspense fallback={<div className="card animate-pulse h-80 flex items-center justify-center text-slate-500 text-sm">Loading map...</div>}>
-          <WaterMap currentWeatherData={{
+          <VectorWaterMap currentWeatherData={{
             ambientTemp: lakeState?.pws?.temperature ?? null,
             windSpeed: currentWindSpeed ?? null,
             windDirection: currentWindDirection ?? null,
