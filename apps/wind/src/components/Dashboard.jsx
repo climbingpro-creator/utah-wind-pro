@@ -17,6 +17,7 @@ import { calculateCorrelatedWind } from '@utahwind/weather';
 import { monitorSwings } from '@utahwind/weather';
 import { generateBriefing } from '../services/MorningBriefing';
 import TodayHero from './TodayHero';
+import WelcomeCard from './WelcomeCard';
 import { Modal } from '@utahwind/ui';
 import AppHeader from './AppHeader';
 import { Trophy, Calendar, ArrowUpRight, Users } from 'lucide-react';
@@ -476,6 +477,9 @@ export function Dashboard() {
       {!showOnboarding && (
       <Suspense fallback={<div className="max-w-6xl mx-auto px-5 sm:px-8 py-8 space-y-4"><ModuleLoader variant="section" className="h-48" /><ModuleLoader variant="section" className="h-64" /><ModuleLoader /></div>}>
       <main className="max-w-6xl mx-auto px-5 sm:px-8 py-8 section-stack">
+
+        {/* ═══════════ 0. WELCOME CARD — First-time visitors ═══════════ */}
+        <WelcomeCard />
 
         {/* ═══════════ 1. THE VERDICT — Activity Matrix ═══════════ */}
         <TodayHero
