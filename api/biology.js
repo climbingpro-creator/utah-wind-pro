@@ -16,10 +16,13 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 // ─── Schema ──────────────────────────────────────────────────
 
 const BASE_PROPERTIES = {
-  species:     { type: SchemaType.STRING, description: 'Comma-separated list of 3-6 primary sport fish species for this specific location' },
-  forage:      { type: SchemaType.STRING, description: 'Comma-separated list of primary forage organisms and baitfish' },
-  targetDepth: { type: SchemaType.STRING, description: 'Recommended angling depth range with units, or structure type' },
-  regulations: { type: SchemaType.STRING, description: 'Key fishing regulations, seasons, or permit requirements' },
+  species:        { type: SchemaType.STRING, description: 'Comma-separated list of 3-6 primary sport fish species for this specific location' },
+  forage:         { type: SchemaType.STRING, description: 'Comma-separated list of primary forage organisms and baitfish' },
+  forageProfile:  { type: SchemaType.STRING, description: 'Detailed forage description: for each major baitfish/forage species, include typical size range (inches) and coloring/pattern so an angler can match lures. Example: "Pacific Sardine (4-7in, silver-blue back), Northern Anchovy (3-5in, translucent silver), Market Squid (3-8in, white/pink iridescent)"' },
+  seasonalForage: { type: SchemaType.STRING, description: 'Month-by-month or seasonal breakdown of which forage species are most abundant and available in this area. Example: "Spring: anchovy schools peak nearshore. Summer: squid spawn runs, sardine bait balls. Fall: mackerel move inshore. Winter: herring runs, fewer baitfish."' },
+  pelagicCalendar: { type: SchemaType.STRING, description: 'Seasonal migration calendar of pelagic or migratory game fish passing through this specific area. Example: "May-Jun: Yellowtail arrive from south. Jul-Sep: Dorado push north, Marlin peak. Oct-Nov: Bluefin tuna move through. Winter: Gray whales transit, limited pelagic activity."' },
+  targetDepth:    { type: SchemaType.STRING, description: 'Recommended angling depth range with units, or structure type' },
+  regulations:    { type: SchemaType.STRING, description: 'Key fishing regulations, seasons, or permit requirements' },
 };
 
 const VISUAL_PROPERTIES = {
@@ -34,7 +37,7 @@ function buildSchema(hasImage) {
     properties: hasImage
       ? { ...BASE_PROPERTIES, ...VISUAL_PROPERTIES }
       : BASE_PROPERTIES,
-    required: ['species', 'forage', 'targetDepth', 'regulations'],
+    required: ['species', 'forage', 'forageProfile', 'seasonalForage', 'pelagicCalendar', 'targetDepth', 'regulations'],
   };
 }
 
@@ -93,10 +96,17 @@ export default async function handler(req, res) {
 
     const typeLabel = type === 'ocean' ? 'ocean/sea' : type;
     const coordContext = lat && lng ? ` The coordinates are ${lat}, ${lng}.` : '';
+    const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const currentMonth = monthNames[new Date().getMonth()];
+
+    const forageInstructions = `
+For the forage profile: describe each major baitfish/forage species with its typical SIZE RANGE in inches and COLORING/PATTERN so an angler can select the correct lure color and size.
+For the seasonal forage: describe which forage species are most available during each season or month, with emphasis on what is happening RIGHT NOW in ${currentMonth}.
+For the pelagic calendar: describe which migratory or pelagic game fish species pass through this area during each season, highlighting what is running RIGHT NOW in ${currentMonth}.`;
 
     const textPrompt = hasImage
-      ? `You are a geospatial marine analyst and fisheries expert. Analyze the provided satellite image of the ${typeLabel} at or near: "${name}".${coordContext} Identify water clarity, visible submerged structures (reefs, weed beds, drop-offs, channels), bank accessibility, and color gradients that indicate depth changes or thermoclines. Also provide the biological and angling profile: the most important regional sport fish species, primary forage/baitfish, recommended depth or structure to fish, and any notable regulations. Give one specific tactical clue for an angler based on what you see in the image. Rate habitat complexity from 1-10.`
-      : `You are a marine biologist and fisheries expert. Generate a detailed biological and angling profile for the ${typeLabel} at or near: "${name}".${coordContext} Include the most important regional sport fish species that anglers target in this specific area, the primary local forage/baitfish, recommended depth or structure to fish, and any notable fishing regulations or permit requirements. Be specific to this exact geographic location — not generic.`;
+      ? `You are a geospatial marine analyst and fisheries expert. Analyze the provided satellite image of the ${typeLabel} at or near: "${name}".${coordContext} It is currently ${currentMonth}. Identify water clarity, visible submerged structures (reefs, weed beds, drop-offs, channels), bank accessibility, and color gradients that indicate depth changes or thermoclines. Provide the biological and angling profile: the most important regional sport fish species, primary forage/baitfish with sizes and colors, recommended depth, and regulations.${forageInstructions} Give one specific tactical clue for an angler based on what you see in the image. Rate habitat complexity from 1-10.`
+      : `You are a marine biologist and fisheries expert. Generate a detailed biological and angling profile for the ${typeLabel} at or near: "${name}".${coordContext} It is currently ${currentMonth}. Include the most important regional sport fish species that anglers target in this specific area, recommended depth or structure to fish, and notable fishing regulations. Be specific to this exact geographic location — not generic.${forageInstructions}`;
 
     // Build the content parts array
     const parts = [textPrompt];
@@ -132,6 +142,9 @@ function buildFallback(name, type) {
     return {
       species: 'Roosterfish, Dorado (Mahi-Mahi), Yellowtail, Marlin, Snapper',
       forage: 'Sardines, mackerel, squid, flying fish',
+      forageProfile: 'Sardine (4-7in, silver-blue back), Mackerel (6-10in, green-blue bars), Squid (3-8in, white/pink)',
+      seasonalForage: 'Check local bait reports for current conditions',
+      pelagicCalendar: 'Check local charter reports for current pelagic activity',
       targetDepth: '30-200 ft (nearshore reefs to blue water)',
       regulations: 'Check local marine authority for permits and bag limits',
       _fallback: true,
@@ -140,6 +153,9 @@ function buildFallback(name, type) {
   return {
     species: 'Local game fish',
     forage: 'Regional baitfish and aquatic insects',
+    forageProfile: 'Check local reports for current forage sizes and patterns',
+    seasonalForage: 'Check local reports for seasonal forage availability',
+    pelagicCalendar: 'No significant pelagic migrations for inland waters',
     targetDepth: 'Variable — check local reports',
     regulations: 'Check local wildlife department for limits and seasons',
     _fallback: true,

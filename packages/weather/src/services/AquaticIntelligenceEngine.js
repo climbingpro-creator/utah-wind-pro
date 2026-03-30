@@ -763,6 +763,12 @@ async function buildOceanProfile(lat, lng, name, ambientTemp) {
       forage: bio.forage || null,
     } : { name, species: [], targetDepth: null, regulations: null, forage: null },
 
+    anglerIntel: {
+      forageProfile: bio?.forageProfile || null,
+      seasonalForage: bio?.seasonalForage || null,
+      pelagicCalendar: bio?.pelagicCalendar || null,
+    },
+
     visualIntel: bio?._visual ? {
       analysis: bio.visualAnalysis || null,
       clue: bio.clue || null,
@@ -827,6 +833,12 @@ async function buildDynamicLakeProfile(lat, lng, name, elevation, ambientTemp) {
       regulations: bio?.regulations || null,
       forage: bio?.forage || null,
       season,
+    },
+
+    anglerIntel: {
+      forageProfile: bio?.forageProfile || null,
+      seasonalForage: bio?.seasonalForage || null,
+      pelagicCalendar: bio?.pelagicCalendar || null,
     },
 
     visualIntel: bio?._visual ? {

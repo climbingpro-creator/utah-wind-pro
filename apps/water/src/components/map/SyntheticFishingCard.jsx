@@ -1,4 +1,4 @@
-import { X, Thermometer, Droplets, Activity, Waves, Fish, Gauge, Anchor, MapPin, Shield, Navigation, Zap, Eye, Crosshair, Satellite } from 'lucide-react';
+import { X, Thermometer, Droplets, Activity, Waves, Fish, Gauge, Anchor, MapPin, Shield, Navigation, Zap, Eye, Crosshair, Satellite, Palette, Calendar, Ship } from 'lucide-react';
 
 const CLARITY_STYLE = {
   'blown out':       { color: 'text-red-400',     bg: 'bg-red-500/10',     border: 'border-red-500/20',     dot: 'bg-red-500' },
@@ -236,6 +236,49 @@ function VisualIntelSection({ visual }) {
   );
 }
 
+function AnglerIntelSection({ intel, isOcean }) {
+  if (!intel) return null;
+  const hasContent = intel.forageProfile || intel.seasonalForage || intel.pelagicCalendar;
+  if (!hasContent) return null;
+
+  const accent = isOcean ? 'text-blue-400' : 'text-emerald-400';
+  const borderAccent = isOcean ? 'border-blue-500/15' : 'border-emerald-500/15';
+
+  return (
+    <div className="px-3 pb-1.5 space-y-1.5">
+      {intel.forageProfile && (
+        <div className={`rounded-lg bg-white/[0.03] border ${borderAccent} px-2.5 py-1.5`}>
+          <div className="flex items-center gap-1 mb-0.5">
+            <Palette className={`w-2.5 h-2.5 ${accent}`} />
+            <span className="text-[8px] font-bold uppercase tracking-wider text-slate-500">Match the Hatch — Size & Color</span>
+          </div>
+          <p className="text-[10px] text-slate-200 leading-relaxed">{intel.forageProfile}</p>
+        </div>
+      )}
+
+      {intel.seasonalForage && (
+        <div className={`rounded-lg bg-white/[0.03] border ${borderAccent} px-2.5 py-1.5`}>
+          <div className="flex items-center gap-1 mb-0.5">
+            <Calendar className={`w-2.5 h-2.5 ${accent}`} />
+            <span className="text-[8px] font-bold uppercase tracking-wider text-slate-500">Seasonal Forage</span>
+          </div>
+          <p className="text-[10px] text-slate-200 leading-relaxed">{intel.seasonalForage}</p>
+        </div>
+      )}
+
+      {intel.pelagicCalendar && (
+        <div className={`rounded-lg bg-white/[0.03] border ${borderAccent} px-2.5 py-1.5`}>
+          <div className="flex items-center gap-1 mb-0.5">
+            <Ship className={`w-2.5 h-2.5 ${accent}`} />
+            <span className="text-[8px] font-bold uppercase tracking-wider text-slate-500">Migration Calendar</span>
+          </div>
+          <p className="text-[10px] text-slate-200 leading-relaxed">{intel.pelagicCalendar}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function SyntheticFishingCard({ data, isLoading, onClose }) {
   if (isLoading) {
     return (
@@ -363,6 +406,9 @@ export default function SyntheticFishingCard({ data, isLoading, onClose }) {
         <RiverTelemetryGrid data={data} />
       )}
 
+      {/* Angler Intel — forage sizes/colors, seasonal patterns, pelagic migrations */}
+      <AnglerIntelSection intel={data.anglerIntel} isOcean={isOcean} />
+
       {/* Visual Intelligence (satellite multimodal analysis) */}
       <VisualIntelSection visual={data.visualIntel} />
 
@@ -390,8 +436,10 @@ export default function SyntheticFishingCard({ data, isLoading, onClose }) {
       <div className="px-3 pb-1.5">
         <div className="rounded-lg bg-white/[0.03] border border-white/[0.06] px-2.5 py-2">
           <div className="flex items-center gap-2 mb-1">
-            <Fish className={`w-3.5 h-3.5 ${data.thermalStress === 'critical' ? 'text-red-400' : 'text-amber-400'}`} />
-            <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Bug Report</span>
+            <Fish className={`w-3.5 h-3.5 ${data.thermalStress === 'critical' ? 'text-red-400' : isOcean ? 'text-blue-400' : 'text-amber-400'}`} />
+            <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
+              {isOcean ? 'Forage Report' : 'Bug Report'}
+            </span>
           </div>
           <p className="text-[11px] font-semibold text-emerald-300/90 leading-relaxed">{data.hatch}</p>
           <p className="text-[10px] text-slate-400 mt-1">{data.feedingActivity}</p>
