@@ -17,6 +17,10 @@ function loadCached() {
   return null;
 }
 
+export function getModelContext() {
+  return loadCached() || {};
+}
+
 function saveCache(ctx) {
   try {
     localStorage.setItem(LS_KEY, JSON.stringify(ctx));
