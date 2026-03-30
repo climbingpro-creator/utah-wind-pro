@@ -119,12 +119,9 @@ function generateWaterBriefing(activity, speed, gust, pressureData, boatingPred)
   return { headline, body, bestAction, bullets, excitement: s <= 3 ? 5 : s <= 8 ? 3 : 1 };
 }
 
-function WaterApp() {
-  const { theme, toggleTheme } = useTheme();
-  const isDark = theme === 'dark';
-  const { user, signOut } = useAuth();
+function AppShell() {
   const hash = useHashRoute();
-  const isAdmin = user && ADMIN_EMAILS.includes(user.email?.toLowerCase());
+  const { user } = useAuth();
 
   if (hash === '#admin') {
     return (
@@ -141,6 +138,16 @@ function WaterApp() {
       </Suspense>
     );
   }
+
+  return <WaterApp />;
+}
+
+function WaterApp() {
+  const { theme, toggleTheme } = useTheme();
+  const isDark = theme === 'dark';
+  const { user, signOut } = useAuth();
+  const isAdmin = user && ADMIN_EMAILS.includes(user.email?.toLowerCase());
+
   const [selectedActivity, setSelectedActivity] = useState('fishing');
   const [selectedLocation, setSelectedLocation] = useState(() =>
     localStorage.getItem('uwg_default_location') || 'strawberry'
@@ -551,7 +558,7 @@ export default function App() {
     <ErrorBoundary name="Utah Water">
       <AuthProvider>
         <ThemeProvider>
-          <WaterApp />
+          <AppShell />
           <Analytics />
         </ThemeProvider>
       </AuthProvider>
