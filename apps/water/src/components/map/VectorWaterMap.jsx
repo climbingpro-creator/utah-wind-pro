@@ -70,12 +70,11 @@ export function VectorWaterMap({ currentWeatherData = {} }) {
     const map = mapRef.current?.getMap();
     if (!map) return;
 
-    const waterLayerExists = map.getLayer('water-fill') || map.getLayer('water-line') || map.getLayer('water-labels');
+    const layerIds = ['lakes-fill', 'streams-line'].filter(id => map.getLayer(id));
+    const waterLayerExists = layerIds.length > 0;
     
     if (waterLayerExists) {
-      const features = map.queryRenderedFeatures(e.point, {
-        layers: ['water-fill', 'water-line', 'water-labels'].filter(id => map.getLayer(id)),
-      });
+      const features = map.queryRenderedFeatures(e.point, { layers: layerIds });
 
       if (features.length === 0) {
         setSelectedWaterFeature(null);
@@ -87,7 +86,7 @@ export function VectorWaterMap({ currentWeatherData = {} }) {
       const feature = features[0];
       console.log('Clicked feature:', feature);
 
-      const name = feature.properties?.name || feature.properties?.gnis_name || feature.properties?.GNIS_NAME || null;
+      const name = feature.properties?.GNIS_Name || feature.properties?.GNIS_NAME || feature.properties?.gnis_name || feature.properties?.name || null;
       
       if (!name) {
         setSelectedWaterFeature(null);
@@ -96,7 +95,7 @@ export function VectorWaterMap({ currentWeatherData = {} }) {
         return;
       }
 
-      const type = feature.properties?.ftype || feature.properties?.fcode_d || feature.properties?.FTYPE || 'Stream/River';
+      const type = feature.properties?.FType || feature.properties?.FTYPE || feature.properties?.ftype || feature.properties?.fcode_d || 'Stream/River';
       
       setSelectedWaterFeature({
         name,
@@ -196,67 +195,97 @@ export function VectorWaterMap({ currentWeatherData = {} }) {
           <NavigationControl position="top-right" showCompass={true} showZoom={true} />
           <GeolocateControl position="top-right" trackUserLocation={false} />
 
-          {/* PMTiles water features layer */}
+          {/* PMTiles water features — dual-layer USGS NHD dataset */}
           {pmtilesReady && PMTILES_URL && (
             <Source
               id="water-pmtiles"
               type="vector"
               url={`pmtiles://${PMTILES_URL}`}
             >
-              {/* Water body fills (lakes, reservoirs) */}
+              {/* Lakes & Reservoirs (polygon fills) — source-layer: utahlakeshires */}
               <Layer
-                id="water-fill"
+                id="lakes-fill"
                 type="fill"
-                source-layer="water"
-                minzoom={8}
+                source-layer="utahlakeshires"
+                minzoom={6}
                 paint={{
-                  'fill-color': [
-                    'case',
-                    ['==', ['get', 'ftype'], 390], '#3b82f6',
-                    ['==', ['get', 'ftype'], 436], '#0ea5e9',
-                    ['==', ['get', 'ftype'], 460], '#06b6d4',
-                    '#3b82f6'
-                  ],
+                  'fill-color': '#3b82f6',
                   'fill-opacity': [
                     'interpolate', ['linear'], ['zoom'],
-                    8, 0.1,
-                    12, 0.25
+                    6, 0.15,
+                    10, 0.3,
+                    14, 0.4
                   ],
                 }}
               />
-              {/* Stream/river lines */}
               <Layer
-                id="water-line"
+                id="lakes-outline"
                 type="line"
-                source-layer="water"
+                source-layer="utahlakeshires"
+                minzoom={8}
+                paint={{
+                  'line-color': '#1d4ed8',
+                  'line-width': [
+                    'interpolate', ['linear'], ['zoom'],
+                    8, 0.5,
+                    12, 1.5
+                  ],
+                  'line-opacity': 0.6,
+                }}
+              />
+              {/* Streams & Rivers (lines) — source-layer: utahstreamshires */}
+              <Layer
+                id="streams-line"
+                type="line"
+                source-layer="utahstreamshires"
                 minzoom={10}
                 paint={{
-                  'line-color': '#3b82f6',
+                  'line-color': '#0ea5e9',
                   'line-width': [
                     'interpolate', ['linear'], ['zoom'],
                     10, 1,
-                    14, 3,
-                    18, 6
+                    14, 2.5,
+                    18, 5
                   ],
                   'line-opacity': 0.7,
                 }}
               />
-              {/* Water labels */}
+              {/* Lake labels */}
               <Layer
-                id="water-labels"
+                id="lakes-labels"
                 type="symbol"
-                source-layer="water"
-                minzoom={11}
-                filter={['has', 'name']}
+                source-layer="utahlakeshires"
+                minzoom={9}
+                filter={['has', 'GNIS_Name']}
                 layout={{
-                  'text-field': ['get', 'name'],
-                  'text-size': 11,
-                  'text-font': ['Open Sans Regular'],
-                  'text-offset': [0, 0.5],
-                  'text-anchor': 'top',
+                  'text-field': ['get', 'GNIS_Name'],
+                  'text-size': ['interpolate', ['linear'], ['zoom'], 9, 10, 14, 14],
+                  'text-font': ['Open Sans Bold'],
+                  'text-anchor': 'center',
+                  'text-allow-overlap': false,
                 }}
                 paint={{
                   'text-color': '#1e40af',
+                  'text-halo-color': '#ffffff',
+                  'text-halo-width': 2,
+                }}
+              />
+              {/* Stream labels */}
+              <Layer
+                id="streams-labels"
+                type="symbol"
+                source-layer="utahstreamshires"
+                minzoom={12}
+                filter={['has', 'GNIS_Name']}
+                layout={{
+                  'text-field': ['get', 'GNIS_Name'],
+                  'text-size': 10,
+                  'text-font': ['Open Sans Regular'],
+                  'symbol-placement': 'line',
+                  'text-allow-overlap': false,
+                }}
+                paint={{
+                  'text-color': '#0369a1',
                   'text-halo-color': '#ffffff',
                   'text-halo-width': 1.5,
                 }}
