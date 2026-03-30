@@ -669,7 +669,7 @@ export async function generateFisheryProfile(lat, lng, elevation = 4500, current
   return buildRiverProfileWithData(lat, lng, elevation, ambientTemp, usgs);
 }
 
-function buildLakeProfile(lake, elevation, ambientTemp) {
+async function buildLakeProfile(lake, elevation, ambientTemp) {
   const effectiveElevation = lake.elevation || elevation;
   const waterTemp = inferWaterTemp(effectiveElevation, ambientTemp);
 
@@ -687,6 +687,11 @@ function buildLakeProfile(lake, elevation, ambientTemp) {
 
   const month = new Date().getMonth() + 1;
   const season = month <= 3 || month >= 11 ? 'winter' : month <= 5 ? 'spring' : month <= 8 ? 'summer' : 'fall';
+
+  let bio = null;
+  try {
+    bio = await fetchDynamicBioProfile(lake.name, lake.lat, lake.lng, 'lake');
+  } catch { /* non-blocking */ }
 
   return {
     coordinates: { lat: lake.lat, lng: lake.lng },
@@ -706,6 +711,19 @@ function buildLakeProfile(lake, elevation, ambientTemp) {
       distanceMiles: lake.distanceMiles,
       season,
     },
+
+    anglerIntel: {
+      forageProfile: bio?.forageProfile || null,
+      seasonalForage: bio?.seasonalForage || null,
+      pelagicCalendar: bio?.pelagicCalendar || null,
+      lureRecommendations: bio?.lureRecommendations || null,
+      flySelections: bio?.flySelections || null,
+      tackleGuide: bio?.tackleGuide || null,
+      seasonalDepthPattern: bio?.seasonalDepthPattern || null,
+      activeSpeciesNow: bio?.activeSpeciesNow || null,
+    },
+
+    visualIntel: null,
 
     usgsGauge: null,
 
@@ -731,7 +749,6 @@ async function buildOceanProfile(lat, lng, name, ambientTemp) {
     fetchDynamicBioProfile(name, lat, lng, 'ocean'),
   ]);
 
-  // Latitude-based SST estimation for ocean (tropical ≈ 82°F, polar ≈ 35°F)
   const absLat = Math.abs(lat);
   const waterTemp = ambientTemp != null
     ? ambientTemp * 0.85 + 10
@@ -767,6 +784,11 @@ async function buildOceanProfile(lat, lng, name, ambientTemp) {
       forageProfile: bio?.forageProfile || null,
       seasonalForage: bio?.seasonalForage || null,
       pelagicCalendar: bio?.pelagicCalendar || null,
+      lureRecommendations: bio?.lureRecommendations || null,
+      flySelections: bio?.flySelections || null,
+      tackleGuide: bio?.tackleGuide || null,
+      seasonalDepthPattern: bio?.seasonalDepthPattern || null,
+      activeSpeciesNow: bio?.activeSpeciesNow || null,
     },
 
     visualIntel: bio?._visual ? {
@@ -839,6 +861,11 @@ async function buildDynamicLakeProfile(lat, lng, name, elevation, ambientTemp) {
       forageProfile: bio?.forageProfile || null,
       seasonalForage: bio?.seasonalForage || null,
       pelagicCalendar: bio?.pelagicCalendar || null,
+      lureRecommendations: bio?.lureRecommendations || null,
+      flySelections: bio?.flySelections || null,
+      tackleGuide: bio?.tackleGuide || null,
+      seasonalDepthPattern: bio?.seasonalDepthPattern || null,
+      activeSpeciesNow: bio?.activeSpeciesNow || null,
     },
 
     visualIntel: bio?._visual ? {
@@ -877,7 +904,11 @@ async function buildRiverProfile(lat, lng, elevation, ambientTemp) {
 }
 
 async function buildRiverProfileWithData(lat, lng, elevation, ambientTemp, prefetchedUsgs) {
-  const usgs = prefetchedUsgs ?? await fetchNearestUSGSData(lat, lng, 15);
+  const riverName = prefetchedUsgs?.siteName || `River at ${lat.toFixed(2)}, ${lng.toFixed(2)}`;
+  const [usgs, bio] = await Promise.all([
+    prefetchedUsgs ? Promise.resolve(prefetchedUsgs) : fetchNearestUSGSData(lat, lng, 15),
+    fetchDynamicBioProfile(riverName, lat, lng, 'river'),
+  ]);
 
   let waterTemp;
   let dataSource;
@@ -887,7 +918,7 @@ async function buildRiverProfileWithData(lat, lng, elevation, ambientTemp, prefe
     dataSource = `USGS Live Gauge (Site ${usgs.siteId} — ${usgs.siteName}, ${usgs.distanceMiles} mi)`;
   } else {
     waterTemp = inferWaterTemp(elevation, ambientTemp);
-    dataSource = 'Elevation/Thermal Inference';
+    dataSource = bio ? `AI + Thermal Inference — ${riverName}` : 'Elevation/Thermal Inference';
   }
 
   const flow = assessFlowConditions(usgs?.dischargeCFS ?? null, 'river');
@@ -917,7 +948,24 @@ async function buildRiverProfileWithData(lat, lng, elevation, ambientTemp, prefe
     dataSource,
     waterType: 'river',
 
-    lakeIntel: null,
+    lakeIntel: bio ? {
+      name: usgs?.siteName || riverName,
+      species: bio.species ? (Array.isArray(bio.species) ? bio.species : bio.species.split(', ')) : [],
+      targetDepth: bio.targetDepth || null,
+      regulations: bio.regulations || null,
+      forage: bio.forage || null,
+    } : null,
+
+    anglerIntel: {
+      forageProfile: bio?.forageProfile || null,
+      seasonalForage: bio?.seasonalForage || null,
+      pelagicCalendar: bio?.pelagicCalendar || null,
+      lureRecommendations: bio?.lureRecommendations || null,
+      flySelections: bio?.flySelections || null,
+      tackleGuide: bio?.tackleGuide || null,
+      seasonalDepthPattern: bio?.seasonalDepthPattern || null,
+      activeSpeciesNow: bio?.activeSpeciesNow || null,
+    },
 
     usgsGauge: usgs ? {
       siteId: usgs.siteId,
@@ -929,8 +977,8 @@ async function buildRiverProfileWithData(lat, lng, elevation, ambientTemp, prefe
 
     ...flow,
 
-    hatch,
-    feedingActivity,
+    hatch: bio?.forage || hatch,
+    feedingActivity: bio?.forage ? `active — ${bio.forage.toLowerCase().substring(0, 60)}` : feedingActivity,
     thermalStress,
     thermalAdvice,
 

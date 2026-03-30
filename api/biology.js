@@ -23,6 +23,12 @@ const BASE_PROPERTIES = {
   pelagicCalendar: { type: SchemaType.STRING, description: 'Seasonal migration calendar of pelagic or migratory game fish passing through this specific area. Example: "May-Jun: Yellowtail arrive from south. Jul-Sep: Dorado push north, Marlin peak. Oct-Nov: Bluefin tuna move through. Winter: Gray whales transit, limited pelagic activity."' },
   targetDepth:    { type: SchemaType.STRING, description: 'Recommended angling depth range with units, or structure type' },
   regulations:    { type: SchemaType.STRING, description: 'Key fishing regulations, seasons, or permit requirements' },
+
+  lureRecommendations: { type: SchemaType.STRING, description: 'Top 3-5 specific conventional lure recommendations for RIGHT NOW based on current forage, water temp, clarity, and time of year. Include lure type, size, and color. Example: "3/8oz white spinnerbait (match shad), 4in green pumpkin Senko (finesse for pressured fish), 1/2oz chartreuse crankbait (stained water), jerkbait in ghost minnow (cold water suspending)"' },
+  flySelections:       { type: SchemaType.STRING, description: 'Top 3-5 fly patterns for fly fishing RIGHT NOW. Include pattern name, hook size, and why. For rivers: match current insect hatches (dry flies, nymphs, emergers, streamers). For lakes: match forage (leeches, scuds, minnow patterns, chironomids). Example: "Size 16 Parachute Adams (PMD hatch), Size 18 RS2 emerger (BWO), Size 10 Woolly Bugger olive (streamer for browns), Size 14 Copper John (all-purpose nymph)"' },
+  tackleGuide:         { type: SchemaType.STRING, description: 'Recommended tackle setup: rod weight/length, line type (mono/fluoro/braid), leader/tippet, and terminal gear. Example: "Medium-light 6\'6\" spinning rod, 6lb fluorocarbon, size 6 hook. Fly: 5wt 9ft rod, 5X tippet, floating line with 9ft leader."' },
+  seasonalDepthPattern: { type: SchemaType.STRING, description: 'Where fish are holding in the water column RIGHT NOW based on season, thermocline, and water temp. Be specific about depth ranges and structure. Example: "Late March: fish transitioning from deep winter holds (30-50ft) to pre-spawn staging areas (8-15ft) near rocky points. Thermocline forming at 20ft. Morning: shallow flats. Afternoon: drop-offs and shaded banks."' },
+  activeSpeciesNow:    { type: SchemaType.STRING, description: 'Which specific species are most active and catchable RIGHT NOW based on current month and water conditions. Include what they are doing (spawning, feeding, staging). Example: "Rainbow trout: very active pre-spawn, aggressive on streamers. Brown trout: moderate, holding deep. Largemouth bass: staging on secondary points pre-spawn. Crappie: moving to brush piles in 8-12ft."' },
 };
 
 const VISUAL_PROPERTIES = {
@@ -37,7 +43,7 @@ function buildSchema(hasImage) {
     properties: hasImage
       ? { ...BASE_PROPERTIES, ...VISUAL_PROPERTIES }
       : BASE_PROPERTIES,
-    required: ['species', 'forage', 'forageProfile', 'seasonalForage', 'pelagicCalendar', 'targetDepth', 'regulations'],
+    required: ['species', 'forage', 'forageProfile', 'seasonalForage', 'pelagicCalendar', 'targetDepth', 'regulations', 'lureRecommendations', 'flySelections', 'tackleGuide', 'seasonalDepthPattern', 'activeSpeciesNow'],
   };
 }
 
@@ -122,14 +128,23 @@ export default async function handler(req, res) {
     const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
     const currentMonth = monthNames[new Date().getMonth()];
 
+    const isFreshwater = type === 'lake' || type === 'river';
+
     const forageInstructions = `
 For the forage profile: describe each major baitfish/forage species with its typical SIZE RANGE in inches and COLORING/PATTERN so an angler can select the correct lure color and size.
 For the seasonal forage: describe which forage species are most available during each season or month, with emphasis on what is happening RIGHT NOW in ${currentMonth}.
-For the pelagic calendar: describe which migratory or pelagic game fish species pass through this area during each season, highlighting what is running RIGHT NOW in ${currentMonth}.`;
+For the pelagic calendar: ${isFreshwater ? 'describe seasonal fish movement patterns — spawning runs, stocking schedules, and species migrations within this water body by season' : 'describe which migratory or pelagic game fish species pass through this area during each season'}, highlighting what is happening RIGHT NOW in ${currentMonth}.`;
+
+    const anglerInstructions = `
+For lure recommendations: give 3-5 SPECIFIC conventional lure/bait selections for RIGHT NOW (${currentMonth}). Include type, size, and color that matches the current forage and water conditions.
+For fly selections: give 3-5 SPECIFIC fly patterns for fly fishing RIGHT NOW. ${isFreshwater ? 'For rivers match the active insect hatches (dries, nymphs, emergers). For lakes match the forage base (streamers, chironomids, leeches, scuds).' : 'Include saltwater fly patterns like Clousers, Deceivers, crab patterns.'} Include pattern name, hook size, and reasoning.
+For tackle guide: recommend specific rod/reel/line setup for both conventional and fly fishing at this location. Include line weight, leader size, and terminal tackle.
+For seasonal depth pattern: describe EXACTLY where fish are positioned in the water column RIGHT NOW in ${currentMonth}. Include depth ranges, structure types, and time-of-day movement patterns.
+For active species now: list which species are most catchable RIGHT NOW and what they are doing (spawning, staging, feeding, holding deep, etc.).`;
 
     const textPrompt = hasImage
-      ? `You are a geospatial marine analyst and fisheries expert. Analyze the provided satellite image of the ${typeLabel} at or near: "${name}".${coordContext} It is currently ${currentMonth}. Identify water clarity, visible submerged structures (reefs, weed beds, drop-offs, channels), bank accessibility, and color gradients that indicate depth changes or thermoclines. Provide the biological and angling profile: the most important regional sport fish species, primary forage/baitfish with sizes and colors, recommended depth, and regulations.${forageInstructions} Give one specific tactical clue for an angler based on what you see in the image. Rate habitat complexity from 1-10.`
-      : `You are a marine biologist and fisheries expert. Generate a detailed biological and angling profile for the ${typeLabel} at or near: "${name}".${coordContext} It is currently ${currentMonth}. Include the most important regional sport fish species that anglers target in this specific area, recommended depth or structure to fish, and notable fishing regulations. Be specific to this exact geographic location — not generic.${forageInstructions}`;
+      ? `You are a geospatial marine analyst and fisheries expert. Analyze the provided satellite image of the ${typeLabel} at or near: "${name}".${coordContext} It is currently ${currentMonth}. Identify water clarity, visible submerged structures (reefs, weed beds, drop-offs, channels), bank accessibility, and color gradients that indicate depth changes or thermoclines. Provide the biological and angling profile: the most important regional sport fish species, primary forage/baitfish with sizes and colors, recommended depth, and regulations.${forageInstructions}${anglerInstructions} Give one specific tactical clue for an angler based on what you see in the image. Rate habitat complexity from 1-10.`
+      : `You are a marine biologist and fisheries expert. Generate a detailed biological and angling profile for the ${typeLabel} at or near: "${name}".${coordContext} It is currently ${currentMonth}. Include the most important regional sport fish species that anglers target in this specific area, recommended depth or structure to fish, and notable fishing regulations. Be specific to this exact geographic location — not generic.${forageInstructions}${anglerInstructions}`;
 
     // Build the content parts array
     const parts = [textPrompt];
@@ -161,6 +176,15 @@ For the pelagic calendar: describe which migratory or pelagic game fish species 
 // ─── Fallback ────────────────────────────────────────────────
 
 function buildFallback(name, type) {
+  const shared = {
+    lureRecommendations: 'Check local tackle shop for current recommendations',
+    flySelections: 'Check local fly shop for current hatch chart',
+    tackleGuide: 'Medium-action rod appropriate for target species',
+    seasonalDepthPattern: 'Variable — check local reports for current depth patterns',
+    activeSpeciesNow: 'Check local reports for current species activity',
+    _fallback: true,
+  };
+
   if (type === 'ocean') {
     return {
       species: 'Roosterfish, Dorado (Mahi-Mahi), Yellowtail, Marlin, Snapper',
@@ -170,7 +194,7 @@ function buildFallback(name, type) {
       pelagicCalendar: 'Check local charter reports for current pelagic activity',
       targetDepth: '30-200 ft (nearshore reefs to blue water)',
       regulations: 'Check local marine authority for permits and bag limits',
-      _fallback: true,
+      ...shared,
     };
   }
   return {
@@ -181,6 +205,6 @@ function buildFallback(name, type) {
     pelagicCalendar: 'No significant pelagic migrations for inland waters',
     targetDepth: 'Variable — check local reports',
     regulations: 'Check local wildlife department for limits and seasons',
-    _fallback: true,
+    ...shared,
   };
 }

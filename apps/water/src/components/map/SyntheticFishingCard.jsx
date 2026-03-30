@@ -1,4 +1,4 @@
-import { X, Thermometer, Droplets, Activity, Waves, Fish, Gauge, Anchor, MapPin, Shield, Navigation, Zap, Eye, Crosshair, Satellite, Palette, Calendar, Ship } from 'lucide-react';
+import { X, Thermometer, Droplets, Activity, Waves, Fish, Gauge, Anchor, MapPin, Shield, Navigation, Zap, Eye, Crosshair, Satellite, Palette, Calendar, Ship, Target, FishingRod, Bug, Layers, Flame } from 'lucide-react';
 
 const CLARITY_STYLE = {
   'blown out':       { color: 'text-red-400',     bg: 'bg-red-500/10',     border: 'border-red-500/20',     dot: 'bg-red-500' },
@@ -236,6 +236,75 @@ function VisualIntelSection({ visual }) {
   );
 }
 
+function TacticalGearSection({ intel, isOcean }) {
+  if (!intel) return null;
+  const hasContent = intel.lureRecommendations || intel.flySelections || intel.tackleGuide || intel.seasonalDepthPattern || intel.activeSpeciesNow;
+  if (!hasContent) return null;
+
+  const accent = isOcean ? 'text-blue-400' : 'text-emerald-400';
+  const borderAccent = isOcean ? 'border-blue-500/15' : 'border-emerald-500/15';
+  const headerAccent = isOcean ? 'text-blue-400/80' : 'text-emerald-400/80';
+
+  return (
+    <div className="px-3 pb-1.5 space-y-1.5">
+      <div className="flex items-center gap-1.5 pt-1">
+        <FishingRod className={`w-3 h-3 ${headerAccent}`} />
+        <span className={`text-[9px] font-bold uppercase tracking-wider ${headerAccent}`}>Tactical Guide</span>
+      </div>
+
+      {intel.activeSpeciesNow && (
+        <div className={`rounded-lg bg-white/[0.03] border ${borderAccent} px-2.5 py-1.5`}>
+          <div className="flex items-center gap-1 mb-0.5">
+            <Flame className={`w-2.5 h-2.5 ${accent}`} />
+            <span className="text-[8px] font-bold uppercase tracking-wider text-slate-500">Active Species Now</span>
+          </div>
+          <p className="text-[10px] text-slate-200 leading-relaxed">{intel.activeSpeciesNow}</p>
+        </div>
+      )}
+
+      {intel.seasonalDepthPattern && (
+        <div className={`rounded-lg bg-white/[0.03] border ${borderAccent} px-2.5 py-1.5`}>
+          <div className="flex items-center gap-1 mb-0.5">
+            <Layers className={`w-2.5 h-2.5 ${accent}`} />
+            <span className="text-[8px] font-bold uppercase tracking-wider text-slate-500">Depth Pattern</span>
+          </div>
+          <p className="text-[10px] text-slate-200 leading-relaxed">{intel.seasonalDepthPattern}</p>
+        </div>
+      )}
+
+      {intel.lureRecommendations && (
+        <div className={`rounded-lg bg-white/[0.03] border ${borderAccent} px-2.5 py-1.5`}>
+          <div className="flex items-center gap-1 mb-0.5">
+            <Target className={`w-2.5 h-2.5 ${accent}`} />
+            <span className="text-[8px] font-bold uppercase tracking-wider text-slate-500">Lure Selection</span>
+          </div>
+          <p className="text-[10px] text-slate-200 leading-relaxed">{intel.lureRecommendations}</p>
+        </div>
+      )}
+
+      {intel.flySelections && (
+        <div className={`rounded-lg bg-white/[0.03] border ${borderAccent} px-2.5 py-1.5`}>
+          <div className="flex items-center gap-1 mb-0.5">
+            <Bug className={`w-2.5 h-2.5 ${accent}`} />
+            <span className="text-[8px] font-bold uppercase tracking-wider text-slate-500">Fly Box</span>
+          </div>
+          <p className="text-[10px] text-slate-200 leading-relaxed">{intel.flySelections}</p>
+        </div>
+      )}
+
+      {intel.tackleGuide && (
+        <div className={`rounded-lg bg-white/[0.03] border ${borderAccent} px-2.5 py-1.5`}>
+          <div className="flex items-center gap-1 mb-0.5">
+            <FishingRod className={`w-2.5 h-2.5 ${accent}`} />
+            <span className="text-[8px] font-bold uppercase tracking-wider text-slate-500">Tackle Setup</span>
+          </div>
+          <p className="text-[10px] text-slate-200 leading-relaxed">{intel.tackleGuide}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function AnglerIntelSection({ intel, isOcean }) {
   if (!intel) return null;
   const hasContent = intel.forageProfile || intel.seasonalForage || intel.pelagicCalendar;
@@ -404,11 +473,17 @@ export default function SyntheticFishingCard({ data, isLoading, onClose }) {
       ) : isLake ? (
         <LakeIntelGrid intel={data.lakeIntel} isOcean={false} />
       ) : (
-        <RiverTelemetryGrid data={data} />
+        <>
+          <RiverTelemetryGrid data={data} />
+          <LakeIntelGrid intel={data.lakeIntel} isOcean={false} />
+        </>
       )}
 
       {/* Angler Intel — forage sizes/colors, seasonal patterns, pelagic migrations */}
       <AnglerIntelSection intel={data.anglerIntel} isOcean={isOcean} />
+
+      {/* Tactical Guide — lures, flies, tackle, depth patterns, active species */}
+      <TacticalGearSection intel={data.anglerIntel} isOcean={isOcean} />
 
       {/* Visual Intelligence (satellite multimodal analysis) */}
       <VisualIntelSection visual={data.visualIntel} />
