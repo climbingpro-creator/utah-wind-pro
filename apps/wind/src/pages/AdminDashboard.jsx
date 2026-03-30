@@ -5,7 +5,7 @@ import {
   MessageSquare, ExternalLink, RefreshCw, Trash2, BarChart3, CreditCard,
 } from 'lucide-react';
 
-const ADMIN_EMAIL = 'tyler@aspenearth.com';
+const ALLOWED_ADMINS = ['tyler@aspenearth.com', 'climbingpro@gmail.com'];
 
 const TYPE_CONFIG = {
   bug:     { label: 'Bug Report',       icon: Bug,           color: 'text-red-400',    bg: 'bg-red-500/10 border-red-500/20' },
@@ -55,7 +55,7 @@ export default function AdminDashboard() {
       }
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        if (user?.email?.toLowerCase() === ADMIN_EMAIL) {
+        if (ALLOWED_ADMINS.includes(user?.email?.toLowerCase())) {
           setAuthorized(true);
         } else {
           window.location.hash = '';
