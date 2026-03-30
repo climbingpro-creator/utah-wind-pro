@@ -358,29 +358,35 @@ function buildSatelliteUrl(lat, lng) {
 function _buildBioUrl(name, lat, lng, type, imageUrl) {
   const params = new URLSearchParams({ name, lat: String(lat), lng: String(lng), type });
   if (imageUrl) params.set('imageUrl', imageUrl);
-  const origin = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_ORIGIN)
-    || 'https://utah-wind-pro.vercel.app';
-  return `${origin}/api/biology?${params}`;
+  return `/api/biology?${params}`;
 }
 
 async function fetchDynamicBioProfile(name, lat, lng, type = 'lake') {
-  const origin = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_ORIGIN)
-    || 'https://utah-wind-pro.vercel.app';
-  const url = `${origin}/api/biology?name=${encodeURIComponent(name)}&lat=${lat}&lng=${lng}&type=${type}`;
-  console.error('[BioProfile] Fetching:', url);
+  const url = `/api/biology?name=${encodeURIComponent(name)}&lat=${lat}&lng=${lng}&type=${type}`;
+  console.log('[BioProfile] Fetching:', url);
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 15000);
     const res = await fetch(url, { signal: controller.signal });
     clearTimeout(timer);
-    console.error('[BioProfile] Status:', res.status);
-    if (!res.ok) return null;
+
+    if (!res.ok) {
+      console.warn('[BioProfile] HTTP', res.status);
+      return null;
+    }
+
+    const ct = res.headers.get('content-type') || '';
+    if (!ct.includes('json')) {
+      console.warn('[BioProfile] Non-JSON response:', ct);
+      return null;
+    }
+
     const data = await res.json();
     data._satelliteUrl = buildSatelliteUrl(lat, lng);
-    console.error('[BioProfile] Got data:', Object.keys(data));
+    console.log('[BioProfile] OK:', data.species?.substring(0, 40));
     return data;
   } catch (err) {
-    console.error('[BioProfile] Error:', err?.name, err?.message);
+    console.warn('[BioProfile] Error:', err?.message);
     return null;
   }
 }

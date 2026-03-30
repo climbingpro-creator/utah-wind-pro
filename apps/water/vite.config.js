@@ -16,4 +16,12 @@ export default defineConfig({
     tailwindcss(),
     visualizer({ open: true, filename: 'bundle-stats.html', gzipSize: true }),
   ],
+  server: {
+    proxy: {
+      '/api/biology': {
+        target: 'https://utah-wind-pro.vercel.app',
+        changeOrigin: true,
+      },
+    },
+  },
 })
