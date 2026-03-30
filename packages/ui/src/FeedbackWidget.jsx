@@ -51,7 +51,7 @@ export function FeedbackWidget({ supabase, userEmail }) {
         setStatus('idle');
       }, 2000);
     } catch (err) {
-      console.error('[FeedbackWidget]', err);
+      console.error('[FeedbackWidget]', err?.message || err?.details || JSON.stringify(err));
       setStatus('error');
     }
   }
