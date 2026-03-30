@@ -14,7 +14,7 @@ import { SPOT_SLUG_MAP } from '../config/spotSlugs';
 import { Trophy, Calendar, ArrowUpRight, Users } from 'lucide-react';
 
 const DetailedPanels = lazy(() => import('./DetailedPanels'));
-const WindMap = lazy(() => import('./WindMap').then(m => ({ default: m.WindMap })));
+const VectorWindMap = lazy(() => import('./VectorWindMap').then(m => ({ default: m.VectorWindMap })));
 const NotificationSettings = lazy(() => import('./NotificationSettings').then(m => ({ default: m.NotificationSettings })));
 const LearningDashboard = lazy(() => import('./LearningDashboard'));
 const ParaglidingMode = lazy(() => import('./ParaglidingMode'));
@@ -396,7 +396,7 @@ export function Dashboard() {
           </Suspense>
 
           <Suspense fallback={<ChunkFallback className="h-80" />}>
-            <WindMap
+            <VectorWindMap
               selectedLake={selectedLake}
               windData={{
                 direction: lakeState?.pws?.windDirection || lakeState?.wind?.stations?.[0]?.direction,
