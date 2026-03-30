@@ -1,10 +1,11 @@
 import { useState, useEffect, useMemo, Suspense, lazy, useCallback } from 'react';
 import { Analytics } from '@vercel/analytics/react';
 import { Fish, Ship, Waves, RefreshCw, Wifi, WifiOff, Sun, Moon, CheckCircle,
-  Shield, Clock, Lightbulb, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+  Shield, Clock, Lightbulb, TrendingUp, TrendingDown, Minus, LogIn, LogOut } from 'lucide-react';
 import { ErrorBoundary, FeedbackWidget, initAnalytics, trackPageView } from '@utahwind/ui';
 import { supabase } from '@utahwind/database';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { useWeatherData, getHourlyForecast, findAllSportWindows } from '@utahwind/weather';
 import { IntelligentRecommendations } from '@utahwind/ui';
 import { predictGlass } from './services/BoatingPredictor';
@@ -14,6 +15,20 @@ import LocationSelector from './components/LocationSelector';
 const FishingMode = lazy(() => import('./components/FishingMode'));
 const FlatwaterTemplate = lazy(() => import('./components/FlatwaterTemplate'));
 const WaterMap = lazy(() => import('./components/map/WaterMap'));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const Login = lazy(() => import('./pages/Login'));
+
+const ADMIN_EMAILS = ['tyler@aspenearth.com', 'climbingpro@gmail.com'];
+
+function useHashRoute() {
+  const [hash, setHash] = useState(window.location.hash);
+  useEffect(() => {
+    const onHash = () => setHash(window.location.hash);
+    window.addEventListener('hashchange', onHash);
+    return () => window.removeEventListener('hashchange', onHash);
+  }, []);
+  return hash;
+}
 
 const WATER_ACTIVITIES = [
   { id: 'fishing', name: 'Fishing', icon: Fish, description: 'Lakes & rivers — pressure, hatches, solunar', wantsCalm: true },
@@ -107,6 +122,25 @@ function generateWaterBriefing(activity, speed, gust, pressureData, boatingPred)
 function WaterApp() {
   const { theme, toggleTheme } = useTheme();
   const isDark = theme === 'dark';
+  const { user, signOut } = useAuth();
+  const hash = useHashRoute();
+  const isAdmin = user && ADMIN_EMAILS.includes(user.email?.toLowerCase());
+
+  if (hash === '#admin') {
+    return (
+      <Suspense fallback={<div className="flex items-center justify-center min-h-screen text-white/50">Loading admin...</div>}>
+        <AdminDashboard />
+      </Suspense>
+    );
+  }
+
+  if (hash === '#login') {
+    return (
+      <Suspense fallback={<div className="flex items-center justify-center min-h-screen text-white/50">Loading...</div>}>
+        <Login />
+      </Suspense>
+    );
+  }
   const [selectedActivity, setSelectedActivity] = useState('fishing');
   const [selectedLocation, setSelectedLocation] = useState(() =>
     localStorage.getItem('uwg_default_location') || 'strawberry'
@@ -218,8 +252,8 @@ function WaterApp() {
                 Utah Water & Glass
               </h1>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5 text-[11px] font-medium text-[var(--text-tertiary)]">
+            <div className="flex items-center gap-1.5">
+              <div className="hidden sm:flex items-center gap-1.5 text-[11px] font-medium text-[var(--text-tertiary)] mr-1">
                 {error ? <WifiOff className="w-3.5 h-3.5 text-red-500" /> : <Wifi className="w-3.5 h-3.5 text-emerald-500" />}
                 <span>{formatTime(lastUpdated)}</span>
               </div>
@@ -229,6 +263,32 @@ function WaterApp() {
               <button onClick={toggleTheme} className="p-1.5 rounded-lg hover:bg-white/5 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors">
                 {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
               </button>
+              {isAdmin && (
+                <button
+                  onClick={() => { window.location.hash = '#admin'; }}
+                  className="p-1.5 rounded-lg hover:bg-violet-500/10 text-violet-400/70 hover:text-violet-400 transition-colors"
+                  title="Admin"
+                >
+                  <Shield className="w-4 h-4" />
+                </button>
+              )}
+              {user ? (
+                <button
+                  onClick={signOut}
+                  className="p-1.5 rounded-lg hover:bg-red-500/10 text-slate-400 hover:text-red-400 transition-colors"
+                  title="Sign Out"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              ) : (
+                <button
+                  onClick={() => { window.location.hash = '#login'; }}
+                  className="p-1.5 rounded-lg hover:bg-cyan-500/10 text-cyan-400/70 hover:text-cyan-400 transition-colors"
+                  title="Log In"
+                >
+                  <LogIn className="w-4 h-4" />
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -481,7 +541,7 @@ function WaterApp() {
           )}
         </Suspense>
       </div>
-      <FeedbackWidget />
+      <FeedbackWidget supabase={supabase} userEmail={user?.email} />
     </div>
   );
 }
@@ -489,10 +549,12 @@ function WaterApp() {
 export default function App() {
   return (
     <ErrorBoundary name="Utah Water">
-      <ThemeProvider>
-        <WaterApp />
-        <Analytics />
-      </ThemeProvider>
+      <AuthProvider>
+        <ThemeProvider>
+          <WaterApp />
+          <Analytics />
+        </ThemeProvider>
+      </AuthProvider>
     </ErrorBoundary>
   );
 }

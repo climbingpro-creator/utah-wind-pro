@@ -18,7 +18,7 @@ export default defineConfig({
   ],
   server: {
     proxy: {
-      '/api/biology': {
+      '/api': {
         target: 'https://utah-wind-pro.vercel.app',
         changeOrigin: true,
       },

@@ -1,8 +1,8 @@
 {
   "rewrites": [
     {
-      "source": "/api/biology",
-      "destination": "https://utah-wind-pro.vercel.app/api/biology"
+      "source": "/api/:path*",
+      "destination": "https://utah-wind-pro.vercel.app/api/:path*"
     },
     {
       "source": "/(.*)",
