@@ -714,8 +714,8 @@ function buildLakeProfile(lake, elevation, ambientTemp) {
     safeForWading: true,
     reason: `${lake.name} — stillwater fishery. Target ${lake.targetDepth}.`,
 
-    hatch,
-    feedingActivity,
+    hatch: lake.forage || hatch,
+    feedingActivity: lake.forage ? `active — ${lake.forage.toLowerCase()} present` : feedingActivity,
     thermalStress,
     thermalAdvice,
 

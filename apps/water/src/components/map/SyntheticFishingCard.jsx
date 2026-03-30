@@ -295,6 +295,7 @@ export default function SyntheticFishingCard({ data, isLoading, onClose }) {
 
   const isLake = data.waterType === 'lake';
   const isOcean = data.waterType === 'ocean';
+  const isRiver = data.waterType === 'river';
   const isUSGS = data.dataSource?.includes('USGS');
   const isAI = data.dataSource?.includes('AI Synthesized');
   const hasVisual = data.visualIntel != null;
@@ -436,9 +437,9 @@ export default function SyntheticFishingCard({ data, isLoading, onClose }) {
       <div className="px-3 pb-1.5">
         <div className="rounded-lg bg-white/[0.03] border border-white/[0.06] px-2.5 py-2">
           <div className="flex items-center gap-2 mb-1">
-            <Fish className={`w-3.5 h-3.5 ${data.thermalStress === 'critical' ? 'text-red-400' : isOcean ? 'text-blue-400' : 'text-amber-400'}`} />
+            <Fish className={`w-3.5 h-3.5 ${data.thermalStress === 'critical' ? 'text-red-400' : isOcean ? 'text-blue-400' : isLake ? 'text-emerald-400' : 'text-amber-400'}`} />
             <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
-              {isOcean ? 'Forage Report' : 'Bug Report'}
+              {isRiver ? 'Bug Report' : 'Forage Report'}
             </span>
           </div>
           <p className="text-[11px] font-semibold text-emerald-300/90 leading-relaxed">{data.hatch}</p>
