@@ -5,3 +5,4 @@ export { Sparkline } from './Sparkline.jsx';
 export { IntelligentRecommendations } from './IntelligentRecommendations.jsx';
 export { ModuleLoader } from './ModuleLoader.jsx';
 export { FeedbackWidget } from './FeedbackWidget.jsx';
+export { initAnalytics, trackEvent, trackPageView, trackPinDrop, trackBioApiCall, trackMapInteraction } from './analytics.js';

@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import { MapPin } from 'lucide-react';
 import { generateFisheryProfile } from '@utahwind/weather';
+import { trackPinDrop, trackBioApiCall } from '@utahwind/ui';
 import SyntheticFishingCard from './SyntheticFishingCard';
 import 'leaflet/dist/leaflet.css';
 
@@ -51,6 +52,7 @@ export function WaterMap({ currentWeatherData = {} }) {
     setHasDroppedPin(true);
     setIsLoading(true);
     setFishProfile(null);
+    trackPinDrop(coords[0], coords[1], 'water');
 
     try {
       const profile = await generateFisheryProfile(
@@ -60,6 +62,7 @@ export function WaterMap({ currentWeatherData = {} }) {
       );
       if (requestId === abortRef.current) {
         setFishProfile(profile);
+        if (profile?.waterBodyName) trackBioApiCall(profile.waterBodyName, profile.waterType);
       }
     } catch (err) {
       console.error('Fishery profile error:', err);

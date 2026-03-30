@@ -2,7 +2,8 @@ import { useState, useEffect, useMemo, Suspense, lazy, useCallback } from 'react
 import { Analytics } from '@vercel/analytics/react';
 import { Fish, Ship, Waves, RefreshCw, Wifi, WifiOff, Sun, Moon, CheckCircle,
   Shield, Clock, Lightbulb, TrendingUp, TrendingDown, Minus } from 'lucide-react';
-import { ErrorBoundary, FeedbackWidget } from '@utahwind/ui';
+import { ErrorBoundary, FeedbackWidget, initAnalytics, trackPageView } from '@utahwind/ui';
+import { supabase } from '@utahwind/database';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { useWeatherData, getHourlyForecast, findAllSportWindows } from '@utahwind/weather';
 import { IntelligentRecommendations } from '@utahwind/ui';
@@ -167,6 +168,13 @@ function WaterApp() {
   const heroImage = useMemo(() => {
     const day = new Date().getDate();
     return HERO_IMAGES[day % HERO_IMAGES.length];
+  }, []);
+
+  useEffect(() => {
+    if (supabase) {
+      initAnalytics(supabase);
+      trackPageView('water');
+    }
   }, []);
 
   const [sportWindows, setSportWindows] = useState(null);

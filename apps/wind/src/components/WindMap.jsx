@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline, Circle } from
 import L from 'leaflet';
 import { Compass, Maximize2, X, Wind } from 'lucide-react';
 import { LAKE_CONFIGS, SpatialInterpolator, applySurfacePhysics, calculateFetchMultiplier, calculateVenturiMultiplier, weatherService } from '@utahwind/weather';
+import { trackPinDrop } from '@utahwind/ui';
 import { safeToFixed } from '../utils/safeToFixed';
 import PinDropListener from './map/PinDropListener';
 import SyntheticForecastCard from './map/SyntheticForecastCard';
@@ -365,6 +366,7 @@ export function WindMap({
     setDroppedPin(coords);
     setHasDroppedPin(true);
     setSyntheticData(null);
+    trackPinDrop(coords[0], coords[1], 'wind');
 
     let stations = liveStationsWithCoords;
 

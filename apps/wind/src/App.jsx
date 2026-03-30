@@ -5,7 +5,7 @@ import { InstallPrompt } from './components/InstallPrompt';
 import { dataCollector } from './services/DataCollector';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { ErrorBoundary, FeedbackWidget } from '@utahwind/ui';
+import { ErrorBoundary, FeedbackWidget, initAnalytics, trackPageView } from '@utahwind/ui';
 import { supabase } from '@utahwind/database';
 
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
@@ -59,6 +59,10 @@ function AppShell() {
 
   useEffect(() => {
     dataCollector.start();
+    if (supabase) {
+      initAnalytics(supabase);
+      trackPageView('wind');
+    }
     return () => { dataCollector.stop(); };
   }, []);
 
