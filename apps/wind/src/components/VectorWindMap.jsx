@@ -1,8 +1,11 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import Map, { Source, Layer, Marker, Popup, NavigationControl, GeolocateControl } from 'react-map-gl/maplibre';
 import maplibregl from 'maplibre-gl';
+import { Protocol } from 'pmtiles';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { Compass, Maximize2, X, Wind, Navigation, Droplets } from 'lucide-react';
+import { Compass, Maximize2, X, Wind, Droplets } from 'lucide-react';
+
+const PMTILES_URL = import.meta.env.VITE_PMTILES_WATER_URL || null;
 import { LAKE_CONFIGS, SpatialInterpolator, applySurfacePhysics, calculateFetchMultiplier, calculateVenturiMultiplier, weatherService } from '@utahwind/weather';
 import { trackPinDrop } from '@utahwind/ui';
 import { safeToFixed } from '../utils/safeToFixed';
@@ -204,11 +207,25 @@ export function VectorWindMap({
   const [hasDroppedPin, setHasDroppedPin] = useState(false);
   const [selectedStation, setSelectedStation] = useState(null);
   const [selectedFeature, setSelectedFeature] = useState(null);
+  const [pmtilesReady, setPmtilesReady] = useState(false);
   const [viewState, setViewState] = useState({
     longitude: -111.83,
     latitude: 40.23,
     zoom: 10,
   });
+
+  useEffect(() => {
+    if (!PMTILES_URL) {
+      setPmtilesReady(true);
+      return;
+    }
+    const protocol = new Protocol();
+    maplibregl.addProtocol('pmtiles', protocol.tile);
+    setPmtilesReady(true);
+    return () => {
+      maplibregl.removeProtocol('pmtiles');
+    };
+  }, []);
 
   useEffect(() => {
     let area = MAP_AREAS['utah-lake'];
@@ -246,19 +263,22 @@ export function VectorWindMap({
     const map = mapRef.current?.getMap();
     if (!map) return;
 
-    const features = map.queryRenderedFeatures(e.point, {
-      layers: ['water-features-fill'],
-    });
-
-    if (features.length > 0) {
-      const feature = features[0];
-      setSelectedFeature({
-        name: feature.properties?.name || feature.properties?.gnis_name || 'Water Feature',
-        type: feature.properties?.ftype || feature.properties?.fcode_d || 'Stream/River',
-        flowRate: feature.properties?.flow_rate || null,
-        lngLat: [e.lngLat.lng, e.lngLat.lat],
+    const waterLayerExists = map.getLayer('water-features-fill');
+    if (waterLayerExists) {
+      const features = map.queryRenderedFeatures(e.point, {
+        layers: ['water-features-fill'],
       });
-      return;
+
+      if (features.length > 0) {
+        const feature = features[0];
+        setSelectedFeature({
+          name: feature.properties?.name || feature.properties?.gnis_name || 'Water Feature',
+          type: feature.properties?.ftype || feature.properties?.fcode_d || 'Stream/River',
+          flowRate: feature.properties?.flow_rate || null,
+          lngLat: [e.lngLat.lng, e.lngLat.lat],
+        });
+        return;
+      }
     }
 
     const coords = [e.lngLat.lat, e.lngLat.lng];
@@ -373,36 +393,36 @@ export function VectorWindMap({
           <NavigationControl position="top-right" showCompass={true} showZoom={true} />
           <GeolocateControl position="top-right" trackUserLocation={false} />
 
-          {/* Vector tile source for water features (placeholder URL) */}
-          <Source
-            id="water-features"
-            type="vector"
-            tiles={['https://your-vector-tile-server.com/nhd/{z}/{x}/{y}.pbf']}
-            minzoom={10}
-            maxzoom={16}
-          >
-            <Layer
-              id="water-features-fill"
-              type="fill"
-              source-layer="streams"
-              minzoom={10}
-              paint={{
-                'fill-color': '#3b82f6',
-                'fill-opacity': 0.15,
-              }}
-            />
-            <Layer
-              id="water-features-line"
-              type="line"
-              source-layer="streams"
-              minzoom={10}
-              paint={{
-                'line-color': '#3b82f6',
-                'line-width': ['interpolate', ['linear'], ['zoom'], 10, 1, 14, 3],
-                'line-opacity': 0.6,
-              }}
-            />
-          </Source>
+          {/* Vector tile source for water features (PMTiles or placeholder) */}
+          {pmtilesReady && PMTILES_URL && (
+            <Source
+              id="water-features"
+              type="vector"
+              url={`pmtiles://${PMTILES_URL}`}
+            >
+              <Layer
+                id="water-features-fill"
+                type="fill"
+                source-layer="water"
+                minzoom={10}
+                paint={{
+                  'fill-color': '#3b82f6',
+                  'fill-opacity': 0.15,
+                }}
+              />
+              <Layer
+                id="water-features-line"
+                type="line"
+                source-layer="water"
+                minzoom={10}
+                paint={{
+                  'line-color': '#3b82f6',
+                  'line-width': ['interpolate', ['linear'], ['zoom'], 10, 1, 14, 3],
+                  'line-opacity': 0.6,
+                }}
+              />
+            </Source>
+          )}
 
           {/* Wind arrow overlay */}
           <WindArrowOverlay
