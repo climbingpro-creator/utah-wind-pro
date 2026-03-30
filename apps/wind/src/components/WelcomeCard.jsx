@@ -24,52 +24,47 @@ export default function WelcomeCard() {
 
   return (
     <div
-      className={`relative overflow-hidden rounded-2xl border border-sky-500/20 bg-gradient-to-br from-sky-500/10 via-[var(--bg-card)] to-cyan-500/5 shadow-lg shadow-sky-500/5 transition-all duration-300 ${
-        exiting ? 'opacity-0 max-h-0 mb-0 scale-95' : 'opacity-100 max-h-[500px] mb-6 scale-100'
+      className={`relative overflow-hidden rounded-2xl border border-sky-500/20 bg-gradient-to-br from-sky-500/10 via-[var(--bg-card)] to-cyan-500/5 transition-all duration-300 ${
+        exiting ? 'opacity-0 max-h-0 mb-0' : 'opacity-100 max-h-[500px] mb-6'
       }`}
     >
-      {/* Decorative background elements */}
-      <div className="absolute top-0 right-0 w-64 h-64 bg-sky-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-48 h-48 bg-cyan-500/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2 pointer-events-none" />
-
-      {/* Close button */}
+      {/* Close button — 44x44 minimum touch target */}
       <button
         onClick={handleDismiss}
-        className="absolute top-3 right-3 p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors z-10"
+        className="absolute top-2 right-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-slate-300 bg-white/5 active:bg-white/15 transition-colors z-10"
         aria-label="Dismiss"
       >
-        <X className="w-4 h-4" />
+        <X className="w-5 h-5" />
       </button>
 
-      <div className="relative z-10 p-6 sm:p-8">
+      <div className="relative z-10 p-5">
         {/* Icon + Headline */}
-        <div className="flex items-center gap-3 mb-4">
-          <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-sky-500/15 border border-sky-500/25 shadow-inner">
-            <Wind className="w-6 h-6 text-sky-400" />
+        <div className="flex items-start gap-3 mb-3 pr-10">
+          <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-sky-500/15 border border-sky-500/25 flex-shrink-0">
+            <Wind className="w-5 h-5 text-sky-400" />
           </div>
-          <div>
-            <h2 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
+          <div className="min-w-0">
+            <h2 className="text-lg font-extrabold text-white tracking-tight leading-tight">
               Welcome to UtahWindFinder
             </h2>
-            <div className="flex items-center gap-1.5 mt-0.5">
-              <Sparkles className="w-3 h-3 text-amber-400" />
-              <span className="text-[11px] font-semibold text-amber-400/80 uppercase tracking-wider">
+            <div className="flex items-center gap-1.5 mt-1">
+              <Sparkles className="w-3 h-3 text-amber-400 flex-shrink-0" />
+              <span className="text-[10px] font-semibold text-amber-400/90 uppercase tracking-wider">
                 AI-Powered Forecasting
               </span>
             </div>
           </div>
         </div>
 
-        {/* Body copy */}
-        <p className="text-sm sm:text-base text-slate-300 leading-relaxed mb-6 max-w-xl">
-          Stop guessing, start sending. We use AI-powered forecasting to give you real-time, 
-          hyper-local wind and weather data for Utah's best kite, fly, and sail spots.
+        {/* Body copy — compact for mobile */}
+        <p className="text-sm text-slate-300 leading-relaxed mb-4">
+          Stop guessing, start sending. Real-time, hyper-local wind data for Utah's best kite, fly, and sail spots.
         </p>
 
-        {/* CTA Button */}
+        {/* CTA Button — 44px+ height, full width on mobile for easy thumb reach */}
         <button
           onClick={handleDismiss}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-white text-sm font-bold shadow-lg shadow-sky-500/25 hover:shadow-sky-400/30 transition-all hover:scale-[1.02] active:scale-[0.98]"
+          className="w-full flex items-center justify-center gap-2 min-h-[44px] px-5 py-3 rounded-xl bg-sky-500 active:bg-sky-600 text-white text-sm font-bold transition-colors"
         >
           Let's Go!
           <Wind className="w-4 h-4" />
