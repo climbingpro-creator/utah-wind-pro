@@ -19,7 +19,8 @@ const STATUS_CONFIG = {
   resolved: { label: 'Resolved', color: 'text-emerald-400', bg: 'bg-emerald-500/15', icon: CheckCircle },
 };
 
-function QuickLink({ href, icon: Icon, label, description }) {
+function QuickLink({ href, icon, label, description }) {
+  const LinkIcon = icon;
   return (
     <a
       href={href}
@@ -28,7 +29,7 @@ function QuickLink({ href, icon: Icon, label, description }) {
       className="flex items-center gap-3 p-4 rounded-xl border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.05] transition-colors group"
     >
       <div className="w-10 h-10 rounded-lg bg-sky-500/10 border border-sky-500/20 flex items-center justify-center shrink-0">
-        <Icon className="w-5 h-5 text-sky-400" />
+        <LinkIcon className="w-5 h-5 text-sky-400" />
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-white">{label}</p>
