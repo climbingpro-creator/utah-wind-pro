@@ -27,8 +27,14 @@ import { getEnv, redisCommand, redisMGet, checkRateLimit } from '../lib/redis.js
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type, x-internal-api-key');
   if (req.method === 'OPTIONS') return res.status(204).end();
+
+  const apiKey = req.headers['x-internal-api-key'];
+  const expectedKey = process.env.INTERNAL_API_KEY;
+  if (!expectedKey || !apiKey || apiKey !== expectedKey) {
+    return res.status(403).json({ error: 'Forbidden — valid x-internal-api-key header required' });
+  }
 
   const action = req.query?.action;
   if (!action) {

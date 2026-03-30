@@ -7,14 +7,33 @@
  *
  * Body: { lat, lon, ts, type, msg }
  */
-import { getSupabase } from './lib/supabase.js';
+import { getSupabase, verifyAuth } from './lib/supabase.js';
+
+const ALLOWED_ORIGINS = [
+  'https://utahwindfinder.com',
+  'https://utah-wind-pro.vercel.app',
+  'https://utah-water-glass.vercel.app',
+];
+
+function setCorsHeaders(req, res) {
+  const origin = req.headers.origin || '';
+  if (ALLOWED_ORIGINS.includes(origin) || origin.startsWith('http://localhost:')) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+}
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  setCorsHeaders(req, res);
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
+
+  const auth = await verifyAuth(req);
+  if (auth.error) {
+    return res.status(auth.status || 401).json({ error: auth.error });
+  }
 
   try {
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;

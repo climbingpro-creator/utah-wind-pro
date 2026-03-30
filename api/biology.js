@@ -43,7 +43,27 @@ function buildSchema(hasImage) {
 
 // ─── Image Fetcher ───────────────────────────────────────────
 
+const ALLOWED_IMAGE_HOSTS = [
+  'server.arcgisonline.com',
+  'services.arcgisonline.com',
+  'api.mapbox.com',
+  'mt1.google.com',
+  'mt0.google.com',
+];
+
+function isAllowedImageUrl(urlString) {
+  try {
+    const { hostname, protocol } = new URL(urlString);
+    return protocol === 'https:' && ALLOWED_IMAGE_HOSTS.includes(hostname);
+  } catch {
+    return false;
+  }
+}
+
 async function fetchImageAsBase64(url) {
+  if (!isAllowedImageUrl(url)) {
+    throw new Error('Image URL not in allowlist');
+  }
   const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
   if (!res.ok) return null;
   const buf = await res.arrayBuffer();
@@ -65,13 +85,16 @@ export default async function handler(req, res) {
   const { name, type = 'lake', lat, lng, imageUrl } = req.query;
   if (!name) return res.status(400).json({ error: 'Water body name is required' });
 
+  if (imageUrl && !isAllowedImageUrl(imageUrl)) {
+    return res.status(400).json({ error: 'Invalid image source. Only approved satellite tile providers are allowed.' });
+  }
+
   if (!process.env.GEMINI_API_KEY) {
     console.warn('[biology] GEMINI_API_KEY not set — returning fallback');
     return res.status(200).json(buildFallback(name, type));
   }
 
   try {
-    // Attempt to fetch satellite image if URL provided
     let imageData = null;
     if (imageUrl) {
       try {

@@ -4,17 +4,32 @@
  * Log a fish catch for a fishing session.
  * Body: { species?, weight_lbs?, length_in?, image?: "data:image/..." }
  */
-import { getSupabase } from '../../lib/supabase.js';
+import { getSupabase, verifyAuth } from '../../lib/supabase.js';
 import crypto from 'crypto';
+
+const ALLOWED_ORIGINS = [
+  'https://utahwindfinder.com',
+  'https://utah-wind-pro.vercel.app',
+  'https://utah-water-glass.vercel.app',
+];
 
 export const config = { api: { bodyParser: { sizeLimit: '10mb' } } };
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const origin = req.headers.origin || '';
+  if (ALLOWED_ORIGINS.includes(origin) || origin.startsWith('http://localhost:')) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
+
+  const auth = await verifyAuth(req);
+  if (auth.error) {
+    return res.status(auth.status || 401).json({ error: auth.error });
+  }
 
   const { id: sessionId } = req.query;
   if (!sessionId || sessionId.length < 10) {
