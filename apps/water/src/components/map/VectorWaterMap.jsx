@@ -70,53 +70,73 @@ export function VectorWaterMap({ currentWeatherData = {} }) {
     const map = mapRef.current?.getMap();
     if (!map) return;
 
-    const waterLayerExists = map.getLayer('water-fill');
+    const waterLayerExists = map.getLayer('water-fill') || map.getLayer('water-line') || map.getLayer('water-labels');
+    
     if (waterLayerExists) {
       const features = map.queryRenderedFeatures(e.point, {
-        layers: ['water-fill', 'water-line'],
+        layers: ['water-fill', 'water-line', 'water-labels'].filter(id => map.getLayer(id)),
       });
 
-      if (features.length > 0) {
-        const feature = features[0];
-        const name = feature.properties?.name || feature.properties?.gnis_name || feature.properties?.GNIS_NAME || 'Water Feature';
-        const type = feature.properties?.ftype || feature.properties?.fcode_d || feature.properties?.FTYPE || 'Stream/River';
-        
-        setSelectedWaterFeature({
-          name,
-          type,
-          permanence: feature.properties?.FCode_Text || feature.properties?.permanence || null,
-          lngLat: [e.lngLat.lng, e.lngLat.lat],
-        });
+      if (features.length === 0) {
+        setSelectedWaterFeature(null);
+        setDroppedPin(null);
+        setFishProfile(null);
+        return;
       }
-    }
 
-    const coords = [e.lngLat.lat, e.lngLat.lng];
-    const requestId = ++abortRef.current;
-    setDroppedPin(coords);
-    setHasDroppedPin(true);
-    setIsLoading(true);
-    setFishProfile(null);
-    trackPinDrop(coords[0], coords[1], 'water');
+      const feature = features[0];
+      console.log('Clicked feature:', feature);
 
-    try {
-      const profile = await generateFisheryProfile(
-        coords[0],
-        coords[1],
-        DEFAULT_ELEVATION,
-        currentWeatherData
-      );
-      if (requestId === abortRef.current) {
-        setFishProfile(profile);
-        if (profile?.waterBodyName) {
-          trackBioApiCall(profile.waterBodyName, profile.waterType);
+      const name = feature.properties?.name || feature.properties?.gnis_name || feature.properties?.GNIS_NAME || null;
+      
+      if (!name) {
+        setSelectedWaterFeature(null);
+        setDroppedPin(null);
+        setFishProfile(null);
+        return;
+      }
+
+      const type = feature.properties?.ftype || feature.properties?.fcode_d || feature.properties?.FTYPE || 'Stream/River';
+      
+      setSelectedWaterFeature({
+        name,
+        type,
+        permanence: feature.properties?.FCode_Text || feature.properties?.permanence || null,
+        lngLat: [e.lngLat.lng, e.lngLat.lat],
+      });
+
+      const coords = [e.lngLat.lat, e.lngLat.lng];
+      const requestId = ++abortRef.current;
+      setDroppedPin(coords);
+      setHasDroppedPin(true);
+      setIsLoading(true);
+      setFishProfile(null);
+      trackPinDrop(coords[0], coords[1], 'water');
+
+      try {
+        const profile = await generateFisheryProfile(
+          coords[0],
+          coords[1],
+          DEFAULT_ELEVATION,
+          currentWeatherData
+        );
+        if (requestId === abortRef.current) {
+          setFishProfile(profile);
+          if (profile?.waterBodyName) {
+            trackBioApiCall(profile.waterBodyName, profile.waterType);
+          }
+        }
+      } catch (err) {
+        console.error('Fishery profile error:', err);
+      } finally {
+        if (requestId === abortRef.current) {
+          setIsLoading(false);
         }
       }
-    } catch (err) {
-      console.error('Fishery profile error:', err);
-    } finally {
-      if (requestId === abortRef.current) {
-        setIsLoading(false);
-      }
+    } else {
+      setSelectedWaterFeature(null);
+      setDroppedPin(null);
+      setFishProfile(null);
     }
   }, [currentWeatherData]);
 
