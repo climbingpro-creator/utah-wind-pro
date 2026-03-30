@@ -13,7 +13,6 @@ import { ACTIVITY_CONFIGS } from './ActivityMode';
 import { SPOT_SLUG_MAP } from '../config/spotSlugs';
 import { Trophy, Calendar, ArrowUpRight, Users } from 'lucide-react';
 
-const Onboarding = lazy(() => import('./Onboarding'));
 const DetailedPanels = lazy(() => import('./DetailedPanels'));
 const WindMap = lazy(() => import('./WindMap').then(m => ({ default: m.WindMap })));
 const NotificationSettings = lazy(() => import('./NotificationSettings').then(m => ({ default: m.NotificationSettings })));
@@ -89,7 +88,6 @@ export function Dashboard() {
   const [showPhotoSubmit, setShowPhotoSubmit] = useState(false);
   const [showSMSSettings, setShowSMSSettings] = useState(false);
   const [showDeepDive, setShowDeepDive] = useState(false);
-  const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem('uwf_onboarded'));
   
   const { lakeState, history, status, isLoading, error, lastUpdated, refresh } = useWeatherData(selectedLake);
   const { theme } = useTheme();
@@ -266,30 +264,28 @@ export function Dashboard() {
     }`}>
       <ToastContainer />
 
-      {!showOnboarding && (
-        <AppHeader
-          theme={theme}
-          activityConfig={activityConfig}
-          error={error}
-          formatTime={formatTime}
-          selectedLake={selectedLake}
-          selectedActivity={selectedActivity}
-          lastUpdated={lastUpdated}
-          isLoading={isLoading}
-          isPro={isPro}
-          trialActive={trialActive}
-          trialDaysLeft={trialDaysLeft}
-          showLearningDashboard={showLearningDashboard}
-          lakeState={lakeState}
-          getSMSPrefs={getSMSPrefsCallback}
-          onSMSClick={() => isPro ? setShowSMSSettings(true) : openPaywall()}
-          onPhotoClick={() => setShowPhotoSubmit(true)}
-          onNotificationsClick={() => isPro ? setShowNotificationSettings(true) : openPaywall()}
-          onLearningClick={() => setShowLearningDashboard(!showLearningDashboard)}
-          onRefresh={refresh}
-          onUpgradeClick={openPaywall}
-        />
-      )}
+      <AppHeader
+        theme={theme}
+        activityConfig={activityConfig}
+        error={error}
+        formatTime={formatTime}
+        selectedLake={selectedLake}
+        selectedActivity={selectedActivity}
+        lastUpdated={lastUpdated}
+        isLoading={isLoading}
+        isPro={isPro}
+        trialActive={trialActive}
+        trialDaysLeft={trialDaysLeft}
+        showLearningDashboard={showLearningDashboard}
+        lakeState={lakeState}
+        getSMSPrefs={getSMSPrefsCallback}
+        onSMSClick={() => isPro ? setShowSMSSettings(true) : openPaywall()}
+        onPhotoClick={() => setShowPhotoSubmit(true)}
+        onNotificationsClick={() => isPro ? setShowNotificationSettings(true) : openPaywall()}
+        onLearningClick={() => setShowLearningDashboard(!showLearningDashboard)}
+        onRefresh={refresh}
+        onUpgradeClick={openPaywall}
+      />
 
       {showNotificationSettings && (
         <Suspense fallback={null}>
@@ -362,18 +358,7 @@ export function Dashboard() {
         </div>
       )}
 
-      {showOnboarding && (
-        <Suspense fallback={null}>
-          <Onboarding onComplete={(sport, spot) => {
-            if (sport) setSelectedActivity(sport);
-            if (spot) setSelectedLake(spot);
-            setShowOnboarding(false);
-          }} />
-        </Suspense>
-      )}
-
-      {!showOnboarding && (
-        <main className="max-w-6xl mx-auto px-5 sm:px-8 py-6 space-y-5">
+      <main className="max-w-6xl mx-auto px-5 sm:px-8 py-6 space-y-5">
 
           <WelcomeCard />
 
@@ -619,26 +604,23 @@ export function Dashboard() {
           )}
 
         </main>
-      )}
 
-      {!showOnboarding && (
-        <footer className="border-t border-[var(--border-color)] mt-8">
-          <div className="max-w-6xl mx-auto px-5 sm:px-8 py-6 text-center">
-            {!isPro && (
-              <button
-                onClick={openPaywall}
-                className="mb-4 w-full max-w-sm mx-auto flex items-center justify-center gap-2 min-h-[48px] px-5 py-3 rounded-xl text-sm font-bold bg-gradient-to-r from-sky-500 to-cyan-500 text-white active:opacity-90 transition-opacity"
-              >
-                Unlock All Features — Try Pro Free
-              </button>
-            )}
-            <p className="text-sm font-semibold text-[var(--text-tertiary)]">UtahWindFinder</p>
-            <p className="text-[11px] mt-1 text-[var(--text-tertiary)] opacity-60">
-              AI-driven forecasting for Utah's lakes and mountains
-            </p>
-          </div>
-        </footer>
-      )}
+      <footer className="border-t border-[var(--border-color)] mt-8">
+        <div className="max-w-6xl mx-auto px-5 sm:px-8 py-6 text-center">
+          {!isPro && (
+            <button
+              onClick={openPaywall}
+              className="mb-4 w-full max-w-sm mx-auto flex items-center justify-center gap-2 min-h-[48px] px-5 py-3 rounded-xl text-sm font-bold bg-gradient-to-r from-sky-500 to-cyan-500 text-white active:opacity-90 transition-opacity"
+            >
+              Unlock All Features — Try Pro Free
+            </button>
+          )}
+          <p className="text-sm font-semibold text-[var(--text-tertiary)]">UtahWindFinder</p>
+          <p className="text-[11px] mt-1 text-[var(--text-tertiary)] opacity-60">
+            AI-driven forecasting for Utah's lakes and mountains
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }
