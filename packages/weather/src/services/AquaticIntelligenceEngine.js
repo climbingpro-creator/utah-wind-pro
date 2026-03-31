@@ -209,7 +209,7 @@ export async function reverseGeocodeWater(lat, lng) {
     // Pass 1: High zoom (14) to detect specific water features (lakes, reservoirs)
     const hiRes = await fetch(
       `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=14&addressdetails=1&accept-language=en`,
-      { headers: { 'User-Agent': 'UtahWaterGlass/1.0' }, signal: AbortSignal.timeout(5000) }
+      { signal: AbortSignal.timeout(5000) }
     );
     if (hiRes.ok) {
       const hiData = await hiRes.json();
@@ -221,7 +221,7 @@ export async function reverseGeocodeWater(lat, lng) {
     let loData = null;
     const loRes = await fetch(
       `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=3&addressdetails=1&accept-language=en`,
-      { headers: { 'User-Agent': 'UtahWaterGlass/1.0' }, signal: AbortSignal.timeout(5000) }
+      { signal: AbortSignal.timeout(5000) }
     );
     if (loRes.ok) {
       loData = await loRes.json();

@@ -15,12 +15,11 @@ import { safeToFixed } from '../utils/safeToFixed';
 
 // NWS API configuration
 const NWS_BASE_URL = 'https://api.weather.gov';
-const USER_AGENT = 'UtahWindPro/1.0 (kite-forecast-app)';
 
 // Forecast grid points for our locations
+// Note: User-Agent removed - browsers block this header. NWS API works without it.
 const NWS_HEADERS = {
   'Accept': 'application/geo+json',
-  'User-Agent': USER_AGENT,
 };
 
 const FORECAST_POINTS = {
