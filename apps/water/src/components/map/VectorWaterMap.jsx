@@ -70,72 +70,67 @@ export function VectorWaterMap({ currentWeatherData = {} }) {
     const map = mapRef.current?.getMap();
     if (!map) return;
 
+    const coords = [e.lngLat.lat, e.lngLat.lng];
+    console.log('Map clicked at:', coords);
+
     const layerIds = ['lakes-fill', 'streams-line'].filter(id => map.getLayer(id));
-    const waterLayerExists = layerIds.length > 0;
+    let clickedFeatureName = null;
     
-    if (waterLayerExists) {
+    if (layerIds.length > 0) {
       const features = map.queryRenderedFeatures(e.point, { layers: layerIds });
+      console.log('Layers found:', layerIds, 'Features at click:', features.length);
 
-      if (features.length === 0) {
-        setSelectedWaterFeature(null);
-        setDroppedPin(null);
-        setFishProfile(null);
-        return;
-      }
+      if (features.length > 0) {
+        const feature = features[0];
+        console.log('Clicked feature:', feature);
+        console.log('Feature properties:', feature.properties);
 
-      const feature = features[0];
-      console.log('Clicked feature:', feature);
-
-      const name = feature.properties?.gnis_name || feature.properties?.GNIS_Name || feature.properties?.GNIS_NAME || feature.properties?.name || null;
-      
-      if (!name) {
-        setSelectedWaterFeature(null);
-        setDroppedPin(null);
-        setFishProfile(null);
-        return;
-      }
-
-      const type = feature.properties?.ftype || feature.properties?.FType || feature.properties?.FTYPE || feature.properties?.fcode_d || 'Water';
-      
-      setSelectedWaterFeature({
-        name,
-        type,
-        permanence: feature.properties?.FCode_Text || feature.properties?.permanence || null,
-        lngLat: [e.lngLat.lng, e.lngLat.lat],
-      });
-
-      const coords = [e.lngLat.lat, e.lngLat.lng];
-      const requestId = ++abortRef.current;
-      setDroppedPin(coords);
-      setHasDroppedPin(true);
-      setIsLoading(true);
-      setFishProfile(null);
-      trackPinDrop(coords[0], coords[1], 'water');
-
-      try {
-        const profile = await generateFisheryProfile(
-          coords[0],
-          coords[1],
-          DEFAULT_ELEVATION,
-          currentWeatherData
-        );
-        if (requestId === abortRef.current) {
-          setFishProfile(profile);
-          if (profile?.waterBodyName) {
-            trackBioApiCall(profile.waterBodyName, profile.waterType);
-          }
-        }
-      } catch (err) {
-        console.error('Fishery profile error:', err);
-      } finally {
-        if (requestId === abortRef.current) {
-          setIsLoading(false);
+        clickedFeatureName = feature.properties?.gnis_name || feature.properties?.GNIS_Name || feature.properties?.GNIS_NAME || feature.properties?.name || null;
+        const type = feature.properties?.ftype || feature.properties?.FType || feature.properties?.FTYPE || feature.properties?.fcode_d || 'Water';
+        
+        if (clickedFeatureName) {
+          setSelectedWaterFeature({
+            name: clickedFeatureName,
+            type,
+            permanence: feature.properties?.FCode_Text || feature.properties?.permanence || null,
+            lngLat: [e.lngLat.lng, e.lngLat.lat],
+          });
         }
       }
     } else {
-      setSelectedWaterFeature(null);
-      setDroppedPin(null);
-      setFishProfile(null);
+      console.log('No vector layers found on map');
+    }
+
+    const requestId = ++abortRef.current;
+    setDroppedPin(coords);
+    setHasDroppedPin(true);
+    setIsLoading(true);
+    setFishProfile(null);
+    if (!clickedFeatureName) setSelectedWaterFeature(null);
+    trackPinDrop(coords[0], coords[1], 'water');
+
+    try {
+      const profile = await generateFisheryProfile(
+        coords[0],
+        coords[1],
+        DEFAULT_ELEVATION,
+        currentWeatherData
+      );
+      if (requestId === abortRef.current) {
+        setFishProfile(profile);
+        if (profile?.waterBodyName) {
+          trackBioApiCall(profile.waterBodyName, profile.waterType);
+        }
+      }
+    } catch (err) {
+      console.error('Fishery profile error:', err);
+      if (requestId === abortRef.current) {
+        setFishProfile({ error: err.message || 'Failed to load profile' });
+      }
+    } finally {
+      if (requestId === abortRef.current) {
+        setIsLoading(false);
+      }
     }
   }, [currentWeatherData]);
 
