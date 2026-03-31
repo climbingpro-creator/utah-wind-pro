@@ -1,4 +1,4 @@
-import { X, Thermometer, Droplets, Activity, Waves, Fish, Gauge, Anchor, MapPin, Shield, Navigation, Zap, Eye, Crosshair, Satellite, Palette, Calendar, Ship, Target, FishingRod, Bug, Layers, Flame } from 'lucide-react';
+import { X, Thermometer, Droplets, Activity, Waves, Fish, Gauge, Anchor, MapPin, Shield, Navigation, Zap, Eye, Crosshair, Satellite, Palette, Calendar, Ship, Target, FishingRod, Bug, Layers, Flame, Wind, CloudSun } from 'lucide-react';
 
 const CLARITY_STYLE = {
   'blown out':       { color: 'text-red-400',     bg: 'bg-red-500/10',     border: 'border-red-500/20',     dot: 'bg-red-500' },
@@ -463,6 +463,42 @@ export default function SyntheticFishingCard({ data, isLoading, onClose }) {
         </div>
         <div className="text-[9px] text-slate-500 mt-1 leading-tight">{data.dataSource}</div>
       </div>
+
+      {/* NWS Live Weather (when available) */}
+      {data.nwsWeather && (
+        <div className="px-3 pb-1.5">
+          <div className="rounded-lg bg-sky-500/5 border border-sky-500/15 px-2.5 py-2">
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <CloudSun className="w-3 h-3 text-sky-400" />
+              <span className="text-[8px] font-bold uppercase tracking-wider text-sky-400/70">NWS Live Weather</span>
+              <span className="ml-auto text-[8px] text-slate-500">{data.nwsWeather.stationName}</span>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {data.nwsWeather.windSpeed != null && (
+                <div className="text-center">
+                  <Wind className="w-3.5 h-3.5 text-sky-400/70 mx-auto mb-0.5" />
+                  <div className="text-xs font-bold text-white">{Math.round(data.nwsWeather.windSpeed)}</div>
+                  <div className="text-[8px] text-slate-500">mph</div>
+                </div>
+              )}
+              {data.nwsWeather.windDirection != null && (
+                <div className="text-center">
+                  <Navigation className="w-3.5 h-3.5 text-sky-400/70 mx-auto mb-0.5" style={{ transform: `rotate(${data.nwsWeather.windDirection}deg)` }} />
+                  <div className="text-xs font-bold text-white">{data.nwsWeather.windDirection}°</div>
+                  <div className="text-[8px] text-slate-500">dir</div>
+                </div>
+              )}
+              {data.nwsWeather.temperature != null && (
+                <div className="text-center">
+                  <Thermometer className="w-3.5 h-3.5 text-sky-400/70 mx-auto mb-0.5" />
+                  <div className="text-xs font-bold text-white">{Math.round(data.nwsWeather.temperature)}°</div>
+                  <div className="text-[8px] text-slate-500">air</div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Conditional: Ocean Marine Grid OR Lake Intelligence OR River Telemetry */}
       {isOcean ? (
