@@ -14,143 +14,63 @@ const PARAM_DISCHARGE  = '00060'; // Discharge / stream flow (CFS)
 const PARAM_GAUGE_HT   = '00065'; // Gauge height (ft)
 
 const USGS_BASE = 'https://waterservices.usgs.gov/nwis/iv/';
-const NWS_BASE = 'https://api.weather.gov';
 
-// ─── NWS Direct Weather Fetch (Free Government API) ──────────
+// ─── FREE Radial Weather Fetch (NWS + UDOT + Ambient via Server API) ──────
 /**
- * Fetches live weather data directly from the National Weather Service API
- * using GPS coordinates. This bypasses any paid aggregators.
+ * Fetches live weather data from our FREE government/custom station network.
+ * Pipeline: Map Click → /api/weather?source=radial → NWS/UDOT/Ambient → UI
+ * 
+ * NO SYNOPTIC/MESOWEST - uses only FREE sources:
+ *   - NWS (National Weather Service) for airport ASOS/AWOS stations
+ *   - UDOT RWIS (Road Weather Information System) for highway stations
+ *   - Ambient Weather for our personal weather stations
  * 
  * @param {number} lat - Latitude
  * @param {number} lng - Longitude
+ * @param {number} [radiusMiles=100] - Search radius in miles
  * @returns {Promise<{windSpeed: number, windDirection: number, temperature: number, pressure: number, stationName: string} | null>}
  */
-export async function fetchNWSWeather(lat, lng) {
+export async function fetchNearbyWeather(lat, lng, radiusMiles = 100) {
   try {
-    // Step 1: Get the grid point for these coordinates
-    const pointsRes = await fetch(
-      `${NWS_BASE}/points/${lat.toFixed(4)},${lng.toFixed(4)}`,
-      { 
-        headers: { 'Accept': 'application/geo+json' },
-        signal: AbortSignal.timeout(8000)
-      }
-    );
+    // Call our server-side radial endpoint that uses FREE sources only
+    const apiBase = import.meta.env.VITE_API_URL || '';
+    const url = `${apiBase}/api/weather?source=radial&lat=${lat}&lng=${lng}&radius=${radiusMiles}`;
     
-    if (!pointsRes.ok) {
-      console.warn(`[NWS] Points API returned ${pointsRes.status} for ${lat},${lng}`);
+    console.log(`[Radial] Fetching nearest FREE station to ${lat.toFixed(3)}, ${lng.toFixed(3)}`);
+    
+    const response = await fetch(url, { signal: AbortSignal.timeout(12000) });
+    
+    if (!response.ok) {
+      console.warn(`[Radial] API returned ${response.status}`);
       return null;
     }
     
-    const pointsData = await pointsRes.json();
-    const observationStationsUrl = pointsData?.properties?.observationStations;
+    const data = await response.json();
     
-    if (!observationStationsUrl) {
-      console.warn('[NWS] No observation stations URL in response');
+    if (!data.station) {
+      console.log(`[Radial] No stations found: ${data.message || 'unknown reason'}`);
       return null;
     }
     
-    // Step 2: Get the list of nearby observation stations
-    const stationsRes = await fetch(
-      observationStationsUrl,
-      { 
-        headers: { 'Accept': 'application/geo+json' },
-        signal: AbortSignal.timeout(8000)
-      }
-    );
-    
-    if (!stationsRes.ok) {
-      console.warn(`[NWS] Stations API returned ${stationsRes.status}`);
-      return null;
-    }
-    
-    const stationsData = await stationsRes.json();
-    const stations = stationsData?.features || [];
-    
-    if (stations.length === 0) {
-      console.warn('[NWS] No observation stations found nearby');
-      return null;
-    }
-    
-    // Step 3: Get the latest observation from the nearest station
-    const nearestStation = stations[0];
-    const stationId = nearestStation?.properties?.stationIdentifier;
-    const stationName = nearestStation?.properties?.name || stationId;
-    
-    if (!stationId) {
-      console.warn('[NWS] No station identifier found');
-      return null;
-    }
-    
-    const obsRes = await fetch(
-      `${NWS_BASE}/stations/${stationId}/observations/latest`,
-      { 
-        headers: { 'Accept': 'application/geo+json' },
-        signal: AbortSignal.timeout(8000)
-      }
-    );
-    
-    if (!obsRes.ok) {
-      console.warn(`[NWS] Observations API returned ${obsRes.status} for ${stationId}`);
-      return null;
-    }
-    
-    const obsData = await obsRes.json();
-    const props = obsData?.properties;
-    
-    if (!props) {
-      console.warn('[NWS] No properties in observation response');
-      return null;
-    }
-    
-    // Step 4: Extract and convert values
-    // NWS returns wind speed in km/h (or m/s), temperature in Celsius
-    let windSpeedMph = null;
-    if (props.windSpeed?.value != null) {
-      // NWS wind speed is in m/s when unitCode is "wmoUnit:m_s-1" or km/h
-      const unitCode = props.windSpeed?.unitCode || '';
-      if (unitCode.includes('km_h') || unitCode.includes('km/h')) {
-        windSpeedMph = props.windSpeed.value * 0.621371; // km/h to mph
-      } else {
-        // Assume m/s
-        windSpeedMph = props.windSpeed.value * 2.23694; // m/s to mph
-      }
-    }
-    
-    let windDirection = null;
-    if (props.windDirection?.value != null) {
-      windDirection = Math.round(props.windDirection.value);
-    }
-    
-    let temperatureF = null;
-    if (props.temperature?.value != null) {
-      // NWS returns Celsius
-      temperatureF = (props.temperature.value * 9/5) + 32;
-    }
-    
-    let pressureMb = null;
-    if (props.barometricPressure?.value != null) {
-      // NWS returns Pascals, convert to millibars (hPa)
-      pressureMb = props.barometricPressure.value / 100;
-    }
-    
-    console.log(`[NWS] Got weather from ${stationName}: ${windSpeedMph?.toFixed(1)} mph, ${windDirection}°, ${temperatureF?.toFixed(1)}°F`);
+    const station = data.station;
+    console.log(`[Radial] Found: ${station.stationName} (${station.source}) at ${station.distanceMiles} mi`);
     
     return {
-      windSpeed: windSpeedMph != null ? Math.round(windSpeedMph * 10) / 10 : null,
-      windDirection,
-      temperature: temperatureF != null ? Math.round(temperatureF) : null,
-      pressure: pressureMb != null ? Math.round(pressureMb * 10) / 10 : null,
-      stationName,
-      stationId,
-      dataSource: `NWS ${stationName}`,
-      timestamp: props.timestamp || new Date().toISOString(),
+      windSpeed: station.windSpeed,
+      windDirection: station.windDirection,
+      windGust: station.windGust,
+      temperature: station.temperature,
+      humidity: station.humidity,
+      pressure: station.pressure,
+      stationName: station.stationName,
+      stationId: station.stationId,
+      distanceMiles: station.distanceMiles,
+      source: station.source,
+      dataSource: station.dataSource,
+      timestamp: station.timestamp,
     };
   } catch (err) {
-    if (err.name === 'TimeoutError' || err.name === 'AbortError') {
-      console.warn('[NWS] Request timed out');
-    } else {
-      console.warn('[NWS] Fetch error:', err.message);
-    }
+    console.warn('[Radial] Weather fetch error:', err.message);
     return null;
   }
 }
@@ -770,14 +690,14 @@ function estimateHatchActivity(waterTempF) {
  */
 export async function generateFisheryProfile(lat, lng, elevation = 4500, currentWeatherData = {}) {
   let ambientTemp = currentWeatherData.ambientTemp ?? null;
-  let nwsWeather = null;
+  let ambientWeather = null;
 
-  // ── Fetch NWS weather if no ambient data provided ──
-  // This gives us live government weather data for any GPS coordinate
+  // ── Fetch Ambient Weather if no ambient data provided ──
+  // Uses our custom Supabase database + Ambient Weather API (NO Synoptic/MesoWest)
   if (ambientTemp == null) {
-    nwsWeather = await fetchNWSWeather(lat, lng);
-    if (nwsWeather?.temperature != null) {
-      ambientTemp = nwsWeather.temperature;
+    ambientWeather = await fetchNearbyWeather(lat, lng, 50);
+    if (ambientWeather?.temperature != null) {
+      ambientTemp = ambientWeather.temperature;
     }
   }
 
@@ -785,7 +705,7 @@ export async function generateFisheryProfile(lat, lng, elevation = 4500, current
   const lakeMatch = identifyWaterBody(lat, lng);
   if (lakeMatch) {
     const profile = await buildLakeProfile(lakeMatch, elevation, ambientTemp);
-    if (nwsWeather) profile.nwsWeather = nwsWeather;
+    if (ambientWeather) profile.ambientWeather = ambientWeather;
     return profile;
   }
 
@@ -796,14 +716,14 @@ export async function generateFisheryProfile(lat, lng, elevation = 4500, current
   if (geo?.isOcean) {
     const name = inferOceanName(lat, lng, geo.name);
     const profile = await buildOceanProfile(lat, lng, name, ambientTemp);
-    if (nwsWeather) profile.nwsWeather = nwsWeather;
+    if (ambientWeather) profile.ambientWeather = ambientWeather;
     return profile;
   }
 
   // ── Unknown lake (not in hardcoded list) — try dynamic bio ──
   if (geo?.isLake && geo.name) {
     const profile = await buildDynamicLakeProfile(lat, lng, geo.name, elevation, ambientTemp);
-    if (nwsWeather) profile.nwsWeather = nwsWeather;
+    if (ambientWeather) profile.ambientWeather = ambientWeather;
     return profile;
   }
 
@@ -819,13 +739,13 @@ export async function generateFisheryProfile(lat, lng, elevation = 4500, current
   if (hasMarineData && !usgs) {
     const oceanName = inferOceanName(lat, lng, geo?.name);
     const profile = await buildOceanProfile(lat, lng, oceanName, ambientTemp);
-    if (nwsWeather) profile.nwsWeather = nwsWeather;
+    if (ambientWeather) profile.ambientWeather = ambientWeather;
     return profile;
   }
 
   // ── River/Stream fallback (pass pre-fetched USGS to avoid duplicate call) ──
   const profile = await buildRiverProfileWithData(lat, lng, elevation, ambientTemp, usgs, geo?.name);
-  if (nwsWeather) profile.nwsWeather = nwsWeather;
+  if (ambientWeather) profile.ambientWeather = ambientWeather;
   return profile;
 }
 

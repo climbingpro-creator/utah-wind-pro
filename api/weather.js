@@ -4,6 +4,7 @@
  * 
  * Routes:
  *   GET /api/weather?source=ambient
+ *   GET /api/weather?source=radial&lat=40.35&lng=-111.90  ← NEW: FREE radial search (NWS + UDOT + Ambient)
  *   GET /api/weather?source=synoptic&stids=FPS,KSLC,...
  *   GET /api/weather?source=synoptic-history&stids=FPS,KSLC,...&hours=3
  *   GET /api/weather?source=wu-nearby&lat=40.35&lon=-111.90
@@ -13,6 +14,9 @@
  * Multi-source fallback: airport stations (K-prefix) route through NWS
  * (free, no key), UDOT RWIS stations (UT-prefix) route through UDOT
  * (free with key), remaining stations try Synoptic.
+ * 
+ * The `radial` source is 100% FREE — it only uses NWS, UDOT, and Ambient
+ * Weather APIs. No Synoptic charges.
  */
 
 import { splitStations, fetchNwsLatest, fetchNwsHistory } from './lib/nwsAdapter.js';
@@ -43,6 +47,8 @@ export default async function handler(req, res) {
       return await handleAmbient(res);
     } else if (source === 'ambient-history') {
       return await handleAmbientHistory(res, req.query);
+    } else if (source === 'radial') {
+      return await handleRadialFree(res, req.query);
     } else if (source === 'synoptic-radial') {
       return await handleSynopticRadial(res, req.query);
     } else if (source === 'synoptic') {
@@ -58,7 +64,7 @@ export default async function handler(req, res) {
     } else if (source === 'wu-pws-date') {
       return await handleWuPwsDate(res, req.query);
     } else {
-      return res.status(400).json({ error: 'Invalid source. Use: ambient, ambient-history, synoptic, synoptic-radial, synoptic-history, wu-nearby, wu-pws, wu-pws-history' });
+      return res.status(400).json({ error: 'Invalid source. Use: ambient, ambient-history, radial, synoptic, synoptic-radial, synoptic-history, wu-nearby, wu-pws, wu-pws-history' });
     }
   } catch (error) {
     console.error(`[API Proxy] ${source} error:`, error.message);
@@ -129,6 +135,183 @@ async function handleAmbient(res) {
   const data = await response.json();
   res.setHeader('Cache-Control', 's-maxage=5, stale-while-revalidate=15');
   return res.status(200).json(data);
+}
+
+// ─── FREE Radial Weather (NWS + UDOT + Ambient — NO SYNOPTIC) ─────────────
+// Returns the nearest weather station to a GPS coordinate using only free sources.
+
+const RADIAL_STATIONS = [
+  // NWS Airport Stations (FREE via api.weather.gov)
+  { id: 'KSLC', name: 'Salt Lake City Intl Airport', lat: 40.7884, lng: -111.9778, source: 'nws' },
+  { id: 'KPVU', name: 'Provo Municipal Airport', lat: 40.2192, lng: -111.7235, source: 'nws' },
+  { id: 'KHCR', name: 'Heber City Municipal Airport', lat: 40.4822, lng: -111.4289, source: 'nws' },
+  { id: 'KOGD', name: 'Ogden-Hinckley Airport', lat: 41.1961, lng: -112.0122, source: 'nws' },
+  { id: 'KLGU', name: 'Logan-Cache Airport', lat: 41.7912, lng: -111.8522, source: 'nws' },
+  { id: 'KHIF', name: 'Hill Air Force Base', lat: 41.1239, lng: -111.9731, source: 'nws' },
+  { id: 'KVEL', name: 'Vernal Regional Airport', lat: 40.4409, lng: -109.5099, source: 'nws' },
+  { id: 'KPUC', name: 'Price Carbon County Airport', lat: 39.6147, lng: -110.7514, source: 'nws' },
+  { id: 'KSGU', name: 'St George Regional Airport', lat: 37.0364, lng: -113.5103, source: 'nws' },
+  { id: 'KPGA', name: 'Page Municipal Airport', lat: 36.9261, lng: -111.4483, source: 'nws' },
+  { id: 'KCDC', name: 'Cedar City Regional Airport', lat: 37.7011, lng: -113.0989, source: 'nws' },
+  { id: 'KFGR', name: 'Flaming Gorge (Dutch John)', lat: 40.9159, lng: -109.3928, source: 'nws' },
+  { id: 'KBMC', name: 'Brigham City Airport', lat: 41.5524, lng: -112.0622, source: 'nws' },
+  
+  // UDOT RWIS Stations (FREE via udottraffic.utah.gov)
+  { id: 'UTDCD', name: 'Deer Creek Dam', lat: 40.4097, lng: -111.5097, source: 'udot' },
+  { id: 'UTLPC', name: 'Lower Provo Canyon', lat: 40.3500, lng: -111.6000, source: 'udot' },
+  { id: 'UTPCY', name: 'Provo Canyon', lat: 40.3300, lng: -111.5500, source: 'udot' },
+  { id: 'UTCHL', name: 'Charleston', lat: 40.4700, lng: -111.4700, source: 'udot' },
+  { id: 'UTORM', name: 'Orem', lat: 40.2969, lng: -111.6946, source: 'udot' },
+  { id: 'UTPCR', name: 'Point of the Mountain', lat: 40.4500, lng: -111.9100, source: 'udot' },
+  { id: 'UT7', name: 'American Fork', lat: 40.3770, lng: -111.7958, source: 'udot' },
+  { id: 'UTPRB', name: 'Price', lat: 39.5994, lng: -110.8107, source: 'udot' },
+  { id: 'UTRVT', name: 'Riverton', lat: 40.5219, lng: -111.9391, source: 'udot' },
+  { id: 'UTLAK', name: 'Lake Point', lat: 40.6886, lng: -112.2108, source: 'udot' },
+  { id: 'UTHEB', name: 'Heber', lat: 40.5070, lng: -111.4130, source: 'udot' },
+  { id: 'UTSLD', name: 'Soldier Summit', lat: 39.9300, lng: -111.0900, source: 'udot' },
+  { id: 'UTCOP', name: 'Daniels Pass', lat: 40.3200, lng: -111.2500, source: 'udot' },
+  { id: 'UTALP', name: 'Alpine', lat: 40.4530, lng: -111.7580, source: 'udot' },
+  
+  // Ambient Weather PWS (FREE via our own meters)
+  { id: 'PWS', name: 'Saratoga Springs PWS', lat: 40.3500, lng: -111.9000, source: 'ambient', mac: '48:3F:DA:54:2C:6E' },
+];
+
+function haversineDistance(lat1, lng1, lat2, lng2) {
+  const R = 3958.8; // Earth radius in miles
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+async function handleRadialFree(res, query) {
+  const { lat, lng, radius } = query;
+  if (!lat || !lng) {
+    return res.status(400).json({ error: 'lat and lng parameters required' });
+  }
+  
+  const targetLat = parseFloat(lat);
+  const targetLng = parseFloat(lng);
+  const maxRadius = Math.min(parseFloat(radius) || 100, 200);
+  
+  // Calculate distance to all known free stations
+  const stationsWithDistance = RADIAL_STATIONS.map(s => ({
+    ...s,
+    distanceMiles: haversineDistance(targetLat, targetLng, s.lat, s.lng),
+  }))
+    .filter(s => s.distanceMiles <= maxRadius)
+    .sort((a, b) => a.distanceMiles - b.distanceMiles);
+  
+  if (stationsWithDistance.length === 0) {
+    return res.status(200).json({
+      station: null,
+      message: `No free weather stations found within ${maxRadius} miles`,
+      searchedCoords: { lat: targetLat, lng: targetLng },
+    });
+  }
+  
+  // Try to fetch data from the closest stations until we get valid data
+  const udotKey = process.env.UDOT_API_KEY;
+  const ambientApiKey = process.env.AMBIENT_API_KEY;
+  const ambientAppKey = process.env.AMBIENT_APP_KEY;
+  
+  for (const station of stationsWithDistance.slice(0, 5)) {
+    try {
+      let weatherData = null;
+      
+      if (station.source === 'nws') {
+        const nwsResults = await fetchNwsLatest([station.id]);
+        if (nwsResults.length > 0) {
+          weatherData = normalizeStationData(nwsResults[0], station);
+        }
+      } else if (station.source === 'udot' && udotKey) {
+        const udotResults = await fetchUdotLatest([station.id], udotKey);
+        if (udotResults.length > 0) {
+          weatherData = normalizeStationData(udotResults[0], station);
+        }
+      } else if (station.source === 'ambient' && ambientApiKey && ambientAppKey) {
+        const ambientData = await fetchAmbientByMac(station.mac, ambientApiKey, ambientAppKey);
+        if (ambientData) {
+          weatherData = normalizeAmbientData(ambientData, station);
+        }
+      }
+      
+      if (weatherData && (weatherData.windSpeed != null || weatherData.temperature != null)) {
+        res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
+        return res.status(200).json({
+          station: weatherData,
+          searchedCoords: { lat: targetLat, lng: targetLng },
+          stationsSearched: stationsWithDistance.length,
+        });
+      }
+    } catch (err) {
+      console.warn(`[Radial] Error fetching ${station.id}:`, err.message);
+      continue;
+    }
+  }
+  
+  // No station returned valid data
+  res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
+  return res.status(200).json({
+    station: null,
+    message: 'Found stations but none returned valid data',
+    searchedCoords: { lat: targetLat, lng: targetLng },
+    nearestStations: stationsWithDistance.slice(0, 3).map(s => ({ id: s.id, name: s.name, distanceMiles: Math.round(s.distanceMiles * 10) / 10 })),
+  });
+}
+
+function normalizeStationData(rawStation, stationMeta) {
+  const obs = rawStation.OBSERVATIONS || {};
+  return {
+    stationId: rawStation.STID || stationMeta.id,
+    stationName: rawStation.NAME || stationMeta.name,
+    latitude: parseFloat(rawStation.LATITUDE) || stationMeta.lat,
+    longitude: parseFloat(rawStation.LONGITUDE) || stationMeta.lng,
+    distanceMiles: Math.round(stationMeta.distanceMiles * 10) / 10,
+    source: stationMeta.source,
+    windSpeed: obs.wind_speed_value_1?.value ?? null,
+    windDirection: obs.wind_direction_value_1?.value ?? null,
+    windGust: obs.wind_gust_value_1?.value ?? null,
+    temperature: obs.air_temp_value_1?.value ?? null,
+    humidity: obs.relative_humidity_value_1?.value ?? null,
+    pressure: obs.altimeter_value_1?.value ?? obs.sea_level_pressure_value_1?.value ?? null,
+    timestamp: obs.date_time || obs.wind_speed_value_1?.date_time || new Date().toISOString(),
+    dataSource: `${stationMeta.source.toUpperCase()} — ${stationMeta.name}`,
+  };
+}
+
+async function fetchAmbientByMac(mac, apiKey, appKey) {
+  try {
+    const params = new URLSearchParams({ apiKey, applicationKey: appKey, limit: '1' });
+    const url = `https://api.ambientweather.net/v1/devices/${mac}?${params}`;
+    const response = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    if (!response.ok) return null;
+    const data = await response.json();
+    return Array.isArray(data) && data.length > 0 ? data[0] : null;
+  } catch {
+    return null;
+  }
+}
+
+function normalizeAmbientData(ambientObs, stationMeta) {
+  return {
+    stationId: stationMeta.mac || stationMeta.id,
+    stationName: stationMeta.name,
+    latitude: stationMeta.lat,
+    longitude: stationMeta.lng,
+    distanceMiles: Math.round(stationMeta.distanceMiles * 10) / 10,
+    source: 'ambient',
+    windSpeed: ambientObs.windspeedmph ?? null,
+    windDirection: ambientObs.winddir ?? null,
+    windGust: ambientObs.windgustmph ?? null,
+    temperature: ambientObs.tempf ?? null,
+    humidity: ambientObs.humidity ?? null,
+    pressure: ambientObs.baromrelin ?? null,
+    timestamp: ambientObs.dateutc ? new Date(ambientObs.dateutc).toISOString() : new Date().toISOString(),
+    dataSource: `Ambient Weather — ${stationMeta.name}`,
+  };
 }
 
 const ALLOWED_STATIONS = new Set([

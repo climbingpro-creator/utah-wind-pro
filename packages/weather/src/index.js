@@ -116,7 +116,7 @@ export {
 export {
   AquaticIntelligenceEngine,
   fetchNearestUSGSData,
-  fetchNWSWeather,
+  fetchNearbyWeather,
   inferWaterTemp,
   assessFlowConditions,
   generateFisheryProfile,

@@ -423,3 +423,46 @@ LANGUAGE sql STABLE AS $$
   ORDER BY distance
   LIMIT 1;
 $$;
+
+-- ── Weather Stations (Ambient Weather meters with GPS coordinates) ──
+
+CREATE TABLE IF NOT EXISTS weather_stations (
+  id            UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  mac_address   TEXT UNIQUE NOT NULL,
+  name          TEXT NOT NULL,
+  latitude      DOUBLE PRECISION NOT NULL,
+  longitude     DOUBLE PRECISION NOT NULL,
+  elevation_ft  INTEGER,
+  is_active     BOOLEAN DEFAULT true,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Seed with our known Ambient Weather stations
+INSERT INTO weather_stations (mac_address, name, latitude, longitude, elevation_ft) VALUES
+  ('48:3F:DA:54:2C:6E', 'Saratoga Springs PWS', 40.3500, -111.9000, 4500)
+ON CONFLICT (mac_address) DO NOTHING;
+
+-- RPC: Find nearest weather station to a coordinate
+-- Returns the closest station within a given radius (in degrees, ~69 mi per degree)
+CREATE OR REPLACE FUNCTION nearest_weather_station(p_lat DOUBLE PRECISION, p_lon DOUBLE PRECISION, p_radius_deg DOUBLE PRECISION DEFAULT 0.5)
+RETURNS TABLE(id UUID, mac_address TEXT, name TEXT, latitude DOUBLE PRECISION, longitude DOUBLE PRECISION, distance_deg DOUBLE PRECISION)
+LANGUAGE sql STABLE AS $$
+  SELECT 
+    ws.id, 
+    ws.mac_address, 
+    ws.name, 
+    ws.latitude, 
+    ws.longitude,
+    sqrt(power(ws.latitude - p_lat, 2) + power(ws.longitude - p_lon, 2)) AS distance_deg
+  FROM weather_stations ws
+  WHERE ws.is_active = true
+    AND sqrt(power(ws.latitude - p_lat, 2) + power(ws.longitude - p_lon, 2)) <= p_radius_deg
+  ORDER BY distance_deg
+  LIMIT 1;
+$$;
+
+CREATE INDEX IF NOT EXISTS idx_weather_stations_coords
+  ON weather_stations(latitude, longitude);
+
+CREATE INDEX IF NOT EXISTS idx_weather_stations_active
+  ON weather_stations(is_active) WHERE is_active = true;

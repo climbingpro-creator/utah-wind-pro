@@ -464,38 +464,80 @@ export default function SyntheticFishingCard({ data, isLoading, onClose }) {
         <div className="text-[9px] text-slate-500 mt-1 leading-tight">{data.dataSource}</div>
       </div>
 
-      {/* NWS Live Weather (when available) */}
-      {data.nwsWeather && (
+      {/* Live Weather Station (NWS / UDOT / Ambient — when available) */}
+      {data.ambientWeather && (
         <div className="px-3 pb-1.5">
-          <div className="rounded-lg bg-sky-500/5 border border-sky-500/15 px-2.5 py-2">
+          <div className={`rounded-lg px-2.5 py-2 ${
+            data.ambientWeather.source === 'nws' 
+              ? 'bg-sky-500/5 border border-sky-500/15' 
+              : data.ambientWeather.source === 'udot'
+                ? 'bg-orange-500/5 border border-orange-500/15'
+                : 'bg-teal-500/5 border border-teal-500/15'
+          }`}>
             <div className="flex items-center gap-1.5 mb-1.5">
-              <CloudSun className="w-3 h-3 text-sky-400" />
-              <span className="text-[8px] font-bold uppercase tracking-wider text-sky-400/70">NWS Live Weather</span>
-              <span className="ml-auto text-[8px] text-slate-500">{data.nwsWeather.stationName}</span>
+              <CloudSun className={`w-3 h-3 ${
+                data.ambientWeather.source === 'nws' ? 'text-sky-400' 
+                : data.ambientWeather.source === 'udot' ? 'text-orange-400' 
+                : 'text-teal-400'
+              }`} />
+              <span className={`text-[8px] font-bold uppercase tracking-wider ${
+                data.ambientWeather.source === 'nws' ? 'text-sky-400/70' 
+                : data.ambientWeather.source === 'udot' ? 'text-orange-400/70' 
+                : 'text-teal-400/70'
+              }`}>
+                {data.ambientWeather.source === 'nws' ? 'NWS Airport' 
+                  : data.ambientWeather.source === 'udot' ? 'UDOT RWIS' 
+                  : 'Live Weather'}
+              </span>
+              <span className="ml-auto text-[8px] text-slate-500 truncate max-w-[100px]">{data.ambientWeather.stationName}</span>
             </div>
-            <div className="grid grid-cols-3 gap-2">
-              {data.nwsWeather.windSpeed != null && (
+            <div className="grid grid-cols-4 gap-1.5">
+              {data.ambientWeather.windSpeed != null && (
                 <div className="text-center">
-                  <Wind className="w-3.5 h-3.5 text-sky-400/70 mx-auto mb-0.5" />
-                  <div className="text-xs font-bold text-white">{Math.round(data.nwsWeather.windSpeed)}</div>
+                  <Wind className={`w-3.5 h-3.5 mx-auto mb-0.5 ${
+                    data.ambientWeather.source === 'nws' ? 'text-sky-400/70' 
+                    : data.ambientWeather.source === 'udot' ? 'text-orange-400/70' 
+                    : 'text-teal-400/70'
+                  }`} />
+                  <div className="text-xs font-bold text-white">{Math.round(data.ambientWeather.windSpeed)}</div>
                   <div className="text-[8px] text-slate-500">mph</div>
                 </div>
               )}
-              {data.nwsWeather.windDirection != null && (
+              {data.ambientWeather.windGust != null && (
                 <div className="text-center">
-                  <Navigation className="w-3.5 h-3.5 text-sky-400/70 mx-auto mb-0.5" style={{ transform: `rotate(${data.nwsWeather.windDirection}deg)` }} />
-                  <div className="text-xs font-bold text-white">{data.nwsWeather.windDirection}°</div>
+                  <Wind className="w-3.5 h-3.5 text-amber-400/70 mx-auto mb-0.5" />
+                  <div className="text-xs font-bold text-amber-300">{Math.round(data.ambientWeather.windGust)}</div>
+                  <div className="text-[8px] text-slate-500">gust</div>
+                </div>
+              )}
+              {data.ambientWeather.windDirection != null && (
+                <div className="text-center">
+                  <Navigation className={`w-3.5 h-3.5 mx-auto mb-0.5 ${
+                    data.ambientWeather.source === 'nws' ? 'text-sky-400/70' 
+                    : data.ambientWeather.source === 'udot' ? 'text-orange-400/70' 
+                    : 'text-teal-400/70'
+                  }`} style={{ transform: `rotate(${data.ambientWeather.windDirection}deg)` }} />
+                  <div className="text-xs font-bold text-white">{Math.round(data.ambientWeather.windDirection)}°</div>
                   <div className="text-[8px] text-slate-500">dir</div>
                 </div>
               )}
-              {data.nwsWeather.temperature != null && (
+              {data.ambientWeather.temperature != null && (
                 <div className="text-center">
-                  <Thermometer className="w-3.5 h-3.5 text-sky-400/70 mx-auto mb-0.5" />
-                  <div className="text-xs font-bold text-white">{Math.round(data.nwsWeather.temperature)}°</div>
+                  <Thermometer className={`w-3.5 h-3.5 mx-auto mb-0.5 ${
+                    data.ambientWeather.source === 'nws' ? 'text-sky-400/70' 
+                    : data.ambientWeather.source === 'udot' ? 'text-orange-400/70' 
+                    : 'text-teal-400/70'
+                  }`} />
+                  <div className="text-xs font-bold text-white">{Math.round(data.ambientWeather.temperature)}°</div>
                   <div className="text-[8px] text-slate-500">air</div>
                 </div>
               )}
             </div>
+            {data.ambientWeather.distanceMiles != null && (
+              <div className="text-[8px] text-slate-500 mt-1.5 text-center">
+                {data.ambientWeather.distanceMiles} mi away · FREE gov data
+              </div>
+            )}
           </div>
         </div>
       )}
