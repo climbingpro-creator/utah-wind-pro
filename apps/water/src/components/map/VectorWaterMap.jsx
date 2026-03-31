@@ -86,7 +86,7 @@ export function VectorWaterMap({ currentWeatherData = {} }) {
       const feature = features[0];
       console.log('Clicked feature:', feature);
 
-      const name = feature.properties?.GNIS_Name || feature.properties?.GNIS_NAME || feature.properties?.gnis_name || feature.properties?.name || null;
+      const name = feature.properties?.gnis_name || feature.properties?.GNIS_Name || feature.properties?.GNIS_NAME || feature.properties?.name || null;
       
       if (!name) {
         setSelectedWaterFeature(null);
@@ -95,7 +95,7 @@ export function VectorWaterMap({ currentWeatherData = {} }) {
         return;
       }
 
-      const type = feature.properties?.FType || feature.properties?.FTYPE || feature.properties?.ftype || feature.properties?.fcode_d || 'Stream/River';
+      const type = feature.properties?.ftype || feature.properties?.FType || feature.properties?.FTYPE || feature.properties?.fcode_d || 'Water';
       
       setSelectedWaterFeature({
         name,
@@ -202,11 +202,11 @@ export function VectorWaterMap({ currentWeatherData = {} }) {
               type="vector"
               url={`pmtiles://${PMTILES_URL}`}
             >
-              {/* Lakes & Reservoirs (polygon fills) — source-layer: utahlakeshires */}
+              {/* Lakes & Reservoirs (polygon fills) — source-layer: utah-lakes-hires */}
               <Layer
                 id="lakes-fill"
                 type="fill"
-                source-layer="utahlakeshires"
+                source-layer="utah-lakes-hires"
                 minzoom={6}
                 paint={{
                   'fill-color': '#3b82f6',
@@ -221,7 +221,7 @@ export function VectorWaterMap({ currentWeatherData = {} }) {
               <Layer
                 id="lakes-outline"
                 type="line"
-                source-layer="utahlakeshires"
+                source-layer="utah-lakes-hires"
                 minzoom={8}
                 paint={{
                   'line-color': '#1d4ed8',
@@ -233,11 +233,11 @@ export function VectorWaterMap({ currentWeatherData = {} }) {
                   'line-opacity': 0.6,
                 }}
               />
-              {/* Streams & Rivers (lines) — source-layer: utahstreamshires */}
+              {/* Streams & Rivers (lines) — source-layer: utah-streams-hires */}
               <Layer
                 id="streams-line"
                 type="line"
-                source-layer="utahstreamshires"
+                source-layer="utah-streams-hires"
                 minzoom={10}
                 paint={{
                   'line-color': '#0ea5e9',
@@ -250,15 +250,15 @@ export function VectorWaterMap({ currentWeatherData = {} }) {
                   'line-opacity': 0.7,
                 }}
               />
-              {/* Lake labels */}
+              {/* Lake labels — check both cases for gnis_name */}
               <Layer
                 id="lakes-labels"
                 type="symbol"
-                source-layer="utahlakeshires"
+                source-layer="utah-lakes-hires"
                 minzoom={9}
-                filter={['has', 'GNIS_Name']}
+                filter={['any', ['has', 'gnis_name'], ['has', 'GNIS_Name']]}
                 layout={{
-                  'text-field': ['get', 'GNIS_Name'],
+                  'text-field': ['coalesce', ['get', 'gnis_name'], ['get', 'GNIS_Name']],
                   'text-size': ['interpolate', ['linear'], ['zoom'], 9, 10, 14, 14],
                   'text-font': ['Open Sans Bold'],
                   'text-anchor': 'center',
@@ -270,15 +270,15 @@ export function VectorWaterMap({ currentWeatherData = {} }) {
                   'text-halo-width': 2,
                 }}
               />
-              {/* Stream labels */}
+              {/* Stream labels — check both cases for gnis_name */}
               <Layer
                 id="streams-labels"
                 type="symbol"
-                source-layer="utahstreamshires"
+                source-layer="utah-streams-hires"
                 minzoom={12}
-                filter={['has', 'GNIS_Name']}
+                filter={['any', ['has', 'gnis_name'], ['has', 'GNIS_Name']]}
                 layout={{
-                  'text-field': ['get', 'GNIS_Name'],
+                  'text-field': ['coalesce', ['get', 'gnis_name'], ['get', 'GNIS_Name']],
                   'text-size': 10,
                   'text-font': ['Open Sans Regular'],
                   'symbol-placement': 'line',
