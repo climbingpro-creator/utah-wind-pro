@@ -16,54 +16,9 @@ const DEFAULT_ZOOM = 8;
 const DEFAULT_ELEVATION = 4500;
 
 /**
- * Check if a name looks like an actual water body name (vs a location/landmark)
- */
-function isWaterBodyName(name) {
-  if (!name) return false;
-  const lower = name.toLowerCase();
-  return lower.includes('river') || 
-         lower.includes('creek') || 
-         lower.includes('stream') || 
-         lower.includes('lake') ||
-         lower.includes('reservoir') ||
-         lower.includes('pond') ||
-         lower.includes('canal') ||
-         lower.includes('wash') ||
-         lower.includes('fork') ||  // e.g., "North Fork"
-         lower.includes('branch');  // e.g., "East Branch"
-}
-
-/**
- * Extract water body name from feature properties
+ * Extract water body type from feature properties
  * Handles both USGS NHD and OpenStreetMap property naming conventions
- * Returns { name, isActualWaterName } to indicate if it's a real water body name
  */
-function extractWaterName(properties, _layerId = null) {
-  if (!properties) return null;
-  
-  // USGS NHD naming (case variations)
-  const usgsName = properties.gnis_name || properties.GNIS_Name || properties.GNIS_NAME;
-  
-  // OpenStreetMap naming
-  const osmName = properties.name || properties['name:en'];
-  
-  // Fallback to any name-like property
-  const fallbackName = properties.NAME || properties.Name;
-  
-  // Get the best available name
-  const name = usgsName || osmName || fallbackName || null;
-  
-  // If we got a name, check if it's actually a water body name
-  // Names like "Nunns" are location markers, not water body names
-  if (name && !isWaterBodyName(name)) {
-    // This is likely a location marker on a stream, not the stream's name
-    // Return null so we can try to get the real name from USGS API
-    console.log(`[extractWaterName] "${name}" doesn't look like a water body name, ignoring`);
-    return null;
-  }
-  
-  return name;
-}
 
 /**
  * Extract water body type from feature properties
@@ -196,16 +151,21 @@ export function VectorWaterMap({ currentWeatherData = {} }) {
     const map = mapRef.current?.getMap();
     if (!map) return;
 
-    // Query our PMTiles water layers first
+    // Use a small bounding box for better line feature detection
+    const bbox = [
+      [e.point.x - 8, e.point.y - 8],
+      [e.point.x + 8, e.point.y + 8]
+    ];
+
+    // Query our PMTiles water layers first (with bbox for thin lines)
     const waterLayerIds = WATER_LAYER_IDS.filter(id => map.getLayer(id));
     let features = waterLayerIds.length > 0 
-      ? map.queryRenderedFeatures(e.point, { layers: waterLayerIds })
+      ? map.queryRenderedFeatures(bbox, { layers: waterLayerIds })
       : [];
 
     // If no PMTiles features, check basemap water layers
     if (features.length === 0) {
-      const allFeatures = map.queryRenderedFeatures(e.point);
-      
+      const allFeatures = map.queryRenderedFeatures(bbox);
       
       const basemapWater = allFeatures.find(f => {
         const fLayerId = (f.layer?.id || '').toLowerCase();
@@ -228,25 +188,52 @@ export function VectorWaterMap({ currentWeatherData = {} }) {
     }
 
     if (features.length > 0) {
-      const feature = features[0];
-      const featureId = feature.id || `${feature.layer?.id}-${Math.round(e.point.x)}-${Math.round(e.point.y)}`;
+      // Helper to detect if a feature is a river/stream
+      const isRiverFeature = (f) => {
+        const geomType = f.geometry?.type;
+        const isLine = geomType === 'LineString' || geomType === 'MultiLineString';
+        const hasWaterway = !!f.properties?.waterway;
+        const typeIsRiver = f.properties?.type === 'river' || 
+                            f.properties?.type === 'stream' || 
+                            f.properties?.type === 'canal';
+        const layerIsStream = f.layer?.id?.includes('stream');
+        return isLine || hasWaterway || typeIsRiver || layerIsStream;
+      };
       
-      // Only update if hovering over a different feature (use rounded coords for stability)
+      // Separate and prioritize rivers over lakes
+      const riverFeatures = features.filter(f => isRiverFeature(f));
+      const namedRiver = riverFeatures.find(f => f.properties?.name);
+      const namedFeature = features.find(f => f.properties?.name);
+      
+      // Prefer: named river > any river > named lake > any feature
+      const feature = namedRiver || riverFeatures[0] || namedFeature || features[0];
+      const featureId = feature.id || `${feature.layer?.id}-${feature.properties?.name || 'unnamed'}-${Math.round(e.point.x / 20)}`;
+      
+      // Only update if hovering over a different feature
       if (hoveredFeatureIdRef.current !== featureId) {
         hoveredFeatureIdRef.current = featureId;
         
-        // Extract name and type
-        const name = extractWaterName(feature.properties, feature.layer?.id) ||
-                     feature.properties?.name ||
-                     feature.properties?.name_en ||
-                     feature.properties?.class;
+        // Get the name directly from properties
+        const name = feature.properties?.name;
         const type = extractWaterType(feature.properties, feature.layer?.id);
         
+        // If no name, show a more descriptive fallback based on type
+        let displayName = name;
+        if (!displayName) {
+          const waterType = feature.properties?.type || feature.properties?.waterway || type;
+          if (waterType === 'river') displayName = 'Unnamed River';
+          else if (waterType === 'stream') displayName = 'Unnamed Stream';
+          else if (waterType === 'canal') displayName = 'Unnamed Canal';
+          else if (waterType === 'lake' || waterType === 'reservoir') displayName = 'Unnamed Lake';
+          else displayName = type || 'Water';
+        }
+        
         setHoveredFeature({
-          name: name || type || 'Water',
+          name: displayName,
           type,
           lngLat: [e.lngLat.lng, e.lngLat.lat],
           layerId: feature.layer?.id,
+          hasName: !!name,
         });
         setCursorStyle('pointer');
       } else {
@@ -350,55 +337,88 @@ export function VectorWaterMap({ currentWeatherData = {} }) {
     }
     
     if (waterLayerIds.length > 0) {
-      // First try exact point query
-      let features = map.queryRenderedFeatures(e.point, { layers: waterLayerIds });
-      
-      // If no features found, try a small bounding box around the click (helps with thin lines)
-      if (features.length === 0) {
-        const bbox = [
-          [e.point.x - 10, e.point.y - 10],
-          [e.point.x + 10, e.point.y + 10]
-        ];
-        features = map.queryRenderedFeatures(bbox, { layers: waterLayerIds });
-        console.log('[VectorWaterMap] Expanded bbox query found:', features.length, 'features');
-      }
-      
+      // Use a wider bounding box for better line feature detection (streams are thin)
+      const bbox = [
+        [e.point.x - 15, e.point.y - 15],
+        [e.point.x + 15, e.point.y + 15]
+      ];
+      let features = map.queryRenderedFeatures(bbox, { layers: waterLayerIds });
       console.log('[VectorWaterMap] Our layers:', waterLayerIds, 'Features found:', features.length);
 
       if (features.length > 0) {
         console.log('[VectorWaterMap] All features found:', features.map(f => ({
           layer: f.layer?.id,
-          name: f.properties?.gnis_name || f.properties?.GNIS_Name || f.properties?.name,
+          name: f.properties?.name,
+          type: f.properties?.type,
+          waterway: f.properties?.waterway,
+          geometry: f.geometry?.type,
         })));
         
-        // PRIORITY ORDER:
-        // 1. Stream/river features (even without names) - user likely clicked on the visible river line
-        // 2. Named water features
-        // 3. Any feature
-        const streamFeature = features.find(f => 
-          f.layer?.id?.includes('stream') || f.layer?.id?.includes('river')
-        );
-        const namedFeature = features.find(f => extractWaterName(f.properties, f.layer?.id));
+        // Helper to detect if a feature is a river/stream (line geometry or waterway property)
+        const isRiverFeature = (f) => {
+          const geomType = f.geometry?.type;
+          const isLine = geomType === 'LineString' || geomType === 'MultiLineString';
+          const hasWaterway = !!f.properties?.waterway;
+          const typeIsRiver = f.properties?.type === 'river' || 
+                              f.properties?.type === 'stream' || 
+                              f.properties?.type === 'canal';
+          const layerIsStream = f.layer?.id?.includes('stream');
+          return isLine || hasWaterway || typeIsRiver || layerIsStream;
+        };
         
-        // Prefer stream features over lakes when both are present
-        const feature = streamFeature || namedFeature || features[0];
+        // Separate features by type
+        const riverFeatures = features.filter(f => isRiverFeature(f));
+        const lakeFeatures = features.filter(f => !isRiverFeature(f));
+        
+        console.log('[VectorWaterMap] Rivers:', riverFeatures.length, 'Lakes:', lakeFeatures.length);
+        
+        // PRIORITY ORDER - ALWAYS prefer rivers/streams over lakes when both are present
+        // This handles the case where a river flows through/near a lake
+        // 1. Named river/stream features (LineString with name) - BEST match
+        // 2. Unnamed river/stream features (user clicked on visible river line)
+        // 3. Named polygon features (lakes, reservoirs)
+        // 4. Any feature
+        const namedRiverFeature = riverFeatures.find(f => f.properties?.name);
+        const unnamedRiverFeature = riverFeatures[0];
+        const namedLakeFeature = lakeFeatures.find(f => f.properties?.name);
+        
+        // Pick the best feature - STRONGLY prioritize rivers over lakes!
+        let feature;
+        if (riverFeatures.length > 0) {
+          // If there are ANY river features, prefer them
+          feature = namedRiverFeature || unnamedRiverFeature;
+          console.log('[VectorWaterMap] Prioritizing river feature:', feature.properties?.name || '(unnamed)');
+        } else {
+          // No rivers, use lake
+          feature = namedLakeFeature || features[0];
+        }
+        
+        console.log('[VectorWaterMap] Feature selection:', {
+          namedRiver: namedRiverFeature?.properties?.name,
+          unnamedRiver: unnamedRiverFeature ? 'yes' : 'no',
+          namedLake: namedLakeFeature?.properties?.name,
+          selected: feature.properties?.name,
+        });
         
         clickedLayerId = feature.layer?.id;
         console.log('[VectorWaterMap] Selected feature from layer:', clickedLayerId);
         console.log('[VectorWaterMap] Properties:', feature.properties);
 
-        // Use unified extraction functions for USGS + OSM compatibility
-        clickedFeatureName = extractWaterName(feature.properties, clickedLayerId);
+        // For our PMTiles, use the 'name' property directly
+        clickedFeatureName = feature.properties?.name || null;
         clickedFeatureType = extractWaterType(feature.properties, clickedLayerId);
         featureIsSaltwater = isSaltwater(feature.properties);
         
-        // IMPORTANT: If we clicked on a stream/river layer but couldn't get the name,
-        // still mark it as a river so we don't fall back to nearby lakes
+        // Determine if this is a river/stream based on properties or layer
         const isStreamLayer = clickedLayerId?.includes('stream') || clickedLayerId?.includes('river');
-        if (isStreamLayer) {
-          // Force the type to be "River/Stream" so profile generator knows not to match lakes
+        const isStreamType = feature.properties?.waterway || 
+                             feature.properties?.type === 'river' || 
+                             feature.properties?.type === 'stream' ||
+                             feature.properties?.type === 'canal';
+        
+        if (isStreamLayer || isStreamType) {
           clickedFeatureType = 'River/Stream';
-          console.log('[VectorWaterMap] Stream layer detected, setting type to River/Stream');
+          console.log('[VectorWaterMap] Stream/river detected, setting type to River/Stream');
         }
         
         console.log('[VectorWaterMap] Final - name:', clickedFeatureName, 'type:', clickedFeatureType);
@@ -407,7 +427,7 @@ export function VectorWaterMap({ currentWeatherData = {} }) {
           setSelectedWaterFeature({
             name: clickedFeatureName,
             type: clickedFeatureType,
-            permanence: feature.properties?.FCode_Text || feature.properties?.permanence || feature.properties?.intermittent || null,
+            permanence: feature.properties?.intermittent ? 'Intermittent' : null,
             lngLat: [e.lngLat.lng, e.lngLat.lat],
             isSaltwater: featureIsSaltwater,
           });
@@ -532,76 +552,114 @@ export function VectorWaterMap({ currentWeatherData = {} }) {
           <NavigationControl position="top-right" showCompass={true} showZoom={true} />
           <GeolocateControl position="top-right" trackUserLocation={false} />
 
-          {/* PMTiles water features — supports both USGS NHD (US) and OSM (global) data */}
+          {/* PMTiles water features — Utah regional POC with OSM data */}
           {pmtilesReady && PMTILES_URL && (
             <Source
               id="water-pmtiles"
               type="vector"
               url={`pmtiles://${PMTILES_URL}`}
             >
-              {/* ─── USGS NHD Layers (US data) ─────────────────────────────── */}
-              {/* Lakes & Reservoirs (polygon fills) — source-layer: utah-lakes-hires */}
+              {/* ─── Water Layer (source-layer: water) ─────────────────────── */}
+              {/* All water features from OSM: lakes, reservoirs, rivers, streams, canals */}
+              {/* Properties: name, type, waterway, water, natural, intermittent */}
+              
+              {/* Lakes & Reservoirs (polygon fills) */}
               <Layer
                 id="lakes-fill"
                 type="fill"
-                source-layer="utah-lakes-hires"
-                minzoom={6}
+                source-layer="water"
+                minzoom={4}
+                filter={['any',
+                  ['==', ['geometry-type'], 'Polygon'],
+                  ['==', ['geometry-type'], 'MultiPolygon']
+                ]}
                 paint={{
-                  'fill-color': '#3b82f6',
+                  'fill-color': [
+                    'case',
+                    ['==', ['get', 'type'], 'reservoir'], '#2563eb',
+                    '#3b82f6'
+                  ],
                   'fill-opacity': [
                     'interpolate', ['linear'], ['zoom'],
-                    6, 0.15,
-                    10, 0.3,
-                    14, 0.4
+                    4, 0.2,
+                    8, 0.35,
+                    14, 0.45
                   ],
                 }}
               />
               <Layer
                 id="lakes-outline"
                 type="line"
-                source-layer="utah-lakes-hires"
-                minzoom={8}
+                source-layer="water"
+                minzoom={6}
+                filter={['any',
+                  ['==', ['geometry-type'], 'Polygon'],
+                  ['==', ['geometry-type'], 'MultiPolygon']
+                ]}
                 paint={{
                   'line-color': '#1d4ed8',
                   'line-width': [
                     'interpolate', ['linear'], ['zoom'],
-                    8, 0.5,
-                    12, 1.5
+                    6, 0.5,
+                    10, 1,
+                    14, 2
                   ],
-                  'line-opacity': 0.6,
+                  'line-opacity': 0.7,
                 }}
               />
-              {/* Streams & Rivers (lines) — source-layer: utah-streams-hires */}
+              
+              {/* Rivers & Streams (lines) */}
               <Layer
                 id="streams-line"
                 type="line"
-                source-layer="utah-streams-hires"
-                minzoom={8}
+                source-layer="water"
+                minzoom={6}
+                filter={['any',
+                  ['==', ['geometry-type'], 'LineString'],
+                  ['==', ['geometry-type'], 'MultiLineString']
+                ]}
                 paint={{
-                  'line-color': '#0ea5e9',
+                  'line-color': [
+                    'case',
+                    ['==', ['get', 'type'], 'river'], '#0284c7',
+                    ['==', ['get', 'type'], 'canal'], '#7c3aed',
+                    '#0ea5e9'
+                  ],
                   'line-width': [
                     'interpolate', ['linear'], ['zoom'],
-                    8, 1.5,
+                    6, 1,
                     10, 2.5,
-                    14, 4,
-                    18, 8
+                    14, 5,
+                    18, 10
                   ],
-                  'line-opacity': 0.8,
+                  'line-opacity': [
+                    'case',
+                    ['==', ['get', 'intermittent'], true], 0.5,
+                    0.85
+                  ],
                 }}
               />
-              {/* Lake labels — check both USGS and OSM naming */}
+              
+              {/* Lake/Reservoir labels */}
               <Layer
                 id="lakes-labels"
                 type="symbol"
-                source-layer="utah-lakes-hires"
-                minzoom={9}
-                filter={['any', ['has', 'gnis_name'], ['has', 'GNIS_Name'], ['has', 'name']]}
+                source-layer="water"
+                minzoom={8}
+                filter={['all',
+                  ['has', 'name'],
+                  ['any',
+                    ['==', ['geometry-type'], 'Polygon'],
+                    ['==', ['geometry-type'], 'MultiPolygon']
+                  ]
+                ]}
                 layout={{
-                  'text-field': ['coalesce', ['get', 'gnis_name'], ['get', 'GNIS_Name'], ['get', 'name']],
-                  'text-size': ['interpolate', ['linear'], ['zoom'], 9, 10, 14, 14],
+                  'text-field': ['get', 'name'],
+                  'text-size': ['interpolate', ['linear'], ['zoom'], 8, 10, 12, 13, 16, 16],
                   'text-font': ['Open Sans Bold'],
                   'text-anchor': 'center',
                   'text-allow-overlap': false,
+                  'text-max-width': 8,
                 }}
                 paint={{
                   'text-color': '#1e40af',
@@ -609,81 +667,32 @@ export function VectorWaterMap({ currentWeatherData = {} }) {
                   'text-halo-width': 2,
                 }}
               />
-              {/* Stream labels — check both USGS and OSM naming */}
+              
+              {/* River/Stream labels (along the line) */}
               <Layer
                 id="streams-labels"
                 type="symbol"
-                source-layer="utah-streams-hires"
-                minzoom={12}
-                filter={['any', ['has', 'gnis_name'], ['has', 'GNIS_Name'], ['has', 'name']]}
+                source-layer="water"
+                minzoom={10}
+                filter={['all',
+                  ['has', 'name'],
+                  ['any',
+                    ['==', ['geometry-type'], 'LineString'],
+                    ['==', ['geometry-type'], 'MultiLineString']
+                  ]
+                ]}
                 layout={{
-                  'text-field': ['coalesce', ['get', 'gnis_name'], ['get', 'GNIS_Name'], ['get', 'name']],
-                  'text-size': 10,
+                  'text-field': ['get', 'name'],
+                  'text-size': ['interpolate', ['linear'], ['zoom'], 10, 9, 14, 12],
                   'text-font': ['Open Sans Regular'],
                   'symbol-placement': 'line',
                   'text-allow-overlap': false,
+                  'text-max-angle': 30,
                 }}
                 paint={{
                   'text-color': '#0369a1',
                   'text-halo-color': '#ffffff',
                   'text-halo-width': 1.5,
-                }}
-              />
-              
-              {/* ─── OSM Global Layers (when global PMTiles available) ────── */}
-              {/* These layers will activate when global-water.pmtiles is deployed */}
-              {/* Lakes from OSM (source-layer: lakes) */}
-              <Layer
-                id="osm-lakes"
-                type="fill"
-                source-layer="lakes"
-                minzoom={4}
-                paint={{
-                  'fill-color': '#3b82f6',
-                  'fill-opacity': ['interpolate', ['linear'], ['zoom'], 4, 0.1, 10, 0.35],
-                }}
-              />
-              {/* Rivers from OSM (source-layer: rivers) */}
-              <Layer
-                id="osm-rivers"
-                type="line"
-                source-layer="rivers"
-                minzoom={6}
-                paint={{
-                  'line-color': '#0ea5e9',
-                  'line-width': ['interpolate', ['linear'], ['zoom'], 6, 0.5, 12, 2, 16, 4],
-                  'line-opacity': 0.7,
-                }}
-              />
-              {/* Ocean/coastline from OSM (source-layer: oceans) */}
-              <Layer
-                id="osm-ocean"
-                type="fill"
-                source-layer="oceans"
-                minzoom={0}
-                paint={{
-                  'fill-color': '#1e3a5f',
-                  'fill-opacity': 0.15,
-                }}
-              />
-              {/* OSM water labels */}
-              <Layer
-                id="osm-water-labels"
-                type="symbol"
-                source-layer="lakes"
-                minzoom={8}
-                filter={['has', 'name']}
-                layout={{
-                  'text-field': ['get', 'name'],
-                  'text-size': ['interpolate', ['linear'], ['zoom'], 8, 10, 14, 14],
-                  'text-font': ['Open Sans Bold'],
-                  'text-anchor': 'center',
-                  'text-allow-overlap': false,
-                }}
-                paint={{
-                  'text-color': '#1e40af',
-                  'text-halo-color': '#ffffff',
-                  'text-halo-width': 2,
                 }}
               />
             </Source>
@@ -728,11 +737,11 @@ export function VectorWaterMap({ currentWeatherData = {} }) {
             >
               <div className="flex flex-col gap-0.5 px-2.5 py-1.5 bg-slate-900/95 rounded-lg border border-cyan-500/30 shadow-lg shadow-cyan-500/10">
                 <div className="flex items-center gap-1.5">
-                  <Droplets className="w-3.5 h-3.5 text-cyan-400" />
-                  <span className="text-xs font-bold text-white whitespace-nowrap">
+                  <Droplets className={`w-3.5 h-3.5 ${hoveredFeature.hasName ? 'text-cyan-400' : 'text-slate-400'}`} />
+                  <span className={`text-xs font-bold whitespace-nowrap ${hoveredFeature.hasName ? 'text-white' : 'text-slate-300 italic'}`}>
                     {hoveredFeature.name}
                   </span>
-                  {hoveredFeature.type && hoveredFeature.type !== hoveredFeature.name && (
+                  {hoveredFeature.hasName && hoveredFeature.type && hoveredFeature.type !== hoveredFeature.name && (
                     <span className="text-[10px] text-cyan-300/60">
                       · {hoveredFeature.type}
                     </span>
@@ -741,6 +750,11 @@ export function VectorWaterMap({ currentWeatherData = {} }) {
                 <div className="text-[10px] text-slate-400 font-mono pl-5">
                   {hoveredFeature.lngLat[1].toFixed(5)}, {hoveredFeature.lngLat[0].toFixed(5)}
                 </div>
+                {!hoveredFeature.hasName && (
+                  <div className="text-[9px] text-slate-500 pl-5">
+                    Click for USGS data lookup
+                  </div>
+                )}
               </div>
             </Popup>
           )}

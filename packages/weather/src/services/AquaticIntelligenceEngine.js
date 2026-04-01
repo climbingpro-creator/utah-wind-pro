@@ -316,11 +316,20 @@ export async function reverseGeocodeWater(lat, lng) {
     // from actual marine telemetry data in the orchestrator.
 
     // Last resort: return what Nominatim gave us as a river/stream default
+    // But filter out non-water names like country/state names
     if (loData) {
       const addr = loData.address || {};
+      let name = addr.water || addr.river || null;
+      
+      // Don't use country/state/city names as water body names
+      const badNames = ['United States', 'USA', 'Canada', 'Mexico', 'Utah', 'Colorado', 'Wyoming', 'Idaho', 'Arizona', 'Nevada'];
+      if (!name && loData.name && !badNames.includes(loData.name)) {
+        name = loData.name;
+      }
+      
       return {
         isLake: false, isOcean: false, isRiver: true,
-        name: addr.water || addr.river || loData.name || null,
+        name: name,
       };
     }
 

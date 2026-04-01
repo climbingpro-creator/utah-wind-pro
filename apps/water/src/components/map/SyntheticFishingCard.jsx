@@ -554,25 +554,50 @@ export default function SyntheticFishingCard({ data, isLoading, onClose }) {
   
   // Helper: Parse river name and location from USGS site name
   // e.g., "ALAFIA RIVER AT GIBSONTON FL" -> { river: "Alafia River", location: "Gibsonton FL" }
+  // e.g., "AMERICAN FK AB UPPER POWERPLANT NR AMERICAN F" -> { river: "American Fork", location: "Upper Powerplant" }
   const parseUSGSSiteName = (siteName) => {
     if (!siteName) return { river: null, location: null };
     
+    // USGS uses abbreviations: AB=above, BL=below, NR=near, AT=at
+    // First, expand common abbreviations
+    let expanded = siteName
+      .replace(/\bAB\b/gi, 'above')
+      .replace(/\bBL\b/gi, 'below')
+      .replace(/\bNR\b/gi, 'near')
+      .replace(/\bFK\b/gi, 'Fork')
+      .replace(/\bCR\b/gi, 'Creek')
+      .replace(/\bR\b/gi, 'River')
+      .replace(/\bCK\b/gi, 'Creek')
+      .replace(/\bSPR\b/gi, 'Spring')
+      .replace(/\bMTN\b/gi, 'Mountain');
+    
     // Match patterns like "RIVER NAME AT/NEAR/BELOW/ABOVE LOCATION"
-    const match = siteName.match(/^(.+?)\s+(at|near|below|above)\s+(.+)$/i);
+    const match = expanded.match(/^(.+?)\s+(at|near|below|above)\s+(.+)$/i);
     if (match) {
+      let riverName = toTitleCase(match[1].trim());
+      let location = toTitleCase(match[3].trim());
+      
+      // If location contains another preposition, extract just the first part
+      const locMatch = location.match(/^(.+?)\s+(near|at|above|below)\s+/i);
+      if (locMatch) {
+        location = locMatch[1].trim();
+      }
+      
       return {
-        river: toTitleCase(match[1].trim()),
-        location: toTitleCase(match[3].trim()),
+        river: riverName,
+        location: location,
       };
     }
     // No location marker found, just title case the whole thing
-    return { river: toTitleCase(siteName), location: null };
+    return { river: toTitleCase(expanded), location: null };
   };
   
   // Build display name: prioritize vector feature name (actual river/stream name from map)
   // then fall back to waterBodyName (from reverse geocode), then USGS site name, then generic label
   const vectorName = data.vectorFeatureName;
-  const waterBodyName = data.waterBodyName;
+  // Filter out bad waterBodyNames (country/state names that slipped through)
+  const badNames = ['United States', 'USA', 'Canada', 'Mexico', 'Utah', 'Colorado', 'Wyoming', 'Idaho', 'Arizona', 'Nevada'];
+  const waterBodyName = badNames.includes(data.waterBodyName) ? null : data.waterBodyName;
   const usgsName = data.usgsGauge?.siteName;
   const lakeIntelName = data.lakeIntel?.name;
   const oceanName = data.oceanData?.name;
