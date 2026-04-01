@@ -38,7 +38,7 @@ function isWaterBodyName(name) {
  * Handles both USGS NHD and OpenStreetMap property naming conventions
  * Returns { name, isActualWaterName } to indicate if it's a real water body name
  */
-function extractWaterName(properties, layerId = null) {
+function extractWaterName(properties, _layerId = null) {
   if (!properties) return null;
   
   // USGS NHD naming (case variations)
@@ -214,24 +214,18 @@ export function VectorWaterMap({ currentWeatherData = {} }) {
       }
       
       const basemapWater = allFeatures.find(f => {
-        const layerId = (f.layer?.id || '').toLowerCase();
+        const fLayerId = (f.layer?.id || '').toLowerCase();
         const sourceLayer = (f.sourceLayer || '').toLowerCase();
-        const layerType = f.layer?.type || '';
         
         // Check for water-related layer names (Carto, Mapbox, MapTiler, OSM)
-        const isWaterLayer = layerId.includes('water') || 
-               layerId.includes('river') || 
-               layerId.includes('stream') ||
-               layerId.includes('lake') ||
-               layerId.includes('ocean') ||
-               layerId.includes('sea') ||
+        return fLayerId.includes('water') || 
+               fLayerId.includes('river') || 
+               fLayerId.includes('stream') ||
+               fLayerId.includes('lake') ||
+               fLayerId.includes('ocean') ||
+               fLayerId.includes('sea') ||
                sourceLayer.includes('water') ||
                sourceLayer.includes('waterway');
-        
-        // Also check if it's a fill layer with blue-ish color (common for water)
-        // This helps catch generic "water" layers that might not have obvious names
-        
-        return isWaterLayer;
       });
       
       if (basemapWater) {
