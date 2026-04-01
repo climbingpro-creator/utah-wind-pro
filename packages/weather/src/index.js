@@ -125,6 +125,25 @@ export {
   fetchMarineTelemetry,
 } from './services/AquaticIntelligenceEngine.js';
 
+// ─── Tactical Recommendation Engine ───────────────────────────
+export {
+  generateTacticalBriefing,
+  generateTacticalSummary,
+  predictHatch,
+  parseSkyCondition,
+  analyzePressureTrend,
+  inferWaterTemp as inferWaterTempTactical,
+  SKY_LABELS,
+} from './services/TacticalRecommendationEngine.js';
+export { default as TacticalRecommendationEngine } from './services/TacticalRecommendationEngine.js';
+
+// ─── Open-Meteo Global Weather ────────────────────────────────
+export {
+  fetchOpenMeteoWeather,
+  fetchOpenMeteoCurrent,
+  isOutsideUS,
+} from './services/OpenMeteoAdapter.js';
+
 // ─── Utils ────────────────────────────────────────────────────
 export { apiUrl, isNativeApp, isIOS, isAndroid, isWeb } from './utils/platform.js';
 export { safeToFixed } from './utils/safeToFixed.js';
