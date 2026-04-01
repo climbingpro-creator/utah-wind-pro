@@ -186,8 +186,13 @@ export function VectorWaterMap({ currentWeatherData = {} }) {
     'osm-lakes', 'osm-rivers', 'osm-ocean', 'lakes-outline',
   ];
 
-  // Handle mouse move for hover effects
+  // Detect if device supports touch (mobile/tablet)
+  const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+  // Handle mouse move for hover effects (desktop only)
   const handleMouseMove = useCallback((e) => {
+    // Skip hover on touch devices - they use tap instead
+    if (isTouchDevice) return;
     const map = mapRef.current?.getMap();
     if (!map) return;
 
@@ -201,17 +206,6 @@ export function VectorWaterMap({ currentWeatherData = {} }) {
     if (features.length === 0) {
       const allFeatures = map.queryRenderedFeatures(e.point);
       
-      // Debug: log all layers under cursor (remove after debugging)
-      if (allFeatures.length > 0 && !window._lastHoverDebug) {
-        console.log('[Hover] All layers under cursor:', allFeatures.map(f => ({ 
-          layer: f.layer?.id, 
-          source: f.sourceLayer, 
-          type: f.layer?.type,
-          props: Object.keys(f.properties || {}).slice(0, 5)
-        })));
-        window._lastHoverDebug = Date.now();
-        setTimeout(() => { window._lastHoverDebug = null; }, 2000); // Throttle logging
-      }
       
       const basemapWater = allFeatures.find(f => {
         const fLayerId = (f.layer?.id || '').toLowerCase();
@@ -230,7 +224,6 @@ export function VectorWaterMap({ currentWeatherData = {} }) {
       
       if (basemapWater) {
         features = [basemapWater];
-        console.log('[Hover] Found basemap water:', basemapWater.layer?.id, basemapWater.sourceLayer, basemapWater.properties);
       }
     }
 
@@ -248,8 +241,6 @@ export function VectorWaterMap({ currentWeatherData = {} }) {
                      feature.properties?.name_en ||
                      feature.properties?.class;
         const type = extractWaterType(feature.properties, feature.layer?.id);
-        
-        console.log('[Hover] Water feature:', { name, type, layerId: feature.layer?.id, props: feature.properties });
         
         setHoveredFeature({
           name: name || type || 'Water',
@@ -724,8 +715,8 @@ export function VectorWaterMap({ currentWeatherData = {} }) {
             </Popup>
           )}
 
-          {/* Hover tooltip - shows water name and GPS on hover */}
-          {hoveredFeature && !isLoading && (
+          {/* Hover tooltip - shows water name and GPS on hover (desktop only) */}
+          {hoveredFeature && !isLoading && !isTouchDevice && (
             <Popup
               longitude={hoveredFeature.lngLat[0]}
               latitude={hoveredFeature.lngLat[1]}
@@ -764,7 +755,7 @@ export function VectorWaterMap({ currentWeatherData = {} }) {
                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
               </span>
               <span className="text-xs sm:text-sm font-medium">
-                Hover to see names · Tap to analyze
+                {isTouchDevice ? 'Tap any water to analyze' : 'Hover to see names · Tap to analyze'}
               </span>
             </div>
           </div>
