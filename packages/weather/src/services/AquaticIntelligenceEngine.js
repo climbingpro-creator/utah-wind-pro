@@ -6,7 +6,18 @@
  *
  * Returns an EcologicalProfile with water temp, flow, clarity estimates,
  * and an explicit `dataSource` flag so the UI can show provenance.
+ * 
+ * Now includes TacticalRecommendationEngine integration for weather-to-tactic
+ * intelligence (BWO on overcast, streamers on falling pressure, etc.)
  */
+
+import {
+  generateTacticalSummary,
+  predictHatch as predictHatchTactical,
+  parseSkyCondition,
+  analyzePressureTrend,
+  inferWaterTemp as inferWaterTempTactical,
+} from './TacticalRecommendationEngine.js';
 
 // ─── USGS Parameter Codes ────────────────────────────────────
 const PARAM_WATER_TEMP = '00010'; // Water temperature (°C)
@@ -246,6 +257,17 @@ export async function reverseGeocodeWater(lat, lng) {
         return { isLake: false, isOcean: true, isRiver: false,
           name: bestName || nameStr || `Ocean near ${lat.toFixed(1)}, ${lng.toFixed(1)}` };
       }
+    }
+
+    // ── River / Stream / Creek ──
+    const RIVER_KEYWORDS = ['river', 'creek', 'stream', 'fork', 'branch', 'run', 'brook', 'wash'];
+    const nameHasRiver = RIVER_KEYWORDS.some(kw => all.includes(kw));
+    const isRiverType = typeStr === 'river' || typeStr === 'stream' || typeStr === 'waterway';
+    const isWaterwayClass = classStr === 'waterway';
+    
+    if (isRiverType || isWaterwayClass || nameHasRiver) {
+      const bestName = addr.water || addr.river || nameStr || displayName.split(',')[0] || 'Unknown River';
+      return { isLake: false, isOcean: false, isRiver: true, name: bestName };
     }
 
     // ── Lake / Reservoir ──
@@ -674,6 +696,105 @@ function estimateHatchActivity(waterTempF) {
   return { hatch: 'minimal — water too warm', feedingActivity: 'very low — trout in thermal refugia. Bass may be active.' };
 }
 
+// ─── Tactical Intelligence Integration ───────────────────────
+
+/**
+ * Add tactical fishing recommendations to a profile based on current weather.
+ * Uses the TacticalRecommendationEngine to synthesize weather + season + entomology.
+ * Now region-aware: tropical, warmwater, saltwater, and coldwater-trout fisheries
+ * get different tactical recommendations.
+ */
+function addTacticalIntelligence(profile, weather) {
+  try {
+    const month = new Date().getMonth() + 1;
+    const hour = new Date().getHours();
+    const waterType = profile.waterType || 'river';
+    
+    // Extract coordinates for region detection
+    const lat = profile.coordinates?.lat || 40;
+    const isSaltwater = profile.isSaltwater || waterType === 'ocean';
+    
+    // Parse sky condition from weather data
+    const sky = weather.sky || parseSkyCondition(weather.shortForecast);
+    
+    // Generate tactical summary with region awareness
+    // Tropical (Amazon, etc.) gets different tactics than coldwater trout streams
+    const tacticalSummary = generateTacticalSummary(sky, month, weather, waterType, hour, {
+      lat,
+      isSaltwater,
+    });
+    
+    // Predict hatches based on conditions (only relevant for coldwater trout)
+    // Skip hatch prediction for tropical/warmwater/saltwater
+    const absLat = Math.abs(lat);
+    const isTroutWater = absLat >= 35 && !isSaltwater;
+    const hatchPrediction = isTroutWater 
+      ? predictHatchTactical(sky, month, weather.temperature, profile.waterTemp)
+      : []; // No insect hatches for tropical/warmwater/saltwater
+    
+    // Analyze pressure trend
+    const pressureTrend = weather.pressureTrend || analyzePressureTrend(weather.pressure);
+    
+    // Calculate fishing quality score (0-100)
+    const fishingQuality = calculateFishingQualityScore(weather, sky, month, hour, pressureTrend);
+    
+    // Add to profile
+    profile.tacticalSummary = tacticalSummary;
+    profile.hatchPrediction = hatchPrediction;
+    profile.fishingQuality = fishingQuality;
+    profile.pressureTrend = pressureTrend;
+    profile.currentSky = sky;
+    
+    // Add forecast timeline if hourly data available
+    if (weather.hourlyForecast) {
+      profile.forecastTimeline = weather.hourlyForecast.slice(0, 12);
+    }
+  } catch (err) {
+    console.warn('[TacticalIntel] Error adding tactical intelligence:', err.message);
+  }
+}
+
+/**
+ * Calculate fishing quality score (0-100) based on weather conditions.
+ */
+function calculateFishingQualityScore(weather, sky, month, hour, pressureTrend) {
+  let score = 50;
+  
+  // Wind impact
+  const windSpeed = weather.windSpeed || 0;
+  if (windSpeed >= 3 && windSpeed <= 8) score += 15;
+  else if (windSpeed < 3) score += 10;
+  else if (windSpeed <= 12) score += 5;
+  else if (windSpeed <= 18) score -= 5;
+  else score -= 15;
+  
+  // Pressure trend
+  const trend = pressureTrend?.trend || 'stable';
+  if (trend === 'falling' || trend === 'falling_slow') score += 15;
+  else if (trend === 'falling_fast') score += 10;
+  else if (trend === 'stable') score += 8;
+  else if (trend === 'rising' || trend === 'rising_slow') score -= 5;
+  else if (trend === 'rising_fast') score -= 10;
+  
+  // Sky conditions
+  if (sky === 'overcast' || sky === 'cloudy') score += 10;
+  else if (sky === 'drizzle') score += 8;
+  else if (sky === 'partly') score += 5;
+  else if (sky === 'rain') score += 5;
+  else if (sky === 'storm') score -= 10;
+  
+  // Time of day
+  if ((hour >= 6 && hour <= 9) || (hour >= 17 && hour <= 20)) score += 10;
+  else if (hour < 6 || hour > 21) score -= 5;
+  
+  // Season
+  const season = month <= 2 || month === 12 ? 'winter' : month <= 5 ? 'spring' : month <= 8 ? 'summer' : 'fall';
+  if (season === 'spring' || season === 'fall') score += 5;
+  else if (season === 'winter') score -= 10;
+  
+  return Math.max(0, Math.min(100, score));
+}
+
 // ─── Step 2: The 2-Tier Orchestrator ─────────────────────────
 
 /**
@@ -681,16 +802,40 @@ function estimateHatchActivity(waterTempF) {
  *
  * Tier 1: Live USGS gauge data (water temp, flow, gauge height).
  * Tier 2: Elevation + ambient temp inference when no gauge exists.
+ * 
+ * Now includes TacticalRecommendationEngine for weather-to-tactic intelligence.
  *
  * @param {number} lat
  * @param {number} lng
  * @param {number} [elevation=4500] — Approximate elevation in feet
- * @param {{ ambientTemp?: number, waterBodyType?: string }} [currentWeatherData={}]
+ * @param {{ ambientTemp?: number, waterBodyType?: string, windSpeed?: number, windDirection?: number }} [currentWeatherData={}]
  * @returns {Promise<EcologicalProfile>}
  */
 export async function generateFisheryProfile(lat, lng, elevation = 4500, currentWeatherData = {}) {
   let ambientTemp = currentWeatherData.ambientTemp ?? null;
   let ambientWeather = null;
+  
+  // Extract vector feature info from map click (if user clicked on a specific feature)
+  const vectorFeatureName = currentWeatherData.vectorFeatureName;
+  const vectorFeatureType = currentWeatherData.vectorFeatureType?.toLowerCase() || '';
+  const isSaltwaterFeature = currentWeatherData.isSaltwater || false;
+  
+  // Determine if user explicitly clicked on a river/stream (not a lake)
+  // This can be true even without a name if they clicked on a stream layer
+  const typeIndicatesRiver = vectorFeatureType.includes('river') || 
+                             vectorFeatureType.includes('stream') ||
+                             vectorFeatureType.includes('creek');
+  const nameIndicatesRiver = vectorFeatureName && (
+    vectorFeatureName.toLowerCase().includes('river') ||
+    vectorFeatureName.toLowerCase().includes('creek') ||
+    vectorFeatureName.toLowerCase().includes('stream') ||
+    vectorFeatureName.toLowerCase().includes('fork') ||
+    vectorFeatureName.toLowerCase().includes('wash')
+  );
+  const clickedOnRiver = typeIndicatesRiver || nameIndicatesRiver;
+  
+  console.log(`[FisheryProfile] Input - vectorFeatureName: "${vectorFeatureName}", vectorFeatureType: "${vectorFeatureType}"`);
+  console.log(`[FisheryProfile] Detection - typeIndicatesRiver: ${typeIndicatesRiver}, nameIndicatesRiver: ${nameIndicatesRiver}, clickedOnRiver: ${clickedOnRiver}`);
 
   // ── Fetch Ambient Weather if no ambient data provided ──
   // Uses our custom Supabase database + Ambient Weather API (NO Synoptic/MesoWest)
@@ -700,13 +845,45 @@ export async function generateFisheryProfile(lat, lng, elevation = 4500, current
       ambientTemp = ambientWeather.temperature;
     }
   }
+  
+  // Merge weather data for tactical engine
+  const weatherForTactical = {
+    windSpeed: currentWeatherData.windSpeed ?? ambientWeather?.windSpeed ?? 0,
+    windDirection: currentWeatherData.windDirection ?? ambientWeather?.windDirection,
+    temperature: ambientTemp,
+    pressure: ambientWeather?.pressure,
+    cloudCover: ambientWeather?.cloudCover,
+    precipChance: ambientWeather?.precipChance ?? 0,
+    shortForecast: ambientWeather?.shortForecast,
+    sky: ambientWeather?.sky,
+    pressureTrend: ambientWeather?.pressureTrend,
+  };
+
+  // ── PRIORITY: If user clicked on a river/stream, skip lake matching ──
+  // This prevents "Provo River" click from matching to nearby "Deer Creek Reservoir"
+  if (clickedOnRiver) {
+    console.log(`[FisheryProfile] User clicked on river/stream: "${vectorFeatureName}" — skipping lake match`);
+    const profile = await buildRiverProfileWithData(lat, lng, elevation, ambientTemp, null, vectorFeatureName);
+    if (ambientWeather) profile.ambientWeather = ambientWeather;
+    addTacticalIntelligence(profile, weatherForTactical);
+    return profile;
+  }
 
   // ── Tier 0: Hardcoded known Utah lakes (fastest, no network) ──
+  // Only match if user didn't click on a specific named feature, OR clicked on a lake
   const lakeMatch = identifyWaterBody(lat, lng);
   if (lakeMatch) {
-    const profile = await buildLakeProfile(lakeMatch, elevation, ambientTemp);
-    if (ambientWeather) profile.ambientWeather = ambientWeather;
-    return profile;
+    // If user clicked on a named feature that doesn't match the lake name, prefer the clicked feature
+    if (vectorFeatureName && !vectorFeatureName.toLowerCase().includes(lakeMatch.name.toLowerCase()) 
+        && !lakeMatch.name.toLowerCase().includes(vectorFeatureName.toLowerCase())) {
+      console.log(`[FisheryProfile] Vector feature "${vectorFeatureName}" doesn't match lake "${lakeMatch.name}" — using vector feature`);
+      // Fall through to other detection methods
+    } else {
+      const profile = await buildLakeProfile(lakeMatch, elevation, ambientTemp);
+      if (ambientWeather) profile.ambientWeather = ambientWeather;
+      addTacticalIntelligence(profile, weatherForTactical);
+      return profile;
+    }
   }
 
   // ── Tier 1: Reverse geocode to determine water body type ──
@@ -717,6 +894,7 @@ export async function generateFisheryProfile(lat, lng, elevation = 4500, current
     const name = inferOceanName(lat, lng, geo.name);
     const profile = await buildOceanProfile(lat, lng, name, ambientTemp);
     if (ambientWeather) profile.ambientWeather = ambientWeather;
+    addTacticalIntelligence(profile, weatherForTactical);
     return profile;
   }
 
@@ -724,6 +902,7 @@ export async function generateFisheryProfile(lat, lng, elevation = 4500, current
   if (geo?.isLake && geo.name) {
     const profile = await buildDynamicLakeProfile(lat, lng, geo.name, elevation, ambientTemp);
     if (ambientWeather) profile.ambientWeather = ambientWeather;
+    addTacticalIntelligence(profile, weatherForTactical);
     return profile;
   }
 
@@ -740,12 +919,14 @@ export async function generateFisheryProfile(lat, lng, elevation = 4500, current
     const oceanName = inferOceanName(lat, lng, geo?.name);
     const profile = await buildOceanProfile(lat, lng, oceanName, ambientTemp);
     if (ambientWeather) profile.ambientWeather = ambientWeather;
+    addTacticalIntelligence(profile, weatherForTactical);
     return profile;
   }
 
   // ── River/Stream fallback (pass pre-fetched USGS to avoid duplicate call) ──
   const profile = await buildRiverProfileWithData(lat, lng, elevation, ambientTemp, usgs, geo?.name);
   if (ambientWeather) profile.ambientWeather = ambientWeather;
+  addTacticalIntelligence(profile, weatherForTactical);
   return profile;
 }
 
@@ -984,7 +1165,9 @@ async function buildRiverProfile(lat, lng, elevation, ambientTemp) {
 }
 
 async function buildRiverProfileWithData(lat, lng, elevation, ambientTemp, prefetchedUsgs, geocodedName = null) {
-  const riverName = prefetchedUsgs?.siteName || geocodedName || `River at ${lat.toFixed(2)}, ${lng.toFixed(2)}`;
+  // Prefer geocoded name (from vector map or reverse geocode) over USGS gauge name
+  // because the USGS gauge might be on a nearby tributary, not the clicked river
+  const riverName = geocodedName || prefetchedUsgs?.siteName || `River at ${lat.toFixed(2)}, ${lng.toFixed(2)}`;
   const [usgs, bio] = await Promise.all([
     prefetchedUsgs ? Promise.resolve(prefetchedUsgs) : fetchNearestUSGSData(lat, lng, 15),
     fetchDynamicBioProfile(riverName, lat, lng, 'river'),
@@ -1029,7 +1212,7 @@ async function buildRiverProfileWithData(lat, lng, elevation, ambientTemp, prefe
     waterType: 'river',
 
     lakeIntel: bio ? {
-      name: usgs?.siteName || riverName,
+      name: riverName,
       species: bio.species ? (Array.isArray(bio.species) ? bio.species : bio.species.split(', ')) : [],
       targetDepth: bio.targetDepth || null,
       regulations: bio.regulations || null,
@@ -1064,6 +1247,7 @@ async function buildRiverProfileWithData(lat, lng, elevation, ambientTemp, prefe
 
     ambientTemp,
     waterBodyType: 'river',
+    waterBodyName: riverName,
     generatedAt: new Date().toISOString(),
   };
 }

@@ -3,6 +3,117 @@
 export const strawberryConfigs = {
 
   // =====================================================
+  // STRAWBERRY RESERVOIR — Generic entry for water/fishing app
+  // =====================================================
+  'strawberry': {
+    id: 'strawberry',
+    name: 'Strawberry Reservoir',
+    shortName: 'Strawberry',
+    region: 'Strawberry Reservoir',
+    coordinates: { lat: 40.17, lng: -111.17 },
+    elevation: 7600,
+
+    primaryWindType: 'W/NW Frontal',
+    thermalDirection: 'W to NW (260-340°)',
+    description: 'High-elevation reservoir — popular for fishing and snowkiting',
+
+    shoreOrientation: 315,
+    kiting: {
+      onshore: { min: 270, max: 350 },
+      sideOn: { min: 350, max: 45, min2: 225, max2: 270 },
+      sideOffshore: { min: 90, max: 135 },
+      offshore: { min: 135, max: 225 },
+    },
+
+    stations: {
+      pressure: {
+        high: {
+          id: 'KSLC',
+          name: 'Salt Lake City Intl',
+          elevation: 4226,
+          role: 'Regional pressure reference',
+        },
+        low: {
+          id: 'UTCOP',
+          name: 'US-40 at Co-Op Creek (UDOT)',
+          elevation: 7637,
+          role: 'Reservoir-level pressure reference',
+        },
+        bustThreshold: 2.5,
+      },
+
+      ridge: [
+        {
+          id: 'CCPUT',
+          name: 'Currant Creek Peak (USFS)',
+          elevation: 10547,
+          role: 'Primary high ridge reference',
+          priority: 1,
+        },
+        {
+          id: 'DSTU1',
+          name: 'Daniels-Strawberry SNOTEL',
+          elevation: 8007,
+          role: 'Pass-level ridge reference',
+          priority: 2,
+        },
+      ],
+
+      groundTruth: {
+        id: 'UTCOP',
+        name: 'US-40 at Co-Op Creek (UDOT)',
+        role: 'Ground Truth — closest station to reservoir',
+      },
+
+      lakeshore: [
+        {
+          id: 'UTCOP',
+          name: 'US-40 at Co-Op Creek (UDOT)',
+          elevation: 7637,
+          role: 'Primary — closest to reservoir',
+          priority: 1,
+        },
+        {
+          id: 'DSTU1',
+          name: 'Daniels-Strawberry SNOTEL',
+          elevation: 8007,
+          role: 'High-elevation snow/wind reference',
+          priority: 2,
+        },
+      ],
+
+      reference: [
+        { id: 'UWCU1', name: 'Provo 22E AgriMet', elevation: 7812 },
+        { id: 'UTHEB', name: 'Heber (UDOT)', elevation: 5600 },
+      ],
+    },
+
+    thermal: {
+      optimalDirection: { min: 260, max: 340, ideal: 300 },
+      optimalSpeed: { min: 8, max: 25, average: 14 },
+      peakHours: { start: 10, end: 16, peak: 13 },
+      buildTime: { start: 8, usable: 10 },
+      fadeTime: { start: 16, end: 18 },
+    },
+
+    snowkite: true,
+    waterTempEstimate: 34,
+    fishSpecies: {
+      primary: ['cutthroat trout (Bear Lake strain)', 'rainbow trout (sterile)', 'kokanee salmon'],
+      secondary: [],
+      blueRibbon: true,
+      bestSeasons: {
+        cutthroat: 'May–Jun, Sep–Oct',
+        rainbow: 'Year-round',
+        kokanee: 'Jul–Sep (trolling)',
+        iceFishing: 'Dec–Mar (popular — thick ice at 7,600 ft)',
+      },
+    },
+    boating: { marina: true, ramp: true },
+    glassWindow: { typicalStart: 5, typicalEnd: 9, confidence: 'medium' },
+  },
+
+  // =====================================================
   // STRAWBERRY RESERVOIR — 3 SNOWKITE LOCATIONS
   // =====================================================
 
