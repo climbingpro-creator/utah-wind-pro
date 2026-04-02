@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, Suspense, lazy, useCallback } from 'react';
 import { Analytics } from '@vercel/analytics/react';
 import { Fish, Ship, Waves, RefreshCw, Wifi, WifiOff, Sun, Moon, CheckCircle,
-  Shield, Clock, Lightbulb, TrendingUp, TrendingDown, Minus, LogIn, LogOut } from 'lucide-react';
+  Shield, Clock, Lightbulb, TrendingUp, TrendingDown, Minus, LogIn, LogOut, Crown, CreditCard, Sparkles } from 'lucide-react';
 import { ErrorBoundary, FeedbackWidget, initAnalytics, trackPageView } from '@utahwind/ui';
 import { supabase } from '@utahwind/database';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
@@ -17,6 +17,8 @@ const FlatwaterTemplate = lazy(() => import('./components/FlatwaterTemplate'));
 const VectorWaterMap = lazy(() => import('./components/map/VectorWaterMap'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const Login = lazy(() => import('./pages/Login'));
+const EngineTest = lazy(() => import('./pages/EngineTest'));
+const ProUpgrade = lazy(() => import('./components/ProUpgrade'));
 
 const ADMIN_EMAILS = ['tyler@aspenearth.com', 'climbingpro@gmail.com'];
 
@@ -138,14 +140,34 @@ function AppShell() {
     );
   }
 
+  if (hash === '#test-engine') {
+    return (
+      <Suspense fallback={<div className="flex items-center justify-center min-h-screen text-white/50">Loading test harness...</div>}>
+        <EngineTest />
+      </Suspense>
+    );
+  }
+
   return <WaterApp />;
 }
 
 function WaterApp() {
   const { theme, toggleTheme } = useTheme();
   const isDark = theme === 'dark';
-  const { user, signOut } = useAuth();
+  const { user, signOut, isPro, rawTier, trialActive, trialDaysLeft, openPaywall, showPaywall, manageSubscription } = useAuth();
   const isAdmin = user && ADMIN_EMAILS.includes(user.email?.toLowerCase());
+  const [managingSubscription, setManagingSubscription] = useState(false);
+
+  const handleManageSubscription = async () => {
+    setManagingSubscription(true);
+    try {
+      await manageSubscription();
+    } catch (err) {
+      console.error('Failed to open subscription portal:', err);
+    } finally {
+      setManagingSubscription(false);
+    }
+  };
 
   const [selectedActivity, setSelectedActivity] = useState('fishing');
   const [selectedLocation, setSelectedLocation] = useState(() =>
@@ -269,6 +291,33 @@ function WaterApp() {
               <button onClick={toggleTheme} className="p-1.5 rounded-lg hover:bg-white/5 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors">
                 {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
               </button>
+              {/* Upgrade button for non-Pro users */}
+              {!isPro && (
+                <button
+                  onClick={openPaywall}
+                  className="ml-1 px-3 py-1.5 rounded-lg text-[11px] font-bold bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-sm hover:shadow-lg hover:shadow-cyan-500/25 transition-all hover:scale-105 active:scale-95"
+                >
+                  Upgrade
+                </button>
+              )}
+              {/* Pro badge + Manage Subscription for Pro users */}
+              {isPro && rawTier === 'pro' && (
+                <button
+                  onClick={handleManageSubscription}
+                  disabled={managingSubscription}
+                  className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold bg-gradient-to-r from-amber-500/20 to-yellow-500/20 text-amber-400 border border-amber-500/30 hover:border-amber-500/50 transition-all disabled:opacity-50"
+                  title="Manage Subscription"
+                >
+                  <Crown className="w-3 h-3" />
+                  <span>PRO</span>
+                </button>
+              )}
+              {/* Trial badge */}
+              {isPro && trialActive && (
+                <span className="px-2 py-1 rounded-lg text-[10px] font-semibold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                  Trial: {trialDaysLeft}d
+                </span>
+              )}
               {isAdmin && (
                 <button
                   onClick={() => { window.location.hash = '#admin'; }}
@@ -546,7 +595,44 @@ function WaterApp() {
             />
           )}
         </Suspense>
+
+        {/* ═══════ FOOTER ═══════ */}
+        <footer className="border-t border-[var(--border-color)] mt-8">
+          <div className="max-w-6xl mx-auto px-5 sm:px-8 py-6 text-center">
+            {!isPro && (
+              <button
+                onClick={openPaywall}
+                className="mb-4 w-full max-w-sm mx-auto flex items-center justify-center gap-2 min-h-[48px] px-5 py-3 rounded-xl text-sm font-bold bg-gradient-to-r from-cyan-500 to-blue-500 text-white active:opacity-90 transition-opacity shadow-lg shadow-cyan-500/20"
+              >
+                <Sparkles className="w-4 h-4" />
+                Unlock All Features — Try Pro Free
+              </button>
+            )}
+            {isPro && rawTier === 'pro' && (
+              <button
+                onClick={handleManageSubscription}
+                disabled={managingSubscription}
+                className="mb-4 w-full max-w-sm mx-auto flex items-center justify-center gap-2 min-h-[44px] px-4 py-2.5 rounded-xl text-sm font-semibold border border-[var(--border-color)] text-[var(--text-secondary)] hover:bg-[var(--bg-card)] transition-colors disabled:opacity-50"
+              >
+                <CreditCard className="w-4 h-4" />
+                {managingSubscription ? 'Opening...' : 'Manage Subscription'}
+              </button>
+            )}
+            <p className="text-sm font-semibold text-[var(--text-tertiary)]">NotWindy</p>
+            <p className="text-[11px] mt-1 text-[var(--text-tertiary)] opacity-60">
+              Water intelligence for Utah anglers & boaters
+            </p>
+          </div>
+        </footer>
       </div>
+
+      {/* ProUpgrade Modal */}
+      {showPaywall && (
+        <Suspense fallback={null}>
+          <ProUpgrade />
+        </Suspense>
+      )}
+
       <FeedbackWidget supabase={supabase} userEmail={user?.email} />
     </div>
   );

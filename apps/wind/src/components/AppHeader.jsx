@@ -1,4 +1,5 @@
-import { Bell, Brain, RefreshCw, Wifi, WifiOff, Trophy, LogIn, LogOut, Shield } from 'lucide-react';
+import { useState } from 'react';
+import { Bell, Brain, RefreshCw, Wifi, WifiOff, Trophy, LogIn, LogOut, Shield, Crown } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 import { useAuth } from '../context/AuthContext';
 import { SPOT_SLUG_MAP } from '../config/spotSlugs';
@@ -13,6 +14,7 @@ export default function AppHeader({
   lastUpdated,
   isLoading,
   isPro,
+  rawTier,
   trialActive,
   trialDaysLeft,
   showLearningDashboard,
@@ -27,7 +29,19 @@ export default function AppHeader({
   onRefresh,
   onUpgradeClick,
 }) {
-  const { user, signOut } = useAuth();
+  const { user, signOut, manageSubscription } = useAuth();
+  const [managingSubscription, setManagingSubscription] = useState(false);
+
+  const handleManageSubscription = async () => {
+    setManagingSubscription(true);
+    try {
+      await manageSubscription();
+    } catch (err) {
+      console.error('Failed to open subscription portal:', err);
+    } finally {
+      setManagingSubscription(false);
+    }
+  };
   const isAdmin = user && ADMIN_EMAILS.includes(user.email?.toLowerCase());
   const btnBase = `flex flex-col items-center gap-0.5 px-1.5 py-1 rounded-lg transition-colors`;
   const btnColors = theme === 'dark'
@@ -185,6 +199,17 @@ export default function AppHeader({
                 className="ml-1 px-3 py-1.5 rounded-lg text-[11px] font-bold bg-gradient-to-r from-sky-500 to-cyan-500 text-white shadow-sm hover:shadow-lg hover:shadow-sky-500/25 transition-all hover:scale-105 active:scale-95"
               >
                 Upgrade
+              </button>
+            )}
+            {isPro && rawTier === 'pro' && (
+              <button
+                onClick={handleManageSubscription}
+                disabled={managingSubscription}
+                className="ml-1 flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold bg-gradient-to-r from-amber-500/20 to-yellow-500/20 text-amber-400 border border-amber-500/30 hover:border-amber-500/50 transition-all disabled:opacity-50"
+                title="Manage Subscription"
+              >
+                <Crown className="w-3 h-3" />
+                <span>PRO</span>
               </button>
             )}
             {isPro && trialActive && (

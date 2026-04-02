@@ -3,6 +3,7 @@ import { useWeatherData, getHourlyForecast, findAllSportWindows, LAKE_CONFIGS } 
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { SafeComponent, IntelligentRecommendations, ModuleLoader } from '@utahwind/ui';
+import { CreditCard } from 'lucide-react';
 
 import TodayHero from './TodayHero';
 import WelcomeCard from './WelcomeCard';
@@ -38,6 +39,35 @@ const FREE_LAKES = new Set([
 
 function ChunkFallback({ className = 'h-32' }) {
   return <div className={`animate-pulse rounded-2xl bg-[var(--bg-card)] border border-[var(--border-color)] ${className}`} />;
+}
+
+function ManageSubscriptionFooter({ isPro, rawTier }) {
+  const { manageSubscription } = useAuth();
+  const [loading, setLoading] = useState(false);
+
+  if (!isPro || rawTier !== 'pro') return null;
+
+  const handleClick = async () => {
+    setLoading(true);
+    try {
+      await manageSubscription();
+    } catch (err) {
+      console.error('Failed to open subscription portal:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <button
+      onClick={handleClick}
+      disabled={loading}
+      className="mb-4 w-full max-w-sm mx-auto flex items-center justify-center gap-2 min-h-[44px] px-4 py-2.5 rounded-xl text-sm font-semibold border border-[var(--border-color)] text-[var(--text-secondary)] hover:bg-[var(--bg-card)] transition-colors disabled:opacity-50"
+    >
+      <CreditCard className="w-4 h-4" />
+      {loading ? 'Opening...' : 'Manage Subscription'}
+    </button>
+  );
 }
 
 function ParaglidingLeaderboardCard({ selectedLake }) {
@@ -274,6 +304,7 @@ export function Dashboard() {
         lastUpdated={lastUpdated}
         isLoading={isLoading}
         isPro={isPro}
+        rawTier={rawTier}
         trialActive={trialActive}
         trialDaysLeft={trialDaysLeft}
         showLearningDashboard={showLearningDashboard}
@@ -615,6 +646,7 @@ export function Dashboard() {
               Unlock All Features — Try Pro Free
             </button>
           )}
+          <ManageSubscriptionFooter isPro={isPro} rawTier={rawTier} />
           <p className="text-sm font-semibold text-[var(--text-tertiary)]">UtahWindFinder</p>
           <p className="text-[11px] mt-1 text-[var(--text-tertiary)] opacity-60">
             AI-driven forecasting for Utah's lakes and mountains
