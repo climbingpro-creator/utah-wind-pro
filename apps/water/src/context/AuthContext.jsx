@@ -86,6 +86,18 @@ export function AuthProvider({ children }) {
     return data;
   }
 
+  async function signInWithMagicLink(email) {
+    if (!supabase) throw new Error('Auth not configured');
+    const { data, error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: window.location.origin,
+      },
+    });
+    if (error) throw error;
+    return data;
+  }
+
   async function signOut() {
     if (!supabase) return;
     await supabase.auth.signOut();
@@ -133,7 +145,7 @@ export function AuthProvider({ children }) {
   return (
     <AuthContext.Provider value={{
       user, session, tier: effectiveTier, rawTier: tier, loading,
-      signIn, signUp, signOut,
+      signIn, signUp, signInWithMagicLink, signOut,
       upgradeToPro, manageSubscription,
       isPro: effectiveTier === 'pro',
       trialActive, trialDaysLeft, startTrial,

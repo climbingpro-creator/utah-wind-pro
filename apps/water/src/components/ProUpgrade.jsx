@@ -18,46 +18,29 @@ const FEATURES = [
 ];
 
 export default function ProUpgrade() {
-  const { user, signIn, signUp, upgradeToPro, startTrial, trialActive, trialDaysLeft, closePaywall } = useAuth();
+  const { user, signInWithMagicLink, upgradeToPro, startTrial, trialActive, trialDaysLeft, closePaywall } = useAuth();
   const { theme } = useTheme();
   const [isYearly, setIsYearly] = useState(true);
-  const [authMode, setAuthMode] = useState('signin');
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [authError, setAuthError] = useState('');
   const [authSuccess, setAuthSuccess] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
 
   const dark = theme === 'dark';
 
-  async function handleAuth(e) {
+  async function handleMagicLink(e) {
     e.preventDefault();
-    console.log('[ProUpgrade] handleAuth called, mode:', authMode, 'email:', email);
+    if (!email.trim()) return;
+    
     setAuthError('');
     setAuthSuccess('');
     setAuthLoading(true);
     try {
-      if (authMode === 'signin') {
-        console.log('[ProUpgrade] Calling signIn...');
-        await signIn(email, password);
-        console.log('[ProUpgrade] signIn success');
-      } else {
-        console.log('[ProUpgrade] Calling signUp...');
-        const result = await signUp(email, password);
-        console.log('[ProUpgrade] signUp result:', result);
-        // Supabase returns user but no session when email confirmation is required
-        if (result?.user) {
-          if (!result?.session) {
-            setAuthSuccess('Account created! Check your email to confirm, then sign in.');
-            setAuthMode('signin');
-            setPassword('');
-          }
-          // If session exists, user is already logged in (no email confirmation required)
-        }
-      }
+      await signInWithMagicLink(email);
+      setAuthSuccess('Check your email for a sign-in link!');
     } catch (err) {
-      console.error('[ProUpgrade] Auth error:', err);
-      setAuthError(err.message || 'Authentication failed');
+      console.error('[ProUpgrade] Magic link error:', err);
+      setAuthError(err.message || 'Failed to send magic link');
     } finally {
       setAuthLoading(false);
     }
@@ -222,26 +205,13 @@ export default function ProUpgrade() {
                 </span>
               </div>
 
-              <form onSubmit={handleAuth} className="space-y-2.5">
+              <form onSubmit={handleMagicLink} className="space-y-2.5">
                 <input
                   type="email"
-                  placeholder="Email"
+                  placeholder="Enter your email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className={`w-full px-4 py-2.5 rounded-xl text-sm border outline-none focus:ring-2 focus:ring-cyan-500/40 ${
-                    dark
-                      ? 'bg-slate-800 border-slate-700 text-white placeholder:text-slate-500'
-                      : 'bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400'
-                  }`}
-                />
-                <input
-                  type="password"
-                  placeholder="Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  minLength={6}
                   className={`w-full px-4 py-2.5 rounded-xl text-sm border outline-none focus:ring-2 focus:ring-cyan-500/40 ${
                     dark
                       ? 'bg-slate-800 border-slate-700 text-white placeholder:text-slate-500'
@@ -256,21 +226,17 @@ export default function ProUpgrade() {
                 )}
                 <button
                   type="submit"
-                  disabled={authLoading}
+                  disabled={authLoading || !email.trim()}
                   className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-all ${
                     dark
                       ? 'bg-slate-800 text-white hover:bg-slate-700 border border-slate-700'
                       : 'bg-slate-900 text-white hover:bg-slate-800'
                   } disabled:opacity-50`}
                 >
-                  {authLoading ? '...' : authMode === 'signin' ? 'Sign In' : 'Create Account'}
+                  {authLoading ? 'Sending...' : 'Send Magic Link'}
                 </button>
-                <p className={`text-center text-xs ${dark ? 'text-slate-500' : 'text-slate-400'}`}>
-                  {authMode === 'signin' ? (
-                    <>No account? <button type="button" onClick={() => setAuthMode('signup')} className="text-cyan-500 font-medium">Sign up</button></>
-                  ) : (
-                    <>Have an account? <button type="button" onClick={() => setAuthMode('signin')} className="text-cyan-500 font-medium">Sign in</button></>
-                  )}
+                <p className={`text-center text-[11px] ${dark ? 'text-slate-500' : 'text-slate-400'}`}>
+                  We'll email you a link to sign in — no password needed.
                 </p>
               </form>
             </div>
