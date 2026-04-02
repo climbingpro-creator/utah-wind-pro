@@ -25,6 +25,7 @@ export default function ProUpgrade() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [authError, setAuthError] = useState('');
+  const [authSuccess, setAuthSuccess] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
 
   const dark = theme === 'dark';
@@ -32,12 +33,17 @@ export default function ProUpgrade() {
   async function handleAuth(e) {
     e.preventDefault();
     setAuthError('');
+    setAuthSuccess('');
     setAuthLoading(true);
     try {
       if (authMode === 'signin') {
         await signIn(email, password);
       } else {
-        await signUp(email, password);
+        const result = await signUp(email, password);
+        if (result?.user && !result?.session) {
+          setAuthSuccess('Check your email to confirm your account, then sign in.');
+          setAuthMode('signin');
+        }
       }
     } catch (err) {
       setAuthError(err.message);
@@ -233,6 +239,9 @@ export default function ProUpgrade() {
                 />
                 {authError && (
                   <p className="text-xs text-red-500 text-center">{authError}</p>
+                )}
+                {authSuccess && (
+                  <p className="text-xs text-emerald-500 text-center">{authSuccess}</p>
                 )}
                 <button
                   type="submit"
