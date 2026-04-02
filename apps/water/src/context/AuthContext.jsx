@@ -78,8 +78,10 @@ export function AuthProvider({ children }) {
   }
 
   async function signUp(email, password) {
+    console.log('[AuthContext] signUp called, supabase:', !!supabase);
     if (!supabase) throw new Error('Auth not configured');
     const { data, error } = await supabase.auth.signUp({ email, password });
+    console.log('[AuthContext] signUp response:', { data, error });
     if (error) throw error;
     return data;
   }

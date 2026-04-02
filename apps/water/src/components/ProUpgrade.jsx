@@ -32,21 +32,27 @@ export default function ProUpgrade() {
 
   async function handleAuth(e) {
     e.preventDefault();
+    console.log('[ProUpgrade] handleAuth called, mode:', authMode, 'email:', email);
     setAuthError('');
     setAuthSuccess('');
     setAuthLoading(true);
     try {
       if (authMode === 'signin') {
+        console.log('[ProUpgrade] Calling signIn...');
         await signIn(email, password);
+        console.log('[ProUpgrade] signIn success');
       } else {
+        console.log('[ProUpgrade] Calling signUp...');
         const result = await signUp(email, password);
+        console.log('[ProUpgrade] signUp result:', result);
         if (result?.user && !result?.session) {
           setAuthSuccess('Check your email to confirm your account, then sign in.');
           setAuthMode('signin');
         }
       }
     } catch (err) {
-      setAuthError(err.message);
+      console.error('[ProUpgrade] Auth error:', err);
+      setAuthError(err.message || 'Authentication failed');
     } finally {
       setAuthLoading(false);
     }
