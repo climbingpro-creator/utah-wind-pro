@@ -45,9 +45,14 @@ export default function ProUpgrade() {
         console.log('[ProUpgrade] Calling signUp...');
         const result = await signUp(email, password);
         console.log('[ProUpgrade] signUp result:', result);
-        if (result?.user && !result?.session) {
-          setAuthSuccess('Check your email to confirm your account, then sign in.');
-          setAuthMode('signin');
+        // Supabase returns user but no session when email confirmation is required
+        if (result?.user) {
+          if (!result?.session) {
+            setAuthSuccess('Account created! Check your email to confirm, then sign in.');
+            setAuthMode('signin');
+            setPassword('');
+          }
+          // If session exists, user is already logged in (no email confirmation required)
         }
       }
     } catch (err) {
