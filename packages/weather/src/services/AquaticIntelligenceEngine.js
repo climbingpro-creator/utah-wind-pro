@@ -26,6 +26,107 @@ const PARAM_GAUGE_HT   = '00065'; // Gauge height (ft)
 
 const USGS_BASE = 'https://waterservices.usgs.gov/nwis/iv/';
 
+// ─── KNOWN TAILWATER RIVERS ─────────────────────────────────────
+// For rivers below dams, we MUST use the gauge BELOW the dam, not above.
+// The reservoir flow is irrelevant to fishing conditions on the tailwater.
+const KNOWN_TAILWATERS = [
+  {
+    name: 'Provo River',
+    namePatterns: ['provo river', 'provo'],
+    dam: 'Deer Creek Dam',
+    damLat: 40.4033,
+    damLng: -111.5296,
+    // Any click on Provo River below this latitude should use the downstream gauge
+    belowDamBounds: {
+      maxLat: 40.41,  // Anything south of the dam
+      minLat: 40.20,  // Down to Provo city
+      minLng: -111.70,
+      maxLng: -111.45,
+    },
+    // USGS 10163000 - Provo River at Provo, UT (active gauge downstream)
+    downstreamGauge: {
+      siteId: '10163000',
+      siteName: 'Provo River at Provo, UT',
+      lat: 40.2336,
+      lng: -111.6575,
+    },
+    // Location description for the tailwater section
+    tailwaterDescription: 'Lower Provo River (below Deer Creek Dam)',
+  },
+  {
+    name: 'Green River',
+    namePatterns: ['green river', 'green'],
+    dam: 'Flaming Gorge Dam',
+    damLat: 40.9147,
+    damLng: -109.4214,
+    belowDamBounds: {
+      maxLat: 40.92,
+      minLat: 40.50,
+      minLng: -109.55,
+      maxLng: -109.35,
+    },
+    // USGS 09234500 - Green River near Greendale, UT
+    downstreamGauge: {
+      siteId: '09234500',
+      siteName: 'Green River near Greendale, UT',
+      lat: 40.9083,
+      lng: -109.4222,
+    },
+    tailwaterDescription: 'Green River (below Flaming Gorge Dam)',
+  },
+  {
+    name: 'Weber River',
+    namePatterns: ['weber river', 'weber'],
+    dam: 'Echo Dam',
+    damLat: 40.9667,
+    damLng: -111.4333,
+    belowDamBounds: {
+      maxLat: 40.97,
+      minLat: 40.85,
+      minLng: -111.55,
+      maxLng: -111.40,
+    },
+    // USGS 10128500 - Weber River near Oakley, UT
+    downstreamGauge: {
+      siteId: '10128500',
+      siteName: 'Weber River near Oakley, UT',
+      lat: 40.7319,
+      lng: -111.2728,
+    },
+    tailwaterDescription: 'Weber River (below Echo Dam)',
+  },
+];
+
+/**
+ * Check if coordinates are on a known tailwater section (below a dam).
+ * If so, return the correct downstream gauge info.
+ */
+function getTailwaterGauge(lat, lng, riverName) {
+  const nameLower = (riverName || '').toLowerCase();
+  
+  for (const tw of KNOWN_TAILWATERS) {
+    // Check if river name matches
+    const nameMatch = tw.namePatterns.some(p => nameLower.includes(p));
+    if (!nameMatch) continue;
+    
+    // Check if coordinates are in the tailwater bounds (below the dam)
+    const bounds = tw.belowDamBounds;
+    const inBounds = lat <= bounds.maxLat && lat >= bounds.minLat &&
+                     lng >= bounds.minLng && lng <= bounds.maxLng;
+    
+    if (inBounds) {
+      console.log(`[Tailwater] "${riverName}" at ${lat.toFixed(4)}, ${lng.toFixed(4)} is below ${tw.dam} — using downstream gauge ${tw.downstreamGauge.siteId}`);
+      return {
+        ...tw.downstreamGauge,
+        tailwaterDescription: tw.tailwaterDescription,
+        damName: tw.dam,
+      };
+    }
+  }
+  
+  return null;
+}
+
 // ─── FREE Radial Weather Fetch (NWS + UDOT + Ambient via Server API) ──────
 /**
  * Fetches live weather data from our FREE government/custom station network.
@@ -483,6 +584,81 @@ async function fetchDynamicBioProfile(name, lat, lng, type = 'lake') {
 }
 
 // ─── Step 1: USGS API Fetcher ────────────────────────────────
+
+/**
+ * Fetch USGS gauge data for a specific site ID.
+ * Used for known tailwater gauges where we need a specific downstream gauge.
+ */
+async function fetchUSGSDataBySiteId(siteId, gaugeLat, gaugeLng, clickLat, clickLng) {
+  const params = new URLSearchParams({
+    format: 'json',
+    sites: siteId,
+    parameterCd: [PARAM_WATER_TEMP, PARAM_DISCHARGE, PARAM_GAUGE_HT].join(','),
+    siteStatus: 'all', // Include inactive sites too, in case they have recent data
+  });
+
+  const url = `${USGS_BASE}?${params.toString()}`;
+  console.log(`[USGS] Fetching specific gauge ${siteId}...`);
+
+  let json;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) {
+      console.warn(`[USGS] Gauge ${siteId} returned ${res.status}`);
+      return null;
+    }
+    json = await res.json();
+  } catch (err) {
+    console.warn(`[USGS] Error fetching gauge ${siteId}:`, err?.message);
+    return null;
+  }
+
+  const timeSeries = json?.value?.timeSeries;
+  if (!timeSeries || timeSeries.length === 0) {
+    console.warn(`[USGS] No data for gauge ${siteId}`);
+    return null;
+  }
+
+  const result = {
+    siteId,
+    siteName: '',
+    lat: gaugeLat,
+    lng: gaugeLng,
+    waterTemp: null,
+    dischargeCFS: null,
+    gaugeHeightFt: null,
+  };
+
+  for (const ts of timeSeries) {
+    const info = ts.sourceInfo;
+    if (!result.siteName) {
+      result.siteName = info?.siteName || siteId;
+    }
+
+    const paramCode = ts.variable?.variableCode?.[0]?.value;
+    const latestVal = ts.values?.[0]?.value?.[0];
+    const numericValue = latestVal ? parseFloat(latestVal.value) : NaN;
+    if (isNaN(numericValue) || numericValue < -999) continue;
+
+    if (paramCode === PARAM_WATER_TEMP) {
+      result.waterTemp = Math.round((numericValue * 9 / 5 + 32) * 10) / 10;
+    } else if (paramCode === PARAM_DISCHARGE) {
+      result.dischargeCFS = Math.round(numericValue * 10) / 10;
+    } else if (paramCode === PARAM_GAUGE_HT) {
+      result.gaugeHeightFt = Math.round(numericValue * 100) / 100;
+    }
+  }
+
+  // Calculate distance from click point to gauge
+  const distanceMiles = haversine([clickLat, clickLng], [gaugeLat, gaugeLng]);
+  
+  console.log(`[USGS] Gauge ${siteId}: ${result.dischargeCFS} CFS, ${result.gaugeHeightFt} ft, ${result.waterTemp}°F (${distanceMiles.toFixed(1)} mi from click)`);
+
+  return {
+    ...result,
+    distanceMiles,
+  };
+}
 
 /**
  * Fetch the nearest USGS gauge data for a given coordinate.
@@ -1177,20 +1353,45 @@ async function buildRiverProfileWithData(lat, lng, elevation, ambientTemp, prefe
   // Prefer geocoded name (from vector map or reverse geocode) over USGS gauge name
   // because the USGS gauge might be on a nearby tributary, not the clicked river
   const riverName = geocodedName || prefetchedUsgs?.siteName || `River at ${lat.toFixed(2)}, ${lng.toFixed(2)}`;
+  
+  // ── TAILWATER LOGIC: For rivers below dams, use the downstream gauge ──
+  // The reservoir flow above the dam is irrelevant to fishing conditions
+  const tailwaterGauge = getTailwaterGauge(lat, lng, riverName);
+  
+  let usgsPromise;
+  if (tailwaterGauge) {
+    // Use the specific downstream gauge for this tailwater
+    usgsPromise = fetchUSGSDataBySiteId(
+      tailwaterGauge.siteId,
+      tailwaterGauge.lat,
+      tailwaterGauge.lng,
+      lat,
+      lng
+    );
+  } else if (prefetchedUsgs) {
+    usgsPromise = Promise.resolve(prefetchedUsgs);
+  } else {
+    usgsPromise = fetchNearestUSGSData(lat, lng, 15);
+  }
+  
   const [usgs, bio] = await Promise.all([
-    prefetchedUsgs ? Promise.resolve(prefetchedUsgs) : fetchNearestUSGSData(lat, lng, 15),
+    usgsPromise,
     fetchDynamicBioProfile(riverName, lat, lng, 'river'),
   ]);
+  
+  // If this is a tailwater, update the display name
+  const displayName = tailwaterGauge?.tailwaterDescription || riverName;
 
   let waterTemp;
   let dataSource;
 
   if (usgs?.waterTemp != null) {
     waterTemp = usgs.waterTemp;
-    dataSource = `USGS Live Gauge (Site ${usgs.siteId} — ${usgs.siteName}, ${usgs.distanceMiles} mi)`;
+    const gaugeNote = tailwaterGauge ? ` (below ${tailwaterGauge.damName})` : '';
+    dataSource = `USGS Live Gauge (Site ${usgs.siteId} — ${usgs.siteName}${gaugeNote}, ${usgs.distanceMiles?.toFixed(1) || '?'} mi)`;
   } else {
     waterTemp = inferWaterTemp(elevation, ambientTemp);
-    dataSource = bio ? `AI + Thermal Inference — ${riverName}` : 'Elevation/Thermal Inference';
+    dataSource = bio ? `AI + Thermal Inference — ${displayName}` : 'Elevation/Thermal Inference';
   }
 
   const flow = assessFlowConditions(usgs?.dischargeCFS ?? null, 'river');
@@ -1221,11 +1422,18 @@ async function buildRiverProfileWithData(lat, lng, elevation, ambientTemp, prefe
     waterType: 'river',
 
     lakeIntel: bio ? {
-      name: riverName,
+      name: displayName,
       species: bio.species ? (Array.isArray(bio.species) ? bio.species : bio.species.split(', ')) : [],
       targetDepth: bio.targetDepth || null,
       regulations: bio.regulations || null,
       forage: bio.forage || null,
+    } : null,
+    
+    // Include tailwater info if applicable
+    tailwaterInfo: tailwaterGauge ? {
+      damName: tailwaterGauge.damName,
+      description: tailwaterGauge.tailwaterDescription,
+      gaugeId: tailwaterGauge.siteId,
     } : null,
 
     anglerIntel: {
