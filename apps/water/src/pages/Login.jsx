@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '@utahwind/database';
-import { Fish, Mail, Lock, ArrowLeft, Zap, CheckCircle, AlertCircle } from 'lucide-react';
+import { Fish, Mail, Lock, ArrowLeft, Zap, CheckCircle, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 export default function Login() {
   const { user, signIn, signUp } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [mode, setMode] = useState('signin');
   const [status, setStatus] = useState({ type: null, message: '' });
   const [loading, setLoading] = useState(false);
@@ -18,14 +20,22 @@ export default function Login() {
   async function handleEmailAuth(e) {
     e.preventDefault();
     if (!email.trim() || !password.trim()) return;
+    
+    if (mode === 'signup' && password !== confirmPassword) {
+      setStatus({ type: 'error', message: 'Passwords do not match.' });
+      return;
+    }
+    
     setLoading(true);
     setStatus({ type: null, message: '' });
 
     try {
       if (mode === 'signup') {
         await signUp(email, password);
-        setStatus({ type: 'success', message: 'Account created! Check your email to confirm, then sign in.' });
+        setStatus({ type: 'success', message: 'Account created! You can now sign in.' });
         setMode('signin');
+        setPassword('');
+        setConfirmPassword('');
       } else {
         await signIn(email, password);
       }
@@ -100,16 +110,50 @@ export default function Login() {
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   required
                   minLength={6}
-                  className="w-full rounded-lg bg-white/[0.04] border border-white/[0.08] pl-10 pr-3 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30"
+                  className="w-full rounded-lg bg-white/[0.04] border border-white/[0.08] pl-10 pr-10 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
               </div>
             </div>
+
+            {mode === 'signup' && (
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">Confirm Password</label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                    minLength={6}
+                    className={`w-full rounded-lg bg-white/[0.04] border pl-10 pr-10 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 ${
+                      confirmPassword && password !== confirmPassword ? 'border-red-500' : 'border-white/[0.08]'
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+            )}
 
             {status.type && (
               <div className={`flex items-start gap-2 px-3 py-2.5 rounded-lg text-[12px] leading-relaxed border ${
@@ -126,7 +170,7 @@ export default function Login() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || (mode === 'signup' && password !== confirmPassword)}
               className="w-full py-2.5 rounded-lg bg-cyan-500 hover:bg-cyan-600 text-white text-sm font-bold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {loading ? 'Please wait...' : mode === 'signup' ? 'Create Account' : 'Sign In'}
