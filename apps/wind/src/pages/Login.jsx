@@ -19,9 +19,14 @@ export default function Login() {
 
   async function handleEmailAuth(e) {
     e.preventDefault();
-    if (!email.trim() || !password.trim()) return;
+    console.log('[Login] handleEmailAuth called, mode:', mode, 'email:', email);
+    if (!email.trim() || !password.trim()) {
+      console.log('[Login] Empty email or password');
+      return;
+    }
     
     if (mode === 'signup' && password !== confirmPassword) {
+      console.log('[Login] Passwords do not match');
       setStatus({ type: 'error', message: 'Passwords do not match.' });
       return;
     }
@@ -31,15 +36,19 @@ export default function Login() {
 
     try {
       if (mode === 'signup') {
-        await signUp(email, password);
+        console.log('[Login] Calling signUp...');
+        const result = await signUp(email, password);
+        console.log('[Login] signUp result:', result);
         setStatus({ type: 'success', message: 'Account created! You can now sign in.' });
         setMode('signin');
         setPassword('');
         setConfirmPassword('');
       } else {
+        console.log('[Login] Calling signIn...');
         await signIn(email, password);
       }
     } catch (err) {
+      console.error('[Login] Auth error:', err);
       setStatus({ type: 'error', message: err.message || 'Authentication failed. Please try again.' });
     }
     setLoading(false);
