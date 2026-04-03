@@ -129,14 +129,25 @@ export function AuthProvider({ children }) {
   }
 
   async function manageSubscription() {
-    if (!session) throw new Error('Must be signed in');
+    if (!session) throw new Error('Must be signed in - no session found');
     const apiOrigin = import.meta.env.VITE_API_ORIGIN || '';
-    const resp = await fetch(`${apiOrigin}/api/subscribe?action=portal`, {
+    const endpoint = `${apiOrigin}/api/subscribe?action=portal`;
+    console.log('[manageSubscription] Calling:', endpoint);
+    console.log('[manageSubscription] Token:', session.access_token?.substring(0, 20) + '...');
+    const resp = await fetch(endpoint, {
       headers: { Authorization: `Bearer ${session.access_token}` },
     });
-    const { url, error } = await resp.json();
-    if (error) throw new Error(error);
-    window.location.href = url;
+    console.log('[manageSubscription] Response status:', resp.status);
+    const text = await resp.text();
+    console.log('[manageSubscription] Response body:', text.substring(0, 200));
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      throw new Error(`Invalid response: ${text.substring(0, 100)}`);
+    }
+    if (data.error) throw new Error(data.error);
+    window.location.href = data.url;
   }
 
   const openPaywall = useCallback(() => setShowPaywall(true), []);
