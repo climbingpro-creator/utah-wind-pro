@@ -232,6 +232,7 @@ function parseWindFromAlert(description) {
 
 /**
  * Fetch 7-day forecast for a location
+ * Now includes sky condition, cloud cover, and precip chance for fishing intelligence
  */
 export async function get7DayForecast(locationId = 'utah-lake') {
   const point = FORECAST_POINTS[resolveForecastKey(locationId)];
@@ -247,20 +248,30 @@ export async function get7DayForecast(locationId = 'utah-lake') {
     
     const periods = response.data.properties.periods || [];
     
-    return periods.map(period => ({
-      name: period.name,
-      startTime: period.startTime,
-      endTime: period.endTime,
-      isDaytime: period.isDaytime,
-      temperature: period.temperature,
-      temperatureUnit: period.temperatureUnit,
-      windSpeed: period.windSpeed,
-      windDirection: period.windDirection,
-      shortForecast: period.shortForecast,
-      detailedForecast: period.detailedForecast,
-      // Analyze for kiting
-      windAnalysis: analyzeWindForecast(period),
-    }));
+    return periods.map(period => {
+      const sky = parseSkyCondition(period.shortForecast);
+      const cloudCover = estimateCloudCover(sky);
+      const precipChance = period.probabilityOfPrecipitation?.value ?? estimatePrecipChance(period.shortForecast);
+      
+      return {
+        name: period.name,
+        startTime: period.startTime,
+        endTime: period.endTime,
+        isDaytime: period.isDaytime,
+        temperature: period.temperature,
+        temperatureUnit: period.temperatureUnit,
+        windSpeed: period.windSpeed,
+        windDirection: period.windDirection,
+        shortForecast: period.shortForecast,
+        detailedForecast: period.detailedForecast,
+        // NEW: Sky/cloud/precip data for fishing intelligence
+        sky,
+        cloudCover,
+        precipChance,
+        // Analyze for kiting
+        windAnalysis: analyzeWindForecast(period),
+      };
+    });
   } catch (error) {
     console.error('Error fetching 7-day forecast:', error.message);
     return null;
@@ -268,7 +279,65 @@ export async function get7DayForecast(locationId = 'utah-lake') {
 }
 
 /**
+ * Parse sky condition from NWS shortForecast text
+ */
+function parseSkyCondition(shortForecast) {
+  if (!shortForecast) return 'partly';
+  const t = shortForecast.toLowerCase();
+
+  if (/thunder|tstorm|t-storm/.test(t)) return 'storm';
+  if (/heavy rain|rain shower|showers/.test(t)) return 'rain';
+  if (/drizzle|light rain|sprinkle/.test(t)) return 'drizzle';
+  if (/snow|sleet|freezing/.test(t)) return 'storm';
+  if (/overcast|mostly cloudy/.test(t)) return 'overcast';
+  if (/cloudy|clouds/.test(t)) return 'cloudy';
+  if (/partly/.test(t)) return 'partly';
+  if (/sunny|clear|fair/.test(t)) return 'clear';
+  return 'partly';
+}
+
+/**
+ * Estimate cloud cover percentage from sky condition
+ */
+function estimateCloudCover(sky) {
+  const cloudMap = {
+    clear: 0,
+    partly: 30,
+    cloudy: 70,
+    overcast: 95,
+    drizzle: 90,
+    rain: 85,
+    storm: 100,
+  };
+  return cloudMap[sky] ?? 50;
+}
+
+/**
+ * Estimate precipitation chance from shortForecast text
+ */
+function estimatePrecipChance(shortForecast) {
+  if (!shortForecast) return 0;
+  const t = shortForecast.toLowerCase();
+  
+  // Look for explicit percentages like "30% chance of rain"
+  const percentMatch = t.match(/(\d+)%?\s*(?:chance|probability)/);
+  if (percentMatch) return parseInt(percentMatch[1]);
+  
+  // Estimate from keywords
+  if (/thunder|tstorm|storm/.test(t)) return 70;
+  if (/rain showers|showers likely/.test(t)) return 60;
+  if (/chance.*rain|rain.*chance|scattered.*showers/.test(t)) return 40;
+  if (/slight chance|isolated/.test(t)) return 20;
+  if (/drizzle|light rain/.test(t)) return 50;
+  if (/rain|showers/.test(t)) return 55;
+  if (/snow/.test(t)) return 50;
+  
+  return 0;
+}
+
+/**
  * Fetch hourly forecast for detailed wind prediction
+ * Now includes cloudCover, precipChance, and sky condition for fishing intelligence
  */
 export async function getHourlyForecast(locationId = 'utah-lake') {
   const point = FORECAST_POINTS[resolveForecastKey(locationId)];
@@ -284,15 +353,26 @@ export async function getHourlyForecast(locationId = 'utah-lake') {
     
     const periods = response.data.properties.periods || [];
     
-    return periods.slice(0, 48).map(period => ({
-      startTime: period.startTime,
-      temperature: period.temperature,
-      windSpeed: parseWindSpeed(period.windSpeed),
-      windDirection: period.windDirection,
-      shortForecast: period.shortForecast,
-      // Kiting analysis
-      kiteAnalysis: analyzeHourlyForKiting(period),
-    }));
+    return periods.slice(0, 48).map(period => {
+      const sky = parseSkyCondition(period.shortForecast);
+      const cloudCover = estimateCloudCover(sky);
+      const precipChance = period.probabilityOfPrecipitation?.value ?? estimatePrecipChance(period.shortForecast);
+      
+      return {
+        startTime: period.startTime,
+        time: period.startTime,
+        temperature: period.temperature,
+        windSpeed: parseWindSpeed(period.windSpeed),
+        windDirection: period.windDirection,
+        shortForecast: period.shortForecast,
+        // NEW: Sky/cloud/precip data for fishing intelligence
+        sky,
+        cloudCover,
+        precipChance,
+        // Kiting analysis
+        kiteAnalysis: analyzeHourlyForKiting(period),
+      };
+    });
   } catch (error) {
     console.error('Error fetching hourly forecast:', error.message);
     return null;

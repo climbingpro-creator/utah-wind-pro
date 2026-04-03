@@ -4,7 +4,7 @@
  * 
  * Routes:
  *   GET /api/weather?source=ambient
- *   GET /api/weather?source=radial&lat=40.35&lng=-111.90  ← NEW: FREE radial search (NWS + UDOT + Ambient)
+ *   GET /api/weather?source=radial&lat=40.35&lng=-111.90  ← FREE radial search (NWS + UDOT + Ambient + Open-Meteo global fallback)
  *   GET /api/weather?source=synoptic&stids=FPS,KSLC,...
  *   GET /api/weather?source=synoptic-history&stids=FPS,KSLC,...&hours=3
  *   GET /api/weather?source=wu-nearby&lat=40.35&lon=-111.90
@@ -15,8 +15,12 @@
  * (free, no key), UDOT RWIS stations (UT-prefix) route through UDOT
  * (free with key), remaining stations try Synoptic.
  * 
- * The `radial` source is 100% FREE — it only uses NWS, UDOT, and Ambient
- * Weather APIs. No Synoptic charges.
+ * The `radial` source is 100% FREE — it uses:
+ *   1. NWS (US airports)
+ *   2. UDOT RWIS (Utah roads)
+ *   3. Ambient Weather (personal weather stations)
+ *   4. Open-Meteo (global fallback for international coordinates)
+ * No Synoptic charges.
  */
 
 import { splitStations, fetchNwsLatest, fetchNwsHistory } from './lib/nwsAdapter.js';
@@ -186,6 +190,119 @@ function haversineDistance(lat1, lng1, lat2, lng2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
+/**
+ * Check if coordinates are outside the continental US
+ */
+function isOutsideUS(lat, lng) {
+  // Continental US bounding box
+  const US_BOUNDS = { minLat: 24.5, maxLat: 49.5, minLng: -125, maxLng: -66.5 };
+  // Alaska
+  const ALASKA_BOUNDS = { minLat: 51, maxLat: 72, minLng: -180, maxLng: -129 };
+  // Hawaii
+  const HAWAII_BOUNDS = { minLat: 18.5, maxLat: 22.5, minLng: -161, maxLng: -154 };
+  
+  if (lat >= US_BOUNDS.minLat && lat <= US_BOUNDS.maxLat && lng >= US_BOUNDS.minLng && lng <= US_BOUNDS.maxLng) return false;
+  if (lat >= ALASKA_BOUNDS.minLat && lat <= ALASKA_BOUNDS.maxLat && lng >= ALASKA_BOUNDS.minLng && lng <= ALASKA_BOUNDS.maxLng) return false;
+  if (lat >= HAWAII_BOUNDS.minLat && lat <= HAWAII_BOUNDS.maxLat && lng >= HAWAII_BOUNDS.minLng && lng <= HAWAII_BOUNDS.maxLng) return false;
+  return true;
+}
+
+/**
+ * Fetch weather from Open-Meteo (FREE global coverage)
+ */
+async function fetchOpenMeteoGlobal(lat, lng) {
+  const OPEN_METEO_BASE = 'https://api.open-meteo.com/v1/forecast';
+  const url = `${OPEN_METEO_BASE}?latitude=${lat}&longitude=${lng}` +
+    '&current=temperature_2m,relative_humidity_2m,precipitation,weather_code,' +
+    'cloud_cover,surface_pressure,wind_speed_10m,wind_direction_10m,wind_gusts_10m' +
+    '&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,weather_code,' +
+    'cloud_cover,surface_pressure,wind_speed_10m,wind_direction_10m,wind_gusts_10m' +
+    '&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto&forecast_days=2';
+
+  try {
+    const response = await fetch(url, { signal: AbortSignal.timeout(10000) });
+    if (!response.ok) return null;
+    const data = await response.json();
+    if (!data.current) return null;
+
+    // Weather code to sky condition
+    const WEATHER_CODE_MAP = {
+      0: 'clear', 1: 'clear', 2: 'partly', 3: 'cloudy',
+      45: 'cloudy', 48: 'cloudy',
+      51: 'drizzle', 53: 'drizzle', 55: 'drizzle', 56: 'drizzle', 57: 'drizzle',
+      61: 'rain', 63: 'rain', 65: 'rain', 66: 'rain', 67: 'rain',
+      71: 'storm', 73: 'storm', 75: 'storm', 77: 'storm',
+      80: 'rain', 81: 'rain', 82: 'rain', 85: 'storm', 86: 'storm',
+      95: 'storm', 96: 'storm', 99: 'storm',
+    };
+
+    const weatherCodeToForecast = (code) => {
+      const descriptions = {
+        0: 'Clear sky', 1: 'Mainly clear', 2: 'Partly cloudy', 3: 'Overcast',
+        45: 'Foggy', 51: 'Light drizzle', 61: 'Slight rain', 63: 'Moderate rain',
+        65: 'Heavy rain', 71: 'Slight snow', 80: 'Rain showers', 95: 'Thunderstorm',
+      };
+      return descriptions[code] || 'Unknown';
+    };
+
+    const degreesToCardinal = (deg) => {
+      if (deg == null) return 'N';
+      const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+      return dirs[Math.round(deg / 22.5) % 16];
+    };
+
+    // Build hourly forecast array
+    const hourly = [];
+    if (data.hourly?.time) {
+      const maxHours = Math.min(data.hourly.time.length, 48);
+      for (let i = 0; i < maxHours; i++) {
+        hourly.push({
+          startTime: data.hourly.time[i],
+          time: data.hourly.time[i],
+          temperature: data.hourly.temperature_2m?.[i],
+          humidity: data.hourly.relative_humidity_2m?.[i],
+          windSpeed: data.hourly.wind_speed_10m?.[i],
+          windDirection: data.hourly.wind_direction_10m?.[i],
+          windDirectionCardinal: degreesToCardinal(data.hourly.wind_direction_10m?.[i]),
+          windGust: data.hourly.wind_gusts_10m?.[i],
+          pressure: data.hourly.surface_pressure?.[i] ? data.hourly.surface_pressure[i] / 33.8639 : null,
+          cloudCover: data.hourly.cloud_cover?.[i],
+          precipChance: data.hourly.precipitation_probability?.[i],
+          weatherCode: data.hourly.weather_code?.[i],
+          sky: WEATHER_CODE_MAP[data.hourly.weather_code?.[i]] || 'partly',
+          shortForecast: weatherCodeToForecast(data.hourly.weather_code?.[i]),
+          source: 'open-meteo',
+        });
+      }
+    }
+
+    return {
+      stationId: 'open-meteo',
+      stationName: `Open-Meteo (${lat.toFixed(2)}, ${lng.toFixed(2)})`,
+      latitude: lat,
+      longitude: lng,
+      distanceMiles: 0,
+      source: 'open-meteo',
+      windSpeed: data.current.wind_speed_10m,
+      windDirection: data.current.wind_direction_10m,
+      windDirectionCardinal: degreesToCardinal(data.current.wind_direction_10m),
+      windGust: data.current.wind_gusts_10m,
+      temperature: data.current.temperature_2m,
+      humidity: data.current.relative_humidity_2m,
+      pressure: data.current.surface_pressure ? data.current.surface_pressure / 33.8639 : null,
+      cloudCover: data.current.cloud_cover,
+      sky: WEATHER_CODE_MAP[data.current.weather_code] || 'partly',
+      shortForecast: weatherCodeToForecast(data.current.weather_code),
+      timestamp: data.current.time,
+      dataSource: 'Open-Meteo Global',
+      hourlyForecast: hourly,
+    };
+  } catch (err) {
+    console.error('[OpenMeteo] Fetch error:', err.message);
+    return null;
+  }
+}
+
 async function handleRadialFree(res, query) {
   const { lat, lng, radius } = query;
   if (!lat || !lng) {
@@ -196,7 +313,10 @@ async function handleRadialFree(res, query) {
   const targetLng = parseFloat(lng);
   const maxRadius = Math.min(parseFloat(radius) || 100, 200);
   
-  // Calculate distance to all known free stations
+  // Check if outside US — if so, use Open-Meteo directly (global coverage)
+  const outsideUS = isOutsideUS(targetLat, targetLng);
+  
+  // Calculate distance to all known free stations (US-based)
   const stationsWithDistance = RADIAL_STATIONS.map(s => ({
     ...s,
     distanceMiles: haversineDistance(targetLat, targetLng, s.lat, s.lng),
@@ -204,15 +324,31 @@ async function handleRadialFree(res, query) {
     .filter(s => s.distanceMiles <= maxRadius)
     .sort((a, b) => a.distanceMiles - b.distanceMiles);
   
-  if (stationsWithDistance.length === 0) {
+  // If outside US or no nearby US stations, fall back to Open-Meteo
+  if (outsideUS || stationsWithDistance.length === 0) {
+    console.log(`[Radial] ${outsideUS ? 'International location' : 'No nearby US stations'} — using Open-Meteo for ${targetLat.toFixed(3)}, ${targetLng.toFixed(3)}`);
+    const openMeteoData = await fetchOpenMeteoGlobal(targetLat, targetLng);
+    
+    if (openMeteoData) {
+      res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=120');
+      return res.status(200).json({
+        station: openMeteoData,
+        searchedCoords: { lat: targetLat, lng: targetLng },
+        source: 'open-meteo',
+        isInternational: outsideUS,
+      });
+    }
+    
     return res.status(200).json({
       station: null,
-      message: `No free weather stations found within ${maxRadius} miles`,
+      message: outsideUS 
+        ? 'International location — Open-Meteo unavailable' 
+        : `No free weather stations found within ${maxRadius} miles`,
       searchedCoords: { lat: targetLat, lng: targetLng },
     });
   }
   
-  // Try to fetch data from the closest stations until we get valid data
+  // Try to fetch data from the closest US stations until we get valid data
   const udotKey = process.env.UDOT_API_KEY;
   const ambientApiKey = process.env.AMBIENT_API_KEY;
   const ambientAppKey = process.env.AMBIENT_APP_KEY;
@@ -250,6 +386,20 @@ async function handleRadialFree(res, query) {
       console.warn(`[Radial] Error fetching ${station.id}:`, err.message);
       continue;
     }
+  }
+  
+  // US stations failed — fall back to Open-Meteo as last resort
+  console.log(`[Radial] US stations failed — falling back to Open-Meteo for ${targetLat.toFixed(3)}, ${targetLng.toFixed(3)}`);
+  const openMeteoFallback = await fetchOpenMeteoGlobal(targetLat, targetLng);
+  
+  if (openMeteoFallback) {
+    res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=120');
+    return res.status(200).json({
+      station: openMeteoFallback,
+      searchedCoords: { lat: targetLat, lng: targetLng },
+      source: 'open-meteo-fallback',
+      nearestStations: stationsWithDistance.slice(0, 3).map(s => ({ id: s.id, name: s.name, distanceMiles: Math.round(s.distanceMiles * 10) / 10 })),
+    });
   }
   
   // No station returned valid data

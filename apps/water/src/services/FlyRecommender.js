@@ -401,12 +401,28 @@ export function getDailyFlyPick({
   locationId = 'provo-river',
   locationType = 'river',
   ecosystem = null,
+  cloudCover = null,
+  precipChance = null,
 } = {}) {
+  // If cloudCover is provided, use it to refine sky condition
+  let effectiveSky = skyCondition;
+  if (cloudCover != null && !skyCondition) {
+    if (cloudCover >= 90) effectiveSky = 'overcast';
+    else if (cloudCover >= 70) effectiveSky = 'cloudy';
+    else if (cloudCover >= 30) effectiveSky = 'partly';
+    else effectiveSky = 'clear';
+  }
+  
+  // If precipChance is high, upgrade to rain/drizzle conditions
+  if (precipChance != null && precipChance >= 50 && effectiveSky !== 'rain' && effectiveSky !== 'storm') {
+    effectiveSky = precipChance >= 70 ? 'rain' : 'drizzle';
+  }
+  
   const candidates = buildCandidates({
     month,
     waterTemp,
     windSpeed,
-    sky: skyCondition,
+    sky: effectiveSky,
     pressureTrend,
     hour,
     locationId,
@@ -426,7 +442,7 @@ export function getDailyFlyPick({
     .sort((a, b) => b.confidence - a.confidence)
     .slice(0, 6);
 
-  const nymphVsDry = getNymphVsDry(skyCondition, windSpeed, waterTemp, month);
+  const nymphVsDry = getNymphVsDry(effectiveSky, windSpeed, waterTemp, month);
 
   // Build time-of-day guide from top picks
   const timeGuide = [];
@@ -446,8 +462,10 @@ export function getDailyFlyPick({
     alternatives: ranked.slice(1, 4),
     nymphVsDry,
     timeGuide,
-    skyLabel: SKY_LABELS[skyCondition] || skyCondition,
-    skyCondition,
+    skyLabel: SKY_LABELS[effectiveSky] || effectiveSky,
+    skyCondition: effectiveSky,
+    cloudCover,
+    precipChance,
     ecosystemInfo: eco ? {
       activeHatches: Object.entries(eco.hatches || {})
         .filter(([, h]) => h.months?.includes(month))
