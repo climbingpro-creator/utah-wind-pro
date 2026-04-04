@@ -476,6 +476,15 @@ export function VectorWaterMap({ currentWeatherData = {} }) {
           if (clickedFeatureType) {
             profile.vectorFeatureType = clickedFeatureType;
           }
+          // DEBUG: Log coordinate comparison
+          console.log('[VectorWaterMap] COORDINATE DEBUG:');
+          console.log('  Click coords:', coords[0].toFixed(6), coords[1].toFixed(6));
+          console.log('  Profile coords:', profile.coordinates?.lat?.toFixed(6), profile.coordinates?.lng?.toFixed(6));
+          console.log('  AmbientWeather coords:', profile.ambientWeather?.latitude, profile.ambientWeather?.longitude);
+          if (profile.ambientWeather?.latitude && 
+              Math.abs(profile.coordinates?.lat - profile.ambientWeather?.latitude) > 0.01) {
+            console.warn('[VectorWaterMap] WARNING: Profile coords differ from weather station coords!');
+          }
         }
         setFishProfile(profile);
         if (profile?.waterBodyName) {

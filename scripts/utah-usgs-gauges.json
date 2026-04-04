@@ -1,0 +1,1426 @@
+[
+  {
+    "siteId": "09180000",
+    "name": "DOLORES RIVER NEAR CISCO, UT",
+    "lat": 38.79720805,
+    "lng": -109.1951142,
+    "elevation": 4168.32,
+    "drainageArea": 4580
+  },
+  {
+    "siteId": "09180500",
+    "name": "COLORADO RIVER NEAR CISCO, UT",
+    "lat": 38.81054095,
+    "lng": -109.2934493,
+    "elevation": 4092.35,
+    "drainageArea": 24100
+  },
+  {
+    "siteId": "09182400",
+    "name": "CASTLE CREEK BELOW CASTLE VALLEY NEAR MOAB, UT",
+    "lat": 38.673859,
+    "lng": -109.4501395,
+    "elevation": 4120,
+    "drainageArea": 58.1
+  },
+  {
+    "siteId": "09183500",
+    "name": "MILL CREEK AT SHELEY TUNNEL, NEAR MOAB, UT",
+    "lat": 38.4819972,
+    "lng": -109.405025,
+    "elevation": 5403.62,
+    "drainageArea": 26.8
+  },
+  {
+    "siteId": "09183600",
+    "name": "MILL CREEK BELOW SHELEY TUNNEL, NEAR MOAB, UT",
+    "lat": 38.48571796,
+    "lng": -109.4111044,
+    "elevation": 5355.02,
+    "drainageArea": 27.6
+  },
+  {
+    "siteId": "09183800",
+    "name": "NORTH FORK MILL CREEK NEAR MOAB, UTAH",
+    "lat": 38.56599444,
+    "lng": -109.477175,
+    "elevation": 4510,
+    "drainageArea": null
+  },
+  {
+    "siteId": "09184600",
+    "name": "PACK CREEK AT PACK CREEK ROAD BRIDGE NEAR MOAB, UT",
+    "lat": 38.445528,
+    "lng": -109.383667,
+    "elevation": 5699.86,
+    "drainageArea": 30.5
+  },
+  {
+    "siteId": "09185100",
+    "name": "MILL CREEK BLW PACK CREEK NR MOUTH AT MOAB, UT",
+    "lat": 38.5732861,
+    "lng": -109.5672083,
+    "elevation": 3960.74,
+    "drainageArea": 142
+  },
+  {
+    "siteId": "09185600",
+    "name": "COLORADO RIVER AT POTASH, UT",
+    "lat": 38.5047222,
+    "lng": -109.6583333,
+    "elevation": 3926.29,
+    "drainageArea": 25406
+  },
+  {
+    "siteId": "09217900",
+    "name": "BLACKS FORK NEAR ROBERTSON, WY",
+    "lat": 40.95902778,
+    "lng": -110.5797222,
+    "elevation": 8811.3,
+    "drainageArea": 126
+  },
+  {
+    "siteId": "09234500",
+    "name": "GREEN RIVER NEAR GREENDALE, UT",
+    "lat": 40.90829296,
+    "lng": -109.422914,
+    "elevation": 5594.21,
+    "drainageArea": 19400
+  },
+  {
+    "siteId": "09261000",
+    "name": "GREEN RIVER NEAR JENSEN, UT",
+    "lat": 40.40871944,
+    "lng": -109.23523611,
+    "elevation": 4761.82,
+    "drainageArea": 29660
+  },
+  {
+    "siteId": "09261700",
+    "name": "BIG BRUSH CRK ABV RED FLEET RES, NR VERNAL, UT",
+    "lat": 40.58883234,
+    "lng": -109.46543719,
+    "elevation": 5627.26,
+    "drainageArea": 77.2
+  },
+  {
+    "siteId": "09263500",
+    "name": "BRUSH CREEK NEAR JENSEN, UTAH",
+    "lat": 40.40846111,
+    "lng": -109.34056667,
+    "elevation": 4738.68,
+    "drainageArea": 255
+  },
+  {
+    "siteId": "09266500",
+    "name": "ASHLEY CREEK NEAR VERNAL, UT",
+    "lat": 40.5774426,
+    "lng": -109.6221085,
+    "elevation": 6230.61,
+    "drainageArea": 101
+  },
+  {
+    "siteId": "09267500",
+    "name": "MOSBY CANAL NEAR LAPOINT, UT",
+    "lat": 40.6082881,
+    "lng": -109.8840393,
+    "elevation": 9500,
+    "drainageArea": 0.01
+  },
+  {
+    "siteId": "09271000",
+    "name": "ASHLEY CR NR REMEMBER THE MAINE PARK NR VERNAL, UT",
+    "lat": 40.5141111,
+    "lng": -109.5943694,
+    "elevation": 5736.63,
+    "drainageArea": 241
+  },
+  {
+    "siteId": "09271550",
+    "name": "ASHLEY CREEK BEL UNION CANAL DIV NR JENSEN, UT",
+    "lat": 40.3580023,
+    "lng": -109.3876546,
+    "elevation": 4737.48,
+    "drainageArea": 389
+  },
+  {
+    "siteId": "09272400",
+    "name": "GREEN RIVER AT OURAY, UTAH",
+    "lat": 40.0847972,
+    "lng": -109.6758361,
+    "elevation": 4634.74,
+    "drainageArea": 31060
+  },
+  {
+    "siteId": "09276700",
+    "name": "DUCHESNE RIVER NEAR HANNA, UT",
+    "lat": 40.45798889,
+    "lng": -110.82778611,
+    "elevation": 6943.46,
+    "drainageArea": null
+  },
+  {
+    "siteId": "09277500",
+    "name": "DUCHESNE RIVER NEAR TABIONA, UT",
+    "lat": 40.2997472,
+    "lng": -110.6042556,
+    "elevation": 6197.72,
+    "drainageArea": 353
+  },
+  {
+    "siteId": "09279000",
+    "name": "ROCK CREEK NEAR MOUNTAIN HOME, UT",
+    "lat": 40.4931111,
+    "lng": -110.5772222,
+    "elevation": 7243.22,
+    "drainageArea": 147
+  },
+  {
+    "siteId": "09285900",
+    "name": "STRAWBERRY RIVER AT PINNACLES NEAR FRUITLAND, UT",
+    "lat": 40.1271783,
+    "lng": -110.7418242,
+    "elevation": 6051.95,
+    "drainageArea": 362
+  },
+  {
+    "siteId": "09288000",
+    "name": "CURRANT CREEK NEAR FRUITLAND, UT",
+    "lat": 40.20023128,
+    "lng": -110.9076623,
+    "elevation": 6664.78,
+    "drainageArea": 140
+  },
+  {
+    "siteId": "09288180",
+    "name": "STRAWBERRY RIVER NEAR DUCHESNE, UT",
+    "lat": 40.1546793,
+    "lng": -110.5548785,
+    "elevation": 5725.29,
+    "drainageArea": 917
+  },
+  {
+    "siteId": "09289500",
+    "name": "LAKE FORK RIVER AB MOON LAKE, NR MOUNTAIN HOME, UT",
+    "lat": 40.60252778,
+    "lng": -110.5205,
+    "elevation": 8121.4,
+    "drainageArea": 77.9
+  },
+  {
+    "siteId": "09291000",
+    "name": "LAKE FORK RIVER BL MOON LAKE NR MOUNTAIN HOME, UT",
+    "lat": 40.55633555,
+    "lng": -110.4846056,
+    "elevation": 7931.72,
+    "drainageArea": 112
+  },
+  {
+    "siteId": "09292000",
+    "name": "YELLOWSTONE R @ BRIDGE CMPGRND NR ALTONAH, UT",
+    "lat": 40.5463369,
+    "lng": -110.333771,
+    "elevation": 7650.2,
+    "drainageArea": 114
+  },
+  {
+    "siteId": "09292500",
+    "name": "YELLOWSTONE RIVER NEAR ALTONAH, UT",
+    "lat": 40.51189299,
+    "lng": -110.3415491,
+    "elevation": 7451.49,
+    "drainageArea": 132
+  },
+  {
+    "siteId": "09294500",
+    "name": "LAKE FORK RIVER NEAR MYTON, UT",
+    "lat": 40.20844444,
+    "lng": -110.11736111,
+    "elevation": 5117.6,
+    "drainageArea": 484
+  },
+  {
+    "siteId": "09295000",
+    "name": "DUCHESNE RIVER AT MYTON, UT",
+    "lat": 40.20023757,
+    "lng": -110.0637613,
+    "elevation": 5065.45,
+    "drainageArea": 2643
+  },
+  {
+    "siteId": "09295100",
+    "name": "DUCHESNE RIV ABV UINTA RIV, NR RANDLETT, UT",
+    "lat": 40.2066278,
+    "lng": -109.8598673,
+    "elevation": 4837.01,
+    "drainageArea": 2710
+  },
+  {
+    "siteId": "09296800",
+    "name": "UINTA R BLW POWERPLANT DIVERSION, NR NEOLA, UT",
+    "lat": 40.5913396,
+    "lng": -110.1143226,
+    "elevation": 7316.72,
+    "drainageArea": 157
+  },
+  {
+    "siteId": "09299500",
+    "name": "WHITEROCKS RIVER NEAR WHITEROCKS, UT",
+    "lat": 40.5935653,
+    "lng": -109.9323739,
+    "elevation": 7200,
+    "drainageArea": 109
+  },
+  {
+    "siteId": "09301500",
+    "name": "UINTA RIVER AT RANDLETT, UT",
+    "lat": 40.23355686,
+    "lng": -109.803777,
+    "elevation": 4791.91,
+    "drainageArea": 1064
+  },
+  {
+    "siteId": "09302000",
+    "name": "DUCHESNE RIVER NEAR RANDLETT, UT",
+    "lat": 40.21027778,
+    "lng": -109.7813889,
+    "elevation": 4746.96,
+    "drainageArea": 3790
+  },
+  {
+    "siteId": "09306500",
+    "name": "WHITE RIVER NEAR WATSON, UTAH",
+    "lat": 39.97885629,
+    "lng": -109.1787269,
+    "elevation": 4950.82,
+    "drainageArea": 4020
+  },
+  {
+    "siteId": "09309600",
+    "name": "FAIRVIEW TUNNEL NEAR FAIRVIEW, UT",
+    "lat": 39.66966944,
+    "lng": -111.3133194,
+    "elevation": 8652.01,
+    "drainageArea": 0.01
+  },
+  {
+    "siteId": "09310500",
+    "name": "FISH CREEK ABOVE RESERVOIR, NEAR SCOFIELD, UT",
+    "lat": 39.77440566,
+    "lng": -111.191006,
+    "elevation": 7636.11,
+    "drainageArea": 60.1
+  },
+  {
+    "siteId": "09310700",
+    "name": "MUD CRK BL WINTER QUARTERS CYN @ SCOFIELD, UT",
+    "lat": 39.7219111,
+    "lng": -111.1615444,
+    "elevation": 7703.91,
+    "drainageArea": 29.1
+  },
+  {
+    "siteId": "09311500",
+    "name": "PRICE RIVER NEAR SCOFIELD, UTAH",
+    "lat": 39.78690558,
+    "lng": -111.1201697,
+    "elevation": 7570.13,
+    "drainageArea": 155
+  },
+  {
+    "siteId": "09312600",
+    "name": "WHITE R BL TABBYUNE CRK NR SOLDIER SUMMIT, UT",
+    "lat": 39.87601667,
+    "lng": -111.0375167,
+    "elevation": 7235.55,
+    "drainageArea": 75.6
+  },
+  {
+    "siteId": "09313520",
+    "name": "PRICE RIVER BELOW GOLF COURSE NEAR HELPER, UT",
+    "lat": 39.63738333,
+    "lng": -110.85777222,
+    "elevation": 5618.07,
+    "drainageArea": 530
+  },
+  {
+    "siteId": "09313600",
+    "name": "PRICE RIVER AT WELLINGTON, UTAH",
+    "lat": 39.53217157,
+    "lng": -110.73435287,
+    "elevation": 5384,
+    "drainageArea": 719
+  },
+  {
+    "siteId": "09313980",
+    "name": "PRICE RIVER AT RIDGE ROAD NEAR WELLINGTON, UT",
+    "lat": 39.536081,
+    "lng": -110.6994,
+    "elevation": 5340.76,
+    "drainageArea": 846
+  },
+  {
+    "siteId": "09314250",
+    "name": "PRICE RIVER BL MILLER CREEK NR WELLINGTON, UT",
+    "lat": 39.44967343,
+    "lng": -110.62795996,
+    "elevation": 5250,
+    "drainageArea": 955
+  },
+  {
+    "siteId": "09314260",
+    "name": "WASHBOARD WASH BL SACCO WEST DIV NR WELLINGTON, UT",
+    "lat": 39.42726667,
+    "lng": -110.6583028,
+    "elevation": 5280,
+    "drainageArea": 50.6
+  },
+  {
+    "siteId": "09314300",
+    "name": "PRICE RIVER ABV SILVAGNI RANCH DIV NR WOODSIDE, UT",
+    "lat": 39.33553056,
+    "lng": -110.4281,
+    "elevation": 4756.69,
+    "drainageArea": 1586
+  },
+  {
+    "siteId": "09314500",
+    "name": "PRICE RIVER AT WOODSIDE, UT",
+    "lat": 39.26444444,
+    "lng": -110.3427778,
+    "elevation": 4610.61,
+    "drainageArea": 1540
+  },
+  {
+    "siteId": "09314700",
+    "name": "GREEN RIVER BL SWASEYS RAPID NEAR GREEN RIVER, UT",
+    "lat": 39.11428889,
+    "lng": -110.10905,
+    "elevation": 4094,
+    "drainageArea": null
+  },
+  {
+    "siteId": "09315000",
+    "name": "GREEN RIVER AT GREEN RIVER, UT",
+    "lat": 38.98886944,
+    "lng": -110.15035556,
+    "elevation": 4043.61,
+    "drainageArea": 44850
+  },
+  {
+    "siteId": "09319000",
+    "name": "EPHRAIM TUNNEL NEAR EPHRAIM, UT",
+    "lat": 39.3296855,
+    "lng": -111.4315745,
+    "elevation": 9694.9,
+    "drainageArea": 0.01
+  },
+  {
+    "siteId": "09326500",
+    "name": "FERRON CREEK (UPPER STATION) NEAR FERRON, UT",
+    "lat": 39.1049972,
+    "lng": -111.2289917,
+    "elevation": 6290.26,
+    "drainageArea": 138
+  },
+  {
+    "siteId": "09328000",
+    "name": "SAN RAFAEL RIVER NEAR CASTLE DALE, UTAH",
+    "lat": 39.1382333,
+    "lng": -110.89065,
+    "elevation": 5301.66,
+    "drainageArea": 939
+  },
+  {
+    "siteId": "09328500",
+    "name": "SAN RAFAEL RIVER NEAR GREEN RIVER, UT",
+    "lat": 38.8583081,
+    "lng": -110.3701469,
+    "elevation": 4180.95,
+    "drainageArea": 1628
+  },
+  {
+    "siteId": "09328910",
+    "name": "SAN RAFAEL RIVER AT MOUTH NEAR GREEN RIVER, UT",
+    "lat": 38.7577611,
+    "lng": -110.1435278,
+    "elevation": 4002.38,
+    "drainageArea": 3123
+  },
+  {
+    "siteId": "09328920",
+    "name": "GREEN RIVER AT MINERAL BOTTOM NR CYNLNDS NTL PARK",
+    "lat": 38.52402778,
+    "lng": -109.9944167,
+    "elevation": 3928.76,
+    "drainageArea": 48560
+  },
+  {
+    "siteId": "09328960",
+    "name": "COLORADO RIVER AT GYPSUM CANYON NEAR HITE, UT",
+    "lat": 38.01001944,
+    "lng": -110.0735389,
+    "elevation": 3600,
+    "drainageArea": 71200
+  },
+  {
+    "siteId": "09328990",
+    "name": "COLORADO RIVER AB DIRTY DEVIL RIVER NR HITE, UT",
+    "lat": 37.89146944,
+    "lng": -110.3708361,
+    "elevation": 3785,
+    "drainageArea": 75530
+  },
+  {
+    "siteId": "09329050",
+    "name": "SEVEN MILE CREEK NEAR FISH LAKE, UT",
+    "lat": 38.62775234,
+    "lng": -111.6479647,
+    "elevation": 9005.79,
+    "drainageArea": 24
+  },
+  {
+    "siteId": "09330000",
+    "name": "FREMONT RIVER NEAR BICKNELL, UT",
+    "lat": 38.3069248,
+    "lng": -111.5187917,
+    "elevation": 6888.28,
+    "drainageArea": 751
+  },
+  {
+    "siteId": "09330250",
+    "name": "FREMONT R AT HWY 24 AB SANDY C NR CAINEVILLE, UT",
+    "lat": 38.292575,
+    "lng": -111.04559444,
+    "elevation": 4666,
+    "drainageArea": 1240
+  },
+  {
+    "siteId": "09330500",
+    "name": "MUDDY CREEK NEAR EMERY, UT",
+    "lat": 38.99105556,
+    "lng": -111.253886,
+    "elevation": 6505.49,
+    "drainageArea": 105
+  },
+  {
+    "siteId": "09332100",
+    "name": "MUDDY CREEK BL I-70 NR EMERY, UTAH",
+    "lat": 38.8125833,
+    "lng": -111.20025,
+    "elevation": 5630,
+    "drainageArea": 418
+  },
+  {
+    "siteId": "09333500",
+    "name": "DIRTY DEVIL R AB POISON SP WSH NR HANKSVILLE UT",
+    "lat": 38.0971222,
+    "lng": -110.4074167,
+    "elevation": 3826.73,
+    "drainageArea": 4159
+  },
+  {
+    "siteId": "09337000",
+    "name": "PINE CREEK NEAR ESCALANTE, UT",
+    "lat": 37.86248747,
+    "lng": -111.6360113,
+    "elevation": 6401.31,
+    "drainageArea": 68.1
+  },
+  {
+    "siteId": "09337500",
+    "name": "ESCALANTE RIVER NEAR ESCALANTE, UT",
+    "lat": 37.77804389,
+    "lng": -111.5746181,
+    "elevation": 5664.43,
+    "drainageArea": 320
+  },
+  {
+    "siteId": "09378170",
+    "name": "SOUTH CREEK ABOVE RESERVOIR NEAR MONTICELLO, UT",
+    "lat": 37.8466608,
+    "lng": -109.3695625,
+    "elevation": 7164.57,
+    "drainageArea": 8.64
+  },
+  {
+    "siteId": "09378630",
+    "name": "RECAPTURE CREEK NEAR BLANDING, UT",
+    "lat": 37.7555504,
+    "lng": -109.476511,
+    "elevation": 7200,
+    "drainageArea": 3.77
+  },
+  {
+    "siteId": "09379500",
+    "name": "SAN JUAN RIVER NEAR BLUFF, UT",
+    "lat": 37.15067778,
+    "lng": -109.8666889,
+    "elevation": 4046.22,
+    "drainageArea": 23000
+  },
+  {
+    "siteId": "09379700",
+    "name": "SAN JUAN R BL PIUTE FARMS WASH NR MONUMENT VLY, UT",
+    "lat": 37.25265278,
+    "lng": -110.4389694,
+    "elevation": 3655.5,
+    "drainageArea": 24000
+  },
+  {
+    "siteId": "09381800",
+    "name": "PARIA RIVER NEAR KANAB, UTAH",
+    "lat": 37.10748428,
+    "lng": -111.9060102,
+    "elevation": 4348.6,
+    "drainageArea": 647
+  },
+  {
+    "siteId": "09403600",
+    "name": "KANAB CREEK NEAR KANAB, UT",
+    "lat": 37.10054059,
+    "lng": -112.5479827,
+    "elevation": 5049.43,
+    "drainageArea": 194
+  },
+  {
+    "siteId": "09404450",
+    "name": "EAST FORK VIRGIN RIVER NEAR GLENDALE, UT",
+    "lat": 37.3394272,
+    "lng": -112.6043769,
+    "elevation": 5872.07,
+    "drainageArea": 74.2
+  },
+  {
+    "siteId": "09404900",
+    "name": "EAST FORK VIRGIN RIVER NEAR SPRINGDALE, UT",
+    "lat": 37.16414955,
+    "lng": -112.9585499,
+    "elevation": 3931.22,
+    "drainageArea": 343
+  },
+  {
+    "siteId": "09405500",
+    "name": "NORTH FORK VIRGIN RIVER NEAR SPRINGDALE, UT",
+    "lat": 37.2097046,
+    "lng": -112.9785512,
+    "elevation": 3957.92,
+    "drainageArea": 344
+  },
+  {
+    "siteId": "09406000",
+    "name": "VIRGIN RIVER AT VIRGIN, UT",
+    "lat": 37.2041494,
+    "lng": -113.1807789,
+    "elevation": 3495.73,
+    "drainageArea": 956
+  },
+  {
+    "siteId": "09406100",
+    "name": "VIRGIN RIVER AB LA VERKIN CREEK NR LA VERKIN, UT",
+    "lat": 37.1969272,
+    "lng": -113.285226,
+    "elevation": 2985.28,
+    "drainageArea": 980
+  },
+  {
+    "siteId": "09408000",
+    "name": "LEEDS CREEK NEAR LEEDS, UT",
+    "lat": 37.26748174,
+    "lng": -113.3707839,
+    "elevation": 4002.46,
+    "drainageArea": 15.5
+  },
+  {
+    "siteId": "09408135",
+    "name": "VIRGIN RIVER AB QUAIL CREEK NEAR HURRICANE, UT",
+    "lat": 37.19248238,
+    "lng": -113.3532832,
+    "elevation": 2822.43,
+    "drainageArea": 1314
+  },
+  {
+    "siteId": "09408150",
+    "name": "VIRGIN RIVER NEAR HURRICANE, UT",
+    "lat": 37.16276007,
+    "lng": -113.3952285,
+    "elevation": 2739.42,
+    "drainageArea": 1493
+  },
+  {
+    "siteId": "09408195",
+    "name": "FORT PEARCE WASH NEAR ST. GEORGE, UT",
+    "lat": 37.00164939,
+    "lng": -113.4688407,
+    "elevation": 2791.35,
+    "drainageArea": 1349
+  },
+  {
+    "siteId": "09408400",
+    "name": "SANTA CLARA RIVER NEAR PINE VALLEY, UT",
+    "lat": 37.38331325,
+    "lng": -113.483288,
+    "elevation": 6624.05,
+    "drainageArea": 18.7
+  },
+  {
+    "siteId": "09409100",
+    "name": "SANTA CLARA RIVER ABV BAKER RES, NR CENTRAL, UT",
+    "lat": 37.38470108,
+    "lng": -113.6319052,
+    "elevation": 4882.44,
+    "drainageArea": 116
+  },
+  {
+    "siteId": "09410100",
+    "name": "SANTA CLARA RIV BLW WINSOR DAM, NR SANTA CLARA, UT",
+    "lat": 37.19,
+    "lng": -113.7680556,
+    "elevation": 3194.8,
+    "drainageArea": 378
+  },
+  {
+    "siteId": "09413000",
+    "name": "SANTA CLARA RIVER AT ST. GEORGE, UT",
+    "lat": 37.07525867,
+    "lng": -113.5930125,
+    "elevation": 2545.14,
+    "drainageArea": 541
+  },
+  {
+    "siteId": "09413200",
+    "name": "VIRGIN RIVER NEAR BLOOMINGTON, UT",
+    "lat": 37.07,
+    "lng": -113.5838889,
+    "elevation": 2511.34,
+    "drainageArea": 3853
+  },
+  {
+    "siteId": "09413500",
+    "name": "VIRGIN RIVER NEAR ST. GEORGE, UT",
+    "lat": 37.0144243,
+    "lng": -113.6805163,
+    "elevation": 2401.58,
+    "drainageArea": 4123
+  },
+  {
+    "siteId": "10011500",
+    "name": "BEAR RIVER NEAR UTAH-WYOMING STATE LINE",
+    "lat": 40.9652079,
+    "lng": -110.853539,
+    "elevation": 7961.25,
+    "drainageArea": 172
+  },
+  {
+    "siteId": "10023000",
+    "name": "BIG CREEK NEAR RANDOLPH, UT",
+    "lat": 41.60994177,
+    "lng": -111.2540876,
+    "elevation": 6410.38,
+    "drainageArea": 52.4
+  },
+  {
+    "siteId": "10102220",
+    "name": "CUB RIVER NEAR MOUTH NEAR RICHMOND, UT",
+    "lat": 41.90695,
+    "lng": -111.8751194,
+    "elevation": 4413.3,
+    "drainageArea": null
+  },
+  {
+    "siteId": "10102250",
+    "name": "BEAR RIVER NEAR SMITHFIELD, UT",
+    "lat": 41.84000833,
+    "lng": -111.88158611,
+    "elevation": 4404.02,
+    "drainageArea": 5193
+  },
+  {
+    "siteId": "10102350",
+    "name": "SUMMIT CREEK AT MOUTH NEAR SMITHFIELD, UT",
+    "lat": 41.83304444,
+    "lng": -111.8810972,
+    "elevation": 4407.34,
+    "drainageArea": null
+  },
+  {
+    "siteId": "10105900",
+    "name": "LITTLE BEAR RIVER AT PARADISE, UT",
+    "lat": 41.5754898,
+    "lng": -111.8552203,
+    "elevation": 4742.67,
+    "drainageArea": 182
+  },
+  {
+    "siteId": "10108400",
+    "name": "CACHE HIGHLINE CANAL NEAR LOGAN, UTAH",
+    "lat": 41.743375,
+    "lng": -111.762061,
+    "elevation": 4861.05,
+    "drainageArea": 0.01
+  },
+  {
+    "siteId": "10109000",
+    "name": "LOGAN RIVER ABOVE STATE DAM, NEAR LOGAN, UT",
+    "lat": 41.74355,
+    "lng": -111.7839806,
+    "elevation": 4681.8,
+    "drainageArea": 214
+  },
+  {
+    "siteId": "10109001",
+    "name": "COM F LOGAN R AB ST D AND CACHE HL CAN NR LOGAN UT",
+    "lat": 41.74437546,
+    "lng": -111.7843867,
+    "elevation": 4680,
+    "drainageArea": 214
+  },
+  {
+    "siteId": "10113500",
+    "name": "BLACKSMITH FORK AB UP and L CO.'S DAM NR HYRUM, UT",
+    "lat": 41.62400556,
+    "lng": -111.7361639,
+    "elevation": 5020.52,
+    "drainageArea": 263
+  },
+  {
+    "siteId": "10118000",
+    "name": "BEAR RIVER NEAR COLLINSTON, UT",
+    "lat": 41.8340793,
+    "lng": -112.0552524,
+    "elevation": 4276.13,
+    "drainageArea": 6271
+  },
+  {
+    "siteId": "10125850",
+    "name": "SALT CREEK NEAR HONEYVILLE, UT",
+    "lat": 41.6235,
+    "lng": -112.08525,
+    "elevation": 4240.96,
+    "drainageArea": null
+  },
+  {
+    "siteId": "10125900",
+    "name": "MALAD RIVER NEAR BEAR RIVER CITY, UT",
+    "lat": 41.59367778,
+    "lng": -112.1293444,
+    "elevation": 4203.64,
+    "drainageArea": 709
+  },
+  {
+    "siteId": "10126000",
+    "name": "BEAR RIVER NEAR CORINNE, UT",
+    "lat": 41.5763213,
+    "lng": -112.100782,
+    "elevation": 4206.78,
+    "drainageArea": 7029
+  },
+  {
+    "siteId": "10126050",
+    "name": "BEAR RIVER BELOW O-LINE CANAL NR BRIGHAM CITY, UT",
+    "lat": 41.4701722,
+    "lng": -112.2203833,
+    "elevation": 4210,
+    "drainageArea": null
+  },
+  {
+    "siteId": "10127150",
+    "name": "AV WATKIN OUTLET NEAR WILLARD, UT",
+    "lat": 41.42125,
+    "lng": -112.06381389,
+    "elevation": 4200.26,
+    "drainageArea": null
+  },
+  {
+    "siteId": "10128500",
+    "name": "WEBER RIVER NEAR OAKLEY, UT",
+    "lat": 40.7371721,
+    "lng": -111.2479652,
+    "elevation": 6637.22,
+    "drainageArea": 162
+  },
+  {
+    "siteId": "10129300",
+    "name": "WEBER RIVER NEAR PEOA, UTAH",
+    "lat": 40.75105998,
+    "lng": -111.3704716,
+    "elevation": 6052.38,
+    "drainageArea": 296
+  },
+  {
+    "siteId": "10129500",
+    "name": "WEBER RIVER NEAR WANSHIP, UT",
+    "lat": 40.79272607,
+    "lng": -111.404918,
+    "elevation": 5894.02,
+    "drainageArea": 335
+  },
+  {
+    "siteId": "10129900",
+    "name": "SILVER CREEK NEAR SILVER CREEK JUNCTION, UT",
+    "lat": 40.73522634,
+    "lng": -111.4760313,
+    "elevation": 6443.93,
+    "drainageArea": 17.4
+  },
+  {
+    "siteId": "10130500",
+    "name": "WEBER RIVER NEAR COALVILLE, UT",
+    "lat": 40.89522527,
+    "lng": -111.4018633,
+    "elevation": 5604.38,
+    "drainageArea": 435
+  },
+  {
+    "siteId": "10131000",
+    "name": "CHALK CREEK AT COALVILLE, UT",
+    "lat": 40.92050285,
+    "lng": -111.4015858,
+    "elevation": 5561.43,
+    "drainageArea": 250
+  },
+  {
+    "siteId": "10132000",
+    "name": "WEBER RIVER AT ECHO, UT",
+    "lat": 40.9677245,
+    "lng": -111.437699,
+    "elevation": 5442.15,
+    "drainageArea": 727
+  },
+  {
+    "siteId": "10132500",
+    "name": "LOST CREEK NEAR CROYDON, UTAH",
+    "lat": 41.18068056,
+    "lng": -111.4004583,
+    "elevation": 5825.52,
+    "drainageArea": 123
+  },
+  {
+    "siteId": "10133000",
+    "name": "LOST CREEK AT DEVILS SLIDE, UTAH",
+    "lat": 41.06063889,
+    "lng": -111.53455556,
+    "elevation": 5240.44,
+    "drainageArea": 228
+  },
+  {
+    "siteId": "10133550",
+    "name": "WEBER RIVER AT MORGAN, UTAH",
+    "lat": 41.0403611,
+    "lng": -111.6654889,
+    "elevation": 5064.73,
+    "drainageArea": null
+  },
+  {
+    "siteId": "10133600",
+    "name": "MCLEOD CREEK NEAR PARK CITY, UT",
+    "lat": 40.68803889,
+    "lng": -111.5337194,
+    "elevation": 6578.38,
+    "drainageArea": 8.78
+  },
+  {
+    "siteId": "10133650",
+    "name": "E CANYON CR BL I-80 REST STOP NR PARK CITY, UT",
+    "lat": 40.7238375,
+    "lng": -111.5196438,
+    "elevation": 6363.22,
+    "drainageArea": 42.1
+  },
+  {
+    "siteId": "10133800",
+    "name": "EAST CANYON CREEK NEAR JEREMY RANCH, UT",
+    "lat": 40.75966979,
+    "lng": -111.5640912,
+    "elevation": 6237.48,
+    "drainageArea": 57.2
+  },
+  {
+    "siteId": "10133980",
+    "name": "EAST CANYON CREEK AB EAST CYN RES NR MORGAN, UTAH",
+    "lat": 40.8695861,
+    "lng": -111.5866222,
+    "elevation": 5736.29,
+    "drainageArea": 110
+  },
+  {
+    "siteId": "10134500",
+    "name": "EAST CANYON CREEK NEAR MORGAN, UT",
+    "lat": 40.92244629,
+    "lng": -111.6071504,
+    "elevation": 5470.75,
+    "drainageArea": 144
+  },
+  {
+    "siteId": "10136500",
+    "name": "WEBER RIVER AT GATEWAY, UT",
+    "lat": 41.1368878,
+    "lng": -111.8324384,
+    "elevation": 4794.09,
+    "drainageArea": 1627
+  },
+  {
+    "siteId": "10136600",
+    "name": "WEBER RIVER AT I-84 AT UINTAH, UT",
+    "lat": 41.1370833,
+    "lng": -111.9195556,
+    "elevation": 4504.28,
+    "drainageArea": 1630
+  },
+  {
+    "siteId": "10137000",
+    "name": "WEBER RIVER AT OGDEN, UTAH",
+    "lat": 41.223269,
+    "lng": -111.988117,
+    "elevation": 4277.93,
+    "drainageArea": 1670
+  },
+  {
+    "siteId": "10137300",
+    "name": "SOUTH FK OGDEN R BL CAUSEY RES NR HUNTSVILLE, UTAH",
+    "lat": 41.29615278,
+    "lng": -111.5914167,
+    "elevation": 5491.9,
+    "drainageArea": 92.3
+  },
+  {
+    "siteId": "10137500",
+    "name": "SOUTH FORK OGDEN RIVER NEAR HUNTSVILLE, UT",
+    "lat": 41.26855226,
+    "lng": -111.6741004,
+    "elevation": 5181.5,
+    "drainageArea": 137
+  },
+  {
+    "siteId": "10140100",
+    "name": "OGDEN RIVER BL PINEVIEW RES NR HUNTSVILLE, UT",
+    "lat": 41.254387,
+    "lng": -111.8557727,
+    "elevation": 4783.2,
+    "drainageArea": 323
+  },
+  {
+    "siteId": "10140700",
+    "name": "OGDEN RIVER NR GIBSON AVENUE AT OGDEN, UT",
+    "lat": 41.23181944,
+    "lng": -111.9844972,
+    "elevation": 4274.48,
+    "drainageArea": 333
+  },
+  {
+    "siteId": "10141000",
+    "name": "WEBER RIVER NEAR PLAIN CITY, UT",
+    "lat": 41.2782765,
+    "lng": -112.0918866,
+    "elevation": 4200.22,
+    "drainageArea": 2081
+  },
+  {
+    "siteId": "10141100",
+    "name": "SOUTH FORK WEBER RIVER NEAR HOOPER, UTAH",
+    "lat": 41.1786,
+    "lng": -112.1763889,
+    "elevation": 4200.38,
+    "drainageArea": null
+  },
+  {
+    "siteId": "10141200",
+    "name": "NORTH FORK WEBER RIVER NEAR HOOPER, UTAH",
+    "lat": 41.22135556,
+    "lng": -112.18134722,
+    "elevation": 4195.81,
+    "drainageArea": null
+  },
+  {
+    "siteId": "10141410",
+    "name": "HOWARD SLOUGH AT HOWARD SLOUGH WMA, NR HOOPER, UT",
+    "lat": 41.12946111,
+    "lng": -112.14521944,
+    "elevation": 4203.36,
+    "drainageArea": null
+  },
+  {
+    "siteId": "10141450",
+    "name": "KAYS CREEK NEAR LAYTON, UTAH",
+    "lat": 41.0408861,
+    "lng": -111.9966694,
+    "elevation": 4235.34,
+    "drainageArea": null
+  },
+  {
+    "siteId": "10142000",
+    "name": "FARMINGTON CR ABV DIV NR FARMINGTON, UTAH",
+    "lat": 41.00133317,
+    "lng": -111.8732724,
+    "elevation": 5043.27,
+    "drainageArea": 10
+  },
+  {
+    "siteId": "10145400",
+    "name": "SALT CRK BL NEPHI POWERPLANT DIV NR NEPHI, UT",
+    "lat": 39.7171797,
+    "lng": -111.7335396,
+    "elevation": 5746.93,
+    "drainageArea": 81
+  },
+  {
+    "siteId": "10146000",
+    "name": "SALT CREEK AT NEPHI, UT",
+    "lat": 39.71301186,
+    "lng": -111.8043759,
+    "elevation": 5282.5,
+    "drainageArea": 95.6
+  },
+  {
+    "siteId": "10146400",
+    "name": "CURRANT CREEK NEAR MONA, UT",
+    "lat": 39.80259167,
+    "lng": -111.8668806,
+    "elevation": 4883.72,
+    "drainageArea": 225
+  },
+  {
+    "siteId": "10147100",
+    "name": "SUMMIT CREEK ABV SUMMIT CR CANAL NR SANTAQUIN UT",
+    "lat": 39.9444722,
+    "lng": -111.7748889,
+    "elevation": 5351.48,
+    "drainageArea": 18
+  },
+  {
+    "siteId": "10149000",
+    "name": "SIXTH WATER CRK AB SYAR TUN NR SPRINGVILLE, UT",
+    "lat": 40.11801206,
+    "lng": -111.3146215,
+    "elevation": 6320.81,
+    "drainageArea": 15
+  },
+  {
+    "siteId": "10149400",
+    "name": "DIAMOND FORK ABV RED HOLLOW NR THISTLE, UT",
+    "lat": 40.07627778,
+    "lng": -111.3826389,
+    "elevation": 5377.2,
+    "drainageArea": 97
+  },
+  {
+    "siteId": "10149500",
+    "name": "DIAMOND FORK BELOW RED HOLLOW, NEAR THISTLE, UT",
+    "lat": 40.0785676,
+    "lng": -111.4096276,
+    "elevation": 5300,
+    "drainageArea": 107
+  },
+  {
+    "siteId": "10150500",
+    "name": "SPANISH FORK AT CASTILLA, UT",
+    "lat": 40.0496781,
+    "lng": -111.5479705,
+    "elevation": 4869.97,
+    "drainageArea": 652
+  },
+  {
+    "siteId": "10153100",
+    "name": "HOBBLE CREEK AT 1650 WEST AT SPRINGVILLE, UTAH",
+    "lat": 40.1788719,
+    "lng": -111.639338,
+    "elevation": 4496.72,
+    "drainageArea": 115
+  },
+  {
+    "siteId": "10154200",
+    "name": "PROVO RIVER NEAR WOODLAND, UT",
+    "lat": 40.5577278,
+    "lng": -111.1687838,
+    "elevation": 6958.3,
+    "drainageArea": 162
+  },
+  {
+    "siteId": "10155000",
+    "name": "PROVO RIVER NEAR HAILSTONE, UT",
+    "lat": 40.6051111,
+    "lng": -111.3145278,
+    "elevation": 6282.83,
+    "drainageArea": 230
+  },
+  {
+    "siteId": "10155200",
+    "name": "PROVO RIV AT RIV ROAD BRIDGE NR HEBER CITY, UT",
+    "lat": 40.55439805,
+    "lng": -111.4332426,
+    "elevation": 5691.59,
+    "drainageArea": 270
+  },
+  {
+    "siteId": "10155500",
+    "name": "PROVO RIVER NEAR CHARLESTON, UT",
+    "lat": 40.4841221,
+    "lng": -111.4635198,
+    "elevation": 5427.04,
+    "drainageArea": 359
+  },
+  {
+    "siteId": "10156000",
+    "name": "SNAKE CREEK NEAR CHARLESTON, UT",
+    "lat": 40.4852332,
+    "lng": -111.4671312,
+    "elevation": 5426.64,
+    "drainageArea": 31.8
+  },
+  {
+    "siteId": "10157500",
+    "name": "DANIELS CREEK AT CHARLESTON, UT",
+    "lat": 40.46078909,
+    "lng": -111.472687,
+    "elevation": 5419,
+    "drainageArea": 50.1
+  },
+  {
+    "siteId": "10163000",
+    "name": "PROVO RIVER AT PROVO, UT",
+    "lat": 40.23925556,
+    "lng": -111.7111944,
+    "elevation": 4493.22,
+    "drainageArea": 673
+  },
+  {
+    "siteId": "10164500",
+    "name": "AMERICAN FK AB UPPER POWERPLANT NR AMERICAN FK, UT",
+    "lat": 40.4477297,
+    "lng": -111.6821472,
+    "elevation": 5937.21,
+    "drainageArea": 51.1
+  },
+  {
+    "siteId": "10165600",
+    "name": "DRY CREEK AT 300 N, AT ALPINE, UT",
+    "lat": 40.4571722,
+    "lng": -111.7683722,
+    "elevation": 4981.46,
+    "drainageArea": null
+  },
+  {
+    "siteId": "10166430",
+    "name": "WEST CANYON CREEK NEAR CEDAR FORT, UT",
+    "lat": 40.4052063,
+    "lng": -112.1005142,
+    "elevation": 5628.62,
+    "drainageArea": 26.8
+  },
+  {
+    "siteId": "10168000",
+    "name": "LITTLE COTTONWOOD CREEK @ JORDAN RIVER NR SLC",
+    "lat": 40.66430556,
+    "lng": -111.898861,
+    "elevation": 4254.24,
+    "drainageArea": 46
+  },
+  {
+    "siteId": "10170500",
+    "name": "SURPLUS CANAL @ SALT LAKE CITY, UT",
+    "lat": 40.72755556,
+    "lng": -111.927361,
+    "elevation": 4216.71,
+    "drainageArea": null
+  },
+  {
+    "siteId": "10171000",
+    "name": "JORDAN RIVER @ 1700 SOUTH @ SALT LAKE CITY, UT",
+    "lat": 40.73355737,
+    "lng": -111.9232703,
+    "elevation": 4222.64,
+    "drainageArea": 3438
+  },
+  {
+    "siteId": "10172200",
+    "name": "RED BUTTE CREEK AT FORT DOUGLAS, NEAR SLC, UT",
+    "lat": 40.77994627,
+    "lng": -111.806045,
+    "elevation": 5403.38,
+    "drainageArea": 7.25
+  },
+  {
+    "siteId": "10172600",
+    "name": "JORDAN RIVER @ CUDAHY LANE NR SALT LAKE CITY, UT",
+    "lat": 40.84734444,
+    "lng": -111.95402778,
+    "elevation": 4209.48,
+    "drainageArea": 3490
+  },
+  {
+    "siteId": "10172625",
+    "name": "SALT LAKE CITY SEWAGE CANAL NR FARMINGTON, UTAH",
+    "lat": 40.89413889,
+    "lng": -112.00552778,
+    "elevation": 4197.9,
+    "drainageArea": null
+  },
+  {
+    "siteId": "10172630",
+    "name": "GOGGIN DRAIN NEAR MAGNA UTAH",
+    "lat": 40.81661107,
+    "lng": -112.1007767,
+    "elevation": 4194.01,
+    "drainageArea": null
+  },
+  {
+    "siteId": "10172640",
+    "name": "LEE CREEK NEAR MAGNA, UT",
+    "lat": 40.78085278,
+    "lng": -112.1385944,
+    "elevation": 4197.23,
+    "drainageArea": null
+  },
+  {
+    "siteId": "10172700",
+    "name": "VERNON CREEK NEAR VERNON, UT",
+    "lat": 39.97939105,
+    "lng": -112.3802297,
+    "elevation": 6207.07,
+    "drainageArea": 25
+  },
+  {
+    "siteId": "10172727",
+    "name": "FAUST CREEK NEAR VERNON, UT",
+    "lat": 40.16050085,
+    "lng": -112.4310639,
+    "elevation": 5255.63,
+    "drainageArea": 145
+  },
+  {
+    "siteId": "10172765",
+    "name": "CLOVER CREEK ABOVE BIG HOLLOW, NEAR CLOVER, UT",
+    "lat": 40.33494346,
+    "lng": -112.5282894,
+    "elevation": 5660,
+    "drainageArea": 6.71
+  },
+  {
+    "siteId": "10172800",
+    "name": "SOUTH WILLOW CREEK NEAR GRANTSVILLE, UT",
+    "lat": 40.496313,
+    "lng": -112.5744182,
+    "elevation": 6334.75,
+    "drainageArea": 4.19
+  },
+  {
+    "siteId": "10172870",
+    "name": "TROUT CREEK NEAR CALLAO, UT",
+    "lat": 39.74410784,
+    "lng": -113.8899945,
+    "elevation": 6332.16,
+    "drainageArea": 8.19
+  },
+  {
+    "siteId": "10172952",
+    "name": "DUNN CREEK NEAR PARK VALLEY, UT",
+    "lat": 41.85851438,
+    "lng": -113.3272356,
+    "elevation": 6278.22,
+    "drainageArea": 8.72
+  },
+  {
+    "siteId": "10173450",
+    "name": "MAMMOTH CREEK ABV WEST HATCH DITCH, NEAR HATCH, UT",
+    "lat": 37.6227572,
+    "lng": -112.5168773,
+    "elevation": 7285.74,
+    "drainageArea": 105
+  },
+  {
+    "siteId": "10174500",
+    "name": "SEVIER RIVER AT HATCH, UT",
+    "lat": 37.65109086,
+    "lng": -112.4302069,
+    "elevation": 6871.58,
+    "drainageArea": 340
+  },
+  {
+    "siteId": "10183500",
+    "name": "SEVIER RIVER NEAR KINGSTON, UT",
+    "lat": 38.20609038,
+    "lng": -112.2077024,
+    "elevation": 5989.02,
+    "drainageArea": 1131
+  },
+  {
+    "siteId": "10189000",
+    "name": "EAST FORK SEVIER RIVER NEAR KINGSTON, UT",
+    "lat": 38.19636955,
+    "lng": -112.1477005,
+    "elevation": 6159.54,
+    "drainageArea": 1207
+  },
+  {
+    "siteId": "10194200",
+    "name": "CLEAR CREEK ABOVE DIVERSIONS, NEAR SEVIER, UT",
+    "lat": 38.5794169,
+    "lng": -112.2885399,
+    "elevation": 5677.01,
+    "drainageArea": 164
+  },
+  {
+    "siteId": "10205030",
+    "name": "SALINA CREEK NEAR EMERY, UT",
+    "lat": 38.9119141,
+    "lng": -111.5304654,
+    "elevation": 6988.84,
+    "drainageArea": 51.8
+  },
+  {
+    "siteId": "10215900",
+    "name": "MANTI CREEK BLW DUGWAY CREEK, NR MANTI, UT",
+    "lat": 39.25912877,
+    "lng": -111.579916,
+    "elevation": 6505.44,
+    "drainageArea": 26.4
+  },
+  {
+    "siteId": "10217000",
+    "name": "SEVIER RIV BLW SAN PITCH RIV NR GUNNISON, UT",
+    "lat": 39.1552387,
+    "lng": -111.877705,
+    "elevation": 5029.08,
+    "drainageArea": 4921
+  },
+  {
+    "siteId": "10219000",
+    "name": "SEVIER RIVER NEAR JUAB, UT",
+    "lat": 39.37468029,
+    "lng": -112.0396557,
+    "elevation": 4930.86,
+    "drainageArea": 5165
+  },
+  {
+    "siteId": "10224000",
+    "name": "SEVIER RIVER NEAR LYNNDYL, UT",
+    "lat": 39.48189754,
+    "lng": -112.3938338,
+    "elevation": 4670.65,
+    "drainageArea": 5966
+  },
+  {
+    "siteId": "10234500",
+    "name": "BEAVER RIVER NEAR BEAVER, UT",
+    "lat": 38.2798,
+    "lng": -112.568286,
+    "elevation": 6203.51,
+    "drainageArea": 91
+  },
+  {
+    "siteId": "10242000",
+    "name": "COAL CREEK NEAR CEDAR CITY, UT",
+    "lat": 37.67219924,
+    "lng": -113.0346702,
+    "elevation": 5983.01,
+    "drainageArea": 80.9
+  },
+  {
+    "siteId": "411403112200801",
+    "name": "BEAR RIVER BAY OUTFLOW AT GSL MINERALS CORP BRIDGE",
+    "lat": 41.27138889,
+    "lng": -112.356111,
+    "elevation": 4194,
+    "drainageArea": null
+  }
+]
