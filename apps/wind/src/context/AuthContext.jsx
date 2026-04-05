@@ -137,19 +137,15 @@ export function AuthProvider({ children }) {
   async function manageSubscription() {
     if (!session) throw new Error('Must be signed in - no session found');
     const endpoint = apiUrl('/api/subscribe?action=portal');
-    console.log('[manageSubscription] Calling:', endpoint);
-    console.log('[manageSubscription] Token:', session.access_token?.substring(0, 20) + '...');
     const resp = await fetch(endpoint, {
       headers: { Authorization: `Bearer ${session.access_token}` },
     });
-    console.log('[manageSubscription] Response status:', resp.status);
     const text = await resp.text();
-    console.log('[manageSubscription] Response body:', text.substring(0, 200));
     let data;
     try {
       data = JSON.parse(text);
     } catch {
-      throw new Error(`Invalid response: ${text.substring(0, 100)}`);
+      throw new Error(`Invalid response from subscription portal`);
     }
     if (data.error) throw new Error(data.error);
     window.location.href = data.url;

@@ -21,7 +21,6 @@ const FEATURES = [
 export default function ProUpgrade() {
   const { user, signIn, signUp, signInWithMagicLink, upgradeToPro, startTrial, trialActive, trialDaysLeft, closePaywall } = useAuth();
   const { theme } = useTheme();
-  const [isYearly, setIsYearly] = useState(true);
   const [authMode, setAuthMode] = useState('signin'); // 'signin', 'signup', 'magic'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -131,48 +130,16 @@ export default function ProUpgrade() {
         </div>
 
         <div className="px-6 py-5 space-y-5">
-          {/* Pricing toggle */}
-          <div className="flex items-center justify-center gap-3">
-            <button
-              onClick={() => setIsYearly(false)}
-              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-                !isYearly
-                  ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/25'
-                  : dark ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-500'
-              }`}
-            >
-              Monthly
-            </button>
-            <button
-              onClick={() => setIsYearly(true)}
-              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all relative ${
-                isYearly
-                  ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/25'
-                  : dark ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-500'
-              }`}
-            >
-              Yearly
-              <span className="absolute -top-2 -right-2 px-1.5 py-0.5 rounded-full bg-emerald-500 text-[9px] font-bold text-white">
-                -37%
-              </span>
-            </button>
-          </div>
-
           {/* Price display */}
           <div className="text-center">
             <div className="flex items-baseline justify-center gap-1">
               <span className={`text-4xl font-extrabold ${dark ? 'text-white' : 'text-slate-900'}`}>
-                ${isYearly ? '2.49' : '3.99'}
+                $5.99
               </span>
               <span className={`text-sm ${dark ? 'text-slate-400' : 'text-slate-500'}`}>
                 /month
               </span>
             </div>
-            {isYearly && (
-              <p className={`text-xs mt-1 ${dark ? 'text-slate-500' : 'text-slate-400'}`}>
-                $29.99 billed annually (save $18)
-              </p>
-            )}
           </div>
 
           {/* Feature comparison */}
@@ -366,7 +333,7 @@ export default function ProUpgrade() {
                 onClick={handleUpgrade}
                 className="w-full py-3 rounded-xl font-bold text-sm bg-gradient-to-r from-sky-500 to-cyan-500 text-white shadow-lg shadow-sky-500/25 hover:shadow-sky-500/40 transition-all hover:scale-[1.02] active:scale-[0.98]"
               >
-                {isYearly ? 'Subscribe — $29.99/year' : 'Subscribe — $3.99/month'}
+                Subscribe — $5.99/month
               </button>
               <p className={`text-center text-[11px] ${dark ? 'text-slate-500' : 'text-slate-400'}`}>
                 Cancel anytime. Instant access to all Pro features.

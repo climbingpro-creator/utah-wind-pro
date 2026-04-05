@@ -29,7 +29,7 @@ export default async function handler(req, res) {
   try {
     if (req.method === 'POST') return await createCheckout(req, res, auth.user);
     if (req.method === 'GET' && req.query.action === 'portal') {
-      return await createPortal(res, auth.user);
+      return await createPortal(req, res, auth.user);
     }
     return res.status(405).json({ error: 'Method not allowed' });
   } catch (err) {
@@ -60,9 +60,9 @@ async function createCheckout(req, res, user) {
   return res.status(200).json({ url: session.url });
 }
 
-async function createPortal(res, user) {
+async function createPortal(req, res, user) {
   const stripe = getStripe();
-  const origin = 'https://utahwindfinder.com';
+  const origin = req.headers.origin || req.headers.referer?.split('/').slice(0, 3).join('/') || 'https://utahwindfinder.com';
 
   const customerId = await getOrCreateCustomer(stripe, user);
 
