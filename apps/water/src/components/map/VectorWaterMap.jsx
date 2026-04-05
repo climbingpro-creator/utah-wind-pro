@@ -121,24 +121,67 @@ export function VectorWaterMap({ currentWeatherData = {} }) {
   });
   const abortRef = useRef(0);
   const hoveredFeatureIdRef = useRef(null);
+  
+  // Cache for water body names - maps polygon ID to name
+  // This persists across hovers so once we learn a lake's name, we remember it
+  const waterNameCacheRef = useRef({});
 
   useEffect(() => {
+    console.log('[PMTiles] ========== INITIALIZATION ==========');
+    console.log('[PMTiles] VITE_PMTILES_WATER_URL:', PMTILES_URL);
+    console.log('[PMTiles] URL type:', typeof PMTILES_URL);
+    console.log('[PMTiles] URL length:', PMTILES_URL?.length);
+    
     if (!PMTILES_URL) {
+      console.error('[PMTiles] ERROR: No URL configured! Check your .env file for VITE_PMTILES_WATER_URL');
+      console.log('[PMTiles] All VITE_ env vars:', Object.keys(import.meta.env).filter(k => k.startsWith('VITE_')));
       setPmtilesReady(true);
       return;
     }
+    
+    // Validate URL format
+    if (!PMTILES_URL.includes('.pmtiles')) {
+      console.error('[PMTiles] ERROR: URL does not appear to be a PMTiles file:', PMTILES_URL);
+    }
+    
+    console.log('[PMTiles] Registering pmtiles protocol...');
     const protocol = new Protocol();
     maplibregl.addProtocol('pmtiles', protocol.tile);
+    console.log('[PMTiles] Protocol registered successfully');
+    console.log('[PMTiles] Full source URL will be:', `pmtiles://${PMTILES_URL}`);
+    console.log('[PMTiles] ====================================');
     setPmtilesReady(true);
+    
+    // Test fetch the PMTiles header to verify URL is accessible
+    fetch(PMTILES_URL, { method: 'HEAD' })
+      .then(res => {
+        console.log('[PMTiles] HEAD request status:', res.status, res.statusText);
+        console.log('[PMTiles] Content-Type:', res.headers.get('content-type'));
+        console.log('[PMTiles] Content-Length:', res.headers.get('content-length'));
+        if (!res.ok) {
+          console.error('[PMTiles] ERROR: PMTiles URL returned non-OK status!');
+        }
+      })
+      .catch(err => {
+        console.error('[PMTiles] ERROR: Failed to fetch PMTiles URL:', err.message);
+        console.error('[PMTiles] This could be a CORS issue or the URL is incorrect');
+      });
+    
     return () => {
+      console.log('[PMTiles] Cleaning up protocol...');
       maplibregl.removeProtocol('pmtiles');
     };
   }, []);
 
   // Water layer IDs for hover detection (both PMTiles and basemap)
+  // OpenMapTiles schema: 
+  //   'water' = lakes/oceans polygons (NO names!)
+  //   'waterway' = rivers/streams lines (has names at high zoom)
+  //   'water_name' = lake labels (has names)
   const WATER_LAYER_IDS = [
-    'lakes-fill', 'streams-line', 'lakes-labels', 'streams-labels',
-    'osm-lakes', 'osm-rivers', 'osm-ocean', 'lakes-outline',
+    'lakes-fill', 'lakes-outline', 'lakes-labels',
+    'streams-line', 'streams-labels',
+    'water-name-labels', // For lake names from water_name source-layer
   ];
 
   // Detect if device supports touch (mobile/tablet)
@@ -150,89 +193,322 @@ export function VectorWaterMap({ currentWeatherData = {} }) {
     if (isTouchDevice) return;
     const map = mapRef.current?.getMap();
     if (!map) return;
-
-    // Use a small bounding box for better line feature detection
-    const bbox = [
+    
+    // ═══════════════════════════════════════════════════════════════════════════
+    // SIMPLE HOVER DETECTION
+    // Use a tight bbox to verify mouse is actually over water
+    // Then extract name from the polygon itself or nearby water_name label
+    // ═══════════════════════════════════════════════════════════════════════════
+    
+    // Tight bounding box (8px) - verify mouse is physically over water
+    const tightBbox = [
       [e.point.x - 8, e.point.y - 8],
       [e.point.x + 8, e.point.y + 8]
     ];
 
-    // Query our PMTiles water layers first (with bbox for thin lines)
-    const waterLayerIds = WATER_LAYER_IDS.filter(id => map.getLayer(id));
-    let features = waterLayerIds.length > 0 
-      ? map.queryRenderedFeatures(bbox, { layers: waterLayerIds })
-      : [];
-
-    // If no PMTiles features, check basemap water layers
-    if (features.length === 0) {
-      const allFeatures = map.queryRenderedFeatures(bbox);
+    // Query features directly under the mouse
+    const tightFeatures = map.queryRenderedFeatures(tightBbox);
+    
+    // Filter for water-related features (polygons and lines)
+    const waterFeatures = tightFeatures.filter(f => {
+      const layerId = (f.layer?.id || '').toLowerCase();
+      const sourceLayer = (f.sourceLayer || '').toLowerCase();
       
-      const basemapWater = allFeatures.find(f => {
-        const fLayerId = (f.layer?.id || '').toLowerCase();
+      // Our PMTiles layers
+      if (WATER_LAYER_IDS.some(id => layerId === id.toLowerCase())) return true;
+      
+      // OpenMapTiles source layers
+      if (sourceLayer === 'waterway' || sourceLayer === 'water') return true;
+      
+      // Basemap water layers
+      return layerId.includes('water') || 
+             layerId.includes('river') || 
+             layerId.includes('stream') ||
+             layerId.includes('lake') ||
+             layerId.includes('ocean') ||
+             layerId.includes('sea');
+    });
+    
+    // If no water features under mouse, clear hover state and exit
+    if (waterFeatures.length === 0) {
+      if (hoveredFeatureIdRef.current !== null) {
+        hoveredFeatureIdRef.current = null;
+        setHoveredFeature(null);
+        setCursorStyle('crosshair');
+      }
+      return;
+    }
+    
+    
+    // Search for water_name labels that belong to the water polygon we're hovering over
+    const zoom = map.getZoom();
+    let allWaterNameFeatures = [];
+    
+    // Get the water polygon we're hovering over (to get its ID for caching)
+    const hoveredWaterPolygon = waterFeatures.find(f => {
+      const geomType = f.geometry?.type;
+      return (geomType === 'Polygon' || geomType === 'MultiPolygon' || f.sourceLayer === 'water') 
+             && f.properties?.id;
+    });
+    
+    const polygonId = hoveredWaterPolygon?.properties?.id;
+    
+    // STRATEGY 1: Check the cache first - if we've seen this polygon before, use cached name
+    if (polygonId && waterNameCacheRef.current[polygonId]) {
+      // We already know this lake's name!
+      allWaterNameFeatures = [{ 
+        properties: { name: waterNameCacheRef.current[polygonId] },
+        _fromCache: true 
+      }];
+    }
+    
+    // STRATEGY 2: Check if there's a label directly under the mouse
+    if (allWaterNameFeatures.length === 0) {
+      const directLabels = waterFeatures.filter(f => {
         const sourceLayer = (f.sourceLayer || '').toLowerCase();
-        
-        // Check for water-related layer names (Carto, Mapbox, MapTiler, OSM)
-        return fLayerId.includes('water') || 
-               fLayerId.includes('river') || 
-               fLayerId.includes('stream') ||
-               fLayerId.includes('lake') ||
-               fLayerId.includes('ocean') ||
-               fLayerId.includes('sea') ||
-               sourceLayer.includes('water') ||
-               sourceLayer.includes('waterway');
+        const layerId = (f.layer?.id || '').toLowerCase();
+        return sourceLayer === 'water_name' || layerId.includes('watername');
+      });
+      if (directLabels.length > 0) {
+        allWaterNameFeatures = directLabels;
+        // Cache this name for the polygon ID
+        const labelName = directLabels[0].properties?.name;
+        if (polygonId && labelName) {
+          waterNameCacheRef.current[polygonId] = labelName;
+        }
+      }
+    }
+    
+    // STRATEGY 3: Search a wide area around the mouse for any water_name labels
+    // and cache them for their respective polygons
+    if (allWaterNameFeatures.length === 0) {
+      const searchRadius = 300;
+      const searchBbox = [
+        [e.point.x - searchRadius, e.point.y - searchRadius],
+        [e.point.x + searchRadius, e.point.y + searchRadius]
+      ];
+      
+      const searchFeatures = map.queryRenderedFeatures(searchBbox);
+      const nearbyLabels = searchFeatures.filter(f => {
+        const sourceLayer = (f.sourceLayer || '').toLowerCase();
+        const layerId = (f.layer?.id || '').toLowerCase();
+        return sourceLayer === 'water_name' || 
+               layerId.includes('watername') ||
+               layerId === 'lakes-labels' ||
+               layerId === 'water-name-labels';
       });
       
-      if (basemapWater) {
-        features = [basemapWater];
+      // For each label found, try to find which polygon it belongs to
+      // by querying the polygon at the label's location
+      nearbyLabels.forEach(label => {
+        if (label.geometry?.type === 'Point' && label.properties?.name) {
+          const labelCoords = label.geometry.coordinates;
+          const labelScreen = map.project(labelCoords);
+          
+          // Query for water polygons at this label's location
+          const polygonsAtLabel = map.queryRenderedFeatures(
+            [labelScreen.x, labelScreen.y],
+            { layers: ['lakes-fill', 'water'] }
+          ).filter(f => f.properties?.id);
+          
+          // Cache the name for each polygon found at this label
+          polygonsAtLabel.forEach(poly => {
+            const pid = poly.properties.id;
+            if (pid && !waterNameCacheRef.current[pid]) {
+              waterNameCacheRef.current[pid] = label.properties.name;
+            }
+          });
+        }
+      });
+      
+      // Now check cache again
+      if (polygonId && waterNameCacheRef.current[polygonId]) {
+        allWaterNameFeatures = [{ 
+          properties: { name: waterNameCacheRef.current[polygonId] },
+          _fromCache: true 
+        }];
+      }
+    }
+    
+    
+    // Combine: water features from tight query + water_name from search
+    let features = [...waterFeatures];
+    for (const wnf of allWaterNameFeatures) {
+      if (!features.some(f => f.id === wnf.id && f.layer?.id === wnf.layer?.id)) {
+        features.push(wnf);
       }
     }
 
     if (features.length > 0) {
       // Helper to detect if a feature is a river/stream
+      // OpenMapTiles uses 'class' property and 'waterway' source-layer
+      // IMPORTANT: Exclude water_name labels - they are NOT rivers!
       const isRiverFeature = (f) => {
+        // First, exclude water_name labels - they're lake/ocean names, not rivers
+        const layerId = (f.layer?.id || '').toLowerCase();
+        if (f.sourceLayer === 'water_name' || 
+            layerId.includes('watername') || 
+            layerId.includes('water_name') ||
+            layerId === 'lakes-labels') {
+          return false;
+        }
+        
         const geomType = f.geometry?.type;
         const isLine = geomType === 'LineString' || geomType === 'MultiLineString';
         const hasWaterway = !!f.properties?.waterway;
+        const featureClass = f.properties?.class;
+        const classIsRiver = featureClass === 'river' || 
+                             featureClass === 'stream' || 
+                             featureClass === 'canal' ||
+                             featureClass === 'drain';
         const typeIsRiver = f.properties?.type === 'river' || 
                             f.properties?.type === 'stream' || 
                             f.properties?.type === 'canal';
         const layerIsStream = f.layer?.id?.includes('stream');
-        return isLine || hasWaterway || typeIsRiver || layerIsStream;
+        const sourceIsWaterway = f.sourceLayer === 'waterway';
+        return isLine || hasWaterway || classIsRiver || typeIsRiver || layerIsStream || sourceIsWaterway;
       };
       
-      // Separate and prioritize rivers over lakes
-      const riverFeatures = features.filter(f => isRiverFeature(f));
-      const namedRiver = riverFeatures.find(f => f.properties?.name);
-      const namedFeature = features.find(f => f.properties?.name);
+      // Helper to detect if a feature is a water polygon (lake/reservoir/ocean)
+      const isWaterPolygon = (f) => {
+        const geomType = f.geometry?.type;
+        const isPolygon = geomType === 'Polygon' || geomType === 'MultiPolygon';
+        const sourceIsWater = f.sourceLayer === 'water';
+        const layerIsLake = f.layer?.id?.includes('lake') || f.layer?.id?.includes('water');
+        return isPolygon || sourceIsWater || layerIsLake;
+      };
       
-      // Prefer: named river > any river > named lake > any feature
-      const feature = namedRiver || riverFeatures[0] || namedFeature || features[0];
-      const featureId = feature.id || `${feature.layer?.id}-${feature.properties?.name || 'unnamed'}-${Math.round(e.point.x / 20)}`;
+      // Helper to detect if feature is a water_name label (point feature with lake/reservoir name)
+      // OpenMapTiles: source-layer = 'water_name'
+      // Carto basemap: layer ids like 'watername_lake', 'watername_ocean', 'watername_sea'
+      const isWaterNameLabel = (f) => {
+        const layerId = f.layer?.id || '';
+        return f.sourceLayer === 'water_name' || 
+               layerId.includes('watername') ||
+               layerId.includes('water_name') ||
+               layerId.includes('water-name') ||
+               layerId === 'lakes-labels'; // Our PMTiles lake labels
+      };
+      
+      // Helper to get name from feature
+      // Check ALL possible name properties that might be in the global PMTiles
+      const getFeatureName = (f) => {
+        if (!f?.properties) return null;
+        const p = f.properties;
+        return p['name:en'] ||    // OpenMapTiles standard
+               p.name ||           // Common
+               p.name_en ||        // Alternative English
+               p.NAME ||           // Uppercase variant
+               p.Name ||           // Title case variant
+               p['name:latin'] ||  // Latin script name
+               p.int_name ||       // International name
+               p.loc_name ||       // Local name
+               p.alt_name ||       // Alternative name
+               p.official_name ||  // Official name
+               p.ref ||            // Reference (sometimes used for water bodies)
+               null;
+      };
+      
+      // Separate features by type
+      const riverFeatures = features.filter(f => isRiverFeature(f));
+      const waterNameFeaturesInResults = features.filter(f => isWaterNameLabel(f));
+      const waterPolygonFeatures = features.filter(f => isWaterPolygon(f) && !isWaterNameLabel(f));
+      
+      // Find named features - prioritize water_name layer for lakes since water polygons don't have names
+      const namedRiver = riverFeatures.find(f => getFeatureName(f));
+      const namedWaterName = waterNameFeaturesInResults.find(f => getFeatureName(f)); // water_name has the lake names!
+      const namedFeature = features.find(f => getFeatureName(f));
+      
+      
+      
+      // PRIORITY ORDER for lakes/reservoirs:
+      // 1. Named river (from waterway layer) - rivers have names directly
+      // 2. Named water_name feature (lake/sea/ocean names) - THIS IS WHERE LAKE NAMES ARE!
+      // 3. Any named feature from any layer
+      // 4. Any river feature (even unnamed)
+      // 5. Any water polygon (will show as "Unnamed Lake/Reservoir")
+      // 6. First feature
+      
+      // For lakes: If we have a water polygon AND a water_name, prefer water_name for the name
+      let feature;
+      let name;
+      
+      if (namedRiver) {
+        // Rivers: use the river feature directly
+        feature = namedRiver;
+        name = getFeatureName(namedRiver);
+      } else if (namedWaterName) {
+        // Lakes/Reservoirs: water_name has the name, but we might want to show the polygon
+        // Use water_name for the name, but keep polygon for type detection
+        feature = waterPolygonFeatures[0] || namedWaterName;
+        name = getFeatureName(namedWaterName);
+      } else if (namedFeature) {
+        feature = namedFeature;
+        name = getFeatureName(namedFeature);
+      } else if (riverFeatures[0]) {
+        feature = riverFeatures[0];
+        name = null; // Unnamed river
+      } else if (waterPolygonFeatures[0]) {
+        feature = waterPolygonFeatures[0];
+        name = null; // Unnamed lake - water_name not in bbox
+      } else {
+        feature = features[0];
+        name = getFeatureName(features[0]);
+      }
+      
+      const featureId = feature.id || `${feature.layer?.id}-${name || 'unnamed'}-${Math.round(e.point.x / 20)}`;
       
       // Only update if hovering over a different feature
       if (hoveredFeatureIdRef.current !== featureId) {
         hoveredFeatureIdRef.current = featureId;
         
-        // Get the name directly from properties
-        const name = feature.properties?.name;
-        const type = extractWaterType(feature.properties, feature.layer?.id);
+        // Get the water type from OpenMapTiles 'class' property
+        const props = feature.properties || {};
+        const waterClass = props.class || props.subclass || props.type || props.waterway;
+        const type = extractWaterType(props, feature.layer?.id);
         
-        // If no name, show a more descriptive fallback based on type
+        
+        // Helper to capitalize first letter
+        const capitalize = (str) => str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : '';
+        
+        // If no name, show a clean fallback based on class/type
+        // For global PMTiles, just show the water type (Lake, River, etc.) without "Unnamed"
         let displayName = name;
         if (!displayName) {
-          const waterType = feature.properties?.type || feature.properties?.waterway || type;
-          if (waterType === 'river') displayName = 'Unnamed River';
-          else if (waterType === 'stream') displayName = 'Unnamed Stream';
-          else if (waterType === 'canal') displayName = 'Unnamed Canal';
-          else if (waterType === 'lake' || waterType === 'reservoir') displayName = 'Unnamed Lake';
+          // Skip non-natural water features entirely
+          if (waterClass === 'dock' || waterClass === 'swimming_pool' || waterClass === 'basin') {
+            displayName = null;
+          }
+          // Ocean and Sea don't need "Unnamed" prefix
+          else if (waterClass === 'ocean') displayName = 'Ocean';
+          else if (waterClass === 'sea') displayName = 'Sea';
+          // For lakes/reservoirs/rivers, show clean type name
+          else if (waterClass === 'lake') displayName = 'Lake';
+          else if (waterClass === 'reservoir') displayName = 'Reservoir';
+          else if (waterClass === 'river') displayName = 'River';
+          else if (waterClass === 'stream') displayName = 'Stream';
+          else if (waterClass === 'canal') displayName = 'Canal';
+          else if (waterClass === 'drain') displayName = 'Drainage';
+          // Use the class directly if it exists, capitalized
+          else if (waterClass) displayName = capitalize(waterClass);
+          // Final fallback to extracted type or generic "Water"
           else displayName = type || 'Water';
+        }
+        
+        // Skip non-natural water features
+        if (!displayName) {
+          hoveredFeatureIdRef.current = null;
+          setHoveredFeature(null);
+          setCursorStyle('crosshair');
+          return;
         }
         
         setHoveredFeature({
           name: displayName,
-          type,
+          type: waterClass || type,
           lngLat: [e.lngLat.lng, e.lngLat.lat],
           layerId: feature.layer?.id,
+          sourceLayer: feature.sourceLayer,
           hasName: !!name,
         });
         setCursorStyle('pointer');
@@ -264,12 +540,13 @@ export function VectorWaterMap({ currentWeatherData = {} }) {
     const coords = [e.lngLat.lat, e.lngLat.lng];
     console.log('[VectorWaterMap] Click at:', coords);
 
-    // Query all water-related layers (USGS NHD + OSM global)
+    // Query all water-related layers from our PMTiles
     // Include label layers as they have the same properties but larger hit areas
     const waterLayerIds = [
-      'lakes-fill', 'streams-line',           // USGS NHD geometry layers
-      'lakes-labels', 'streams-labels',       // USGS NHD label layers (easier to click)
-      'osm-lakes', 'osm-rivers', 'osm-ocean', // OSM global layers (if present)
+      'lakes-fill', 'lakes-outline',          // Water polygons
+      'streams-line',                          // Waterway lines
+      'lakes-labels', 'streams-labels',        // Labels (easier to click)
+      'water-name-labels',                     // Lake names from water_name source-layer
     ].filter(id => map.getLayer(id));
     
     let clickedFeatureName = null;
@@ -317,8 +594,9 @@ export function VectorWaterMap({ currentWeatherData = {} }) {
                              featureType === 'stream' ||
                              (isLineGeometry && basemapSourceLayer.includes('water'));
       
-      // Try to extract name from basemap feature
-      const basemapName = basemapWaterFeature.properties?.name || 
+      // Try to extract name from basemap feature (OpenMapTiles uses name:en)
+      const basemapName = basemapWaterFeature.properties?.['name:en'] ||
+                          basemapWaterFeature.properties?.name || 
                           basemapWaterFeature.properties?.name_en ||
                           basemapWaterFeature.properties?.gnis_name;
       
@@ -345,80 +623,128 @@ export function VectorWaterMap({ currentWeatherData = {} }) {
       let features = map.queryRenderedFeatures(bbox, { layers: waterLayerIds });
       console.log('[VectorWaterMap] Our layers:', waterLayerIds, 'Features found:', features.length);
 
+      // Also query ALL features at this point to find water_name labels
+      const allFeaturesAtPoint = map.queryRenderedFeatures(bbox);
+      const waterNameFeatures = allFeaturesAtPoint.filter(f => f.sourceLayer === 'water_name');
+      
       if (features.length > 0) {
         console.log('[VectorWaterMap] All features found:', features.map(f => ({
           layer: f.layer?.id,
+          sourceLayer: f.sourceLayer,
           name: f.properties?.name,
-          type: f.properties?.type,
-          waterway: f.properties?.waterway,
+          'name:en': f.properties?.['name:en'],
+          class: f.properties?.class,
           geometry: f.geometry?.type,
         })));
         
         // Helper to detect if a feature is a river/stream (line geometry or waterway property)
+        // OpenMapTiles uses 'class' property and 'waterway' source-layer
         const isRiverFeature = (f) => {
           const geomType = f.geometry?.type;
           const isLine = geomType === 'LineString' || geomType === 'MultiLineString';
           const hasWaterway = !!f.properties?.waterway;
+          const featureClass = f.properties?.class;
+          const classIsRiver = featureClass === 'river' || 
+                               featureClass === 'stream' || 
+                               featureClass === 'canal' ||
+                               featureClass === 'drain';
           const typeIsRiver = f.properties?.type === 'river' || 
                               f.properties?.type === 'stream' || 
                               f.properties?.type === 'canal';
           const layerIsStream = f.layer?.id?.includes('stream');
-          return isLine || hasWaterway || typeIsRiver || layerIsStream;
+          const sourceIsWaterway = f.sourceLayer === 'waterway';
+          return isLine || hasWaterway || classIsRiver || typeIsRiver || layerIsStream || sourceIsWaterway;
         };
+        
+        // Helper to detect water polygons
+        const isWaterPolygon = (f) => {
+          const geomType = f.geometry?.type;
+          const isPolygon = geomType === 'Polygon' || geomType === 'MultiPolygon';
+          const sourceIsWater = f.sourceLayer === 'water';
+          const layerIsLake = f.layer?.id?.includes('lake') || f.layer?.id?.includes('water');
+          return isPolygon || sourceIsWater || layerIsLake;
+        };
+        
+        // Helper to get name from feature (OpenMapTiles uses name:en)
+        const getFeatureName = (f) => f.properties?.['name:en'] || f.properties?.name;
         
         // Separate features by type
         const riverFeatures = features.filter(f => isRiverFeature(f));
         const lakeFeatures = features.filter(f => !isRiverFeature(f));
         
-        console.log('[VectorWaterMap] Rivers:', riverFeatures.length, 'Lakes:', lakeFeatures.length);
+        console.log('[VectorWaterMap] Rivers:', riverFeatures.length, 'Lakes:', lakeFeatures.length, 'WaterNames:', waterNameFeatures.length);
+        
+        // Find named features
+        const namedRiverFeature = riverFeatures.find(f => getFeatureName(f));
+        const unnamedRiverFeature = riverFeatures[0];
+        const namedWaterNameFeature = waterNameFeatures.find(f => getFeatureName(f));
+        const namedLakeFeature = lakeFeatures.find(f => getFeatureName(f));
         
         // PRIORITY ORDER - ALWAYS prefer rivers/streams over lakes when both are present
-        // This handles the case where a river flows through/near a lake
         // 1. Named river/stream features (LineString with name) - BEST match
         // 2. Unnamed river/stream features (user clicked on visible river line)
-        // 3. Named polygon features (lakes, reservoirs)
-        // 4. Any feature
-        const namedRiverFeature = riverFeatures.find(f => f.properties?.name);
-        const unnamedRiverFeature = riverFeatures[0];
-        const namedLakeFeature = lakeFeatures.find(f => f.properties?.name);
-        
-        // Pick the best feature - STRONGLY prioritize rivers over lakes!
+        // 3. Named water_name feature (lake/reservoir names from water_name layer)
+        // 4. Named polygon features (lakes, reservoirs)
+        // 5. Any feature
         let feature;
         if (riverFeatures.length > 0) {
           // If there are ANY river features, prefer them
           feature = namedRiverFeature || unnamedRiverFeature;
-          console.log('[VectorWaterMap] Prioritizing river feature:', feature.properties?.name || '(unnamed)');
+          if (feature) {
+            console.log('[VectorWaterMap] Prioritizing river feature:', getFeatureName(feature) || '(unnamed)');
+          }
         } else {
-          // No rivers, use lake
+          // No rivers, use lake - prefer water_name for the name
           feature = namedLakeFeature || features[0];
         }
         
+        // Guard against undefined feature
+        if (!feature) {
+          console.log('[VectorWaterMap] No valid feature found');
+          return;
+        }
+        
         console.log('[VectorWaterMap] Feature selection:', {
-          namedRiver: namedRiverFeature?.properties?.name,
+          namedRiver: namedRiverFeature ? getFeatureName(namedRiverFeature) : null,
           unnamedRiver: unnamedRiverFeature ? 'yes' : 'no',
-          namedLake: namedLakeFeature?.properties?.name,
-          selected: feature.properties?.name,
+          namedWaterName: namedWaterNameFeature ? getFeatureName(namedWaterNameFeature) : null,
+          namedLake: namedLakeFeature ? getFeatureName(namedLakeFeature) : null,
+          selected: getFeatureName(feature),
         });
         
         clickedLayerId = feature.layer?.id;
         console.log('[VectorWaterMap] Selected feature from layer:', clickedLayerId);
         console.log('[VectorWaterMap] Properties:', feature.properties);
 
-        // For our PMTiles, use the 'name' property directly
-        clickedFeatureName = feature.properties?.name || null;
+        // For our PMTiles (OpenMapTiles schema), prefer 'name:en' then 'name'
+        // If the feature doesn't have a name (water polygons don't!), try water_name layer
+        clickedFeatureName = getFeatureName(feature);
+        
+        // If no name and this is a water polygon, get name from water_name layer
+        if (!clickedFeatureName && isWaterPolygon(feature) && namedWaterNameFeature) {
+          clickedFeatureName = getFeatureName(namedWaterNameFeature);
+          console.log('[VectorWaterMap] Got lake name from water_name layer:', clickedFeatureName);
+        }
         clickedFeatureType = extractWaterType(feature.properties, clickedLayerId);
         featureIsSaltwater = isSaltwater(feature.properties);
         
         // Determine if this is a river/stream based on properties or layer
+        // OpenMapTiles uses 'class' property (river, stream, canal, drain, ditch)
         const isStreamLayer = clickedLayerId?.includes('stream') || clickedLayerId?.includes('river');
+        const featureClass = feature.properties?.class;
         const isStreamType = feature.properties?.waterway || 
+                             featureClass === 'river' || 
+                             featureClass === 'stream' ||
+                             featureClass === 'canal' ||
                              feature.properties?.type === 'river' || 
                              feature.properties?.type === 'stream' ||
                              feature.properties?.type === 'canal';
         
         if (isStreamLayer || isStreamType) {
-          clickedFeatureType = 'River/Stream';
-          console.log('[VectorWaterMap] Stream/river detected, setting type to River/Stream');
+          clickedFeatureType = featureClass === 'river' ? 'River' : 
+                               featureClass === 'stream' ? 'Stream' : 
+                               featureClass === 'canal' ? 'Canal' : 'River/Stream';
+          console.log('[VectorWaterMap] Stream/river detected, class:', featureClass, 'type:', clickedFeatureType);
         }
         
         console.log('[VectorWaterMap] Final - name:', clickedFeatureName, 'type:', clickedFeatureType);
@@ -476,16 +802,7 @@ export function VectorWaterMap({ currentWeatherData = {} }) {
           if (clickedFeatureType) {
             profile.vectorFeatureType = clickedFeatureType;
           }
-          // DEBUG: Log coordinate comparison
-          console.log('[VectorWaterMap] COORDINATE DEBUG:');
-          console.log('  Click coords:', coords[0].toFixed(6), coords[1].toFixed(6));
-          console.log('  Profile coords:', profile.coordinates?.lat?.toFixed(6), profile.coordinates?.lng?.toFixed(6));
-          console.log('  AmbientWeather coords:', profile.ambientWeather?.latitude, profile.ambientWeather?.longitude);
-          if (profile.ambientWeather?.latitude && 
-              Math.abs(profile.coordinates?.lat - profile.ambientWeather?.latitude) > 0.01) {
-            console.warn('[VectorWaterMap] WARNING: Profile coords differ from weather station coords!');
           }
-        }
         setFishProfile(profile);
         if (profile?.waterBodyName) {
           trackBioApiCall(profile.waterBodyName, profile.waterType);
@@ -550,6 +867,35 @@ export function VectorWaterMap({ currentWeatherData = {} }) {
           onClick={handleMapClick}
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
+          onLoad={() => {
+            const map = mapRef.current?.getMap();
+            if (map) {
+              console.log('[Map] ========== MAP LOADED ==========');
+              const sources = map.getStyle()?.sources || {};
+              console.log('[Map] All sources:', Object.keys(sources));
+              const layers = map.getStyle()?.layers?.map(l => l.id) || [];
+              const waterLayers = layers.filter(l => l.includes('water') || l.includes('lake') || l.includes('stream'));
+              console.log('[Map] Water-related layers:', waterLayers);
+              
+              // Check if our PMTiles source exists
+              if (sources['water-pmtiles']) {
+                console.log('[Map] SUCCESS: PMTiles source found!');
+                console.log('[Map] PMTiles source config:', JSON.stringify(sources['water-pmtiles'], null, 2));
+              } else {
+                console.error('[Map] ERROR: PMTiles source NOT found!');
+                console.log('[Map] pmtilesReady state:', pmtilesReady);
+                console.log('[Map] PMTILES_URL:', PMTILES_URL);
+                console.log('[Map] This means the <Source> component did not render');
+              }
+              
+              // List all layers from our source
+              const ourLayers = layers.filter(l => 
+                l.includes('lakes-') || l.includes('streams-') || l.includes('water-name')
+              );
+              console.log('[Map] Our PMTiles layers:', ourLayers);
+              console.log('[Map] ==================================');
+            }
+          }}
           mapLib={maplibregl}
           mapStyle={BASEMAP_STYLE}
           style={{ width: '100%', height: '100%' }}
@@ -561,7 +907,9 @@ export function VectorWaterMap({ currentWeatherData = {} }) {
           <NavigationControl position="top-right" showCompass={true} showZoom={true} />
           <GeolocateControl position="top-right" trackUserLocation={false} />
 
-          {/* PMTiles water features — Utah regional POC with OSM data */}
+          {/* PMTiles water features — Global Planetiler/OpenMapTiles schema from Cloudflare R2 */}
+          {/* OpenMapTiles schema: 'water' = lakes/oceans (polygons), 'waterway' = rivers/streams (lines) */}
+          {/* Properties: name, name:en, class, subclass, intermittent, brunnel */}
           {pmtilesReady && PMTILES_URL && (
             <Source
               id="water-pmtiles"
@@ -569,8 +917,7 @@ export function VectorWaterMap({ currentWeatherData = {} }) {
               url={`pmtiles://${PMTILES_URL}`}
             >
               {/* ─── Water Layer (source-layer: water) ─────────────────────── */}
-              {/* All water features from OSM: lakes, reservoirs, rivers, streams, canals */}
-              {/* Properties: name, type, waterway, water, natural, intermittent */}
+              {/* Lakes, reservoirs, oceans, seas (polygons) */}
               
               {/* Lakes & Reservoirs (polygon fills) */}
               <Layer
@@ -578,21 +925,18 @@ export function VectorWaterMap({ currentWeatherData = {} }) {
                 type="fill"
                 source-layer="water"
                 minzoom={4}
-                filter={['any',
-                  ['==', ['geometry-type'], 'Polygon'],
-                  ['==', ['geometry-type'], 'MultiPolygon']
-                ]}
                 paint={{
                   'fill-color': [
                     'case',
-                    ['==', ['get', 'type'], 'reservoir'], '#2563eb',
+                    ['==', ['get', 'class'], 'ocean'], '#1e3a5f',
+                    ['==', ['get', 'class'], 'sea'], '#1e4976',
                     '#3b82f6'
                   ],
                   'fill-opacity': [
                     'interpolate', ['linear'], ['zoom'],
-                    4, 0.2,
-                    8, 0.35,
-                    14, 0.45
+                    4, 0.25,
+                    8, 0.4,
+                    14, 0.5
                   ],
                 }}
               />
@@ -601,10 +945,6 @@ export function VectorWaterMap({ currentWeatherData = {} }) {
                 type="line"
                 source-layer="water"
                 minzoom={6}
-                filter={['any',
-                  ['==', ['geometry-type'], 'Polygon'],
-                  ['==', ['geometry-type'], 'MultiPolygon']
-                ]}
                 paint={{
                   'line-color': '#1d4ed8',
                   'line-width': [
@@ -617,55 +957,16 @@ export function VectorWaterMap({ currentWeatherData = {} }) {
                 }}
               />
               
-              {/* Rivers & Streams (lines) */}
-              <Layer
-                id="streams-line"
-                type="line"
-                source-layer="water"
-                minzoom={6}
-                filter={['any',
-                  ['==', ['geometry-type'], 'LineString'],
-                  ['==', ['geometry-type'], 'MultiLineString']
-                ]}
-                paint={{
-                  'line-color': [
-                    'case',
-                    ['==', ['get', 'type'], 'river'], '#0284c7',
-                    ['==', ['get', 'type'], 'canal'], '#7c3aed',
-                    '#0ea5e9'
-                  ],
-                  'line-width': [
-                    'interpolate', ['linear'], ['zoom'],
-                    6, 1,
-                    10, 2.5,
-                    14, 5,
-                    18, 10
-                  ],
-                  'line-opacity': [
-                    'case',
-                    ['==', ['get', 'intermittent'], true], 0.5,
-                    0.85
-                  ],
-                }}
-              />
-              
               {/* Lake/Reservoir labels */}
               <Layer
                 id="lakes-labels"
                 type="symbol"
-                source-layer="water"
-                minzoom={8}
-                filter={['all',
-                  ['has', 'name'],
-                  ['any',
-                    ['==', ['geometry-type'], 'Polygon'],
-                    ['==', ['geometry-type'], 'MultiPolygon']
-                  ]
-                ]}
+                source-layer="water_name"
+                minzoom={4}
                 layout={{
-                  'text-field': ['get', 'name'],
+                  'text-field': ['coalesce', ['get', 'name:en'], ['get', 'name']],
                   'text-size': ['interpolate', ['linear'], ['zoom'], 8, 10, 12, 13, 16, 16],
-                  'text-font': ['Open Sans Bold'],
+                  'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
                   'text-anchor': 'center',
                   'text-allow-overlap': false,
                   'text-max-width': 8,
@@ -677,23 +978,49 @@ export function VectorWaterMap({ currentWeatherData = {} }) {
                 }}
               />
               
+              {/* ─── Waterway Layer (source-layer: waterway) ─────────────────────── */}
+              {/* Rivers, streams, canals, drains (lines) */}
+              
+              {/* Rivers & Streams (lines) */}
+              <Layer
+                id="streams-line"
+                type="line"
+                source-layer="waterway"
+                minzoom={6}
+                paint={{
+                  'line-color': [
+                    'case',
+                    ['==', ['get', 'class'], 'river'], '#0284c7',
+                    ['==', ['get', 'class'], 'canal'], '#7c3aed',
+                    ['==', ['get', 'class'], 'stream'], '#0ea5e9',
+                    '#38bdf8'
+                  ],
+                  'line-width': [
+                    'interpolate', ['linear'], ['zoom'],
+                    6, ['case', ['==', ['get', 'class'], 'river'], 2, 1],
+                    10, ['case', ['==', ['get', 'class'], 'river'], 4, 2.5],
+                    14, ['case', ['==', ['get', 'class'], 'river'], 8, 5],
+                    18, ['case', ['==', ['get', 'class'], 'river'], 14, 10]
+                  ],
+                  'line-opacity': [
+                    'case',
+                    ['==', ['get', 'intermittent'], 1], 0.5,
+                    0.85
+                  ],
+                }}
+              />
+              
               {/* River/Stream labels (along the line) */}
               <Layer
                 id="streams-labels"
                 type="symbol"
-                source-layer="water"
+                source-layer="waterway"
                 minzoom={10}
-                filter={['all',
-                  ['has', 'name'],
-                  ['any',
-                    ['==', ['geometry-type'], 'LineString'],
-                    ['==', ['geometry-type'], 'MultiLineString']
-                  ]
-                ]}
+                filter={['has', 'name']}
                 layout={{
-                  'text-field': ['get', 'name'],
+                  'text-field': ['coalesce', ['get', 'name:en'], ['get', 'name']],
                   'text-size': ['interpolate', ['linear'], ['zoom'], 10, 9, 14, 12],
-                  'text-font': ['Open Sans Regular'],
+                  'text-font': ['Open Sans Regular', 'Arial Unicode MS Regular'],
                   'symbol-placement': 'line',
                   'text-allow-overlap': false,
                   'text-max-angle': 30,
@@ -702,6 +1029,29 @@ export function VectorWaterMap({ currentWeatherData = {} }) {
                   'text-color': '#0369a1',
                   'text-halo-color': '#ffffff',
                   'text-halo-width': 1.5,
+                }}
+              />
+              
+              {/* ─── Water Name Layer (source-layer: water_name) ─────────────────────── */}
+              {/* Lake/sea/ocean names - this is where lake names live in OpenMapTiles! */}
+              {/* The 'water' polygon layer does NOT have names, only water_name does */}
+              <Layer
+                id="water-name-labels"
+                type="symbol"
+                source-layer="water_name"
+                minzoom={4}
+                layout={{
+                  'text-field': ['coalesce', ['get', 'name:en'], ['get', 'name']],
+                  'text-size': ['interpolate', ['linear'], ['zoom'], 6, 10, 10, 12, 14, 14],
+                  'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
+                  'text-anchor': 'center',
+                  'text-allow-overlap': false,
+                  'text-max-width': 8,
+                }}
+                paint={{
+                  'text-color': '#1e40af',
+                  'text-halo-color': '#ffffff',
+                  'text-halo-width': 2,
                 }}
               />
             </Source>

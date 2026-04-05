@@ -759,6 +759,9 @@ export async function fetchNearestUSGSData(lat, lng, radiusMiles = 10) {
   return {
     siteId: closest.siteId,
     siteName: closest.siteName,
+    // Include the gauge's actual coordinates from USGS API
+    lat: closest.lat,
+    lng: closest.lng,
     waterTemp: closest.waterTemp,
     dischargeCFS: closest.dischargeCFS,
     gaugeHeightFt: closest.gaugeHeightFt,
@@ -1324,6 +1327,8 @@ async function buildDynamicLakeProfile(lat, lng, name, elevation, ambientTemp) {
     usgsGauge: usgs ? {
       siteId: usgs.siteId,
       siteName: usgs.siteName,
+      lat: usgs.lat,
+      lng: usgs.lng,
       distanceMiles: usgs.distanceMiles,
       dischargeCFS: usgs.dischargeCFS,
       gaugeHeightFt: usgs.gaugeHeightFt,
@@ -1450,6 +1455,8 @@ async function buildRiverProfileWithData(lat, lng, elevation, ambientTemp, prefe
     usgsGauge: usgs ? {
       siteId: usgs.siteId,
       siteName: usgs.siteName,
+      lat: usgs.lat,
+      lng: usgs.lng,
       distanceMiles: usgs.distanceMiles,
       dischargeCFS: usgs.dischargeCFS,
       gaugeHeightFt: usgs.gaugeHeightFt,
