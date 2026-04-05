@@ -241,7 +241,6 @@ export function VectorWaterMap({ currentWeatherData = {} }) {
     
     
     // Search for water_name labels that belong to the water polygon we're hovering over
-    const zoom = map.getZoom();
     let allWaterNameFeatures = [];
     
     // Get the water polygon we're hovering over (to get its ID for caching)
