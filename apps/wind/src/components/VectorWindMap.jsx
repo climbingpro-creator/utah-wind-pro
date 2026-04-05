@@ -445,14 +445,28 @@ export function VectorWindMap({
               
               const layers = map.getStyle().layers;
               
-              // Find insertion point for base layers (above background but below water/roads/labels)
-              let insertBefore = null;
+              // Find the first layer that should be ABOVE our base layers
+              // Layer order from bottom to top: background -> satellite -> hillshade -> landcover -> water -> roads -> labels -> markers
+              let insertBeforeWater = null;
               for (const layer of layers) {
-                if (layer.id.includes('water') || layer.id.includes('road') || layer.id.includes('label') || layer.id.includes('boundary')) {
-                  insertBefore = layer.id;
+                // Find the first water-related layer to insert our layers before it
+                if (layer.id.includes('water') && !insertBeforeWater) {
+                  insertBeforeWater = layer.id;
                   break;
                 }
               }
+              
+              // Find landcover layer to insert satellite/hillshade before it (but after background)
+              let insertBeforeLandcover = null;
+              for (const layer of layers) {
+                if (layer.id.includes('landcover') || layer.id.includes('landuse') || layer.id.includes('park')) {
+                  insertBeforeLandcover = layer.id;
+                  break;
+                }
+              }
+              
+              // Use landcover insertion point, or fall back to water
+              const baseInsertPoint = insertBeforeLandcover || insertBeforeWater;
               
               // Add satellite layer at the bottom (hidden by default) - will drape over 3D terrain
               if (!map.getLayer('satellite-layer')) {
@@ -466,24 +480,24 @@ export function VectorWindMap({
                   paint: {
                     'raster-opacity': 1,
                   },
-                }, insertBefore);
+                }, baseInsertPoint);
               }
               
-              // Add hillshade layer above satellite but below labels and markers
+              // Add hillshade layer - dark mode friendly with subtle shadows, minimal highlights
               if (!map.getLayer('hillshade')) {
                 map.addLayer({
                   id: 'hillshade',
                   type: 'hillshade',
                   source: 'terrain-dem',
                   paint: {
-                    'hillshade-exaggeration': 0.6,
-                    'hillshade-shadow-color': '#3d4f5f',
-                    'hillshade-highlight-color': '#ffffff',
-                    'hillshade-accent-color': '#5a7a8a',
+                    'hillshade-exaggeration': 0.5,
+                    'hillshade-shadow-color': '#000000',
+                    'hillshade-highlight-color': 'rgba(255, 255, 255, 0.05)',
+                    'hillshade-accent-color': '#1a1a2e',
                     'hillshade-illumination-direction': 315,
                     'hillshade-illumination-anchor': 'viewport',
                   },
-                }, insertBefore);
+                }, baseInsertPoint);
               }
             } catch (err) {
               console.error('[Terrain] Failed to initialize:', err);
