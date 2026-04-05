@@ -389,6 +389,42 @@ export function VectorWindMap({
           attributionControl={false}
           minZoom={3}
           maxZoom={18}
+          onLoad={() => {
+            const map = mapRef.current?.getMap();
+            if (!map) return;
+            
+            // Add terrain DEM source (AWS Mapzen Terrarium)
+            if (!map.getSource('terrain-dem')) {
+              map.addSource('terrain-dem', {
+                type: 'raster-dem',
+                tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
+                encoding: 'terrarium',
+                tileSize: 256,
+                maxzoom: 14,
+              });
+            }
+            
+            // Enable 3D terrain with slight exaggeration
+            map.setTerrain({ source: 'terrain-dem', exaggeration: 1.3 });
+            
+            // Add hillshade layer at the bottom of the stack for realistic shadows
+            if (!map.getLayer('hillshade')) {
+              const layers = map.getStyle().layers;
+              const firstLayerId = layers[0]?.id;
+              
+              map.addLayer({
+                id: 'hillshade',
+                type: 'hillshade',
+                source: 'terrain-dem',
+                paint: {
+                  'hillshade-exaggeration': 0.5,
+                  'hillshade-shadow-color': '#1e293b',
+                  'hillshade-highlight-color': '#f8fafc',
+                  'hillshade-accent-color': '#334155',
+                },
+              }, firstLayerId);
+            }
+          }}
         >
           <NavigationControl position="top-right" showCompass={true} showZoom={true} />
           <GeolocateControl position="top-right" trackUserLocation={false} />
