@@ -257,7 +257,7 @@ export function VectorWindMap({
       if (map.getLayer('satellite-layer')) {
         map.setLayoutProperty('satellite-layer', 'visibility', showSatellite ? 'visible' : 'none');
       }
-    } catch (err) {
+    } catch (_err) {
       // Layer may not exist yet during initial load
     }
   }, [showSatellite]);
