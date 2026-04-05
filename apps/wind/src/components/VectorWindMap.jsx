@@ -3,7 +3,7 @@ import Map, { Source, Layer, Marker, Popup, NavigationControl, GeolocateControl 
 import maplibregl from 'maplibre-gl';
 import { Protocol } from 'pmtiles';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { Compass, Maximize2, X, Wind, Droplets } from 'lucide-react';
+import { Compass, Maximize2, X, Wind, Droplets, Layers } from 'lucide-react';
 
 const PMTILES_URL = import.meta.env.VITE_PMTILES_WATER_URL || null;
 import { LAKE_CONFIGS, SpatialInterpolator, applySurfacePhysics, calculateFetchMultiplier, calculateVenturiMultiplier, weatherService } from '@utahwind/weather';
@@ -208,6 +208,7 @@ export function VectorWindMap({
   const [selectedStation, setSelectedStation] = useState(null);
   const [selectedFeature, setSelectedFeature] = useState(null);
   const [pmtilesReady, setPmtilesReady] = useState(false);
+  const [showSatellite, setShowSatellite] = useState(false);
   const [viewState, setViewState] = useState({
     longitude: -111.83,
     latitude: 40.23,
@@ -246,6 +247,20 @@ export function VectorWindMap({
       }));
     }
   }, [selectedLake]);
+
+  // Toggle satellite layer visibility
+  useEffect(() => {
+    const map = mapRef.current?.getMap();
+    if (!map || !map.isStyleLoaded()) return;
+    
+    try {
+      if (map.getLayer('satellite-layer')) {
+        map.setLayoutProperty('satellite-layer', 'visibility', showSatellite ? 'visible' : 'none');
+      }
+    } catch (err) {
+      // Layer may not exist yet during initial load
+    }
+  }, [showSatellite]);
 
   const liveStationsWithCoords = useMemo(() => {
     if (!mapArea) return [];
@@ -405,6 +420,17 @@ export function VectorWindMap({
                 });
               }
               
+              // Add ESRI satellite imagery source
+              if (!map.getSource('esri-satellite')) {
+                map.addSource('esri-satellite', {
+                  type: 'raster',
+                  tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+                  tileSize: 256,
+                  maxzoom: 19,
+                  attribution: '© Esri',
+                });
+              }
+              
               // Wait for source to load before setting terrain
               map.on('sourcedata', (e) => {
                 if (e.sourceId === 'terrain-dem' && e.isSourceLoaded) {
@@ -417,19 +443,34 @@ export function VectorWindMap({
               // Try to set terrain immediately if source is ready
               map.setTerrain({ source: 'terrain-dem', exaggeration: 1.3 });
               
-              // Add hillshade layer above landcover/background but below labels and markers
-              if (!map.getLayer('hillshade')) {
-                const layers = map.getStyle().layers;
-                
-                // Find a good insertion point - above landcover but below water/roads/labels
-                let insertBefore = null;
-                for (const layer of layers) {
-                  if (layer.id.includes('water') || layer.id.includes('road') || layer.id.includes('label') || layer.id.includes('boundary')) {
-                    insertBefore = layer.id;
-                    break;
-                  }
+              const layers = map.getStyle().layers;
+              
+              // Find insertion point for base layers (above background but below water/roads/labels)
+              let insertBefore = null;
+              for (const layer of layers) {
+                if (layer.id.includes('water') || layer.id.includes('road') || layer.id.includes('label') || layer.id.includes('boundary')) {
+                  insertBefore = layer.id;
+                  break;
                 }
-                
+              }
+              
+              // Add satellite layer at the bottom (hidden by default) - will drape over 3D terrain
+              if (!map.getLayer('satellite-layer')) {
+                map.addLayer({
+                  id: 'satellite-layer',
+                  type: 'raster',
+                  source: 'esri-satellite',
+                  layout: {
+                    visibility: 'none',
+                  },
+                  paint: {
+                    'raster-opacity': 1,
+                  },
+                }, insertBefore);
+              }
+              
+              // Add hillshade layer above satellite but below labels and markers
+              if (!map.getLayer('hillshade')) {
                 map.addLayer({
                   id: 'hillshade',
                   type: 'hillshade',
@@ -659,6 +700,20 @@ export function VectorWindMap({
             </div>
           </div>
         )}
+
+        {/* Satellite/Map toggle button */}
+        <button
+          onClick={() => setShowSatellite(!showSatellite)}
+          className={`absolute bottom-2 right-2 z-20 flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all shadow-lg ${
+            showSatellite
+              ? 'bg-cyan-500 text-white hover:bg-cyan-600'
+              : 'bg-slate-900/90 text-slate-300 hover:bg-slate-800 border border-slate-700'
+          }`}
+          aria-label={showSatellite ? 'Switch to map view' : 'Switch to satellite view'}
+        >
+          <Layers className="w-4 h-4" />
+          <span>{showSatellite ? 'Map' : 'Satellite'}</span>
+        </button>
       </div>
 
       {/* Synthetic forecast card — bottom sheet style for mobile */}
