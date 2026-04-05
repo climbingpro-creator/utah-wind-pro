@@ -393,36 +393,59 @@ export function VectorWindMap({
             const map = mapRef.current?.getMap();
             if (!map) return;
             
-            // Add terrain DEM source (AWS Mapzen Terrarium)
-            if (!map.getSource('terrain-dem')) {
-              map.addSource('terrain-dem', {
-                type: 'raster-dem',
-                tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
-                encoding: 'terrarium',
-                tileSize: 256,
-                maxzoom: 14,
-              });
-            }
-            
-            // Enable 3D terrain with slight exaggeration
-            map.setTerrain({ source: 'terrain-dem', exaggeration: 1.3 });
-            
-            // Add hillshade layer at the bottom of the stack for realistic shadows
-            if (!map.getLayer('hillshade')) {
-              const layers = map.getStyle().layers;
-              const firstLayerId = layers[0]?.id;
+            try {
+              // Add terrain DEM source (AWS Mapzen Terrarium)
+              if (!map.getSource('terrain-dem')) {
+                map.addSource('terrain-dem', {
+                  type: 'raster-dem',
+                  tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
+                  encoding: 'terrarium',
+                  tileSize: 256,
+                  maxzoom: 14,
+                });
+              }
               
-              map.addLayer({
-                id: 'hillshade',
-                type: 'hillshade',
-                source: 'terrain-dem',
-                paint: {
-                  'hillshade-exaggeration': 0.5,
-                  'hillshade-shadow-color': '#1e293b',
-                  'hillshade-highlight-color': '#f8fafc',
-                  'hillshade-accent-color': '#334155',
-                },
-              }, firstLayerId);
+              // Wait for source to load before setting terrain
+              map.on('sourcedata', (e) => {
+                if (e.sourceId === 'terrain-dem' && e.isSourceLoaded) {
+                  if (!map.getTerrain()) {
+                    map.setTerrain({ source: 'terrain-dem', exaggeration: 1.3 });
+                  }
+                }
+              });
+              
+              // Try to set terrain immediately if source is ready
+              map.setTerrain({ source: 'terrain-dem', exaggeration: 1.3 });
+              
+              // Add hillshade layer above landcover/background but below labels and markers
+              if (!map.getLayer('hillshade')) {
+                const layers = map.getStyle().layers;
+                
+                // Find a good insertion point - above landcover but below water/roads/labels
+                let insertBefore = null;
+                for (const layer of layers) {
+                  if (layer.id.includes('water') || layer.id.includes('road') || layer.id.includes('label') || layer.id.includes('boundary')) {
+                    insertBefore = layer.id;
+                    break;
+                  }
+                }
+                
+                map.addLayer({
+                  id: 'hillshade',
+                  type: 'hillshade',
+                  source: 'terrain-dem',
+                  paint: {
+                    'hillshade-exaggeration': 0.6,
+                    'hillshade-shadow-color': '#3d4f5f',
+                    'hillshade-highlight-color': '#ffffff',
+                    'hillshade-accent-color': '#5a7a8a',
+                    'hillshade-illumination-direction': 315,
+                    'hillshade-illumination-anchor': 'viewport',
+                  },
+                }, insertBefore);
+              }
+            } catch (err) {
+              console.error('[Terrain] Failed to initialize:', err);
             }
           }}
         >
