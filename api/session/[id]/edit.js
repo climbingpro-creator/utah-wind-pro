@@ -8,6 +8,9 @@ import { getSupabase, verifyAuth } from '../../lib/supabase.js';
 
 const ALLOWED_ORIGINS = [
   'https://utahwindfinder.com',
+  'https://liftforecast.com',
+  'https://notwindy.com',
+  'https://www.notwindy.com',
   'https://utah-wind-pro.vercel.app',
   'https://utah-water-glass.vercel.app',
 ];
