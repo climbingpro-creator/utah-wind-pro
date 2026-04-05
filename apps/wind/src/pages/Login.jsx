@@ -32,7 +32,7 @@ export default function Login() {
     try {
       if (mode === 'signup') {
         await signUp(email, password);
-        setStatus({ type: 'success', message: 'Account created! You can now sign in.' });
+        setStatus({ type: 'success', message: 'Account created! Check your email to confirm, then sign in.' });
         setMode('signin');
         setPassword('');
         setConfirmPassword('');
@@ -40,7 +40,15 @@ export default function Login() {
         await signIn(email, password);
       }
     } catch (err) {
-      setStatus({ type: 'error', message: err.message || 'Authentication failed. Please try again.' });
+      let message = err.message || 'Authentication failed. Please try again.';
+      if (message.includes('Email not confirmed')) {
+        message = 'Please check your email and click the confirmation link before signing in.';
+      } else if (message.includes('Invalid login credentials')) {
+        message = 'Invalid email or password. Please try again.';
+      } else if (message.includes('User already registered')) {
+        message = 'An account with this email already exists. Try signing in instead.';
+      }
+      setStatus({ type: 'error', message });
     }
     setLoading(false);
   }

@@ -51,14 +51,22 @@ export default function ProUpgrade() {
         closePaywall();
       } else {
         await signUp(email, password);
-        setAuthSuccess('Account created! You can now sign in.');
+        setAuthSuccess('Account created! Check your email to confirm, then sign in.');
         setAuthMode('signin');
         setPassword('');
         setConfirmPassword('');
       }
     } catch (err) {
       console.error('[ProUpgrade] Auth error:', err);
-      setAuthError(err.message || 'Authentication failed');
+      let message = err.message || 'Authentication failed';
+      if (message.includes('Email not confirmed')) {
+        message = 'Please check your email and click the confirmation link before signing in.';
+      } else if (message.includes('Invalid login credentials')) {
+        message = 'Invalid email or password. Please try again.';
+      } else if (message.includes('User already registered')) {
+        message = 'An account with this email already exists. Try signing in instead.';
+      }
+      setAuthError(message);
     } finally {
       setAuthLoading(false);
     }
