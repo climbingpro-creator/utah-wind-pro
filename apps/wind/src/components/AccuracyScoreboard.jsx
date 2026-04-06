@@ -182,8 +182,8 @@ export default function AccuracyScoreboard() {
   const displayTotalPreds = hasLiveData ? totalPreds : BACKTEST_STATS.paraglidingSamples;
   const displayWeWin = hasLiveData ? weWinOverall : true;
   
-  // Show backtest source info
-  const dataSource = hasLiveData ? 'live' : 'backtest';
+  // Show backtest source info (prefixed with _ as it's for future use)
+  const _dataSource = hasLiveData ? 'live' : 'backtest';
 
   return (
     <div className="card">
