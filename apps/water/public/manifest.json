@@ -1,7 +1,7 @@
 {
   "name": "NotWindy",
   "short_name": "NotWindy",
-  "description": "Real-time fishing conditions, glass water predictions, and boating intelligence for Utah lakes and rivers.",
+  "description": "AI-powered fishing conditions, glass water predictions, and boating intelligence. Click any water body worldwide for instant fishing intel.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f172a",

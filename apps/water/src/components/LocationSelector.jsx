@@ -1,40 +1,80 @@
-import { MapPin } from 'lucide-react';
+import { MapPin, Map, Navigation } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
-const LOCATION_LIST = [
-  { id: 'strawberry', name: 'Strawberry', type: 'reservoir', region: 'Wasatch' },
-  { id: 'deer-creek', name: 'Deer Creek', type: 'reservoir', region: 'Wasatch' },
-  { id: 'jordanelle', name: 'Jordanelle', type: 'reservoir', region: 'Wasatch' },
-  { id: 'utah-lake', name: 'Utah Lake', type: 'lake', region: 'Utah' },
-  { id: 'provo-river', name: 'Provo River', type: 'river', region: 'Wasatch' },
-  { id: 'middle-provo', name: 'Middle Provo', type: 'river', region: 'Wasatch' },
-  { id: 'weber-river', name: 'Weber River', type: 'river', region: 'Summit' },
-  { id: 'green-river', name: 'Green River', type: 'river', region: 'Daggett' },
-  { id: 'flaming-gorge', name: 'Flaming Gorge', type: 'reservoir', region: 'Daggett' },
-  { id: 'pineview', name: 'Pineview', type: 'reservoir', region: 'Weber' },
-  { id: 'bear-lake', name: 'Bear Lake', type: 'lake', region: 'Rich' },
-  { id: 'willard-bay', name: 'Willard Bay', type: 'reservoir', region: 'Box Elder' },
-  { id: 'starvation', name: 'Starvation', type: 'reservoir', region: 'Duchesne' },
-  { id: 'yuba', name: 'Yuba', type: 'reservoir', region: 'Juab' },
-  { id: 'scofield', name: 'Scofield', type: 'reservoir', region: 'Carbon' },
-  { id: 'lake-powell', name: 'Lake Powell', type: 'reservoir', region: 'Kane' },
-  { id: 'sand-hollow', name: 'Sand Hollow', type: 'reservoir', region: 'Washington' },
+// Popular fishing/boating destinations worldwide - shown as suggestions
+// Users can also click the map for any location
+const FEATURED_LOCATIONS = [
+  // North America
+  { id: 'lake-tahoe', name: 'Lake Tahoe', type: 'lake', region: 'California' },
+  { id: 'lake-michigan', name: 'Lake Michigan', type: 'lake', region: 'Great Lakes' },
+  { id: 'lake-powell', name: 'Lake Powell', type: 'reservoir', region: 'Arizona/Utah' },
+  { id: 'florida-keys', name: 'Florida Keys', type: 'ocean', region: 'Florida' },
+  { id: 'chesapeake-bay', name: 'Chesapeake Bay', type: 'bay', region: 'Maryland' },
+  { id: 'columbia-river', name: 'Columbia River', type: 'river', region: 'Oregon' },
+  // International
+  { id: 'lake-como', name: 'Lake Como', type: 'lake', region: 'Italy' },
+  { id: 'lake-geneva', name: 'Lake Geneva', type: 'lake', region: 'Switzerland' },
+  { id: 'great-barrier', name: 'Great Barrier Reef', type: 'ocean', region: 'Australia' },
 ];
 
-const TYPE_ICON = { river: '\u{1F3DE}\uFE0F', lake: '\u{1F4A7}', reservoir: '\u{1F4A7}' };
+const TYPE_ICON = { river: '🏞️', lake: '💧', reservoir: '💧', ocean: '🌊', bay: '🌊' };
 
-export default function LocationSelector({ selectedLocation, onSelectLocation }) {
+export default function LocationSelector({ selectedLocation, onSelectLocation, onOpenMap }) {
+  const [recentLocations, setRecentLocations] = useState([]);
+  
+  // Load recent locations from localStorage
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('notwindy_recent_locations');
+      if (stored) {
+        setRecentLocations(JSON.parse(stored));
+      }
+    } catch (_e) { /* ignore */ }
+  }, []);
+  
+  // Combine recent + featured, dedupe
+  const displayLocations = [
+    ...recentLocations.slice(0, 5),
+    ...FEATURED_LOCATIONS.filter(f => !recentLocations.find(r => r.id === f.id))
+  ].slice(0, 12);
+
   return (
     <div className="space-y-1.5">
-      <div className="flex items-center gap-1.5 px-1">
-        <MapPin className="w-3.5 h-3.5 text-emerald-500" />
-        <span className="text-[11px] font-semibold uppercase tracking-widest text-[var(--text-tertiary)]">
-          Location
-        </span>
+      <div className="flex items-center justify-between px-1">
+        <div className="flex items-center gap-1.5">
+          <MapPin className="w-3.5 h-3.5 text-emerald-500" />
+          <span className="text-[11px] font-semibold uppercase tracking-widest text-[var(--text-tertiary)]">
+            Quick Access
+          </span>
+        </div>
+        {onOpenMap && (
+          <button
+            onClick={onOpenMap}
+            className="flex items-center gap-1 text-[10px] font-semibold text-cyan-400 hover:text-cyan-300 transition-colors"
+          >
+            <Map className="w-3 h-3" />
+            <span>Explore Map</span>
+          </button>
+        )}
       </div>
-      <div
-        className="flex overflow-x-auto gap-2 pb-2 hide-scrollbar"
-      >
-        {LOCATION_LIST.map((loc) => {
+      <div className="flex overflow-x-auto gap-2 pb-2 hide-scrollbar">
+        {/* "My Location" button */}
+        <button
+          onClick={() => {
+            if ('geolocation' in navigator) {
+              navigator.geolocation.getCurrentPosition(
+                (pos) => onSelectLocation(`geo:${pos.coords.latitude},${pos.coords.longitude}`),
+                () => alert('Location access denied. Use the map to select a location.')
+              );
+            }
+          }}
+          className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all whitespace-nowrap cursor-pointer bg-cyan-900/30 text-cyan-400 border-cyan-500/50 hover:border-cyan-400"
+        >
+          <Navigation className="w-3 h-3" />
+          <span>My Location</span>
+        </button>
+        
+        {displayLocations.map((loc) => {
           const isSelected = selectedLocation === loc.id;
           return (
             <button
@@ -49,7 +89,7 @@ export default function LocationSelector({ selectedLocation, onSelectLocation })
                 }
               `}
             >
-              <span className="text-sm leading-none">{TYPE_ICON[loc.type]}</span>
+              <span className="text-sm leading-none">{TYPE_ICON[loc.type] || '💧'}</span>
               <span>{loc.name}</span>
             </button>
           );
@@ -59,4 +99,5 @@ export default function LocationSelector({ selectedLocation, onSelectLocation })
   );
 }
 
-export { LOCATION_LIST };
+// Export for backward compatibility - but these are now "featured" not required
+export const LOCATION_LIST = FEATURED_LOCATIONS;

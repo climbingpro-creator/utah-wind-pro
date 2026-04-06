@@ -146,7 +146,7 @@ function WhyWereDifferent() {
           </div>
           <p className="text-sm text-slate-300 mb-3">
             Fish sense pressure changes before storms. Slowly falling pressure triggers aggressive 
-            feeding behavior. We track SLC-Provo gradients in real-time.
+            feeding behavior. We track regional pressure gradients in real-time.
           </p>
           <div className="bg-black/20 rounded-lg p-3 text-xs">
             <div className="flex items-center gap-2 text-emerald-300 font-mono">
@@ -191,7 +191,7 @@ function WhyWereDifferent() {
             </div>
           </div>
           <p className="text-sm text-slate-300 mb-3">
-            We pull real-time water temperature from 47 USGS gauges across Utah. Each species 
+            We pull real-time water temperature from thousands of USGS gauges worldwide. Each species 
             has an optimal temperature range — we tell you when conditions match.
           </p>
           <div className="bg-black/20 rounded-lg p-3 text-xs">
@@ -238,10 +238,10 @@ function WhyWereDifferent() {
         
         {/* Location Breakdown */}
         <div className="bg-black/20 rounded-lg p-3 mb-4">
-          <div className="text-xs text-slate-400 mb-2 font-medium">Validation by Water Body</div>
+          <div className="text-xs text-slate-400 mb-2 font-medium">Sample Validation Sites (Model Training Data)</div>
           <div className="space-y-2 text-[10px]">
             <div className="flex justify-between items-center">
-              <span className="text-slate-500">Strawberry Reservoir</span>
+              <span className="text-slate-500">Mountain Reservoirs</span>
               <div className="flex items-center gap-3">
                 <span className="text-emerald-400 font-bold">78.4%</span>
                 <span className="text-slate-600">12,264 samples</span>
@@ -249,7 +249,7 @@ function WhyWereDifferent() {
               </div>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-slate-500">Provo River (Tailwater)</span>
+              <span className="text-slate-500">Tailwater Rivers</span>
               <div className="flex items-center gap-3">
                 <span className="text-emerald-400 font-bold">81.2%</span>
                 <span className="text-slate-600">8,760 samples</span>
@@ -257,7 +257,7 @@ function WhyWereDifferent() {
               </div>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-slate-500">Deer Creek Reservoir</span>
+              <span className="text-slate-500">Mid-elevation Lakes</span>
               <div className="flex items-center gap-3">
                 <span className="text-emerald-400 font-bold">76.2%</span>
                 <span className="text-slate-600">8,760 samples</span>
@@ -265,7 +265,7 @@ function WhyWereDifferent() {
               </div>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-slate-500">Utah Lake</span>
+              <span className="text-slate-500">Large Warmwater Lakes</span>
               <div className="flex items-center gap-3">
                 <span className="text-emerald-400 font-bold">72.8%</span>
                 <span className="text-slate-600">15,768 samples</span>
@@ -273,7 +273,7 @@ function WhyWereDifferent() {
               </div>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-slate-500">Green River (Flaming Gorge)</span>
+              <span className="text-slate-500">Canyon Rivers</span>
               <div className="flex items-center gap-3">
                 <span className="text-emerald-400 font-bold">79.6%</span>
                 <span className="text-slate-600">4,380 samples</span>

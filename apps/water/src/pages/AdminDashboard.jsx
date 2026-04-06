@@ -414,7 +414,7 @@ export default function AdminDashboard() {
                 <div className="text-center p-4 rounded-xl bg-cyan-500/5 border border-cyan-500/10">
                   <Fish className="w-6 h-6 text-cyan-400 mx-auto mb-2" />
                   <p className="text-2xl font-black text-white tabular-nums">{e?.waterViews30d ?? 0}</p>
-                  <p className="text-[10px] font-bold text-cyan-400 uppercase tracking-wider">Utah Water & Glass</p>
+                  <p className="text-[10px] font-bold text-cyan-400 uppercase tracking-wider">NotWindy</p>
                 </div>
               </div>
             </div>
