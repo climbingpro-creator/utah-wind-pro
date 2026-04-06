@@ -188,15 +188,16 @@ export default function WaterSearch({ onSelect, isExpanded = false, onToggle }) 
     inputRef.current?.focus();
   }, []);
 
-  // Collapsed state - just show search icon
+  // Collapsed state - show labeled search button
   if (!isExpanded) {
     return (
       <button
         onClick={() => onToggle?.(true)}
-        className="flex items-center justify-center w-10 h-10 rounded-lg bg-slate-800/90 border border-slate-700 hover:border-cyan-500/50 hover:bg-slate-700/90 transition-all shadow-lg"
+        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-cyan-500/15 border border-cyan-500/30 hover:border-cyan-400/60 hover:bg-cyan-500/25 transition-all shadow-lg"
         aria-label="Search for water body"
       >
         <Search className="w-4 h-4 text-cyan-400" />
+        <span className="text-sm font-semibold text-cyan-400">Search</span>
       </button>
     );
   }
