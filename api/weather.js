@@ -185,6 +185,20 @@ const RADIAL_STATIONS = [
   
   // Ambient Weather PWS (FREE via our own meters)
   { id: 'PWS', name: 'Saratoga Springs PWS', lat: 40.3500, lng: -111.9000, source: 'ambient', mac: '48:3F:DA:54:2C:6E' },
+  
+  // Weather Underground PWS — VIP Flight Park Proxies (FREE via WU_API_KEY)
+  // These stations provide FREE alternatives to the paid MesoWest FPS/UTALP stations
+  // KUTLEHI111: Primary FPS shadow — validated ~1.0 speed ratio vs ridge-mounted FPS
+  { id: 'KUTLEHI111', name: 'Lehi (FPS Shadow)', lat: 40.454, lng: -111.892, source: 'wu-pws', speedRatio: 1.0, shadowsStation: 'FPS' },
+  { id: 'KUTLEHI160', name: 'Lehi S', lat: 40.447, lng: -111.889, source: 'wu-pws', speedRatio: 1.1 },
+  // North Flow corridor — shadows UTALP for PotM North
+  { id: 'KUTDRAPE132', name: 'Draper E (UTALP Shadow)', lat: 40.480, lng: -111.884, source: 'wu-pws', speedRatio: 1.0, shadowsStation: 'UTALP' },
+  { id: 'KUTDRAPE59', name: 'Draper W', lat: 40.477, lng: -111.883, source: 'wu-pws', speedRatio: 1.0 },
+  { id: 'KUTRIVER67', name: 'Riverton', lat: 40.489, lng: -111.919, source: 'wu-pws', speedRatio: 1.1 },
+  { id: 'KUTBLUFF18', name: 'Bluffdale', lat: 40.492, lng: -111.935, source: 'wu-pws', speedRatio: 0.99 },
+  // Alpine stations — east bench early indicators
+  { id: 'KUTALPIN3', name: 'Alpine W', lat: 40.444, lng: -111.769, source: 'wu-pws' },
+  { id: 'KUTALPIN25', name: 'Alpine E', lat: 40.451, lng: -111.761, source: 'wu-pws' },
 ];
 
 function haversineDistance(lat1, lng1, lat2, lng2) {
@@ -602,9 +616,11 @@ async function fetchNearestNwsStation(lat, lng, radiusMiles) {
 }
 
 /**
- * Fetch from our curated station list (UDOT, Ambient, known NWS)
+ * Fetch from our curated station list (UDOT, Ambient, known NWS, WU PWS)
  */
 async function fetchFromCuratedStations(stations, udotKey, ambientApiKey, ambientAppKey) {
+  const wuApiKey = process.env.WU_API_KEY;
+  
   for (const station of stations) {
     try {
       let weatherData = null;
@@ -624,6 +640,9 @@ async function fetchFromCuratedStations(stations, udotKey, ambientApiKey, ambien
         if (ambientData) {
           weatherData = normalizeAmbientData(ambientData, station);
         }
+      } else if (station.source === 'wu-pws' && wuApiKey) {
+        // Fetch from Weather Underground PWS
+        weatherData = await fetchWuPwsStation(station.id, wuApiKey, station);
       }
       
       if (weatherData && (weatherData.windSpeed != null || weatherData.temperature != null)) {
@@ -635,6 +654,55 @@ async function fetchFromCuratedStations(stations, udotKey, ambientApiKey, ambien
     }
   }
   return null;
+}
+
+/**
+ * Fetch a single WU PWS station by ID
+ */
+async function fetchWuPwsStation(stationId, apiKey, stationMeta) {
+  try {
+    const url = `https://api.weather.com/v2/pws/observations/current?stationId=${stationId}&format=json&units=e&numericPrecision=decimal&apiKey=${apiKey}`;
+    const response = await fetch(url, { signal: AbortSignal.timeout(6000) });
+    
+    if (!response.ok) {
+      console.warn(`[WU PWS] ${stationId} returned ${response.status}`);
+      return null;
+    }
+    
+    const data = await response.json();
+    const obs = data.observations?.[0];
+    
+    if (!obs) return null;
+    
+    const speedRatio = stationMeta?.speedRatio || 1.0;
+    const rawSpeed = obs.imperial?.windSpeed ?? null;
+    const rawGust = obs.imperial?.windGust ?? null;
+    
+    return {
+      stationId: stationId,
+      stationName: stationMeta?.name || stationId,
+      latitude: obs.lat,
+      longitude: obs.lon,
+      distanceMiles: stationMeta?.distanceMiles,
+      source: 'wu-pws',
+      // Apply speed ratio if this station shadows another (e.g., KUTLEHI111 shadows FPS)
+      windSpeed: rawSpeed != null ? +(rawSpeed / speedRatio).toFixed(1) : null,
+      windDirection: obs.winddir ?? null,
+      windGust: rawGust != null ? +(rawGust / speedRatio).toFixed(1) : null,
+      temperature: obs.imperial?.temp ?? null,
+      humidity: obs.humidity ?? null,
+      pressure: obs.imperial?.pressure ?? null,
+      timestamp: obs.obsTimeLocal,
+      // Shadow mode metadata
+      shadowsStation: stationMeta?.shadowsStation || null,
+      speedRatioApplied: speedRatio !== 1.0 ? speedRatio : null,
+      rawWindSpeed: rawSpeed,
+      rawWindGust: rawGust,
+    };
+  } catch (err) {
+    console.warn(`[WU PWS] Error fetching ${stationId}:`, err.message);
+    return null;
+  }
 }
 
 function normalizeStationData(rawStation, stationMeta) {

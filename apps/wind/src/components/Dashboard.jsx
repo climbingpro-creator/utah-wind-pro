@@ -197,10 +197,20 @@ export function Dashboard() {
   
   const fpsStation = lakeState?.wind?.stations?.find(s => s.id === 'FPS');
   const utalpStation = lakeState?.wind?.stations?.find(s => s.id === 'UTALP');
-  const pgPrimaryStation = fpsStation || utalpStation;
+  
+  // Shadow stations (FREE WU PWS alternatives to paid Synoptic stations)
+  const kutlehi111Station = lakeState?.wind?.stations?.find(s => s.id === 'KUTLEHI111');
+  const kutdrape132Station = lakeState?.wind?.stations?.find(s => s.id === 'KUTDRAPE132');
+  
+  // Use FPS if available, otherwise fall back to KUTLEHI111 (shadow), then UTALP
+  const pgPrimaryStation = fpsStation || kutlehi111Station || utalpStation || kutdrape132Station;
   const pgWindSpeed = pgPrimaryStation?.speed ?? pgPrimaryStation?.windSpeed;
   const pgWindGust = pgPrimaryStation?.gust ?? pgPrimaryStation?.windGust;
   const pgWindDirection = pgPrimaryStation?.direction ?? pgPrimaryStation?.windDirection;
+  
+  // Track which source we're using for debugging/display
+  const pgSourceStation = fpsStation ? 'FPS' : kutlehi111Station ? 'KUTLEHI111' : utalpStation ? 'UTALP' : kutdrape132Station ? 'KUTDRAPE132' : null;
+  const pgUsingShadow = !fpsStation && kutlehi111Station;
 
   const decisionWindSpeed = selectedActivity === 'paragliding' ? pgWindSpeed : currentWindSpeed;
   const decisionWindGust = selectedActivity === 'paragliding' ? pgWindGust : currentWindGust;
@@ -213,8 +223,11 @@ export function Dashboard() {
     if (lakeState.kpvuStation) data.KPVU = lakeState.kpvuStation;
     if (lakeState.utalpStation) data.UTALP = lakeState.utalpStation;
     if (lakeState.earlyIndicator) data.QSF = lakeState.earlyIndicator;
+    // Add shadow stations for side-by-side comparison
+    if (kutlehi111Station) data.KUTLEHI111 = kutlehi111Station;
+    if (kutdrape132Station) data.KUTDRAPE132 = kutdrape132Station;
     return data;
-  }, [lakeState]);
+  }, [lakeState, kutlehi111Station, kutdrape132Station]);
 
   const pressureData = useMemo(() => lakeState?.pressure ? {
     gradient: lakeState.pressure.gradient,
@@ -461,6 +474,74 @@ export function Dashboard() {
                 {lakeState?.wind?.stations?.filter(s => (s.speed ?? s.windSpeed ?? 0) >= 5).length || 0} firing
               </span>
             </h2>
+            
+            {/* ═══════ SHADOW MODE: FPS vs KUTLEHI111 Side-by-Side Comparison ═══════ */}
+            {(fpsStation || kutlehi111Station) && (
+              <div className={`mb-4 p-3 rounded-lg border ${theme === 'dark' ? 'bg-amber-500/5 border-amber-500/20' : 'bg-amber-50 border-amber-200'}`}>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className={`text-xs font-semibold ${theme === 'dark' ? 'text-amber-400' : 'text-amber-700'}`}>
+                    🔬 Shadow Mode: FPS Validation
+                  </span>
+                  {pgUsingShadow && (
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded ${theme === 'dark' ? 'bg-amber-500/20 text-amber-300' : 'bg-amber-100 text-amber-600'}`}>
+                      Using Shadow
+                    </span>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  {/* FPS (Paid Synoptic) */}
+                  <div className={`p-2 rounded ${theme === 'dark' ? 'bg-slate-800/50' : 'bg-white'}`}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className={`text-[10px] font-medium ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                        Flight Park South
+                      </span>
+                      <span className={`text-[9px] px-1 rounded ${fpsStation ? (theme === 'dark' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-600') : (theme === 'dark' ? 'bg-slate-700 text-slate-500' : 'bg-slate-100 text-slate-400')}`}>
+                        {fpsStation ? 'LIVE' : 'OFFLINE'}
+                      </span>
+                    </div>
+                    <div className="flex items-baseline gap-1">
+                      <span className={`text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+                        {fpsStation?.speed ?? fpsStation?.windSpeed ?? '—'}
+                      </span>
+                      <span className={`text-xs ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>mph</span>
+                      {fpsStation?.direction != null && (
+                        <span className={`text-xs ml-1 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
+                          {fpsStation.direction}°
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  {/* KUTLEHI111 (Free WU Shadow) */}
+                  <div className={`p-2 rounded ${theme === 'dark' ? 'bg-slate-800/50' : 'bg-white'}`}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className={`text-[10px] font-medium ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                        Lehi (FPS Shadow)
+                      </span>
+                      <span className={`text-[9px] px-1 rounded ${kutlehi111Station ? (theme === 'dark' ? 'bg-sky-500/20 text-sky-400' : 'bg-sky-100 text-sky-600') : (theme === 'dark' ? 'bg-slate-700 text-slate-500' : 'bg-slate-100 text-slate-400')}`}>
+                        {kutlehi111Station ? 'FREE' : 'OFFLINE'}
+                      </span>
+                    </div>
+                    <div className="flex items-baseline gap-1">
+                      <span className={`text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+                        {kutlehi111Station?.speed ?? kutlehi111Station?.windSpeed ?? '—'}
+                      </span>
+                      <span className={`text-xs ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>mph</span>
+                      {kutlehi111Station?.direction != null && (
+                        <span className={`text-xs ml-1 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
+                          {kutlehi111Station.direction}°
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                {fpsStation && kutlehi111Station && (
+                  <div className={`mt-2 text-[10px] ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
+                    Δ = {Math.abs((fpsStation?.speed ?? fpsStation?.windSpeed ?? 0) - (kutlehi111Station?.speed ?? kutlehi111Station?.windSpeed ?? 0)).toFixed(1)} mph difference
+                  </div>
+                )}
+              </div>
+            )}
+            
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
               {lakeState?.wind?.stations?.map((station, index) => (
                 <WindVector
@@ -519,10 +600,19 @@ export function Dashboard() {
                         ...(lakeState?.kpvuStation ? [{ id: 'KPVU', ...lakeState.kpvuStation }] : []),
                         ...(lakeState?.utalpStation ? [{ id: 'UTALP', ...lakeState.utalpStation }] : []),
                       ].filter((s, i, arr) => arr.findIndex(x => x.id === s.id) === i),
+                      // Primary stations (paid Synoptic)
                       FPS: fpsStation,
                       UTALP: lakeState?.utalpStation || utalpStation,
                       KSLC: lakeState?.kslcStation,
                       KPVU: lakeState?.kpvuStation,
+                      // Shadow stations (FREE WU PWS alternatives)
+                      KUTLEHI111: kutlehi111Station,
+                      KUTDRAPE132: kutdrape132Station,
+                      // Fallback: use shadow if primary is unavailable
+                      _effectiveFPS: fpsStation || kutlehi111Station,
+                      _effectiveUTALP: utalpStation || kutdrape132Station,
+                      _usingShadowFPS: !fpsStation && !!kutlehi111Station,
+                      _usingShadowUTALP: !utalpStation && !!kutdrape132Station,
                     }}
                     isLoading={isLoading}
                   />

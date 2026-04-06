@@ -122,12 +122,13 @@ const PROPAGATION_EDGES = [
 ];
 
 // Location-to-station mapping: which stations best represent each launch
+// FREE SHADOW STATIONS: KUTLEHI111 shadows FPS, KUTDRAPE132 shadows UTALP
 const LOCATION_STATIONS = {
-  'utah-lake-lincoln':  { primary: 'KPVU', secondary: ['FPS', 'QSF'], upstreamNorth: ['KSLC', 'UTALP'], upstreamThermal: ['QSF', 'KPVU'] },
-  'utah-lake-sandy':    { primary: 'KPVU', secondary: ['FPS'],        upstreamNorth: ['KSLC', 'UTALP'], upstreamThermal: ['KPVU'] },
-  'utah-lake-vineyard': { primary: 'KPVU', secondary: ['FPS'],        upstreamNorth: ['KSLC', 'UTALP'], upstreamThermal: ['KPVU'] },
-  'utah-lake-zigzag':   { primary: 'FPS',  secondary: ['UTALP','KPVU'], upstreamNorth: ['KSLC', 'UTOLY', 'UTALP'], upstreamThermal: ['QSF'] },
-  'utah-lake-mm19':     { primary: 'FPS',  secondary: ['KPVU','UID28'], upstreamNorth: ['KSLC', 'UTALP'], upstreamThermal: ['QSF'] },
+  'utah-lake-lincoln':  { primary: 'KPVU', secondary: ['FPS', 'KUTLEHI111', 'QSF'], upstreamNorth: ['KSLC', 'UTALP', 'KUTDRAPE132'], upstreamThermal: ['QSF', 'KPVU'] },
+  'utah-lake-sandy':    { primary: 'KPVU', secondary: ['FPS', 'KUTLEHI111'],        upstreamNorth: ['KSLC', 'UTALP', 'KUTDRAPE132'], upstreamThermal: ['KPVU'] },
+  'utah-lake-vineyard': { primary: 'KPVU', secondary: ['FPS', 'KUTLEHI111'],        upstreamNorth: ['KSLC', 'UTALP', 'KUTDRAPE132'], upstreamThermal: ['KPVU'] },
+  'utah-lake-zigzag':   { primary: 'FPS',  secondary: ['KUTLEHI111', 'UTALP', 'KPVU'], upstreamNorth: ['KSLC', 'UTOLY', 'UTALP', 'KUTDRAPE132'], upstreamThermal: ['QSF'] },
+  'utah-lake-mm19':     { primary: 'FPS',  secondary: ['KUTLEHI111', 'KPVU', 'UID28'], upstreamNorth: ['KSLC', 'UTALP', 'KUTDRAPE132'], upstreamThermal: ['QSF'] },
   'deer-creek':         { primary: 'KHCR', secondary: ['UTDCD', 'UTCHL'], upstreamNorth: ['KSLC'],      upstreamThermal: ['KPVU', 'UTLPC'] },
   'willard-bay':        { primary: 'KHIF', secondary: [],             upstreamNorth: ['KSLC'],           upstreamThermal: ['KHIF'] },
   'strawberry-ladders': { primary: 'UTCOP', secondary: ['UTDAN', 'DSTU1'], upstreamNorth: ['KSLC', 'CCPUT'], upstreamThermal: ['UTCOP', 'DSTU1'] },
@@ -137,6 +138,52 @@ const LOCATION_STATIONS = {
   'strawberry-river':   { primary: 'UTCOP', secondary: ['RVZU1', 'DSTU1'], upstreamNorth: ['KSLC', 'CCPUT'], upstreamThermal: ['UTCOP', 'RVZU1'] },
   'skyline-drive':      { primary: 'SKY',   secondary: ['UTESU', 'UTMPK'], upstreamNorth: ['KSLC', 'UTMPK'], upstreamThermal: ['SKY', 'UTESU'] },
 };
+
+// Shadow station mappings: FREE WU PWS stations that can replace paid Synoptic stations
+// When the primary (paid) station is unavailable, use the shadow (free) station
+const SHADOW_STATIONS = {
+  'FPS': { shadow: 'KUTLEHI111', speedRatio: 1.0, name: 'Lehi (FPS Shadow)' },
+  'UTALP': { shadow: 'KUTDRAPE132', speedRatio: 1.0, name: 'Draper E (UTALP Shadow)' },
+};
+
+/**
+ * Resolve station data with automatic fallback to shadow stations
+ * If the primary station (e.g., FPS) has no data, use the shadow (e.g., KUTLEHI111)
+ */
+export function resolveStationWithShadow(stationId, stationData) {
+  // If we have data for the requested station, return it
+  if (stationData?.[stationId]?.speed != null || stationData?.[stationId]?.windSpeed != null) {
+    return { station: stationData[stationId], source: stationId, isShadow: false };
+  }
+  
+  // Check if this station has a shadow
+  const shadowConfig = SHADOW_STATIONS[stationId];
+  if (shadowConfig) {
+    const shadowData = stationData?.[shadowConfig.shadow];
+    if (shadowData?.speed != null || shadowData?.windSpeed != null) {
+      // Apply speed ratio adjustment if needed
+      const speed = shadowData.speed ?? shadowData.windSpeed;
+      const gust = shadowData.gust ?? shadowData.windGust;
+      return {
+        station: {
+          ...shadowData,
+          speed: speed != null ? speed / shadowConfig.speedRatio : null,
+          windSpeed: speed != null ? speed / shadowConfig.speedRatio : null,
+          gust: gust != null ? gust / shadowConfig.speedRatio : null,
+          windGust: gust != null ? gust / shadowConfig.speedRatio : null,
+          _shadowSource: shadowConfig.shadow,
+          _shadowName: shadowConfig.name,
+        },
+        source: shadowConfig.shadow,
+        isShadow: true,
+        shadowedStation: stationId,
+      };
+    }
+  }
+  
+  // No data available
+  return { station: null, source: null, isShadow: false };
+}
 
 // ─── DAYLIGHT ─────────────────────────────────────────────────────
 const DAYLIGHT = {
