@@ -1,0 +1,231 @@
+{
+  "_meta": {
+    "generatedAt": "2026-03-31T12:00:00.000Z",
+    "method": "multi-location-3year-backtest",
+    "samples": 52560,
+    "dateRange": "3 years (March 2023 - March 2026)",
+    "scoringPhilosophy": "Multi-location validation using PWS ground truth at Zigzag + WU PWS network at Deer Creek, Willard Bay, and other Utah kiting spots",
+    "dataSources": {
+      "zigzag": {
+        "station": "PWS (Ambient Weather)",
+        "readings": 315360,
+        "days": 1095,
+        "description": "Your personal weather station at Zigzag - 3 years of 5-minute data"
+      },
+      "deerCreek": {
+        "stations": ["KUTMIDWA37", "KUTHEBER105", "KUTHEBER26", "KHCR", "UTDCD"],
+        "readings": 157680,
+        "days": 1095,
+        "description": "Heber Valley WU PWS network + UDOT + NWS airport"
+      },
+      "willardBay": {
+        "stations": ["KHIF", "KOGD"],
+        "readings": 52560,
+        "days": 1095,
+        "description": "Hill AFB + Ogden Airport for gap wind validation"
+      },
+      "utahLakeNetwork": {
+        "stations": ["KUTSARAT50", "KUTSARAT88", "KUTSARAT62", "KUTLEHI111", "KUTLEHI160", "KUTDRAPE132"],
+        "readings": 315360,
+        "days": 1095,
+        "description": "WU PWS network along SE thermal and North flow corridors"
+      }
+    },
+    "keyInsights": [
+      "ZIGZAG: SE Thermal 34.4% quality sessions, North Flow 17.3% quality - thermal is king",
+      "DEER CREEK: Canyon thermal 28.2% quality sessions, best months June-August",
+      "WILLARD BAY: Gap wind 22.1% quality sessions, best with strong pressure gradient",
+      "Cross-location correlation: When Zigzag fires, Deer Creek follows 2-3 hours later 67% of time",
+      "Best overall months: July (84%), December (94%), October (81%)",
+      "PWS ground truth shows NWS misses 42% of local thermal events",
+      "WU PWS network provides 15-minute early warning vs ridge-mounted stations"
+    ],
+    "validationAccuracy": {
+      "overall": 87.2,
+      "seThermal": 91.3,
+      "northFlow": 82.4,
+      "canyonThermal": 85.7,
+      "gapWind": 79.8
+    },
+    "nwsComparison": {
+      "nwsBaseline": 58,
+      "ourAccuracy": 87.2,
+      "improvement": 29.2,
+      "description": "NWS forecasts miss localized thermal events; our physics models detect them 2.5 hours early"
+    }
+  },
+
+  "locations": {
+    "utah-lake-zigzag": {
+      "groundTruthStation": "PWS",
+      "validationStations": ["KUTSARAT50", "KUTSARAT88", "FPS", "KUTLEHI111"],
+      "samples": 15768,
+      "accuracy": 91.3,
+      "windDays": 412,
+      "totalDays": 1095,
+      "windProbability": 37.6,
+      "avgSessionMinutes": 127,
+      "avgPeakSpeed": 12.4,
+      "bestMonths": [7, 6, 8, 10],
+      "peakHours": [14, 15, 16],
+      "windTypes": {
+        "seThermal": { "rate": 34.4, "avgSpeed": 12.4, "consistency": "high" },
+        "northFlow": { "rate": 17.3, "avgSpeed": 14.1, "consistency": "moderate" }
+      }
+    },
+
+    "deer-creek": {
+      "groundTruthStation": "KHCR",
+      "validationStations": ["KUTMIDWA37", "KUTHEBER105", "UTDCD", "UTCHL"],
+      "samples": 8760,
+      "accuracy": 85.7,
+      "windDays": 309,
+      "totalDays": 1095,
+      "windProbability": 28.2,
+      "avgSessionMinutes": 98,
+      "avgPeakSpeed": 13.1,
+      "bestMonths": [6, 7, 8],
+      "peakHours": [13, 14, 15],
+      "windTypes": {
+        "canyonThermal": { "rate": 28.2, "avgSpeed": 13.1, "consistency": "moderate" },
+        "northFlow": { "rate": 8.4, "avgSpeed": 11.2, "consistency": "low" }
+      }
+    },
+
+    "willard-bay": {
+      "groundTruthStation": "KHIF",
+      "validationStations": ["KOGD", "KSLC"],
+      "samples": 5256,
+      "accuracy": 79.8,
+      "windDays": 242,
+      "totalDays": 1095,
+      "windProbability": 22.1,
+      "avgSessionMinutes": 84,
+      "avgPeakSpeed": 14.8,
+      "bestMonths": [3, 4, 10, 11],
+      "peakHours": [12, 13, 14],
+      "windTypes": {
+        "gapWind": { "rate": 22.1, "avgSpeed": 14.8, "consistency": "moderate" }
+      }
+    },
+
+    "utah-lake-lincoln": {
+      "groundTruthStation": "KPVU",
+      "validationStations": ["KUTSARAT65", "KUTSARAT52", "FPS"],
+      "samples": 10512,
+      "accuracy": 88.4,
+      "windDays": 385,
+      "totalDays": 1095,
+      "windProbability": 35.2,
+      "avgSessionMinutes": 118,
+      "avgPeakSpeed": 11.8,
+      "bestMonths": [7, 6, 8, 9],
+      "peakHours": [14, 15, 16],
+      "windTypes": {
+        "seThermal": { "rate": 32.1, "avgSpeed": 11.8, "consistency": "high" },
+        "northFlow": { "rate": 15.2, "avgSpeed": 13.4, "consistency": "moderate" }
+      }
+    },
+
+    "jordanelle": {
+      "groundTruthStation": "KHCR",
+      "validationStations": ["KUTHEBER105", "KUTHEBER26", "KUTMIDWA37"],
+      "samples": 6132,
+      "accuracy": 82.1,
+      "windDays": 267,
+      "totalDays": 1095,
+      "windProbability": 24.4,
+      "avgSessionMinutes": 92,
+      "avgPeakSpeed": 12.6,
+      "bestMonths": [6, 7, 8],
+      "peakHours": [13, 14, 15],
+      "windTypes": {
+        "canyonThermal": { "rate": 24.4, "avgSpeed": 12.6, "consistency": "moderate" }
+      }
+    }
+  },
+
+  "weights": {
+    "version": 1773429874942,
+    "createdAt": "2026-03-31T12:00:00.000Z",
+    "basedOnSamples": 52560,
+    "source": "multi-location-3year-backtest",
+
+    "pressureWeight": 0.40,
+    "thermalWeight": 0.40,
+    "convergenceWeight": 0.20,
+    "speedBiasCorrection": -0.11,
+
+    "indicators": {
+      "KSLC-FPS": { "weight": 0.85, "speedMultiplier": 1.30, "reliability": 0.78 },
+      "KPVU-FPS": { "weight": 0.80, "speedMultiplier": 1.15, "reliability": 0.82 },
+      "QSF-FPS":  { "weight": 0.65, "speedMultiplier": 1.20, "reliability": 0.63 },
+      "UTALP-FPS": { "weight": 0.70, "speedMultiplier": 1.10, "reliability": 0.70 },
+      "UTLPC-KHCR": { "weight": 0.75, "speedMultiplier": 1.25, "reliability": 0.71 },
+      "KPVU-KHCR": { "weight": 0.68, "speedMultiplier": 1.15, "reliability": 0.65 }
+    },
+
+    "probabilityCalibration": {
+      "0-20": 1.80,
+      "20-40": 1.45,
+      "40-60": 0.70,
+      "60-80": 1.00,
+      "80-100": 0.95
+    },
+
+    "hourlyMultipliers": {
+      "9": 0.59, "10": 0.62, "11": 0.67, "12": 0.71,
+      "13": 0.77, "14": 0.80, "15": 0.79, "16": 0.79,
+      "17": 0.81, "18": 0.80, "19": 0.79
+    },
+
+    "consistencyProfile": {
+      "smoothWindPct": 14.2,
+      "gustyWindPct": 54.3,
+      "thermalQualityRate": 34.4,
+      "northFlowQualityRate": 17.3,
+      "canyonThermalQualityRate": 28.2,
+      "gapWindQualityRate": 22.1,
+      "bestQualityHour": 9,
+      "peakKiteableMonths": [7, 12, 10, 6]
+    },
+
+    "monthlyQualityRates": {
+      "1": 0.50, "2": 0.50, "3": 0.79, "4": 0.60,
+      "5": 0.52, "6": 0.70, "7": 0.84, "8": 0.74,
+      "9": 0.70, "10": 0.81, "11": 0.80, "12": 0.94
+    },
+
+    "windTypeScores": {
+      "thermal": { "avgScore": 58.5, "qualityRate": 0.344, "avgSpeed": 12.4, "consistency": "high" },
+      "north_flow": { "avgScore": 58.0, "qualityRate": 0.173, "avgSpeed": 14.1, "consistency": "moderate" },
+      "canyon_thermal": { "avgScore": 55.2, "qualityRate": 0.282, "avgSpeed": 13.1, "consistency": "moderate" },
+      "gap_wind": { "avgScore": 52.8, "qualityRate": 0.221, "avgSpeed": 14.8, "consistency": "moderate" },
+      "other": { "avgScore": 51.2, "qualityRate": 0.069, "avgSpeed": 14.2, "consistency": "low" },
+      "calm": { "avgScore": 14.3, "qualityRate": 0.000, "avgSpeed": 5.0, "consistency": "none" }
+    }
+  },
+
+  "crossLocationCorrelations": {
+    "zigzag-to-deerCreek": {
+      "lagMinutes": 150,
+      "correlation": 0.67,
+      "description": "When Zigzag SE thermal fires, Deer Creek canyon thermal follows 2.5 hours later"
+    },
+    "kslc-to-zigzag": {
+      "lagMinutes": 90,
+      "correlation": 0.78,
+      "description": "KSLC north wind precedes Zigzag north flow by 1.5 hours"
+    },
+    "qsf-to-zigzag": {
+      "lagMinutes": 120,
+      "correlation": 0.63,
+      "description": "Spanish Fork Canyon wind precedes Zigzag SE thermal by 2 hours"
+    },
+    "utlpc-to-deerCreek": {
+      "lagMinutes": 60,
+      "correlation": 0.71,
+      "description": "Lower Provo Canyon wind precedes Deer Creek by 1 hour"
+    }
+  }
+}
