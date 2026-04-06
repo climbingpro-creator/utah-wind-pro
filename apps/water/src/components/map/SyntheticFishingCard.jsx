@@ -428,6 +428,14 @@ function WeatherCorrelationBadges({ conditions }) {
     precipitation: 'bg-blue-500/15 text-blue-400 border-blue-500/20',
     hot: 'bg-red-500/15 text-red-400 border-red-500/20',
     midday: 'bg-amber-500/15 text-amber-400 border-amber-500/20',
+    // Water type badges
+    saltwater: 'bg-blue-500/15 text-blue-400 border-blue-500/20',
+    warmwater: 'bg-amber-500/15 text-amber-400 border-amber-500/20',
+    tropical: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
+    freshwater: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/20',
+    spawn: 'bg-pink-500/15 text-pink-400 border-pink-500/20',
+    morning: 'bg-orange-500/15 text-orange-400 border-orange-500/20',
+    evening: 'bg-purple-500/15 text-purple-400 border-purple-500/20',
   };
   
   return (

@@ -322,10 +322,37 @@ export function identifyWaterBody(lat, lng) {
 
 // ─── Reverse Geocode: Identify water body type via OSM ───────
 
-const OCEAN_TYPES = new Set(['ocean', 'sea', 'bay', 'strait', 'gulf', 'coastline']);
+const OCEAN_TYPES = new Set(['ocean', 'sea', 'strait', 'gulf', 'coastline']);
+// Note: 'bay' removed from OCEAN_TYPES - many freshwater bays exist (e.g., Green Bay on Lake Michigan)
+
+// Great Lakes are freshwater - must be detected before ocean classification
+// Bounding boxes: [minLat, maxLat, minLng, maxLng]
+const GREAT_LAKES = [
+  { name: 'Lake Superior', bounds: [46.4, 49.0, -92.2, -84.3] },
+  { name: 'Lake Michigan', bounds: [41.6, 46.1, -87.8, -84.7] },
+  { name: 'Lake Huron', bounds: [43.0, 46.3, -84.8, -79.7] },
+  { name: 'Lake Erie', bounds: [41.4, 42.9, -83.5, -78.8] },
+  { name: 'Lake Ontario', bounds: [43.2, 44.3, -79.9, -76.0] },
+];
+
+function isInGreatLakes(lat, lng) {
+  for (const lake of GREAT_LAKES) {
+    const [minLat, maxLat, minLng, maxLng] = lake.bounds;
+    if (lat >= minLat && lat <= maxLat && lng >= minLng && lng <= maxLng) {
+      return lake.name;
+    }
+  }
+  return null;
+}
 
 export async function reverseGeocodeWater(lat, lng) {
   const LAKE_KEYWORDS = ['lake', 'reservoir', 'pond', 'lago', 'laguna', 'loch', 'lac', 'see', 'embalse'];
+
+  // ── Check Great Lakes first (they're freshwater, not ocean!) ──
+  const greatLakeName = isInGreatLakes(lat, lng);
+  if (greatLakeName) {
+    return { isLake: true, isOcean: false, isRiver: false, name: greatLakeName };
+  }
 
   // Helper: classify a single Nominatim response
   function classify(data) {
@@ -338,7 +365,15 @@ export async function reverseGeocodeWater(lat, lng) {
     const displayName = (data.display_name || '');
     const all = `${classStr} ${typeStr} ${nameStr} ${displayName} ${addr.natural || ''} ${addr.water || ''}`.toLowerCase();
 
-    // ── Ocean / Sea / Bay / Gulf ──
+    // ── Check for "lake" in the name/address BEFORE ocean check ──
+    // This catches cases where a bay is part of a lake (e.g., Green Bay on Lake Michigan)
+    const hasLakeInName = LAKE_KEYWORDS.some(kw => all.includes(kw));
+    if (hasLakeInName && !all.includes('ocean') && !all.includes('sea')) {
+      const bestName = addr.water || nameStr || displayName.split(',')[0] || 'Unknown Lake';
+      return { isLake: true, isOcean: false, isRiver: false, name: bestName };
+    }
+
+    // ── Ocean / Sea / Gulf / Strait (true saltwater) ──
     if (addr.ocean || addr.sea) {
       return { isLake: false, isOcean: true, isRiver: false,
         name: addr.ocean || addr.sea || addr.bay || nameStr || 'Ocean' };
