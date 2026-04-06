@@ -209,7 +209,7 @@ export function Dashboard() {
   const pgWindDirection = pgPrimaryStation?.direction ?? pgPrimaryStation?.windDirection;
   
   // Track which source we're using for debugging/display
-  const pgSourceStation = fpsStation ? 'FPS' : kutlehi111Station ? 'KUTLEHI111' : utalpStation ? 'UTALP' : kutdrape132Station ? 'KUTDRAPE132' : null;
+  const _pgSourceStation = fpsStation ? 'FPS' : kutlehi111Station ? 'KUTLEHI111' : utalpStation ? 'UTALP' : kutdrape132Station ? 'KUTDRAPE132' : null;
   const pgUsingShadow = !fpsStation && kutlehi111Station;
 
   const decisionWindSpeed = selectedActivity === 'paragliding' ? pgWindSpeed : currentWindSpeed;
