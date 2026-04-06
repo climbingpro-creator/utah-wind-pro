@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, Suspense, lazy, useCallback } from 'react';
 import { Analytics } from '@vercel/analytics/react';
 import { Fish, Ship, Waves, RefreshCw, Wifi, WifiOff, Sun, Moon, CheckCircle,
-  Shield, Clock, Lightbulb, TrendingUp, TrendingDown, Minus, LogIn, LogOut, Crown, CreditCard, Sparkles } from 'lucide-react';
+  Shield, Clock, Lightbulb, TrendingUp, TrendingDown, Minus, LogIn, LogOut, Crown, CreditCard, Sparkles, Brain } from 'lucide-react';
 import { ErrorBoundary, FeedbackWidget, initAnalytics, trackPageView } from '@utahwind/ui';
 import { supabase } from '@utahwind/database';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
@@ -19,6 +19,7 @@ const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const Login = lazy(() => import('./pages/Login'));
 const EngineTest = lazy(() => import('./pages/EngineTest'));
 const ProUpgrade = lazy(() => import('./components/ProUpgrade'));
+const LearnView = lazy(() => import('./components/LearnView'));
 
 const ADMIN_EMAILS = ['tyler@aspenearth.com', 'climbingpro@gmail.com'];
 
@@ -157,6 +158,7 @@ function WaterApp() {
   const { user, signOut, isPro, rawTier, trialActive, trialDaysLeft, openPaywall, showPaywall, manageSubscription } = useAuth();
   const isAdmin = user && ADMIN_EMAILS.includes(user.email?.toLowerCase());
   const [managingSubscription, setManagingSubscription] = useState(false);
+  const [showLearnView, setShowLearnView] = useState(false);
 
   const handleManageSubscription = async () => {
     setManagingSubscription(true);
@@ -290,6 +292,14 @@ function WaterApp() {
               </button>
               <button onClick={toggleTheme} className="p-1.5 rounded-lg hover:bg-white/5 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors">
                 {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              </button>
+              {/* Learn button - accessible to all users */}
+              <button
+                onClick={() => setShowLearnView(true)}
+                className="p-1.5 rounded-lg hover:bg-cyan-500/10 text-cyan-400/70 hover:text-cyan-400 transition-colors"
+                title="Learn how NotWindy works"
+              >
+                <Brain className="w-4 h-4" />
               </button>
               {/* Upgrade button for non-Pro users */}
               {!isPro && (
@@ -630,6 +640,13 @@ function WaterApp() {
       {showPaywall && (
         <Suspense fallback={null}>
           <ProUpgrade />
+        </Suspense>
+      )}
+
+      {/* Learn View Modal */}
+      {showLearnView && (
+        <Suspense fallback={null}>
+          <LearnView onClose={() => setShowLearnView(false)} />
         </Suspense>
       )}
 
