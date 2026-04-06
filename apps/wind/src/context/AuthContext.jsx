@@ -129,9 +129,16 @@ export function AuthProvider({ children }) {
         'Content-Type': 'application/json',
       },
     });
-    const { url, error } = await resp.json();
-    if (error) throw new Error(error);
-    window.location.href = url;
+    const text = await resp.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      throw new Error('Failed to start checkout. Please try again.');
+    }
+    if (data.error) throw new Error(data.error);
+    if (!data.url) throw new Error('No checkout URL returned');
+    window.location.href = data.url;
   }
 
   async function manageSubscription() {

@@ -43,7 +43,8 @@ async function createCheckout(req, res, user) {
   const priceId = process.env.STRIPE_PRO_PRICE_ID;
   if (!priceId) return res.status(500).json({ error: 'STRIPE_PRO_PRICE_ID not configured' });
 
-  const origin = req.headers.origin || 'https://utahwindfinder.com';
+  // Determine origin for success/cancel URLs - try origin header, then referer, then fallback
+  const origin = req.headers.origin || req.headers.referer?.split('/').slice(0, 3).join('/') || 'https://liftforecast.com';
 
   // Get or create Stripe customer
   const customerId = await getOrCreateCustomer(stripe, user);
@@ -62,7 +63,8 @@ async function createCheckout(req, res, user) {
 
 async function createPortal(req, res, user) {
   const stripe = getStripe();
-  const origin = req.headers.origin || req.headers.referer?.split('/').slice(0, 3).join('/') || 'https://utahwindfinder.com';
+  // Determine origin for return URL - try origin header, then referer, then fallback
+  const origin = req.headers.origin || req.headers.referer?.split('/').slice(0, 3).join('/') || 'https://liftforecast.com';
 
   const customerId = await getOrCreateCustomer(stripe, user);
 
