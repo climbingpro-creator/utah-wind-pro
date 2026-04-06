@@ -33,7 +33,7 @@ export default function WindSeekerTemplate({
   effectiveDecision, lakeState, history,
   prediction, effectiveThermalPrediction, effectiveBoatingPrediction,
   effectiveActivityScore, effectiveBriefing, pressureData: _pressureData,
-  mesoData, isLoading, onSelectSpot, contentRef,
+  mesoData: _mesoData, isLoading: _isLoading, onSelectSpot: _onSelectSpot, contentRef: _contentRef,
 }) {
   const pwsFromStations = lakeState?.wind?.stations?.find(s => s.isPWS || s.isYourStation);
   const heroStation = pwsFromStations || lakeState?.wind?.stations?.[0];

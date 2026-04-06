@@ -439,7 +439,7 @@ export default function TodayHero({ windSpeed, windGust, windDirection, thermalP
   );
 
   const finalCards = useMemo(() => applyUnifiedOverrides(rawCards, unifiedActivities), [rawCards, unifiedActivities]);
-  const { headline, subline, mood, context } = useMemo(
+  const { headline: _headline, subline: _subline, mood, context } = useMemo(
     () => buildHeadline(finalCards, outlookSpeed, selectedActivity, prediction),
     [finalCards, outlookSpeed, selectedActivity, prediction]
   );
@@ -513,7 +513,7 @@ export default function TodayHero({ windSpeed, windGust, windDirection, thermalP
     return candidates[0];
   }, [mesoData, selectedLake, windSpeed]);
 
-  const accent = MOOD_ACCENT[mood] || MOOD_ACCENT.neutral;
+  const _accent = MOOD_ACCENT[mood] || MOOD_ACCENT.neutral;
   const bgImage = getRotatingImage(mood, 'mood') || MOOD_IMAGE_FALLBACK[mood];
   const styles = isDark ? STATUS_STYLES : STATUS_STYLES_LIGHT;
 
