@@ -3,10 +3,11 @@ import Map, { Source, Layer, Marker, Popup, NavigationControl, GeolocateControl 
 import maplibregl from 'maplibre-gl';
 import { Protocol } from 'pmtiles';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { Compass, Maximize2, X, Droplets, Fish, Waves } from 'lucide-react';
+import { Compass, Maximize2, X, Droplets, Fish, Waves, Search } from 'lucide-react';
 import { generateFisheryProfile } from '@utahwind/weather';
 import { trackPinDrop, trackBioApiCall } from '@utahwind/ui';
 import SyntheticFishingCard from './SyntheticFishingCard';
+import WaterSearch from './WaterSearch';
 
 const PMTILES_URL = import.meta.env.VITE_PMTILES_WATER_URL || null;
 const BASEMAP_STYLE = 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json';
@@ -122,6 +123,7 @@ export function VectorWaterMap({ currentWeatherData = {} }) {
     zoom: GLOBAL_DEFAULT_ZOOM,
   });
   const [geolocateAttempted, setGeolocateAttempted] = useState(false);
+  const [searchExpanded, setSearchExpanded] = useState(false);
   const abortRef = useRef(0);
   const hoveredFeatureIdRef = useRef(null);
   
@@ -853,6 +855,39 @@ export function VectorWaterMap({ currentWeatherData = {} }) {
     setSelectedWaterFeature(null);
   }, []);
 
+  // Handle search result selection - fly to the water body
+  const handleSearchSelect = useCallback((result) => {
+    const map = mapRef.current?.getMap();
+    if (!map) return;
+    
+    // If we have a bounding box, fit to it
+    if (result.boundingBox && result.boundingBox.length === 4) {
+      const [south, north, west, east] = result.boundingBox;
+      map.fitBounds(
+        [[west, south], [east, north]],
+        { padding: 50, maxZoom: 14, duration: 1500 }
+      );
+    } else {
+      // Otherwise fly to the point
+      map.flyTo({
+        center: [result.lng, result.lat],
+        zoom: 12,
+        duration: 1500,
+      });
+    }
+    
+    // Optionally drop a pin at the location
+    setDroppedPin([result.lat, result.lng]);
+    setSelectedWaterFeature({ name: result.name, type: result.type });
+    setHasDroppedPin(true);
+    
+    // Trigger profile generation for this location
+    handleMapClick({
+      lngLat: { lat: result.lat, lng: result.lng },
+      point: { x: 0, y: 0 },
+    });
+  }, [handleMapClick]);
+
   const mapHeight = isFullscreen ? 'h-[85vh]' : 'h-[28rem] sm:h-[36rem]';
 
   return (
@@ -868,8 +903,14 @@ export function VectorWaterMap({ currentWeatherData = {} }) {
           <span className="text-sm font-medium text-slate-300">Water Intelligence Map</span>
         </div>
         <div className="flex items-center gap-2">
-          {PMTILES_URL && (
-            <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+          {/* Search Toggle/Expanded */}
+          <WaterSearch
+            isExpanded={searchExpanded}
+            onToggle={setSearchExpanded}
+            onSelect={handleSearchSelect}
+          />
+          {PMTILES_URL && !searchExpanded && (
+            <div className="hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
               <Waves className="w-3 h-3 text-emerald-400" />
               <span className="text-[10px] font-semibold text-emerald-400 uppercase">Vector Data</span>
             </div>
