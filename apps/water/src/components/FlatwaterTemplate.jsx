@@ -2,6 +2,7 @@ import React, { Suspense, lazy } from 'react';
 import { Brain, Lightbulb, Waves, Trophy, Calendar, ArrowUpRight, Users } from 'lucide-react';
 import { SafeComponent } from '@utahwind/ui';
 import { safeToFixed } from '../utils/safeToFixed';
+import ProTeaser from './ProTeaser';
 
 const WaterForecast = lazy(() => import('./WaterForecast'));
 
@@ -10,8 +11,10 @@ export default function FlatwaterTemplate({
   currentWindSpeed, currentWindGust: _currentWindGust, currentWindDirection: _currentWindDirection,
   effectiveDecision, lakeState,
   effectiveBoatingPrediction, effectiveActivityScore,
-  effectiveBriefing,   pressureData, upstreamData, mesoData,
+  effectiveBriefing, pressureData, upstreamData, mesoData,
   isLoading: _isLoading,
+  isPro = false,
+  onUnlockPro,
 }) {
   const locName = lakeState?.config?.shortName || lakeState?.config?.name || selectedLake || 'Utah Lake';
   const score = effectiveActivityScore?.score;
@@ -123,6 +126,18 @@ export default function FlatwaterTemplate({
             </div>
           )}
         </div>
+      )}
+
+      {/* ═══════ PRO TEASER — Glass Window Intelligence ═══════ */}
+      {!isPro && (
+        <ProTeaser
+          variant="glass"
+          context={{
+            hasPressureData: !!pressureData,
+            isGlassConditions: (currentWindSpeed ?? 0) < 5,
+          }}
+          onUnlock={onUnlockPro}
+        />
       )}
 
       {/* ═══════ WATER FORECAST — Timeline, Glass Windows, Warnings ═══════ */}

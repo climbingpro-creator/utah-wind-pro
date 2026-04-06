@@ -588,6 +588,8 @@ function WaterApp() {
               isLoading={isLoading}
               upstreamData={upstreamData}
               selectedLocation={selectedLocation}
+              isPro={isPro}
+              onUnlockPro={openPaywall}
             />
           ) : (
             <FlatwaterTemplate
@@ -608,6 +610,8 @@ function WaterApp() {
               mesoData={mesoData}
               history={history}
               isLoading={isLoading}
+              isPro={isPro}
+              onUnlockPro={openPaywall}
             />
           )}
         </Suspense>

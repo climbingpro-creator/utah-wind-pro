@@ -7,6 +7,7 @@ import { getDailyFlyPick, parseSkyCondition, TIME_WINDOW_LABELS } from '../servi
 import { getDailyLurePick, LURES, getShoreStrategy, TIME_WINDOW_LABELS as LURE_TIME_LABELS } from '../services/LureRecommender';
 import WaterForecast from './WaterForecast';
 import { safeToFixed } from '../utils/safeToFixed';
+import ProTeaser from './ProTeaser';
 
 // Utah Fishing Locations Configuration
 export const FISHING_LOCATIONS = {
@@ -826,7 +827,7 @@ function getCurrentSeason() {
 }
 
 // Main Fishing Mode Component
-const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamData = {}, hourlyForecast, selectedLocation = 'strawberry' }) => {
+const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamData = {}, hourlyForecast, selectedLocation = 'strawberry', isPro = false, onUnlockPro }) => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   
@@ -1143,6 +1144,21 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
             <span>Hourly: ×{aiPrediction.hourlyMult}</span>
           </div>
         </div>
+      )}
+
+      {/* ═══════ PRO TEASER — Solunar/Pressure Insight ═══════ */}
+      {!isPro && (
+        <ProTeaser
+          variant="auto"
+          context={{
+            hasPressureData: !!pressureData,
+            hasSolunarData: !!solunar,
+            hasWaterTemp: !!waterTemp,
+            isGlassConditions: windSpeed < 5,
+            isFlyFishing: location.type === 'river',
+          }}
+          onUnlock={onUnlockPro}
+        />
       )}
 
       {/* River Conditions — shown for river locations with USGS flow data */}
@@ -1614,6 +1630,17 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Pro Teaser — Fly Intelligence */}
+          {!isPro && (
+            <div className="px-4 pb-4">
+              <ProTeaser
+                variant="fly"
+                compact
+                onUnlock={onUnlockPro}
+              />
             </div>
           )}
         </div>
