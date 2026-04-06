@@ -2,25 +2,32 @@
  * Vercel Serverless Function — API proxy for weather data
  * Keeps API keys on the server, never exposed to the client.
  * 
+ * ═══════════════════════════════════════════════════════════════════════════
+ * NATIONWIDE FREE WEATHER DATA — NO SYNOPTIC/MESOWEST REQUIRED
+ * ═══════════════════════════════════════════════════════════════════════════
+ * 
  * Routes:
+ *   GET /api/weather?source=radial&lat=40.35&lng=-111.90  ← NATIONWIDE FREE radial search
  *   GET /api/weather?source=ambient
- *   GET /api/weather?source=radial&lat=40.35&lng=-111.90  ← FREE radial search (NWS + UDOT + Ambient + Open-Meteo global fallback)
- *   GET /api/weather?source=synoptic&stids=FPS,KSLC,...
- *   GET /api/weather?source=synoptic-history&stids=FPS,KSLC,...&hours=3
  *   GET /api/weather?source=wu-nearby&lat=40.35&lon=-111.90
  *   GET /api/weather?source=wu-pws&stationIds=KUTSARAT50,KUTSARAT88
  *   GET /api/weather?source=wu-pws-history&stationId=KUTSARAT50
+ *   GET /api/weather?source=synoptic&stids=FPS,KSLC,...  (legacy, avoid)
+ *   GET /api/weather?source=synoptic-history&stids=FPS,KSLC,...&hours=3  (legacy, avoid)
  *
- * Multi-source fallback: airport stations (K-prefix) route through NWS
- * (free, no key), UDOT RWIS stations (UT-prefix) route through UDOT
- * (free with key), remaining stations try Synoptic.
+ * The `radial` source is 100% FREE and works NATIONWIDE + WORLDWIDE:
  * 
- * The `radial` source is 100% FREE — it uses:
- *   1. NWS (US airports)
- *   2. UDOT RWIS (Utah roads)
- *   3. Ambient Weather (personal weather stations)
- *   4. Open-Meteo (global fallback for international coordinates)
- * No Synoptic charges.
+ *   US COVERAGE (in priority order):
+ *   1. Weather Underground PWS — 250,000+ personal weather stations nationwide (WU_API_KEY)
+ *   2. NWS ASOS/AWOS — ANY US airport dynamically discovered via api.weather.gov (FREE)
+ *   3. UDOT RWIS — Utah road weather stations (UDOT_API_KEY)
+ *   4. Ambient Weather — Our personal weather stations (AMBIENT_API_KEY)
+ *   5. Open-Meteo — Fallback if all US sources fail (FREE)
+ * 
+ *   INTERNATIONAL COVERAGE:
+ *   - Open-Meteo provides global weather data (FREE, no key required)
+ * 
+ * ZERO Synoptic/MesoWest API calls for radial searches.
  */
 
 import { splitStations, fetchNwsLatest, fetchNwsHistory } from './lib/nwsAdapter.js';
@@ -303,6 +310,19 @@ async function fetchOpenMeteoGlobal(lat, lng) {
   }
 }
 
+/**
+ * NATIONWIDE FREE Radial Weather Search
+ * 
+ * This endpoint provides weather data for ANY location in the US (and worldwide)
+ * using 100% FREE data sources - NO Synoptic/MesoWest API required.
+ * 
+ * Data source priority:
+ *   1. Weather Underground PWS (nationwide PWS network via WU_API_KEY)
+ *   2. NWS ASOS/AWOS (any US airport via api.weather.gov - FREE)
+ *   3. UDOT RWIS (Utah road stations - FREE with key)
+ *   4. Ambient Weather (our personal stations)
+ *   5. Open-Meteo (global fallback - FREE, no key)
+ */
 async function handleRadialFree(res, query) {
   const { lat, lng, radius } = query;
   if (!lat || !lng) {
@@ -316,17 +336,8 @@ async function handleRadialFree(res, query) {
   // Check if outside US — if so, use Open-Meteo directly (global coverage)
   const outsideUS = isOutsideUS(targetLat, targetLng);
   
-  // Calculate distance to all known free stations (US-based)
-  const stationsWithDistance = RADIAL_STATIONS.map(s => ({
-    ...s,
-    distanceMiles: haversineDistance(targetLat, targetLng, s.lat, s.lng),
-  }))
-    .filter(s => s.distanceMiles <= maxRadius)
-    .sort((a, b) => a.distanceMiles - b.distanceMiles);
-  
-  // If outside US or no nearby US stations, fall back to Open-Meteo
-  if (outsideUS || stationsWithDistance.length === 0) {
-    console.log(`[Radial] ${outsideUS ? 'International location' : 'No nearby US stations'} — using Open-Meteo for ${targetLat.toFixed(3)}, ${targetLng.toFixed(3)}`);
+  if (outsideUS) {
+    console.log(`[Radial] International location — using Open-Meteo for ${targetLat.toFixed(3)}, ${targetLng.toFixed(3)}`);
     const openMeteoData = await fetchOpenMeteoGlobal(targetLat, targetLng);
     
     if (openMeteoData) {
@@ -335,25 +346,266 @@ async function handleRadialFree(res, query) {
         station: openMeteoData,
         searchedCoords: { lat: targetLat, lng: targetLng },
         source: 'open-meteo',
-        isInternational: outsideUS,
+        isInternational: true,
       });
     }
     
     return res.status(200).json({
       station: null,
-      message: outsideUS 
-        ? 'International location — Open-Meteo unavailable' 
-        : `No free weather stations found within ${maxRadius} miles`,
+      message: 'International location — Open-Meteo unavailable',
       searchedCoords: { lat: targetLat, lng: targetLng },
     });
   }
   
-  // Try to fetch data from the closest US stations until we get valid data
+  // ═══════════════════════════════════════════════════════════════════════════
+  // US LOCATION: Try multiple FREE sources in parallel for best coverage
+  // ═══════════════════════════════════════════════════════════════════════════
+  
+  const wuApiKey = process.env.WU_API_KEY;
   const udotKey = process.env.UDOT_API_KEY;
   const ambientApiKey = process.env.AMBIENT_API_KEY;
   const ambientAppKey = process.env.AMBIENT_APP_KEY;
   
-  for (const station of stationsWithDistance.slice(0, 5)) {
+  const fetchPromises = [];
+  const sourceLabels = [];
+  
+  // 1. Weather Underground - discover nearby PWS stations NATIONWIDE
+  if (wuApiKey) {
+    fetchPromises.push(fetchWuNearbyStations(targetLat, targetLng, wuApiKey, maxRadius));
+    sourceLabels.push('wu-pws');
+  }
+  
+  // 2. NWS - find nearest airport (works for ANY US airport, not just our list)
+  fetchPromises.push(fetchNearestNwsStation(targetLat, targetLng, maxRadius));
+  sourceLabels.push('nws');
+  
+  // 3. Check our curated RADIAL_STATIONS list (includes UDOT, Ambient, known NWS)
+  const stationsWithDistance = RADIAL_STATIONS.map(s => ({
+    ...s,
+    distanceMiles: haversineDistance(targetLat, targetLng, s.lat, s.lng),
+  }))
+    .filter(s => s.distanceMiles <= maxRadius)
+    .sort((a, b) => a.distanceMiles - b.distanceMiles);
+  
+  if (stationsWithDistance.length > 0) {
+    fetchPromises.push(fetchFromCuratedStations(stationsWithDistance.slice(0, 3), udotKey, ambientApiKey, ambientAppKey));
+    sourceLabels.push('curated');
+  }
+  
+  // Execute all fetches in parallel
+  const results = await Promise.allSettled(fetchPromises);
+  
+  // Find the best result (closest station with valid wind data)
+  let bestStation = null;
+  let bestSource = null;
+  let bestDistance = Infinity;
+  
+  for (let i = 0; i < results.length; i++) {
+    if (results[i].status === 'fulfilled' && results[i].value) {
+      const station = results[i].value;
+      const dist = station.distanceMiles ?? Infinity;
+      
+      // Prefer stations with wind data and closer distance
+      if (station.windSpeed != null && dist < bestDistance) {
+        bestStation = station;
+        bestSource = sourceLabels[i];
+        bestDistance = dist;
+      } else if (!bestStation && (station.temperature != null || station.windSpeed != null)) {
+        bestStation = station;
+        bestSource = sourceLabels[i];
+        bestDistance = dist;
+      }
+    }
+  }
+  
+  if (bestStation) {
+    console.log(`[Radial] Found station via ${bestSource}: ${bestStation.stationName || bestStation.stationId} at ${bestDistance.toFixed(1)} miles`);
+    res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
+    return res.status(200).json({
+      station: bestStation,
+      searchedCoords: { lat: targetLat, lng: targetLng },
+      source: bestSource,
+      distanceMiles: Math.round(bestDistance * 10) / 10,
+    });
+  }
+  
+  // All US sources failed — fall back to Open-Meteo
+  console.log(`[Radial] All US sources failed — falling back to Open-Meteo for ${targetLat.toFixed(3)}, ${targetLng.toFixed(3)}`);
+  const openMeteoFallback = await fetchOpenMeteoGlobal(targetLat, targetLng);
+  
+  if (openMeteoFallback) {
+    res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=120');
+    return res.status(200).json({
+      station: openMeteoFallback,
+      searchedCoords: { lat: targetLat, lng: targetLng },
+      source: 'open-meteo-fallback',
+    });
+  }
+  
+  res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
+  return res.status(200).json({
+    station: null,
+    message: `No weather stations found within ${maxRadius} miles`,
+    searchedCoords: { lat: targetLat, lng: targetLng },
+  });
+}
+
+/**
+ * Fetch nearest Weather Underground PWS stations (NATIONWIDE)
+ */
+async function fetchWuNearbyStations(lat, lng, apiKey, radiusMiles) {
+  try {
+    // WU nearby endpoint discovers PWS stations by location
+    const url = `https://api.weather.com/v3/location/near?geocode=${lat},${lng}&product=pws&format=json&apiKey=${apiKey}`;
+    const response = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    
+    if (!response.ok) {
+      console.warn(`[WU Nearby] API returned ${response.status}`);
+      return null;
+    }
+    
+    const data = await response.json();
+    const stations = data.location?.stationId || [];
+    const distances = data.location?.distanceKm || [];
+    
+    if (stations.length === 0) return null;
+    
+    // Find closest station within radius
+    for (let i = 0; i < Math.min(stations.length, 5); i++) {
+      const distMiles = (distances[i] || 0) * 0.621371;
+      if (distMiles > radiusMiles) continue;
+      
+      const stationId = stations[i];
+      
+      // Fetch current conditions for this PWS
+      const obsUrl = `https://api.weather.com/v2/pws/observations/current?stationId=${stationId}&format=json&units=e&numericPrecision=decimal&apiKey=${apiKey}`;
+      const obsResp = await fetch(obsUrl, { signal: AbortSignal.timeout(6000) });
+      
+      if (!obsResp.ok) continue;
+      
+      const obsData = await obsResp.json();
+      const obs = obsData.observations?.[0];
+      
+      if (obs && (obs.imperial?.windSpeed != null || obs.imperial?.temp != null)) {
+        return {
+          stationId: stationId,
+          stationName: obs.stationID || stationId,
+          latitude: obs.lat,
+          longitude: obs.lon,
+          distanceMiles: distMiles,
+          source: 'wu-pws',
+          windSpeed: obs.imperial?.windSpeed ?? null,
+          windDirection: obs.winddir ?? null,
+          windGust: obs.imperial?.windGust ?? null,
+          temperature: obs.imperial?.temp ?? null,
+          humidity: obs.humidity ?? null,
+          pressure: obs.imperial?.pressure ?? null,
+          timestamp: obs.obsTimeLocal,
+        };
+      }
+    }
+    
+    return null;
+  } catch (err) {
+    console.warn('[WU Nearby] Error:', err.message);
+    return null;
+  }
+}
+
+/**
+ * Fetch nearest NWS station dynamically (works for ANY US airport)
+ * Uses NWS points API to find the nearest observation station
+ */
+async function fetchNearestNwsStation(lat, lng, radiusMiles) {
+  try {
+    // First, get the NWS grid point for this location
+    const pointsUrl = `https://api.weather.gov/points/${lat.toFixed(4)},${lng.toFixed(4)}`;
+    const pointsResp = await fetch(pointsUrl, {
+      headers: { 'User-Agent': '(UtahWindApp, support@utahwindapp.com)', Accept: 'application/geo+json' },
+      signal: AbortSignal.timeout(8000),
+    });
+    
+    if (!pointsResp.ok) {
+      console.warn(`[NWS Points] API returned ${pointsResp.status}`);
+      return null;
+    }
+    
+    const pointsData = await pointsResp.json();
+    const observationStationsUrl = pointsData.properties?.observationStations;
+    
+    if (!observationStationsUrl) return null;
+    
+    // Get list of nearby observation stations
+    const stationsResp = await fetch(observationStationsUrl, {
+      headers: { 'User-Agent': '(UtahWindApp, support@utahwindapp.com)', Accept: 'application/geo+json' },
+      signal: AbortSignal.timeout(8000),
+    });
+    
+    if (!stationsResp.ok) return null;
+    
+    const stationsData = await stationsResp.json();
+    const features = stationsData.features || [];
+    
+    // Try the closest stations
+    for (const feature of features.slice(0, 5)) {
+      const stationId = feature.properties?.stationIdentifier;
+      const stationName = feature.properties?.name;
+      const coords = feature.geometry?.coordinates;
+      
+      if (!stationId || !coords) continue;
+      
+      const stationLng = coords[0];
+      const stationLat = coords[1];
+      const distMiles = haversineDistance(lat, lng, stationLat, stationLng);
+      
+      if (distMiles > radiusMiles) continue;
+      
+      // Fetch latest observation
+      const obsUrl = `https://api.weather.gov/stations/${stationId}/observations/latest`;
+      const obsResp = await fetch(obsUrl, {
+        headers: { 'User-Agent': '(UtahWindApp, support@utahwindapp.com)', Accept: 'application/geo+json' },
+        signal: AbortSignal.timeout(6000),
+      });
+      
+      if (!obsResp.ok) continue;
+      
+      const obsData = await obsResp.json();
+      const p = obsData.properties;
+      
+      if (p && (p.windSpeed?.value != null || p.temperature?.value != null)) {
+        const KMH_TO_MPH = 0.621371;
+        const PA_TO_INHG = 1 / 3386.39;
+        
+        return {
+          stationId: stationId,
+          stationName: stationName || stationId,
+          latitude: stationLat,
+          longitude: stationLng,
+          distanceMiles: distMiles,
+          source: 'nws',
+          windSpeed: p.windSpeed?.value != null ? +(p.windSpeed.value * KMH_TO_MPH).toFixed(1) : null,
+          windDirection: p.windDirection?.value ?? null,
+          windGust: p.windGust?.value != null ? +(p.windGust.value * KMH_TO_MPH).toFixed(1) : null,
+          temperature: p.temperature?.value != null ? +(p.temperature.value * 9/5 + 32).toFixed(1) : null,
+          humidity: p.relativeHumidity?.value != null ? +p.relativeHumidity.value.toFixed(1) : null,
+          pressure: p.barometricPressure?.value != null ? +(p.barometricPressure.value * PA_TO_INHG).toFixed(2) : null,
+          timestamp: p.timestamp,
+        };
+      }
+    }
+    
+    return null;
+  } catch (err) {
+    console.warn('[NWS Dynamic] Error:', err.message);
+    return null;
+  }
+}
+
+/**
+ * Fetch from our curated station list (UDOT, Ambient, known NWS)
+ */
+async function fetchFromCuratedStations(stations, udotKey, ambientApiKey, ambientAppKey) {
+  for (const station of stations) {
     try {
       let weatherData = null;
       
@@ -375,41 +627,14 @@ async function handleRadialFree(res, query) {
       }
       
       if (weatherData && (weatherData.windSpeed != null || weatherData.temperature != null)) {
-        res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
-        return res.status(200).json({
-          station: weatherData,
-          searchedCoords: { lat: targetLat, lng: targetLng },
-          stationsSearched: stationsWithDistance.length,
-        });
+        return weatherData;
       }
     } catch (err) {
-      console.warn(`[Radial] Error fetching ${station.id}:`, err.message);
+      console.warn(`[Curated] Error fetching ${station.id}:`, err.message);
       continue;
     }
   }
-  
-  // US stations failed — fall back to Open-Meteo as last resort
-  console.log(`[Radial] US stations failed — falling back to Open-Meteo for ${targetLat.toFixed(3)}, ${targetLng.toFixed(3)}`);
-  const openMeteoFallback = await fetchOpenMeteoGlobal(targetLat, targetLng);
-  
-  if (openMeteoFallback) {
-    res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=120');
-    return res.status(200).json({
-      station: openMeteoFallback,
-      searchedCoords: { lat: targetLat, lng: targetLng },
-      source: 'open-meteo-fallback',
-      nearestStations: stationsWithDistance.slice(0, 3).map(s => ({ id: s.id, name: s.name, distanceMiles: Math.round(s.distanceMiles * 10) / 10 })),
-    });
-  }
-  
-  // No station returned valid data
-  res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
-  return res.status(200).json({
-    station: null,
-    message: 'Found stations but none returned valid data',
-    searchedCoords: { lat: targetLat, lng: targetLng },
-    nearestStations: stationsWithDistance.slice(0, 3).map(s => ({ id: s.id, name: s.name, distanceMiles: Math.round(s.distanceMiles * 10) / 10 })),
-  });
+  return null;
 }
 
 function normalizeStationData(rawStation, stationMeta) {

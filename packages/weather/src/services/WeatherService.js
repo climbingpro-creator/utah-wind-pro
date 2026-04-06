@@ -228,7 +228,47 @@ class WeatherService {
     }
   }
 
+  /**
+   * Fetch nearby stations using FREE sources first (NWS + UDOT + Ambient + Open-Meteo)
+   * Falls back to Synoptic (paid) only if free sources fail or return no data
+   */
   async fetchNearbyStations(lat, lng, radiusMiles = 50) {
+    // Try FREE radial endpoint first (NWS + UDOT + Ambient + Open-Meteo global fallback)
+    try {
+      const freeResponse = await axiosWithRetry({
+        method: 'get',
+        url: apiUrl('/api/weather'),
+        params: { source: 'radial', lat, lng, radius: radiusMiles },
+        timeout: 8000,
+      });
+      
+      const freeData = freeResponse.data;
+      
+      // If we got a station from free sources, return it
+      if (freeData?.station && (freeData.station.windSpeed != null || freeData.station.temperature != null)) {
+        const s = freeData.station;
+        return [{
+          id: s.stationId || s.id || 'FREE',
+          name: s.stationName || s.name || 'Weather Station',
+          lat: s.latitude || s.lat || lat,
+          lng: s.longitude || s.lng || lng,
+          elevation: s.elevation || null,
+          speed: s.windSpeed ?? null,
+          direction: s.windDirection ?? null,
+          gust: s.windGust ?? null,
+          temperature: s.temperature ?? null,
+          pressure: s.pressure ?? null,
+          windSpeed: s.windSpeed ?? null,
+          windDirection: s.windDirection ?? null,
+          distanceMiles: s.distanceMiles,
+          _source: freeData.source || s.source || 'free-radial',
+        }];
+      }
+    } catch (freeErr) {
+      console.warn('[WeatherService] Free radial failed, trying Synoptic:', freeErr.message);
+    }
+
+    // Fall back to Synoptic (paid) if free sources didn't work
     try {
       let responseData;
 
