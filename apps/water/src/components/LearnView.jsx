@@ -2,11 +2,90 @@ import React, { Suspense, lazy, useState } from 'react';
 import { 
   Brain, Waves, Fish, Target, Zap, 
   Thermometer, BarChart3, CheckCircle, Clock,
-  Sparkles, ArrowRight, Shield, Moon, TrendingDown, Droplets, MapPin
+  Sparkles, ArrowRight, Shield, Moon, TrendingDown, Droplets, MapPin, MousePointer, Gauge
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const AccuracyScoreboard = lazy(() => import('./AccuracyScoreboard'));
+
+function AIMapFeature() {
+  return (
+    <div className="bg-gradient-to-br from-cyan-500/10 to-blue-500/10 rounded-xl p-5 border border-cyan-500/20 mb-6">
+      <div className="flex items-center gap-2 mb-4">
+        <div className="w-10 h-10 rounded-xl bg-cyan-500/20 flex items-center justify-center">
+          <MousePointer className="w-5 h-5 text-cyan-400" />
+        </div>
+        <div>
+          <h3 className="font-bold text-white">AI-Powered Map Intelligence</h3>
+          <p className="text-xs text-cyan-400">Click anywhere for instant fishing intel</p>
+        </div>
+        <span className="ml-auto text-xs px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-400 font-bold">
+          LIVE
+        </span>
+      </div>
+      
+      <p className="text-sm text-slate-300 mb-4">
+        Click any water body on the map and our AI instantly generates a complete fishing profile — 
+        water temperature, flow conditions, hatch activity, fly recommendations, and tactical advice 
+        specific to that exact location.
+      </p>
+
+      {/* Feature Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+        <div className="bg-black/20 rounded-lg p-3 text-center">
+          <Thermometer className="w-5 h-5 text-cyan-400 mx-auto mb-1" />
+          <div className="text-xs text-slate-400">Water Temp</div>
+          <div className="text-sm font-bold text-white">Live USGS</div>
+        </div>
+        <div className="bg-black/20 rounded-lg p-3 text-center">
+          <Gauge className="w-5 h-5 text-emerald-400 mx-auto mb-1" />
+          <div className="text-xs text-slate-400">Flow & Gauge</div>
+          <div className="text-sm font-bold text-white">Real-time CFS</div>
+        </div>
+        <div className="bg-black/20 rounded-lg p-3 text-center">
+          <Fish className="w-5 h-5 text-amber-400 mx-auto mb-1" />
+          <div className="text-xs text-slate-400">Fly Patterns</div>
+          <div className="text-sm font-bold text-white">AI Matched</div>
+        </div>
+        <div className="bg-black/20 rounded-lg p-3 text-center">
+          <Target className="w-5 h-5 text-purple-400 mx-auto mb-1" />
+          <div className="text-xs text-slate-400">Quality Score</div>
+          <div className="text-sm font-bold text-white">0-100 Rating</div>
+        </div>
+      </div>
+
+      {/* Example Output */}
+      <div className="bg-black/30 rounded-lg p-4 border border-slate-700/50">
+        <div className="text-xs text-slate-500 mb-2 font-medium">Example: Dry Creek at Alpine</div>
+        <div className="space-y-2 text-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-slate-400">Water Temperature</span>
+            <span className="text-cyan-400 font-bold">34°F (USGS Live)</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-slate-400">Flow Rate</span>
+            <span className="text-emerald-400 font-bold">6.8 CFS</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-slate-400">Fishing Quality</span>
+            <span className="text-amber-400 font-bold">95/100 Excellent</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-slate-400">AI Recommendation</span>
+            <span className="text-purple-400 font-bold">Dry Fly Conditions 75%</span>
+          </div>
+        </div>
+        <div className="mt-3 pt-3 border-t border-slate-700/50">
+          <div className="text-xs text-emerald-400 font-medium mb-1">Tactical Advice:</div>
+          <p className="text-xs text-slate-400">
+            "Parachute Adams #14-16 with Pheasant Tail dropper. Clear, calm spring day — 
+            fish will be looking up. Work the riffles and runs. Midday best."
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function WhyWereDifferent() {
   return (
@@ -25,6 +104,9 @@ function WhyWereDifferent() {
           and 3 years of validated data to predict when fish actually bite.
         </p>
       </div>
+
+      {/* AI Map Feature - New Hero Section */}
+      <AIMapFeature />
 
       {/* Physics Models Grid */}
       <div className="grid md:grid-cols-2 gap-4">
