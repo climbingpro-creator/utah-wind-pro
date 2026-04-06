@@ -3,7 +3,7 @@ import Map, { Source, Layer, Marker, Popup, NavigationControl, GeolocateControl 
 import maplibregl from 'maplibre-gl';
 import { Protocol } from 'pmtiles';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { Compass, Maximize2, X, Wind, Droplets, Layers, Waves } from 'lucide-react';
+import { Compass, Maximize2, X, Wind, Droplets, Layers } from 'lucide-react';
 
 const PMTILES_URL = import.meta.env.VITE_PMTILES_WATER_URL || null;
 import { LAKE_CONFIGS, SpatialInterpolator, applySurfacePhysics, calculateFetchMultiplier, calculateVenturiMultiplier, weatherService } from '@utahwind/weather';
@@ -209,7 +209,6 @@ export function VectorWindMap({
   const [selectedFeature, setSelectedFeature] = useState(null);
   const [pmtilesReady, setPmtilesReady] = useState(false);
   const [showSatellite, setShowSatellite] = useState(false);
-  const [showWindHeatmap, setShowWindHeatmap] = useState(false);
   const [viewState, setViewState] = useState({
     longitude: -111.83,
     latitude: 40.23,
@@ -273,62 +272,6 @@ export function VectorWindMap({
       })
       .filter(Boolean);
   }, [mapArea, stationData]);
-
-  // Generate wind heatmap grid using SpatialInterpolator
-  const windHeatmapGeoJSON = useMemo(() => {
-    if (!showWindHeatmap || !mapArea || liveStationsWithCoords.length === 0) {
-      return { type: 'FeatureCollection', features: [] };
-    }
-
-    const [centerLng, centerLat] = mapArea.center;
-    const gridSize = 20; // 20x20 grid
-    const cellSize = 0.015; // ~1 mile cells
-    const features = [];
-
-    // Wind speed to color mapping
-    const getWindColor = (speed) => {
-      if (speed == null) return 'rgba(128, 128, 128, 0.1)';
-      if (speed < 5) return 'rgba(59, 130, 246, 0.4)';   // Light blue - calm
-      if (speed < 10) return 'rgba(34, 197, 94, 0.45)';  // Green - light
-      if (speed < 15) return 'rgba(132, 204, 22, 0.5)';  // Lime - rideable
-      if (speed < 20) return 'rgba(234, 179, 8, 0.5)';   // Yellow - strong
-      if (speed < 25) return 'rgba(249, 115, 22, 0.55)'; // Orange - very strong
-      return 'rgba(239, 68, 68, 0.6)';                   // Red - nuking
-    };
-
-    for (let i = 0; i < gridSize; i++) {
-      for (let j = 0; j < gridSize; j++) {
-        const lat = centerLat - (gridSize / 2 - i) * cellSize;
-        const lng = centerLng - (gridSize / 2 - j) * cellSize;
-
-        // Use SpatialInterpolator to get wind at this point
-        const result = SpatialInterpolator.interpolateConditions([lat, lng], liveStationsWithCoords);
-        const speed = result?.interpolated?.speed;
-
-        // Create a small polygon cell
-        const halfCell = cellSize / 2;
-        features.push({
-          type: 'Feature',
-          properties: {
-            speed: speed ?? 0,
-            color: getWindColor(speed),
-          },
-          geometry: {
-            type: 'Polygon',
-            coordinates: [[
-              [lng - halfCell, lat - halfCell],
-              [lng + halfCell, lat - halfCell],
-              [lng + halfCell, lat + halfCell],
-              [lng - halfCell, lat + halfCell],
-              [lng - halfCell, lat - halfCell],
-            ]],
-          },
-        });
-      }
-    }
-
-    return { type: 'FeatureCollection', features };
-  }, [showWindHeatmap, mapArea, liveStationsWithCoords]);
 
   const abortRef = useRef(0);
   const handleMapClick = useCallback(async (e) => {
@@ -595,20 +538,6 @@ export function VectorWindMap({
             </Source>
           )}
 
-          {/* Wind heatmap layer - above terrain/satellite, below markers */}
-          {showWindHeatmap && windHeatmapGeoJSON.features.length > 0 && (
-            <Source id="wind-heatmap" type="geojson" data={windHeatmapGeoJSON}>
-              <Layer
-                id="wind-heatmap-fill"
-                type="fill"
-                paint={{
-                  'fill-color': ['get', 'color'],
-                  'fill-outline-color': 'rgba(0, 0, 0, 0)',
-                }}
-              />
-            </Source>
-          )}
-
           {/* Wind arrow overlay */}
           <WindArrowOverlay
             center={mapArea?.center}
@@ -786,36 +715,19 @@ export function VectorWindMap({
           </div>
         )}
 
-        {/* Map layer toggle buttons */}
-        <div className="absolute bottom-2 right-2 z-20 flex flex-col gap-2">
-          {/* Wind Heatmap toggle */}
-          <button
-            onClick={() => setShowWindHeatmap(!showWindHeatmap)}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all shadow-lg ${
-              showWindHeatmap
-                ? 'bg-orange-500 text-white hover:bg-orange-600'
-                : 'bg-slate-900/90 text-slate-300 hover:bg-slate-800 border border-slate-700'
-            }`}
-            aria-label={showWindHeatmap ? 'Hide wind heatmap' : 'Show wind heatmap'}
-          >
-            <Waves className="w-4 h-4" />
-            <span>Wind Field</span>
-          </button>
-
-          {/* Satellite/Map toggle */}
-          <button
-            onClick={() => setShowSatellite(!showSatellite)}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all shadow-lg ${
-              showSatellite
-                ? 'bg-cyan-500 text-white hover:bg-cyan-600'
-                : 'bg-slate-900/90 text-slate-300 hover:bg-slate-800 border border-slate-700'
-            }`}
-            aria-label={showSatellite ? 'Switch to map view' : 'Switch to satellite view'}
-          >
-            <Layers className="w-4 h-4" />
-            <span>{showSatellite ? 'Map' : 'Satellite'}</span>
-          </button>
-        </div>
+        {/* Satellite/Map toggle button */}
+        <button
+          onClick={() => setShowSatellite(!showSatellite)}
+          className={`absolute bottom-2 right-2 z-20 flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all shadow-lg ${
+            showSatellite
+              ? 'bg-cyan-500 text-white hover:bg-cyan-600'
+              : 'bg-slate-900/90 text-slate-300 hover:bg-slate-800 border border-slate-700'
+          }`}
+          aria-label={showSatellite ? 'Switch to map view' : 'Switch to satellite view'}
+        >
+          <Layers className="w-4 h-4" />
+          <span>{showSatellite ? 'Map' : 'Satellite'}</span>
+        </button>
       </div>
 
       {/* Synthetic forecast card — bottom sheet style for mobile */}
