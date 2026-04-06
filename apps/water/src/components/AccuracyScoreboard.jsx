@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Target, TrendingUp, Zap, BarChart3, ChevronDown, ChevronUp, MapPin, Fish, Ship, Droplets, Calendar, CheckCircle, XCircle, HelpCircle } from 'lucide-react';
+import { Target, TrendingUp, TrendingDown, Zap, BarChart3, ChevronDown, ChevronUp, MapPin, Fish, Ship, Droplets, Calendar, CheckCircle, XCircle, HelpCircle, Moon } from 'lucide-react';
 
 // Import validated backtest data from trained weights
 import fishingWeights from '../config/trainedWeights-fishing.json';
@@ -155,62 +155,99 @@ function HowWeValidated() {
 
 function ComparisonExplainer({ accuracy, baseline }) {
   return (
-    <div className="space-y-3">
-      {/* Visual comparison */}
+    <div className="space-y-4">
+      {/* Main Score Comparison */}
       <div className="grid grid-cols-2 gap-4">
         {/* NotWindy */}
         <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4 text-center">
           <div className="text-4xl font-black text-emerald-400 mb-1">{accuracy}%</div>
-          <div className="text-sm font-semibold text-emerald-300 mb-2">NotWindy AI</div>
-          <div className="space-y-1 text-xs text-left">
-            <div className="flex items-center gap-1.5">
-              <CheckCircle size={12} className="text-emerald-400" />
-              <span className="text-slate-300">Solunar patterns</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <CheckCircle size={12} className="text-emerald-400" />
-              <span className="text-slate-300">Pressure trends</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <CheckCircle size={12} className="text-emerald-400" />
-              <span className="text-slate-300">Live water temp</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <CheckCircle size={12} className="text-emerald-400" />
-              <span className="text-slate-300">Golden hours</span>
-            </div>
-          </div>
+          <div className="text-sm font-semibold text-emerald-300">NotWindy AI</div>
         </div>
-
         {/* Standard */}
         <div className="bg-slate-700/30 border border-slate-600/30 rounded-xl p-4 text-center">
           <div className="text-4xl font-black text-slate-500 mb-1">{baseline}%</div>
-          <div className="text-sm font-semibold text-slate-400 mb-2">Standard Forecast</div>
-          <div className="space-y-1 text-xs text-left">
-            <div className="flex items-center gap-1.5">
-              <XCircle size={12} className="text-slate-500" />
-              <span className="text-slate-500">No solunar data</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <XCircle size={12} className="text-slate-500" />
-              <span className="text-slate-500">No pressure analysis</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <XCircle size={12} className="text-slate-500" />
-              <span className="text-slate-500">No water temp</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <XCircle size={12} className="text-slate-500" />
-              <span className="text-slate-500">Generic hourly wind</span>
-            </div>
-          </div>
+          <div className="text-sm font-semibold text-slate-400">Standard Forecast</div>
         </div>
       </div>
 
       {/* Improvement callout */}
-      <div className="flex items-center justify-center gap-2 py-2">
+      <div className="flex items-center justify-center gap-2 py-1">
         <TrendingUp size={18} className="text-emerald-400" />
         <span className="text-lg font-bold text-emerald-400">+{accuracy - baseline}% more accurate</span>
+      </div>
+
+      {/* What NotWindy Includes - Icon Grid with Labels */}
+      <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-4">
+        <div className="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-3 text-center">
+          What NotWindy Analyzes
+        </div>
+        <div className="grid grid-cols-4 gap-3">
+          <div className="text-center">
+            <div className="w-10 h-10 mx-auto rounded-xl bg-indigo-500/20 flex items-center justify-center mb-2">
+              <Moon size={20} className="text-indigo-400" />
+            </div>
+            <div className="text-[11px] font-semibold text-white">Solunar</div>
+            <div className="text-[9px] text-slate-400">Moon phases</div>
+          </div>
+          <div className="text-center">
+            <div className="w-10 h-10 mx-auto rounded-xl bg-emerald-500/20 flex items-center justify-center mb-2">
+              <TrendingDown size={20} className="text-emerald-400" />
+            </div>
+            <div className="text-[11px] font-semibold text-white">Pressure</div>
+            <div className="text-[9px] text-slate-400">Trend analysis</div>
+          </div>
+          <div className="text-center">
+            <div className="w-10 h-10 mx-auto rounded-xl bg-cyan-500/20 flex items-center justify-center mb-2">
+              <Droplets size={20} className="text-cyan-400" />
+            </div>
+            <div className="text-[11px] font-semibold text-white">Water Temp</div>
+            <div className="text-[9px] text-slate-400">47 USGS gauges</div>
+          </div>
+          <div className="text-center">
+            <div className="w-10 h-10 mx-auto rounded-xl bg-amber-500/20 flex items-center justify-center mb-2">
+              <Calendar size={20} className="text-amber-400" />
+            </div>
+            <div className="text-[11px] font-semibold text-white">Golden Hours</div>
+            <div className="text-[9px] text-slate-400">Dawn & dusk</div>
+          </div>
+        </div>
+      </div>
+
+      {/* What Standard Forecasts Miss */}
+      <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4">
+        <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 text-center">
+          What Standard Forecasts Miss
+        </div>
+        <div className="grid grid-cols-4 gap-3">
+          <div className="text-center opacity-50">
+            <div className="w-10 h-10 mx-auto rounded-xl bg-slate-700/50 flex items-center justify-center mb-2">
+              <XCircle size={20} className="text-slate-500" />
+            </div>
+            <div className="text-[11px] font-medium text-slate-500">No Solunar</div>
+            <div className="text-[9px] text-slate-600">Ignored</div>
+          </div>
+          <div className="text-center opacity-50">
+            <div className="w-10 h-10 mx-auto rounded-xl bg-slate-700/50 flex items-center justify-center mb-2">
+              <XCircle size={20} className="text-slate-500" />
+            </div>
+            <div className="text-[11px] font-medium text-slate-500">No Pressure</div>
+            <div className="text-[9px] text-slate-600">Ignored</div>
+          </div>
+          <div className="text-center opacity-50">
+            <div className="w-10 h-10 mx-auto rounded-xl bg-slate-700/50 flex items-center justify-center mb-2">
+              <XCircle size={20} className="text-slate-500" />
+            </div>
+            <div className="text-[11px] font-medium text-slate-500">No Water</div>
+            <div className="text-[9px] text-slate-600">Ignored</div>
+          </div>
+          <div className="text-center opacity-50">
+            <div className="w-10 h-10 mx-auto rounded-xl bg-slate-700/50 flex items-center justify-center mb-2">
+              <XCircle size={20} className="text-slate-500" />
+            </div>
+            <div className="text-[11px] font-medium text-slate-500">Generic</div>
+            <div className="text-[9px] text-slate-600">Hourly only</div>
+          </div>
+        </div>
       </div>
     </div>
   );
