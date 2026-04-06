@@ -1,13 +1,9 @@
-import React, { Suspense, lazy } from 'react';
+import React from 'react';
 import { Wind, Brain, Lightbulb, ShieldCheck, ShieldAlert, AlertTriangle, AlertCircle, XCircle, CheckCircle, Trophy, Users, ArrowUpRight, Calendar } from 'lucide-react';
 import { WindVector } from './WindVector';
-import { SafeComponent } from '@utahwind/ui';
 import DecisionCard from './DecisionCard';
-import TodayTimeline from './TodayTimeline';
 import { evaluateKiteSafety } from './KiteSafety';
 import { SPOT_SLUG_MAP } from '../config/spotSlugs';
-
-const SpotRanker = lazy(() => import('./SpotRanker'));
 
 const SAFETY_PILL = {
   GO:      { bg: 'bg-green-500/15',  border: 'border-green-500/40', text: 'text-green-400',  icon: ShieldCheck },
@@ -200,65 +196,6 @@ export default function WindSeekerTemplate({
           </button>
         </>);
       })()}
-
-      {/* ═══════ WHERE TO GO ═══════ */}
-      <div ref={contentRef} className="scroll-mt-4">
-        <Suspense fallback={<div className="animate-pulse rounded-xl bg-[var(--bg-card)] border border-[var(--border-color)] h-48" />}>
-          <SafeComponent name="Spot Ranker">
-            <SpotRanker
-              activity={selectedActivity}
-              currentWind={{ speed: currentWindSpeed, gust: currentWindGust, direction: currentWindDirection }}
-              lakeState={lakeState}
-              mesoData={mesoData}
-              thermalPrediction={effectiveThermalPrediction}
-              onSelectSpot={onSelectSpot}
-            />
-          </SafeComponent>
-        </Suspense>
-      </div>
-
-      {/* ═══════ LIVE SENSOR NETWORK ═══════ */}
-      <div aria-live="polite" aria-atomic="false">
-        <h2 className="text-sm font-bold text-[var(--text-primary)] mb-3 flex items-center gap-2">
-          <Wind className="w-4 h-4 text-sky-500" />
-          Live Sensor Network
-          <span className="text-[10px] font-medium text-[var(--text-tertiary)] ml-auto">
-            {lakeState?.wind?.stations?.filter(s => (s.speed ?? s.windSpeed ?? 0) >= 5).length || 0} firing
-          </span>
-        </h2>
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
-          {lakeState?.wind?.stations?.map((station, index) => (
-            <WindVector
-              key={station.id || index}
-              station={station}
-              history={history[station.id]}
-              isPersonalStation={station.isPWS}
-              compact
-            />
-          ))}
-          {isLoading && !lakeState?.wind?.stations?.length && (
-            <>
-              {[1, 2, 3].map((i) => (
-                <div key={i} className={`rounded-lg p-3 animate-pulse ${theme === 'dark' ? 'bg-slate-800/40 border border-slate-700/50' : 'bg-white border border-slate-200'}`}>
-                  <div className="h-4 bg-[var(--border-color)] rounded w-2/3 mb-3" />
-                  <div className="flex gap-3">
-                    <div className="w-10 h-10 bg-[var(--border-color)] rounded-full" />
-                    <div className="flex-1 space-y-2">
-                      <div className="h-5 bg-[var(--border-color)] rounded w-1/2" />
-                      <div className="h-3 bg-[var(--border-color)] rounded w-3/4" />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* ═══════ HOURLY FORECAST ═══════ */}
-      <SafeComponent name="Today Timeline">
-        <TodayTimeline locationId={selectedLake} activity={selectedActivity} unifiedHourly={prediction?.hourly} />
-      </SafeComponent>
 
       {/* ═══════ AI BRIEFING ═══════ */}
       {effectiveBriefing && (

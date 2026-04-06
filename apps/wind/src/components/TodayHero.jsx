@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { ChevronRight, CheckCircle, MapPin, Zap, ArrowRight } from 'lucide-react';
+import { ChevronRight, CheckCircle, MapPin, Zap, ArrowRight, Clock, Wind, Sunrise } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { ACTIVITY_CONFIGS } from './ActivityMode';
 import { getRotatingImage } from '../config/imagePool';
@@ -325,6 +325,75 @@ const MOOD_ACCENT = {
   neutral: 'text-slate-400',
 };
 
+function ForecastSparkline({ hours, isDark, bgImage }) {
+  if (!hours || hours.length === 0) return null;
+  
+  const now = new Date().getHours();
+  
+  const getSegmentColor = (speed) => {
+    if (speed >= 18) return 'bg-amber-500';
+    if (speed >= 12) return 'bg-emerald-500';
+    if (speed >= 8) return 'bg-cyan-500';
+    return isDark ? 'bg-slate-700' : 'bg-slate-300';
+  };
+  
+  const getSegmentLabel = (speed) => {
+    if (speed >= 18) return 'Strong';
+    if (speed >= 12) return 'Ideal';
+    if (speed >= 8) return 'Rideable';
+    return 'Light';
+  };
+
+  return (
+    <div className={`rounded-lg p-3 ${bgImage ? 'bg-black/20 backdrop-blur-sm' : 'bg-[var(--bg-card)] border border-[var(--border-color)]'}`}>
+      <div className="flex items-center gap-2 mb-2">
+        <Clock className={`w-3 h-3 ${bgImage ? 'text-white/50' : 'text-[var(--text-tertiary)]'}`} />
+        <span className={`text-[10px] font-bold uppercase tracking-wider ${bgImage ? 'text-white/50' : 'text-[var(--text-tertiary)]'}`}>
+          24-Hour Forecast
+        </span>
+        <div className="flex items-center gap-2 ml-auto text-[9px]">
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-slate-500" /> Light</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-cyan-500" /> Rideable</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500" /> Ideal</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500" /> Strong</span>
+        </div>
+      </div>
+      
+      {/* Sparkline bar */}
+      <div className="flex gap-0.5 h-6 rounded overflow-hidden">
+        {hours.slice(0, 24).map((h, i) => {
+          const speed = h.windSpeed || h.speed || 0;
+          const hourNum = typeof h.time === 'string' && h.time.includes(':') 
+            ? parseInt(h.time.split(':')[0]) 
+            : (now + i) % 24;
+          const isNow = hourNum === now;
+          
+          return (
+            <div
+              key={i}
+              className={`flex-1 relative group cursor-default transition-all ${getSegmentColor(speed)} ${isNow ? 'ring-2 ring-white ring-offset-1 ring-offset-transparent' : ''}`}
+              title={`${hourNum > 12 ? hourNum - 12 : hourNum || 12}${hourNum >= 12 ? 'PM' : 'AM'}: ${Math.round(speed)} mph — ${getSegmentLabel(speed)}`}
+            >
+              {isNow && (
+                <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[4px] border-r-[4px] border-t-[4px] border-l-transparent border-r-transparent border-t-white" />
+              )}
+            </div>
+          );
+        })}
+      </div>
+      
+      {/* Time labels */}
+      <div className="flex justify-between mt-1 text-[9px] text-[var(--text-tertiary)]">
+        <span>Now</span>
+        <span>+6h</span>
+        <span>+12h</span>
+        <span>+18h</span>
+        <span>+24h</span>
+      </div>
+    </div>
+  );
+}
+
 const MOOD_DOT = {
   epic: 'bg-emerald-500',
   good: 'bg-sky-500',
@@ -360,7 +429,7 @@ function dirLabel(deg) {
   return dirs[Math.round(deg / 22.5) % 16];
 }
 
-export default function TodayHero({ windSpeed, windGust, windDirection, thermalPrediction, boatingPrediction, onSelectActivity, selectedActivity, fpsStation, utalpStation, propagation, unifiedActivities, locationName, prediction, selectedLake, onSelectSpot, mesoData, lakeState: _lakeState }) {
+export default function TodayHero({ windSpeed, windGust, windDirection, thermalPrediction, boatingPrediction, onSelectActivity, selectedActivity, fpsStation, utalpStation, propagation, unifiedActivities, locationName, prediction, selectedLake, onSelectSpot, mesoData, lakeState: _lakeState, sportWindows }) {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 
@@ -374,6 +443,51 @@ export default function TodayHero({ windSpeed, windGust, windDirection, thermalP
     () => buildHeadline(finalCards, outlookSpeed, selectedActivity, prediction),
     [finalCards, outlookSpeed, selectedActivity, prediction]
   );
+
+  // Compute "Next Session" from sportWindows for forecast-first hero
+  const nextSession = useMemo(() => {
+    if (!sportWindows || Object.keys(sportWindows).length === 0) return null;
+    
+    // Map selected activity to sport window key
+    const activityToSportKey = {
+      kiting: 'foil-kite',
+      windsurfing: 'windsurfing',
+      sailing: 'sailing',
+      paragliding: 'paragliding',
+      snowkiting: 'snowkiting',
+    };
+    
+    const sportKey = activityToSportKey[selectedActivity];
+    const window = sportKey ? sportWindows[sportKey] : null;
+    
+    // If no window for selected activity, find the best one
+    const bestWindow = window || Object.values(sportWindows).sort((a, b) => (b.avgScore || 0) - (a.avgScore || 0))[0];
+    
+    if (!bestWindow || !bestWindow.windowStartLabel) return null;
+    
+    return {
+      sport: bestWindow.sport || 'Session',
+      spotName: locationName || 'Your Spot',
+      startTime: bestWindow.windowStartLabel,
+      endTime: bestWindow.windowEndLabel,
+      peakTime: bestWindow.peakTimeLabel,
+      peakCondition: bestWindow.peakCondition,
+      peakSpeed: bestWindow.hours?.reduce((max, h) => Math.max(max, h.windSpeed || 0), 0) || 0,
+      durationHours: bestWindow.durationHours || 0,
+      avgScore: bestWindow.avgScore || 0,
+      hours: bestWindow.hours || [],
+    };
+  }, [sportWindows, selectedActivity, locationName]);
+
+  // Determine gear hint based on peak wind speed
+  const gearHint = useMemo(() => {
+    const peakSpeed = nextSession?.peakSpeed || outlookSpeed || 0;
+    if (peakSpeed >= 25) return { text: 'Small kite / wing day', icon: '🪁', color: 'text-red-400' };
+    if (peakSpeed >= 18) return { text: 'Medium gear', icon: '💨', color: 'text-amber-400' };
+    if (peakSpeed >= 12) return { text: 'Big gear today', icon: '🎐', color: 'text-emerald-400' };
+    if (peakSpeed >= 8) return { text: 'Foil conditions', icon: '🏄', color: 'text-cyan-400' };
+    return null;
+  }, [nextSession, outlookSpeed]);
 
   // Scout banner: detect if another spot is significantly better
   const scoutBanner = useMemo(() => {
@@ -432,62 +546,113 @@ export default function TodayHero({ windSpeed, windGust, windDirection, thermalP
       )}
 
       <div className={`relative z-10 p-5 sm:p-6 lg:p-8 ${bgImage ? '' : 'card'}`}>
-        {/* Headline + wind */}
-        <div className="flex items-start justify-between gap-6 mb-6">
-          <div className="min-w-0 flex-1">
-            <p className={`text-[11px] font-semibold uppercase tracking-widest mb-3 flex items-center gap-2 ${bgImage ? 'text-white/50' : 'data-label'}`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${MOOD_DOT[mood]}`} />
+        {/* ═══════ FORECAST-FIRST HERO ═══════ */}
+        {nextSession ? (
+          // There IS a rideable window today
+          <div className="mb-6">
+            <p className={`text-[11px] font-semibold uppercase tracking-widest mb-2 flex items-center gap-2 ${bgImage ? 'text-white/50' : 'data-label'}`}>
+              <Sunrise className={`w-3.5 h-3.5 ${bgImage ? 'text-emerald-400' : 'text-emerald-500'}`} />
+              {getGreeting()} — Next Session
+            </p>
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0 flex-1">
+                <h2 className={`text-2xl sm:text-3xl lg:text-4xl font-black leading-tight tracking-tight ${bgImage ? 'text-white' : 'text-emerald-500'}`}>
+                  {nextSession.spotName} at {nextSession.startTime}
+                </h2>
+                <p className={`text-sm sm:text-base mt-2 font-medium leading-relaxed ${bgImage ? 'text-white/70' : 'text-[var(--text-secondary)]'}`}>
+                  {nextSession.durationHours}hr window until {nextSession.endTime} · Peak {Math.round(nextSession.peakSpeed)} mph at {nextSession.peakTime}
+                </p>
+              </div>
+              <div className={`flex-shrink-0 flex flex-col items-center justify-center px-4 py-3 rounded-xl ${
+                bgImage ? 'bg-emerald-500/20 backdrop-blur-sm' : 'bg-emerald-500/10 border border-emerald-500/30'
+              }`}>
+                <div className={`text-3xl font-black tabular-nums ${bgImage ? 'text-emerald-300' : 'text-emerald-500'}`}>
+                  {nextSession.avgScore}
+                </div>
+                <p className={`text-[9px] font-bold uppercase tracking-wider ${bgImage ? 'text-emerald-300/60' : 'text-emerald-600'}`}>
+                  score
+                </p>
+              </div>
+            </div>
+
+            {/* Gear Hint Badge */}
+            {gearHint && (
+              <div className={`inline-flex items-center gap-2 mt-3 px-3 py-1.5 rounded-full text-xs font-bold ${
+                bgImage ? 'bg-white/10 backdrop-blur-sm' : 'bg-[var(--bg-card)] border border-[var(--border-color)]'
+              } ${gearHint.color}`}>
+                <span>{gearHint.icon}</span>
+                <span>{gearHint.text}</span>
+              </div>
+            )}
+
+            {/* 24-Hour Sparkline Timeline */}
+            {nextSession.hours?.length > 0 && (
+              <div className="mt-4">
+                <ForecastSparkline hours={nextSession.hours} isDark={isDark} bgImage={bgImage} />
+              </div>
+            )}
+          </div>
+        ) : (
+          // NO rideable window today — Rest Day
+          <div className="mb-6">
+            <p className={`text-[11px] font-semibold uppercase tracking-widest mb-2 flex items-center gap-2 ${bgImage ? 'text-white/50' : 'data-label'}`}>
+              <span className={`w-1.5 h-1.5 rounded-full bg-slate-500`} />
               {getGreeting()} — Today's Outlook
             </p>
-            <h2 className={`text-xl sm:text-2xl lg:text-3xl font-extrabold leading-snug tracking-tight ${bgImage ? 'text-white' : accent}`}>
-              {headline}
-            </h2>
-            {subline && (
-              <p className={`text-sm sm:text-base mt-2 font-medium leading-relaxed ${bgImage ? 'text-white/70' : 'text-[var(--text-secondary)]'}`}>
-                {subline}
-              </p>
-            )}
-          </div>
-          <div className="text-right flex-shrink-0">
-            <div className={`data-number ${bgImage ? 'text-white' : accent}`}>
-              {outlookSpeed > 0 ? Math.round(outlookSpeed) : '--'}
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0 flex-1">
+                <h2 className={`text-2xl sm:text-3xl lg:text-4xl font-black leading-tight tracking-tight ${bgImage ? 'text-white/80' : 'text-slate-400'}`}>
+                  Rest Day
+                </h2>
+                <p className={`text-sm sm:text-base mt-2 font-medium leading-relaxed ${bgImage ? 'text-white/50' : 'text-[var(--text-tertiary)]'}`}>
+                  No rideable wind forecasted today. Check back tomorrow or explore other activities.
+                </p>
+              </div>
+              <div className="text-right flex-shrink-0">
+                <div className={`text-4xl font-black tabular-nums ${bgImage ? 'text-white/40' : 'text-slate-500'}`}>
+                  {outlookSpeed > 0 ? Math.round(outlookSpeed) : '--'}
+                </div>
+                <p className={`text-[11px] font-semibold uppercase tracking-widest mt-1 ${bgImage ? 'text-white/30' : 'text-[var(--text-tertiary)]'}`}>
+                  mph now
+                </p>
+              </div>
             </div>
-            <p className={`text-[11px] font-semibold uppercase tracking-widest mt-1 ${bgImage ? 'text-white/50' : 'text-[var(--text-tertiary)]'}`}>
-              mph{windDirection != null ? ` ${dirLabel(windDirection)}` : ''}
-            </p>
-            {outlookGust > outlookSpeed * 1.2 && (
-              <p className={`text-xs mt-1 font-medium ${bgImage ? 'text-white/40' : 'text-[var(--text-tertiary)]'}`}>
-                G{Math.round(outlookGust)}
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* Location + upstream intelligence */}
-        {(locationName || context) && (
-          <div className="flex flex-wrap items-center gap-2 mb-4">
-            {locationName && (
-              <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${
-                bgImage ? 'bg-white/10 backdrop-blur-sm' : 'bg-[var(--bg-card)] border border-[var(--border-color)]'
-              }`}>
-                <MapPin className={`w-3.5 h-3.5 flex-shrink-0 ${bgImage ? 'text-sky-400' : 'text-sky-500'}`} />
-                <span className={`text-xs font-bold ${bgImage ? 'text-white/90' : 'text-[var(--text-primary)]'}`}>
-                  {locationName}
-                </span>
-              </div>
-            )}
-            {context && (
-              <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${
-                bgImage ? 'bg-amber-500/15 backdrop-blur-sm' : 'bg-amber-500/10 border border-amber-500/20'
-              }`}>
-                <Zap className={`w-3.5 h-3.5 flex-shrink-0 ${bgImage ? 'text-amber-400' : 'text-amber-500'}`} />
-                <span className={`text-xs font-bold ${bgImage ? 'text-amber-200' : 'text-amber-600'}`}>
-                  {context}
-                </span>
-              </div>
-            )}
           </div>
         )}
+
+        {/* Current conditions + context (secondary info) */}
+        <div className="flex flex-wrap items-center gap-2 mb-4">
+          {/* Current wind reading */}
+          <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${
+            bgImage ? 'bg-white/10 backdrop-blur-sm' : 'bg-[var(--bg-card)] border border-[var(--border-color)]'
+          }`}>
+            <Wind className={`w-3.5 h-3.5 flex-shrink-0 ${bgImage ? 'text-sky-400' : 'text-sky-500'}`} />
+            <span className={`text-xs font-bold ${bgImage ? 'text-white/90' : 'text-[var(--text-primary)]'}`}>
+              Now: {outlookSpeed > 0 ? `${Math.round(outlookSpeed)} mph` : 'Calm'}{windDirection != null ? ` ${dirLabel(windDirection)}` : ''}
+              {outlookGust > outlookSpeed * 1.2 && ` G${Math.round(outlookGust)}`}
+            </span>
+          </div>
+          {locationName && (
+            <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${
+              bgImage ? 'bg-white/10 backdrop-blur-sm' : 'bg-[var(--bg-card)] border border-[var(--border-color)]'
+            }`}>
+              <MapPin className={`w-3.5 h-3.5 flex-shrink-0 ${bgImage ? 'text-sky-400' : 'text-sky-500'}`} />
+              <span className={`text-xs font-bold ${bgImage ? 'text-white/90' : 'text-[var(--text-primary)]'}`}>
+                {locationName}
+              </span>
+            </div>
+          )}
+          {context && (
+            <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${
+              bgImage ? 'bg-amber-500/15 backdrop-blur-sm' : 'bg-amber-500/10 border border-amber-500/20'
+            }`}>
+              <Zap className={`w-3.5 h-3.5 flex-shrink-0 ${bgImage ? 'text-amber-400' : 'text-amber-500'}`} />
+              <span className={`text-xs font-bold ${bgImage ? 'text-amber-200' : 'text-amber-600'}`}>
+                {context}
+              </span>
+            </div>
+          )}
+        </div>
 
         {/* Propagation chain — upstream station flow when wind is building */}
         {prediction?.propagation?.chains?.length > 0 && (prediction?.propagation?.phase === 'building' || prediction?.propagation?.phase === 'approaching') && (

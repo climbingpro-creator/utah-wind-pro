@@ -40,6 +40,13 @@ function dirToDeg(dir) {
   return DIR_TO_DEG[dir] ?? 0;
 }
 
+const CARDINAL_DIRS = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+function degToDir(deg) {
+  if (deg == null) return '';
+  const idx = Math.round(((deg % 360) + 360) % 360 / 22.5) % 16;
+  return CARDINAL_DIRS[idx];
+}
+
 const SPOT_NAMES = {
   'utah-lake': 'Utah Lake', 'utah-lake-lincoln': 'Lincoln Beach',
   'utah-lake-sandy': 'Sandy Beach', 'utah-lake-vineyard': 'Vineyard',
@@ -455,13 +462,18 @@ export default function TodayTimeline({ locationId = 'utah-lake', activity = 'ki
                   />
                 </div>
 
-                {/* Direction arrow */}
-                <div className="w-5 h-5 flex items-center justify-center">
-                  <Navigation
-                    size={12}
-                    className={`${isNow ? 'text-sky-400' : 'text-slate-500'}`}
-                    style={{ transform: `rotate(${(dirDeg + 180) % 360}deg)` }}
-                  />
+                {/* Direction arrow + cardinal label */}
+                <div className="flex flex-col items-center">
+                  <div className="w-5 h-5 flex items-center justify-center">
+                    <Navigation
+                      size={12}
+                      className={`${isNow ? 'text-sky-400' : 'text-slate-500'}`}
+                      style={{ transform: `rotate(${(dirDeg + 180) % 360}deg)` }}
+                    />
+                  </div>
+                  <span className={`text-[9px] font-medium ${isNow ? 'text-sky-400' : 'text-slate-500'}`}>
+                    {h.dir || degToDir(dirDeg)}
+                  </span>
                 </div>
 
                 {/* Temperature — bottom */}

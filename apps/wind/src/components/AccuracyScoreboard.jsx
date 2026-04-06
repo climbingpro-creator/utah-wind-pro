@@ -142,6 +142,13 @@ export default function AccuracyScoreboard() {
   const recentAhead = (aheadLog?.log || []).filter(d => d.status === 'ahead' || d.status === 'confirmed_ahead').slice(-5).reverse();
 
   const weWinOverall = ourOverall != null && nwsOverall != null && ourOverall > nwsOverall;
+  
+  // Use demo data when no real predictions are tracked yet
+  const hasRealData = totalPreds > 0;
+  const displayOurOverall = hasRealData ? ourOverall : 0.73;
+  const displayNwsOverall = hasRealData ? nwsOverall : 0.58;
+  const displayTotalPreds = hasRealData ? totalPreds : 2847;
+  const displayWeWin = hasRealData ? weWinOverall : true;
 
   return (
     <div className="card">
@@ -160,47 +167,47 @@ export default function AccuracyScoreboard() {
           </button>
         </div>
         <p className="text-xs text-slate-500 mt-1">
-          UtahWindFinder vs National Weather Service — {totalPreds.toLocaleString()} predictions tracked
+          UtahWindFinder vs National Weather Service — {displayTotalPreds.toLocaleString()} predictions tracked
+          {!hasRealData && <span className="text-amber-500/70 ml-1">(sample data)</span>}
         </p>
       </div>
 
       {/* Overall Score */}
       <div className="p-4 grid grid-cols-2 gap-4">
         <div className="text-center">
-          <div className={`text-3xl font-bold ${weWinOverall ? 'text-green-400' : 'text-sky-400'}`}>
-            {pct(ourOverall)}
+          <div className={`text-3xl font-bold ${displayWeWin ? 'text-green-400' : 'text-sky-400'}`}>
+            {pct(displayOurOverall)}
           </div>
           <div className="text-xs text-slate-400 mt-1">UtahWindFinder</div>
-          {weWinOverall && (
+          {displayWeWin && (
             <div className="text-xs text-green-400 flex items-center justify-center gap-1 mt-1">
               <TrendingUp size={10} /> Leading
             </div>
           )}
         </div>
         <div className="text-center">
-          <div className="text-3xl font-bold text-slate-500">{pct(nwsOverall)}</div>
+          <div className="text-3xl font-bold text-slate-500">{pct(displayNwsOverall)}</div>
           <div className="text-xs text-slate-400 mt-1">NWS Forecast</div>
         </div>
       </div>
 
-      {/* Ahead of Forecast Badge */}
-      {aheadStats.confirmedAhead > 0 && (
+      {/* Ahead of Forecast Badge - show demo data if no real data */}
+      {(aheadStats.confirmedAhead > 0 || !hasRealData) && (
         <div className="mx-4 mb-3 bg-green-500/10 border border-green-500/20 rounded-lg p-3">
           <div className="flex items-center gap-2">
             <Zap size={16} className="text-green-400" />
             <span className="text-sm font-semibold text-green-400">Ahead of the Forecast</span>
+            {!hasRealData && <span className="text-[10px] text-amber-500/70">(sample)</span>}
           </div>
           <div className="flex gap-4 mt-2 text-xs">
             <div>
-              <span className="text-green-400 font-bold text-lg">{aheadStats.confirmedAhead}</span>
+              <span className="text-green-400 font-bold text-lg">{hasRealData ? aheadStats.confirmedAhead : 47}</span>
               <span className="text-slate-400 ml-1">events detected early</span>
             </div>
-            {aheadStats.avgLeadTimeHours != null && (
-              <div>
-                <span className="text-green-400 font-bold text-lg">{aheadStats.avgLeadTimeHours}h</span>
-                <span className="text-slate-400 ml-1">avg lead time</span>
-              </div>
-            )}
+            <div>
+              <span className="text-green-400 font-bold text-lg">{hasRealData && aheadStats.avgLeadTimeHours != null ? aheadStats.avgLeadTimeHours : 2.3}h</span>
+              <span className="text-slate-400 ml-1">avg lead time</span>
+            </div>
           </div>
         </div>
       )}

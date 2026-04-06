@@ -12,7 +12,8 @@ import { LakeSelector } from './LakeSelector';
 import { ToastContainer } from './ToastNotification';
 import { ACTIVITY_CONFIGS } from './ActivityMode';
 import { SPOT_SLUG_MAP } from '../config/spotSlugs';
-import { Trophy, Calendar, ArrowUpRight, Users } from 'lucide-react';
+import { Trophy, Calendar, ArrowUpRight, Users, Wind } from 'lucide-react';
+import { WindVector } from './WindVector';
 
 const DetailedPanels = lazy(() => import('./DetailedPanels'));
 const VectorWindMap = lazy(() => import('./VectorWindMap').then(m => ({ default: m.VectorWindMap })));
@@ -22,15 +23,15 @@ const ParaglidingMode = lazy(() => import('./ParaglidingMode'));
 const ProUpgrade = lazy(() => import('./ProUpgrade'));
 const WindSeekerTemplate = lazy(() => import('./WindSeekerTemplate'));
 const WinterRiderTemplate = lazy(() => import('./WinterRiderTemplate'));
-const AccuracyScoreboard = lazy(() => import('./AccuracyScoreboard'));
+const LearnView = lazy(() => import('./LearnView'));
 const PhotoSubmit = lazy(() => import('./PhotoSubmit'));
 const SMSAlertSettings = lazy(() => import('./SMSAlertSettings'));
 const ModelStepCard = lazy(() => import('./ModelStepCard'));
 const SignalConvergence = lazy(() => import('./SignalConvergence'));
 const PropagationTracker = lazy(() => import('./PropagationTracker'));
 const SpotRanker = lazy(() => import('./SpotRanker'));
-const ProGate = lazy(() => import('./ProGate'));
 const Modal = lazy(() => import('@utahwind/ui').then(m => ({ default: m.Modal })));
+const TodayTimeline = lazy(() => import('./TodayTimeline'));
 
 const FREE_LAKES = new Set([
   'utah-lake', 'utah-lake-zigzag', 'utah-lake-lincoln', 'utah-lake-vineyard',
@@ -345,7 +346,7 @@ export function Dashboard() {
 
       {showLearningDashboard && (
         <Suspense fallback={null}>
-          <Modal isOpen={showLearningDashboard} onClose={() => setShowLearningDashboard(false)} label="Learning System" className="bg-slate-900 rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+          <Modal isOpen={showLearningDashboard} onClose={() => setShowLearningDashboard(false)} label="How Our AI Works" className="bg-slate-900 rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <button
               onClick={() => setShowLearningDashboard(false)}
               aria-label="Close learning dashboard"
@@ -354,12 +355,7 @@ export function Dashboard() {
               ✕
             </button>
             <Suspense fallback={<div className="p-8 text-center text-gray-400">Loading...</div>}>
-              <div className="p-2 space-y-4">
-                <AccuracyScoreboard />
-                <ProGate feature="Model Intelligence" preview="See how the AI learns and improves">
-                  <LearningDashboard />
-                </ProGate>
-              </div>
+              <LearnView onUpgradeClick={openPaywall} isPro={isPro} />
             </Suspense>
           </Modal>
         </Suspense>
@@ -393,6 +389,7 @@ export function Dashboard() {
 
           <WelcomeCard />
 
+          {/* ═══════ 1. HERO FORECAST BLOCK ═══════ */}
           <TodayHero
             windSpeed={currentWindSpeed}
             windGust={currentWindGust}
@@ -411,35 +408,10 @@ export function Dashboard() {
             onSelectSpot={handleSelectLake}
             mesoData={mesoData}
             lakeState={lakeState}
+            sportWindows={sportWindows}
           />
 
-          <Suspense fallback={<ChunkFallback className="h-48" />}>
-            <SafeComponent name="Spot Ranker">
-              <SpotRanker
-                activity={selectedActivity}
-                currentWind={{ speed: currentWindSpeed, gust: currentWindGust, direction: currentWindDirection }}
-                lakeState={lakeState}
-                mesoData={mesoData}
-                thermalPrediction={effectiveThermalPrediction}
-                onSelectSpot={handleSelectLake}
-              />
-            </SafeComponent>
-          </Suspense>
-
-          <Suspense fallback={<ChunkFallback className="h-80" />}>
-            <VectorWindMap
-              selectedLake={selectedLake}
-              windData={{
-                direction: lakeState?.pws?.windDirection || lakeState?.wind?.stations?.[0]?.direction,
-                speed: lakeState?.pws?.windSpeed || lakeState?.wind?.stations?.[0]?.speed,
-                waterTemp: lakeState?.pws?.waterTemp ?? null,
-              }}
-              stationData={lakeState?.wind?.stations}
-              isLoading={isLoading}
-              onSelectLaunch={handleSelectLake}
-            />
-          </Suspense>
-
+          {/* ═══════ 2. BEST TIME WINDOWS ═══════ */}
           {sportWindows && Object.keys(sportWindows).length > 0 && (
             <SafeComponent name="Sport Intelligence">
               <IntelligentRecommendations
@@ -459,6 +431,81 @@ export function Dashboard() {
             </SafeComponent>
           )}
 
+          {/* ═══════ 3. WHERE TO GO (Spot Ranker) ═══════ */}
+          <Suspense fallback={<ChunkFallback className="h-48" />}>
+            <SafeComponent name="Spot Ranker">
+              <SpotRanker
+                activity={selectedActivity}
+                currentWind={{ speed: currentWindSpeed, gust: currentWindGust, direction: currentWindDirection }}
+                lakeState={lakeState}
+                mesoData={mesoData}
+                thermalPrediction={effectiveThermalPrediction}
+                onSelectSpot={handleSelectLake}
+              />
+            </SafeComponent>
+          </Suspense>
+
+          {/* ═══════ 4. TODAY'S WIND (Hourly Table) — Moved from WindSeekerTemplate ═══════ */}
+          <SafeComponent name="Today Timeline">
+            <Suspense fallback={<ChunkFallback className="h-48" />}>
+              <TodayTimeline locationId={selectedLake} activity={selectedActivity} unifiedHourly={prediction?.hourly} />
+            </Suspense>
+          </SafeComponent>
+
+          {/* ═══════ 5. LIVE SENSOR NETWORK — Moved from WindSeekerTemplate ═══════ */}
+          <div aria-live="polite" aria-atomic="false">
+            <h2 className="text-sm font-bold text-[var(--text-primary)] mb-3 flex items-center gap-2">
+              <Wind className="w-4 h-4 text-sky-500" />
+              Live Sensor Network
+              <span className="text-[10px] font-medium text-[var(--text-tertiary)] ml-auto">
+                {lakeState?.wind?.stations?.filter(s => (s.speed ?? s.windSpeed ?? 0) >= 5).length || 0} firing
+              </span>
+            </h2>
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
+              {lakeState?.wind?.stations?.map((station, index) => (
+                <WindVector
+                  key={station.id || index}
+                  station={station}
+                  history={history?.[station.id]}
+                  isPersonalStation={station.isPWS}
+                  compact
+                />
+              ))}
+              {isLoading && !lakeState?.wind?.stations?.length && (
+                <>
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className={`rounded-lg p-3 animate-pulse ${theme === 'dark' ? 'bg-slate-800/40 border border-slate-700/50' : 'bg-white border border-slate-200'}`}>
+                      <div className="h-4 bg-[var(--border-color)] rounded w-2/3 mb-3" />
+                      <div className="flex gap-3">
+                        <div className="w-10 h-10 bg-[var(--border-color)] rounded-full" />
+                        <div className="flex-1 space-y-2">
+                          <div className="h-5 bg-[var(--border-color)] rounded w-1/2" />
+                          <div className="h-3 bg-[var(--border-color)] rounded w-3/4" />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* ═══════ MAP ═══════ */}
+          <Suspense fallback={<ChunkFallback className="h-80" />}>
+            <VectorWindMap
+              selectedLake={selectedLake}
+              windData={{
+                direction: lakeState?.pws?.windDirection || lakeState?.wind?.stations?.[0]?.direction,
+                speed: lakeState?.pws?.windSpeed || lakeState?.wind?.stations?.[0]?.speed,
+                waterTemp: lakeState?.pws?.waterTemp ?? null,
+              }}
+              stationData={lakeState?.wind?.stations}
+              isLoading={isLoading}
+              onSelectLaunch={handleSelectLake}
+            />
+          </Suspense>
+
+          {/* ═══════ ACTIVITY-SPECIFIC TEMPLATES ═══════ */}
           <Suspense fallback={<ChunkFallback className="h-64" />}>
             {selectedActivity === 'paragliding' ? (
               <>
