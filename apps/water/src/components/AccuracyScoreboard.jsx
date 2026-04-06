@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Target, TrendingUp, Clock, Zap, Shield, BarChart3, ChevronDown, ChevronUp, MapPin, Fish, Ship, Droplets } from 'lucide-react';
-import { apiUrl } from '@utahwind/weather';
-import { fetchWithRetry } from '../utils/fetchWithRetry';
+import { Target, TrendingUp, Zap, BarChart3, ChevronDown, ChevronUp, MapPin, Fish, Ship, Droplets } from 'lucide-react';
 
 // Import validated backtest data from trained weights
 import fishingWeights from '../config/trainedWeights-fishing.json';
@@ -35,11 +33,6 @@ const BACKTEST_STATS = {
   fishingImprovement: 23.1,
   boatingImprovement: 24.5,
 };
-
-function pct(val) {
-  if (val == null) return '—';
-  return `${Math.round(val * 100)}%`;
-}
 
 function AccuracyBar({ label, ours, nws, count, icon: Icon }) {
   const ourPct = ours != null ? Math.round(ours * 100) : 0;
