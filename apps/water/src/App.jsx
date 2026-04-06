@@ -282,24 +282,27 @@ function WaterApp() {
                 Utah Water & Glass
               </h1>
             </div>
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-2">
               <div className="hidden sm:flex items-center gap-1.5 text-[11px] font-medium text-[var(--text-tertiary)] mr-1">
                 {error ? <WifiOff className="w-3.5 h-3.5 text-red-500" /> : <Wifi className="w-3.5 h-3.5 text-emerald-500" />}
                 <span>{formatTime(lastUpdated)}</span>
               </div>
-              <button onClick={refresh} disabled={isLoading} className="p-1.5 rounded-lg hover:bg-white/5 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors disabled:opacity-40">
+              <button onClick={refresh} disabled={isLoading} className="flex flex-col items-center gap-0.5 p-1.5 rounded-lg hover:bg-white/5 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors disabled:opacity-40">
                 <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+                <span className="text-[8px] font-medium">Refresh</span>
               </button>
-              <button onClick={toggleTheme} className="p-1.5 rounded-lg hover:bg-white/5 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors">
+              <button onClick={toggleTheme} className="flex flex-col items-center gap-0.5 p-1.5 rounded-lg hover:bg-white/5 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors">
                 {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                <span className="text-[8px] font-medium">{isDark ? 'Light' : 'Dark'}</span>
               </button>
               {/* Learn button - accessible to all users */}
               <button
                 onClick={() => setShowLearnView(true)}
-                className="p-1.5 rounded-lg hover:bg-cyan-500/10 text-cyan-400/70 hover:text-cyan-400 transition-colors"
+                className="flex flex-col items-center gap-0.5 p-1.5 rounded-lg hover:bg-cyan-500/10 text-cyan-400/70 hover:text-cyan-400 transition-colors"
                 title="Learn how NotWindy works"
               >
                 <Brain className="w-4 h-4" />
+                <span className="text-[8px] font-medium">Learn</span>
               </button>
               {/* Upgrade button for non-Pro users */}
               {!isPro && (
@@ -331,27 +334,30 @@ function WaterApp() {
               {isAdmin && (
                 <button
                   onClick={() => { window.location.hash = '#admin'; }}
-                  className="p-1.5 rounded-lg hover:bg-violet-500/10 text-violet-400/70 hover:text-violet-400 transition-colors"
+                  className="flex flex-col items-center gap-0.5 p-1.5 rounded-lg hover:bg-violet-500/10 text-violet-400/70 hover:text-violet-400 transition-colors"
                   title="Admin"
                 >
                   <Shield className="w-4 h-4" />
+                  <span className="text-[8px] font-medium">Admin</span>
                 </button>
               )}
               {user ? (
                 <button
                   onClick={signOut}
-                  className="p-1.5 rounded-lg hover:bg-red-500/10 text-slate-400 hover:text-red-400 transition-colors"
+                  className="flex flex-col items-center gap-0.5 p-1.5 rounded-lg hover:bg-red-500/10 text-slate-400 hover:text-red-400 transition-colors"
                   title="Sign Out"
                 >
                   <LogOut className="w-4 h-4" />
+                  <span className="text-[8px] font-medium">Out</span>
                 </button>
               ) : (
                 <button
                   onClick={() => { window.location.hash = '#login'; }}
-                  className="p-1.5 rounded-lg hover:bg-cyan-500/10 text-cyan-400/70 hover:text-cyan-400 transition-colors"
+                  className="flex flex-col items-center gap-0.5 p-1.5 rounded-lg hover:bg-cyan-500/10 text-cyan-400/70 hover:text-cyan-400 transition-colors"
                   title="Log In"
                 >
                   <LogIn className="w-4 h-4" />
+                  <span className="text-[8px] font-medium">Login</span>
                 </button>
               )}
             </div>
