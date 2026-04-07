@@ -46,8 +46,9 @@ class JumpTracker {
     hidden var _spdBufIdx  = 0;
     hidden var _spdBufFull = false;
 
-    // ── Altitude smoothing (rolling 2-second baseline) ────────────
-    hidden const ALT_BUF_SIZE   = 50;    // ~2s at 25Hz
+    // ── Altitude smoothing (rolling 1-second baseline) ────────────
+    // Reduced from 50 to 25 samples to save memory
+    hidden const ALT_BUF_SIZE   = 25;    // ~1s at 25Hz (was 50)
     hidden var _altBuf;
     hidden var _altBufIdx       = 0;
     hidden var _altBufFull      = false;

@@ -92,13 +92,27 @@ class SessionView extends WatchUi.View {
         dc.drawText(cx, H * 76 / 100, Graphics.FONT_SMALL,
             avgSpd.format("%.1f") + " kts", Graphics.TEXT_JUSTIFY_CENTER);
 
-        // GPS diagnostic
+        // Memory + GPS diagnostic
+        var stats = System.getSystemStats();
+        var usedMem = stats.usedMemory;
+        var totalMem = stats.totalMemory;
+        var memPct = (totalMem > 0) ? ((usedMem * 100) / totalMem) : 0;
+        
+        var diagStr = "Mem: " + memPct + "%";
         if (app.jumpTracker != null && app.jumpTracker.logger != null) {
-            dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(cx, H * 89 / 100, Graphics.FONT_XTINY,
-                "GPS: " + app.jumpTracker.logger.gpsFixes + " fixes",
-                Graphics.TEXT_JUSTIFY_CENTER);
+            diagStr += "  GPS: " + app.jumpTracker.logger.gpsFixes;
         }
+        
+        // Color code memory usage
+        if (memPct > 85) {
+            dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
+        } else if (memPct > 70) {
+            dc.setColor(Graphics.COLOR_YELLOW, Graphics.COLOR_TRANSPARENT);
+        } else {
+            dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
+        }
+        dc.drawText(cx, H * 89 / 100, Graphics.FONT_XTINY,
+            diagStr, Graphics.TEXT_JUSTIFY_CENTER);
     }
 
     hidden function _fmtTimer(ms) {

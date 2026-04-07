@@ -19,7 +19,9 @@ class KiteSessionApp extends Application.AppBase {
     var uploader    = null;
 
     // ── App-level GPS track (shared by MapView + ReviewView) ────
-    hidden const MAX_TRACK = 600;
+    // Reduced from 600 to 300 to save ~2.4KB of memory
+    // At 2s sampling, 300 points = 10 minutes before simplification kicks in
+    hidden const MAX_TRACK = 300;
     var trackLats;
     var trackLons;
     var trackCount = 0;
