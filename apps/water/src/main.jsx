@@ -85,7 +85,7 @@ try {
       localStorage.removeItem(key);
     }
   }
-} catch (e) {
+} catch (_e) {
   // localStorage might not be available
 }
 
