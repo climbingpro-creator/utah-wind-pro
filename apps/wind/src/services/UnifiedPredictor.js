@@ -1189,19 +1189,25 @@ export function predict(lakeId, activity, liveStations, modelContext, config, op
   const requiresDaylight = DAYLIGHT_REQUIRED.includes(activity);
   
   if (requiresDaylight && daylight.isNight) {
+    const nightHeadline = `After Dark — ${activity === 'paragliding' ? 'No flying' : 'No sessions'} at night`;
+    const nightDetail = `${activity.charAt(0).toUpperCase() + activity.slice(1)} requires daylight for safety. Sunrise at ${formatHour(daylight.sunrise)}.`;
+    const nightAction = `Wait for sunrise at ${formatHour(daylight.sunrise)}`;
     return {
+      // Match normal return structure - decision is a STRING
+      decision: 'PASS',
+      confidence: 1.0,
+      regime: 'night',
       probability: 0,
       speed: 0,
       direction: null,
-      decision: {
-        decision: 'PASS',
-        confidence: 1.0,
-        headline: `After Dark — ${activity === 'paragliding' ? 'No flying' : 'No sessions'} at night`,
-        detail: `${activity.charAt(0).toUpperCase() + activity.slice(1)} requires daylight for safety. Sunrise at ${formatHour(daylight.sunrise)}.`,
-        action: `Wait for sunrise at ${formatHour(daylight.sunrise)}`,
+      // Briefing object for UI
+      briefing: {
+        headline: nightHeadline,
+        body: nightDetail,
+        bestAction: nightAction,
+        bullets: [`Sunrise at ${formatHour(daylight.sunrise)}`],
       },
       activities: Object.fromEntries(DAYLIGHT_REQUIRED.map(a => [a, { score: 0, status: 'pass', message: 'After dark' }])),
-      regime: { regime: 'night', confidence: 1.0 },
       propagation: { phase: 'night', eta: Math.round((daylight.sunrise - daylight.currentHour + (daylight.currentHour > 12 ? 24 : 0)) * 60) },
       daylight,
       isNight: true,
@@ -1210,21 +1216,27 @@ export function predict(lakeId, activity, liveStations, modelContext, config, op
   
   if (requiresDaylight && daylight.isTwilight) {
     const isMorning = daylight.currentHour < 12;
+    const twilightHeadline = isMorning ? 'Pre-Dawn — Almost time' : 'Dusk — Wrapping up';
+    const twilightDetail = isMorning 
+      ? `Sunrise at ${formatHour(daylight.sunrise)}. ${activity === 'paragliding' ? 'Flying' : 'Sessions'} start soon.`
+      : `Sunset was at ${formatHour(daylight.sunset)}. Limited visibility — pack up for safety.`;
+    const twilightAction = isMorning ? `Wait for full light at ${formatHour(daylight.sunrise + 0.3)}` : 'Call it a day';
     return {
+      // Match normal return structure - decision is a STRING
+      decision: 'WAIT',
+      confidence: 0.9,
+      regime: 'twilight',
       probability: 10,
       speed: 0,
       direction: null,
-      decision: {
-        decision: 'WAIT',
-        confidence: 0.9,
-        headline: isMorning ? 'Pre-Dawn — Almost time' : 'Dusk — Wrapping up',
-        detail: isMorning 
-          ? `Sunrise at ${formatHour(daylight.sunrise)}. ${activity === 'paragliding' ? 'Flying' : 'Sessions'} start soon.`
-          : `Sunset was at ${formatHour(daylight.sunset)}. Limited visibility — pack up for safety.`,
-        action: isMorning ? `Wait for full light at ${formatHour(daylight.sunrise + 0.3)}` : 'Call it a day',
+      // Briefing object for UI
+      briefing: {
+        headline: twilightHeadline,
+        body: twilightDetail,
+        bestAction: twilightAction,
+        bullets: [isMorning ? `Sunrise at ${formatHour(daylight.sunrise)}` : `Sunset was at ${formatHour(daylight.sunset)}`],
       },
       activities: Object.fromEntries(DAYLIGHT_REQUIRED.map(a => [a, { score: 10, status: 'wait', message: isMorning ? 'Dawn approaching' : 'Dusk — ending' }])),
-      regime: { regime: 'twilight', confidence: 0.9 },
       propagation: { phase: 'twilight', eta: isMorning ? Math.round((daylight.sunrise - daylight.currentHour) * 60) : 0 },
       daylight,
       isTwilight: true,
