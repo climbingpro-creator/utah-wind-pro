@@ -9,6 +9,7 @@ import { NorthFlowGauge } from './NorthFlowGauge';
 import { KiteSafetyIndicator } from './KiteSafety';
 import { SafeComponent } from '@utahwind/ui';
 import ProGate from './ProGate';
+import { maskWindSpeed, maskDirection } from './ProFeatureLock';
 import PrimaryWindDisplay from './PrimaryWindDisplay';
 import { FactorBar } from '@utahwind/ui';
 import { safeToFixed } from '../utils/safeToFixed';
@@ -260,19 +261,23 @@ export default function DetailedPanels({
           </SafeComponent>
         )}
 
-        <ProGate feature="Smart Hourly Forecast" preview="Hour-by-hour wind predictions">
+        <ProGate feature="Smart Hourly Forecast" preview="See exact timing + confidence scores">
           <SmartTimeline
             activity={selectedActivity}
             locationId={selectedLake}
-            currentWind={{ speed: currentWindSpeed, gust: currentWindGust, direction: currentWindDirection }}
-            upstreamData={{
-              kslcSpeed: lakeState?.kslcStation?.speed,
-              kslcDirection: lakeState?.kslcStation?.direction,
-              kpvuSpeed: lakeState?.kpvuStation?.speed,
-              kpvuDirection: lakeState?.kpvuStation?.direction,
+            currentWind={{
+              speed: maskWindSpeed(),
+              gust: maskWindSpeed() + 4,
+              direction: maskDirection(),
             }}
-            lakeState={lakeState}
-            mesoData={mesoData}
+            upstreamData={{
+              kslcSpeed: maskWindSpeed(),
+              kslcDirection: maskDirection(),
+              kpvuSpeed: maskWindSpeed(),
+              kpvuDirection: maskDirection(),
+            }}
+            lakeState={{}}
+            mesoData={{}}
           />
         </ProGate>
 
