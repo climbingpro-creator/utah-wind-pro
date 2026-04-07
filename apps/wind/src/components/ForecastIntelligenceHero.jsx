@@ -1,21 +1,13 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
-  ChevronRight, CheckCircle, MapPin, Clock, Wind, Calendar, 
-  Star, AlertTriangle, Sun, Cloud, Zap, ArrowRight, Loader2
+  ChevronRight, Wind, Calendar, 
+  Star, AlertTriangle, Zap, Loader2
 } from 'lucide-react';
-import { useTheme } from '../context/ThemeContext';
 import { ACTIVITY_CONFIGS } from './ActivityMode';
 import { getRotatingImage } from '../config/imagePool';
 import { getForecastIntelligence } from '@utahwind/weather';
 
 const ALL_ACTIVITIES = ['kiting', 'paragliding', 'sailing', 'snowkiting', 'boating', 'paddling', 'fishing', 'windsurfing'];
-
-function getGreeting() {
-  const h = new Date().getHours();
-  if (h < 12) return 'Good morning';
-  if (h < 17) return 'Good afternoon';
-  return 'Good evening';
-}
 
 function getDayName() {
   return new Date().toLocaleDateString('en-US', { weekday: 'long' });
@@ -43,8 +35,6 @@ const EVENT_ICONS = {
 };
 
 function SpotRow({ spot, rank, onSelect, isSelected, bgImage }) {
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
   const isPriority = spot.isPriority;
 
   return (
@@ -190,8 +180,6 @@ export default function ForecastIntelligenceHero({
   currentWindSpeed,
   currentWindDirection,
 }) {
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
   const [forecast, setForecast] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -229,7 +217,6 @@ export default function ForecastIntelligenceHero({
     return dirs[Math.round(deg / 22.5) % 16];
   };
 
-  const bestToday = forecast?.today?.[0];
   const hasWindowsToday = forecast?.today?.length > 0;
   const hasWindowsTomorrow = forecast?.tomorrow?.length > 0;
 
