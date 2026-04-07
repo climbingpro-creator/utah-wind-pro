@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  ChevronRight, Wind, Calendar, 
+  ChevronRight, CheckCircle, Wind, Calendar, 
   Star, AlertTriangle, Zap, Loader2
 } from 'lucide-react';
 import { ACTIVITY_CONFIGS } from './ActivityMode';
