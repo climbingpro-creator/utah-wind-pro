@@ -210,6 +210,11 @@ export default function WaterSearch({ onSelect, isExpanded = false, onToggle }) 
         <input
           ref={inputRef}
           type="text"
+          inputMode="search"
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
+          spellCheck="false"
           value={query}
           onChange={(e) => {
             setQuery(e.target.value);
@@ -217,7 +222,8 @@ export default function WaterSearch({ onSelect, isExpanded = false, onToggle }) 
           }}
           onFocus={() => setShowResults(true)}
           placeholder="Search lake, river, reservoir..."
-          className="flex-1 bg-transparent text-sm text-white placeholder-slate-500 outline-none"
+          className="flex-1 bg-transparent text-base text-white placeholder-slate-500 outline-none"
+          style={{ fontSize: '16px' }}
         />
         {isSearching && (
           <Loader2 className="w-4 h-4 text-cyan-400 animate-spin shrink-0" />

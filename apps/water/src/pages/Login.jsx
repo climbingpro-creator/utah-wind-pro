@@ -104,11 +104,15 @@ export default function Login() {
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                 <input
                   type="email"
+                  inputMode="email"
+                  autoComplete="email"
+                  autoCapitalize="off"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
                   required
-                  className="w-full rounded-lg bg-white/[0.04] border border-white/[0.08] pl-10 pr-3 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30"
+                  className="w-full rounded-lg bg-white/[0.04] border border-white/[0.08] pl-10 pr-3 py-2.5 text-base text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30"
+                  style={{ fontSize: '16px' }}
                 />
               </div>
             </div>
@@ -119,12 +123,14 @@ export default function Login() {
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                 <input
                   type={showPassword ? 'text' : 'password'}
+                  autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   required
                   minLength={6}
-                  className="w-full rounded-lg bg-white/[0.04] border border-white/[0.08] pl-10 pr-10 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30"
+                  className="w-full rounded-lg bg-white/[0.04] border border-white/[0.08] pl-10 pr-10 py-2.5 text-base text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30"
+                  style={{ fontSize: '16px' }}
                 />
                 <button
                   type="button"
@@ -143,14 +149,16 @@ export default function Login() {
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                   <input
                     type={showPassword ? 'text' : 'password'}
+                    autoComplete="new-password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="••••••••"
                     required
                     minLength={6}
-                    className={`w-full rounded-lg bg-white/[0.04] border pl-10 pr-10 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 ${
+                    className={`w-full rounded-lg bg-white/[0.04] border pl-10 pr-10 py-2.5 text-base text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 ${
                       confirmPassword && password !== confirmPassword ? 'border-red-500' : 'border-white/[0.08]'
                     }`}
+                    style={{ fontSize: '16px' }}
                   />
                   <button
                     type="button"

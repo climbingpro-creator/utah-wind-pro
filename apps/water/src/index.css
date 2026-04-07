@@ -13,13 +13,35 @@
   --card-radius: 1rem;
 }
 
+/* iOS Safari fixes */
+html {
+  /* Prevent iOS bounce/rubber-band scrolling */
+  overscroll-behavior: none;
+  /* Ensure touch events work properly */
+  -webkit-tap-highlight-color: transparent;
+}
+
 body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   margin: 0;
   min-height: 100vh;
+  min-height: 100dvh; /* Dynamic viewport height for iOS */
   background: var(--bg-primary);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
+  /* Prevent iOS zoom on double-tap */
+  touch-action: manipulation;
+}
+
+/* Prevent iOS auto-zoom on input focus (must be 16px+) */
+input, select, textarea {
+  font-size: 16px !important;
+}
+
+/* Ensure buttons and links are tappable on iOS */
+button, a, [role="button"] {
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+  touch-action: manipulation;
 }
 
 .card {
