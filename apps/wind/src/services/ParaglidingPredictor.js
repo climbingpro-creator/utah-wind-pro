@@ -9,9 +9,46 @@
  * Indicator chain:
  *   SOUTH: KPVU S (thermal) → UTOLY confirm → FPS ground truth
  *   NORTH: KSLC N (30-60 min lead) → UTOLY confirm → FPS switch → UTALP ground truth
+ * 
+ * CRITICAL: Paragliding requires daylight! No flying after sunset.
  */
 
 import pgWeightsData from '../config/trainedWeights-paragliding.json';
+
+// ─── Daylight Calculation ─────────────────────────────────────
+// Paragliding REQUIRES daylight - this is a safety-critical check
+
+function calculateDaylight(lat = 40.45, date = new Date()) {
+  const dayOfYear = Math.floor((date - new Date(date.getFullYear(), 0, 0)) / 86400000);
+  const hour = date.getHours() + date.getMinutes() / 60;
+  
+  const declination = 23.45 * Math.sin((360 / 365) * (dayOfYear - 81) * Math.PI / 180);
+  const latRad = lat * Math.PI / 180;
+  const decRad = declination * Math.PI / 180;
+  
+  let cosHourAngle = -Math.tan(latRad) * Math.tan(decRad);
+  cosHourAngle = Math.max(-1, Math.min(1, cosHourAngle));
+  const hourAngle = Math.acos(cosHourAngle) * 180 / Math.PI;
+  
+  const solarNoon = 12;
+  const sunrise = solarNoon - hourAngle / 15;
+  const sunset = solarNoon + hourAngle / 15;
+  
+  const isNight = hour < sunrise - 0.5 || hour > sunset + 0.5;
+  const isTwilight = (hour >= sunrise - 0.5 && hour < sunrise) || (hour > sunset && hour <= sunset + 0.5);
+  const isDaylight = hour >= sunrise && hour <= sunset;
+  const daylightHoursRemaining = isDaylight ? Math.max(0, sunset - hour) : 0;
+  
+  return { sunrise, sunset, isNight, isTwilight, isDaylight, daylightHoursRemaining };
+}
+
+function formatHour(decimalHour) {
+  const h = Math.floor(decimalHour);
+  const m = Math.round((decimalHour - h) * 60);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const h12 = h > 12 ? h - 12 : (h === 0 ? 12 : h);
+  return m === 0 ? `${h12} ${ampm}` : `${h12}:${m.toString().padStart(2, '0')} ${ampm}`;
+}
 
 let learnedWeights = null;
 
@@ -39,6 +76,34 @@ export function predictSouth(windData, conditions = {}) {
   const wuAlpin3 = windData?.KUTALPIN3 || {};
   const hour = new Date().getHours();
   const month = new Date().getMonth() + 1;
+  
+  // ─── DAYLIGHT CHECK — Paragliding requires visibility! ───────
+  const daylight = calculateDaylight(40.45); // PotM latitude
+  
+  if (daylight.isNight) {
+    return {
+      probability: 0,
+      expectedSpeed: 0,
+      conditions: 'No flying after dark',
+      verdict: `Night — No flying possible. Sunrise at ${formatHour(daylight.sunrise)}`,
+      confidence: 100,
+      isNight: true,
+      hoursUntilSunrise: daylight.sunrise - hour + (hour > 12 ? 24 : 0),
+    };
+  }
+  
+  if (daylight.isTwilight) {
+    return {
+      probability: 5,
+      expectedSpeed: 0,
+      conditions: 'Twilight — limited visibility',
+      verdict: hour < 12 
+        ? `Pre-dawn twilight. Flying starts at sunrise (${formatHour(daylight.sunrise)})`
+        : `Dusk — pack up. Too dark to fly safely.`,
+      confidence: 90,
+      isTwilight: true,
+    };
+  }
 
   let probability = 30;
 
@@ -244,6 +309,34 @@ export function predictNorth(windData, _conditions = {}) {
   const wuSandy = windData?.KUTSANDY188 || {};
   const hour = new Date().getHours();
   const month = new Date().getMonth() + 1;
+  
+  // ─── DAYLIGHT CHECK — Paragliding requires visibility! ───────
+  const daylight = calculateDaylight(40.45); // PotM latitude
+  
+  if (daylight.isNight) {
+    return {
+      probability: 0,
+      expectedSpeed: 0,
+      conditions: 'No flying after dark',
+      verdict: `Night — No flying possible. Sunrise at ${formatHour(daylight.sunrise)}`,
+      confidence: 100,
+      isNight: true,
+      hoursUntilSunrise: daylight.sunrise - hour + (hour > 12 ? 24 : 0),
+    };
+  }
+  
+  if (daylight.isTwilight) {
+    return {
+      probability: 5,
+      expectedSpeed: 0,
+      conditions: 'Twilight — limited visibility',
+      verdict: hour < 12 
+        ? `Pre-dawn twilight. Flying starts at sunrise (${formatHour(daylight.sunrise)})`
+        : `Dusk — pack up. Too dark to fly safely.`,
+      confidence: 90,
+      isTwilight: true,
+    };
+  }
 
   let probability = 20;
 

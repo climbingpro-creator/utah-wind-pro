@@ -44,6 +44,49 @@ function denverMonth(date = new Date()) {
   }
 }
 
+// ─── DAYLIGHT CALCULATION ──────────────────────────────────────────
+// Critical for outdoor activities that require visibility
+
+function calculateDaylight(lat = 40.45, date = new Date()) {
+  const dayOfYear = Math.floor((date - new Date(date.getFullYear(), 0, 0)) / 86400000);
+  const hour = denverHour(date) + date.getMinutes() / 60;
+  
+  const declination = 23.45 * Math.sin((360 / 365) * (dayOfYear - 81) * Math.PI / 180);
+  const latRad = lat * Math.PI / 180;
+  const decRad = declination * Math.PI / 180;
+  
+  let cosHourAngle = -Math.tan(latRad) * Math.tan(decRad);
+  cosHourAngle = Math.max(-1, Math.min(1, cosHourAngle));
+  const hourAngle = Math.acos(cosHourAngle) * 180 / Math.PI;
+  
+  const solarNoon = 12;
+  const sunrise = solarNoon - hourAngle / 15;
+  const sunset = solarNoon + hourAngle / 15;
+  
+  const isNight = hour < sunrise - 0.5 || hour > sunset + 0.5;
+  const isTwilight = (hour >= sunrise - 0.5 && hour < sunrise) || (hour > sunset && hour <= sunset + 0.5);
+  const isDaylight = hour >= sunrise && hour <= sunset;
+  const daylightHoursRemaining = isDaylight ? Math.max(0, sunset - hour) : 0;
+  
+  return { 
+    sunrise: Math.round(sunrise * 10) / 10, 
+    sunset: Math.round(sunset * 10) / 10, 
+    isNight, 
+    isTwilight, 
+    isDaylight, 
+    daylightHoursRemaining: Math.round(daylightHoursRemaining * 10) / 10,
+    currentHour: hour,
+  };
+}
+
+function formatHour(decimalHour) {
+  const h = Math.floor(decimalHour);
+  const m = Math.round((decimalHour - h) * 60);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const h12 = h > 12 ? h - 12 : (h === 0 ? 12 : h);
+  return m === 0 ? `${h12} ${ampm}` : `${h12}:${m.toString().padStart(2, '0')} ${ampm}`;
+}
+
 function _angleDiff(a, b) {
   let d = Math.abs(a - b) % 360;
   return d > 180 ? 360 - d : d;
@@ -1137,6 +1180,56 @@ export function predict(lakeId, activity, liveStations, modelContext, config, op
   const hour = modelContext?.currentHour ?? denverHour(now);
   const month = modelContext?.currentMonth ?? denverMonth(now);
   const ctx = modelContext || {};
+  
+  // ─── DAYLIGHT CHECK — Critical for outdoor activities ───────────
+  const daylight = calculateDaylight(config?.lat || 40.45, now);
+  
+  // Activities that REQUIRE daylight (cannot be done safely at night)
+  const DAYLIGHT_REQUIRED = ['kiting', 'paragliding', 'wingfoil', 'windsurf', 'sup', 'kayak'];
+  const requiresDaylight = DAYLIGHT_REQUIRED.includes(activity);
+  
+  if (requiresDaylight && daylight.isNight) {
+    return {
+      probability: 0,
+      speed: 0,
+      direction: null,
+      decision: {
+        decision: 'PASS',
+        confidence: 1.0,
+        headline: `After Dark — ${activity === 'paragliding' ? 'No flying' : 'No sessions'} at night`,
+        detail: `${activity.charAt(0).toUpperCase() + activity.slice(1)} requires daylight for safety. Sunrise at ${formatHour(daylight.sunrise)}.`,
+        action: `Wait for sunrise at ${formatHour(daylight.sunrise)}`,
+      },
+      activities: Object.fromEntries(DAYLIGHT_REQUIRED.map(a => [a, { score: 0, status: 'pass', message: 'After dark' }])),
+      regime: { regime: 'night', confidence: 1.0 },
+      propagation: { phase: 'night', eta: Math.round((daylight.sunrise - daylight.currentHour + (daylight.currentHour > 12 ? 24 : 0)) * 60) },
+      daylight,
+      isNight: true,
+    };
+  }
+  
+  if (requiresDaylight && daylight.isTwilight) {
+    const isMorning = daylight.currentHour < 12;
+    return {
+      probability: 10,
+      speed: 0,
+      direction: null,
+      decision: {
+        decision: 'WAIT',
+        confidence: 0.9,
+        headline: isMorning ? 'Pre-Dawn — Almost time' : 'Dusk — Wrapping up',
+        detail: isMorning 
+          ? `Sunrise at ${formatHour(daylight.sunrise)}. ${activity === 'paragliding' ? 'Flying' : 'Sessions'} start soon.`
+          : `Sunset was at ${formatHour(daylight.sunset)}. Limited visibility — pack up for safety.`,
+        action: isMorning ? `Wait for full light at ${formatHour(daylight.sunrise + 0.3)}` : 'Call it a day',
+      },
+      activities: Object.fromEntries(DAYLIGHT_REQUIRED.map(a => [a, { score: 10, status: 'wait', message: isMorning ? 'Dawn approaching' : 'Dusk — ending' }])),
+      regime: { regime: 'twilight', confidence: 0.9 },
+      propagation: { phase: 'twilight', eta: isMorning ? Math.round((daylight.sunrise - daylight.currentHour) * 60) : 0 },
+      daylight,
+      isTwilight: true,
+    };
+  }
 
   // 1. OBSERVE
   const obs = observe(liveStations, config);
@@ -1314,6 +1407,19 @@ export function predict(lakeId, activity, liveStations, modelContext, config, op
     // Backward-compat fields for existing components
     thermalPrediction: compat.thermalPrediction,
     boatingPrediction: compat.boatingPrediction,
+
+    // Daylight info (for UI sunset warnings)
+    daylight: {
+      sunrise: daylight.sunrise,
+      sunset: daylight.sunset,
+      isDaylight: daylight.isDaylight,
+      isTwilight: daylight.isTwilight,
+      isNight: daylight.isNight,
+      daylightHoursRemaining: daylight.daylightHoursRemaining,
+      sunsetWarning: daylight.daylightHoursRemaining > 0 && daylight.daylightHoursRemaining < 2
+        ? `Only ${daylight.daylightHoursRemaining.toFixed(1)} hours of light remaining — sunset at ${formatHour(daylight.sunset)}`
+        : null,
+    },
 
     // Meta
     _lakeId: lakeId,

@@ -33,6 +33,89 @@ function getSeasonLabel(season) {
   }[season] || 'Unknown';
 }
 
+// ─── Daylight / Sunrise-Sunset Calculation ─────────────────────
+// Approximate sunrise/sunset based on latitude, day of year, and timezone
+// Returns { sunrise, sunset, isDaylight, isGoldenHour, isTwilight, isNight, daylightHoursRemaining }
+
+export function calculateDaylight(lat = 40, date = new Date()) {
+  const dayOfYear = Math.floor((date - new Date(date.getFullYear(), 0, 0)) / 86400000);
+  const hour = date.getHours() + date.getMinutes() / 60;
+  
+  // Solar declination (simplified)
+  const declination = 23.45 * Math.sin((360 / 365) * (dayOfYear - 81) * Math.PI / 180);
+  
+  // Hour angle at sunrise/sunset
+  const latRad = lat * Math.PI / 180;
+  const decRad = declination * Math.PI / 180;
+  
+  // Clamp for polar regions
+  let cosHourAngle = -Math.tan(latRad) * Math.tan(decRad);
+  cosHourAngle = Math.max(-1, Math.min(1, cosHourAngle));
+  
+  const hourAngle = Math.acos(cosHourAngle) * 180 / Math.PI;
+  
+  // Sunrise and sunset in hours (local solar time, approximate)
+  // Adjust for longitude would require timezone, so we use rough estimate
+  const solarNoon = 12; // Simplified - assumes local solar noon at 12:00
+  const sunrise = solarNoon - hourAngle / 15;
+  const sunset = solarNoon + hourAngle / 15;
+  
+  // Civil twilight is ~30 min before sunrise and after sunset
+  const civilTwilightStart = sunrise - 0.5;
+  const civilTwilightEnd = sunset + 0.5;
+  
+  // Golden hour is ~1 hour after sunrise and before sunset
+  const morningGoldenEnd = sunrise + 1;
+  const eveningGoldenStart = sunset - 1;
+  
+  // Determine current light conditions
+  const isNight = hour < civilTwilightStart || hour > civilTwilightEnd;
+  const isTwilight = (hour >= civilTwilightStart && hour < sunrise) || 
+                     (hour > sunset && hour <= civilTwilightEnd);
+  const isDaylight = hour >= sunrise && hour <= sunset;
+  const isGoldenHour = (hour >= sunrise && hour <= morningGoldenEnd) || 
+                       (hour >= eveningGoldenStart && hour <= sunset);
+  const isMorning = hour >= sunrise && hour < 12;
+  const isAfternoon = hour >= 12 && hour <= sunset;
+  const isEarlyMorning = hour >= sunrise && hour < sunrise + 2;
+  const isLateMorning = hour >= sunrise + 2 && hour < 12;
+  const isEarlyAfternoon = hour >= 12 && hour < sunset - 3;
+  const isLateAfternoon = hour >= sunset - 3 && hour <= sunset;
+  
+  // Hours of daylight remaining
+  const daylightHoursRemaining = isDaylight ? Math.max(0, sunset - hour) : 0;
+  const hoursUntilSunrise = hour < sunrise ? sunrise - hour : (24 - hour + sunrise);
+  const hoursUntilSunset = hour < sunset ? sunset - hour : (24 - hour + sunset);
+  
+  return {
+    sunrise: Math.round(sunrise * 10) / 10,
+    sunset: Math.round(sunset * 10) / 10,
+    isDaylight,
+    isNight,
+    isTwilight,
+    isGoldenHour,
+    isMorning,
+    isAfternoon,
+    isEarlyMorning,
+    isLateMorning,
+    isEarlyAfternoon,
+    isLateAfternoon,
+    daylightHoursRemaining: Math.round(daylightHoursRemaining * 10) / 10,
+    hoursUntilSunrise: Math.round(hoursUntilSunrise * 10) / 10,
+    hoursUntilSunset: Math.round(hoursUntilSunset * 10) / 10,
+    totalDaylightHours: Math.round((sunset - sunrise) * 10) / 10,
+  };
+}
+
+// Format time as "6:30 AM" style
+function formatHour(decimalHour) {
+  const h = Math.floor(decimalHour);
+  const m = Math.round((decimalHour - h) * 60);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const h12 = h > 12 ? h - 12 : (h === 0 ? 12 : h);
+  return m === 0 ? `${h12} ${ampm}` : `${h12}:${m.toString().padStart(2, '0')} ${ampm}`;
+}
+
 // ─── Sky Condition Parser ──────────────────────────────────────
 
 export function parseSkyCondition(shortForecast) {
@@ -473,18 +556,55 @@ function generateSaltwaterSummary(sky, month, weather, hour) {
 export function generateTacticalSummary(sky, month, weather, waterType, hour = new Date().getHours(), options = {}) {
   const { lat = 40, isSaltwater = false } = options;
   
+  // Calculate daylight conditions
+  const daylight = calculateDaylight(lat, new Date());
+  
+  // ─── NIGHT TIME CHECK — No visual fishing at night! ───────────
+  if (daylight.isNight) {
+    return {
+      headline: 'After Dark — Limited Options',
+      tactic: 'Night fishing requires specialized techniques: large dark streamers, mouse patterns, or bait fishing',
+      reason: `Sun sets at ${formatHour(daylight.sunset)}. Dry fly and sight fishing not possible after dark. Consider night fishing for brown trout with mouse patterns, or wait until sunrise at ${formatHour(daylight.sunrise)}.`,
+      confidence: 40,
+      conditions: ['night'],
+      timeWindow: `Sunrise at ${formatHour(daylight.sunrise)}`,
+      category: 'night',
+      isDark: true,
+      hoursUntilSunrise: daylight.hoursUntilSunrise,
+    };
+  }
+  
+  // ─── TWILIGHT — Limited visibility ────────────────────────────
+  if (daylight.isTwilight) {
+    const isMorningTwilight = hour < 12;
+    return {
+      headline: isMorningTwilight ? 'Pre-Dawn Twilight' : 'Dusk Twilight',
+      tactic: isMorningTwilight 
+        ? 'Low light fishing — streamers, dark nymphs, or wait for sunrise dry fly action'
+        : 'Last light fishing — streamers and large dry flies while you can still see',
+      reason: isMorningTwilight
+        ? `Sunrise at ${formatHour(daylight.sunrise)}. Fish are active but visibility is limited. Streamers work well in low light.`
+        : `Sunset was at ${formatHour(daylight.sunset)}. Last chance for dry flies — switch to streamers or call it a day.`,
+      confidence: 60,
+      conditions: ['twilight', isMorningTwilight ? 'dawn' : 'dusk'],
+      timeWindow: isMorningTwilight ? `Full light by ${formatHour(daylight.sunrise + 0.5)}` : 'Fading fast',
+      category: 'low-light',
+      isTwilight: true,
+    };
+  }
+  
   // Determine fishery category based on location
   const fisheryCategory = determineFisheryCategory(lat, waterType, isSaltwater);
   
-  // Route to appropriate tactical generator
+  // Route to appropriate tactical generator (with daylight context)
   if (fisheryCategory === 'tropical') {
-    return generateTropicalSummary(sky, weather, hour);
+    return generateTropicalSummary(sky, weather, hour, daylight);
   }
   if (fisheryCategory === 'warmwater') {
-    return generateWarmwaterSummary(sky, month, weather, hour);
+    return generateWarmwaterSummary(sky, month, weather, hour, daylight);
   }
   if (fisheryCategory === 'saltwater') {
-    return generateSaltwaterSummary(sky, month, weather, hour);
+    return generateSaltwaterSummary(sky, month, weather, hour, daylight);
   }
   
   // ─── Coldwater Trout Rules (Original Logic) ───────────────────
@@ -500,6 +620,11 @@ export function generateTacticalSummary(sky, month, weather, waterType, hour = n
   const isFalling = pressureTrend.trend === 'falling' || pressureTrend.trend === 'falling_fast';
   const isRising = pressureTrend.trend === 'rising' || pressureTrend.trend === 'rising_fast';
   
+  // Add daylight context to all recommendations
+  const sunsetNote = daylight.daylightHoursRemaining < 2 
+    ? ` Only ${daylight.daylightHoursRemaining.toFixed(1)} hours of light remaining — sunset at ${formatHour(daylight.sunset)}.`
+    : '';
+  
   // ─── Spring Rules ────────────────────────────────────────────
   
   // Spring + Overcast + Light Rain = BWO Hatch
@@ -507,11 +632,12 @@ export function generateTacticalSummary(sky, month, weather, waterType, hour = n
     return {
       headline: 'BWO Hatch Likely',
       tactic: 'Dry flies and droppers — Parachute BWO #18-20 with RS2 dropper',
-      reason: 'Cloudy spring conditions with chance of rain trigger Blue Winged Olive emergence. Baetis love low light.',
+      reason: 'Cloudy spring conditions with chance of rain trigger Blue Winged Olive emergence. Baetis love low light.' + sunsetNote,
       confidence: 90,
       conditions: ['overcast', 'spring', 'precipitation'],
       timeWindow: '1-4 PM peak',
       category: 'dry-fly',
+      daylightHoursRemaining: daylight.daylightHoursRemaining,
     };
   }
   
@@ -520,11 +646,12 @@ export function generateTacticalSummary(sky, month, weather, waterType, hour = n
     return {
       headline: 'BWO Conditions',
       tactic: 'Dry flies and droppers — Parachute BWO #18-20, trail RS2 emerger',
-      reason: 'Overcast spring day — ideal for Blue Winged Olive hatch. Fish the seams and tailouts.',
+      reason: 'Overcast spring day — ideal for Blue Winged Olive hatch. Fish the seams and tailouts.' + sunsetNote,
       confidence: 80,
       conditions: ['overcast', 'spring'],
       timeWindow: '1-4 PM peak',
       category: 'dry-fly',
+      daylightHoursRemaining: daylight.daylightHoursRemaining,
     };
   }
   
@@ -533,11 +660,12 @@ export function generateTacticalSummary(sky, month, weather, waterType, hour = n
     return {
       headline: 'Dry Fly Conditions',
       tactic: 'Dry flies and droppers — Parachute Adams #14-16 with Pheasant Tail dropper',
-      reason: 'Clear, calm spring day — fish will be looking up. Work the riffles and runs.',
+      reason: 'Clear, calm spring day — fish will be looking up. Work the riffles and runs.' + sunsetNote,
       confidence: 75,
       conditions: ['clear', 'spring', 'calm'],
       timeWindow: 'Midday best',
       category: 'dry-dropper',
+      daylightHoursRemaining: daylight.daylightHoursRemaining,
     };
   }
   
@@ -700,6 +828,9 @@ export async function generateTacticalBriefing(coords, waterName, waterType, wea
   const month = now.getMonth() + 1;
   const hour = now.getHours();
   
+  // Calculate daylight conditions
+  const daylight = calculateDaylight(lat, now);
+  
   // Parse weather data
   const weather = {
     windSpeed: weatherData.windSpeed ?? weatherData.wind_speed ?? 0,
@@ -760,6 +891,19 @@ export async function generateTacticalBriefing(coords, waterName, waterType, wea
     },
     waterTemp,
     pressureTrend,
+    
+    // Daylight info
+    daylight: {
+      sunrise: daylight.sunrise,
+      sunset: daylight.sunset,
+      isDaylight: daylight.isDaylight,
+      isTwilight: daylight.isTwilight,
+      isNight: daylight.isNight,
+      isGoldenHour: daylight.isGoldenHour,
+      daylightHoursRemaining: daylight.daylightHoursRemaining,
+      sunriseFormatted: formatHour(daylight.sunrise),
+      sunsetFormatted: formatHour(daylight.sunset),
+    },
     
     // Intelligence
     tacticalSummary,

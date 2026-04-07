@@ -133,6 +133,7 @@ export {
   parseSkyCondition,
   analyzePressureTrend,
   inferWaterTemp as inferWaterTempTactical,
+  calculateDaylight,
   SKY_LABELS,
 } from './services/TacticalRecommendationEngine.js';
 export { default as TacticalRecommendationEngine } from './services/TacticalRecommendationEngine.js';

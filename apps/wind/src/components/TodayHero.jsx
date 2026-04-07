@@ -1,11 +1,48 @@
 import React, { useMemo } from 'react';
-import { ChevronRight, CheckCircle, MapPin, Zap, ArrowRight, Clock, Wind, Sunrise } from 'lucide-react';
+import { ChevronRight, CheckCircle, MapPin, Zap, ArrowRight, Clock, Wind, Sunrise, Moon, Sunset } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { ACTIVITY_CONFIGS } from './ActivityMode';
 import { getRotatingImage } from '../config/imagePool';
 import { estimateSessionDuration, LAKE_CONFIGS } from '@utahwind/weather';
 
 const ALL_ACTIVITIES = ['kiting', 'paragliding', 'sailing', 'snowkiting', 'boating', 'paddling', 'fishing', 'windsurfing'];
+
+// Activities that require daylight for safety
+const DAYLIGHT_REQUIRED = ['kiting', 'paragliding', 'sailing', 'snowkiting', 'windsurfing', 'paddling'];
+
+// Calculate sunrise/sunset for daylight checks
+function calculateDaylight(lat = 40.45) {
+  const date = new Date();
+  const dayOfYear = Math.floor((date - new Date(date.getFullYear(), 0, 0)) / 86400000);
+  const hour = date.getHours() + date.getMinutes() / 60;
+  
+  const declination = 23.45 * Math.sin((360 / 365) * (dayOfYear - 81) * Math.PI / 180);
+  const latRad = lat * Math.PI / 180;
+  const decRad = declination * Math.PI / 180;
+  
+  let cosHourAngle = -Math.tan(latRad) * Math.tan(decRad);
+  cosHourAngle = Math.max(-1, Math.min(1, cosHourAngle));
+  const hourAngle = Math.acos(cosHourAngle) * 180 / Math.PI;
+  
+  const solarNoon = 12;
+  const sunrise = solarNoon - hourAngle / 15;
+  const sunset = solarNoon + hourAngle / 15;
+  
+  const isNight = hour < sunrise - 0.5 || hour > sunset + 0.5;
+  const isTwilight = (hour >= sunrise - 0.5 && hour < sunrise) || (hour > sunset && hour <= sunset + 0.5);
+  const isDaylight = hour >= sunrise && hour <= sunset;
+  const daylightHoursRemaining = isDaylight ? Math.max(0, sunset - hour) : 0;
+  
+  return { sunrise, sunset, isNight, isTwilight, isDaylight, daylightHoursRemaining, currentHour: hour };
+}
+
+function formatSunTime(decimalHour) {
+  const h = Math.floor(decimalHour);
+  const m = Math.round((decimalHour - h) * 60);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const h12 = h > 12 ? h - 12 : (h === 0 ? 12 : h);
+  return m === 0 ? `${h12} ${ampm}` : `${h12}:${m.toString().padStart(2, '0')} ${ampm}`;
+}
 
 function formatHour(h) {
   if (h === 0 || h === 24) return '12 AM';
@@ -29,6 +66,34 @@ function sessionLabel(minutes) {
 function getActivityVerdict(id, speed, gust, thermalPrediction, _boatingPrediction, propagation) {
   const cfg = ACTIVITY_CONFIGS[id];
   if (!cfg) return null;
+  
+  // ─── DAYLIGHT CHECK — Critical for outdoor activities ───────────
+  const daylight = calculateDaylight();
+  const requiresDaylight = DAYLIGHT_REQUIRED.includes(id);
+  
+  if (requiresDaylight && daylight.isNight) {
+    return {
+      status: 'off',
+      label: 'AFTER DARK',
+      reason: `No ${id === 'paragliding' ? 'flying' : 'sessions'} at night. Sunrise at ${formatSunTime(daylight.sunrise)}`,
+      color: 'indigo',
+      isNight: true,
+    };
+  }
+  
+  if (requiresDaylight && daylight.isTwilight) {
+    const isMorning = daylight.currentHour < 12;
+    return {
+      status: 'wait',
+      label: isMorning ? 'DAWN' : 'DUSK',
+      reason: isMorning 
+        ? `Wait for sunrise at ${formatSunTime(daylight.sunrise)}`
+        : `Fading light — pack up for safety`,
+      color: 'purple',
+      isTwilight: true,
+    };
+  }
+  
   const good = cfg.goodCondition?.(speed, gust);
   const now = new Date().getHours();
   const thermal = thermalPrediction || {};
@@ -47,6 +112,11 @@ function getActivityVerdict(id, speed, gust, thermalPrediction, _boatingPredicti
 
   const actualSpeed = speed;
   const proxyWarning = id !== 'paragliding' && estTargetSpeed != null && estTargetSpeed < speed * 0.8;
+  
+  // Add sunset warning to good conditions if less than 2 hours of light
+  const sunsetWarning = requiresDaylight && daylight.daylightHoursRemaining > 0 && daylight.daylightHoursRemaining < 2
+    ? ` (${daylight.daylightHoursRemaining.toFixed(1)}h light left)`
+    : '';
 
   if (good && cfg.wantsWind) {
     if ((session?.source === 'learned' || session?.source === 'pws-backfill') && session.avgMinutes < 45) {
@@ -78,9 +148,9 @@ function getActivityVerdict(id, speed, gust, thermalPrediction, _boatingPredicti
     const sessionStr = session ? ` — ${sessionLabel(session.avgMinutes)} session` : '';
     const ideal = cfg.thresholds?.ideal;
     if (ideal && actualSpeed >= ideal.min && actualSpeed <= ideal.max) {
-      return { status: 'go', label: 'GO', reason: `${Math.round(speed)} mph — ideal range${sessionStr}`, color: 'emerald' };
+      return { status: 'go', label: 'GO', reason: `${Math.round(speed)} mph — ideal range${sessionStr}${sunsetWarning}`, color: 'emerald' };
     }
-    return { status: 'go', label: 'GO', reason: `${Math.round(speed)} mph — conditions active${sessionStr}`, color: 'emerald' };
+    return { status: 'go', label: 'GO', reason: `${Math.round(speed)} mph — conditions active${sessionStr}${sunsetWarning}`, color: 'emerald' };
   }
 
   if (good && !cfg.wantsWind) {

@@ -1,4 +1,4 @@
-import { X, Thermometer, Droplets, Activity, Waves, Fish, Gauge, Anchor, MapPin, Shield, Navigation, Zap, Eye, Crosshair, Satellite, Palette, Calendar, Ship, Target, FishingRod, Bug, Layers, Flame, Wind, CloudSun, Cloud, Sun, CloudRain, Snowflake, AlertTriangle, TrendingUp, TrendingDown, Minus, Clock } from 'lucide-react';
+import { X, Thermometer, Droplets, Activity, Waves, Fish, Gauge, Anchor, MapPin, Shield, Navigation, Zap, Eye, Crosshair, Satellite, Palette, Calendar, Ship, Target, FishingRod, Bug, Layers, Flame, Wind, CloudSun, Cloud, Sun, CloudRain, Snowflake, AlertTriangle, TrendingUp, TrendingDown, Minus, Clock, Sunrise, Sunset, Moon } from 'lucide-react';
 
 const CLARITY_STYLE = {
   'blown out':       { color: 'text-red-400',     bg: 'bg-red-500/10',     border: 'border-red-500/20',     dot: 'bg-red-500' },
@@ -37,6 +37,82 @@ function LoadingSkeleton() {
       </div>
     </div>
   );
+}
+
+function DaylightBanner({ daylight }) {
+  if (!daylight) return null;
+  
+  const { isNight, isTwilight, isDaylight, isGoldenHour, daylightHoursRemaining, sunriseFormatted, sunsetFormatted } = daylight;
+  
+  if (isNight) {
+    return (
+      <div className="mx-3 mb-2 rounded-lg bg-indigo-950/60 border border-indigo-500/30 px-3 py-2">
+        <div className="flex items-center gap-2">
+          <Moon className="w-4 h-4 text-indigo-400" />
+          <div>
+            <div className="text-xs font-bold text-indigo-300">After Dark</div>
+            <div className="text-[10px] text-indigo-400/80">
+              Dry fly fishing not possible. Night fishing with streamers or bait only. Sunrise at {sunriseFormatted}.
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  if (isTwilight) {
+    const hour = new Date().getHours();
+    const isMorning = hour < 12;
+    return (
+      <div className="mx-3 mb-2 rounded-lg bg-purple-950/60 border border-purple-500/30 px-3 py-2">
+        <div className="flex items-center gap-2">
+          {isMorning ? <Sunrise className="w-4 h-4 text-orange-400" /> : <Sunset className="w-4 h-4 text-purple-400" />}
+          <div>
+            <div className="text-xs font-bold text-purple-300">{isMorning ? 'Dawn — First Light' : 'Dusk — Last Light'}</div>
+            <div className="text-[10px] text-purple-400/80">
+              {isMorning 
+                ? `Low visibility. Dry fly action starts at sunrise (${sunriseFormatted}). Streamers work now.`
+                : `Fading light. Last chance for dry flies. Sunset was at ${sunsetFormatted}.`}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  if (isGoldenHour) {
+    return (
+      <div className="mx-3 mb-2 rounded-lg bg-amber-950/60 border border-amber-500/30 px-3 py-2">
+        <div className="flex items-center gap-2">
+          <Sun className="w-4 h-4 text-amber-400" />
+          <div>
+            <div className="text-xs font-bold text-amber-300">Golden Hour</div>
+            <div className="text-[10px] text-amber-400/80">
+              Prime fishing light. Hatches active, fish feeding near surface.
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  if (isDaylight && daylightHoursRemaining != null && daylightHoursRemaining < 2) {
+    return (
+      <div className="mx-3 mb-2 rounded-lg bg-orange-950/60 border border-orange-500/30 px-3 py-2">
+        <div className="flex items-center gap-2">
+          <Sunset className="w-4 h-4 text-orange-400" />
+          <div>
+            <div className="text-xs font-bold text-orange-300">Sunset Approaching</div>
+            <div className="text-[10px] text-orange-400/80">
+              {daylightHoursRemaining.toFixed(1)} hours of light remaining. Sunset at {sunsetFormatted}.
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  return null;
 }
 
 function LakeIntelGrid({ intel, isOcean }) {
@@ -747,6 +823,9 @@ export default function SyntheticFishingCard({ data, isLoading, onClose }) {
         </div>
         <div className="text-[9px] text-slate-500 mt-1 leading-tight">{data.dataSource}</div>
       </div>
+
+      {/* Daylight Status Banner — Critical for fishing tactics */}
+      <DaylightBanner daylight={data.daylight} />
 
       {/* Tactical Headline — Weather-to-Tactic Intelligence */}
       {data.tacticalSummary && (
