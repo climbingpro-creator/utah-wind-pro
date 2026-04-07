@@ -112,7 +112,7 @@ async function getPredictionForSpot(spotId, activity, modelContext) {
 /**
  * Rank spots by their prediction quality for the selected activity
  */
-function rankSpots(predictions, activity) {
+function rankSpots(predictions, _activity) {
   if (!predictions || predictions.length === 0) return [];
 
   // Filter to only spots with valid predictions

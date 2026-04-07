@@ -169,7 +169,7 @@ export default function ForecastIntelligenceHero({
   currentWindDirection,
 }) {
   // Use the REAL prediction hook - not raw NWS data
-  const { predictions, loading, error, lastUpdated, goSpots, waitSpots } = useCrossLocationPredictions(selectedActivity);
+  const { predictions, loading, error, goSpots, waitSpots } = useCrossLocationPredictions(selectedActivity);
 
   const activityConfig = ACTIVITY_CONFIGS[selectedActivity];
   const hasGoSpots = goSpots.length > 0;
