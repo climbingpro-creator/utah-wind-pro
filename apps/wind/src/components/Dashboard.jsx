@@ -6,6 +6,7 @@ import { SafeComponent, IntelligentRecommendations, ModuleLoader } from '@utahwi
 import { CreditCard } from 'lucide-react';
 
 import TodayHero from './TodayHero';
+import ForecastIntelligenceHero from './ForecastIntelligenceHero';
 import WelcomeCard from './WelcomeCard';
 import AppHeader from './AppHeader';
 import { LakeSelector } from './LakeSelector';
@@ -32,6 +33,7 @@ const PropagationTracker = lazy(() => import('./PropagationTracker'));
 const SpotRanker = lazy(() => import('./SpotRanker'));
 const Modal = lazy(() => import('@utahwind/ui').then(m => ({ default: m.Modal })));
 const TodayTimeline = lazy(() => import('./TodayTimeline'));
+const ProTeaser = lazy(() => import('./ProTeaser'));
 
 const FREE_LAKES = new Set([
   'utah-lake', 'utah-lake-zigzag', 'utah-lake-lincoln', 'utah-lake-vineyard',
@@ -402,26 +404,13 @@ export function Dashboard() {
 
           <WelcomeCard />
 
-          {/* ═══════ 1. HERO FORECAST BLOCK ═══════ */}
-          <TodayHero
-            windSpeed={currentWindSpeed}
-            windGust={currentWindGust}
-            windDirection={currentWindDirection}
-            thermalPrediction={effectiveThermalPrediction}
-            boatingPrediction={effectiveBoatingPrediction}
-            onSelectActivity={setSelectedActivity}
+          {/* ═══════ 1. FORECAST INTELLIGENCE HERO ═══════ */}
+          <ForecastIntelligenceHero
             selectedActivity={selectedActivity}
-            fpsStation={fpsStation}
-            utalpStation={lakeState?.utalpStation || utalpStation}
-            propagation={prediction?.propagation || lakeState?.propagation}
-            unifiedActivities={prediction?.activities}
-            locationName={lakeState?.config?.name || lakeState?.config?.shortName}
-            prediction={prediction}
-            selectedLake={selectedLake}
+            onSelectActivity={setSelectedActivity}
             onSelectSpot={handleSelectLake}
-            mesoData={mesoData}
-            lakeState={lakeState}
-            sportWindows={sportWindows}
+            currentWindSpeed={currentWindSpeed}
+            currentWindDirection={currentWindDirection}
           />
 
           {/* ═══════ 2. BEST TIME WINDOWS ═══════ */}
@@ -440,8 +429,27 @@ export function Dashboard() {
                 title="Best Time Windows Today"
                 currentApp="wind"
                 crossAppUrls={{ water: import.meta.env.VITE_WATER_APP_URL }}
+                isPro={isPro}
+                onUnlockPro={openPaywall}
               />
             </SafeComponent>
+          )}
+
+          {/* ═══════ PRO TEASER: Advanced Wind Intelligence ═══════ */}
+          {!isPro && sportWindows && (
+            <Suspense fallback={null}>
+              <ProTeaser
+                variant="auto"
+                context={{
+                  hasThermalData: !!effectiveThermalPrediction,
+                  hasPropagation: !!prediction?.propagation?.phase,
+                  hasPressure: !!pressureData?.gradient,
+                  hasGearRec: true,
+                  hasSessionEst: !!prediction?.propagation?.chains?.length,
+                }}
+                onUnlock={openPaywall}
+              />
+            </Suspense>
           )}
 
           {/* ═══════ 3. WHERE TO GO (Spot Ranker) ═══════ */}

@@ -572,6 +572,8 @@ function WaterApp() {
             title="Best Time Windows Today"
             currentApp="water"
             crossAppUrls={{ wind: import.meta.env.VITE_WIND_APP_URL }}
+            isPro={isPro}
+            onUnlockPro={openPaywall}
           />
         )}
 

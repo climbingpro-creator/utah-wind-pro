@@ -30,13 +30,24 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type, x-internal-api-key');
   if (req.method === 'OPTIONS') return res.status(204).end();
 
-  const apiKey = req.headers['x-internal-api-key'];
-  const expectedKey = process.env.INTERNAL_API_KEY;
-  if (!expectedKey || !apiKey || apiKey !== expectedKey) {
-    return res.status(403).json({ error: 'Forbidden — valid x-internal-api-key header required' });
-  }
-
   const action = req.query?.action;
+  
+  // Public read-only actions that the frontend needs - no auth required
+  const PUBLIC_ACTIONS = new Set([
+    'context', 'sync', 'weights', 'nws', 'ahead', 'analogs', 
+    'models', 'propagation', 'pws-history', 'upstream',
+  ]);
+  
+  // Protected actions require internal API key
+  const PROTECTED_ACTIONS = new Set(['predictions']);
+  
+  if (action && PROTECTED_ACTIONS.has(action)) {
+    const apiKey = req.headers['x-internal-api-key'];
+    const expectedKey = process.env.INTERNAL_API_KEY;
+    if (!expectedKey || !apiKey || apiKey !== expectedKey) {
+      return res.status(403).json({ error: 'Forbidden — valid x-internal-api-key header required' });
+    }
+  }
   if (!action) {
     return res.status(200).json({
       message: 'Read-only API. Cron moved to /api/cron/1-ingest. Admin ops at /api/internal/admin.',

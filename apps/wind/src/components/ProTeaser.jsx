@@ -1,99 +1,80 @@
-import { Lock, Sparkles, Moon, TrendingDown, Waves, Fish, Thermometer, Clock, Target, Droplets, Wind, Anchor } from 'lucide-react';
+import { Lock, Sparkles, Wind, Zap, TrendingUp, Clock, Target, Mountain, Thermometer, Gauge } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 
-// Dynamic teaser content that rotates based on context
+// Dynamic teaser content for wind sports — rotates based on context
 const TEASER_VARIANTS = {
-  solunar: [
-    { icon: Moon, headline: 'Solunar Peak Window', teaser: 'AI detected major feeding period at', blurred: '[Unlock Time]', color: 'indigo' },
-    { icon: Moon, headline: 'Moon Phase Advantage', teaser: 'Current phase indicates', blurred: '[Unlock Feeding Score]', color: 'indigo' },
+  thermal: [
+    { icon: Thermometer, headline: 'Thermal Timing Intel', teaser: 'AI detected thermal trigger — wind arriving at', blurred: '[Unlock Peak Hour]', color: 'amber' },
+    { icon: Thermometer, headline: 'Thermal Pump Active', teaser: 'Temperature differential indicates strength of', blurred: '[Unlock Peak mph]', color: 'amber' },
+  ],
+  propagation: [
+    { icon: TrendingUp, headline: 'Wind Propagation Tracked', teaser: 'Upstream stations show wind reaching you at', blurred: '[Unlock ETA]', color: 'cyan' },
+    { icon: TrendingUp, headline: 'Fetch Acceleration Detected', teaser: 'Lake fetch geometry indicates peak conditions at', blurred: '[Unlock Window]', color: 'cyan' },
+  ],
+  venturi: [
+    { icon: Wind, headline: 'Venturi Effect Analysis', teaser: 'Canyon geometry amplifying wind by', blurred: '[Unlock % Boost]', color: 'purple' },
+    { icon: Mountain, headline: 'Terrain Channeling', teaser: 'Ridgeline is funneling flow — local boost of', blurred: '[Unlock Extra mph]', color: 'purple' },
   ],
   pressure: [
-    { icon: TrendingDown, headline: 'Pressure Trigger Detected', teaser: 'Falling barometer signals', blurred: '[Unlock Bite Window]', color: 'emerald' },
-    { icon: TrendingDown, headline: 'Pre-Front Feeding', teaser: 'Pressure models predict aggressive bite at', blurred: '[Unlock Peak Hour]', color: 'emerald' },
+    { icon: Gauge, headline: 'Pressure Gradient Signal', teaser: 'SLC-Provo gradient predicts wind at', blurred: '[Unlock Confidence %]', color: 'emerald' },
+    { icon: Gauge, headline: 'Barometric Trigger', teaser: 'Pressure differential indicates thermal by', blurred: '[Unlock Start Time]', color: 'emerald' },
   ],
-  glass: [
-    { icon: Waves, headline: 'Glass Window Found', teaser: 'AI predicts calm water starting at', blurred: '[Unlock 2hr Window]', color: 'cyan' },
-    { icon: Waves, headline: 'Perfect Conditions Coming', teaser: 'Glass probability peaks at', blurred: '[Unlock Time & Duration]', color: 'cyan' },
-    { icon: Anchor, headline: 'Glass Predictor Alert', teaser: 'Our model shows a calm water window of', blurred: '[Unlock Duration]', color: 'cyan' },
+  gearSize: [
+    { icon: Target, headline: 'AI Gear Recommendation', teaser: 'Based on peak forecast + gust factor:', blurred: '[Unlock Kite/Sail Size]', color: 'sky' },
+    { icon: Wind, headline: 'Session Planning Intel', teaser: 'Optimal rigging for this window:', blurred: '[Unlock Gear Setup]', color: 'sky' },
   ],
-  fly: [
-    { icon: Fish, headline: 'AI Fly Match', teaser: 'Based on USGS water temp + hatch data:', blurred: '[Unlock Pattern & Size]', color: 'amber' },
-    { icon: Fish, headline: 'Hatch Intelligence', teaser: 'Current conditions favor', blurred: '[Unlock Fly Selection]', color: 'amber' },
-    { icon: Target, headline: 'Tactical Fly Intel', teaser: 'Optimal presentation depth today:', blurred: '[Unlock Depth + Pattern]', color: 'amber' },
+  sessionLength: [
+    { icon: Clock, headline: 'Session Duration Estimate', teaser: 'Based on historical patterns for this spot:', blurred: '[Unlock Expected Minutes]', color: 'indigo' },
+    { icon: Zap, headline: 'Window Quality Score', teaser: 'AI analysis of consistency + duration:', blurred: '[Unlock Full Intel]', color: 'indigo' },
   ],
-  waterTemp: [
-    { icon: Thermometer, headline: 'Thermal Sweet Spot', teaser: 'Target species active at current', blurred: '[Unlock Depth & Zone]', color: 'cyan' },
-    { icon: Droplets, headline: 'Thermocline Located', teaser: 'Fish congregating at depth:', blurred: '[Unlock Feet]', color: 'cyan' },
+  bestWindow: [
+    { icon: Clock, headline: 'Optimal Session Window', teaser: 'AI models show the ideal launch time at', blurred: '[Unlock Time Range]', color: 'purple' },
   ],
-  bestTime: [
-    { icon: Clock, headline: 'Optimal Window Today', teaser: 'AI analysis shows best fishing at', blurred: '[Unlock Time Range]', color: 'purple' },
-  ],
-  windCalm: [
-    { icon: Wind, headline: 'Wind Pattern Analysis', teaser: 'Thermal winds will die down at', blurred: '[Unlock Evening Window]', color: 'sky' },
-    { icon: Waves, headline: 'Lake Calm Forecast', teaser: 'Surface conditions optimal starting', blurred: '[Unlock Time]', color: 'sky' },
-  ],
-  depthZone: [
-    { icon: Target, headline: 'AI Depth Targeting', teaser: 'Based on temp profile + species behavior:', blurred: '[Unlock Best Depth]', color: 'emerald' },
-  ],
-  hatchTiming: [
-    { icon: Fish, headline: 'Hatch Emergence Intel', teaser: 'Insect activity models predict hatch at', blurred: '[Unlock Time + Species]', color: 'amber' },
+  bustedRisk: [
+    { icon: Gauge, headline: 'Bust Risk Analysis', teaser: 'Synoptic pattern suggests thermal may be interrupted at', blurred: '[Unlock Risk %]', color: 'red' },
   ],
 };
 
-// Get a contextual teaser based on available data
 function getContextualTeaser(context = {}) {
-  const { hasPressureData, hasSolunarData, hasWaterTemp, isGlassConditions, isFlyFishing, hasWindForecast, hasHatchData } = context;
+  const { hasThermalData, hasPropagation, hasVenturi, hasPressure, hasGearRec, hasSessionEst } = context;
   
-  // Priority order based on what's most compelling
-  if (hasPressureData) {
+  if (hasPropagation) {
+    const variants = TEASER_VARIANTS.propagation;
+    return variants[Math.floor(Math.random() * variants.length)];
+  }
+  if (hasThermalData) {
+    const variants = TEASER_VARIANTS.thermal;
+    return variants[Math.floor(Math.random() * variants.length)];
+  }
+  if (hasPressure) {
     const variants = TEASER_VARIANTS.pressure;
     return variants[Math.floor(Math.random() * variants.length)];
   }
-  if (hasSolunarData) {
-    const variants = TEASER_VARIANTS.solunar;
+  if (hasVenturi) {
+    const variants = TEASER_VARIANTS.venturi;
     return variants[Math.floor(Math.random() * variants.length)];
   }
-  if (isGlassConditions) {
-    const variants = TEASER_VARIANTS.glass;
+  if (hasGearRec) {
+    const variants = TEASER_VARIANTS.gearSize;
     return variants[Math.floor(Math.random() * variants.length)];
   }
-  if (isFlyFishing && hasHatchData) {
-    const variants = TEASER_VARIANTS.hatchTiming;
+  if (hasSessionEst) {
+    const variants = TEASER_VARIANTS.sessionLength;
     return variants[Math.floor(Math.random() * variants.length)];
-  }
-  if (isFlyFishing) {
-    const variants = TEASER_VARIANTS.fly;
-    return variants[Math.floor(Math.random() * variants.length)];
-  }
-  if (hasWindForecast) {
-    const variants = TEASER_VARIANTS.windCalm;
-    return variants[Math.floor(Math.random() * variants.length)];
-  }
-  if (hasWaterTemp) {
-    // Mix between water temp and depth zone
-    const allVariants = [...TEASER_VARIANTS.waterTemp, ...TEASER_VARIANTS.depthZone];
-    return allVariants[Math.floor(Math.random() * allVariants.length)];
   }
   
-  // Default fallback
-  const variants = TEASER_VARIANTS.bestTime;
+  const variants = TEASER_VARIANTS.bestWindow;
   return variants[Math.floor(Math.random() * variants.length)];
 }
 
 const COLOR_STYLES = {
-  indigo: {
-    bg: 'from-indigo-500/10 to-purple-500/10',
-    border: 'border-indigo-500/30',
-    icon: 'text-indigo-400',
-    headline: 'text-indigo-300',
-    blur: 'bg-indigo-500/20 text-indigo-300',
-  },
-  emerald: {
-    bg: 'from-emerald-500/10 to-teal-500/10',
-    border: 'border-emerald-500/30',
-    icon: 'text-emerald-400',
-    headline: 'text-emerald-300',
-    blur: 'bg-emerald-500/20 text-emerald-300',
+  amber: {
+    bg: 'from-amber-500/10 to-orange-500/10',
+    border: 'border-amber-500/30',
+    icon: 'text-amber-400',
+    headline: 'text-amber-300',
+    blur: 'bg-amber-500/20 text-amber-300',
+    cta: 'from-amber-500/20 to-orange-500/20 border-amber-500/30 text-amber-400',
   },
   cyan: {
     bg: 'from-cyan-500/10 to-blue-500/10',
@@ -101,13 +82,7 @@ const COLOR_STYLES = {
     icon: 'text-cyan-400',
     headline: 'text-cyan-300',
     blur: 'bg-cyan-500/20 text-cyan-300',
-  },
-  amber: {
-    bg: 'from-amber-500/10 to-orange-500/10',
-    border: 'border-amber-500/30',
-    icon: 'text-amber-400',
-    headline: 'text-amber-300',
-    blur: 'bg-amber-500/20 text-amber-300',
+    cta: 'from-cyan-500/20 to-blue-500/20 border-cyan-500/30 text-cyan-400',
   },
   purple: {
     bg: 'from-purple-500/10 to-pink-500/10',
@@ -115,13 +90,39 @@ const COLOR_STYLES = {
     icon: 'text-purple-400',
     headline: 'text-purple-300',
     blur: 'bg-purple-500/20 text-purple-300',
+    cta: 'from-purple-500/20 to-pink-500/20 border-purple-500/30 text-purple-400',
+  },
+  emerald: {
+    bg: 'from-emerald-500/10 to-teal-500/10',
+    border: 'border-emerald-500/30',
+    icon: 'text-emerald-400',
+    headline: 'text-emerald-300',
+    blur: 'bg-emerald-500/20 text-emerald-300',
+    cta: 'from-emerald-500/20 to-teal-500/20 border-emerald-500/30 text-emerald-400',
   },
   sky: {
-    bg: 'from-sky-500/10 to-blue-500/10',
+    bg: 'from-sky-500/10 to-indigo-500/10',
     border: 'border-sky-500/30',
     icon: 'text-sky-400',
     headline: 'text-sky-300',
     blur: 'bg-sky-500/20 text-sky-300',
+    cta: 'from-sky-500/20 to-indigo-500/20 border-sky-500/30 text-sky-400',
+  },
+  indigo: {
+    bg: 'from-indigo-500/10 to-violet-500/10',
+    border: 'border-indigo-500/30',
+    icon: 'text-indigo-400',
+    headline: 'text-indigo-300',
+    blur: 'bg-indigo-500/20 text-indigo-300',
+    cta: 'from-indigo-500/20 to-violet-500/20 border-indigo-500/30 text-indigo-400',
+  },
+  red: {
+    bg: 'from-red-500/10 to-rose-500/10',
+    border: 'border-red-500/30',
+    icon: 'text-red-400',
+    headline: 'text-red-300',
+    blur: 'bg-red-500/20 text-red-300',
+    cta: 'from-red-500/20 to-rose-500/20 border-red-500/30 text-red-400',
   },
 };
 
@@ -135,7 +136,6 @@ export default function ProTeaser({
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   
-  // Get teaser content
   const teaser = variant === 'auto' 
     ? getContextualTeaser(context)
     : (TEASER_VARIANTS[variant]?.[0] || getContextualTeaser(context));
@@ -155,7 +155,7 @@ export default function ProTeaser({
           ${className}
         `}
       >
-        <div className={`w-8 h-8 rounded-lg bg-black/20 flex items-center justify-center shrink-0`}>
+        <div className="w-8 h-8 rounded-lg bg-black/20 flex items-center justify-center shrink-0">
           <Lock className={`w-4 h-4 ${styles.icon}`} />
         </div>
         <div className="flex-1 text-left min-w-0">
@@ -190,7 +190,7 @@ export default function ProTeaser({
         {/* Header */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <div className={`w-9 h-9 rounded-xl bg-black/20 flex items-center justify-center`}>
+            <div className="w-9 h-9 rounded-xl bg-black/20 flex items-center justify-center">
               <IconComponent className={`w-5 h-5 ${styles.icon}`} />
             </div>
             <div>
@@ -222,13 +222,13 @@ export default function ProTeaser({
         {/* CTA */}
         <div className={`
           flex items-center justify-center gap-2 py-2 px-4 rounded-lg
-          bg-gradient-to-r from-cyan-500/20 to-blue-500/20 
-          border border-cyan-500/30
-          group-hover:from-cyan-500/30 group-hover:to-blue-500/30
+          bg-gradient-to-r ${styles.cta}
+          border
+          group-hover:opacity-90
           transition-all
         `}>
-          <Lock className="w-3.5 h-3.5 text-cyan-400" />
-          <span className="text-xs font-bold text-cyan-400 group-hover:text-cyan-300">
+          <Lock className="w-3.5 h-3.5" />
+          <span className="text-xs font-bold group-hover:underline">
             Unlock with Pro
           </span>
         </div>
@@ -237,7 +237,7 @@ export default function ProTeaser({
   );
 }
 
-// Inline teaser for embedding within existing cards
+// Inline teaser for embedding within existing cards/rows
 export function ProTeaserInline({ text, blurred, onUnlock, color = 'amber' }) {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
@@ -285,7 +285,7 @@ export function ProTeaserBadge({ label = 'Pro', onUnlock, color = 'purple' }) {
     >
       <Lock className="w-2.5 h-2.5" />
       <span>{label}</span>
-      <Sparkles className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+      <Sparkles className={`w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-opacity`} />
     </button>
   );
 }

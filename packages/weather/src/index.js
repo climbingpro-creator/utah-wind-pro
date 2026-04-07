@@ -96,6 +96,18 @@ export {
   SPORT_PROFILES,
 } from './SportIntelligenceEngine.js';
 
+// ─── Cross-Location Forecast Intelligence ────────────────────
+export {
+  getActivitySpots,
+  fetchAllSpotForecasts,
+  rankSpotsForActivity,
+  splitByDay,
+  scanWeekEvents,
+  getForecastIntelligence,
+  fetchServerContext,
+} from './services/CrossLocationForecastService.js';
+export { default as CrossLocationForecastService } from './services/CrossLocationForecastService.js';
+
 // ─── Nowcasting ──────────────────────────────────────────────
 export { applyLiveCorrections } from './services/NowcastEngine.js';
 

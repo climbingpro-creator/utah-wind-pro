@@ -9,7 +9,7 @@ const SPORT_PROFILES = {
   'foil-kite': {
     name: 'Foil / Kite',
     wantsWind: true,
-    minSpeed: 12,
+    minSpeed: 10,      // Foilable minimum (matches app's foilMin threshold)
     idealMin: 14,
     idealMax: 22,
     maxSpeed: 30,
@@ -17,14 +17,15 @@ const SPORT_PROFILES = {
     minWindowHours: 2,
     scorer: (h) => {
       const s = h.windSpeed ?? 0;
-      if (s < 12) return 0;
-      if (s > 30) return 0;
-      if (s >= 14 && s <= 22) return 80 + (1 - Math.abs(s - 18) / 8) * 20;
-      if (s >= 12 && s < 14) return 50 + (s - 12) * 15;
-      return Math.max(10, 80 - (s - 22) * 5);
+      if (s < 10) return 0;           // Below foil minimum
+      if (s > 30) return 0;           // Too strong
+      if (s >= 14 && s <= 22) return 80 + (1 - Math.abs(s - 18) / 8) * 20;  // Ideal: 80-100
+      if (s >= 12 && s < 14) return 50 + (s - 12) * 15;                      // Good: 50-80
+      if (s >= 10 && s < 12) return 30 + (s - 10) * 10;                      // Foilable: 30-50
+      return Math.max(10, 80 - (s - 22) * 5);                                // Strong: decreasing
     },
     reasonTemplate: (peak, window) =>
-      `Sustained winds over ${Math.round(SPORT_PROFILES['foil-kite'].minSpeed)} mph expected from ${window.startLabel} to ${window.endLabel}. Peak ${Math.round(peak.windSpeed)} mph at ${peak.label}.`,
+      `Rideable winds from ${window.startLabel} to ${window.endLabel}. Peak ${Math.round(peak.windSpeed)} mph at ${peak.label}.`,
   },
 
   'windsurfing': {
@@ -224,7 +225,8 @@ export function findOptimalWindows(locationId, hourlyForecast, sportType) {
   if (!profile || !hourlyForecast?.length) return null;
 
   const scored = scoreHours(hourlyForecast, profile);
-  const threshold = profile.wantsWind ? 40 : 30;
+  // Lower threshold to include marginal-but-rideable conditions (foilable 10-12 mph)
+  const threshold = profile.wantsWind ? 25 : 30;
   const windows = findContiguousWindows(scored, threshold, profile.minWindowHours);
 
   if (windows.length === 0) return null;

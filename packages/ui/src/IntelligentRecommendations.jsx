@@ -163,8 +163,10 @@ function WindowCard({ window: w, currentApp, crossAppUrls, onLocalClick }) {
  * @param {'wind'|'water'} [props.currentApp] — Which app is rendering this component
  * @param {Object} [props.crossAppUrls] — URLs to sister apps, e.g. { water: 'https://...', wind: 'https://...' }
  * @param {Function} [props.onLocalClick] — Callback when a local-sport card is clicked
+ * @param {boolean} [props.isPro] — Whether user is Pro (hides inline teaser if true)
+ * @param {Function} [props.onUnlockPro] — Callback to trigger paywall for Pro upsell
  */
-export function IntelligentRecommendations({ windows, sportFilter, title = 'Best Time Windows', currentApp, crossAppUrls, onLocalClick }) {
+export function IntelligentRecommendations({ windows, sportFilter, title = 'Best Time Windows', currentApp, crossAppUrls, onLocalClick, isPro, onUnlockPro }) {
   if (!windows || Object.keys(windows).length === 0) {
     return (
       <div className="rounded-xl border border-[var(--border-color,#1e293b)] p-4 text-center">
@@ -199,6 +201,37 @@ export function IntelligentRecommendations({ windows, sportFilter, title = 'Best
           />
         ))}
       </div>
+
+      {/* Pro Teaser — show inline hint about advanced analysis */}
+      {!isPro && onUnlockPro && entries.length > 0 && (
+        <button
+          onClick={onUnlockPro}
+          className="group w-full flex items-center gap-3 px-4 py-3 rounded-xl
+            bg-gradient-to-r from-purple-500/10 to-indigo-500/10 
+            border border-purple-500/25
+            hover:border-purple-500/40 transition-all cursor-pointer
+            backdrop-blur-sm"
+        >
+          <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center shrink-0">
+            <svg className="w-4 h-4 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          </div>
+          <div className="flex-1 text-left min-w-0">
+            <div className="text-[11px] font-bold text-purple-300 flex items-center gap-1.5">
+              <Zap className="w-3 h-3" />
+              Pro: Session Quality Intel
+            </div>
+            <div className="text-[10px] text-slate-400 truncate">
+              AI-optimized gear sizing + session duration estimates{' '}
+              <span className="font-semibold px-1 py-0.5 rounded bg-purple-500/20 text-purple-300 blur-[2px] group-hover:blur-0 transition-all">
+                [Unlock]
+              </span>
+            </div>
+          </div>
+          <Zap className="w-4 h-4 text-purple-400 opacity-60 group-hover:opacity-100 transition-opacity shrink-0" />
+        </button>
+      )}
     </div>
   );
 }

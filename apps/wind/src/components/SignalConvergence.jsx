@@ -44,13 +44,27 @@ function getSignalBarColor(signal) {
 }
 
 export default function SignalConvergence({ intelligence, unifiedPrediction }) {
+  // Early return if no data available
+  if (!intelligence && !unifiedPrediction) return null;
+  
   // Merge unified prediction data when available
   const _effectiveRegime = unifiedPrediction?.regime || intelligence?.regime;
   const _effectiveConfidence = unifiedPrediction?.confidence ?? intelligence?.regimeConfidence;
 
   if ((!intelligence || intelligence.signalCount === 0) && !unifiedPrediction) return null;
 
-  const { regime, regimeConfidence, signals, conflicts, convergenceScore, adjustedThermalProbability, narrative, valleyWind } = intelligence || {};
+  // Safely destructure with defaults to prevent null reference errors
+  const { 
+    regime = 'uncertain', 
+    regimeConfidence = 0, 
+    signals = [], 
+    conflicts = [], 
+    convergenceScore = 0, 
+    adjustedThermalProbability, 
+    narrative, 
+    valleyWind,
+    hasConflicts = false,
+  } = intelligence || {};
   const display = REGIME_DISPLAY[regime] || REGIME_DISPLAY.uncertain;
   const RegimeIcon = display.icon;
 
@@ -129,7 +143,7 @@ export default function SignalConvergence({ intelligence, unifiedPrediction }) {
       )}
 
       {/* Adjusted Probability (if different from raw) */}
-      {intelligence.hasConflicts && adjustedThermalProbability != null && (
+      {hasConflicts && adjustedThermalProbability != null && (
         <div className="px-2.5 py-1.5 rounded-lg bg-amber-500/[0.06] border border-amber-500/20">
           <div className="flex items-center gap-1.5 text-xs text-amber-400 font-semibold">
             <AlertTriangle className="w-3 h-3" />
