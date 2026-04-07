@@ -32,6 +32,12 @@ class KiteSessionApp extends Application.AppBase {
     hidden var _lowSpeedSince = 0;
     hidden var _isThrottled   = false;
 
+    // ── Crash recovery: periodic session checkpoint ───────────────
+    hidden const CHECKPOINT_MS = 60000;  // Save every 60 seconds
+    hidden var _lastCheckpointMs = 0;
+    hidden var _sessionStartMs = 0;
+    var hasCrashedSession = false;  // True if we found a recoverable session on startup
+
     function initialize() {
         AppBase.initialize();
     }
@@ -48,6 +54,90 @@ class KiteSessionApp extends Application.AppBase {
 
         topoLoop = new TopographyLoop();
         jumpTracker = new JumpTracker();
+        
+        // Check for crashed session data from previous run
+        _checkForCrashedSession();
+    }
+    
+    //! Check if there's recoverable session data from a crash
+    hidden function _checkForCrashedSession() {
+        try {
+            var crashed = Application.Storage.getValue("crashed_session");
+            if (crashed != null && crashed.hasKey("active") && crashed["active"] == true) {
+                hasCrashedSession = true;
+                System.println("[KiteSession] Found crashed session data!");
+            }
+        } catch (e) {
+            // No crashed session
+        }
+    }
+    
+    //! Get the crashed session data for display/recovery
+    function getCrashedSessionData() {
+        try {
+            return Application.Storage.getValue("crashed_session");
+        } catch (e) {
+            return null;
+        }
+    }
+    
+    //! Clear the crashed session data (after user reviews it)
+    function clearCrashedSession() {
+        try {
+            Application.Storage.deleteValue("crashed_session");
+            hasCrashedSession = false;
+        } catch (e) {}
+    }
+    
+    //! Save a checkpoint of the current session to storage
+    //! This runs every 60 seconds during recording
+    hidden function _saveSessionCheckpoint() {
+        if (!isRecording || isPaused) { return; }
+        
+        var info = Activity.getActivityInfo();
+        if (info == null) { return; }
+        
+        var timerMs    = (info.timerTime != null) ? info.timerTime : 0;
+        var distM      = (info.elapsedDistance != null) ? info.elapsedDistance : 0.0;
+        var maxSpeedMs = (info.maxSpeed != null) ? info.maxSpeed : 0.0;
+        var cal        = (info.calories != null) ? info.calories : 0;
+        var avgHR      = (info.averageHeartRate != null) ? info.averageHeartRate : 0;
+        var maxHR      = (info.maxHeartRate != null) ? info.maxHeartRate : 0;
+        
+        var checkpoint = {
+            "active"        => true,
+            "timestamp"     => Time.now().value(),
+            "start_time"    => _sessionStartMs,
+            "timer_ms"      => timerMs,
+            "distance_m"    => distM,
+            "max_speed_ms"  => maxSpeedMs,
+            "calories"      => cal,
+            "avg_hr"        => avgHR,
+            "max_hr"        => maxHR,
+            "jumps"         => (jumpTracker != null) ? jumpTracker.jumpCount : 0,
+            "max_jump_ft"   => (jumpTracker != null) ? jumpTracker.maxHeight : 0.0,
+            "total_jump_ft" => (jumpTracker != null) ? jumpTracker.totalHeight : 0.0,
+            "crashes_filtered" => (jumpTracker != null) ? jumpTracker.crashesFiltered : 0,
+            "track_count"   => trackCount
+        };
+        
+        try {
+            Application.Storage.setValue("crashed_session", checkpoint);
+        } catch (e) {
+            // Storage full or other error - not critical
+        }
+    }
+    
+    //! Mark the session as cleanly stopped (not a crash)
+    hidden function _clearSessionCheckpoint() {
+        try {
+            // Mark as inactive so we don't recover it
+            var checkpoint = Application.Storage.getValue("crashed_session");
+            if (checkpoint != null) {
+                checkpoint["active"] = false;
+                Application.Storage.setValue("crashed_session", checkpoint);
+            }
+        } catch (e) {}
     }
 
     function addTrackPoint(lat, lon) {
@@ -147,11 +237,16 @@ class KiteSessionApp extends Application.AppBase {
         trackCount = 0;
         _lowSpeedSince = 0;
         _isThrottled = false;
+        _sessionStartMs = System.getTimer();
+        _lastCheckpointMs = _sessionStartMs;
 
         topoLoop.start();
         jumpTracker.startListening();
         isRecording = true;
         isPaused = false;
+        
+        // Clear any old crashed session since we're starting fresh
+        clearCrashedSession();
     }
 
     function pauseSession() {
@@ -190,6 +285,9 @@ class KiteSessionApp extends Application.AppBase {
 
         isRecording = false;
         isPaused = false;
+        
+        // Mark session as cleanly stopped (not a crash)
+        _clearSessionCheckpoint();
 
         // Build and upload session data
         _uploadAndReview(timerMs, distM, maxSpeedMs, cal, avgHR, maxHR);
@@ -330,6 +428,13 @@ class KiteSessionApp extends Application.AppBase {
                     jumpTracker.setThrottled(false);
                     _isThrottled = false;
                 }
+            }
+            
+            // Periodic session checkpoint for crash recovery
+            var now = System.getTimer();
+            if (now - _lastCheckpointMs >= CHECKPOINT_MS) {
+                _lastCheckpointMs = now;
+                _saveSessionCheckpoint();
             }
         }
     }

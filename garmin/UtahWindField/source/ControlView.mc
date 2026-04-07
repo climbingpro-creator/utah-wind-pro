@@ -52,6 +52,12 @@ class ControlView extends WatchUi.View {
 
         if (!app.isRecording) {
             // ── PRE-SESSION: Show START button + GPS status ──────
+            
+            // Check for crashed session recovery
+            if (app.hasCrashedSession) {
+                _drawCrashRecovery(dc, app, W, H, cx);
+                return;
+            }
 
             // Big START prompt
             dc.setColor(Graphics.COLOR_GREEN, Graphics.COLOR_TRANSPARENT);
@@ -177,5 +183,53 @@ class ControlView extends WatchUi.View {
             return hrs.format("%d") + ":" + mins.format("%02d") + ":" + secs.format("%02d");
         }
         return mins.format("%02d") + ":" + secs.format("%02d");
+    }
+    
+    //! Draw crash recovery screen when we detect a crashed session
+    hidden function _drawCrashRecovery(dc, app, W, H, cx) {
+        var data = app.getCrashedSessionData();
+        
+        // Header - warning color
+        dc.setColor(Graphics.COLOR_ORANGE, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(cx, H * 5 / 100, Graphics.FONT_SMALL,
+            "SESSION FOUND", Graphics.TEXT_JUSTIFY_CENTER);
+        
+        dc.setColor(Graphics.COLOR_YELLOW, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(cx, H * 16 / 100, Graphics.FONT_XTINY,
+            "Recovered from crash", Graphics.TEXT_JUSTIFY_CENTER);
+        
+        if (data != null) {
+            // Show recovered stats
+            var timerMs = data.hasKey("timer_ms") ? data["timer_ms"] : 0;
+            var distM = data.hasKey("distance_m") ? data["distance_m"] : 0.0;
+            var jumps = data.hasKey("jumps") ? data["jumps"] : 0;
+            var maxJump = data.hasKey("max_jump_ft") ? data["max_jump_ft"] : 0.0;
+            
+            var distNM = distM * 0.000539957;
+            
+            dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(cx, H * 28 / 100, Graphics.FONT_MEDIUM,
+                _fmtTimer(timerMs), Graphics.TEXT_JUSTIFY_CENTER);
+            
+            dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(cx, H * 42 / 100, Graphics.FONT_SMALL,
+                distNM.format("%.1f") + " NM", Graphics.TEXT_JUSTIFY_CENTER);
+            
+            if (jumps > 0) {
+                dc.setColor(Graphics.COLOR_GREEN, Graphics.COLOR_TRANSPARENT);
+                dc.drawText(cx, H * 54 / 100, Graphics.FONT_XTINY,
+                    jumps + " jumps (max " + maxJump.format("%.0f") + "ft)",
+                    Graphics.TEXT_JUSTIFY_CENTER);
+            }
+        }
+        
+        // Instructions
+        dc.setColor(Graphics.COLOR_GREEN, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(cx, H * 70 / 100, Graphics.FONT_XTINY,
+            "SELECT = View Details", Graphics.TEXT_JUSTIFY_CENTER);
+        
+        dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(cx, H * 80 / 100, Graphics.FONT_XTINY,
+            "BACK = Discard & Start New", Graphics.TEXT_JUSTIFY_CENTER);
     }
 }
