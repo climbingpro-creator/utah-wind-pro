@@ -1,140 +1,128 @@
-import React, { useState, useEffect } from 'react';
+/**
+ * ForecastIntelligenceHero
+ * 
+ * Cross-location forecast intelligence using REAL predictions from UnifiedPredictor.
+ * This is NOT raw NWS data - it uses the full prediction pipeline:
+ * - Live sensor data from PWS, MesoWest, UDOT networks
+ * - Trained weights from years of historical data
+ * - Pattern recognition and regime classification
+ * - Calibration curves and learned biases
+ * - Propagation lag correlations
+ * 
+ * Shows "Where should I go and when?" with real microclimate predictions.
+ */
+
+import React from 'react';
 import { 
   ChevronRight, CheckCircle, Wind, Calendar, 
-  Star, AlertTriangle, Zap, Loader2
+  Star, AlertTriangle, Zap, Loader2, TrendingUp, Clock
 } from 'lucide-react';
 import { ACTIVITY_CONFIGS } from './ActivityMode';
 import { getRotatingImage } from '../config/imagePool';
-import { getForecastIntelligence } from '@utahwind/weather';
+import { useCrossLocationPredictions, PRIORITY_SPOTS } from '../hooks/useCrossLocationPredictions';
 
 const ALL_ACTIVITIES = ['kiting', 'paragliding', 'sailing', 'snowkiting', 'boating', 'paddling', 'fishing', 'windsurfing'];
 
-function getDayName() {
-  return new Date().toLocaleDateString('en-US', { weekday: 'long' });
-}
-
-function getTomorrowName() {
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  return tomorrow.toLocaleDateString('en-US', { weekday: 'long' });
-}
-
-const STATUS_STYLES = {
-  go:      { bg: 'bg-emerald-500/10', border: 'border-emerald-500/30', text: 'text-emerald-500', badge: 'bg-emerald-500 text-white', dot: 'bg-emerald-500' },
-  wait:    { bg: 'bg-amber-500/10', border: 'border-amber-500/20', text: 'text-amber-500', badge: 'bg-amber-500/20 text-amber-500', dot: 'bg-amber-500' },
-  caution: { bg: 'bg-amber-500/10', border: 'border-amber-500/20', text: 'text-amber-400', badge: 'bg-amber-500/20 text-amber-400', dot: 'bg-amber-400' },
-  off:     { bg: '', border: 'border-[var(--border-subtle)]', text: 'text-[var(--text-tertiary)]', badge: 'bg-[var(--border-subtle)] text-[var(--text-tertiary)]', dot: 'bg-slate-500' },
+const DECISION_STYLES = {
+  GO:   { bg: 'bg-emerald-500/15', border: 'border-emerald-500/40', text: 'text-emerald-400', badge: 'bg-emerald-500 text-white' },
+  WAIT: { bg: 'bg-amber-500/15', border: 'border-amber-500/40', text: 'text-amber-400', badge: 'bg-amber-500 text-black' },
+  PASS: { bg: 'bg-slate-500/15', border: 'border-slate-500/30', text: 'text-slate-400', badge: 'bg-slate-600 text-white' },
 };
 
-const EVENT_ICONS = {
-  front: '🌬️',
-  epic_thermal: '☀️',
-  calm: '🪞',
-  storm: '⛈️',
-  good_wind: '💨',
+const REGIME_LABELS = {
+  thermal: 'Thermal Cycle',
+  north_flow: 'North Flow',
+  postfrontal: 'Post-Frontal',
+  synoptic_wind: 'Synoptic Wind',
+  frontal: 'Frontal',
+  glass: 'Glass/Calm',
+  building: 'Building',
+  transitional: 'Transitional',
+  uncertain: 'Uncertain',
 };
 
-function SpotRow({ spot, rank, onSelect, isSelected, bgImage }) {
+function SpotCard({ spot, rank, onSelect, bgImage }) {
   const isPriority = spot.isPriority;
+  const style = DECISION_STYLES[spot.decision] || DECISION_STYLES.PASS;
+  
+  const windDir = spot.windDirection;
+  const cardinal = windDir != null 
+    ? ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'][Math.round(windDir / 22.5) % 16]
+    : '';
 
   return (
     <button
       onClick={() => onSelect?.(spot.spotId)}
       className={`
-        group w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all
-        ${isSelected 
-          ? (bgImage ? 'bg-sky-500/25 border-sky-400/60' : 'bg-sky-500/10 border-sky-500/40')
-          : isPriority
-            ? (bgImage ? 'bg-amber-500/10 border-amber-500/30 hover:bg-amber-500/15' : 'bg-amber-500/5 border-amber-500/20 hover:border-amber-500/40')
-            : (bgImage ? 'bg-white/10 border-white/10 hover:bg-white/15' : 'bg-[var(--bg-card)] border-[var(--border-color)] hover:border-sky-500/30')
+        group w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left transition-all
+        ${bgImage 
+          ? `${style.bg} border ${style.border} backdrop-blur-sm hover:scale-[1.01]`
+          : `${style.bg} border ${style.border} hover:border-opacity-60`
         }
-        border
       `}
     >
       {/* Rank Badge */}
       <div className={`
-        w-7 h-7 rounded-lg flex items-center justify-center text-xs font-black shrink-0
+        w-8 h-8 rounded-lg flex items-center justify-center text-sm font-black shrink-0
         ${rank === 1 
-          ? (bgImage ? 'bg-amber-500/30 text-amber-300' : 'bg-amber-500/20 text-amber-500')
+          ? 'bg-amber-500/30 text-amber-300'
           : isPriority
-            ? (bgImage ? 'bg-amber-500/20 text-amber-300' : 'bg-amber-500/10 text-amber-600')
-            : (bgImage ? 'bg-white/10 text-white/60' : 'bg-[var(--border-color)] text-[var(--text-tertiary)]')
+            ? 'bg-amber-500/20 text-amber-400'
+            : 'bg-white/10 text-white/60'
         }
       `}>
-        {rank === 1 ? <Star className="w-3.5 h-3.5" /> : rank}
+        {rank === 1 ? <Star className="w-4 h-4" /> : rank}
       </div>
 
       {/* Spot Info */}
       <div className="flex-1 min-w-0">
-        <div className={`text-sm font-bold truncate flex items-center gap-1.5 ${bgImage ? 'text-white' : 'text-[var(--text-primary)]'}`}>
+        <div className={`text-sm font-bold truncate flex items-center gap-2 ${bgImage ? 'text-white' : 'text-[var(--text-primary)]'}`}>
           {spot.spotName}
           {isPriority && (
-            <span className={`text-[8px] font-bold uppercase px-1 py-0.5 rounded ${bgImage ? 'bg-amber-500/20 text-amber-300' : 'bg-amber-500/10 text-amber-600'}`}>
+            <span className="text-[8px] font-bold uppercase px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300">
               Main
             </span>
           )}
         </div>
-        <div className={`text-[11px] flex items-center gap-1.5 ${bgImage ? 'text-white/60' : 'text-[var(--text-tertiary)]'}`}>
-          {spot.startLabel} – {spot.endLabel} · {spot.durationHours}hr window
-          {spot.hasPhysicsBoost && spot.fetchBoostPct > 0 && (
-            <span className={`text-[9px] font-semibold px-1 py-0.5 rounded ${bgImage ? 'bg-sky-500/20 text-sky-300' : 'bg-sky-500/10 text-sky-500'}`} title="Fetch acceleration: wind speeds up over open water">
-              +{spot.fetchBoostPct}% fetch
+        <div className={`text-[11px] flex items-center gap-2 ${bgImage ? 'text-white/60' : 'text-[var(--text-tertiary)]'}`}>
+          {spot.regime && (
+            <span className="flex items-center gap-1">
+              <Zap className="w-3 h-3" />
+              {REGIME_LABELS[spot.regime] || spot.regime}
+            </span>
+          )}
+          {spot.propagation?.phase && spot.propagation.phase !== 'none' && (
+            <span className="flex items-center gap-1">
+              <TrendingUp className="w-3 h-3" />
+              {spot.propagation.phase}
+              {spot.propagation.eta && ` (${spot.propagation.eta})`}
             </span>
           )}
         </div>
       </div>
 
-      {/* Peak Conditions */}
+      {/* Current Wind */}
       <div className="text-right shrink-0">
-        <div className={`text-sm font-bold ${bgImage ? 'text-emerald-300' : 'text-emerald-500'}`}>
-          {spot.peakSpeed} mph
+        <div className={`text-base font-bold ${style.text}`}>
+          {Math.round(spot.windSpeed)} mph
         </div>
         <div className={`text-[10px] ${bgImage ? 'text-white/50' : 'text-[var(--text-tertiary)]'}`}>
-          {spot.hasPhysicsBoost ? 'on water' : 'peak'} @ {spot.peakLabel}
+          {cardinal} {spot.windGust ? `G${Math.round(spot.windGust)}` : ''}
         </div>
       </div>
 
-      {/* Score Badge */}
-      <div className={`
-        px-2 py-1 rounded-lg text-xs font-bold shrink-0
-        ${spot.score >= 80 
-          ? (bgImage ? 'bg-emerald-500/30 text-emerald-300' : 'bg-emerald-500/20 text-emerald-500')
-          : spot.score >= 60
-            ? (bgImage ? 'bg-emerald-500/20 text-emerald-300' : 'bg-emerald-500/10 text-emerald-500')
-            : (bgImage ? 'bg-amber-500/20 text-amber-300' : 'bg-amber-500/10 text-amber-500')
-        }
-      `}>
-        {spot.score}
+      {/* Decision Badge */}
+      <div className={`px-2.5 py-1 rounded-lg text-xs font-black shrink-0 ${style.badge}`}>
+        {spot.decision}
+      </div>
+
+      {/* Confidence */}
+      <div className={`text-xs font-bold shrink-0 ${bgImage ? 'text-white/40' : 'text-[var(--text-tertiary)]'}`}>
+        {spot.confidence}%
       </div>
 
       <ChevronRight className={`w-4 h-4 shrink-0 opacity-40 group-hover:opacity-100 transition-opacity ${bgImage ? 'text-white' : 'text-[var(--text-tertiary)]'}`} />
     </button>
-  );
-}
-
-function WeekEventCard({ event, bgImage }) {
-  const icon = EVENT_ICONS[event.type] || '📅';
-  const isGood = event.goodFor.length > 0 && event.badFor.length === 0;
-  const isBad = event.badFor.length > 0 && event.goodFor.length === 0;
-
-  return (
-    <div className={`
-      flex items-center gap-3 px-3 py-2 rounded-lg
-      ${bgImage 
-        ? (isGood ? 'bg-emerald-500/15' : isBad ? 'bg-red-500/15' : 'bg-white/10')
-        : (isGood ? 'bg-emerald-500/10 border border-emerald-500/20' : isBad ? 'bg-red-500/10 border border-red-500/20' : 'bg-[var(--bg-card)] border border-[var(--border-color)]')
-      }
-    `}>
-      <span className="text-lg">{icon}</span>
-      <div className="flex-1 min-w-0">
-        <div className={`text-xs font-bold ${bgImage ? 'text-white' : 'text-[var(--text-primary)]'}`}>
-          {event.day} · {event.headline}
-        </div>
-        <div className={`text-[10px] ${bgImage ? 'text-white/60' : 'text-[var(--text-tertiary)]'}`}>
-          {event.detail}
-        </div>
-      </div>
-    </div>
   );
 }
 
@@ -180,45 +168,18 @@ export default function ForecastIntelligenceHero({
   currentWindSpeed,
   currentWindDirection,
 }) {
-  const [forecast, setForecast] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  // Fetch forecast intelligence when activity changes
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
-
-    getForecastIntelligence(selectedActivity)
-      .then(data => {
-        if (!cancelled) {
-          setForecast(data);
-          setLoading(false);
-        }
-      })
-      .catch(err => {
-        if (!cancelled) {
-          console.error('Forecast intelligence error:', err);
-          setError('Unable to load forecast');
-          setLoading(false);
-        }
-      });
-
-    return () => { cancelled = true; };
-  }, [selectedActivity]);
+  // Use the REAL prediction hook - not raw NWS data
+  const { predictions, loading, error, lastUpdated, goSpots, waitSpots } = useCrossLocationPredictions(selectedActivity);
 
   const activityConfig = ACTIVITY_CONFIGS[selectedActivity];
-  const bgImage = getRotatingImage(forecast?.today?.length > 0 ? 'good' : 'neutral', 'mood');
+  const hasGoSpots = goSpots.length > 0;
+  const bgImage = getRotatingImage(hasGoSpots ? 'good' : 'neutral', 'mood');
 
   const dirLabel = (deg) => {
     if (deg == null) return '';
     const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
     return dirs[Math.round(deg / 22.5) % 16];
   };
-
-  const hasWindowsToday = forecast?.today?.length > 0;
-  const hasWindowsTomorrow = forecast?.tomorrow?.length > 0;
 
   return (
     <div className={`animate-fade-in ${bgImage ? 'hero-mood' : ''}`}>
@@ -248,7 +209,7 @@ export default function ForecastIntelligenceHero({
           <div className="flex items-center justify-center py-12">
             <Loader2 className={`w-8 h-8 animate-spin ${bgImage ? 'text-white/50' : 'text-[var(--text-tertiary)]'}`} />
             <span className={`ml-3 text-sm ${bgImage ? 'text-white/50' : 'text-[var(--text-tertiary)]'}`}>
-              Analyzing {activityConfig?.name || 'conditions'} across all spots...
+              Running predictions for {activityConfig?.name || 'all spots'}...
             </span>
           </div>
         )}
@@ -261,124 +222,102 @@ export default function ForecastIntelligenceHero({
           </div>
         )}
 
-        {/* ═══════ FORECAST CONTENT ═══════ */}
-        {!loading && !error && forecast && (
-          <div className="space-y-6">
-            {/* ─── TODAY SECTION ─── */}
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <Calendar className={`w-4 h-4 ${bgImage ? 'text-emerald-400' : 'text-emerald-500'}`} />
-                <h3 className={`text-sm font-bold uppercase tracking-wider ${bgImage ? 'text-white/80' : 'text-[var(--text-primary)]'}`}>
-                  Today · {getDayName()}
-                </h3>
-                {hasWindowsToday && (
-                  <span className={`ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full ${bgImage ? 'bg-emerald-500/20 text-emerald-300' : 'bg-emerald-500/10 text-emerald-500'}`}>
-                    {forecast.today.length} spot{forecast.today.length !== 1 ? 's' : ''} firing
-                  </span>
-                )}
-              </div>
-
-              {hasWindowsToday ? (
-                <div className="space-y-2">
-                  {forecast.today.map((spot, i) => (
-                    <SpotRow
-                      key={spot.spotId}
-                      spot={spot}
-                      rank={i + 1}
-                      onSelect={onSelectSpot}
-                      bgImage={bgImage}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className={`px-4 py-6 rounded-xl text-center ${bgImage ? 'bg-white/10' : 'bg-[var(--bg-card)] border border-[var(--border-color)]'}`}>
-                  <Wind className={`w-8 h-8 mx-auto mb-2 ${bgImage ? 'text-white/30' : 'text-[var(--text-tertiary)]'}`} />
-                  <p className={`text-sm font-medium ${bgImage ? 'text-white/60' : 'text-[var(--text-secondary)]'}`}>
-                    No {activityConfig?.name || 'rideable'} windows today
-                  </p>
-                  <p className={`text-xs mt-1 ${bgImage ? 'text-white/40' : 'text-[var(--text-tertiary)]'}`}>
-                    Check tomorrow's forecast below
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* ─── TOMORROW SECTION ─── */}
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <Calendar className={`w-4 h-4 ${bgImage ? 'text-sky-400' : 'text-sky-500'}`} />
-                <h3 className={`text-sm font-bold uppercase tracking-wider ${bgImage ? 'text-white/80' : 'text-[var(--text-primary)]'}`}>
-                  Tomorrow · {getTomorrowName()}
-                </h3>
-                {hasWindowsTomorrow && (
-                  <span className={`ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full ${bgImage ? 'bg-sky-500/20 text-sky-300' : 'bg-sky-500/10 text-sky-500'}`}>
-                    {forecast.tomorrow.length} spot{forecast.tomorrow.length !== 1 ? 's' : ''}
-                  </span>
-                )}
-              </div>
-
-              {hasWindowsTomorrow ? (
-                <div className="space-y-2">
-                  {forecast.tomorrow.map((spot, i) => (
-                    <SpotRow
-                      key={spot.spotId}
-                      spot={spot}
-                      rank={i + 1}
-                      onSelect={onSelectSpot}
-                      bgImage={bgImage}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className={`px-4 py-4 rounded-xl text-center ${bgImage ? 'bg-white/5' : 'bg-[var(--bg-card)] border border-[var(--border-color)]'}`}>
-                  <p className={`text-xs ${bgImage ? 'text-white/40' : 'text-[var(--text-tertiary)]'}`}>
-                    No {activityConfig?.name || 'rideable'} windows forecasted for tomorrow
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* ─── WEEK EVENTS ─── */}
-            {forecast.weekEvents?.length > 0 && (
+        {/* ═══════ PREDICTIONS ═══════ */}
+        {!loading && !error && predictions.length > 0 && (
+          <div className="space-y-4">
+            {/* GO Spots */}
+            {goSpots.length > 0 && (
               <div>
                 <div className="flex items-center gap-2 mb-3">
-                  <Zap className={`w-4 h-4 ${bgImage ? 'text-amber-400' : 'text-amber-500'}`} />
-                  <h3 className={`text-sm font-bold uppercase tracking-wider ${bgImage ? 'text-white/80' : 'text-[var(--text-primary)]'}`}>
-                    This Week
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <h3 className={`text-sm font-bold uppercase tracking-wider ${bgImage ? 'text-emerald-400' : 'text-emerald-500'}`}>
+                    GO Now — {goSpots.length} spot{goSpots.length !== 1 ? 's' : ''} firing
                   </h3>
                 </div>
                 <div className="space-y-2">
-                  {forecast.weekEvents.map((event, i) => (
-                    <WeekEventCard key={i} event={event} bgImage={bgImage} />
+                  {goSpots.slice(0, 5).map((spot, i) => (
+                    <SpotCard
+                      key={spot.spotId}
+                      spot={spot}
+                      rank={i + 1}
+                      onSelect={onSelectSpot}
+                      bgImage={bgImage}
+                    />
                   ))}
                 </div>
               </div>
             )}
 
-            {/* ─── CURRENT CONDITIONS & LEARNING STATUS ─── */}
-            <div className={`flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 rounded-lg ${bgImage ? 'bg-white/10' : 'bg-[var(--bg-card)] border border-[var(--border-color)]'}`}>
-              <Wind className={`w-4 h-4 ${bgImage ? 'text-sky-400' : 'text-sky-500'}`} />
-              <span className={`text-xs font-medium ${bgImage ? 'text-white/70' : 'text-[var(--text-secondary)]'}`}>
-                Current: {currentWindSpeed != null ? `${Math.round(currentWindSpeed)} mph` : '--'}{currentWindDirection != null ? ` ${dirLabel(currentWindDirection)}` : ''}
-              </span>
+            {/* WAIT Spots */}
+            {waitSpots.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <Clock className={`w-4 h-4 ${bgImage ? 'text-amber-400' : 'text-amber-500'}`} />
+                  <h3 className={`text-sm font-bold uppercase tracking-wider ${bgImage ? 'text-amber-400' : 'text-amber-500'}`}>
+                    Building — Check back soon
+                  </h3>
+                </div>
+                <div className="space-y-2">
+                  {waitSpots.slice(0, 3).map((spot, i) => (
+                    <SpotCard
+                      key={spot.spotId}
+                      spot={spot}
+                      rank={goSpots.length + i + 1}
+                      onSelect={onSelectSpot}
+                      bgImage={bgImage}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* No Good Spots */}
+            {goSpots.length === 0 && waitSpots.length === 0 && (
+              <div className={`px-4 py-8 rounded-xl text-center ${bgImage ? 'bg-white/10' : 'bg-[var(--bg-card)] border border-[var(--border-color)]'}`}>
+                <Wind className={`w-10 h-10 mx-auto mb-3 ${bgImage ? 'text-white/30' : 'text-[var(--text-tertiary)]'}`} />
+                <p className={`text-sm font-medium ${bgImage ? 'text-white/60' : 'text-[var(--text-secondary)]'}`}>
+                  No {activityConfig?.name || 'rideable'} conditions right now
+                </p>
+                <p className={`text-xs mt-1 ${bgImage ? 'text-white/40' : 'text-[var(--text-tertiary)]'}`}>
+                  Predictions updated every minute from live sensors
+                </p>
+              </div>
+            )}
+
+            {/* Status Bar */}
+            <div className={`flex flex-wrap items-center gap-x-4 gap-y-2 px-3 py-2 rounded-lg ${bgImage ? 'bg-white/10' : 'bg-[var(--bg-card)] border border-[var(--border-color)]'}`}>
+              <div className="flex items-center gap-2">
+                <Wind className={`w-4 h-4 ${bgImage ? 'text-sky-400' : 'text-sky-500'}`} />
+                <span className={`text-xs font-medium ${bgImage ? 'text-white/70' : 'text-[var(--text-secondary)]'}`}>
+                  Current: {currentWindSpeed != null ? `${Math.round(currentWindSpeed)} mph` : '--'}{currentWindDirection != null ? ` ${dirLabel(currentWindDirection)}` : ''}
+                </span>
+              </div>
               
-              {/* Learning indicators */}
               <div className="flex items-center gap-2 ml-auto">
-                {forecast.mlCorrected && (
-                  <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${bgImage ? 'bg-purple-500/20 text-purple-300' : 'bg-purple-500/10 text-purple-500'}`} title="Using ML-corrected NWS forecasts">
-                    ML
-                  </span>
-                )}
-                {forecast.hasLearnedWeights && (
-                  <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${bgImage ? 'bg-emerald-500/20 text-emerald-300' : 'bg-emerald-500/10 text-emerald-500'}`} title="Calibrated from historical accuracy">
-                    CALIBRATED
-                  </span>
-                )}
+                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400`} title="Using real sensor data + trained prediction models">
+                  LIVE SENSORS
+                </span>
+                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400`} title="Predictions calibrated from historical accuracy">
+                  ML CALIBRATED
+                </span>
                 <span className={`text-[10px] ${bgImage ? 'text-white/40' : 'text-[var(--text-tertiary)]'}`}>
-                  {forecast.totalSpotsAnalyzed} spots
+                  {predictions.length} spots
                 </span>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* No predictions at all */}
+        {!loading && !error && predictions.length === 0 && (
+          <div className={`px-4 py-8 rounded-xl text-center ${bgImage ? 'bg-white/10' : 'bg-[var(--bg-card)] border border-[var(--border-color)]'}`}>
+            <AlertTriangle className={`w-10 h-10 mx-auto mb-3 ${bgImage ? 'text-amber-400' : 'text-amber-500'}`} />
+            <p className={`text-sm font-medium ${bgImage ? 'text-white/60' : 'text-[var(--text-secondary)]'}`}>
+              Unable to load predictions
+            </p>
+            <p className={`text-xs mt-1 ${bgImage ? 'text-white/40' : 'text-[var(--text-tertiary)]'}`}>
+              Check sensor connectivity
+            </p>
           </div>
         )}
       </div>
