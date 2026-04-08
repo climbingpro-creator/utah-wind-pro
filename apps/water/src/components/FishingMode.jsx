@@ -831,7 +831,7 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   
-  const location = FISHING_LOCATIONS[selectedLocation];
+  const location = FISHING_LOCATIONS[selectedLocation] || FISHING_LOCATIONS['strawberry'];
   const season = getCurrentSeason();
   const moonPhase = getMoonPhase();
   const solunar = getSolunarPeriods();
@@ -858,9 +858,10 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
     }
     // Fallback: seasonal estimate
     const baseTemp = { spring: 50, summer: 65, fall: 55, winter: 38 }[season];
-    const elevationAdjust = (location.elevation - 5000) / 1000 * -3;
+    const elev = location?.elevation ?? 5000;
+    const elevationAdjust = (elev - 5000) / 1000 * -3;
     return Math.round(baseTemp + elevationAdjust);
-  }, [waterTempData, season, location.elevation]);
+  }, [waterTempData, season, location?.elevation]);
 
   const waterTempSource = waterTempData?.source === 'USGS' ? 'usgs'
     : waterTempData?.source === 'Satellite Avg' ? 'satellite-avg'
@@ -876,7 +877,7 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
   });
   
   const pressureAnalysis = analyzePressure(pressure, pressureTrend);
-  const depthInfo = location.depths?.[season] || { min: 10, max: 30, description: 'Variable' };
+  const depthInfo = location?.depths?.[season] || { min: 10, max: 30, description: 'Variable' };
 
   // Learned model prediction
   const aiPrediction = useMemo(() => {
