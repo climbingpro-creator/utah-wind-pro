@@ -29,12 +29,14 @@ import { SafeComponent, IntelligentRecommendations, ModuleLoader } from '@utahwi
 import { CreditCard, Wind, Target, TrendingUp, Calendar, ChevronDown, ChevronUp } from 'lucide-react';
 
 import ForecastIntelligenceHero from './ForecastIntelligenceHero';
+import LiveBriefingCard from './LiveBriefingCard';
 import WelcomeCard from './WelcomeCard';
 import AppHeader from './AppHeader';
 import { LakeSelector } from './LakeSelector';
 import { ToastContainer } from './ToastNotification';
 import { ACTIVITY_CONFIGS } from './ActivityMode';
 import CollapsibleSensorCard from './CollapsibleSensorCard';
+import { generateBriefing } from '../services/MorningBriefing';
 
 const DetailedPanels = lazy(() => import('./DetailedPanels'));
 const VectorWindMap = lazy(() => import('./VectorWindMap').then(m => ({ default: m.VectorWindMap })));
@@ -351,6 +353,38 @@ export function Dashboard() {
   const effectiveThermalPrediction = prediction?.thermalPrediction || lakeState?.thermalPrediction;
   const effectiveBoatingPrediction = prediction?.boatingPrediction || null;
 
+  const liveBriefing = useMemo(() => {
+    try {
+      const stations = lakeState?.wind?.stations || [];
+      const kslc = stations.find(s => s.id === 'KSLC') || lakeState?.kslcStation;
+      const kpvu = stations.find(s => s.id === 'KPVU') || lakeState?.kpvuStation;
+
+      return generateBriefing(selectedActivity, {
+        currentWind: {
+          speed: currentWindSpeed || 0,
+          gust: currentWindGust || currentWindSpeed || 0,
+          direction: currentWindDirection,
+          stations,
+        },
+        stations,
+        upstream: {
+          kslcSpeed: kslc?.speed ?? kslc?.windSpeed,
+          kslcDirection: kslc?.direction ?? kslc?.windDirection,
+          kpvuSpeed: kpvu?.speed ?? kpvu?.windSpeed,
+          kpvuDirection: kpvu?.direction ?? kpvu?.windDirection,
+        },
+        thermalPrediction: effectiveThermalPrediction,
+        smartForecast: prediction?.smartForecast || null,
+        activeTriggers: prediction?.triggers || [],
+        swingAlerts: prediction?.swingAlerts || [],
+        boatingPrediction: effectiveBoatingPrediction,
+        intelligence: prediction ? { regime: prediction.regime } : null,
+      });
+    } catch (_e) {
+      return null;
+    }
+  }, [selectedActivity, lakeState, currentWindSpeed, currentWindGust, currentWindDirection, effectiveThermalPrediction, effectiveBoatingPrediction, prediction]);
+
   const effectiveDecision = prediction ? {
     windSpeed: prediction.wind?.current?.speed ?? currentWindSpeed,
     windGust: prediction.wind?.current?.gust ?? currentWindGust,
@@ -535,6 +569,12 @@ export function Dashboard() {
         </Suspense>
 
         {/* ═══════════════════════════════════════════════════════════════════
+            LIVE CONDITIONS BRIEFING
+            Natural-language analysis of current conditions and what to expect
+            ═══════════════════════════════════════════════════════════════════ */}
+        <LiveBriefingCard briefing={liveBriefing} lastUpdated={lastUpdated} />
+
+        {/* ═══════════════════════════════════════════════════════════════════
             3. LIVE SPOT LEADERBOARD (Merged)
             Combines: ForecastIntelligenceHero (cross-location) + SpotRanker
             Now a single unified component showing "Where to Go"
@@ -636,7 +676,7 @@ export function Dashboard() {
               currentWindSpeed={currentWindSpeed} currentWindGust={currentWindGust} currentWindDirection={currentWindDirection}
               effectiveDecision={effectiveDecision} lakeState={lakeState} history={history}
               prediction={prediction} effectiveThermalPrediction={effectiveThermalPrediction} effectiveBoatingPrediction={effectiveBoatingPrediction}
-              effectiveActivityScore={null} effectiveBriefing={null}
+              effectiveActivityScore={null} effectiveBriefing={liveBriefing}
               mesoData={mesoData} isLoading={isLoading} onSelectSpot={handleSelectLake} contentRef={contentRef}
             />
           ) : (
@@ -645,7 +685,7 @@ export function Dashboard() {
               currentWindSpeed={currentWindSpeed} currentWindGust={currentWindGust} currentWindDirection={currentWindDirection}
               effectiveDecision={effectiveDecision} lakeState={lakeState} history={history}
               prediction={prediction} effectiveThermalPrediction={effectiveThermalPrediction} effectiveBoatingPrediction={effectiveBoatingPrediction}
-              effectiveActivityScore={null} effectiveBriefing={null} pressureData={pressureData}
+              effectiveActivityScore={null} effectiveBriefing={liveBriefing} pressureData={pressureData}
               mesoData={mesoData} isLoading={isLoading} onSelectSpot={handleSelectLake} contentRef={contentRef}
             />
           )}

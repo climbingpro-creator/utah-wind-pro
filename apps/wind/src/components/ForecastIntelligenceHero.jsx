@@ -84,21 +84,27 @@ function SpotCard({ spot, rank, onSelect, bgImage }) {
             </span>
           )}
         </div>
-        <div className={`text-[11px] flex items-center gap-2 ${bgImage ? 'text-white/60' : 'text-[var(--text-tertiary)]'}`}>
-          {spot.regime && (
-            <span className="flex items-center gap-1">
-              <Zap className="w-3 h-3" />
-              {REGIME_LABELS[spot.regime] || spot.regime}
-            </span>
-          )}
-          {spot.propagation?.phase && spot.propagation.phase !== 'none' && (
-            <span className="flex items-center gap-1">
-              <TrendingUp className="w-3 h-3" />
-              {spot.propagation.phase}
-              {spot.propagation.eta && ` (${spot.propagation.eta})`}
-            </span>
-          )}
-        </div>
+        {spot.briefing?.headline ? (
+          <div className={`text-[11px] truncate ${bgImage ? 'text-white/60' : 'text-[var(--text-tertiary)]'}`}>
+            {spot.briefing.headline}
+          </div>
+        ) : (
+          <div className={`text-[11px] flex items-center gap-2 ${bgImage ? 'text-white/60' : 'text-[var(--text-tertiary)]'}`}>
+            {spot.regime && (
+              <span className="flex items-center gap-1">
+                <Zap className="w-3 h-3" />
+                {REGIME_LABELS[spot.regime] || spot.regime}
+              </span>
+            )}
+            {spot.propagation?.phase && spot.propagation.phase !== 'none' && (
+              <span className="flex items-center gap-1">
+                <TrendingUp className="w-3 h-3" />
+                {spot.propagation.phase}
+                {spot.propagation.eta && ` (${spot.propagation.eta})`}
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Current Wind */}

@@ -253,9 +253,30 @@ function briefWind(activity, params) {
   const upstreamSnip = buildUpstreamSnippet(upstream);
   if (upstreamSnip) bodyParts.push(`Upstream: ${upstreamSnip}.`);
 
-  if (smartForecast?.translation) bodyParts.push(smartForecast.translation);
+  const translationText = typeof smartForecast?.translation === 'string'
+    ? smartForecast.translation
+    : smartForecast?.translation?.description;
+  if (translationText) bodyParts.push(translationText);
 
   const bullets = [];
+
+  // Live sensor evidence — the readings that back up the briefing
+  const sensorStations = params.stations || params.currentWind?.stations;
+  if (sensorStations?.length) {
+    const top = sensorStations
+      .filter(s => s.speed > 2)
+      .sort((a, b) => b.speed - a.speed)
+      .slice(0, 3);
+    if (top.length) {
+      const sensorText = top.map(s => {
+        const sDir = s.direction != null
+          ? (['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'])[Math.round(s.direction / 22.5) % 16]
+          : '';
+        return `${s.id || s.name} ${safeToFixed(s.speed, 0)} mph ${sDir}`;
+      }).join(' · ');
+      bullets.push({ icon: '📡', text: sensorText });
+    }
+  }
 
   if (nf?.persistenceHours >= 3) {
     bullets.push({ icon: '🔁', text: `Sustained north flow: ${nf.persistenceHours}h and counting` });
@@ -263,6 +284,13 @@ function briefWind(activity, params) {
 
   if (isNonThermal && speed >= foilMin) {
     bullets.push({ icon: '🧭', text: `${dirLabel(dir) || 'North'} flow: ${speed} mph sustained, ${gustDescription(gf)}` });
+  }
+
+  // Thermal probability — the most important number
+  if (!isNonThermal && prob > 0) {
+    const pctStr = prob >= 1 ? `${Math.round(prob)}%` : `${Math.round(prob * 100)}%`;
+    const qualifier = prob >= 0.7 || prob >= 70 ? 'strong' : prob >= 0.4 || prob >= 40 ? 'moderate' : 'possible';
+    bullets.push({ icon: '🌡️', text: `${pctStr} thermal probability — ${qualifier} signal` });
   }
 
   if (thermal.startHour && prob >= 0.5 && !isNonThermal) {
@@ -546,7 +574,10 @@ function briefParagliding(params) {
   const upstreamSnip = buildUpstreamSnippet(upstream);
   if (upstreamSnip) bodyParts.push(`Upstream: ${upstreamSnip}.`);
 
-  if (smartForecast?.translation) bodyParts.push(smartForecast.translation);
+  const pgTranslation = typeof smartForecast?.translation === 'string'
+    ? smartForecast.translation
+    : smartForecast?.translation?.description;
+  if (pgTranslation) bodyParts.push(pgTranslation);
 
   const bullets = [];
 
