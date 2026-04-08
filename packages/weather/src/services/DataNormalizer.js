@@ -110,8 +110,18 @@ export class LakeState {
       };
     }
 
+    // Build lookup maps unconditionally — WU shadow fallback needs these even when Synoptic returns nothing
+    const stationMap = new Map(
+      (synopticStations || []).map((s) => [s.stationId, s])
+    );
+    const wuLookup = new Map();
+    if (wuPwsStations?.length) {
+      for (const wu of wuPwsStations) {
+        if (wu?.stationId) wuLookup.set(wu.stationId, wu);
+      }
+    }
+
     if (synopticStations && synopticStations.length > 0) {
-      const stationMap = new Map(synopticStations.map((s) => [s.stationId, s]));
 
       // =========================================
       // STEP A: GRADIENT CHECK
@@ -254,180 +264,184 @@ export class LakeState {
         };
       }
 
-      // Wind stations from all sources — show every configured meter as a card
-      state.wind.stations = [];
-      const addedIds = new Set();
-      
-      if (state.pws) {
+    } // end if (synopticStations)
+
+    // =========================================
+    // WIND STATIONS — built from ALL sources (Synoptic + UDOT + NWS + WU)
+    // Shadow stations: when a primary Synoptic/UDOT station is offline,
+    // substitute the nearest WU PWS station so the dashboard never goes empty.
+    // =========================================
+    const SHADOW_MAP = {
+      FPS:   { wuId: 'KUTLEHI111',  label: 'Lehi (FPS Shadow)' },
+      UTALP: { wuId: 'KUTDRAPE132', label: 'Draper E (UTALP Shadow)' },
+    };
+
+    state.wind.stations = [];
+    const addedIds = new Set();
+
+    if (state.pws) {
+      state.wind.stations.push({
+        id: 'PWS',
+        name: state.pws.name,
+        speed: state.pws.windSpeed,
+        gust: state.pws.windGust,
+        direction: state.pws.windDirection,
+        temperature: state.pws.temperature,
+        isPWS: true,
+        isYourStation: true,
+        role: 'Ground Truth - Your station at Zig Zag',
+      });
+      addedIds.add('PWS');
+    }
+
+    function addStationOrShadow(stationConfig) {
+      if (addedIds.has(stationConfig.id)) return;
+      const station = stationMap.get(stationConfig.id);
+      if (station) {
+        const info = STATION_INFO[stationConfig.id] || {};
         state.wind.stations.push({
-          id: 'PWS',
-          name: state.pws.name,
-          speed: state.pws.windSpeed,
-          gust: state.pws.windGust,
-          direction: state.pws.windDirection,
-          temperature: state.pws.temperature,
-          isPWS: true,
-          isYourStation: true,
-          role: 'Ground Truth - Your station at Zig Zag',
+          id: station.stationId,
+          name: stationConfig.name,
+          speed: station.windSpeed,
+          gust: station.windGust,
+          direction: station.windDirection,
+          temperature: station.temperature,
+          elevation: stationConfig.elevation,
+          role: stationConfig.role,
+          network: info.network,
+          isPWS: false,
         });
-        addedIds.add('PWS');
+        addedIds.add(stationConfig.id);
+        return;
       }
-      
-      config.stations.lakeshore.forEach((stationConfig) => {
-        if (addedIds.has(stationConfig.id)) return;
-        const station = stationMap.get(stationConfig.id);
-        if (station) {
-          const info = STATION_INFO[stationConfig.id] || {};
+      const shadow = SHADOW_MAP[stationConfig.id];
+      if (shadow) {
+        const wu = wuLookup.get(shadow.wuId);
+        if (wu && wu.windSpeed != null) {
           state.wind.stations.push({
-            id: station.stationId,
-            name: stationConfig.name,
-            speed: station.windSpeed,
-            gust: station.windGust,
-            direction: station.windDirection,
-            temperature: station.temperature,
+            id: stationConfig.id,
+            name: `${stationConfig.name} (WU)`,
+            speed: wu.windSpeed,
+            gust: wu.windGust,
+            direction: wu.windDirection,
+            temperature: wu.temperature,
             elevation: stationConfig.elevation,
             role: stationConfig.role,
-            network: info.network,
-            isPWS: false,
+            network: 'WU-shadow',
+            isPWS: true,
+            isShadow: true,
+            shadowSource: shadow.wuId,
           });
           addedIds.add(stationConfig.id);
-        }
-      });
-
-      config.stations.ridge.forEach((stationConfig) => {
-        if (addedIds.has(stationConfig.id)) return;
-        const station = stationMap.get(stationConfig.id);
-        if (station) {
-          const info = STATION_INFO[stationConfig.id] || {};
-          state.wind.stations.push({
-            id: station.stationId,
-            name: stationConfig.name,
-            speed: station.windSpeed,
-            gust: station.windGust,
-            direction: station.windDirection,
-            temperature: station.temperature,
-            elevation: stationConfig.elevation,
-            role: stationConfig.role,
-            network: info.network,
-            isPWS: false,
-          });
-          addedIds.add(stationConfig.id);
-        }
-      });
-
-      config.stations.reference.forEach((stationConfig) => {
-        if (addedIds.has(stationConfig.id)) return;
-        const station = stationMap.get(stationConfig.id);
-        if (station) {
-          const info = STATION_INFO[stationConfig.id] || {};
-          state.wind.stations.push({
-            id: station.stationId,
-            name: stationConfig.name,
-            speed: station.windSpeed,
-            gust: station.windGust,
-            direction: station.windDirection,
-            temperature: station.temperature,
-            elevation: stationConfig.elevation,
-            role: stationConfig.role,
-            network: info.network,
-            isPWS: false,
-          });
-          addedIds.add(stationConfig.id);
-        }
-      });
-
-      if (wuPwsStations && wuPwsStations.length > 0) {
-        for (const wu of wuPwsStations) {
-          if (wu && wu.stationId && !addedIds.has(wu.stationId) && wu.windSpeed != null) {
-            state.wind.stations.push({
-              id: wu.stationId,
-              name: wu.name || wu.stationId,
-              speed: wu.windSpeed,
-              gust: wu.windGust,
-              direction: wu.windDirection,
-              temperature: wu.temperature,
-              isPWS: true,
-              network: 'WU',
-            });
-            addedIds.add(wu.stationId);
-          }
+          addedIds.add(shadow.wuId);
         }
       }
+    }
 
-      state.wind.convergence = calculateVectorConvergence(
-        state.wind.stations,
-        WIND_DIRECTION_OPTIMAL[lakeId]
-      );
-      
-      // =========================================
-      // SPANISH FORK EARLY INDICATOR (Utah Lake)
-      // When QSF shows SE wind > 6 mph, thermal likely in ~2 hours
-      // =========================================
-      if (config.stations.earlyIndicator) {
-        const earlyIndicatorStation = stationMap.get(config.stations.earlyIndicator.id);
-        if (earlyIndicatorStation) {
-          state.earlyIndicator = {
-            id: earlyIndicatorStation.stationId,
-            name: config.stations.earlyIndicator.name,
-            windSpeed: earlyIndicatorStation.windSpeed,
-            windDirection: earlyIndicatorStation.windDirection,
-            temperature: earlyIndicatorStation.temperature,
-            elevation: config.stations.earlyIndicator.elevation,
-            role: config.stations.earlyIndicator.role,
-            leadTimeMinutes: config.stations.earlyIndicator.leadTimeMinutes,
-            trigger: config.stations.earlyIndicator.trigger,
-          };
+    config.stations.lakeshore.forEach(addStationOrShadow);
+    config.stations.ridge.forEach(addStationOrShadow);
+    config.stations.reference.forEach(addStationOrShadow);
+
+    if (wuPwsStations?.length) {
+      for (const wu of wuPwsStations) {
+        if (wu && wu.stationId && !addedIds.has(wu.stationId) && wu.windSpeed != null) {
+          state.wind.stations.push({
+            id: wu.stationId,
+            name: wu.name || wu.stationId,
+            speed: wu.windSpeed,
+            gust: wu.windGust,
+            direction: wu.windDirection,
+            temperature: wu.temperature,
+            isPWS: true,
+            network: 'WU',
+          });
+          addedIds.add(wu.stationId);
         }
       }
-      
-      // =========================================
-      // KEY REFERENCE STATIONS — always resolve when in the station map
-      // These drive cascade visualization, pressure analysis, and cross-location predictions
-      // =========================================
-      const kslcStation = stationMap.get('KSLC');
-      if (kslcStation) {
-        state.kslcStation = {
-          id: kslcStation.stationId,
-          name: 'Salt Lake City Airport',
-          speed: kslcStation.windSpeed,
-          windSpeed: kslcStation.windSpeed,
-          windDirection: kslcStation.windDirection,
-          direction: kslcStation.windDirection,
-          temperature: kslcStation.temperature,
-          pressure: kslcStation.pressure,
-          elevation: 4226,
-          role: 'North Flow Early Indicator',
+    }
+
+    state.wind.convergence = calculateVectorConvergence(
+      state.wind.stations,
+      WIND_DIRECTION_OPTIMAL[lakeId]
+    );
+
+    if (config.stations.earlyIndicator) {
+      const earlyIndicatorStation = stationMap.get(config.stations.earlyIndicator.id);
+      if (earlyIndicatorStation) {
+        state.earlyIndicator = {
+          id: earlyIndicatorStation.stationId,
+          name: config.stations.earlyIndicator.name,
+          windSpeed: earlyIndicatorStation.windSpeed,
+          windDirection: earlyIndicatorStation.windDirection,
+          temperature: earlyIndicatorStation.temperature,
+          elevation: config.stations.earlyIndicator.elevation,
+          role: config.stations.earlyIndicator.role,
+          leadTimeMinutes: config.stations.earlyIndicator.leadTimeMinutes,
+          trigger: config.stations.earlyIndicator.trigger,
         };
       }
+    }
 
-      const kpvuStation = stationMap.get('KPVU');
-      if (kpvuStation) {
-        state.kpvuStation = {
-          id: kpvuStation.stationId,
-          name: 'Provo Airport',
-          speed: kpvuStation.windSpeed,
-          windSpeed: kpvuStation.windSpeed,
-          windDirection: kpvuStation.windDirection,
-          direction: kpvuStation.windDirection,
-          temperature: kpvuStation.temperature,
-          pressure: kpvuStation.pressure,
-          elevation: 4495,
-          role: 'Southern Launch Indicator',
-        };
-      }
+    // KEY REFERENCE STATIONS — resolve from Synoptic/NWS first, fall back to WU shadow
+    const kslcStation = stationMap.get('KSLC');
+    if (kslcStation) {
+      state.kslcStation = {
+        id: kslcStation.stationId,
+        name: 'Salt Lake City Airport',
+        speed: kslcStation.windSpeed,
+        windSpeed: kslcStation.windSpeed,
+        windDirection: kslcStation.windDirection,
+        direction: kslcStation.windDirection,
+        temperature: kslcStation.temperature,
+        pressure: kslcStation.pressure,
+        elevation: 4226,
+        role: 'North Flow Early Indicator',
+      };
+    }
 
-      const utalpStation = stationMap.get('UTALP');
-      if (utalpStation) {
+    const kpvuStation = stationMap.get('KPVU');
+    if (kpvuStation) {
+      state.kpvuStation = {
+        id: kpvuStation.stationId,
+        name: 'Provo Airport',
+        speed: kpvuStation.windSpeed,
+        windSpeed: kpvuStation.windSpeed,
+        windDirection: kpvuStation.windDirection,
+        direction: kpvuStation.windDirection,
+        temperature: kpvuStation.temperature,
+        pressure: kpvuStation.pressure,
+        elevation: 4495,
+        role: 'Southern Launch Indicator',
+      };
+    }
+
+    const utalpStation = stationMap.get('UTALP');
+    if (utalpStation) {
+      state.utalpStation = {
+        id: utalpStation.stationId,
+        name: 'Point of Mountain',
+        speed: utalpStation.windSpeed,
+        windSpeed: utalpStation.windSpeed,
+        windDirection: utalpStation.windDirection,
+        direction: utalpStation.windDirection,
+        temperature: utalpStation.temperature,
+        elevation: 4796,
+        role: 'Gap Wind Indicator',
+      };
+    } else {
+      const wuShadow = wuLookup.get('KUTDRAPE132');
+      if (wuShadow?.windSpeed != null) {
         state.utalpStation = {
-          id: utalpStation.stationId,
-          name: 'Point of Mountain',
-          speed: utalpStation.windSpeed,
-          windSpeed: utalpStation.windSpeed,
-          windDirection: utalpStation.windDirection,
-          direction: utalpStation.windDirection,
-          temperature: utalpStation.temperature,
+          id: 'UTALP',
+          name: 'Point of Mountain (WU)',
+          speed: wuShadow.windSpeed,
+          windSpeed: wuShadow.windSpeed,
+          windDirection: wuShadow.windDirection,
+          direction: wuShadow.windDirection,
+          temperature: wuShadow.temperature,
           elevation: 4796,
-          role: 'Gap Wind Indicator',
+          role: 'Gap Wind Indicator (WU shadow)',
+          isShadow: true,
         };
       }
     }

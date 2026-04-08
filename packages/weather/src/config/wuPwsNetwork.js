@@ -15,6 +15,20 @@
  */
 
 export const WU_PWS_STATIONS = {
+  // ─── UTAH LAKE OVERVIEW (superset of key corridor stations) ────
+  'utah-lake': {
+    corridor: 'overview',
+    stations: [
+      { id: 'KUTSARAT50', name: 'Zigzag (Your PWS)', lat: 40.302, lon: -111.881, role: 'ground-truth', priority: 1 },
+      { id: 'KUTLEHI111', name: 'Lehi (FPS Shadow)', lat: 40.454, lon: -111.892, role: 'shadow-fps', priority: 2 },
+      { id: 'KUTDRAPE132', name: 'Draper E (UTALP Shadow)', lat: 40.480, lon: -111.884, role: 'shadow-utalp', priority: 3 },
+      { id: 'KUTSARAT88', name: 'Saratoga Springs S', lat: 40.293, lon: -111.884, role: 'close', priority: 4 },
+      { id: 'KUTLEHI160', name: 'Lehi S', lat: 40.447, lon: -111.889, role: 'mid', priority: 5 },
+      { id: 'KUTRIVER67', name: 'Riverton', lat: 40.489, lon: -111.919, role: 'north-flow', priority: 6 },
+      { id: 'KUTBLUFF18', name: 'Bluffdale', lat: 40.492, lon: -111.935, role: 'north-flow', priority: 7 },
+    ],
+  },
+
   // ─── ZIGZAG CORRIDOR (Saratoga Springs) ────────────────────────
   // SE Thermal path: QSF → Orem → Lehi → Saratoga Springs
   'utah-lake-zigzag': {

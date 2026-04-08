@@ -694,9 +694,13 @@ const TwinPeakCard = ({ siteId, isFirst, sensorData, isInterpolated, assessment,
 const ParaglidingMode = ({ windData, isLoading: _isLoading }) => {
   const currentHour = new Date().getHours();
 
-  const fpsData = windData?.FPS || windData?.stations?.find(s => s.id === 'FPS');
-  const utalpData = windData?.UTALP || windData?.stations?.find(s => s.id === 'UTALP');
-  
+  const fpsData = windData?.FPS
+    || windData?.stations?.find(s => s.id === 'FPS')
+    || windData?.stations?.find(s => s.id === 'KUTLEHI111');
+  const utalpData = windData?.UTALP
+    || windData?.stations?.find(s => s.id === 'UTALP')
+    || windData?.stations?.find(s => s.id === 'KUTDRAPE132');
+
   const fpsSpeed = fpsData?.speed || fpsData?.windSpeed;
   const fpsDir = fpsData?.direction || fpsData?.windDirection;
   const fpsGust = fpsData?.gust || fpsData?.windGust;

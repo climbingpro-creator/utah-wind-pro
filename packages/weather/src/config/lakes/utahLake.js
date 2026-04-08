@@ -647,11 +647,12 @@ export const utahLakeConfigs = {
       },
       
       lakeshore: [
-        { id: 'FPS', name: 'Flight Park South', elevation: 5202, role: 'Primary thermal indicator station', priority: 1 },
-        { id: 'KPVU', name: 'Provo Municipal', elevation: 4495, role: 'Valley floor reference', priority: 2 },
-        { id: 'QLN', name: 'Lindon', elevation: 4738, role: 'East shore - lake breeze penetration', priority: 3 },
-        { id: 'UTOLY', name: 'Lake Shore / Zig Zag', elevation: 4489, role: 'On-lake reference', priority: 4 },
-        { id: 'UID28', name: 'Saratoga Springs', elevation: 4500, role: 'North shore reference', priority: 5 },
+        { id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226, role: 'North flow origin - key indicator', priority: 1 },
+        { id: 'FPS', name: 'Flight Park South', elevation: 5202, role: 'Primary thermal indicator station', priority: 2 },
+        { id: 'KPVU', name: 'Provo Municipal', elevation: 4495, role: 'Valley floor reference', priority: 3 },
+        { id: 'QLN', name: 'Lindon', elevation: 4738, role: 'East shore - lake breeze penetration', priority: 4 },
+        { id: 'UTOLY', name: 'Lake Shore / Zig Zag', elevation: 4489, role: 'On-lake reference', priority: 5 },
+        { id: 'UID28', name: 'Saratoga Springs', elevation: 4500, role: 'North shore reference', priority: 6 },
       ],
 
       earlyIndicator: {
