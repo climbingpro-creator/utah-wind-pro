@@ -27,6 +27,8 @@ const LOCATIONS = [
   { id: 'utah-lake-lincoln', label: 'Lincoln Beach' },
   { id: 'utah-lake-sandy', label: 'Sandy Beach' },
   { id: 'utah-lake-vineyard', label: 'Vineyard' },
+  { id: 'deer-creek', label: 'Deer Creek' },
+  { id: 'willard-bay', label: 'Willard Bay' },
   { id: 'strawberry-ladders', label: 'Strawberry Ladders' },
   { id: 'skyline-drive', label: 'Skyline Drive' },
 ];
