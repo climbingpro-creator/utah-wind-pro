@@ -110,12 +110,14 @@ export const saltLakeAreaConfigs = {
         bustThreshold: 2.0,
       },
       ridge: [
-        { id: 'FPS', name: 'Flight Park South', elevation: 4970, role: 'Nearby wind station', priority: 1 },
+        { id: 'UTALP', name: 'Point of the Mountain', elevation: 4796, role: 'ON-SITE wind station', priority: 1 },
+        { id: 'FPS', name: 'Flight Park South', elevation: 4970, role: 'South-side wind station', priority: 2 },
       ],
-      groundTruth: { id: 'FPS', name: 'Flight Park South', role: 'Ground Truth — adjacent' },
+      groundTruth: { id: 'UTALP', name: 'Point of the Mountain', role: 'Ground Truth — on-site' },
       lakeshore: [
         { id: 'FPS', name: 'Flight Park South', elevation: 4970, role: 'Primary — adjacent', priority: 1 },
-        { id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226, role: 'North flow indicator', priority: 2 },
+        { id: 'UTALP', name: 'Point of the Mountain', elevation: 4796, role: 'On-site reference', priority: 2 },
+        { id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226, role: 'North flow indicator', priority: 3 },
       ],
       reference: [
         { id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226 },

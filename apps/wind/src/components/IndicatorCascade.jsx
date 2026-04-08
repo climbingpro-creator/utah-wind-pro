@@ -132,15 +132,10 @@ function resolveStation(nodeId, lakeState) {
     case 'KSLC': return lakeState.kslcStation ?? null;
     case 'KPVU': return lakeState.kpvuStation ?? null;
     case 'UTALP': return lakeState.utalpStation ?? lakeState.wind?.stations?.find(s => s.id === 'UTALP') ?? null;
-    case 'UTOLY': return lakeState.wind?.stations?.find(s => s.id === 'UTOLY') ?? null;
-    case 'FPS': return lakeState.wind?.stations?.find(s => s.id === 'FPS') ?? null;
-    case 'QSF': return lakeState.wind?.stations?.find(s => s.id === 'QSF') ?? null;
-    case 'SND': return lakeState.wind?.stations?.find(s => s.id === 'SND') ?? null;
-    case 'KHCR': return lakeState.wind?.stations?.find(s => s.id === 'KHCR') ?? null;
-    case 'KHIF': return lakeState.wind?.stations?.find(s => s.id === 'KHIF') ?? null;
     case 'TARGET': return lakeState.pws ?? lakeState.wind?.stations?.[0] ?? null;
     case 'RIDGE': return null;
-    default: return null;
+    default:
+      return lakeState.wind?.stations?.find(s => s.id === nodeId) ?? null;
   }
 }
 

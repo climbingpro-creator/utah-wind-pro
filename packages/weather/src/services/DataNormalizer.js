@@ -363,7 +363,7 @@ export class LakeState {
       // SPANISH FORK EARLY INDICATOR (Utah Lake)
       // When QSF shows SE wind > 6 mph, thermal likely in ~2 hours
       // =========================================
-      if (lakeId.startsWith('utah-lake') && config.stations.earlyIndicator) {
+      if (config.stations.earlyIndicator) {
         const earlyIndicatorStation = stationMap.get(config.stations.earlyIndicator.id);
         if (earlyIndicatorStation) {
           state.earlyIndicator = {
@@ -381,58 +381,54 @@ export class LakeState {
       }
       
       // =========================================
-      // KSLC NORTH FLOW INDICATOR (Utah Lake north flow locations)
-      // When KSLC shows N/NW wind > 5 mph, north flow likely in ~1 hour
+      // KEY REFERENCE STATIONS — always resolve when in the station map
+      // These drive cascade visualization, pressure analysis, and cross-location predictions
       // =========================================
-      if (lakeId.startsWith('utah-lake')) {
-        const kslcStation = stationMap.get('KSLC');
-        if (kslcStation) {
-          state.kslcStation = {
-            id: kslcStation.stationId,
-            name: 'Salt Lake City Airport',
-            windSpeed: kslcStation.windSpeed,
-            windDirection: kslcStation.windDirection,
-            temperature: kslcStation.temperature,
-            pressure: kslcStation.pressure,
-            elevation: 4226,
-            role: 'North Flow Early Indicator - N/NW wind here precedes Utah Lake by ~1 hour',
-          };
-        }
-        
-        // =========================================
-        // KPVU INDICATOR (Best for Lincoln Beach & Sandy Beach)
-        // 78% foil kiteable at 8-10 mph N - better than KSLC for southern launches
-        // =========================================
-        const kpvuStation = stationMap.get('KPVU');
-        if (kpvuStation) {
-          state.kpvuStation = {
-            id: kpvuStation.stationId,
-            name: 'Provo Airport',
-            windSpeed: kpvuStation.windSpeed,
-            windDirection: kpvuStation.windDirection,
-            temperature: kpvuStation.temperature,
-            pressure: kpvuStation.pressure,
-            elevation: 4495,
-            role: 'Southern Launch Indicator - Best for Lincoln Beach & Sandy Beach',
-          };
-        }
-        
-        // =========================================
-        // UTALP INDICATOR (Point of Mountain - Gap wind)
-        // Shows wind funneling through the gap
-        // =========================================
-        const utalpStation = stationMap.get('UTALP');
-        if (utalpStation) {
-          state.utalpStation = {
-            id: utalpStation.stationId,
-            name: 'Point of Mountain',
-            windSpeed: utalpStation.windSpeed,
-            windDirection: utalpStation.windDirection,
-            temperature: utalpStation.temperature,
-            elevation: 4796,
-            role: 'Gap Wind Indicator - Shows north flow through Point of Mountain',
-          };
-        }
+      const kslcStation = stationMap.get('KSLC');
+      if (kslcStation) {
+        state.kslcStation = {
+          id: kslcStation.stationId,
+          name: 'Salt Lake City Airport',
+          speed: kslcStation.windSpeed,
+          windSpeed: kslcStation.windSpeed,
+          windDirection: kslcStation.windDirection,
+          direction: kslcStation.windDirection,
+          temperature: kslcStation.temperature,
+          pressure: kslcStation.pressure,
+          elevation: 4226,
+          role: 'North Flow Early Indicator',
+        };
+      }
+
+      const kpvuStation = stationMap.get('KPVU');
+      if (kpvuStation) {
+        state.kpvuStation = {
+          id: kpvuStation.stationId,
+          name: 'Provo Airport',
+          speed: kpvuStation.windSpeed,
+          windSpeed: kpvuStation.windSpeed,
+          windDirection: kpvuStation.windDirection,
+          direction: kpvuStation.windDirection,
+          temperature: kpvuStation.temperature,
+          pressure: kpvuStation.pressure,
+          elevation: 4495,
+          role: 'Southern Launch Indicator',
+        };
+      }
+
+      const utalpStation = stationMap.get('UTALP');
+      if (utalpStation) {
+        state.utalpStation = {
+          id: utalpStation.stationId,
+          name: 'Point of Mountain',
+          speed: utalpStation.windSpeed,
+          windSpeed: utalpStation.windSpeed,
+          windDirection: utalpStation.windDirection,
+          direction: utalpStation.windDirection,
+          temperature: utalpStation.temperature,
+          elevation: 4796,
+          role: 'Gap Wind Indicator',
+        };
       }
     }
 

@@ -66,6 +66,11 @@ const STATION_NODES = {
   RVZU1: { name: 'Soldier Creek',      lat: 40.119,  lng: -111.078,  elevation: 7640,  type: 'lakeshore' },
   CCPUT: { name: 'Currant Creek Pass', lat: 40.292,  lng: -111.094,  elevation: 8020,  type: 'ridge' },
   UWCU1: { name: 'Wolf Creek',         lat: 40.312,  lng: -111.106,  elevation: 9400,  type: 'ridge' },
+  UID28: { name: 'Saratoga Springs',   lat: 40.35,   lng: -111.90,   elevation: 4500, type: 'lakeshore' },
+  UTPCR: { name: 'Pioneer Crossing',   lat: 40.42,   lng: -111.87,   elevation: 4500, type: 'udot' },
+  UT7:   { name: 'Bluffdale I-15',     lat: 40.49,   lng: -111.93,   elevation: 4500, type: 'udot' },
+  TIMU1: { name: 'Timpanogos Divide',  lat: 40.39,   lng: -111.65,   elevation: 8170, type: 'ridge' },
+  QLN:   { name: 'Lindon',             lat: 40.34,   lng: -111.72,   elevation: 4738, type: 'lakeshore' },
   SKY:   { name: 'Skyline Drive',      lat: 39.645,  lng: -111.315,  elevation: 10200, type: 'ridge' },
   UTESU: { name: 'Ephraim South',      lat: 39.358,  lng: -111.540,  elevation: 9800,  type: 'ridge' },
   UTMPK: { name: 'Millers Peak',       lat: 39.590,  lng: -111.210,  elevation: 9200,  type: 'ridge' },
@@ -88,11 +93,25 @@ const PROPAGATION_EDGES = [
   { from: 'KSLC', to: 'KPVU', delay: 50, attenuation: 0.55, channeling: 0.85,
     headingRange: [270, 45], description: 'SLC → Provo (full distance, spreading)' },
 
+  // === NORTH FLOW DETAIL (I-15 corridor stations) ===
+  { from: 'KSLC', to: 'UT7', delay: 20, attenuation: 0.85, channeling: 1.0,
+    headingRange: [270, 45], description: 'SLC → Bluffdale I-15 (corridor flow)' },
+  { from: 'UT7', to: 'UTALP', delay: 10, attenuation: 0.90, channeling: 1.1,
+    headingRange: [270, 45], description: 'Bluffdale → Point of Mtn (gap compression)' },
+  { from: 'UTALP', to: 'UTPCR', delay: 10, attenuation: 0.85, channeling: 1.0,
+    headingRange: [270, 60], description: 'Point → Pioneer Crossing (south side spill)' },
+  { from: 'UTPCR', to: 'FPS', delay: 5, attenuation: 0.95, channeling: 1.0,
+    headingRange: [270, 60], description: 'Pioneer Crossing → Flight Park (adjacent)' },
+  { from: 'FPS', to: 'UID28', delay: 10, attenuation: 0.85, channeling: 0.9,
+    headingRange: [270, 45], description: 'Flight Park → Saratoga Springs (lake approach)' },
+
   // === THERMAL / SOUTH FLOW PATH ===
   { from: 'KPVU', to: 'FPS', delay: 10, attenuation: 0.90, channeling: 1.0,
     headingRange: [130, 220], description: 'Provo → Flight Park South (short hop)' },
   { from: 'QSF', to: 'KPVU', delay: 25, attenuation: 0.70, channeling: 1.25,
     headingRange: [90, 180], description: 'Canyon → Provo (canyon exit acceleration)' },
+  { from: 'QSF', to: 'FPS', delay: 40, attenuation: 0.60, channeling: 1.1,
+    headingRange: [90, 200], description: 'Canyon → Flight Park (thermal propagation)' },
 
   // === DEER CREEK VENTURI PATH ===
   { from: 'KPVU', to: 'KHCR', delay: 45, attenuation: 0.60, channeling: 1.40,
@@ -124,11 +143,14 @@ const PROPAGATION_EDGES = [
 // Location-to-station mapping: which stations best represent each launch
 // FREE SHADOW STATIONS: KUTLEHI111 shadows FPS, KUTDRAPE132 shadows UTALP
 const LOCATION_STATIONS = {
+  'utah-lake':          { primary: 'FPS',  secondary: ['KUTLEHI111', 'UTALP', 'KPVU', 'UTOLY', 'UID28'], upstreamNorth: ['KSLC', 'UTOLY', 'UTALP', 'KUTDRAPE132', 'UT7'], upstreamThermal: ['QSF', 'KPVU'] },
   'utah-lake-lincoln':  { primary: 'KPVU', secondary: ['FPS', 'KUTLEHI111', 'QSF'], upstreamNorth: ['KSLC', 'UTALP', 'KUTDRAPE132'], upstreamThermal: ['QSF', 'KPVU'] },
   'utah-lake-sandy':    { primary: 'KPVU', secondary: ['FPS', 'KUTLEHI111'],        upstreamNorth: ['KSLC', 'UTALP', 'KUTDRAPE132'], upstreamThermal: ['KPVU'] },
   'utah-lake-vineyard': { primary: 'KPVU', secondary: ['FPS', 'KUTLEHI111'],        upstreamNorth: ['KSLC', 'UTALP', 'KUTDRAPE132'], upstreamThermal: ['KPVU'] },
   'utah-lake-zigzag':   { primary: 'FPS',  secondary: ['KUTLEHI111', 'UTALP', 'KPVU'], upstreamNorth: ['KSLC', 'UTOLY', 'UTALP', 'KUTDRAPE132'], upstreamThermal: ['QSF'] },
   'utah-lake-mm19':     { primary: 'FPS',  secondary: ['KUTLEHI111', 'KPVU', 'UID28'], upstreamNorth: ['KSLC', 'UTALP', 'KUTDRAPE132'], upstreamThermal: ['QSF'] },
+  'potm-south':         { primary: 'FPS',  secondary: ['UTALP', 'KUTLEHI111', 'UTPCR'], upstreamNorth: ['KSLC', 'UTALP', 'KUTDRAPE132'], upstreamThermal: ['QSF', 'KPVU'] },
+  'potm-north':         { primary: 'UTALP', secondary: ['FPS', 'KUTDRAPE132', 'UT7'], upstreamNorth: ['KSLC', 'KUTDRAPE132'], upstreamThermal: ['FPS', 'KPVU'] },
   'deer-creek':         { primary: 'KHCR', secondary: ['UTDCD', 'UTCHL'], upstreamNorth: ['KSLC'],      upstreamThermal: ['KPVU', 'UTLPC'] },
   'willard-bay':        { primary: 'KHIF', secondary: [],             upstreamNorth: ['KSLC'],           upstreamThermal: ['KHIF'] },
   'strawberry-ladders': { primary: 'UTCOP', secondary: ['UTDAN', 'DSTU1'], upstreamNorth: ['KSLC', 'CCPUT'], upstreamThermal: ['UTCOP', 'DSTU1'] },

@@ -57,7 +57,7 @@ async function getPredictionForSpot(spotId, activity, modelContext) {
   try {
     // Fetch current sensor data for this spot
     const rawData = await weatherService.getDataForLake(spotId);
-    const hasData = rawData.ambient || rawData.synoptic?.length > 0;
+    const hasData = rawData.ambient || rawData.synoptic?.length > 0 || rawData.wuPws?.length > 0;
     
     if (!hasData) {
       return null;

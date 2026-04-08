@@ -35,7 +35,7 @@ export const useWeatherStore = create((set, get) => ({
 
     try {
       const rawData = await weatherService.getDataForLake(lakeId);
-      const hasData = rawData.ambient || rawData.synoptic?.length > 0;
+      const hasData = rawData.ambient || rawData.synoptic?.length > 0 || rawData.wuPws?.length > 0;
 
       const lakeHistory = get().history[lakeId];
       const historyArray = lakeHistory

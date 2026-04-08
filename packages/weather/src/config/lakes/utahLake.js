@@ -455,6 +455,8 @@ export const utahLakeConfigs = {
       
       reference: [
         { id: 'UTALP', name: 'Point of the Mountain', elevation: 4796 },
+        { id: 'UTOLY', name: 'Lake Shore / Zig Zag', elevation: 4489 },
+        { id: 'UID28', name: 'Saratoga Springs', elevation: 4500 },
         { id: 'UTORM', name: 'I-15 Orem (UDOT)', elevation: 4500 },
         { id: 'UT7', name: 'Bluffdale I-15 (UDOT)', elevation: 4500 },
         { id: 'UTPRB', name: 'Porter Rockwell Blvd (UDOT)', elevation: 4500 },
@@ -645,34 +647,33 @@ export const utahLakeConfigs = {
       },
       
       lakeshore: [
-        { 
-          id: 'FPS', 
-          name: 'Flight Park South',
-          elevation: 5202,
-          role: 'Primary thermal indicator station',
-          priority: 1
-        },
-        { 
-          id: 'KPVU', 
-          name: 'Provo Municipal',
-          elevation: 4495,
-          role: 'Valley floor reference',
-          priority: 2
-        },
-        { 
-          id: 'QLN', 
-          name: 'Lindon',
-          elevation: 4738,
-          role: 'East shore - lake breeze penetration',
-          priority: 3
-        },
+        { id: 'FPS', name: 'Flight Park South', elevation: 5202, role: 'Primary thermal indicator station', priority: 1 },
+        { id: 'KPVU', name: 'Provo Municipal', elevation: 4495, role: 'Valley floor reference', priority: 2 },
+        { id: 'QLN', name: 'Lindon', elevation: 4738, role: 'East shore - lake breeze penetration', priority: 3 },
+        { id: 'UTOLY', name: 'Lake Shore / Zig Zag', elevation: 4489, role: 'On-lake reference', priority: 4 },
+        { id: 'UID28', name: 'Saratoga Springs', elevation: 4500, role: 'North shore reference', priority: 5 },
       ],
-      
+
+      earlyIndicator: {
+        id: 'QSF',
+        name: 'Spanish Fork Canyon',
+        elevation: 4550,
+        role: 'Early Warning - SE wind precedes thermal by ~90 min',
+        leadTimeMinutes: 90,
+        trigger: { direction: { min: 100, max: 180, label: 'SE' }, speed: { min: 6, optimal: 7.5 } },
+      },
+
       reference: [
         { id: 'UTALP', name: 'Point of the Mountain', elevation: 4796 },
+        { id: 'UTPCR', name: 'Pioneer Crossing, Lehi (UDOT)', elevation: 4500 },
+        { id: 'UTORM', name: 'I-15 Orem (UDOT)', elevation: 4500 },
+        { id: 'UT7', name: 'Bluffdale I-15 (UDOT)', elevation: 4500 },
+        { id: 'UTPRB', name: 'Porter Rockwell Blvd (UDOT)', elevation: 4500 },
+        { id: 'UTRVT', name: 'SR-154 Riverton (UDOT)', elevation: 4500 },
+        { id: 'UTLAK', name: 'SR-68 Mosida (UDOT)', elevation: 4500 },
       ],
     },
-    
+
     thermal: {
       optimalDirection: { min: 135, max: 165, ideal: 150 },
       optimalSpeed: { min: 8, max: 18, average: 10.3 },
@@ -680,7 +681,7 @@ export const utahLakeConfigs = {
       buildTime: { start: 5, usable: 8 },
       fadeTime: { start: 15, end: 18 },
     },
-    
+
     waterTempEstimate: 58,
     fishSpecies: {
       primary: ['channel catfish', 'walleye', 'white bass', 'largemouth bass', 'black crappie'],
@@ -688,10 +689,10 @@ export const utahLakeConfigs = {
       native: ['June sucker (threatened — must release)'],
       blueRibbon: false,
       bestSeasons: {
-        walleye: 'Mar–May, Oct–Nov',
-        whiteBass: 'May–Jun (spawning run)',
-        catfish: 'Jun–Sep',
-        iceFishing: 'Dec–Feb (rare — shallow)',
+        walleye: 'Mar-May, Oct-Nov',
+        whiteBass: 'May-Jun (spawning run)',
+        catfish: 'Jun-Sep',
+        iceFishing: 'Dec-Feb (rare - shallow)',
       },
     },
     boating: { marina: true, ramp: true, statePark: 'Utah Lake State Park' },
@@ -720,6 +721,7 @@ export const utahLakeConfigs = {
       },
       ridge: [
         { id: 'FPS', name: 'Flight Park South', elevation: 4970, role: 'ON-SITE wind station', priority: 1 },
+        { id: 'UTALP', name: 'Point of the Mountain', elevation: 4796, role: 'Ridge-top wind station', priority: 2 },
       ],
       groundTruth: { id: 'FPS', name: 'Flight Park South', role: 'Ground Truth — on-site' },
       earlyIndicator: {
@@ -735,10 +737,12 @@ export const utahLakeConfigs = {
       },
       lakeshore: [
         { id: 'FPS', name: 'Flight Park South', elevation: 4970, role: 'Primary — on-site', priority: 1 },
-        { id: 'UTPCR', name: 'Pioneer Crossing, Lehi (UDOT)', elevation: 4500, role: 'South-side approach indicator', priority: 2 },
+        { id: 'UTALP', name: 'Point of the Mountain', elevation: 4796, role: 'Ridge reference', priority: 2 },
+        { id: 'UTPCR', name: 'Pioneer Crossing, Lehi (UDOT)', elevation: 4500, role: 'South-side approach indicator', priority: 3 },
       ],
       reference: [
         { id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226 },
+        { id: 'UTALP', name: 'Point of the Mountain', elevation: 4796 },
         { id: 'UTPCR', name: 'Pioneer Crossing, Lehi (UDOT)', elevation: 4500 },
       ],
     },

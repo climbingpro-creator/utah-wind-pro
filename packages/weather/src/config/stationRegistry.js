@@ -271,6 +271,19 @@ export const STATION_REGISTRY = {
     roles: ['north-flow-valley-confirmation'],
   },
 
+  // Saratoga Springs
+  UID28: {
+    id: 'UID28',
+    name: 'Saratoga Springs',
+    shortName: 'Saratoga',
+    lat: 40.35,
+    lng: -111.90,
+    elevation: 4500,
+    type: 'mesonet',
+    network: 'MesoWest',
+    roles: ['utah-lake-north-shore', 'zigzag-proximity'],
+  },
+
   // Pineview
   COOPOGNU1: {
     id: 'COOPOGNU1',
