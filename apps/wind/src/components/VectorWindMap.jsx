@@ -10,6 +10,7 @@ import { LAKE_CONFIGS, SpatialInterpolator, applySurfacePhysics, calculateFetchM
 import { trackPinDrop } from '@utahwind/ui';
 import { safeToFixed } from '../utils/safeToFixed';
 import SyntheticForecastCard from './map/SyntheticForecastCard';
+import StationPopupCard from './map/StationPopupCard';
 
 const MAP_AREAS = {
   'utah-lake': {
@@ -194,6 +195,7 @@ function WindArrowOverlay({ center, direction, speed }) {
 
 export function VectorWindMap({
   selectedLake,
+  selectedActivity = 'kiting',
   windData,
   stationData = [],
   isLoading,
@@ -568,7 +570,7 @@ export function VectorWindMap({
           {/* Dropped pin marker */}
           {droppedPin && <PinDropMarker coords={droppedPin} />}
 
-          {/* Station popup */}
+          {/* Station popup — Live Now + Next Session */}
           {selectedStation && (
             <Popup
               longitude={selectedStation.station.lng}
@@ -578,52 +580,15 @@ export function VectorWindMap({
               closeButton={true}
               closeOnClick={false}
               className="station-popup"
+              maxWidth="300px"
             >
-              <div className="min-w-[180px] p-1">
-                <div className="font-bold text-base" style={{ color: getStationColor(selectedStation.station) }}>
-                  {selectedStation.station.name}
-                  {selectedStation.station.isEarlyIndicator && ' ⏰'}
-                  {selectedStation.station.isNorthFlowIndicator && ' 🌬️'}
-                </div>
-                <div className="text-xs text-gray-500 mb-2">
-                  {selectedStation.station.id} • {selectedStation.station.elevation?.toLocaleString() || '?'} ft
-                  {selectedStation.station.isRidge && ' • Ridge'}
-                </div>
-
-                {selectedStation.live?.speed != null ? (
-                  <div className="bg-slate-100 rounded p-2 space-y-1">
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-600 text-sm">Wind:</span>
-                      <span className="font-bold text-lg text-gray-800">
-                        {safeToFixed(selectedStation.live.speed, 1)} mph
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-600 text-sm">Direction:</span>
-                      <span className="font-medium text-gray-800">
-                        {selectedStation.live.direction}° ({getCardinalDirection(selectedStation.live.direction)})
-                      </span>
-                    </div>
-                    {selectedStation.live.gust && (
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-600 text-sm">Gust:</span>
-                        <span className="font-medium text-gray-800">
-                          {safeToFixed(selectedStation.live.gust, 1)} mph
-                        </span>
-                      </div>
-                    )}
-                    {selectedStation.physicsHints?.length > 0 && (
-                      <div className="mt-1.5 pt-1.5 border-t border-gray-200">
-                        {selectedStation.physicsHints.map((h, i) => (
-                          <div key={i} className="text-[10px] font-medium text-emerald-600">▲ {h}</div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="text-gray-400 text-sm italic">No current data</div>
-                )}
-              </div>
+              <StationPopupCard
+                station={selectedStation.station}
+                live={selectedStation.live}
+                physicsHints={selectedStation.physicsHints}
+                selectedActivity={selectedActivity}
+                selectedLake={selectedLake}
+              />
             </Popup>
           )}
 

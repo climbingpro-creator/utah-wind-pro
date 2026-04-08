@@ -522,6 +522,7 @@ export function Dashboard() {
         <Suspense fallback={<ChunkFallback className="h-80" />}>
           <VectorWindMap
             selectedLake={selectedLake}
+            selectedActivity={selectedActivity}
             windData={{
               direction: lakeState?.pws?.windDirection || lakeState?.wind?.stations?.[0]?.direction,
               speed: lakeState?.pws?.windSpeed || lakeState?.wind?.stations?.[0]?.speed,
