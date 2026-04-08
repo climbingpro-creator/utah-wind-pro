@@ -160,12 +160,12 @@ export function useCrossLocationPredictions(activity) {
         const spots = ACTIVITY_SPOTS[activity] || ACTIVITY_SPOTS.kiting;
         const modelContext = getModelContext() || {};
 
-        // Fetch predictions for all spots in parallel (with concurrency limit)
         const results = [];
-        const batchSize = 4; // Don't hammer the API
+        const batchSize = 3;
         
         for (let i = 0; i < spots.length; i += batchSize) {
           if (abortRef.current) break;
+          if (i > 0) await new Promise(r => setTimeout(r, 3000));
           
           const batch = spots.slice(i, i + batchSize);
           const batchResults = await Promise.all(

@@ -163,26 +163,35 @@ class DataCollector {
       await this.syncServerWeights();
       console.log('Quick startup complete — weights synced');
 
-      // Phase 2: Deferred heavy work — runs after UI is interactive
+      // Phase 2: Deferred heavy work — give UI 45s to finish its own data loading
       setTimeout(() => {
         if (!this.isRunning) return;
         this._deferredCollection();
-      }, 10_000);
+      }, 45_000);
     } catch (e) {
       console.error('Startup cycle error (non-fatal):', e.message);
     }
   }
 
   async _deferredCollection() {
+    const pause = (ms) => new Promise(r => setTimeout(r, ms));
     try {
       await this.backfillFromHistory();
+      await pause(5000);
       await this.collectActuals();
+      await pause(5000);
       await this.recordAndVerify();
+      await pause(3000);
       await this.collectIndicatorData();
+      await pause(2000);
       await this.triggerLearning();
       console.log('Deferred collection cycle complete');
     } catch (e) {
-      console.error('Deferred collection error (non-fatal):', e.message);
+      if (e?.message?.includes('429') || e?.message?.includes('Too Many')) {
+        console.warn('Rate limited during deferred collection — will retry on next cycle');
+      } else {
+        console.error('Deferred collection error (non-fatal):', e.message);
+      }
     }
   }
 
@@ -450,58 +459,59 @@ class DataCollector {
     try {
       const lakes = getAllLakeIds();
 
+      // Batch: collect ALL unique station IDs across all lakes into ONE API call
+      const allStationIds = new Set();
+      const stationToLakes = {};
       for (const lakeId of lakes) {
-        const stationIds = getAllStationIds(lakeId);
-        
-        // Get Synoptic data
-        const synopticData = await weatherService.getSynopticStationData(stationIds);
-        
-        for (const station of synopticData) {
-          const wind = {
-            speed: station.windSpeed,
-            gust: station.windGust,
-            direction: station.windDirection,
-          };
-          const conditions = {
-            temperature: station.temperature,
-            pressure: station.pressure,
-          };
+        for (const id of getAllStationIds(lakeId)) {
+          allStationIds.add(id);
+          if (!stationToLakes[id]) stationToLakes[id] = [];
+          stationToLakes[id].push(lakeId);
+        }
+      }
 
-          // Score this observation for each relevant activity
-          const activityScores = {
-            kiting: scoreSessionForActivity('kiting', wind, conditions),
-            sailing: scoreSessionForActivity('sailing', wind, conditions),
-            paragliding: scoreSessionForActivity('paragliding', wind, conditions),
-            paragliding_north: scoreSessionForActivity('paragliding_north', wind, conditions),
-            paragliding_south: scoreSessionForActivity('paragliding_south', wind, conditions),
-            fishing: scoreSessionForActivity('fishing', wind, conditions),
-            boating: scoreSessionForActivity('boating', wind, conditions),
-            paddling: scoreSessionForActivity('paddling', wind, conditions),
-            windsurfing: scoreSessionForActivity('windsurfing', wind, conditions),
-            snowkiting: scoreSessionForActivity('snowkiting', wind, conditions),
-          };
+      const synopticData = await weatherService.getSynopticStationData(Array.from(allStationIds));
+      const stationMap = new Map(synopticData.map(s => [s.stationId, s]));
 
+      function scoreAll(wind, conditions) {
+        return {
+          kiting: scoreSessionForActivity('kiting', wind, conditions),
+          sailing: scoreSessionForActivity('sailing', wind, conditions),
+          paragliding: scoreSessionForActivity('paragliding', wind, conditions),
+          paragliding_north: scoreSessionForActivity('paragliding_north', wind, conditions),
+          paragliding_south: scoreSessionForActivity('paragliding_south', wind, conditions),
+          fishing: scoreSessionForActivity('fishing', wind, conditions),
+          boating: scoreSessionForActivity('boating', wind, conditions),
+          paddling: scoreSessionForActivity('paddling', wind, conditions),
+          windsurfing: scoreSessionForActivity('windsurfing', wind, conditions),
+          snowkiting: scoreSessionForActivity('snowkiting', wind, conditions),
+        };
+      }
+
+      for (const station of synopticData) {
+        const wind = { speed: station.windSpeed, gust: station.windGust, direction: station.windDirection };
+        const conditions = { temperature: station.temperature, pressure: station.pressure };
+        const lakesForStation = stationToLakes[station.stationId] || [];
+
+        for (const lakeId of lakesForStation) {
           await learningSystem.recordActual(lakeId, station.stationId, {
             windSpeed: station.windSpeed,
             windGust: station.windGust,
             windDirection: station.windDirection,
             temperature: station.temperature,
             pressure: station.pressure,
-            activityScores,
+            activityScores: scoreAll(wind, conditions),
           });
-          
           this.collectionStats.actualsCollected++;
         }
+      }
 
-        // Buffer the latest aggregate reading for wind event prediction
+      // Buffer latest reading per lake for wind event prediction
+      for (const lakeId of lakes) {
         if (!this.recentHistory[lakeId]) this.recentHistory[lakeId] = [];
         const lakeConfig = LAKE_CONFIGS?.[lakeId];
-        const groundTruthId = lakeConfig?.stations?.groundTruth?.id;
-        const primaryId = lakeConfig?.stations?.lakeshore?.[0]?.id;
-        const preferredId = groundTruthId || primaryId;
-        const latestStation = preferredId
-          ? synopticData.find(s => s.stationId === preferredId) || synopticData[0]
-          : synopticData[0];
+        const preferredId = lakeConfig?.stations?.groundTruth?.id || lakeConfig?.stations?.lakeshore?.[0]?.id;
+        const latestStation = preferredId ? stationMap.get(preferredId) : null;
         if (latestStation) {
           this.recentHistory[lakeId].push({
             timestamp: Date.now(),
@@ -517,36 +527,18 @@ class DataCollector {
         }
       }
 
-      // Also collect PWS data (with activity scores)
+      // Also collect PWS data
       const ambientData = await weatherService.getAmbientWeatherData();
       if (ambientData) {
-        const pwsWind = {
-          speed: ambientData.windSpeed,
-          gust: ambientData.windGust,
-          direction: ambientData.windDirection,
-        };
-        const pwsConditions = {
-          temperature: ambientData.temperature,
-          pressure: ambientData.pressure,
-        };
+        const pwsWind = { speed: ambientData.windSpeed, gust: ambientData.windGust, direction: ambientData.windDirection };
+        const pwsConditions = { temperature: ambientData.temperature, pressure: ambientData.pressure };
         await learningSystem.recordActual('utah-lake-zigzag', 'PWS', {
           windSpeed: ambientData.windSpeed,
           windGust: ambientData.windGust,
           windDirection: ambientData.windDirection,
           temperature: ambientData.temperature,
           pressure: ambientData.pressure,
-          activityScores: {
-            kiting: scoreSessionForActivity('kiting', pwsWind, pwsConditions),
-            sailing: scoreSessionForActivity('sailing', pwsWind, pwsConditions),
-            paragliding: scoreSessionForActivity('paragliding', pwsWind, pwsConditions),
-            paragliding_north: scoreSessionForActivity('paragliding_north', pwsWind, pwsConditions),
-            paragliding_south: scoreSessionForActivity('paragliding_south', pwsWind, pwsConditions),
-            fishing: scoreSessionForActivity('fishing', pwsWind, pwsConditions),
-            boating: scoreSessionForActivity('boating', pwsWind, pwsConditions),
-            paddling: scoreSessionForActivity('paddling', pwsWind, pwsConditions),
-            windsurfing: scoreSessionForActivity('windsurfing', pwsWind, pwsConditions),
-            snowkiting: scoreSessionForActivity('snowkiting', pwsWind, pwsConditions),
-          },
+          activityScores: scoreAll(pwsWind, pwsConditions),
         });
         this.collectionStats.actualsCollected++;
       }
@@ -569,13 +561,19 @@ class DataCollector {
     console.log('🔮 Recording predictions and verifying past ones...');
 
     try {
-      const lakes = getAllLakeIds();
+      // Only verify priority spots to avoid API hammering
+      const VERIFY_SPOTS = [
+        'utah-lake-zigzag', 'utah-lake-lincoln', 'utah-lake-vineyard',
+        'deer-creek', 'willard-bay', 'potm-south', 'potm-north',
+        'strawberry-ladders', 'jordanelle',
+      ];
+      const lakes = VERIFY_SPOTS.filter(id => LAKE_CONFIGS[id]);
 
-      for (const lakeId of lakes) {
-        // Get current data
+      for (let i = 0; i < lakes.length; i++) {
+        if (i > 0) await new Promise(r => setTimeout(r, 2000));
+        const lakeId = lakes[i];
         const data = await weatherService.getDataForLake(lakeId);
         
-        // Build lake state (which includes prediction)
         const lakeState = LakeState.fromRawData(lakeId, data.ambient, data.synoptic);
         
         if (lakeState.thermalPrediction) {

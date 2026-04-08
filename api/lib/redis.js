@@ -111,7 +111,7 @@ function getRateLimiter() {
 
   _rateLimiter = new Ratelimit({
     redis,
-    limiter: Ratelimit.slidingWindow(20, '10 s'),
+    limiter: Ratelimit.slidingWindow(60, '10 s'),
     prefix: 'rl:api',
   });
   return _rateLimiter;
