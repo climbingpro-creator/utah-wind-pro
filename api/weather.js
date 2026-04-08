@@ -132,7 +132,7 @@ async function handleAmbient(res) {
   }
 
   const url = `https://rt.ambientweather.net/v1/devices?apiKey=${apiKey}&applicationKey=${appKey}`;
-  const response = await fetch(url);
+  const response = await fetch(url, { signal: AbortSignal.timeout(6000) });
 
   if (!response.ok) {
     const status = response.status;
@@ -144,7 +144,7 @@ async function handleAmbient(res) {
   }
 
   const data = await response.json();
-  res.setHeader('Cache-Control', 's-maxage=5, stale-while-revalidate=15');
+  res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=120');
   return res.status(200).json(data);
 }
 
