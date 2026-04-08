@@ -4,7 +4,7 @@ import { apiUrl } from '@utahwind/weather';
 
 const TRIAL_KEY = 'uwf_trial_start';
 const TRIAL_DAYS = 7;
-const ADMIN_EMAILS = ['climbingpro@gmail.com'];
+const ADMIN_EMAILS = ['tyler@aspenearth.com', 'climbingpro@gmail.com'];
 
 const AuthContext = createContext({
   user: null, session: null, tier: 'free', loading: true,
@@ -42,7 +42,14 @@ export function AuthProvider({ children }) {
         else fetchTier(s.access_token);
       }
       setLoading(false);
+    }).catch(() => {
+      setLoading(false);
     });
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('subscription') === 'success') {
+      window.history.replaceState({}, '', window.location.pathname);
+    }
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
       setSession(s);
@@ -155,6 +162,7 @@ export function AuthProvider({ children }) {
       throw new Error(`Invalid response from subscription portal`);
     }
     if (data.error) throw new Error(data.error);
+    if (!data.url) throw new Error('No portal URL returned');
     window.location.href = data.url;
   }
 

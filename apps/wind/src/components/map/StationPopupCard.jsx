@@ -7,11 +7,13 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Wind, Navigation, Clock, Lock, Sparkles, Zap, AlertTriangle, Loader2 } from 'lucide-react';
+import { Wind, Navigation, Clock, Lock, Sparkles, Zap, AlertTriangle, Loader2, Bell } from 'lucide-react';
 import { getHourlyForecast } from '@utahwind/weather';
 import { useAuth } from '../../context/AuthContext';
 import { safeToFixed } from '../../utils/safeToFixed';
 import findNextRideableWindow, { getDisciplineThreshold } from '../../utils/findNextRideableWindow';
+import AlertMeModal from './AlertMeModal';
+import useSessionAlerts from '../../hooks/useSessionAlerts';
 
 function getCardinalDirection(deg) {
   if (deg == null) return '--';
@@ -46,6 +48,9 @@ export default function StationPopupCard({
   const { isPro, openPaywall } = useAuth();
   const [nextSession, setNextSession] = useState(undefined); // undefined = loading, null = none
   const [loadError, setLoadError] = useState(false);
+  const [showAlertModal, setShowAlertModal] = useState(false);
+  const { getAlert, saveAlert, deleteAlert } = useSessionAlerts();
+  const [alertSaving, setAlertSaving] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -171,6 +176,43 @@ export default function StationPopupCard({
         onUpgrade={openPaywall}
         selectedActivity={selectedActivity}
       />
+
+      {/* ═══════ ALERT ME BUTTON ═══════ */}
+      <div className="mt-2">
+        {showAlertModal ? (
+          <AlertMeModal
+            spotId={station.id || selectedLake}
+            spotName={station.name}
+            discipline={selectedActivity}
+            existingAlert={getAlert(station.id || selectedLake, selectedActivity)}
+            saving={alertSaving}
+            onSave={async (data) => {
+              setAlertSaving(true);
+              try { await saveAlert(data); } finally { setAlertSaving(false); }
+            }}
+            onDelete={async (spotId, discipline) => {
+              setAlertSaving(true);
+              try {
+                await deleteAlert(spotId, discipline);
+                setShowAlertModal(false);
+              } finally { setAlertSaving(false); }
+            }}
+            onClose={() => setShowAlertModal(false)}
+          />
+        ) : (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              if (!isPro) { openPaywall(); return; }
+              setShowAlertModal(true);
+            }}
+            className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg border border-slate-200 hover:border-sky-300 hover:bg-sky-50 transition-colors text-[11px] font-semibold text-gray-500 hover:text-sky-600"
+          >
+            <Bell className="w-3.5 h-3.5" />
+            {isPro ? 'Alert Me' : 'Alert Me (Pro)'}
+          </button>
+        )}
+      </div>
     </div>
   );
 }

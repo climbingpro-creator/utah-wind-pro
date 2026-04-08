@@ -1,53 +1,26 @@
 import React from 'react';
 import { Calendar, Wind, Waves, Sun, Cloud, CloudRain, AlertTriangle } from 'lucide-react';
-import { ACTIVITY_CONFIGS, getBestActivity } from './ActivityMode';
+import { ACTIVITY_CONFIGS } from './ActivityMode';
 
 const WeeklyBestDays = ({ weeklyForecast, selectedActivity = 'kiting' }) => {
   const config = ACTIVITY_CONFIGS[selectedActivity];
-  
-  // Generate mock weekly data if not provided
-  // In production, this would come from NWS forecast
-  const generateWeeklyData = () => {
-    const days = [];
-    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    const today = new Date();
-    
-    for (let i = 0; i < 7; i++) {
-      const date = new Date(today);
-      date.setDate(date.getDate() + i);
-      
-      // Simulated forecast data
-      const patterns = [
-        { wind: 5, type: 'calm', weather: 'sunny' },
-        { wind: 12, type: 'thermal', weather: 'sunny' },
-        { wind: 18, type: 'north_flow', weather: 'partly_cloudy' },
-        { wind: 8, type: 'light', weather: 'cloudy' },
-        { wind: 25, type: 'strong', weather: 'windy' },
-        { wind: 3, type: 'glass', weather: 'sunny' },
-        { wind: 15, type: 'thermal', weather: 'sunny' },
-      ];
-      
-      const pattern = patterns[i % patterns.length];
-      const bestActivity = getBestActivity(pattern.wind, pattern.wind * 1.3);
-      
-      days.push({
-        date,
-        dayName: i === 0 ? 'Today' : i === 1 ? 'Tomorrow' : dayNames[date.getDay()],
-        dateStr: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        avgWind: pattern.wind,
-        windType: pattern.type,
-        weather: pattern.weather,
-        bestActivity: bestActivity.best,
-        bestScore: bestActivity.bestScore,
-        activityScores: bestActivity.scores,
-        isToday: i === 0,
-      });
-    }
-    
-    return days;
-  };
-  
-  const days = weeklyForecast || generateWeeklyData();
+  const days = weeklyForecast;
+
+  if (!days || days.length === 0) {
+    return (
+      <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+        <div className="flex items-center gap-2 mb-3">
+          <Calendar className="w-4 h-4 text-slate-400" />
+          <span className="text-sm font-medium text-white">7-Day Outlook</span>
+          <span className="text-lg">{config.icon}</span>
+        </div>
+        <div className="text-center py-6 text-slate-400 text-sm">
+          <Wind className="w-6 h-6 mx-auto mb-2 opacity-40" />
+          Weekly forecast data is loading or not yet available.
+        </div>
+      </div>
+    );
+  }
   
   // Get icon for weather
   const getWeatherIcon = (weather) => {

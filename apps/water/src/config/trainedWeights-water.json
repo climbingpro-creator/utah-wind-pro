@@ -369,6 +369,24 @@
       "lagMinutes": 90,
       "correlation": 0.71,
       "description": "KSLC pressure changes predict lake conditions 1.5 hours ahead"
+    },
+    "KHCR-UTDCD": {
+      "type": "canyon_gradient",
+      "location": "deer-creek",
+      "correlation": 0.74,
+      "description": "Heber Airport to Deer Creek Dam temperature/pressure gradient drives canyon flow"
+    },
+    "TIMU1-SND": {
+      "type": "ridge_flow",
+      "location": "deer-creek",
+      "correlation": 0.68,
+      "description": "Timpanogos Divide to Arrowhead Summit gradient indicates canyon wind funneling"
+    },
+    "UR328-KHIF": {
+      "type": "lake_gradient",
+      "location": "willard-bay",
+      "correlation": 0.71,
+      "description": "Willard Bay to Hill AFB gradient predicts south flow onset at the bay"
     }
   },
 

@@ -466,3 +466,42 @@ CREATE INDEX IF NOT EXISTS idx_weather_stations_coords
 
 CREATE INDEX IF NOT EXISTS idx_weather_stations_active
   ON weather_stations(is_active) WHERE is_active = true;
+
+-- ── Session Alerts (Pro feature) ──────────────────────────────
+-- Per-spot, per-discipline alert subscriptions.
+-- Cron watcher evaluates forecasts and notifies via SMS/push.
+
+CREATE TABLE IF NOT EXISTS session_alerts (
+  id                      BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  user_id                 UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  spot_id                 TEXT NOT NULL,
+  discipline              TEXT NOT NULL,
+  min_wind_mph            INTEGER NOT NULL DEFAULT 8,
+  enabled                 BOOLEAN NOT NULL DEFAULT true,
+  last_notified_at        TIMESTAMPTZ,
+  last_window_fingerprint TEXT,
+  created_at              TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at              TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(user_id, spot_id, discipline)
+);
+
+ALTER TABLE session_alerts ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can read own session alerts"
+  ON session_alerts FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own session alerts"
+  ON session_alerts FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own session alerts"
+  ON session_alerts FOR UPDATE
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own session alerts"
+  ON session_alerts FOR DELETE
+  USING (auth.uid() = user_id);
+
+CREATE INDEX IF NOT EXISTS idx_session_alerts_enabled
+  ON session_alerts(enabled) WHERE enabled = true;

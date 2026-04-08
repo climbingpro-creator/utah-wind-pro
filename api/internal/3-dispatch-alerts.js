@@ -20,7 +20,7 @@ import { getLakeConfig } from '../lib/stations.js';
 import { splitStations, fetchNwsLatest } from '../lib/nwsAdapter.js';
 import { isUdotStation, fetchUdotLatest } from '../lib/udotAdapter.js';
 import { redisCommand } from '../lib/redis.js';
-import { verifyQStashSignature } from '../lib/qstash.js';
+import { verifyQStashSignature, triggerNextStage } from '../lib/qstash.js';
 
 const VAPID_PUBLIC  = process.env.VAPID_PUBLIC_KEY;
 const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY;
@@ -147,6 +147,9 @@ export default async function handler(req, res) {
     }));
 
     console.log(`[3-dispatch] Complete — sent=${sent}, cleaned=${cleaned}, users=${userIds.length}`);
+
+    // Chain to Stage 4 — per-spot session alerts for Pro users
+    await triggerNextStage('/api/internal/4-session-alerts', req);
 
     return res.status(200).json({
       ok: true,

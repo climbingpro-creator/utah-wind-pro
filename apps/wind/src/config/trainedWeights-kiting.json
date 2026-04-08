@@ -162,7 +162,10 @@
       "QSF-FPS":  { "weight": 0.65, "speedMultiplier": 1.20, "reliability": 0.63 },
       "UTALP-FPS": { "weight": 0.70, "speedMultiplier": 1.10, "reliability": 0.70 },
       "UTLPC-KHCR": { "weight": 0.75, "speedMultiplier": 1.25, "reliability": 0.71 },
-      "KPVU-KHCR": { "weight": 0.68, "speedMultiplier": 1.15, "reliability": 0.65 }
+      "KPVU-KHCR": { "weight": 0.68, "speedMultiplier": 1.15, "reliability": 0.65 },
+      "KHCR-UTDCD": { "weight": 0.78, "speedMultiplier": 1.20, "reliability": 0.74, "type": "canyon_gradient", "location": "deer-creek" },
+      "TIMU1-SND":  { "weight": 0.72, "speedMultiplier": 1.35, "reliability": 0.68, "type": "ridge_flow", "location": "deer-creek" },
+      "UR328-KHIF":  { "weight": 0.75, "speedMultiplier": 1.15, "reliability": 0.71, "type": "lake_gradient", "location": "willard-bay" }
     },
 
     "probabilityCalibration": {

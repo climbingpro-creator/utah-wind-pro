@@ -759,7 +759,7 @@ function normalizeAmbientData(ambientObs, stationMeta) {
 
 const ALLOWED_STATIONS = new Set([
   'KSLC','KPVU','KHCR','KOGD','KLGU','KHIF','KVEL','KPUC','KSGU','KPGA','KCDC',
-  'KFGR','KBMC','BERU1','FPS','QSF','UTALP','UTOLY','CSC','UID28','TIMU1','MDAU1',
+  'KFGR','KBMC','BERU1','FPS','QSF','UTALP','UTOLY','CSC','UID28','TIMU1','SND','MDAU1',
   'UTPCY','UTCOP','UTDAN','DSTU1','RVZU1','CCPUT','UWCU1','SKY','UTESU','UTMPK',
   'UR328','BLPU1','OGP',
   'QLN','GSLM','EPMU1','UTHTP','COOPOGNU1','PC496',

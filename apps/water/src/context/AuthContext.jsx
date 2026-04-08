@@ -41,7 +41,14 @@ export function AuthProvider({ children }) {
         else fetchTier(s.access_token);
       }
       setLoading(false);
+    }).catch(() => {
+      setLoading(false);
     });
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('subscription') === 'success') {
+      window.history.replaceState({}, '', window.location.pathname);
+    }
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
       setSession(s);
@@ -148,6 +155,7 @@ export function AuthProvider({ children }) {
       throw new Error(`Invalid response from subscription portal`);
     }
     if (data.error) throw new Error(data.error);
+    if (!data.url) throw new Error('No portal URL returned');
     window.location.href = data.url;
   }
 

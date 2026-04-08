@@ -87,7 +87,7 @@ export default async function handler(req, res) {
         stripeRevenue = charges.data
           .filter((c) => c.status === 'succeeded')
           .reduce((sum, c) => sum + c.amount, 0) / 100;
-        stripeMRR = proUsers * 4.99;
+        stripeMRR = proUsers * 5.99;
       }
     } catch (e) {
       console.warn('[admin/analytics] Stripe query failed:', e.message);
@@ -141,7 +141,7 @@ export default async function handler(req, res) {
     const feedbackResolved = feedbackAll.filter((f) => f.status === 'resolved').length;
 
     // Monthly revenue estimate
-    const monthlyRevenue = stripeRevenue ?? proUsers * 4.99;
+    const monthlyRevenue = stripeRevenue ?? proUsers * 5.99;
     const netMargin = monthlyRevenue - estimatedTotalCost;
 
     return res.status(200).json({
@@ -175,7 +175,7 @@ export default async function handler(req, res) {
         estimatedGeminiCost: estimatedGeminiCost.toFixed(4),
         estimatedTotalCost: estimatedTotalCost.toFixed(4),
         netMargin: netMargin.toFixed(2),
-        pricePerUser: '$4.99/mo',
+        pricePerUser: '$5.99/mo',
         costPerBioCall: `$${GEMINI_COST_PER_CALL}`,
       },
       feedback: {

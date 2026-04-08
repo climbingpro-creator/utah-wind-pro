@@ -44,7 +44,7 @@ export const LAKE_STATIONS = {
   // ── Wasatch Back ──
   'deer-creek': {
     name: 'Deer Creek Reservoir',
-    synoptic: ['KSLC', 'UTDCD', 'KHCR', 'TIMU1', 'MDAU1', 'UTPCY', 'UTLPC', 'UTCHL'],
+    synoptic: ['KSLC', 'UTDCD', 'KHCR', 'TIMU1', 'SND', 'MDAU1', 'UTPCY', 'UTLPC', 'UTCHL'],
     wuPws: ['KUTMIDWA37', 'KUTHEBER105', 'KUTHEBER26', 'KUTPLEAS11', 'KUTCEDAR10'],
     primary: 'UTDCD',
     hasAmbient: false,

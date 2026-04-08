@@ -66,6 +66,102 @@ const LAKE_THERMAL = {
   'stockton-bar':         { dir: [170, 210], peak: [10, 18], station: 'KSLC' },
 };
 
+// ── Gradient Indicator Pairs ──
+// Station pairs whose temperature/pressure differential drives local wind.
+// upstreamId is typically the higher-elevation or inland station,
+// downstreamId is the lake-shore or dam station.
+const GRADIENT_INDICATORS = {
+  'deer-creek': [
+    {
+      id: 'KHCR-UTDCD',
+      upstreamId: 'KHCR',     // Heber Airport (valley)
+      downstreamId: 'UTDCD',  // Deer Creek Dam (canyon mouth)
+      type: 'canyon_gradient',
+      tempThreshold: 5,       // °F delta to trigger canyon flow signal
+      speedMultiplier: 1.20,
+    },
+    {
+      id: 'TIMU1-SND',
+      upstreamId: 'TIMU1',    // Timpanogos Divide (ridge)
+      downstreamId: 'SND',    // Arrowhead Summit (ridge)
+      type: 'ridge_flow',
+      tempThreshold: 8,
+      speedMultiplier: 1.35,
+    },
+  ],
+  'willard-bay': [
+    {
+      id: 'UR328-KHIF',
+      upstreamId: 'KHIF',     // Hill AFB / Ogden (inland)
+      downstreamId: 'UR328',  // Willard Bay (lakeshore)
+      type: 'lake_gradient',
+      tempThreshold: 6,
+      speedMultiplier: 1.15,
+    },
+  ],
+};
+
+/**
+ * Compute temperature + pressure gradient scores for gradient indicator pairs.
+ * Returns a map of lakeId → { tempDelta, pressureDelta, gradientScore, activeIndicators }
+ */
+function computeGradientSignals(currentStations) {
+  const results = {};
+
+  for (const [lakeId, pairs] of Object.entries(GRADIENT_INDICATORS)) {
+    const lakeSignals = { tempDelta: 0, pressureDelta: 0, gradientScore: 0, activeIndicators: [] };
+
+    for (const pair of pairs) {
+      const up = currentStations.find(s => s.stationId === pair.upstreamId);
+      const down = currentStations.find(s => s.stationId === pair.downstreamId);
+      if (!up || !down) continue;
+
+      let pairScore = 0;
+      const detail = { id: pair.id, type: pair.type };
+
+      // Temperature gradient: warmer upstream drives downslope canyon flow
+      if (up.temperature != null && down.temperature != null) {
+        const tempDiff = up.temperature - down.temperature;
+        detail.tempDelta = Math.round(tempDiff * 10) / 10;
+        if (Math.abs(tempDiff) >= pair.tempThreshold) {
+          pairScore += 25;
+        } else if (Math.abs(tempDiff) >= pair.tempThreshold * 0.5) {
+          pairScore += 12;
+        }
+        lakeSignals.tempDelta = Math.max(lakeSignals.tempDelta, Math.abs(tempDiff));
+      }
+
+      // Pressure gradient: differential drives air mass movement
+      if (up.pressure != null && down.pressure != null) {
+        const pressDiff = normalizeToMb(up.pressure) - normalizeToMb(down.pressure);
+        detail.pressureDelta = Math.round(pressDiff * 100) / 100;
+        if (Math.abs(pressDiff) > 1.5) {
+          pairScore += 20;
+        } else if (Math.abs(pressDiff) > 0.5) {
+          pairScore += 10;
+        }
+        lakeSignals.pressureDelta = Math.max(lakeSignals.pressureDelta, Math.abs(pressDiff));
+      }
+
+      // Wind speed at downstream confirms flow is arriving
+      if (down.windSpeed != null && down.windSpeed >= 6) {
+        pairScore += 15;
+      }
+
+      detail.score = pairScore;
+      detail.speedMultiplier = pair.speedMultiplier;
+      if (pairScore > 0) lakeSignals.activeIndicators.push(detail);
+      lakeSignals.gradientScore = Math.max(lakeSignals.gradientScore, pairScore);
+    }
+
+    if (lakeSignals.activeIndicators.length > 0) {
+      results[lakeId] = lakeSignals;
+    }
+  }
+
+  return results;
+}
+
 // ── Timezone ──
 
 function toMountainHour(date) {
@@ -510,7 +606,7 @@ function scoreClearing(station, pressure, history, hour, nws) {
   return Math.max(0, Math.min(90, score));
 }
 
-function scoreThermal(station, pressure, hour, lakeId, nws) {
+function scoreThermal(station, pressure, hour, lakeId, nws, gradientSignals) {
   const config = LAKE_THERMAL[lakeId];
   if (!config) return 0;
   let score = 0;
@@ -534,14 +630,17 @@ function scoreThermal(station, pressure, hour, lakeId, nws) {
   if (nws?.keywords) {
     if (nws.keywords.sunny || nws.keywords.clear) score += 10;
     if (nws.keywords.calm || nws.keywords.breezy) score += 5;
-    // Strong synoptic wind kills thermals
     if (nws.keywords.windy || nws.keywords.gusty) score -= 15;
-    // Rain/storm suppress thermals
     if (nws.keywords.rain || nws.keywords.storm || nws.keywords.snow) score -= 20;
   }
-  // NWS current: light synoptic speed confirms thermal-friendly conditions
   if (nws?.current?.speed != null && nws.current.speed <= 8 && hour >= peakStart - 2) {
     score += 8;
+  }
+
+  // Canyon / lake gradient boost (Deer Creek, Willard Bay)
+  const gs = gradientSignals?.[lakeId];
+  if (gs && gs.gradientScore > 0) {
+    score += Math.min(20, gs.gradientScore * 0.4);
   }
 
   return Math.max(0, Math.min(95, score));
@@ -803,14 +902,14 @@ function getUpstreamLag(models, upstreamId, downstreamId) {
 
 // ── Main Prediction Function ──
 
-function predictForLake(lakeId, primaryStation, pressure, history, hour, learnedWeights, upstreamSignals, nwsData, statisticalModels) {
+function predictForLake(lakeId, primaryStation, pressure, history, hour, learnedWeights, upstreamSignals, nwsData, statisticalModels, gradientSignals) {
   const nws = nwsData ? getNWSForLake(nwsData, lakeId, hour) : null;
   const events = [];
   const types = [
     { id: 'frontal_passage', fn: () => scoreFrontal(primaryStation, pressure, history, upstreamSignals, nws), expSpeed: [15, 35], expDir: [300, 30] },
     { id: 'north_flow',      fn: () => scoreNorthFlow(primaryStation, pressure, nws), expSpeed: [10, 25], expDir: [315, 45] },
     { id: 'clearing_wind',   fn: () => scoreClearing(primaryStation, pressure, history, hour, nws), expSpeed: [5, 15], expDir: [160, 230] },
-    { id: 'thermal_cycle',   fn: () => scoreThermal(primaryStation, pressure, hour, lakeId, nws), expSpeed: [6, 18], expDir: LAKE_THERMAL[lakeId]?.dir || [135, 165] },
+    { id: 'thermal_cycle',   fn: () => scoreThermal(primaryStation, pressure, hour, lakeId, nws, gradientSignals), expSpeed: [6, 18], expDir: LAKE_THERMAL[lakeId]?.dir || [135, 165] },
     { id: 'pre_frontal',     fn: () => scorePreFrontal(primaryStation, pressure, history, upstreamSignals, nws), expSpeed: [10, 20], expDir: [180, 250] },
     { id: 'glass',           fn: () => scoreGlass(primaryStation, pressure, hour, nws), expSpeed: [0, 5], expDir: null },
     { id: 'post_frontal',    fn: () => scorePostFrontal(primaryStation, pressure, history, nws), expSpeed: [8, 15], expDir: [290, 340] },
@@ -1682,7 +1781,10 @@ async function runServerLearningCycle(redisCmd, currentStations, recentSnapshots
     }
   }
 
-  // 2. Make predictions for every lake (with upstream intelligence)
+  // 1.7. Compute canyon/lake gradient signals for Deer Creek + Willard Bay
+  const gradientSignals = computeGradientSignals(currentStations);
+
+  // 2. Make predictions for every lake (with upstream intelligence + gradient indicators)
   const allPredictions = [];
   for (const [lakeId, stationIds] of Object.entries(lakeStationMap)) {
     const lakeStations = currentStations.filter(s => stationIds.includes(s.stationId));
@@ -1692,7 +1794,7 @@ async function runServerLearningCycle(redisCmd, currentStations, recentSnapshots
     const primary = lakeStations.find(s => s.stationId === primaryId) || lakeStations[0];
     const history = buildStationHistory(primary.stationId, recentSnapshots);
 
-    const events = predictForLake(lakeId, primary, pressure, history, hour, weights, upstreamSignals, nwsData, statisticalModels);
+    const events = predictForLake(lakeId, primary, pressure, history, hour, weights, upstreamSignals, nwsData, statisticalModels, gradientSignals);
     for (const evt of events) {
       allPredictions.push({ ...evt, lakeId });
     }
@@ -1780,6 +1882,7 @@ async function runServerLearningCycle(redisCmd, currentStations, recentSnapshots
     analogDays: analogDays ? { count: analogDays.analogs.length, topMatch: analogDays.analogs[0]?.date || null } : null,
     meta,
     pressure,
+    gradientSignals: Object.keys(gradientSignals).length > 0 ? gradientSignals : null,
     diagnostics: {
       mountainTimeHour: hour,
       utcHour: now.getUTCHours(),
@@ -1792,6 +1895,7 @@ async function runServerLearningCycle(redisCmd, currentStations, recentSnapshots
       nwsAvailable: !!(nwsData?.grids && Object.keys(nwsData.grids).length > 0),
       nwsGrids: nwsData?.grids ? Object.keys(nwsData.grids) : [],
       nwsFetchedAt: nwsData?.fetchedAt || null,
+      gradientIndicatorsActive: Object.keys(gradientSignals),
     },
   };
 }
@@ -2184,5 +2288,7 @@ export {
   loadMeta,
   toMountainHour,
   normalizeToMb,
+  computeGradientSignals,
   LAKE_THERMAL,
+  GRADIENT_INDICATORS,
 };

@@ -9,6 +9,9 @@
     "api/internal/3-dispatch-alerts.js": {
       "maxDuration": 60
     },
+    "api/internal/4-session-alerts.js": {
+      "maxDuration": 60
+    },
     "api/cron/collect.js": {
       "maxDuration": 30
     },
