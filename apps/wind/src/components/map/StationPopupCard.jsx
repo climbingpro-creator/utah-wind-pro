@@ -175,6 +175,22 @@ export default function StationPopupCard({
   );
 }
 
+/**
+ * FOMO teaser lines — rotated to keep popups feeling fresh.
+ * CRITICAL: None of these mention a day, time-of-day, or direction.
+ */
+const FOMO_TEASERS = [
+  'Upcoming session detected!',
+  'AI has detected a rideable window in the next 48 hours.',
+  'A session window is forming — upgrade to see when.',
+  'Our model found wind. Unlock Pro for exact timing.',
+  'Rideable conditions ahead — details locked.',
+];
+
+function pickTeaser() {
+  return FOMO_TEASERS[Math.floor(Math.random() * FOMO_TEASERS.length)];
+}
+
 function NextSessionBlock({ nextSession, loadError, isPro, onUpgrade, selectedActivity }) {
   // Loading
   if (nextSession === undefined && !loadError) {
@@ -200,7 +216,7 @@ function NextSessionBlock({ nextSession, loadError, isPro, onUpgrade, selectedAc
     );
   }
 
-  // No rideable window
+  // ── No rideable window — transparent for ALL users (builds trust) ──
   if (!nextSession) {
     return (
       <div className="rounded-lg bg-slate-50 border border-slate-200 p-2.5">
@@ -209,29 +225,28 @@ function NextSessionBlock({ nextSession, loadError, isPro, onUpgrade, selectedAc
           <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Next Session</span>
         </div>
         <p className="text-[11px] text-slate-500">
-          No rideable windows for {selectedActivity} in the next 48h.
+          No rideable windows detected for {selectedActivity} in the next 48h.
         </p>
       </div>
     );
   }
 
-  return (
-    <div className="rounded-lg bg-emerald-50 border border-emerald-200/60 p-2.5">
-      <div className="flex items-center gap-2 mb-1.5">
-        <span className="relative flex h-2 w-2">
-          <span className="animate-ping absolute inset-0 rounded-full bg-emerald-400 opacity-75" />
-          <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-        </span>
-        <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600">Next Session</span>
-        {nextSession.hours >= 3 && (
-          <span className="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700">
-            {nextSession.hours}h window
+  // ── PRO: Full detail with exact micro-window ──
+  if (isPro) {
+    return (
+      <div className="rounded-lg bg-emerald-50 border border-emerald-200/60 p-2.5">
+        <div className="flex items-center gap-2 mb-1.5">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inset-0 rounded-full bg-emerald-400 opacity-75" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
           </span>
-        )}
-      </div>
-
-      {isPro ? (
-        /* ── Pro: Full detail ── */
+          <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600">Next Session</span>
+          {nextSession.hours >= 3 && (
+            <span className="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700">
+              {nextSession.hours}h window
+            </span>
+          )}
+        </div>
         <div className="space-y-1">
           <p className="text-sm font-bold text-emerald-800">
             {nextSession.dayLabel}, {nextSession.startStr} – {nextSession.endStr}
@@ -250,44 +265,55 @@ function NextSessionBlock({ nextSession, loadError, isPro, onUpgrade, selectedAc
             )}
           </div>
         </div>
-      ) : (
-        /* ── Free: Teaser with locked exact timing ── */
-        <div>
-          <p className="text-[12px] font-semibold text-emerald-700 mb-2">
-            {nextSession.summaryFree}
+      </div>
+    );
+  }
+
+  // ── FREE: Vague FOMO teaser + fully blurred dummy data ──
+  return (
+    <div className="rounded-lg bg-emerald-50 border border-emerald-200/60 p-2.5">
+      {/* Header — intentionally vague, no day/time/direction */}
+      <div className="flex items-center gap-2 mb-1.5">
+        <span className="relative flex h-2 w-2">
+          <span className="animate-ping absolute inset-0 rounded-full bg-emerald-400 opacity-75" />
+          <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+        </span>
+        <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600">Session Detected</span>
+      </div>
+
+      <p className="text-[12px] font-semibold text-emerald-700 mb-2">
+        {pickTeaser()}
+      </p>
+
+      {/* Blurred dummy data — no real values leak */}
+      <div className="relative rounded-md overflow-hidden">
+        <div
+          className="pointer-events-none select-none px-2 py-1.5"
+          aria-hidden="true"
+          style={{ filter: 'blur(6px)', opacity: 0.45 }}
+        >
+          <p className="text-xs text-emerald-800 font-bold">
+            ██████, XX:XX AM – XX:XX PM
           </p>
-
-          {/* Blurred exact timing */}
-          <div className="relative rounded-md overflow-hidden">
-            <div
-              className="pointer-events-none select-none px-2 py-1.5"
-              aria-hidden="true"
-              style={{ filter: 'blur(5px)', opacity: 0.5 }}
-            >
-              <p className="text-xs text-emerald-800 font-bold">
-                {nextSession.dayLabel}, XX:XX AM – XX:XX PM
-              </p>
-              <p className="text-[10px] text-emerald-600">
-                Peak: XX mph at XX:XX
-              </p>
-            </div>
-
-            {/* Overlay CTA */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                onUpgrade();
-              }}
-              className="absolute inset-0 z-10 flex items-center justify-center gap-1.5 bg-emerald-900/20 backdrop-blur-[1px] rounded-md cursor-pointer hover:bg-emerald-900/30 transition-colors"
-            >
-              <Lock className="w-3 h-3 text-emerald-700" />
-              <span className="text-[10px] font-bold text-emerald-700">View Exact Timing</span>
-              <Sparkles className="w-3 h-3 text-emerald-600" />
-            </button>
-          </div>
+          <p className="text-[10px] text-emerald-600">
+            Peak: XX mph • Direction: ███
+          </p>
         </div>
-      )}
+
+        {/* Full-coverage overlay CTA */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            onUpgrade();
+          }}
+          className="absolute inset-0 z-10 flex items-center justify-center gap-1.5 bg-emerald-900/20 backdrop-blur-[1px] rounded-md cursor-pointer hover:bg-emerald-900/30 transition-colors"
+        >
+          <Lock className="w-3 h-3 text-emerald-700" />
+          <span className="text-[10px] font-bold text-emerald-700">Unlock Exact Timing</span>
+          <Sparkles className="w-3 h-3 text-emerald-600" />
+        </button>
+      </div>
     </div>
   );
 }

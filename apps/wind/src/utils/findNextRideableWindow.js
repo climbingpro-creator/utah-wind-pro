@@ -122,13 +122,7 @@ export default function findNextRideableWindow(hourlyForecast, opts = {}) {
     bestWindow.conditions[Math.floor(bestWindow.conditions.length / 2)]
   );
 
-  // Free-tier teaser: reveals day + general timing but NOT exact hours or peak
-  const isMorning = bestWindow.startTime.getHours() < 12;
-  const isEvening = bestWindow.startTime.getHours() >= 17;
-  const timeOfDay = isEvening ? 'evening' : isMorning ? 'morning' : 'afternoon';
-  const summaryFree = `Wind expected ${dayLabel.toLowerCase()} ${timeOfDay}!`;
-
-  // Pro summary: exact micro-window
+  // Pro-only summary: exact micro-window (NEVER exposed to free tier)
   const summaryPro = `${dayLabel}, ${startStr} – ${endStr} | Peak: ${Math.round(bestWindow.peakSpeed)} mph at ${peakStr}`;
 
   return {
@@ -142,7 +136,8 @@ export default function findNextRideableWindow(hourlyForecast, opts = {}) {
     startStr,
     endStr,
     condition,
-    summaryFree,
     summaryPro,
+    // Boolean flag only — no timing details leak to the UI layer
+    hasWindow: true,
   };
 }
