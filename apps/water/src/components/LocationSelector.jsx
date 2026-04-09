@@ -1,5 +1,5 @@
-import { MapPin, Map, Navigation } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { MapPin, Map, Navigation, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 // Popular fishing/boating destinations worldwide - shown as suggestions
 // Users can also click the map for any location
@@ -21,8 +21,17 @@ const TYPE_ICON = { river: '🏞️', lake: '💧', reservoir: '💧', ocean: '�
 
 export default function LocationSelector({ selectedLocation, onSelectLocation, onOpenMap }) {
   const [recentLocations, setRecentLocations] = useState([]);
-  
-  // Load recent locations from localStorage
+  const scrollRef = useRef(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const checkScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 4);
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+  }, []);
+
   useEffect(() => {
     try {
       const stored = localStorage.getItem('notwindy_recent_locations');
@@ -31,8 +40,29 @@ export default function LocationSelector({ selectedLocation, onSelectLocation, o
       }
     } catch (_e) { /* ignore */ }
   }, []);
-  
-  // Combine recent + featured, dedupe
+
+  useEffect(() => {
+    checkScroll();
+    const el = scrollRef.current;
+    if (!el) return;
+    el.addEventListener('scroll', checkScroll, { passive: true });
+    const ro = new ResizeObserver(checkScroll);
+    ro.observe(el);
+    return () => { el.removeEventListener('scroll', checkScroll); ro.disconnect(); };
+  }, [checkScroll]);
+
+  const scroll = useCallback((dir) => {
+    scrollRef.current?.scrollBy({ left: dir * 200, behavior: 'smooth' });
+  }, []);
+
+  const onWheel = useCallback((e) => {
+    const el = scrollRef.current;
+    if (!el || !e.deltaY) return;
+    if (el.scrollWidth <= el.clientWidth) return;
+    e.preventDefault();
+    el.scrollLeft += e.deltaY;
+  }, []);
+
   const displayLocations = [
     ...recentLocations.slice(0, 5),
     ...FEATURED_LOCATIONS.filter(f => !recentLocations.find(r => r.id === f.id))
@@ -57,7 +87,26 @@ export default function LocationSelector({ selectedLocation, onSelectLocation, o
           </button>
         )}
       </div>
-      <div className="flex overflow-x-auto gap-2 pb-2 hide-scrollbar">
+      <div className="relative group">
+        {canScrollLeft && (
+          <button
+            onClick={() => scroll(-1)}
+            className="absolute left-0 top-0 bottom-2 z-10 w-8 flex items-center justify-start bg-gradient-to-r from-[var(--bg-primary,#0f172a)] via-[var(--bg-primary,#0f172a)] to-transparent cursor-pointer"
+            aria-label="Scroll left"
+          >
+            <ChevronLeft className="w-4 h-4 text-slate-400" />
+          </button>
+        )}
+        {canScrollRight && (
+          <button
+            onClick={() => scroll(1)}
+            className="absolute right-0 top-0 bottom-2 z-10 w-8 flex items-center justify-end bg-gradient-to-l from-[var(--bg-primary,#0f172a)] via-[var(--bg-primary,#0f172a)] to-transparent cursor-pointer"
+            aria-label="Scroll right"
+          >
+            <ChevronRight className="w-4 h-4 text-slate-400" />
+          </button>
+        )}
+      <div ref={scrollRef} onWheel={onWheel} className="flex overflow-x-auto gap-2 pb-2 hide-scrollbar">
         {/* "My Location" button */}
         <button
           onClick={() => {
@@ -94,6 +143,7 @@ export default function LocationSelector({ selectedLocation, onSelectLocation, o
             </button>
           );
         })}
+      </div>
       </div>
     </div>
   );
