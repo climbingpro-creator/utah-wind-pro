@@ -178,6 +178,17 @@ function formatHourLabel(isoString) {
   }
 }
 
+function formatWindowLabel(isoString, referenceIso) {
+  const label = formatHourLabel(isoString);
+  if (!referenceIso) return label;
+  try {
+    const d = new Date(isoString);
+    const ref = new Date(referenceIso);
+    if (d.getDate() !== ref.getDate()) return `${label} Tmw`;
+  } catch { /* ignore */ }
+  return label;
+}
+
 function scoreHours(hourlyForecast, profile) {
   return hourlyForecast.map(h => ({
     ...h,
@@ -245,22 +256,24 @@ export function findOptimalWindows(locationId, hourlyForecast, sportType) {
     ? best.hours.reduce((a, b) => (b.windSpeed ?? 0) > (a.windSpeed ?? 0) ? b : a)
     : best.hours.reduce((a, b) => (b.windSpeed ?? 99) < (a.windSpeed ?? 99) ? b : a);
 
+  const startTime = best.hours[0].startTime;
+  const endTime = best.hours[best.hours.length - 1].startTime;
   const windowObj = {
-    startLabel: best.hours[0].label,
-    endLabel: best.hours[best.hours.length - 1].label,
+    startLabel: formatHourLabel(startTime),
+    endLabel: formatWindowLabel(endTime, startTime),
   };
 
   return {
     locationId,
     sport: profile.name,
     sportType,
-    windowStart: best.hours[0].startTime,
-    windowEnd: best.hours[best.hours.length - 1].startTime,
+    windowStart: startTime,
+    windowEnd: endTime,
     windowStartLabel: windowObj.startLabel,
     windowEndLabel: windowObj.endLabel,
     durationHours: best.hours.length,
     peakTime: peakHour.startTime,
-    peakTimeLabel: peakHour.label,
+    peakTimeLabel: formatWindowLabel(peakHour.startTime, startTime),
     peakCondition: `${Math.round(peakHour.windSpeed ?? 0)} mph`,
     peakScore: peakHour.score,
     avgScore: Math.round(best.totalScore / best.hours.length),
@@ -291,17 +304,18 @@ function buildWindowResult(locationId, sportName, sportType, hours, wantsWind) {
     ? hours.reduce((a, b) => (b.windSpeed ?? 0) > (a.windSpeed ?? 0) ? b : a)
     : hours.reduce((a, b) => (b.windSpeed ?? 99) < (a.windSpeed ?? 99) ? b : a);
 
+  const startTime = hours[0].startTime;
   return {
     locationId,
     sport: sportName,
     sportType,
-    windowStart: hours[0].startTime,
+    windowStart: startTime,
     windowEnd: hours[hours.length - 1].startTime,
-    windowStartLabel: formatHourLabel(hours[0].startTime),
-    windowEndLabel: formatHourLabel(hours[hours.length - 1].startTime),
+    windowStartLabel: formatHourLabel(startTime),
+    windowEndLabel: formatWindowLabel(hours[hours.length - 1].startTime, startTime),
     durationHours: hours.length,
     peakTime: peakHour.startTime,
-    peakTimeLabel: formatHourLabel(peakHour.startTime),
+    peakTimeLabel: formatWindowLabel(peakHour.startTime, startTime),
     peakCondition: `${Math.round(peakHour.windSpeed ?? 0)} mph`,
     peakScore: 90,
     avgScore: 85,
@@ -442,14 +456,17 @@ export function evaluateSailingWindow(hourlyForecast) {
  * @param {{ idealAxis?: number, hasSnowpack?: boolean }} [locationInfo]
  */
 export function findAllSportWindows(locationId, hourlyForecast, locationInfo) {
+  if (!hourlyForecast?.length) return {};
+
+  const hours24 = hourlyForecast.slice(0, 24);
   const results = {};
 
   for (const sportType of Object.keys(SPORT_PROFILES)) {
-    const window = findOptimalWindows(locationId, hourlyForecast, sportType);
+    const window = findOptimalWindows(locationId, hours24, sportType);
     if (window) results[sportType] = window;
   }
 
-  const pg = evaluateParaglidingWindow(hourlyForecast, locationInfo);
+  const pg = evaluateParaglidingWindow(hours24, locationInfo);
   if (pg) {
     pg.locationId = locationId;
     if (!results['paragliding'] || pg.durationHours > results['paragliding'].durationHours) {
@@ -457,7 +474,7 @@ export function findAllSportWindows(locationId, hourlyForecast, locationInfo) {
     }
   }
 
-  const sk = evaluateSnowkiteWindow(hourlyForecast, locationInfo);
+  const sk = evaluateSnowkiteWindow(hours24, locationInfo);
   if (sk) {
     sk.locationId = locationId;
     if (!results['snowkiting'] || sk.durationHours > results['snowkiting'].durationHours) {
@@ -465,7 +482,7 @@ export function findAllSportWindows(locationId, hourlyForecast, locationInfo) {
     }
   }
 
-  const sail = evaluateSailingWindow(hourlyForecast);
+  const sail = evaluateSailingWindow(hours24);
   if (sail) {
     sail.locationId = locationId;
     if (!results['sailing'] || sail.durationHours > results['sailing'].durationHours) {
