@@ -622,6 +622,8 @@ export function Dashboard() {
           stationReadings={lakeState?.wind?.stations}
           activity={selectedActivity}
           pressureData={pressureData}
+          lakeState={lakeState}
+          thermalPrediction={effectiveThermalPrediction}
         />
 
         {/* ═══════════════════════════════════════════════════════════════════
