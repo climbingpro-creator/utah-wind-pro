@@ -1,10 +1,13 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@utahwind/database';
+import { weatherService, LAKE_CONFIGS, getAllStationIds } from '@utahwind/weather';
+import { dataCollector } from '../services/DataCollector';
 import {
   Shield, ArrowLeft, CheckCircle, Clock, AlertTriangle, Bug, Lightbulb,
   MessageSquare, ExternalLink, RefreshCw, Trash2, BarChart3, CreditCard,
   Users, TrendingUp, TrendingDown, Zap, Map, Eye, DollarSign, Activity,
-  Globe, Layers, Wind, Fish, Minus,
+  Globe, Layers, Wind, Fish, Minus, Radio, Brain, Gauge, Wifi, WifiOff,
+  Server, Database, CloudRain,
 } from 'lucide-react';
 
 const ALLOWED_ADMINS = ['tyler@aspenearth.com', 'climbingpro@gmail.com'];
@@ -135,6 +138,8 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [activeTab, setActiveTab] = useState('overview');
+  const [systemHealth, setSystemHealth] = useState(null);
+  const [systemLoading, setSystemLoading] = useState(false);
 
   useEffect(() => {
     async function checkAdmin() {
@@ -192,12 +197,83 @@ export default function AdminDashboard() {
     setLoading(false);
   }, []);
 
+  const fetchSystemHealth = useCallback(async () => {
+    setSystemLoading(true);
+    try {
+      const lakeIds = Object.keys(LAKE_CONFIGS).filter(id => id !== 'utah-lake');
+      const allStationIds = new Set();
+      const spotStationMap = {};
+      for (const id of lakeIds) {
+        const sids = getAllStationIds(id);
+        spotStationMap[id] = sids;
+        sids.forEach(s => allStationIds.add(s));
+      }
+
+      let onlineStations = [];
+      let synopticError = null;
+      try {
+        onlineStations = await weatherService.getSynopticStationData(Array.from(allStationIds));
+      } catch (err) {
+        synopticError = err.message;
+      }
+
+      let ambientOnline = false;
+      try {
+        const amb = await weatherService.getAmbientWeatherData();
+        ambientOnline = !!(amb && amb.windSpeed != null);
+      } catch { /* ignore */ }
+
+      const onlineIds = new Set(onlineStations.filter(s => s.windSpeed != null).map(s => s.stationId));
+      const staleIds = new Set(onlineStations.filter(s => s.windSpeed == null).map(s => s.stationId));
+
+      const spotHealth = lakeIds.map(id => {
+        const sids = spotStationMap[id] || [];
+        const online = sids.filter(s => onlineIds.has(s)).length;
+        return { id, name: LAKE_CONFIGS[id]?.name || id, total: sids.length, online };
+      }).sort((a, b) => (a.online / (a.total || 1)) - (b.online / (b.total || 1)));
+
+      const collectorStats = dataCollector.getStats();
+
+      const learnedWeightsRaw = localStorage.getItem('learningSystem:weights');
+      let learningInfo = null;
+      try {
+        const w = JSON.parse(learnedWeightsRaw);
+        if (w) {
+          learningInfo = {
+            version: w.version,
+            createdAt: w.createdAt,
+            samples: w.basedOnSamples,
+            accuracy: w.meta?.overallAccuracy,
+            lakeCount: w.lakeWeights ? Object.keys(w.lakeWeights).length : 0,
+          };
+        }
+      } catch { /* ignore */ }
+
+      setSystemHealth({
+        totalStations: allStationIds.size,
+        onlineCount: onlineIds.size,
+        staleCount: staleIds.size,
+        offlineCount: allStationIds.size - onlineIds.size - staleIds.size,
+        ambientOnline,
+        synopticError,
+        spotHealth,
+        collector: collectorStats,
+        learning: learningInfo,
+        checkedAt: new Date().toISOString(),
+      });
+    } catch (err) {
+      console.error('[Admin] system health error:', err);
+    }
+    setSystemLoading(false);
+  }, []);
+
   useEffect(() => {
     if (authorized) {
       fetchAnalytics();
       fetchFeedback();
+      fetchSystemHealth();
     }
-  }, [authorized, fetchAnalytics, fetchFeedback]);
+  }, [authorized, fetchAnalytics, fetchFeedback, fetchSystemHealth]);
 
   async function updateStatus(id, newStatus) {
     if (!supabase) return;
@@ -241,6 +317,7 @@ export default function AdminDashboard() {
 
   const TABS = [
     { id: 'overview', label: 'Overview', icon: BarChart3 },
+    { id: 'system', label: 'System Health', icon: Radio },
     { id: 'engagement', label: 'Engagement', icon: Activity },
     { id: 'financials', label: 'Financials', icon: DollarSign },
     { id: 'feedback', label: `Feedback${fb?.new ? ` (${fb.new})` : ''}`, icon: MessageSquare },
@@ -259,6 +336,7 @@ export default function AdminDashboard() {
               <div className="flex items-center gap-2">
                 <Shield className="w-5 h-5 text-sky-400" />
                 <h1 className="text-lg font-bold">Command Center</h1>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/20">Wind</span>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -268,8 +346,8 @@ export default function AdminDashboard() {
                 </span>
               )}
               <button
-                onClick={() => { fetchAnalytics(); fetchFeedback(); }}
-                disabled={analyticsLoading || loading}
+                onClick={() => { fetchAnalytics(); fetchFeedback(); fetchSystemHealth(); }}
+                disabled={analyticsLoading || loading || systemLoading}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-sm text-slate-300 transition-colors"
               >
                 <RefreshCw className={`w-4 h-4 ${analyticsLoading ? 'animate-spin' : ''}`} />
@@ -394,6 +472,144 @@ export default function AdminDashboard() {
                 <QuickLink href="https://aistudio.google.com" icon={Zap} label="Google AI" description="Gemini API usage" />
               </div>
             </div>
+          </div>
+        )}
+
+        {/* ═══════ SYSTEM HEALTH TAB ═══════ */}
+        {activeTab === 'system' && (
+          <div className="space-y-6">
+            {systemLoading && !systemHealth && (
+              <div className="text-center py-12 text-slate-500 animate-pulse">Probing stations...</div>
+            )}
+            {systemHealth && (
+              <>
+                {/* Station Health KPIs */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <KPICard icon={Radio} label="Total Stations" value={systemHealth.totalStations} color="sky" />
+                  <KPICard icon={Wifi} label="Online" value={systemHealth.onlineCount} color="emerald"
+                    sub={`${Math.round((systemHealth.onlineCount / systemHealth.totalStations) * 100)}% uptime`} />
+                  <KPICard icon={WifiOff} label="Offline / Stale" value={systemHealth.staleCount + systemHealth.offlineCount} color="red" />
+                  <KPICard icon={CloudRain} label="Ambient PWS" value={systemHealth.ambientOnline ? 'Online' : 'Offline'}
+                    color={systemHealth.ambientOnline ? 'emerald' : 'red'} />
+                </div>
+
+                {systemHealth.synopticError && (
+                  <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-4 text-sm text-red-400">
+                    <strong>Synoptic API Error:</strong> {systemHealth.synopticError}
+                  </div>
+                )}
+
+                {/* Data Sources */}
+                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+                  <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                    <Server className="w-4 h-4 text-sky-400" />
+                    Data Source Status
+                  </h3>
+                  <div className="space-y-3">
+                    {[
+                      { name: 'NWS (Airport ASOS)', status: systemHealth.onlineCount > 0, desc: 'Free — api.weather.gov' },
+                      { name: 'UDOT RWIS', status: systemHealth.onlineCount > 0, desc: 'UDOT_API_KEY' },
+                      { name: 'Synoptic / MesoWest', status: !systemHealth.synopticError, desc: 'SYNOPTIC_TOKEN' },
+                      { name: 'Weather Underground PWS', status: true, desc: 'WU_API_KEY — Shadow fallback' },
+                      { name: 'Ambient Weather', status: systemHealth.ambientOnline, desc: 'AMBIENT_API_KEY' },
+                    ].map(src => (
+                      <div key={src.name} className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className={`w-2 h-2 rounded-full ${src.status ? 'bg-emerald-400' : 'bg-red-400'}`} />
+                          <span className="text-xs font-semibold text-slate-300">{src.name}</span>
+                          <span className="text-[10px] text-slate-600">{src.desc}</span>
+                        </div>
+                        <span className={`text-[10px] font-bold ${src.status ? 'text-emerald-400' : 'text-red-400'}`}>
+                          {src.status ? 'OK' : 'DOWN'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Learning Engine */}
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+                    <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                      <Brain className="w-4 h-4 text-violet-400" />
+                      Learning Engine
+                    </h3>
+                    {systemHealth.learning ? (
+                      <div className="space-y-3">
+                        {[
+                          { label: 'Model Version', value: systemHealth.learning.version },
+                          { label: 'Training Samples', value: systemHealth.learning.samples?.toLocaleString() ?? '—' },
+                          { label: 'Accuracy', value: systemHealth.learning.accuracy != null
+                            ? `${(systemHealth.learning.accuracy * 100).toFixed(1)}%` : '—' },
+                          { label: 'Spots Trained', value: systemHealth.learning.lakeCount },
+                          { label: 'Last Trained', value: systemHealth.learning.createdAt
+                            ? new Date(systemHealth.learning.createdAt).toLocaleString() : '—' },
+                        ].map(item => (
+                          <div key={item.label} className="flex items-center justify-between">
+                            <span className="text-xs text-slate-400">{item.label}</span>
+                            <span className="text-sm font-bold text-white tabular-nums">{item.value}</span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-slate-600">No learning data stored yet</p>
+                    )}
+                  </div>
+
+                  <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+                    <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                      <Gauge className="w-4 h-4 text-amber-400" />
+                      Data Collector
+                    </h3>
+                    <div className="space-y-3">
+                      {[
+                        { label: 'Status', value: systemHealth.collector?.isRunning ? 'Running' : 'Stopped' },
+                        { label: 'Actuals Collected', value: systemHealth.collector?.actualsCollected?.toLocaleString() ?? 0 },
+                        { label: 'Predictions Recorded', value: systemHealth.collector?.predictionsRecorded?.toLocaleString() ?? 0 },
+                        { label: 'Verifications Run', value: systemHealth.collector?.verificationsRun ?? 0 },
+                        { label: 'Learning Cycles', value: systemHealth.collector?.learningCyclesRun ?? 0 },
+                        { label: 'Last Error', value: systemHealth.collector?.lastError || 'None' },
+                      ].map(item => (
+                        <div key={item.label} className="flex items-center justify-between">
+                          <span className="text-xs text-slate-400">{item.label}</span>
+                          <span className={`text-sm font-bold tabular-nums ${
+                            item.label === 'Last Error' && item.value !== 'None' ? 'text-red-400' : 'text-white'
+                          }`}>{item.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Spot-by-Spot Station Health */}
+                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+                  <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                    <Database className="w-4 h-4 text-emerald-400" />
+                    Spot Station Health ({systemHealth.spotHealth?.length} spots)
+                  </h3>
+                  <div className="space-y-2 max-h-80 overflow-y-auto">
+                    {systemHealth.spotHealth?.map(spot => {
+                      const pct = spot.total > 0 ? Math.round((spot.online / spot.total) * 100) : 0;
+                      return (
+                        <div key={spot.id}>
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-xs font-semibold text-slate-300 truncate">{spot.name}</span>
+                            <span className={`text-[10px] font-bold tabular-nums ${
+                              pct >= 70 ? 'text-emerald-400' : pct >= 40 ? 'text-amber-400' : 'text-red-400'
+                            }`}>{spot.online}/{spot.total} ({pct}%)</span>
+                          </div>
+                          <MiniBar value={spot.online} max={spot.total} color={pct >= 70 ? 'emerald' : pct >= 40 ? 'amber' : 'red'} />
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <p className="text-[10px] text-slate-600 text-right">
+                  Last checked: {new Date(systemHealth.checkedAt).toLocaleString()}
+                </p>
+              </>
+            )}
           </div>
         )}
 
