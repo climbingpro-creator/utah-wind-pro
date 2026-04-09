@@ -5,6 +5,14 @@
       "destination": "https://utah-wind-pro.vercel.app/api/:path*"
     },
     {
+      "source": "/privacy-policy",
+      "destination": "/privacy.html"
+    },
+    {
+      "source": "/privacy",
+      "destination": "/privacy.html"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

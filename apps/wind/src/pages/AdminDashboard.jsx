@@ -7,7 +7,7 @@ import {
   MessageSquare, ExternalLink, RefreshCw, Trash2, BarChart3, CreditCard,
   Users, TrendingUp, TrendingDown, Zap, Map, Eye, DollarSign, Activity,
   Globe, Layers, Wind, Fish, Minus, Radio, Brain, Gauge, Wifi, WifiOff,
-  Server, Database, CloudRain,
+  Server, Database, CloudRain, Phone, Send, AlertCircle,
 } from 'lucide-react';
 
 const ALLOWED_ADMINS = ['tyler@aspenearth.com', 'climbingpro@gmail.com'];
@@ -140,6 +140,10 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [systemHealth, setSystemHealth] = useState(null);
   const [systemLoading, setSystemLoading] = useState(false);
+  const [testPhone, setTestPhone] = useState('');
+  const [testSending, setTestSending] = useState(false);
+  const [testResult, setTestResult] = useState(null);
+  const [alertDiagnostics, setAlertDiagnostics] = useState(null);
 
   useEffect(() => {
     async function checkAdmin() {
@@ -278,13 +282,53 @@ export default function AdminDashboard() {
     setSystemLoading(false);
   }, []);
 
+  const fetchAlertDiagnostics = useCallback(async () => {
+    try {
+      const headers = await getAuthHeader();
+      const apiOrigin = import.meta.env.VITE_API_ORIGIN || '';
+      const resp = await fetch(`${apiOrigin}/api/admin/test-sms`, {
+        method: 'POST',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        setAlertDiagnostics(data.diagnostics);
+      }
+    } catch (err) {
+      console.warn('[Admin] alert diagnostics error:', err);
+    }
+  }, [getAuthHeader]);
+
+  const sendTestSMS = useCallback(async () => {
+    if (!testPhone) return;
+    setTestSending(true);
+    setTestResult(null);
+    try {
+      const headers = await getAuthHeader();
+      const apiOrigin = import.meta.env.VITE_API_ORIGIN || '';
+      const resp = await fetch(`${apiOrigin}/api/admin/test-sms`, {
+        method: 'POST',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: testPhone }),
+      });
+      const data = await resp.json();
+      setTestResult(data);
+      if (data.diagnostics) setAlertDiagnostics(data.diagnostics);
+    } catch (err) {
+      setTestResult({ error: err.message });
+    }
+    setTestSending(false);
+  }, [testPhone, getAuthHeader]);
+
   useEffect(() => {
     if (authorized) {
       fetchAnalytics();
       fetchFeedback();
       fetchSystemHealth();
+      fetchAlertDiagnostics();
     }
-  }, [authorized, fetchAnalytics, fetchFeedback, fetchSystemHealth]);
+  }, [authorized, fetchAnalytics, fetchFeedback, fetchSystemHealth, fetchAlertDiagnostics]);
 
   async function updateStatus(id, newStatus) {
     if (!supabase) return;
@@ -589,6 +633,88 @@ export default function AdminDashboard() {
                         </div>
                       ))}
                     </div>
+                  </div>
+                </div>
+
+                {/* Alert System */}
+                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+                  <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                    <Phone className="w-4 h-4 text-sky-400" />
+                    Alert System (SMS + Push)
+                  </h3>
+
+                  <div className="space-y-4">
+                    {/* Diagnostic indicators */}
+                    <div className="space-y-2">
+                      {[
+                        { label: 'Twilio SMS', ok: alertDiagnostics?.twilioConfigured, detail: alertDiagnostics?.twilioFrom || 'Not configured' },
+                        { label: 'VAPID Push', ok: alertDiagnostics?.vapidConfigured, detail: alertDiagnostics?.vapidConfigured ? 'Keys set' : 'Not configured' },
+                        { label: 'Users with Phone', ok: (alertDiagnostics?.usersWithPhone ?? 0) > 0, detail: `${alertDiagnostics?.usersWithPhone ?? '?'} users` },
+                        { label: 'Users with Alerts', ok: (alertDiagnostics?.usersWithAlerts ?? 0) > 0, detail: `${alertDiagnostics?.usersWithAlerts ?? '?'} users` },
+                      ].map(item => (
+                        <div key={item.label} className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className={`w-2 h-2 rounded-full ${item.ok ? 'bg-emerald-400' : 'bg-red-400'}`} />
+                            <span className="text-xs font-semibold text-slate-300">{item.label}</span>
+                          </div>
+                          <span className={`text-[10px] font-bold ${item.ok ? 'text-emerald-400' : 'text-red-400'}`}>
+                            {item.detail}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Test SMS */}
+                    <div className="border-t border-white/[0.06] pt-4">
+                      <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Send Test SMS</label>
+                      <div className="flex gap-2">
+                        <input
+                          type="tel"
+                          value={testPhone}
+                          onChange={(e) => setTestPhone(e.target.value)}
+                          placeholder="+18015551234"
+                          className="flex-1 px-3 py-2 rounded-lg text-sm bg-slate-800 border border-slate-600 text-white placeholder:text-slate-500 outline-none focus:border-sky-500"
+                        />
+                        <button
+                          onClick={sendTestSMS}
+                          disabled={testSending || !testPhone}
+                          className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold bg-sky-500 text-white hover:bg-sky-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                        >
+                          <Send className={`w-3.5 h-3.5 ${testSending ? 'animate-pulse' : ''}`} />
+                          {testSending ? 'Sending...' : 'Send'}
+                        </button>
+                      </div>
+
+                      {testResult && (
+                        <div className={`mt-3 p-3 rounded-lg text-xs font-semibold flex items-start gap-2 ${
+                          testResult.sms?.success
+                            ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400'
+                            : 'bg-red-500/10 border border-red-500/20 text-red-400'
+                        }`}>
+                          {testResult.sms?.success ? (
+                            <><CheckCircle className="w-4 h-4 shrink-0 mt-0.5" /> SMS sent successfully! Check your phone.</>
+                          ) : (
+                            <><AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                              {testResult.error || (testResult.sms?.reason === 'twilio-not-configured'
+                                ? 'Twilio not configured — add TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER to Vercel env vars'
+                                : `SMS failed (${testResult.sms?.reason || testResult.sms?.method || 'unknown'})`
+                              )}
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {!alertDiagnostics?.twilioConfigured && (
+                      <div className="p-3 rounded-lg bg-amber-500/5 border border-amber-500/20 text-[11px] text-amber-400 leading-relaxed">
+                        <strong>Setup needed:</strong> Add these env vars to your Vercel project (utah-wind-pro):
+                        <ul className="mt-1 ml-3 list-disc space-y-0.5">
+                          <li>TWILIO_ACCOUNT_SID</li>
+                          <li>TWILIO_AUTH_TOKEN</li>
+                          <li>TWILIO_FROM_NUMBER (E.164, e.g. +18015551234)</li>
+                        </ul>
+                      </div>
+                    )}
                   </div>
                 </div>
 

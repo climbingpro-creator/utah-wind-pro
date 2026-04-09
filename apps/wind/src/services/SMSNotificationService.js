@@ -24,6 +24,69 @@ const DEFAULT_PREFS = {
   timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
 };
 
+const FRONTEND_TO_BACKEND_KEYS = {
+  glassConditions: 'glassNotify',
+  thermalCycle: 'thermalNotify',
+  severeWeather: 'severeNotify',
+};
+
+function mapPrefsToServer(prefs) {
+  const alerts = {};
+  for (const [feKey, val] of Object.entries(prefs.alerts || {})) {
+    const beKey = FRONTEND_TO_BACKEND_KEYS[feKey] || feKey;
+    alerts[beKey] = val;
+  }
+  if (prefs.alerts?.windThreshold && prefs.thresholds?.windMin) {
+    alerts.windThreshold = prefs.thresholds.windMin;
+  }
+  alerts.quietStart = `${String(prefs.quietHours?.start ?? 21).padStart(2, '0')}:00`;
+  alerts.quietEnd = `${String(prefs.quietHours?.end ?? 7).padStart(2, '0')}:00`;
+  return alerts;
+}
+
+function toE164(raw) {
+  const digits = (raw || '').replace(/\D/g, '');
+  if (digits.length === 10) return `+1${digits}`;
+  if (digits.length === 11 && digits[0] === '1') return `+${digits}`;
+  return digits ? `+${digits}` : null;
+}
+
+export async function syncToServer(prefs) {
+  try {
+    const { supabase } = await import('../lib/supabase');
+    if (!supabase) return { success: false, reason: 'no-supabase' };
+    const { data: session } = await supabase.auth.getSession();
+    const token = session?.session?.access_token;
+    if (!token) return { success: false, reason: 'not-authenticated' };
+
+    const apiOrigin = import.meta.env.VITE_API_ORIGIN || '';
+    const body = {
+      phone: toE164(prefs.phone),
+      alerts: mapPrefsToServer(prefs),
+      activities: prefs.activities,
+    };
+
+    const resp = await fetch(`${apiOrigin}/api/user-preferences`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!resp.ok) {
+      const text = await resp.text();
+      console.warn('[SMS] Server sync failed:', resp.status, text);
+      return { success: false, reason: `http-${resp.status}` };
+    }
+    return { success: true };
+  } catch (err) {
+    console.warn('[SMS] Server sync error:', err.message);
+    return { success: false, reason: err.message };
+  }
+}
+
 export function getSMSPrefs() {
   try {
     const stored = localStorage.getItem(SMS_PREFS_KEY);

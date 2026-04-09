@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Privacy Policy - Utah Wind Finder</title>
+  <title>Privacy Policy - LiftForecast</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -17,64 +17,127 @@
     ul { padding-left: 1.5rem; }
     .date { color: #64748b; font-size: 0.875rem; margin-bottom: 2rem; }
     a { color: #06b6d4; }
+    .back { display: inline-block; margin-top: 2rem; color: #06b6d4; text-decoration: none; }
+    .back:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>Privacy Policy</h1>
-    <p class="date">Last updated: March 11, 2026</p>
+    <p class="date">Last updated: March 31, 2026</p>
 
-    <p>Utah Wind Finder is a weather intelligence application for wind sports
-    enthusiasts in Utah. We take your privacy seriously.</p>
+    <p>LiftForecast (operated at liftforecast.com, formerly Utah Wind Finder) is a
+    weather intelligence platform for wind sports enthusiasts in Utah. This policy
+    explains what data we collect, how we use it, and your rights.</p>
 
-    <h2>Information We Collect</h2>
-    <p>Utah Wind Finder collects minimal data to provide its services:</p>
+    <h2>1. Information We Collect</h2>
+
+    <h3 style="color:#94a3b8; font-size:1rem; margin-top:1rem; margin-bottom:0.25rem;">Account Information</h3>
+    <p>If you create an account, we collect your email address and an
+    authentication token to manage your subscription and preferences. Account
+    creation is optional.</p>
+
+    <h3 style="color:#94a3b8; font-size:1rem; margin-top:1rem; margin-bottom:0.25rem;">Phone Number (SMS Alerts)</h3>
+    <p>If you opt in to text message alerts, we collect your phone number so we
+    can send you weather notifications via SMS. Your phone number is stored
+    securely in our database and is used <strong>exclusively</strong> for
+    delivering the alerts you configure. We will never share, sell, or use your
+    phone number for marketing purposes. You can remove your phone number at any
+    time from the Text Alerts settings panel.</p>
+
+    <h3 style="color:#94a3b8; font-size:1rem; margin-top:1rem; margin-bottom:0.25rem;">Alert Preferences</h3>
+    <p>Your alert configuration (wind thresholds, glass conditions, quiet hours,
+    selected locations and activities) is stored server-side to evaluate alert
+    conditions and deliver timely notifications.</p>
+
+    <h3 style="color:#94a3b8; font-size:1rem; margin-top:1rem; margin-bottom:0.25rem;">Push Notification Tokens</h3>
+    <p>If you enable browser push notifications, we store a device push
+    subscription token to deliver alerts. No other device information is
+    collected.</p>
+
+    <h3 style="color:#94a3b8; font-size:1rem; margin-top:1rem; margin-bottom:0.25rem;">Learning &amp; Prediction Data</h3>
+    <p>Wind prediction accuracy and pattern data is stored to improve forecasting
+    for all users. This data is anonymous and not tied to any individual.</p>
+
+    <h3 style="color:#94a3b8; font-size:1rem; margin-top:1rem; margin-bottom:0.25rem;">Analytics</h3>
+    <p>We use Vercel Analytics to understand page views and app usage. This data
+    is aggregated and does not include personally identifiable information.</p>
+
+    <h2>2. Information We Do NOT Collect</h2>
     <ul>
-      <li><strong>Weather Preferences:</strong> Your selected spots, activity
-      modes, and notification preferences are stored locally on your device.</li>
-      <li><strong>Learning Data:</strong> Wind prediction accuracy and pattern
-      data is stored server-side to improve forecasting for all users. This data
-      is anonymous and not tied to any individual.</li>
-      <li><strong>Device Information:</strong> If you enable push notifications,
-      we store a device token to deliver alerts. No other device information is
-      collected.</li>
+      <li>We do not collect your GPS or precise location data</li>
+      <li>We do not use advertising trackers or third-party analytics SDKs</li>
+      <li>We do not sell or share any personal data with third parties for
+      marketing</li>
     </ul>
 
-    <h2>Information We Do NOT Collect</h2>
+    <h2>3. How We Use Your Information</h2>
     <ul>
-      <li>We do not collect your name, email, or personal identity</li>
-      <li>We do not collect your location (GPS) data</li>
-      <li>We do not use advertising trackers or analytics SDKs</li>
-      <li>We do not sell or share any data with third parties</li>
+      <li><strong>SMS Alerts:</strong> To send weather and session alerts you have
+      opted in to receive via text message</li>
+      <li><strong>Push Notifications:</strong> To deliver browser-based weather
+      alerts</li>
+      <li><strong>Account Management:</strong> To authenticate you and manage your
+      subscription tier</li>
+      <li><strong>Service Improvement:</strong> To improve wind prediction accuracy
+      using anonymized pattern data</li>
     </ul>
 
-    <h2>Third-Party Services</h2>
-    <p>The app retrieves weather data from the following public sources:</p>
+    <h2>4. Third-Party Services</h2>
+    <p>We use the following services to operate the platform:</p>
     <ul>
-      <li>National Weather Service (NWS) API</li>
-      <li>Synoptic Data / MesoWest API</li>
-      <li>Ambient Weather API (personal weather station data)</li>
+      <li><strong>Twilio:</strong> SMS delivery for text message alerts. Twilio
+      receives your phone number and message content only when you have opted in
+      to SMS alerts. See
+      <a href="https://www.twilio.com/legal/privacy" target="_blank" rel="noopener">Twilio's Privacy Policy</a>.</li>
+      <li><strong>Supabase:</strong> Database and authentication infrastructure.
+      See <a href="https://supabase.com/privacy" target="_blank" rel="noopener">Supabase Privacy Policy</a>.</li>
+      <li><strong>Stripe:</strong> Payment processing for Pro subscriptions. We do
+      not store credit card information. See
+      <a href="https://stripe.com/privacy" target="_blank" rel="noopener">Stripe's Privacy Policy</a>.</li>
+      <li><strong>National Weather Service (NWS):</strong> Public weather data</li>
+      <li><strong>Synoptic Data / MesoWest:</strong> Weather station observations</li>
+      <li><strong>Ambient Weather:</strong> Personal weather station data</li>
     </ul>
-    <p>These services have their own privacy policies. We only use them to fetch
-    publicly available weather observations and forecasts.</p>
+    <p>These services have their own privacy policies. We use them to fetch
+    weather observations, deliver notifications, and process payments.</p>
 
-    <h2>Data Storage</h2>
-    <p>User preferences are stored locally on your device using browser
-    localStorage. Server-side data (prediction accuracy, wind pattern learning)
-    is stored on secure cloud infrastructure and contains no personally
-    identifiable information.</p>
+    <h2>5. SMS/Text Message Terms</h2>
+    <ul>
+      <li>You may opt in to receive automated text message alerts about weather
+      conditions at your selected locations.</li>
+      <li>Message frequency depends on your alert settings and weather
+      conditions — typically 0 to 5 messages per day.</li>
+      <li>Message and data rates may apply depending on your carrier.</li>
+      <li>You can opt out at any time by disabling alerts in the Text Alerts
+      settings panel, or by removing your phone number.</li>
+      <li>For help, contact us at the email below.</li>
+    </ul>
 
-    <h2>Children's Privacy</h2>
-    <p>This app is not directed at children under 13. We do not knowingly
+    <h2>6. Data Storage &amp; Security</h2>
+    <p>Account data, phone numbers, and alert preferences are stored on secure
+    cloud infrastructure (Supabase, hosted on AWS). Local preferences (theme,
+    display settings) are stored in your browser's localStorage. All API
+    communication uses HTTPS encryption.</p>
+
+    <h2>7. Data Retention &amp; Deletion</h2>
+    <p>You can delete your phone number and alert preferences at any time from
+    the app settings. If you delete your account, all associated data (email,
+    phone, preferences, push tokens) will be removed from our systems.</p>
+
+    <h2>8. Children's Privacy</h2>
+    <p>This service is not directed at children under 13. We do not knowingly
     collect information from children.</p>
 
-    <h2>Changes to This Policy</h2>
+    <h2>9. Changes to This Policy</h2>
     <p>We may update this privacy policy from time to time. Changes will be
     reflected on this page with an updated date.</p>
 
-    <h2>Contact</h2>
-    <p>If you have questions about this privacy policy, please visit
-    <a href="https://utahwindfinder.com">utahwindfinder.com</a>.</p>
+    <h2>10. Contact</h2>
+    <p>If you have questions about this privacy policy or your data, contact us
+    at <a href="mailto:tyler@aspenearth.com">tyler@aspenearth.com</a>.</p>
+
+    <a href="/" class="back">&larr; Back to LiftForecast</a>
   </div>
 </body>
 </html>

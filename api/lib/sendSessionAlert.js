@@ -47,7 +47,7 @@ export function formatAlertMessage({ peakSpeed, discipline, spotName, dayLabel, 
 
 // ── SMS via Twilio REST ──────────────────────────────────────
 
-async function trySms(phone, body) {
+export async function trySms(phone, body) {
   const sid  = process.env.TWILIO_ACCOUNT_SID;
   const tok  = process.env.TWILIO_AUTH_TOKEN;
   const from = process.env.TWILIO_FROM_NUMBER;

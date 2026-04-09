@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MessageSquare, X, Phone, Bell, BellOff, Clock, MapPin, Zap, Waves, Wind, Shield, Check, ChevronRight, Smartphone } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
-import { getSMSPrefs, saveSMSPrefs, formatPhone, isValidPhone } from '../services/SMSNotificationService';
+import { getSMSPrefs, saveSMSPrefs, syncToServer, formatPhone, isValidPhone } from '../services/SMSNotificationService';
 import { getPushStatus, subscribeToPush, unsubscribeFromPush } from '../services/PushService';
 
 const ALERT_TYPES = [
@@ -39,6 +39,7 @@ export default function SMSAlertSettings({ isOpen, onClose }) {
   const [prefs, setPrefs] = useState(getSMSPrefs);
   const [phoneInput, setPhoneInput] = useState(prefs.phone);
   const [saved, setSaved] = useState(false);
+  const [syncStatus, setSyncStatus] = useState(null);
   const [step, setStep] = useState(prefs.phone ? 'settings' : 'setup');
   const [pushStatus, setPushStatus] = useState('loading');
   const [pushBusy, setPushBusy] = useState(false);
@@ -50,6 +51,9 @@ export default function SMSAlertSettings({ isOpen, onClose }) {
       setPhoneInput(loaded.phone);
       setStep(loaded.phone ? 'settings' : 'setup');
       getPushStatus().then(setPushStatus);
+      if (loaded.phone && loaded.enabled) {
+        syncToServer(loaded).catch(() => {});
+      }
     }
   }, [isOpen]);
 
@@ -81,12 +85,17 @@ export default function SMSAlertSettings({ isOpen, onClose }) {
     setPushBusy(false);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const updated = { ...prefs, phone: phoneInput };
     saveSMSPrefs(updated);
     setPrefs(updated);
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
+
+    setSyncStatus('syncing');
+    const result = await syncToServer(updated);
+    setSyncStatus(result.success ? 'synced' : 'failed');
+    setTimeout(() => setSyncStatus(null), 4000);
   };
 
   const toggleAlert = (id) => {
@@ -432,6 +441,18 @@ export default function SMSAlertSettings({ isOpen, onClose }) {
                     'Save Preferences'
                   )}
                 </button>
+
+                {syncStatus && (
+                  <p className={`text-center text-[11px] font-semibold ${
+                    syncStatus === 'synced' ? 'text-emerald-500' :
+                    syncStatus === 'failed' ? 'text-amber-500' :
+                    'text-slate-400'
+                  }`}>
+                    {syncStatus === 'syncing' ? 'Syncing to server...' :
+                     syncStatus === 'synced' ? 'Synced to server — alerts active' :
+                     'Server sync failed — alerts saved locally only'}
+                  </p>
+                )}
 
                 <button
                   onClick={() => {
