@@ -1186,7 +1186,7 @@ function RegionSection({ region, selectedLake, onSelectLake, windStatuses, isDar
               <button
                 key={lake.id}
                 onClick={() => onSelectLake(lake.id)}
-                className={`flex items-start gap-3 p-3 rounded-lg transition-all border text-left ${
+                className={`flex flex-col p-3 rounded-lg transition-all border text-left ${
                   isSelected
                     ? 'bg-sky-500/[0.08] border-sky-500'
                     : ws?.level === 'hot'
@@ -1194,33 +1194,48 @@ function RegionSection({ region, selectedLake, onSelectLake, windStatuses, isDar
                       : (isDark ? 'bg-white/[0.02] border-[var(--border-subtle)] hover:border-[var(--border-color)]' : 'bg-white border-slate-100 hover:border-slate-200')
                 }`}
               >
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className={`font-semibold text-sm ${isSelected ? 'text-sky-500' : 'text-[var(--text-primary)]'}`}>
-                      {lake.name}
-                    </span>
-                    {lake.blueRibbon && (
-                      <span className="text-[8px] font-bold px-1 py-0.5 rounded bg-blue-500/10 text-blue-500 uppercase">Blue Ribbon</span>
-                    )}
-                    {lake.hazard && (
-                      <span className="text-[8px] font-bold px-1 py-0.5 rounded bg-red-500/10 text-red-500 uppercase">{lake.hazard}</span>
-                    )}
-                  </div>
-                  {isFishingOrBoating && lake.fish && (
-                    <div className={`text-[10px] mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{lake.fish}</div>
-                  )}
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className={`text-[10px] flex items-center gap-0.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                      <Wind className="w-2.5 h-2.5" /> {lake.wind}
-                    </span>
-                    {cfg?.elevation && (
-                      <span className={`text-[10px] ${isDark ? 'text-slate-600' : 'text-slate-300'}`}>
-                        {cfg.elevation.toLocaleString()} ft
+                <div className="flex items-start justify-between gap-2 w-full">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className={`font-semibold text-sm ${isSelected ? 'text-sky-500' : 'text-[var(--text-primary)]'}`}>
+                        {lake.name}
                       </span>
+                      {lake.blueRibbon && (
+                        <span className="text-[8px] font-bold px-1 py-0.5 rounded bg-blue-500/10 text-blue-500 uppercase">Blue Ribbon</span>
+                      )}
+                      {lake.hazard && (
+                        <span className="text-[8px] font-bold px-1 py-0.5 rounded bg-red-500/10 text-red-500 uppercase">{lake.hazard}</span>
+                      )}
+                    </div>
+                    {isFishingOrBoating && lake.fish && (
+                      <div className={`text-[10px] mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{lake.fish}</div>
+                    )}
+                    {lake.desc && (
+                      <div className={`text-[10px] mt-0.5 leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{lake.desc}</div>
                     )}
                   </div>
+                  {ws && <div className="shrink-0"><WindBadge status={ws} isDark={isDark} /></div>}
                 </div>
-                {ws && <div className="shrink-0 mt-0.5"><WindBadge status={ws} isDark={isDark} /></div>}
+                <div className="flex items-center flex-wrap gap-x-3 gap-y-1 mt-2">
+                  <span className={`text-[10px] flex items-center gap-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                    <Wind className="w-2.5 h-2.5" /> {lake.wind}
+                  </span>
+                  {cfg?.elevation && (
+                    <span className={`text-[10px] flex items-center gap-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                      <Mountain className="w-2.5 h-2.5" /> {cfg.elevation.toLocaleString()} ft
+                    </span>
+                  )}
+                  {cfg?.stations?.lakeshore?.length > 0 && (
+                    <span className={`text-[10px] flex items-center gap-0.5 ${isDark ? 'text-cyan-400/70' : 'text-cyan-600'}`}>
+                      📡 {cfg.stations.lakeshore.length} sensor{cfg.stations.lakeshore.length !== 1 ? 's' : ''}
+                    </span>
+                  )}
+                  {cfg?.primaryWindType && (
+                    <span className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                      {cfg.primaryWindType}
+                    </span>
+                  )}
+                </div>
               </button>
             );
           })}
