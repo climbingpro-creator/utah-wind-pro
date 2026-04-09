@@ -4,11 +4,11 @@
  * Optimized for both screen viewing and print (Cmd+P / Ctrl+P).
  */
 
-import { ArrowRight, ArrowDown, Wind, Thermometer, Gauge, Radio, CheckCircle, TrendingUp, Zap, Clock, MapPin, BarChart3, Activity, Target, Layers, ChevronRight } from 'lucide-react';
+import { Wind, Radio, CheckCircle, TrendingUp, Zap, Clock, MapPin, BarChart3, Activity, Target, Layers } from 'lucide-react';
 
 /* ─────────────────────────── PAGE 1: THE SCIENCE ─────────────────────────── */
 
-function PipelineStep({ step, icon: Icon, title, subtitle, color, children }) {
+function PipelineStep({ step, title, subtitle, color, children }) {
   return (
     <div className="flex gap-4">
       <div className="flex flex-col items-center">
@@ -19,7 +19,6 @@ function PipelineStep({ step, icon: Icon, title, subtitle, color, children }) {
       </div>
       <div className="flex-1 pb-8">
         <div className="flex items-center gap-2 mb-1">
-          <Icon className="w-4 h-4 text-slate-500" />
           <h3 className="text-base font-extrabold text-slate-900">{title}</h3>
         </div>
         <p className="text-xs text-slate-500 mb-3">{subtitle}</p>
@@ -123,7 +122,7 @@ function Page1() {
           <h2 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider">The 3-Stage Prediction Pipeline</h2>
         </div>
 
-        <PipelineStep step="A" icon={Gauge} title="Pressure Gradient Analysis" subtitle="Barometric differential between valley floor and mountain reference" color="bg-violet-600">
+        <PipelineStep step="A" title="Pressure Gradient Analysis" subtitle="Barometric differential between valley floor and mountain reference" color="bg-violet-600">
           <FormulaBox formula="ΔP = P(SLC, 4226 ft) − P(PVU, 4495 ft)" description="millibar differential" />
           <div className="grid grid-cols-3 gap-2 mt-3">
             <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2">
@@ -144,7 +143,7 @@ function Page1() {
           </div>
         </PipelineStep>
 
-        <PipelineStep step="B" icon={Thermometer} title="Thermal Development Model" subtitle="Temperature differential between lakeshore and ridge drives convective draw" color="bg-orange-500">
+        <PipelineStep step="B" title="Thermal Development Model" subtitle="Temperature differential between lakeshore and ridge drives convective draw" color="bg-orange-500">
           <FormulaBox formula="ΔT = T(shore) − T(ridge)  →  ΔT ≥ 10°F = pump active" description="thermal engine" />
           <div className="grid grid-cols-2 gap-3 mt-3">
             <div className="rounded-lg border border-slate-200 px-3 py-2">
@@ -176,7 +175,7 @@ function Page1() {
           </div>
         </PipelineStep>
 
-        <PipelineStep step="C" icon={Radio} title="Ground Truth Validation" subtitle="Live station readings confirm or deny prediction — closes the feedback loop" color="bg-emerald-600">
+        <PipelineStep step="C" title="Ground Truth Validation" subtitle="Live station readings confirm or deny prediction — closes the feedback loop" color="bg-emerald-600">
           <div className="grid grid-cols-3 gap-2">
             <div className="rounded-lg border border-slate-200 px-3 py-2 text-center">
               <Radio className="w-4 h-4 text-sky-500 mx-auto mb-1" />
