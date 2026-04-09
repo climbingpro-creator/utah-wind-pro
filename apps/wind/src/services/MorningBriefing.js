@@ -571,7 +571,7 @@ function briefParagliding(params) {
   }
 
   if (isActiveNorth && speed >= 5) {
-    bodyParts.push(`North flow active — ${siteRec} is the call.`);
+    bodyParts.push('North flow active — sustained ridge lift likely.');
   } else if (thermal.windType && thermal.windType !== 'thermal') {
     bodyParts.push(`Flow type: ${thermal.windType}.`);
   }

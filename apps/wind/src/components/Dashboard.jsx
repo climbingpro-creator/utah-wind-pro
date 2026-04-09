@@ -561,6 +561,39 @@ export function Dashboard() {
         </div>
       )}
 
+      {/* Activity Selector Toolbar — sticky below header */}
+      <div className={`border-b sticky top-14 z-30 transition-colors duration-200 ${
+        theme === 'dark'
+          ? 'border-slate-800 bg-slate-950/95 backdrop-blur-md'
+          : 'border-slate-200 bg-white/95 backdrop-blur-md'
+      }`}>
+        <div className="max-w-6xl mx-auto px-5 sm:px-8">
+          <div className="flex items-center gap-2 py-2 overflow-x-auto scrollbar-hide">
+            {['kiting', 'paragliding', 'sailing', 'snowkiting', 'boating', 'paddling', 'fishing', 'windsurfing'].map(act => {
+              const cfg = ACTIVITY_CONFIGS[act];
+              if (!cfg) return null;
+              const isActive = selectedActivity === act;
+              return (
+                <button
+                  key={act}
+                  onClick={() => setSelectedActivity(act)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
+                    isActive
+                      ? 'bg-sky-500 text-white shadow-sm'
+                      : theme === 'dark'
+                        ? 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700'
+                        : 'bg-slate-100 text-slate-500 hover:text-slate-800 hover:bg-slate-200'
+                  }`}
+                >
+                  <span className="w-4 h-4 [&>svg]:w-4 [&>svg]:h-4">{cfg.icon}</span>
+                  {cfg.name}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
       <main className="max-w-6xl mx-auto px-5 sm:px-8 py-6 space-y-5">
 
         <WelcomeCard />

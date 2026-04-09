@@ -218,6 +218,23 @@ export function VectorWindMap({
   });
 
   useEffect(() => {
+    if (!selectedLake && 'geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setViewState(prev => ({
+            ...prev,
+            longitude: pos.coords.longitude,
+            latitude: pos.coords.latitude,
+            zoom: 10,
+          }));
+        },
+        () => { /* denied — keep default */ },
+        { timeout: 5000, maximumAge: 300000 }
+      );
+    }
+  }, []);
+
+  useEffect(() => {
     if (!PMTILES_URL) {
       setPmtilesReady(true);
       return;
@@ -667,7 +684,7 @@ export function VectorWindMap({
 
         {/* Wind info overlay */}
         {currentDirection != null && (
-          <div className="absolute top-16 right-2 bg-slate-900/90 rounded-lg px-3 py-2 z-20">
+          <div className="absolute top-16 left-2 bg-slate-900/90 rounded-lg px-3 py-2 z-20">
             <div className="text-center">
               <div className="text-2xl font-bold text-cyan-400">
                 {safeToFixed(currentSpeed, 0)}
