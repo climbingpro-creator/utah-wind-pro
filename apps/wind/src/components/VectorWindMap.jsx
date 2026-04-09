@@ -175,6 +175,165 @@ function PinDropMarker({ coords }) {
   );
 }
 
+// ─── Dense PWS Wind Field ─────────────────────────────────────────────────
+
+function usePwsWindField(center, enabled) {
+  const [stations, setStations] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const lastFetch = useRef(0);
+
+  useEffect(() => {
+    if (!enabled || !center) return;
+    const now = Date.now();
+    if (now - lastFetch.current < 120_000) return;
+    lastFetch.current = now;
+
+    let cancelled = false;
+    setLoading(true);
+
+    const apiOrigin = import.meta.env.VITE_API_ORIGIN || '';
+    const url = `${apiOrigin}/api/weather?source=wu-pws-dense&lat=${center[1]}&lon=${center[0]}&radius=40`;
+
+    fetch(url)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (cancelled || !data?.observations) return;
+        const now = Date.now();
+        const MAX_AGE = 30 * 60_000;
+        const valid = data.observations.filter(s => {
+          if (s.windSpeed == null && s.windDir == null) return false;
+          if (s.obsTime) {
+            const age = now - new Date(s.obsTime).getTime();
+            if (age > MAX_AGE) return false;
+          }
+          return true;
+        });
+        setStations(valid);
+      })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setLoading(false); });
+
+    return () => { cancelled = true; };
+  }, [center?.[0], center?.[1], enabled]);
+
+  return { stations, loading };
+}
+
+function buildPwsGeoJSON(stations) {
+  const features = [];
+  for (const s of stations) {
+    if (s.lat == null || s.lon == null) continue;
+    const speed = s.windSpeed ?? 0;
+    const dir = s.windDir;
+    const hasDir = dir != null;
+    const bearing = hasDir ? (dir + 180) % 360 : 0;
+    const rad = bearing * (Math.PI / 180);
+    const len = 0.004 + Math.min(speed, 25) * 0.0004;
+
+    let r, g, b;
+    if (speed < 3) { r = 100; g = 116; b = 139; }
+    else if (speed < 6) { r = 56; g = 189; b = 248; }
+    else if (speed < 10) { r = 34; g = 211; b = 238; }
+    else if (speed < 15) { r = 74; g = 222; b = 128; }
+    else if (speed < 20) { r = 250; g = 204; b = 21; }
+    else { r = 248; g = 113; b = 113; }
+
+    const color = `rgb(${r},${g},${b})`;
+
+    features.push({
+      type: 'Feature',
+      properties: { kind: 'dot', color, speed, id: s.id },
+      geometry: { type: 'Point', coordinates: [s.lon, s.lat] },
+    });
+
+    if (hasDir && speed >= 1) {
+      const tipLon = s.lon + Math.sin(rad) * len;
+      const tipLat = s.lat + Math.cos(rad) * len;
+
+      features.push({
+        type: 'Feature',
+        properties: { kind: 'shaft', color, speed },
+        geometry: { type: 'LineString', coordinates: [[s.lon, s.lat], [tipLon, tipLat]] },
+      });
+
+      const hLen = len * 0.35;
+      const hHalf = hLen * 0.5;
+      const neckLon = tipLon - Math.sin(rad) * hLen;
+      const neckLat = tipLat - Math.cos(rad) * hLen;
+      const perpRad = (bearing + 90) * (Math.PI / 180);
+      features.push({
+        type: 'Feature',
+        properties: { kind: 'head', color, speed },
+        geometry: {
+          type: 'Polygon',
+          coordinates: [[
+            [tipLon, tipLat],
+            [neckLon + Math.sin(perpRad) * hHalf, neckLat + Math.cos(perpRad) * hHalf],
+            [neckLon - Math.sin(perpRad) * hHalf, neckLat - Math.cos(perpRad) * hHalf],
+            [tipLon, tipLat],
+          ]],
+        },
+      });
+    }
+  }
+  return { type: 'FeatureCollection', features };
+}
+
+function PwsWindFieldLayer({ stations }) {
+  const geojson = useMemo(() => buildPwsGeoJSON(stations), [stations]);
+  if (!stations.length) return null;
+
+  return (
+    <Source id="pws-wind-field" type="geojson" data={geojson}>
+      <Layer
+        id="pws-shaft-glow"
+        type="line"
+        filter={['==', ['get', 'kind'], 'shaft']}
+        paint={{
+          'line-color': ['get', 'color'],
+          'line-width': 6,
+          'line-opacity': 0.15,
+          'line-blur': 4,
+        }}
+      />
+      <Layer
+        id="pws-shaft"
+        type="line"
+        filter={['==', ['get', 'kind'], 'shaft']}
+        paint={{
+          'line-color': ['get', 'color'],
+          'line-width': ['interpolate', ['linear'], ['get', 'speed'], 0, 1.5, 10, 2.5, 20, 3.5],
+          'line-opacity': 0.8,
+          'line-cap': 'round',
+        }}
+      />
+      <Layer
+        id="pws-head"
+        type="fill"
+        filter={['==', ['get', 'kind'], 'head']}
+        paint={{
+          'fill-color': ['get', 'color'],
+          'fill-opacity': 0.85,
+        }}
+      />
+      <Layer
+        id="pws-dot"
+        type="circle"
+        filter={['==', ['get', 'kind'], 'dot']}
+        paint={{
+          'circle-radius': ['interpolate', ['linear'], ['get', 'speed'], 0, 3, 10, 5, 20, 7],
+          'circle-color': ['get', 'color'],
+          'circle-opacity': 0.9,
+          'circle-stroke-width': 1.5,
+          'circle-stroke-color': 'rgba(0,0,0,0.4)',
+        }}
+      />
+    </Source>
+  );
+}
+
+// ─── Main Wind Arrow ──────────────────────────────────────────────────────
+
 function WindArrowOverlay({ center, direction, speed }) {
   if (direction == null || !center) return null;
 
@@ -258,6 +417,7 @@ export function VectorWindMap({
   const [selectedFeature, setSelectedFeature] = useState(null);
   const [pmtilesReady, setPmtilesReady] = useState(false);
   const [showSatellite, setShowSatellite] = useState(false);
+  const [showPwsField, setShowPwsField] = useState(true);
   const [viewState, setViewState] = useState({
     longitude: -111.83,
     latitude: 40.23,
@@ -329,6 +489,8 @@ export function VectorWindMap({
       // Layer may not exist yet during initial load
     }
   }, [showSatellite]);
+
+  const { stations: pwsStations, loading: pwsLoading } = usePwsWindField(mapArea?.center, showPwsField);
 
   const liveStationsWithCoords = useMemo(() => {
     if (!mapArea) return [];
@@ -615,6 +777,9 @@ export function VectorWindMap({
             speed={currentSpeed}
           />
 
+          {/* Dense PWS wind field */}
+          {showPwsField && <PwsWindFieldLayer stations={pwsStations} />}
+
           {/* Station markers */}
           {(mapArea?.stations || []).map(station => (
             <StationMarker
@@ -730,8 +895,27 @@ export function VectorWindMap({
               <div className="w-3 h-3 rounded-full bg-blue-500 border border-blue-400" />
               <span>N Flow</span>
             </div>
+            {showPwsField && (
+              <div className="flex items-center gap-1.5">
+                <Wind className="w-3 h-3 text-emerald-400" />
+                <span>PWS ({pwsStations.length})</span>
+              </div>
+            )}
           </div>
         </div>
+
+        {/* PWS wind field toggle */}
+        <button
+          onClick={() => setShowPwsField(v => !v)}
+          className={`absolute bottom-2 right-24 z-20 flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all shadow-lg ${
+            showPwsField
+              ? 'bg-emerald-500 text-white hover:bg-emerald-600'
+              : 'bg-slate-900/90 text-slate-300 hover:bg-slate-800 border border-slate-700'
+          }`}
+        >
+          <Wind className="w-4 h-4" />
+          <span>{pwsLoading ? 'Loading...' : showPwsField ? 'PWS On' : 'PWS Off'}</span>
+        </button>
 
         {/* Wind info overlay */}
         {currentDirection != null && (

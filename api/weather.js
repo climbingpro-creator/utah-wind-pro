@@ -74,8 +74,10 @@ export default async function handler(req, res) {
       return await handleWuPwsHistory(res, req.query);
     } else if (source === 'wu-pws-date') {
       return await handleWuPwsDate(res, req.query);
+    } else if (source === 'wu-pws-dense') {
+      return await handleWuPwsDense(res, req.query);
     } else {
-      return res.status(400).json({ error: 'Invalid source. Use: ambient, ambient-history, radial, synoptic, synoptic-radial, synoptic-history, wu-nearby, wu-pws, wu-pws-history' });
+      return res.status(400).json({ error: 'Invalid source. Use: ambient, ambient-history, radial, synoptic, synoptic-radial, synoptic-history, wu-nearby, wu-pws, wu-pws-history, wu-pws-dense' });
     }
   } catch (error) {
     console.error(`[API Proxy] ${source} error:`, error.message);
@@ -1121,4 +1123,77 @@ async function handleWuPwsHistory(res, query) {
   const data = await response.json();
   res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600');
   return res.status(200).json(data);
+}
+
+/**
+ * Dense PWS discovery — discovers ALL WU stations in a bounding box,
+ * then batch-fetches current observations for each.
+ * Used for the fluid wind field visualization.
+ */
+async function handleWuPwsDense(res, query) {
+  const apiKey = getWuApiKey();
+  if (!apiKey) return res.status(500).json({ error: 'WU_API_KEY not configured' });
+
+  const { lat, lon, radius } = query;
+  if (!lat || !lon) return res.status(400).json({ error: 'lat and lon parameters required' });
+  const radiusKm = parseFloat(radius) || 40;
+
+  const nearbyUrl = `https://api.weather.com/v3/location/near?geocode=${lat},${lon}&product=pws&format=json&apiKey=${apiKey}`;
+  const nearbyRes = await fetch(nearbyUrl, { signal: AbortSignal.timeout(10000) });
+  if (!nearbyRes.ok) return res.status(nearbyRes.status).json({ error: `WU nearby API returned ${nearbyRes.status}` });
+
+  const nearby = await nearbyRes.json();
+  const ids = nearby?.location?.stationId || [];
+  const lats = nearby?.location?.latitude || [];
+  const lons = nearby?.location?.longitude || [];
+  const dists = nearby?.location?.distanceKm || [];
+
+  const candidates = ids.map((id, i) => ({
+    id, lat: lats[i], lon: lons[i], distanceKm: dists[i],
+  })).filter(s => s.distanceKm <= radiusKm);
+
+  const MAX_STATIONS = 50;
+  const selected = candidates.slice(0, MAX_STATIONS);
+
+  const BATCH = 10;
+  const observations = [];
+  for (let i = 0; i < selected.length; i += BATCH) {
+    const batch = selected.slice(i, i + BATCH);
+    const results = await Promise.allSettled(
+      batch.map(async (s) => {
+        const url = `https://api.weather.com/v2/pws/observations/current?stationId=${s.id}&format=json&units=e&numericPrecision=decimal&apiKey=${apiKey}`;
+        const r = await fetch(url, { signal: AbortSignal.timeout(6000) });
+        if (!r.ok) return null;
+        const d = await r.json();
+        const obs = d.observations?.[0];
+        if (!obs) return null;
+        return {
+          id: s.id,
+          lat: obs.lat ?? s.lat,
+          lon: obs.lon ?? s.lon,
+          distanceKm: s.distanceKm,
+          windSpeed: obs.imperial?.windSpeed ?? null,
+          windGust: obs.imperial?.windGust ?? null,
+          windDir: obs.winddir ?? null,
+          temp: obs.imperial?.temp ?? null,
+          humidity: obs.humidity ?? null,
+          pressure: obs.imperial?.pressure ?? null,
+          obsTime: obs.obsTimeUtc,
+          stationId: obs.stationID,
+        };
+      })
+    );
+    for (const r of results) {
+      if (r.status === 'fulfilled' && r.value) observations.push(r.value);
+    }
+  }
+
+  res.setHeader('Cache-Control', 's-maxage=120, stale-while-revalidate=300');
+  return res.status(200).json({
+    stationCount: observations.length,
+    discoveredCount: candidates.length,
+    center: { lat: parseFloat(lat), lon: parseFloat(lon) },
+    radiusKm,
+    observations,
+  });
 }
