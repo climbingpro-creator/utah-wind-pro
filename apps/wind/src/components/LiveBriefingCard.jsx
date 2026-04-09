@@ -39,7 +39,7 @@ export default function LiveBriefingCard({ briefing, lastUpdated }) {
             </h2>
           </div>
           {timeStr && (
-            <span className={`text-[10px] font-medium shrink-0 flex items-center gap-1 ${isDark ? 'text-[var(--text-tertiary)]' : 'text-slate-400'}`}>
+            <span className={`text-[10px] font-medium shrink-0 flex items-center gap-1 ${isDark ? 'text-[var(--text-tertiary)]' : 'text-slate-500'}`}>
               <Radio className="w-3 h-3" />
               {timeStr}
             </span>

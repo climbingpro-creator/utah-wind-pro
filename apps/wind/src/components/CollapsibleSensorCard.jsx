@@ -82,9 +82,9 @@ function HistoryRow({ reading, isDark }) {
   
   return (
     <div className={`flex items-center justify-between py-1.5 px-2 text-xs ${isDark ? 'hover:bg-white/5' : 'hover:bg-slate-50'}`}>
-      <span className={isDark ? 'text-slate-500' : 'text-slate-400'}>{timeStr}</span>
-      <span className={getWindColor(speed, isDark)}>{safeToFixed(speed, 1)} mph</span>
-      <span className={isDark ? 'text-slate-400' : 'text-slate-500'}>{windDirectionToCardinal(dir)}</span>
+      <span className={isDark ? 'text-slate-400' : 'text-slate-500'}>{timeStr}</span>
+      <span className={getWindColor(speed, isDark)}>{safeToFixed(speed, 0)} mph</span>
+      <span className={isDark ? 'text-slate-300' : 'text-slate-500'}>{windDirectionToCardinal(dir)}</span>
       {gust != null && gust > speed && (
         <span className={isDark ? 'text-orange-400' : 'text-orange-600'}>G{safeToFixed(gust, 0)}</span>
       )}
@@ -150,9 +150,9 @@ export default function CollapsibleSensorCard({ station, history, isPersonalStat
             </div>
             <div className="flex items-center gap-2">
               <span className={`text-lg font-bold ${windColor}`}>
-                {safeToFixed(speed, 1)}
+                {safeToFixed(speed, 0)}
               </span>
-              <span className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>mph</span>
+              <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>mph</span>
               <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                 {windDirectionToCardinal(direction)}
               </span>
@@ -167,7 +167,7 @@ export default function CollapsibleSensorCard({ station, history, isPersonalStat
           {/* 3HR Trend */}
           <div className="flex flex-col items-end gap-1 shrink-0">
             <TrendBadge trend={trendData.trend} delta={trendData.delta} />
-            <span className={`text-[9px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>3hr</span>
+            <span className={`text-[9px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>3hr</span>
           </div>
         </div>
       </div>
