@@ -27,6 +27,7 @@ const SYNOPTIC_TO_UDOT_NAME = {
   UTCHL:  ['charleston'],
   UTORM:  ['orem'],
   UTPCR:  ['point of the mountain', 'point of mountain'],
+  UT1:    ['wahsatch', 'wasatch hills'],
   UT7:    ['i-15 @ american fork', 'american fork'],
   UTPRB:  ['price', 'us-6 @ price'],
   UTRVT:  ['riverton'],

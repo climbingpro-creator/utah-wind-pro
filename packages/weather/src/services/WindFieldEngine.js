@@ -74,6 +74,9 @@ const STATION_NODES = {
   SKY:   { name: 'Skyline Drive',      lat: 39.645,  lng: -111.315,  elevation: 10200, type: 'ridge' },
   UTESU: { name: 'Ephraim South',      lat: 39.358,  lng: -111.540,  elevation: 9800,  type: 'ridge' },
   UTMPK: { name: 'Millers Peak',       lat: 39.590,  lng: -111.210,  elevation: 9200,  type: 'ridge' },
+  KFIR:  { name: 'First Divide (WYDOT)', lat: 41.2765, lng: -110.8007, elevation: 7579, type: 'lakeshore' },
+  KEVW:  { name: 'Evanston Airport',    lat: 41.2750, lng: -111.0350, elevation: 7143, type: 'synoptic' },
+  UT1:   { name: 'Wahsatch Hill EB',    lat: 41.1952, lng: -111.114,  elevation: 6814, type: 'gateway' },
 };
 
 // Propagation edges: how wind flows from one station to another
@@ -138,6 +141,16 @@ const PROPAGATION_EDGES = [
     headingRange: [180, 360], description: 'Millers Peak → Skyline (ridge flow)' },
   { from: 'UTESU', to: 'SKY', delay: 30, attenuation: 0.70, channeling: 1.1,
     headingRange: [160, 260], description: 'Ephraim → Skyline (upslope)' },
+
+  // === SULPHUR CREEK JET STREAM PATH (I-80 corridor) ===
+  { from: 'KSLC', to: 'UT1', delay: 60, attenuation: 0.70, channeling: 1.0,
+    headingRange: [240, 310], description: 'SLC → Wahsatch summit (jet stream corridor)' },
+  { from: 'UT1', to: 'KEVW', delay: 15, attenuation: 0.90, channeling: 1.0,
+    headingRange: [240, 310], description: 'Wahsatch → Evanston (open terrain)' },
+  { from: 'UT1', to: 'KFIR', delay: 30, attenuation: 0.85, channeling: 1.1,
+    headingRange: [240, 310], description: 'Wahsatch → First Divide (I-80 terrain channeling)' },
+  { from: 'KEVW', to: 'KFIR', delay: 20, attenuation: 0.90, channeling: 1.05,
+    headingRange: [240, 320], description: 'Evanston → First Divide (local corridor)' },
 ];
 
 // Location-to-station mapping: which stations best represent each launch
@@ -159,6 +172,7 @@ const LOCATION_STATIONS = {
   'strawberry-view':    { primary: 'UTCOP', secondary: ['RVZU1', 'CCPUT'], upstreamNorth: ['KSLC', 'CCPUT'], upstreamThermal: ['UTCOP', 'DSTU1'] },
   'strawberry-river':   { primary: 'UTCOP', secondary: ['RVZU1', 'DSTU1'], upstreamNorth: ['KSLC', 'CCPUT'], upstreamThermal: ['UTCOP', 'RVZU1'] },
   'skyline-drive':      { primary: 'SKY',   secondary: ['UTESU', 'UTMPK'], upstreamNorth: ['KSLC', 'UTMPK'], upstreamThermal: ['SKY', 'UTESU'] },
+  'sulfur-creek':       { primary: 'KFIR',  secondary: ['KEVW'], upstreamNorth: ['KSLC'], upstreamThermal: ['UT1', 'KEVW'] },
 };
 
 // Shadow station mappings: FREE WU PWS stations that can replace paid Synoptic stations

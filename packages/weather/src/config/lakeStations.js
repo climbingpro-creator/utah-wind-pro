@@ -66,6 +66,11 @@ export const getAllStationIds = (lakeId) => {
   if (config.stations.earlyIndicator?.id) {
     ids.add(config.stations.earlyIndicator.id);
   }
+
+  // Add predictor stations (e.g. Wahsatch EB for Sulphur Creek)
+  if (config.stations.predictor?.length) {
+    config.stations.predictor.forEach((s) => ids.add(s.id));
+  }
   
   return Array.from(ids);
 };

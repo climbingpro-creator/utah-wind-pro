@@ -599,6 +599,17 @@ export function Dashboard() {
         <WelcomeCard />
 
         {/* ═══════════════════════════════════════════════════════════════════
+            LAKE / SPOT SELECTOR — front and center for easy access
+            ═══════════════════════════════════════════════════════════════════ */}
+        <LakeSelector
+          selectedLake={selectedLake}
+          onSelectLake={handleSelectLake}
+          stationReadings={lakeState?.wind?.stations}
+          activity={selectedActivity}
+          pressureData={pressureData}
+        />
+
+        {/* ═══════════════════════════════════════════════════════════════════
             2. SINGLE INTERACTIVE WIND MAP
             (Removed static map duplicate - keeping only Leaflet/MapLibre)
             ═══════════════════════════════════════════════════════════════════ */}
@@ -742,14 +753,6 @@ export function Dashboard() {
 
         {/* Extended Outlook - Consolidated Weekly Forecasts */}
         <ExtendedOutlook selectedActivity={selectedActivity} selectedLake={selectedLake} />
-
-        <LakeSelector
-          selectedLake={selectedLake}
-          onSelectLake={handleSelectLake}
-          stationReadings={lakeState?.wind?.stations}
-          activity={selectedActivity}
-          pressureData={pressureData}
-        />
 
         {error && (
           <div className="card !border-red-500/30 p-4">

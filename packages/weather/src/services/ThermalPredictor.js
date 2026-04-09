@@ -208,6 +208,40 @@ const DEER_CREEK_ARROWHEAD_TRIGGER = {
 };
 
 // =====================================================
+// SULPHUR CREEK — WAHSATCH TRIGGER
+// =====================================================
+// When Wahsatch EB (UT1) shows strong W wind, Sulphur Creek fires ~30 min later.
+// KFIR (First Divide) is the closest station to the reservoir.
+const SULFUR_CREEK_HOURLY_PROBABILITY = {
+  0: 0.02, 1: 0.02, 2: 0.02, 3: 0.02, 4: 0.02, 5: 0.02,
+  6: 0.03, 7: 0.04, 8: 0.05, 9: 0.08,
+  10: 0.12,
+  11: 0.16,
+  12: 0.22,
+  13: 0.25,
+  14: 0.25,  // Peak — jet stream influence strongest afternoon
+  15: 0.24,
+  16: 0.22,
+  17: 0.18,
+  18: 0.12,
+  19: 0.08,
+  20: 0.05, 21: 0.03, 22: 0.02, 23: 0.02,
+};
+
+const SULFUR_CREEK_WAHSATCH_TRIGGER = {
+  speed: {
+    optimal: { min: 12, max: 30 },
+    marginal: { min: 8, max: 12 },
+    poor: { min: 0, max: 8 },
+  },
+  direction: {
+    optimal: { min: 250, max: 290 },
+    acceptable: { min: 220, max: 320 },
+  },
+  leadTimeMinutes: 30,
+};
+
+// =====================================================
 // SPANISH FORK CANYON EARLY INDICATOR
 // =====================================================
 // From correlation analysis: QSF shows SE wind 1-2 hours before Utah Lake thermal
@@ -721,6 +755,53 @@ export const THERMAL_PROFILES = {
     requirement: 'MUST have South wind (160-220°) - canyon only works with S flow',
   },
   
+  'sulfur-creek': {
+    name: 'Sulphur Creek Reservoir',
+
+    direction: {
+      optimal: { min: 250, max: 290, ideal: 270 },
+      acceptable: { min: 220, max: 320 },
+      label: 'West',
+      description: 'Due West required — jet stream alignment over the region',
+    },
+
+    speed: {
+      typical: { min: 10, max: 25 },
+      average: 15,
+      peak: 20,
+      unit: 'mph',
+    },
+
+    timing: {
+      buildStart: { hour: 10, minute: 0, label: '10:00 AM' },
+      usableStart: { hour: 12, minute: 0, label: '12:00 PM' },
+      peakWindow: { start: 12, end: 18, label: '12:00 PM - 6:00 PM' },
+      peakHour: 14,
+      fadeStart: { hour: 18, minute: 0, label: '6:00 PM' },
+      fadeEnd: { hour: 20, minute: 0, label: '8:00 PM' },
+    },
+
+    statistics: {
+      goodDaysPercent: 18,
+      sampleSize: 0,
+      dataSource: 'Local knowledge — Utah Windsurfing Association',
+      peakHourRate: 25,
+      avgTempDelta: null,
+    },
+
+    wahsatchTrigger: {
+      windSpeed: { min: 8, max: 30, optimal: 15 },
+      windDirection: { min: 240, max: 300, optimal: 270 },
+      leadTime: 30,
+    },
+
+    primaryStation: 'KFIR',
+    triggerStation: 'UT1',
+    referenceStation: 'KEVW',
+    yourStation: null,
+    requirement: 'Jet stream must be due west overhead — check 500mb charts. No thunderstorms.',
+  },
+
   'willard-bay': {
     name: 'Willard Bay',
     
@@ -816,7 +897,25 @@ export function predictThermal(lakeId, currentConditions) {
   let monthlyMultiplier = 1.0;
   let monthlyRate = 0.24; // Default
   
-  if (lakeId === 'deer-creek') {
+  if (lakeId === 'sulfur-creek') {
+    baseProbability = (SULFUR_CREEK_HOURLY_PROBABILITY[currentHour] || 0.02) * 100;
+    expectedPeakHour = 14;
+    expectedPeakSpeed = 15;
+    // July is the prime month — jet stream dearth escape
+    if (currentMonth === 7) {
+      monthlyMultiplier = 1.4;
+      monthlyRate = 0.30;
+    } else if (currentMonth >= 6 && currentMonth <= 8) {
+      monthlyMultiplier = 1.2;
+      monthlyRate = 0.25;
+    } else if (currentMonth >= 5 && currentMonth <= 9) {
+      monthlyMultiplier = 0.8;
+      monthlyRate = 0.15;
+    } else {
+      monthlyMultiplier = 0.3;
+      monthlyRate = 0.05;
+    }
+  } else if (lakeId === 'deer-creek') {
     // Use Deer Creek specific hourly data
     baseProbability = (DEER_CREEK_HOURLY_PROBABILITY[currentHour] || 0.02) * 100;
     expectedPeakHour = 13; // 1 PM is peak for Deer Creek
@@ -982,6 +1081,53 @@ export function predictThermal(lakeId, currentConditions) {
     }
   }
   
+  // WAHSATCH TRIGGER ANALYSIS (Sulphur Creek specific)
+  // When Wahsatch EB shows strong W wind, Sulphur Creek fires ~30 min later
+  let wahsatchScore = 50;
+  let wahsatchStatus = 'unknown';
+  let wahsatchMessage = '';
+
+  if (lakeId === 'sulfur-creek' && currentConditions?.wahsatchWind) {
+    const wSpeed = currentConditions.wahsatchWind.speed;
+    const wDir = currentConditions.wahsatchWind.direction;
+    const trigger = SULFUR_CREEK_WAHSATCH_TRIGGER;
+
+    let speedScore = 0;
+    if (wSpeed != null) {
+      if (wSpeed >= trigger.speed.optimal.min && wSpeed <= trigger.speed.optimal.max) {
+        speedScore = 100;
+      } else if (wSpeed >= trigger.speed.marginal.min && wSpeed < trigger.speed.optimal.min) {
+        speedScore = 50;
+      } else {
+        speedScore = 10;
+      }
+    }
+
+    let dirScore = 0;
+    if (wDir != null) {
+      if (wDir >= trigger.direction.optimal.min && wDir <= trigger.direction.optimal.max) {
+        dirScore = 100;
+      } else if (wDir >= trigger.direction.acceptable.min && wDir <= trigger.direction.acceptable.max) {
+        dirScore = 60;
+      } else {
+        dirScore = 0;
+      }
+    }
+
+    wahsatchScore = Math.round((speedScore * 0.5) + (dirScore * 0.5));
+
+    if (wahsatchScore >= 80) {
+      wahsatchStatus = 'trigger';
+      wahsatchMessage = `TRIGGER: Wahsatch ${safeToFixed(wSpeed, 0)} mph from ${Math.round(wDir)}° W — Sulphur Creek likely firing in ~30 min`;
+    } else if (wahsatchScore >= 50) {
+      wahsatchStatus = 'building';
+      wahsatchMessage = `Building: Wahsatch ${safeToFixed(wSpeed, 0)} mph — need 12+ mph from W (250-290°)`;
+    } else {
+      wahsatchStatus = 'no-trigger';
+      wahsatchMessage = `No trigger: Wahsatch ${safeToFixed(wSpeed, 0)} mph — need sustained W flow`;
+    }
+  }
+
   // ARROWHEAD TRIGGER ANALYSIS (Deer Creek specific)
   // Data shows: When Arrowhead has 12-18 mph from SSW (210°), thermal at Dam is likely
   let arrowheadScore = 50;
@@ -1148,6 +1294,13 @@ export function predictThermal(lakeId, currentConditions) {
     : 1.0;
   probability *= (1.0 + (elevationImpact - 1.0) * (tW / 0.40));
   
+  // WAHSATCH TRIGGER (Sulphur Creek specific)
+  if (lakeId === 'sulfur-creek' && wahsatchStatus === 'trigger') {
+    probability *= 2.0;
+  } else if (lakeId === 'sulfur-creek' && wahsatchStatus === 'no-trigger') {
+    probability *= 0.4;
+  }
+
   // ARROWHEAD TRIGGER (Deer Creek specific)
   if (lakeId === 'deer-creek' && arrowheadStatus === 'trigger') {
     probability *= 1.8; // 80% boost when Arrowhead shows trigger pattern
@@ -1605,6 +1758,21 @@ export function predictThermal(lakeId, currentConditions) {
       inversionTrapped: currentConditions?.inversionTrapped,
     },
     
+    // Wahsatch trigger (Sulphur Creek specific)
+    wahsatch: lakeId === 'sulfur-creek' ? {
+      status: wahsatchStatus,
+      score: wahsatchScore,
+      message: wahsatchMessage,
+      windSpeed: currentConditions?.wahsatchWind?.speed,
+      windDirection: currentConditions?.wahsatchWind?.direction,
+      stationName: 'Wahsatch Hill EB (UT1)',
+      triggerConditions: {
+        speedNeeded: '12+ mph',
+        directionNeeded: 'W (250-290°)',
+        leadTime: '~30 min',
+      },
+    } : null,
+
     // Arrowhead trigger (Deer Creek specific)
     arrowhead: lakeId === 'deer-creek' ? {
       status: arrowheadStatus,

@@ -37,11 +37,18 @@ const MAP_AREAS = {
     zoom: 11,
     launches: ['deer-creek'],
     stations: [
-      { id: 'DCC', name: 'Deer Creek Dam', lat: 40.4028, lng: -111.5097, type: 'mesowest', elevation: 5417 },
-      { id: 'SND', name: 'Arrowhead Summit', lat: 40.4389, lng: -111.5875, type: 'mesowest', elevation: 8252, isRidge: true },
+      { id: 'UTDCD', name: 'Deer Creek Dam (UDOT)', lat: 40.4090, lng: -111.5100, type: 'udot', elevation: 5400 },
+      { id: 'UTLPC', name: 'Lower Provo Canyon', lat: 40.3800, lng: -111.5800, type: 'udot', elevation: 5100, isEarlyIndicator: true },
+      { id: 'UTPCY', name: 'Provo Canyon MP10', lat: 40.3600, lng: -111.6100, type: 'udot', elevation: 5200 },
+      { id: 'UTCHL', name: 'Charleston (UDOT)', lat: 40.4800, lng: -111.4600, type: 'udot', elevation: 5500 },
       { id: 'KHCR', name: 'Heber Airport', lat: 40.4822, lng: -111.4286, type: 'mesowest', elevation: 5597 },
-      { id: 'TIMU1', name: 'Timpanogos', lat: 40.3833, lng: -111.6333, type: 'mesowest', elevation: 8170, isRidge: true },
-      { id: 'CHL', name: 'Charleston', lat: 40.4750, lng: -111.4750, type: 'mesowest', elevation: 5600 },
+      { id: 'TIMU1', name: 'Timpanogos Divide', lat: 40.3833, lng: -111.6333, type: 'mesowest', elevation: 8170, isRidge: true },
+      { id: 'KUTMIDWA37', name: 'Midway (WU)', lat: 40.505, lng: -111.465, type: 'pws', elevation: 5600 },
+      { id: 'KUTHEBER105', name: 'Heber City E (WU)', lat: 40.485, lng: -111.444, type: 'pws', elevation: 5600 },
+      { id: 'KUTHEBER26', name: 'Heber City S (WU)', lat: 40.477, lng: -111.450, type: 'pws', elevation: 5600 },
+      { id: 'KUTHEBER99', name: 'Heber City (WU)', lat: 40.510, lng: -111.410, type: 'pws', elevation: 5640 },
+      { id: 'KUTPLEAS11', name: 'Pleasant Grove (WU)', lat: 40.400, lng: -111.742, type: 'pws', elevation: 4600 },
+      { id: 'KUTCEDAR10', name: 'Cedar Hills (WU)', lat: 40.396, lng: -111.741, type: 'pws', elevation: 4700 },
     ],
   },
   'willard-bay': {
@@ -59,10 +66,12 @@ const MAP_AREAS = {
   'sulfur-creek': {
     name: 'Sulphur Creek',
     center: [-110.955, 41.095],
-    zoom: 12,
+    zoom: 11,
     launches: ['sulfur-creek'],
     stations: [
+      { id: 'KFIR', name: 'First Divide (WYDOT)', lat: 41.2765, lng: -110.8007, type: 'mesowest', elevation: 7579 },
       { id: 'KEVW', name: 'Evanston Airport', lat: 41.2750, lng: -111.0350, type: 'mesowest', elevation: 7143 },
+      { id: 'UT1', name: 'Wahsatch EB (UDOT)', lat: 41.1952, lng: -111.114, type: 'udot', elevation: 6814 },
     ],
   },
 };

@@ -82,8 +82,20 @@ export const WU_PWS_STATIONS = {
       { id: 'KUTMIDWA37', name: 'Midway', lat: 40.505, lon: -111.465, role: 'close', priority: 1 },
       { id: 'KUTHEBER105', name: 'Heber City E', lat: 40.485, lon: -111.444, role: 'mid', priority: 2 },
       { id: 'KUTHEBER26', name: 'Heber City S', lat: 40.477, lon: -111.450, role: 'mid', priority: 3 },
-      { id: 'KUTPLEAS11', name: 'Pleasant Grove', lat: 40.400, lon: -111.742, role: 'early', priority: 4 },
-      { id: 'KUTCEDAR10', name: 'Cedar Hills', lat: 40.396, lon: -111.741, role: 'early', priority: 5 },
+      { id: 'KUTHEBER99', name: 'Heber City', lat: 40.510, lon: -111.410, role: 'mid', priority: 4 },
+      { id: 'KUTPLEAS11', name: 'Pleasant Grove', lat: 40.400, lon: -111.742, role: 'early', priority: 5 },
+      { id: 'KUTCEDAR10', name: 'Cedar Hills', lat: 40.396, lon: -111.741, role: 'early', priority: 6 },
+    ],
+  },
+
+  // ─── SULPHUR CREEK RESERVOIR (Evanston, WY corridor) ──────────
+  // Jet-stream driven — I-80 corridor stations near Evanston, WY
+  'sulfur-creek': {
+    corridor: 'jet_stream_west',
+    stations: [
+      { id: 'KWYEVANS10', name: 'Evanston NW', lat: 41.280, lon: -110.980, role: 'close', priority: 1 },
+      { id: 'KWYEVANS60', name: 'Evanston S', lat: 41.240, lon: -110.960, role: 'close', priority: 2 },
+      { id: 'KWYEVANS63', name: 'Evanston E', lat: 41.270, lon: -110.940, role: 'mid', priority: 3 },
     ],
   },
 
@@ -134,7 +146,7 @@ export const WU_PRIORITY_STATIONS = [
   // Alpine (PotM east bench)
   'KUTALPIN3', 'KUTALPIN25',
   // Heber Valley (Deer Creek / Jordanelle)
-  'KUTMIDWA37', 'KUTHEBER105', 'KUTHEBER26',
+  'KUTMIDWA37', 'KUTHEBER105', 'KUTHEBER26', 'KUTHEBER99',
   // Pleasant Grove / Cedar Hills (Vineyard / Deer Creek approach)
   'KUTPLEAS11', 'KUTCEDAR10',
 ];

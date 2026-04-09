@@ -224,6 +224,30 @@ const CHAIN_DEFS = {
     ],
     pressureCheck: null,
   },
+
+  // ── Sulphur Creek: Jet Stream West Flow ──────────────────────
+  // Upstream chain: Wahsatch summit (UT/WY border) → First Divide → reservoir
+  'sulfur-creek:west_flow': {
+    label: 'West Jet Stream → Sulphur Creek',
+    flowDir: 'W → E (I-80 corridor)',
+    nodes: [
+      { id: 'KSLC', name: 'SLC Airport',          role: 'Regional jet stream indicator — strong W at SLC means pattern is active', lagMinutes: -90, dir: [240, 310], speed: 8 },
+      { id: 'UT1',  name: 'Wahsatch Hill EB',      role: 'Upstream predictor — W wind at Wahsatch summit signals Sulphur fires',   lagMinutes: -30, dir: [240, 300], speed: 8 },
+      { id: 'KEVW', name: 'Evanston Airport',      role: 'Valley confirmation — Evanston W flow means corridor is active',         lagMinutes: -15, dir: [240, 310], speed: 6 },
+      { id: 'KFIR', name: 'First Divide (WYDOT)',  role: 'Target — closest station to Sulphur Creek Reservoir',                    lagMinutes: 0,   dir: [240, 310], speed: 8 },
+    ],
+    speedRatios: { UT1: 1.1, KEVW: 0.85 },
+    pressureCheck: null,
+  },
+  'sulfur-creek:evanston_local': {
+    label: 'Evanston Local → Sulphur Creek',
+    flowDir: 'N → S (Evanston corridor)',
+    nodes: [
+      { id: 'KEVW', name: 'Evanston Airport',     role: 'Evanston wind check — local flow confirmation',   lagMinutes: -20, dir: [220, 320], speed: 6 },
+      { id: 'KFIR', name: 'First Divide (WYDOT)', role: 'Target — I-80 at First Divide summit',            lagMinutes: 0,   dir: [220, 320], speed: 8 },
+    ],
+    pressureCheck: null,
+  },
 };
 
 // ─── Map: lakeId → which chains apply to THAT specific launch ────
@@ -247,6 +271,7 @@ const LAKE_CHAINS = {
   'strawberry-river':   ['strawberry:ridge_flow'],
   'bear-lake':          ['bear-lake:west_flow'],
   'skyline-drive':      ['skyline:ridge_flow'],
+  'sulfur-creek':       ['sulfur-creek:west_flow', 'sulfur-creek:evanston_local'],
 };
 
 // ─── Session viability: minimum wind duration for a real session ──

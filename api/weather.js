@@ -837,6 +837,7 @@ const ALLOWED_STATIONS = new Set([
   'UTGRC','UTLTS',
   'UTPVD','UTHUN',
   'UTPOW','UTMON',
+  'KEVW','KFIR','UT1',
 ]);
 
 async function handleSynopticLatest(res, stids) {

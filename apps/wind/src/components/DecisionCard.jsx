@@ -41,7 +41,6 @@ function getDecision(activity, windSpeed, windGust, thermalPrediction, boatingPr
     const gustLimit = cfg.thresholds?.gustFactor ?? 1.5;
 
     const isPG = activity === 'paragliding';
-    const goVerb = isPG ? 'fly' : 'ride';
 
     if (good && ideal && speed >= ideal.min && speed <= ideal.max && gustFactor <= gustLimit) {
       const untilStr = endHour && endHour > now ? ` until ~${formatHour(endHour)}` : '';

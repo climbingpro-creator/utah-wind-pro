@@ -45,23 +45,40 @@ export const sulfurCreekConfigs = {
       ridge: [],
 
       groundTruth: {
-        id: 'KEVW',
-        name: 'Evanston-Uinta Co Airport',
-        role: 'Ground Truth — closest weather station (12 mi north)',
+        id: 'KFIR',
+        name: 'First Divide (WYDOT RWIS)',
+        role: 'Ground Truth — I-80 First Divide summit, ~15 mi E of reservoir',
       },
 
       lakeshore: [
         {
+          id: 'KFIR',
+          name: 'First Divide (WYDOT RWIS)',
+          elevation: 7579,
+          role: 'Primary — closest reporting station on I-80 corridor',
+          priority: 1,
+        },
+        {
           id: 'KEVW',
           name: 'Evanston-Uinta Co Airport (ASOS)',
           elevation: 7143,
-          role: 'Primary — closest reporting station',
-          priority: 1,
+          role: 'Secondary — Evanston airport, 12 mi north',
+          priority: 2,
+        },
+      ],
+
+      predictor: [
+        {
+          id: 'UT1',
+          name: 'Wahsatch Hill EB (UDOT RWIS)',
+          elevation: 6814,
+          role: 'West wind predictor — strong W at Wahsatch summit means Sulphur fires',
         },
       ],
 
       reference: [
         { id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226 },
+        { id: 'KEVW', name: 'Evanston-Uinta Co Airport', elevation: 7143 },
       ],
     },
 

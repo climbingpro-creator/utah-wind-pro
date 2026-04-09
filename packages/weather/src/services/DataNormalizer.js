@@ -428,6 +428,25 @@ export class LakeState {
       }
     }
 
+    // PREDICTOR STATIONS (e.g. Wahsatch EB for Sulphur Creek)
+    if (config.stations.predictor?.length) {
+      state.predictorStations = [];
+      for (const pred of config.stations.predictor) {
+        const predStation = stationMap.get(pred.id);
+        if (predStation) {
+          state.predictorStations.push({
+            id: predStation.stationId,
+            name: pred.name,
+            windSpeed: predStation.windSpeed,
+            windDirection: predStation.windDirection,
+            temperature: predStation.temperature,
+            elevation: pred.elevation,
+            role: pred.role,
+          });
+        }
+      }
+    }
+
     // KEY REFERENCE STATIONS — resolve from Synoptic/NWS first, fall back to WU shadow
     const kslcStation = stationMap.get('KSLC');
     if (kslcStation) {
@@ -556,6 +575,11 @@ export class LakeState {
         direction: state.utalpStation.windDirection,
         temperature: state.utalpStation.temperature,
       } : null,
+      wahsatchWind: state.predictorStations?.find(s => s.id === 'UT1') ? {
+        speed: state.predictorStations.find(s => s.id === 'UT1').windSpeed,
+        direction: state.predictorStations.find(s => s.id === 'UT1').windDirection,
+        temperature: state.predictorStations.find(s => s.id === 'UT1').temperature,
+      } : null,
       recentNorthFlowHours,
     });
     
@@ -586,6 +610,7 @@ export class LakeState {
         state.kpvuStation && ['KPVU', state.kpvuStation],
         state.utalpStation && ['UTALP', state.utalpStation],
         state.thermal?.ridgeStation && [state.thermal.ridgeStation.id, state.thermal.ridgeStation],
+        ...(state.predictorStations || []).map(p => [p.id, p]),
       ].filter(Boolean);
       for (const [id, s] of extras) {
         if (!stationReadings[id]) {

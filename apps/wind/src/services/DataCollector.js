@@ -659,7 +659,7 @@ class DataCollector {
       const VERIFY_SPOTS = [
         'utah-lake-zigzag', 'utah-lake-lincoln', 'utah-lake-vineyard',
         'deer-creek', 'willard-bay', 'potm-south', 'potm-north',
-        'strawberry-ladders', 'jordanelle',
+        'strawberry-ladders', 'jordanelle', 'sulfur-creek',
       ];
       const lakes = VERIFY_SPOTS.filter(id => LAKE_CONFIGS[id]);
 

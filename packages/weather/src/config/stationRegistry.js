@@ -649,6 +649,11 @@ export const STATION_REGISTRY = {
     lat: 40.477, lng: -111.450, elevation: 5600,
     type: 'pws', network: 'WU', roles: ['deer-creek-mid-wu'],
   },
+  KUTHEBER99: {
+    id: 'KUTHEBER99', name: 'Heber City (WU)', shortName: 'Heber WU',
+    lat: 40.510, lng: -111.410, elevation: 5640,
+    type: 'pws', network: 'WU', roles: ['deer-creek-mid-wu'],
+  },
   KUTPLEAS11: {
     id: 'KUTPLEAS11', name: 'Pleasant Grove (WU)', shortName: 'PG WU',
     lat: 40.400, lng: -111.742, elevation: 4600,
@@ -663,6 +668,49 @@ export const STATION_REGISTRY = {
     id: 'KUTCEDAR10', name: 'Cedar Hills (WU)', shortName: 'Cedar Hills WU',
     lat: 40.396, lng: -111.741, elevation: 4700,
     type: 'pws', network: 'WU', roles: ['vineyard-mid-wu', 'deer-creek-early-wu'],
+  },
+
+  // ── Sulphur Creek Reservoir (Wyoming I-80 corridor) ──
+  KEVW: {
+    id: 'KEVW',
+    name: 'Evanston-Uinta County Airport',
+    shortName: 'Evanston',
+    lat: 41.2750, lng: -111.0350, elevation: 7143,
+    type: 'aviation', network: 'NWS',
+    roles: ['sulfur-creek-pressure', 'sulfur-creek-secondary'],
+  },
+  KFIR: {
+    id: 'KFIR',
+    name: 'First Divide I-80 (WYDOT)',
+    shortName: 'First Divide',
+    lat: 41.2765, lng: -110.8007, elevation: 7579,
+    type: 'rwis', network: 'WYDOT',
+    roles: ['sulfur-creek-ground-truth', 'sulfur-creek-primary'],
+  },
+  UT1: {
+    id: 'UT1',
+    name: 'Wahsatch Hill EB (UDOT)',
+    shortName: 'Wahsatch EB',
+    lat: 41.1952, lng: -111.114, elevation: 6814,
+    type: 'rwis', network: 'UDOT',
+    roles: ['sulfur-creek-predictor', 'west-wind-upstream'],
+  },
+
+  // ── Sulphur Creek WU PWS (Evanston, WY area) ──
+  KWYEVANS10: {
+    id: 'KWYEVANS10', name: 'Evanston NW (WU)', shortName: 'Evanston NW WU',
+    lat: 41.280, lng: -110.980, elevation: 6800,
+    type: 'pws', network: 'WU', roles: ['sulfur-creek-close-wu'],
+  },
+  KWYEVANS60: {
+    id: 'KWYEVANS60', name: 'Evanston S (WU)', shortName: 'Evanston S WU',
+    lat: 41.240, lng: -110.960, elevation: 6800,
+    type: 'pws', network: 'WU', roles: ['sulfur-creek-close-wu'],
+  },
+  KWYEVANS63: {
+    id: 'KWYEVANS63', name: 'Evanston E (WU)', shortName: 'Evanston E WU',
+    lat: 41.270, lng: -110.940, elevation: 6800,
+    type: 'pws', network: 'WU', roles: ['sulfur-creek-mid-wu'],
   },
 };
 

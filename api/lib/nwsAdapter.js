@@ -32,6 +32,7 @@ const AIRPORT_META = {
   KCDC: { name: 'Cedar City Regional Airport',        lat: '37.7011', lon: '-113.0989', elev: '5622' },
   KFGR: { name: 'Flaming Gorge (Dutch John)',         lat: '40.9159', lon: '-109.3928', elev: '5590' },
   KBMC: { name: 'Brigham City Airport',               lat: '41.5524', lon: '-112.0622', elev: '4229' },
+  KEVW: { name: 'Evanston-Uinta County Airport',     lat: '41.2750', lon: '-111.0350', elev: '7143' },
 };
 
 const AIRPORT_IDS = new Set(Object.keys(AIRPORT_META));

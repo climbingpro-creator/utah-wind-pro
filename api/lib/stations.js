@@ -225,6 +225,14 @@ export const LAKE_STATIONS = {
     primary: 'KPGA',
     hasAmbient: false,
   },
+  // ── SW Wyoming ──
+  'sulfur-creek': {
+    name: 'Sulphur Creek Reservoir',
+    synoptic: ['KSLC', 'KEVW', 'KFIR', 'UT1'],
+    wuPws: ['KWYEVANS10', 'KWYEVANS60', 'KWYEVANS63'],
+    primary: 'KFIR',
+    hasAmbient: false,
+  },
   // ── Kite spots ──
   'rush-lake': {
     name: 'Rush Lake',
