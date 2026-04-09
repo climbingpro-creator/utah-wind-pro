@@ -179,36 +179,76 @@ function WindArrowOverlay({ center, direction, speed }) {
   if (direction == null || !center) return null;
 
   const bearing = (direction + 180) % 360;
-  const length = 0.015 + (speed || 5) * 0.0015;
   const rad = bearing * (Math.PI / 180);
-  const endLng = center[0] + Math.sin(rad) * length;
-  const endLat = center[1] + Math.cos(rad) * length;
+  const shaftLen = 0.018 + Math.min(speed || 5, 30) * 0.0012;
+  const headLen = shaftLen * 0.35;
+  const headHalf = headLen * 0.55;
 
-  const arrowGeoJSON = {
+  const tipLng = center[0] + Math.sin(rad) * shaftLen;
+  const tipLat = center[1] + Math.cos(rad) * shaftLen;
+
+  const baseLng = center[0] + Math.sin(rad) * (shaftLen * 0.12);
+  const baseLat = center[1] + Math.cos(rad) * (shaftLen * 0.12);
+
+  const neckLng = tipLng - Math.sin(rad) * headLen;
+  const neckLat = tipLat - Math.cos(rad) * headLen;
+
+  const perpRad = (bearing + 90) * (Math.PI / 180);
+  const leftLng = neckLng + Math.sin(perpRad) * headHalf;
+  const leftLat = neckLat + Math.cos(perpRad) * headHalf;
+  const rightLng = neckLng - Math.sin(perpRad) * headHalf;
+  const rightLat = neckLat - Math.cos(perpRad) * headHalf;
+
+  const shaftGeo = {
     type: 'FeatureCollection',
-    features: [
-      {
-        type: 'Feature',
-        geometry: {
-          type: 'LineString',
-          coordinates: [center, [endLng, endLat]],
-        },
+    features: [{
+      type: 'Feature',
+      geometry: { type: 'LineString', coordinates: [[baseLng, baseLat], [neckLng, neckLat]] },
+    }],
+  };
+
+  const headGeo = {
+    type: 'FeatureCollection',
+    features: [{
+      type: 'Feature',
+      geometry: {
+        type: 'Polygon',
+        coordinates: [[[tipLng, tipLat], [leftLng, leftLat], [rightLng, rightLat], [tipLng, tipLat]]],
       },
-    ],
+    }],
   };
 
   return (
-    <Source id="wind-arrow" type="geojson" data={arrowGeoJSON}>
-      <Layer
-        id="wind-arrow-line"
-        type="line"
-        paint={{
-          'line-color': '#22d3ee',
-          'line-width': 5,
-          'line-opacity': 0.9,
-        }}
-      />
-    </Source>
+    <>
+      {/* Shaft glow */}
+      <Source id="wind-shaft-glow" type="geojson" data={shaftGeo}>
+        <Layer id="wind-shaft-glow-line" type="line" paint={{
+          'line-color': '#22d3ee', 'line-width': 10, 'line-opacity': 0.12, 'line-blur': 6,
+        }} />
+      </Source>
+      {/* Shaft */}
+      <Source id="wind-shaft" type="geojson" data={shaftGeo}>
+        <Layer id="wind-shaft-line" type="line" paint={{
+          'line-color': '#22d3ee', 'line-width': 3.5, 'line-opacity': 0.85,
+          'line-cap': 'round',
+        }} />
+      </Source>
+      {/* Head glow */}
+      <Source id="wind-head-glow" type="geojson" data={headGeo}>
+        <Layer id="wind-head-glow-fill" type="fill" paint={{
+          'fill-color': '#22d3ee', 'fill-opacity': 0.15,
+        }} />
+      </Source>
+      {/* Arrowhead */}
+      <Source id="wind-head" type="geojson" data={headGeo}>
+        <Layer id="wind-head-fill" type="fill" paint={{
+          'fill-color': '#22d3ee', 'fill-opacity': 0.9,
+        }} />
+        <Layer id="wind-head-outline" type="line" paint={{
+          'line-color': '#67e8f9', 'line-width': 1.5, 'line-opacity': 0.7,
+        }} />
+      </Source>
+    </>
   );
 }
 
