@@ -3,13 +3,15 @@ import { Analytics } from '@vercel/analytics/react';
 import { Dashboard } from './components/Dashboard';
 import { InstallPrompt } from './components/InstallPrompt';
 import { dataCollector } from './services/DataCollector';
-import { ThemeProvider } from './context/ThemeContext';
+import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ErrorBoundary, FeedbackWidget, initAnalytics, trackPageView } from '@utahwind/ui';
 import { supabase } from '@utahwind/database';
+import { isNativeApp } from '@utahwind/weather';
 
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const Login = lazy(() => import('./pages/Login'));
+const ScienceSheet = lazy(() => import('./pages/ScienceSheet'));
 
 function useSWRegistration() {
   const [updateReady, setUpdateReady] = useState(false);
@@ -42,6 +44,33 @@ function useSWRegistration() {
   return updateReady;
 }
 
+function useNativePlatform() {
+  const { theme } = useTheme();
+
+  useEffect(() => {
+    if (!isNativeApp()) return;
+
+    import('@capacitor/status-bar').then(({ StatusBar, Style }) => {
+      StatusBar.setOverlaysWebView({ overlay: true }).catch(() => {});
+      StatusBar.setStyle({ style: theme === 'dark' ? Style.Dark : Style.Light }).catch(() => {});
+      StatusBar.setBackgroundColor({ color: '#0f172a' }).catch(() => {});
+    }).catch(() => {});
+  }, [theme]);
+
+  useEffect(() => {
+    if (!isNativeApp()) return;
+
+    import('@capacitor/keyboard').then(({ Keyboard }) => {
+      Keyboard.setAccessoryBarVisible({ isVisible: true }).catch(() => {});
+      Keyboard.setScroll({ isDisabled: false }).catch(() => {});
+    }).catch(() => {});
+
+    import('./services/NativePushService').then(({ initNativePushListeners }) => {
+      initNativePushListeners();
+    }).catch(() => {});
+  }, []);
+}
+
 function useHashRoute() {
   const [hash, setHash] = useState(window.location.hash);
   useEffect(() => {
@@ -56,6 +85,7 @@ function AppShell() {
   const updateReady = useSWRegistration();
   const hash = useHashRoute();
   const { user } = useAuth();
+  useNativePlatform();
 
   useEffect(() => {
     dataCollector.start();
@@ -78,6 +108,14 @@ function AppShell() {
     return (
       <Suspense fallback={<div className="flex items-center justify-center min-h-screen text-white/50">Loading...</div>}>
         <Login />
+      </Suspense>
+    );
+  }
+
+  if (hash === '#science') {
+    return (
+      <Suspense fallback={<div className="flex items-center justify-center min-h-screen text-white/50">Loading science brief...</div>}>
+        <ScienceSheet />
       </Suspense>
     );
   }
