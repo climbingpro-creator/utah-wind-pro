@@ -1,15 +1,24 @@
 /**
  * POST /api/admin/test-sms
  *
- * Sends a test SMS via Twilio and returns diagnostic info about the alert pipeline.
+ * Sends a test SMS or Push notification and returns diagnostic info.
  * Admin-only — requires JWT from an allowed admin email.
  *
- * Body: { phone: "+18015551234", message?: "optional custom message" }
+ * Body: { phone?, message?, action?: "sms" | "push" | "diagnostics" }
  */
+import webpush from 'web-push';
 import { verifyAuth, getSupabase } from '../lib/supabase.js';
 import { trySms } from '../lib/sendSessionAlert.js';
 
 const ALLOWED_ADMINS = ['tyler@aspenearth.com', 'climbingpro@gmail.com'];
+
+const VAPID_PUBLIC  = process.env.VAPID_PUBLIC_KEY;
+const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY;
+const VAPID_MAILTO  = process.env.VAPID_MAILTO || 'mailto:hello@utahwindfinder.com';
+
+if (VAPID_PUBLIC && VAPID_PRIVATE) {
+  webpush.setVapidDetails(VAPID_MAILTO, VAPID_PUBLIC, VAPID_PRIVATE);
+}
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -26,35 +35,92 @@ export default async function handler(req, res) {
     }
 
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+    const action = body?.action || 'sms';
     const phone = body?.phone;
-    const message = body?.message || 'LiftForecast test alert — if you received this, SMS alerts are working!';
+    const message = body?.message || 'LiftForecast test alert — if you received this, alerts are working!';
+
+    const supabase = getSupabase();
 
     const diagnostics = {
       twilioConfigured: !!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_FROM_NUMBER),
-      vapidConfigured: !!(process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY),
-      twilioSid: process.env.TWILIO_ACCOUNT_SID ? `...${process.env.TWILIO_ACCOUNT_SID.slice(-4)}` : null,
+      vapidConfigured: !!(VAPID_PUBLIC && VAPID_PRIVATE),
       twilioFrom: process.env.TWILIO_FROM_NUMBER || null,
+      smsA2pPending: !!(process.env.TWILIO_A2P_PENDING),
       usersWithPhone: 0,
       usersWithAlerts: 0,
+      pushSubscribers: 0,
+      smsOptedIn: 0,
     };
 
     try {
-      const supabase = getSupabase();
-      const { count: phoneCount } = await supabase
-        .from('user_preferences')
-        .select('id', { count: 'exact', head: true })
-        .not('phone', 'is', null);
-      diagnostics.usersWithPhone = phoneCount || 0;
+      const [phoneRes, alertRes, pushRes] = await Promise.all([
+        supabase.from('user_preferences').select('id', { count: 'exact', head: true }).not('phone', 'is', null),
+        supabase.from('user_preferences').select('id', { count: 'exact', head: true }).not('alerts', 'is', null),
+        supabase.from('push_subscriptions').select('id', { count: 'exact', head: true }),
+      ]);
+      diagnostics.usersWithPhone = phoneRes.count || 0;
+      diagnostics.usersWithAlerts = alertRes.count || 0;
+      diagnostics.pushSubscribers = pushRes.count || 0;
 
-      const { count: alertCount } = await supabase
+      const { data: verifiedRows } = await supabase
         .from('user_preferences')
-        .select('id', { count: 'exact', head: true })
-        .not('alerts', 'is', null);
-      diagnostics.usersWithAlerts = alertCount || 0;
+        .select('alerts')
+        .not('phone', 'is', null);
+      diagnostics.smsOptedIn = (verifiedRows || []).filter(r => r.alerts?.sms_verified === true).length;
     } catch (err) {
       diagnostics.supabaseError = err.message;
     }
 
+    if (action === 'diagnostics') {
+      return res.status(200).json({ diagnostics });
+    }
+
+    if (action === 'push') {
+      const userId = auth.user.id;
+      const { data: subs } = await supabase
+        .from('push_subscriptions')
+        .select('endpoint, p256dh, auth_key')
+        .eq('user_id', userId);
+
+      if (!subs?.length) {
+        return res.status(200).json({
+          push: { success: false, reason: 'no-push-subscription' },
+          diagnostics,
+        });
+      }
+
+      if (!VAPID_PUBLIC || !VAPID_PRIVATE) {
+        return res.status(200).json({
+          push: { success: false, reason: 'vapid-not-configured' },
+          diagnostics,
+        });
+      }
+
+      let sent = 0;
+      for (const sub of subs) {
+        try {
+          await webpush.sendNotification(
+            { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth_key } },
+            JSON.stringify({
+              title: 'LiftForecast Test',
+              body: message,
+              icon: '/icons/icon-192x192.png',
+              tag: 'admin-test-push',
+            }),
+          );
+          sent++;
+        } catch (err) {
+          console.error('[admin/test-push]', err.message);
+        }
+      }
+
+      return res.status(200).json({
+        push: { success: sent > 0, sent, total: subs.length },
+        diagnostics,
+      });
+    }
+
+    // Default: SMS test
     let smsResult = { method: 'sms', success: false, reason: 'no-phone-provided' };
     if (phone) {
       smsResult = await trySms(phone, message);

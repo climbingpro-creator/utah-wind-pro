@@ -5,7 +5,7 @@ const COOLDOWN_MS = 60 * 60 * 1000; // 1 hour between same alert type
 const DEFAULT_PREFS = {
   phone: '',
   enabled: false,
-  verified: false,
+  verified: false, // SMS phone number verified via 6-digit code
   alerts: {
     windThreshold: true,
     glassConditions: true,

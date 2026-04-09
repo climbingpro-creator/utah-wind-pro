@@ -7,7 +7,7 @@ import {
   MessageSquare, ExternalLink, RefreshCw, Trash2, BarChart3, CreditCard,
   Users, TrendingUp, TrendingDown, Zap, Map, Eye, DollarSign, Activity,
   Globe, Layers, Wind, Fish, Minus, Radio, Brain, Gauge, Wifi, WifiOff,
-  Server, Database, CloudRain, Phone, Send, AlertCircle,
+  Server, Database, CloudRain, Phone, Send, AlertCircle, Bell,
 } from 'lucide-react';
 
 const ALLOWED_ADMINS = ['tyler@aspenearth.com', 'climbingpro@gmail.com'];
@@ -143,6 +143,8 @@ export default function AdminDashboard() {
   const [testPhone, setTestPhone] = useState('');
   const [testSending, setTestSending] = useState(false);
   const [testResult, setTestResult] = useState(null);
+  const [pushSending, setPushSending] = useState(false);
+  const [pushResult, setPushResult] = useState(null);
   const [alertDiagnostics, setAlertDiagnostics] = useState(null);
 
   useEffect(() => {
@@ -297,7 +299,7 @@ export default function AdminDashboard() {
       const resp = await fetch(`${apiOrigin}/api/admin/test-sms`, {
         method: 'POST',
         headers: { ...headers, 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
+        body: JSON.stringify({ action: 'diagnostics' }),
       });
       if (resp.ok) {
         const data = await resp.json();
@@ -318,7 +320,7 @@ export default function AdminDashboard() {
       const resp = await fetch(`${apiOrigin}/api/admin/test-sms`, {
         method: 'POST',
         headers: { ...headers, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: testPhone }),
+        body: JSON.stringify({ phone: testPhone, action: 'sms' }),
       });
       const data = await resp.json();
       setTestResult(data);
@@ -328,6 +330,26 @@ export default function AdminDashboard() {
     }
     setTestSending(false);
   }, [testPhone, getAuthHeader]);
+
+  const sendTestPush = useCallback(async () => {
+    setPushSending(true);
+    setPushResult(null);
+    try {
+      const headers = await getAuthHeader();
+      const apiOrigin = import.meta.env.VITE_API_ORIGIN || '';
+      const resp = await fetch(`${apiOrigin}/api/admin/test-sms`, {
+        method: 'POST',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'push' }),
+      });
+      const data = await resp.json();
+      setPushResult(data);
+      if (data.diagnostics) setAlertDiagnostics(data.diagnostics);
+    } catch (err) {
+      setPushResult({ error: err.message });
+    }
+    setPushSending(false);
+  }, [getAuthHeader]);
 
   useEffect(() => {
     if (authorized) {
@@ -659,37 +681,87 @@ export default function AdminDashboard() {
                     {/* Diagnostic indicators */}
                     <div className="space-y-2">
                       {[
-                        { label: 'Twilio SMS', ok: alertDiagnostics?.twilioConfigured, detail: alertDiagnostics?.twilioFrom || 'Not configured' },
+                        { label: 'Twilio SMS', ok: alertDiagnostics?.twilioConfigured && !alertDiagnostics?.smsA2pPending,
+                          detail: alertDiagnostics?.smsA2pPending ? 'A2P Pending' : (alertDiagnostics?.twilioFrom || 'Not configured'),
+                          warn: alertDiagnostics?.smsA2pPending },
                         { label: 'VAPID Push', ok: alertDiagnostics?.vapidConfigured, detail: alertDiagnostics?.vapidConfigured ? 'Keys set' : 'Not configured' },
+                        { label: 'Push Subscribers', ok: (alertDiagnostics?.pushSubscribers ?? 0) > 0, detail: `${alertDiagnostics?.pushSubscribers ?? '?'} users` },
                         { label: 'Users with Phone', ok: (alertDiagnostics?.usersWithPhone ?? 0) > 0, detail: `${alertDiagnostics?.usersWithPhone ?? '?'} users` },
-                        { label: 'Users with Alerts', ok: (alertDiagnostics?.usersWithAlerts ?? 0) > 0, detail: `${alertDiagnostics?.usersWithAlerts ?? '?'} users` },
+                        { label: 'SMS Opted In', ok: (alertDiagnostics?.smsOptedIn ?? 0) > 0, detail: `${alertDiagnostics?.smsOptedIn ?? '?'} confirmed` },
                       ].map(item => (
                         <div key={item.label} className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <div className={`w-2 h-2 rounded-full ${item.ok ? 'bg-emerald-400' : 'bg-red-400'}`} />
+                            <div className={`w-2 h-2 rounded-full ${item.warn ? 'bg-amber-400' : item.ok ? 'bg-emerald-400' : 'bg-red-400'}`} />
                             <span className="text-xs font-semibold text-slate-300">{item.label}</span>
                           </div>
-                          <span className={`text-[10px] font-bold ${item.ok ? 'text-emerald-400' : 'text-red-400'}`}>
+                          <span className={`text-[10px] font-bold ${item.warn ? 'text-amber-400' : item.ok ? 'text-emerald-400' : 'text-red-400'}`}>
                             {item.detail}
                           </span>
                         </div>
                       ))}
                     </div>
 
+                    {/* A2P Pending Warning */}
+                    {alertDiagnostics?.smsA2pPending && (
+                      <div className="p-3 rounded-lg bg-amber-500/5 border border-amber-500/20 text-[11px] text-amber-400 leading-relaxed">
+                        <strong>SMS Paused — A2P Campaign Under Review</strong>
+                        <p className="mt-1">Twilio requires A2P campaign registration for US SMS. Your campaign is under review (can take 1-4 weeks).
+                        SMS will not be delivered until approved. Use <strong>Push Notifications</strong> in the meantime.</p>
+                      </div>
+                    )}
+
+                    {/* Test Push */}
+                    <div className="border-t border-white/[0.06] pt-4">
+                      <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Send Test Push Notification</label>
+                      <p className="text-[10px] text-slate-500 mb-2">Sends a push to your own browser (must have push enabled in Text Alerts settings first)</p>
+                      <button
+                        onClick={sendTestPush}
+                        disabled={pushSending}
+                        className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold bg-violet-500 text-white hover:bg-violet-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                      >
+                        <Bell className={`w-3.5 h-3.5 ${pushSending ? 'animate-pulse' : ''}`} />
+                        {pushSending ? 'Sending...' : 'Send Test Push'}
+                      </button>
+
+                      {pushResult && (
+                        <div className={`mt-3 p-3 rounded-lg text-xs font-semibold flex items-start gap-2 ${
+                          pushResult.push?.success
+                            ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400'
+                            : 'bg-red-500/10 border border-red-500/20 text-red-400'
+                        }`}>
+                          {pushResult.push?.success ? (
+                            <><CheckCircle className="w-4 h-4 shrink-0 mt-0.5" /> Push sent! ({pushResult.push.sent}/{pushResult.push.total} subscriptions)</>
+                          ) : (
+                            <><AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                              {pushResult.error || (pushResult.push?.reason === 'no-push-subscription'
+                                ? 'No push subscription found — enable Push in Text Alerts settings first'
+                                : pushResult.push?.reason === 'vapid-not-configured'
+                                ? 'VAPID keys not configured on server'
+                                : `Push failed (${pushResult.push?.reason || 'unknown'})`
+                              )}
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
                     {/* Test SMS */}
                     <div className="border-t border-white/[0.06] pt-4">
-                      <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Send Test SMS</label>
-                      <div className="flex gap-2">
+                      <label className={`text-[11px] font-bold uppercase tracking-wider block mb-2 ${
+                        alertDiagnostics?.smsA2pPending ? 'text-slate-600' : 'text-slate-400'
+                      }`}>Send Test SMS {alertDiagnostics?.smsA2pPending ? '(A2P Pending — will not deliver)' : ''}</label>
+                      <div className={`flex gap-2 ${alertDiagnostics?.smsA2pPending ? 'opacity-40' : ''}`}>
                         <input
                           type="tel"
                           value={testPhone}
                           onChange={(e) => setTestPhone(e.target.value)}
                           placeholder="+18015551234"
-                          className="flex-1 px-3 py-2 rounded-lg text-sm bg-slate-800 border border-slate-600 text-white placeholder:text-slate-500 outline-none focus:border-sky-500"
+                          disabled={alertDiagnostics?.smsA2pPending}
+                          className="flex-1 px-3 py-2 rounded-lg text-sm bg-slate-800 border border-slate-600 text-white placeholder:text-slate-500 outline-none focus:border-sky-500 disabled:cursor-not-allowed"
                         />
                         <button
                           onClick={sendTestSMS}
-                          disabled={testSending || !testPhone}
+                          disabled={testSending || !testPhone || alertDiagnostics?.smsA2pPending}
                           className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold bg-sky-500 text-white hover:bg-sky-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                         >
                           <Send className={`w-3.5 h-3.5 ${testSending ? 'animate-pulse' : ''}`} />
@@ -704,7 +776,7 @@ export default function AdminDashboard() {
                             : 'bg-red-500/10 border border-red-500/20 text-red-400'
                         }`}>
                           {testResult.sms?.success ? (
-                            <><CheckCircle className="w-4 h-4 shrink-0 mt-0.5" /> SMS sent successfully! Check your phone.</>
+                            <><CheckCircle className="w-4 h-4 shrink-0 mt-0.5" /> SMS queued with Twilio. {alertDiagnostics?.smsA2pPending ? '(May not deliver — A2P pending)' : 'Check your phone.'}</>
                           ) : (
                             <><AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                               {testResult.error || (testResult.sms?.reason === 'twilio-not-configured'

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MessageSquare, X, Phone, Bell, BellOff, Clock, MapPin, Zap, Waves, Wind, Shield, Check, ChevronRight, Smartphone } from 'lucide-react';
+import { MessageSquare, X, Phone, Bell, BellOff, Clock, MapPin, Zap, Waves, Wind, Shield, Check, ChevronRight, Smartphone, Loader, ShieldCheck } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { getSMSPrefs, saveSMSPrefs, syncToServer, formatPhone, isValidPhone } from '../services/SMSNotificationService';
 import { getPushStatus, subscribeToPush, unsubscribeFromPush } from '../services/PushService';
@@ -43,6 +43,10 @@ export default function SMSAlertSettings({ isOpen, onClose }) {
   const [step, setStep] = useState(prefs.phone ? 'settings' : 'setup');
   const [pushStatus, setPushStatus] = useState('loading');
   const [pushBusy, setPushBusy] = useState(false);
+  const [verifyCode, setVerifyCode] = useState('');
+  const [verifySending, setVerifySending] = useState(false);
+  const [verifyError, setVerifyError] = useState(null);
+  const [smsVerified, setSmsVerified] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -50,12 +54,99 @@ export default function SMSAlertSettings({ isOpen, onClose }) {
       setPrefs(loaded);
       setPhoneInput(loaded.phone);
       setStep(loaded.phone ? 'settings' : 'setup');
+      setSmsVerified(loaded.verified || false);
+      setVerifyCode('');
+      setVerifyError(null);
       getPushStatus().then(setPushStatus);
       if (loaded.phone && loaded.enabled) {
         syncToServer(loaded).catch(() => {});
       }
+      if (loaded.phone) {
+        checkVerifyStatus().catch(() => {});
+      }
     }
   }, [isOpen]);
+
+  const getAuthToken = async () => {
+    try {
+      const { supabase } = await import('../lib/supabase');
+      if (!supabase) return null;
+      const { data } = await supabase.auth.getSession();
+      return data?.session?.access_token || null;
+    } catch { return null; }
+  };
+
+  const checkVerifyStatus = async () => {
+    try {
+      const token = await getAuthToken();
+      if (!token) return;
+      const apiOrigin = import.meta.env.VITE_API_ORIGIN || '';
+      const resp = await fetch(`${apiOrigin}/api/sms-verify`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'status' }),
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        setSmsVerified(data.verified);
+        if (data.codePending && !data.verified) setStep('verify');
+      }
+    } catch { /* ignore */ }
+  };
+
+  const sendVerificationCode = async (phone) => {
+    setVerifySending(true);
+    setVerifyError(null);
+    try {
+      const token = await getAuthToken();
+      if (!token) { setVerifyError('Sign in required'); setVerifySending(false); return; }
+      const apiOrigin = import.meta.env.VITE_API_ORIGIN || '';
+      const resp = await fetch(`${apiOrigin}/api/sms-verify`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'send-code', phone }),
+      });
+      const data = await resp.json();
+      if (data.sent) {
+        setStep('verify');
+      } else {
+        setVerifyError(data.reason === 'sms-failed'
+          ? 'SMS delivery pending — A2P campaign under review. Your number is saved and will be verified once approved.'
+          : (data.reason || 'Could not send code'));
+      }
+    } catch (err) {
+      setVerifyError(err.message);
+    }
+    setVerifySending(false);
+  };
+
+  const confirmVerificationCode = async () => {
+    setVerifySending(true);
+    setVerifyError(null);
+    try {
+      const token = await getAuthToken();
+      if (!token) { setVerifyError('Sign in required'); setVerifySending(false); return; }
+      const apiOrigin = import.meta.env.VITE_API_ORIGIN || '';
+      const resp = await fetch(`${apiOrigin}/api/sms-verify`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'verify', code: verifyCode }),
+      });
+      const data = await resp.json();
+      if (data.verified) {
+        setSmsVerified(true);
+        const updated = { ...prefs, phone: phoneInput, enabled: true, verified: true };
+        saveSMSPrefs(updated);
+        setPrefs(updated);
+        setStep('settings');
+      } else {
+        setVerifyError(data.error || 'Verification failed');
+      }
+    } catch (err) {
+      setVerifyError(err.message);
+    }
+    setVerifySending(false);
+  };
 
   const handlePushToggle = async () => {
     setPushBusy(true);
@@ -138,7 +229,11 @@ export default function SMSAlertSettings({ isOpen, onClose }) {
               <MessageSquare className="w-5 h-5 text-sky-500" />
               <h2 className="text-base font-bold text-[var(--text-primary)]">Text Alerts</h2>
               {prefs.enabled && prefs.phone && (
-                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 uppercase">Active</span>
+                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase ${
+                  smsVerified
+                    ? 'bg-emerald-500/10 text-emerald-500'
+                    : 'bg-amber-500/10 text-amber-500'
+                }`}>{smsVerified ? 'Verified' : 'Pending'}</span>
               )}
             </div>
             <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-[var(--bg-card-hover)] text-[var(--text-tertiary)]">
@@ -198,19 +293,112 @@ export default function SMSAlertSettings({ isOpen, onClose }) {
                   onClick={() => {
                     if (isValidPhone(phoneInput)) {
                       setPrefs(prev => ({ ...prev, enabled: true, phone: phoneInput }));
-                      setStep('settings');
+                      sendVerificationCode(phoneInput);
                     }
                   }}
-                  disabled={!isValidPhone(phoneInput)}
+                  disabled={!isValidPhone(phoneInput) || verifySending}
                   className={`w-full py-3 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-all ${
-                    isValidPhone(phoneInput)
+                    isValidPhone(phoneInput) && !verifySending
                       ? 'bg-sky-500 text-white hover:bg-sky-600 shadow-sm'
                       : 'bg-slate-200 text-slate-400 cursor-not-allowed dark:bg-slate-700 dark:text-slate-500'
                   }`}
                 >
-                  Enable Text Alerts
-                  <ChevronRight className="w-4 h-4" />
+                  {verifySending ? (
+                    <><Loader className="w-4 h-4 animate-spin" /> Sending code...</>
+                  ) : (
+                    <>Verify & Enable Alerts <ChevronRight className="w-4 h-4" /></>
+                  )}
                 </button>
+
+                {verifyError && (
+                  <div className={`p-3 rounded-lg text-xs font-semibold ${
+                    isDark ? 'bg-amber-500/10 border border-amber-500/20 text-amber-400' : 'bg-amber-50 border border-amber-200 text-amber-700'
+                  }`}>
+                    {verifyError}
+                    {verifyError.includes('A2P') && (
+                      <button
+                        onClick={() => {
+                          setPrefs(prev => ({ ...prev, enabled: true, phone: phoneInput }));
+                          saveSMSPrefs({ ...prefs, enabled: true, phone: phoneInput });
+                          syncToServer({ ...prefs, enabled: true, phone: phoneInput }).catch(() => {});
+                          setStep('settings');
+                        }}
+                        className="block mt-2 text-sky-500 hover:text-sky-400 font-bold"
+                      >
+                        Continue to settings anyway (verify later)
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : step === 'verify' ? (
+              /* VERIFY STEP — Enter 6-digit code */
+              <div className="space-y-5">
+                <div className="text-center py-4">
+                  <div className={`w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center ${
+                    isDark ? 'bg-violet-500/10' : 'bg-violet-50'
+                  }`}>
+                    <ShieldCheck className="w-8 h-8 text-violet-500" />
+                  </div>
+                  <h3 className="text-lg font-bold text-[var(--text-primary)]">Verify Your Number</h3>
+                  <p className="text-sm text-[var(--text-secondary)] mt-2 leading-relaxed">
+                    We sent a 6-digit code to <strong>{formatPhone(phoneInput)}</strong>. Enter it below to confirm.
+                  </p>
+                </div>
+
+                <div>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={6}
+                    value={verifyCode}
+                    onChange={(e) => setVerifyCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    placeholder="000000"
+                    className={`w-full text-center text-2xl font-bold tracking-[0.5em] px-4 py-4 rounded-lg border outline-none transition-colors ${
+                      isDark
+                        ? 'bg-slate-800 border-slate-600 text-white placeholder:text-slate-600 focus:border-violet-500'
+                        : 'bg-white border-slate-200 text-slate-800 placeholder:text-slate-300 focus:border-violet-400'
+                    }`}
+                  />
+                </div>
+
+                <button
+                  onClick={confirmVerificationCode}
+                  disabled={verifyCode.length !== 6 || verifySending}
+                  className={`w-full py-3 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-all ${
+                    verifyCode.length === 6 && !verifySending
+                      ? 'bg-violet-500 text-white hover:bg-violet-600 shadow-sm'
+                      : 'bg-slate-200 text-slate-400 cursor-not-allowed dark:bg-slate-700 dark:text-slate-500'
+                  }`}
+                >
+                  {verifySending ? (
+                    <><Loader className="w-4 h-4 animate-spin" /> Verifying...</>
+                  ) : (
+                    <><ShieldCheck className="w-4 h-4" /> Confirm Code</>
+                  )}
+                </button>
+
+                {verifyError && (
+                  <p className={`text-center text-xs font-semibold ${isDark ? 'text-red-400' : 'text-red-600'}`}>
+                    {verifyError}
+                  </p>
+                )}
+
+                <div className="flex items-center justify-between">
+                  <button
+                    onClick={() => sendVerificationCode(phoneInput)}
+                    disabled={verifySending}
+                    className="text-xs text-sky-500 hover:text-sky-400 font-semibold"
+                  >
+                    Resend code
+                  </button>
+                  <button
+                    onClick={() => { setStep('setup'); setVerifyCode(''); setVerifyError(null); }}
+                    className="text-xs text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
+                  >
+                    Change number
+                  </button>
+                </div>
               </div>
             ) : (
               /* SETTINGS STEP — Configure alerts */
@@ -241,6 +429,32 @@ export default function SMSAlertSettings({ isOpen, onClose }) {
                     }`} />
                   </button>
                 </div>
+
+                {/* SMS Verification Status */}
+                {prefs.phone && !smsVerified && (
+                  <div className={`flex items-center gap-3 p-3 rounded-lg border ${
+                    isDark ? 'border-amber-500/20 bg-amber-500/5' : 'border-amber-200 bg-amber-50'
+                  }`}>
+                    <ShieldCheck className="w-5 h-5 text-amber-500 shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-xs font-semibold text-amber-500">Phone Not Yet Verified</p>
+                      <p className="text-[10px] text-[var(--text-tertiary)]">
+                        SMS delivery requires A2P approval (in progress). Your number is saved and you'll be able to verify once approved.
+                      </p>
+                    </div>
+                  </div>
+                )}
+                {prefs.phone && smsVerified && (
+                  <div className={`flex items-center gap-3 p-3 rounded-lg border ${
+                    isDark ? 'border-emerald-500/20 bg-emerald-500/5' : 'border-emerald-200 bg-emerald-50'
+                  }`}>
+                    <ShieldCheck className="w-5 h-5 text-emerald-500 shrink-0" />
+                    <div>
+                      <p className="text-xs font-semibold text-emerald-500">Phone Verified</p>
+                      <p className="text-[10px] text-[var(--text-tertiary)]">SMS alerts confirmed for {formatPhone(prefs.phone)}</p>
+                    </div>
+                  </div>
+                )}
 
                 {/* Push Notifications Toggle */}
                 {pushStatus !== 'unsupported' && (
