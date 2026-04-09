@@ -6,8 +6,8 @@ export const deerCreekConfigs = {
     name: 'Deer Creek',
     shortName: 'Deer Creek',
     region: 'Wasatch County', 
-    // Deer Creek Reservoir - main launch near the dam
-    coordinates: { lat: 40.4097, lng: -111.5097 },
+    // Deer Creek Reservoir - kite launch on the north shore
+    coordinates: { lat: 40.45830163741306, lng: -111.47407868398149 },
     elevation: 5400,
     
     primaryWindType: 'SW Thermal / Canyon',
