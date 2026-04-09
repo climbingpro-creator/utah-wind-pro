@@ -4,13 +4,24 @@ import { apiUrl } from '../utils/platform';
 
 const IS_PRODUCTION = import.meta.env.PROD;
 
+const _unavailableSources = {};
+
 async function axiosWithRetry(config, retries = 2, baseDelay = 1000) {
+  const sourceKey = config.params?.source;
+  if (sourceKey && _unavailableSources[sourceKey] > Date.now()) {
+    throw Object.assign(new Error(`${sourceKey} unavailable (cached)`), { _suppressed: true });
+  }
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
       return await axios(config);
     } catch (err) {
       const status = err.response?.status;
       if (status === 429) throw err;
+      if (status === 503) {
+        if (sourceKey) _unavailableSources[sourceKey] = Date.now() + 5 * 60 * 1000;
+        err._suppressed = true;
+        throw err;
+      }
       const retryable = !status || status >= 500;
       if (attempt >= retries || !retryable) throw err;
       await new Promise(r => setTimeout(r, baseDelay * 2 ** attempt));
@@ -82,7 +93,7 @@ class WeatherService {
         console.warn('Ambient Weather API rate limited');
         return cachedAmbientData;
       }
-      console.error('Ambient Weather API error:', error.message);
+      if (!error._suppressed) console.error('Ambient Weather API error:', error.message);
       return cachedAmbientData;
     }
   }
@@ -110,7 +121,7 @@ class WeatherService {
         return response.data || [];
       }
     } catch (error) {
-      console.error('Ambient history error:', error.message);
+      if (!error._suppressed) console.error('Ambient history error:', error.message);
       return [];
     }
   }
@@ -338,7 +349,7 @@ class WeatherService {
       );
       return results.flatMap(r => r.status === 'fulfilled' ? r.value : []);
     } catch (error) {
-      console.error('WU PWS fetch error:', error.message);
+      if (!error._suppressed) console.error('WU PWS fetch error:', error.message);
       return [];
     }
   }

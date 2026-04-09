@@ -92,7 +92,8 @@ async function handleAmbientHistory(res, query) {
   const apiKey = process.env.AMBIENT_API_KEY;
   const appKey = process.env.AMBIENT_APP_KEY;
   if (!apiKey || !appKey) {
-    return res.status(500).json({ error: 'Ambient Weather API keys not configured' });
+    res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600');
+    return res.status(503).json({ error: 'Ambient Weather API keys not configured', retry: false });
   }
 
   const macAddress = '48:3F:DA:54:2C:6E';
@@ -130,7 +131,8 @@ async function handleAmbient(res) {
   const appKey = process.env.AMBIENT_APP_KEY;
 
   if (!apiKey || !appKey) {
-    return res.status(500).json({ error: 'Ambient Weather API keys not configured' });
+    res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600');
+    return res.status(503).json({ error: 'Ambient Weather API keys not configured', retry: false });
   }
 
   const url = `https://rt.ambientweather.net/v1/devices?apiKey=${apiKey}&applicationKey=${appKey}`;
@@ -1055,7 +1057,7 @@ function getWuApiKey() {
 
 async function handleWuNearby(res, query) {
   const apiKey = getWuApiKey();
-  if (!apiKey) return res.status(500).json({ error: 'WU_API_KEY not configured' });
+  if (!apiKey) { res.setHeader('Cache-Control', 's-maxage=300'); return res.status(503).json({ error: 'WU_API_KEY not configured', retry: false }); }
 
   const { lat, lon } = query;
   if (!lat || !lon) return res.status(400).json({ error: 'lat and lon parameters required' });
@@ -1071,7 +1073,7 @@ async function handleWuNearby(res, query) {
 
 async function handleWuPwsCurrent(res, query) {
   const apiKey = getWuApiKey();
-  if (!apiKey) return res.status(500).json({ error: 'WU_API_KEY not configured' });
+  if (!apiKey) { res.setHeader('Cache-Control', 's-maxage=300'); return res.status(503).json({ error: 'WU_API_KEY not configured', retry: false }); }
 
   const stationIds = (query.stationIds || '').split(',').map(s => s.trim()).filter(Boolean);
   if (stationIds.length === 0) return res.status(400).json({ error: 'stationIds parameter required' });
@@ -1094,7 +1096,7 @@ async function handleWuPwsCurrent(res, query) {
 
 async function handleWuPwsDate(res, query) {
   const apiKey = getWuApiKey();
-  if (!apiKey) return res.status(500).json({ error: 'WU_API_KEY not configured' });
+  if (!apiKey) { res.setHeader('Cache-Control', 's-maxage=300'); return res.status(503).json({ error: 'WU_API_KEY not configured', retry: false }); }
 
   const { stationId, date } = query;
   if (!stationId) return res.status(400).json({ error: 'stationId parameter required' });
@@ -1111,7 +1113,7 @@ async function handleWuPwsDate(res, query) {
 
 async function handleWuPwsHistory(res, query) {
   const apiKey = getWuApiKey();
-  if (!apiKey) return res.status(500).json({ error: 'WU_API_KEY not configured' });
+  if (!apiKey) { res.setHeader('Cache-Control', 's-maxage=300'); return res.status(503).json({ error: 'WU_API_KEY not configured', retry: false }); }
 
   const { stationId } = query;
   if (!stationId) return res.status(400).json({ error: 'stationId parameter required' });
@@ -1132,7 +1134,7 @@ async function handleWuPwsHistory(res, query) {
  */
 async function handleWuPwsDense(res, query) {
   const apiKey = getWuApiKey();
-  if (!apiKey) return res.status(500).json({ error: 'WU_API_KEY not configured' });
+  if (!apiKey) { res.setHeader('Cache-Control', 's-maxage=300'); return res.status(503).json({ error: 'WU_API_KEY not configured', retry: false }); }
 
   const { lat, lon, radius } = query;
   if (!lat || !lon) return res.status(400).json({ error: 'lat and lon parameters required' });
