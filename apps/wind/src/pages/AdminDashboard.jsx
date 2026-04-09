@@ -213,10 +213,13 @@ export default function AdminDashboard() {
         sids.forEach(s => allStationIds.add(s));
       }
 
+      const synopticIds = Array.from(allStationIds).filter(id => !id.startsWith('UID'));
+      const udotCount = allStationIds.size - synopticIds.length;
+
       let onlineStations = [];
       let synopticError = null;
       try {
-        onlineStations = await weatherService.getSynopticStationData(Array.from(allStationIds));
+        onlineStations = await weatherService.getSynopticStationData(synopticIds);
       } catch (err) {
         synopticError = err.message;
       }
@@ -227,13 +230,16 @@ export default function AdminDashboard() {
         ambientOnline = !!(amb && amb.windSpeed != null);
       } catch { /* ignore */ }
 
-      const onlineIds = new Set(onlineStations.filter(s => s.windSpeed != null).map(s => s.stationId));
-      const staleIds = new Set(onlineStations.filter(s => s.windSpeed == null).map(s => s.stationId));
+      const respondingIds = new Set(onlineStations.map(s => s.stationId));
+      const windIds = new Set(onlineStations.filter(s => s.windSpeed != null).map(s => s.stationId));
+      const dataOnlyIds = new Set(onlineStations.filter(s => s.windSpeed == null && (s.temperature != null || s.pressure != null)).map(s => s.stationId));
+      const notRespondingCount = synopticIds.length - respondingIds.size;
 
       const spotHealth = lakeIds.map(id => {
-        const sids = spotStationMap[id] || [];
-        const online = sids.filter(s => onlineIds.has(s)).length;
-        return { id, name: LAKE_CONFIGS[id]?.name || id, total: sids.length, online };
+        const sids = (spotStationMap[id] || []).filter(s => !s.startsWith('UID'));
+        const withWind = sids.filter(s => windIds.has(s)).length;
+        const responding = sids.filter(s => respondingIds.has(s)).length;
+        return { id, name: LAKE_CONFIGS[id]?.name || id, total: sids.length, online: responding, withWind };
       }).sort((a, b) => (a.online / (a.total || 1)) - (b.online / (b.total || 1)));
 
       const collectorStats = dataCollector.getStats();
@@ -265,10 +271,12 @@ export default function AdminDashboard() {
       } catch { /* ignore */ }
 
       setSystemHealth({
-        totalStations: allStationIds.size,
-        onlineCount: onlineIds.size,
-        staleCount: staleIds.size,
-        offlineCount: allStationIds.size - onlineIds.size - staleIds.size,
+        totalStations: synopticIds.length,
+        respondingCount: respondingIds.size,
+        windReportingCount: windIds.size,
+        dataOnlyCount: dataOnlyIds.size,
+        notRespondingCount,
+        udotCount,
         ambientOnline,
         synopticError,
         spotHealth,
@@ -539,11 +547,15 @@ export default function AdminDashboard() {
             {systemHealth && (
               <>
                 {/* Station Health KPIs */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  <KPICard icon={Radio} label="Total Stations" value={systemHealth.totalStations} color="sky" />
-                  <KPICard icon={Wifi} label="Online" value={systemHealth.onlineCount} color="emerald"
-                    sub={`${Math.round((systemHealth.onlineCount / systemHealth.totalStations) * 100)}% uptime`} />
-                  <KPICard icon={WifiOff} label="Offline / Stale" value={systemHealth.staleCount + systemHealth.offlineCount} color="red" />
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                  <KPICard icon={Radio} label="Synoptic Stations" value={systemHealth.totalStations} color="sky"
+                    sub={systemHealth.udotCount ? `+${systemHealth.udotCount} UDOT (separate API)` : undefined} />
+                  <KPICard icon={Wifi} label="Responding" value={systemHealth.respondingCount} color="emerald"
+                    sub={`${Math.round((systemHealth.respondingCount / systemHealth.totalStations) * 100)}% of stations`} />
+                  <KPICard icon={Wind} label="Reporting Wind" value={systemHealth.windReportingCount} color="sky"
+                    sub={`${systemHealth.dataOnlyCount} temp/pressure only`} />
+                  <KPICard icon={WifiOff} label="Not Responding" value={systemHealth.notRespondingCount}
+                    color={systemHealth.notRespondingCount > 10 ? 'red' : 'amber'} />
                   <KPICard icon={CloudRain} label="Ambient PWS" value={systemHealth.ambientOnline ? 'Online' : 'Offline'}
                     color={systemHealth.ambientOnline ? 'emerald' : 'red'} />
                 </div>
@@ -733,7 +745,7 @@ export default function AdminDashboard() {
                             <span className="text-xs font-semibold text-slate-300 truncate">{spot.name}</span>
                             <span className={`text-[10px] font-bold tabular-nums ${
                               pct >= 70 ? 'text-emerald-400' : pct >= 40 ? 'text-amber-400' : 'text-red-400'
-                            }`}>{spot.online}/{spot.total} ({pct}%)</span>
+                            }`}>{spot.online}/{spot.total} responding{spot.withWind != null ? ` (${spot.withWind} wind)` : ''}</span>
                           </div>
                           <MiniBar value={spot.online} max={spot.total} color={pct >= 70 ? 'emerald' : pct >= 40 ? 'amber' : 'red'} />
                         </div>
