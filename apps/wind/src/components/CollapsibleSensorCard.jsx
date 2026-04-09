@@ -97,7 +97,8 @@ export default function CollapsibleSensorCard({ station, history, isPersonalStat
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   
-  const { name, speed, gust, direction } = station || {};
+  const { name, speed, gust, direction, network, isShadow } = station || {};
+  const isWU = isPersonalStation && (network === 'WU' || network === 'WU-shadow');
   const windColor = getWindColor(speed, isDark);
   
   const trendData = useMemo(() => calculate3HrTrend(history), [history]);
@@ -106,13 +107,17 @@ export default function CollapsibleSensorCard({ station, history, isPersonalStat
   return (
     <div className={`
       rounded-xl overflow-hidden transition-all
-      ${isPersonalStation 
-        ? (isDark 
-            ? 'bg-gradient-to-br from-cyan-900/30 to-slate-800/80 border border-cyan-500/25' 
-            : 'bg-gradient-to-br from-cyan-50 to-white border border-cyan-200')
-        : (isDark 
-            ? 'bg-slate-800/50 border border-slate-700/50'
-            : 'bg-white border border-slate-200 shadow-sm')
+      ${isWU
+        ? (isDark
+            ? 'bg-gradient-to-br from-amber-900/20 to-slate-800/80 border border-amber-500/25'
+            : 'bg-gradient-to-br from-amber-50 to-white border border-amber-200')
+        : isPersonalStation 
+          ? (isDark 
+              ? 'bg-gradient-to-br from-cyan-900/30 to-slate-800/80 border border-cyan-500/25' 
+              : 'bg-gradient-to-br from-cyan-50 to-white border border-cyan-200')
+          : (isDark 
+              ? 'bg-slate-800/50 border border-slate-700/50'
+              : 'bg-white border border-slate-200 shadow-sm')
       }
     `}>
       {/* Main Row - Always Visible */}
@@ -134,8 +139,12 @@ export default function CollapsibleSensorCard({ station, history, isPersonalStat
                 {name}
               </span>
               {isPersonalStation && (
-                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${isDark ? 'bg-cyan-500/20 text-cyan-400' : 'bg-cyan-100 text-cyan-700'}`}>
-                  PWS
+                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
+                  isWU
+                    ? (isDark ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-700')
+                    : (isDark ? 'bg-cyan-500/20 text-cyan-400' : 'bg-cyan-100 text-cyan-700')
+                }`}>
+                  {isWU ? (isShadow ? 'WU Backup' : 'WU') : 'PWS'}
                 </span>
               )}
             </div>

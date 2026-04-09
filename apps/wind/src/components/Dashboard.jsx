@@ -172,7 +172,12 @@ function LiveSensorNetwork({ stations, history, isLoading, theme }) {
   const [expanded, setExpanded] = useState(false);
   const isDark = theme === 'dark';
   const firingCount = stations?.filter(s => (s.speed ?? s.windSpeed ?? 0) >= 5).length || 0;
-  const displayStations = expanded ? stations : stations?.slice(0, 6);
+  const PRIMARY_VISIBLE = 8;
+  const allStations = stations || [];
+  const primary = allStations.filter(s => !s.isPWS);
+  const backup = allStations.filter(s => s.isPWS);
+  const sorted = [...primary, ...backup];
+  const displayStations = expanded ? sorted : sorted.slice(0, Math.max(PRIMARY_VISIBLE, primary.length + Math.min(backup.length, 3)));
 
   return (
     <div aria-live="polite" aria-atomic="false">
@@ -218,7 +223,7 @@ function LiveSensorNetwork({ stations, history, isLoading, theme }) {
       </div>
 
       {/* Show More/Less Toggle */}
-      {stations?.length > 6 && (
+      {(expanded || sorted.length > displayStations?.length) && (
         <button
           onClick={() => setExpanded(!expanded)}
           className={`
@@ -238,7 +243,7 @@ function LiveSensorNetwork({ stations, history, isLoading, theme }) {
           ) : (
             <>
               <ChevronDown className="w-4 h-4" />
-              Show All {stations.length} Sensors
+              Show All {sorted.length} Sensors
             </>
           )}
         </button>
