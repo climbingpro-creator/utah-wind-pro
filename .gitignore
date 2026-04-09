@@ -37,9 +37,9 @@ yarn-error.log*
 # Testing
 coverage/
 
-# Capacitor
+# Capacitor — Android stays ignored; iOS is committed for Xcode config
 android/
-ios/
+# ios/ is now tracked — see apps/wind/ios/
 assets/
 
 # Misc

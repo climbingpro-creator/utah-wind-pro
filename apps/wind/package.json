@@ -20,13 +20,16 @@
     "mobile:android": "npm run build && cap sync android && cap open android",
     "mobile:ios": "npm run build && cap sync ios && cap open ios",
     "mobile:dev:android": "cap run android --configuration=capacitor.config.dev.json",
-    "mobile:dev:ios": "cap run ios --configuration=capacitor.config.dev.json"
+    "mobile:dev:ios": "cap run ios --configuration=capacitor.config.dev.json",
+    "generate:assets": "capacitor-assets generate --iconBackgroundColor #0f172a --splashBackgroundColor #0f172a --ios"
   },
   "dependencies": {
     "@capacitor/android": "^8.2.0",
     "@capacitor/cli": "^8.2.0",
     "@capacitor/core": "^8.2.0",
+    "@capacitor/haptics": "^8.0.2",
     "@capacitor/ios": "^8.2.0",
+    "@capacitor/keyboard": "^8.0.2",
     "@capacitor/push-notifications": "^8.0.2",
     "@capacitor/splash-screen": "^8.0.1",
     "@capacitor/status-bar": "^8.0.1",

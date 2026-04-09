@@ -309,11 +309,18 @@ body {
 }
 
 /* ─── Safe area insets ─── */
-@supports (padding: env(safe-area-inset-top)) {
+@supports (padding: env(safe-area-inset-left)) {
   body {
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
   }
+}
+
+/* ─── Scrollbar hide utility ─── */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }

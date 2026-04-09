@@ -22,7 +22,30 @@ export default async function handler(req, res) {
   const sb = getSupabase();
 
   if (req.method === 'POST') {
-    const { endpoint, keys } = req.body || {};
+    const { endpoint, keys, token, token_type, platform } = req.body || {};
+
+    // Native APNs/FCM token registration
+    if (token && token_type) {
+      const { error } = await sb
+        .from('push_subscriptions')
+        .upsert({
+          user_id: userId,
+          endpoint: `${token_type}://${token}`,
+          token_type,
+          device_token: token,
+          platform: platform || 'ios',
+          p256dh: null,
+          auth_key: null,
+        }, { onConflict: 'user_id,endpoint' });
+
+      if (error) {
+        console.error('[push-subscribe:native]', error.message);
+        return res.status(500).json({ error: error.message });
+      }
+      return res.status(200).json({ ok: true });
+    }
+
+    // Web Push subscription (VAPID)
     if (!endpoint || !keys?.p256dh || !keys?.auth) {
       return res.status(400).json({ error: 'Missing endpoint or keys' });
     }
@@ -34,6 +57,9 @@ export default async function handler(req, res) {
         endpoint,
         p256dh: keys.p256dh,
         auth_key: keys.auth,
+        token_type: 'web',
+        device_token: null,
+        platform: 'web',
       }, { onConflict: 'user_id,endpoint' });
 
     if (error) {
@@ -44,7 +70,23 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'DELETE') {
-    const { endpoint } = req.body || {};
+    const { endpoint, platform } = req.body || {};
+
+    // Native: delete by platform (user may not have the endpoint handy)
+    if (platform && !endpoint) {
+      const { error } = await sb
+        .from('push_subscriptions')
+        .delete()
+        .eq('user_id', userId)
+        .eq('platform', platform);
+
+      if (error) {
+        console.error('[push-unsubscribe:native]', error.message);
+        return res.status(500).json({ error: error.message });
+      }
+      return res.status(200).json({ ok: true });
+    }
+
     if (!endpoint) return res.status(400).json({ error: 'Missing endpoint' });
 
     const { error } = await sb

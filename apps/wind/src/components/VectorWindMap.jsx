@@ -6,8 +6,9 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import { Compass, Maximize2, X, Wind, Droplets, Layers } from 'lucide-react';
 
 const PMTILES_URL = import.meta.env.VITE_PMTILES_WATER_URL || null;
-import { LAKE_CONFIGS, SpatialInterpolator, applySurfacePhysics, calculateFetchMultiplier, calculateVenturiMultiplier, weatherService } from '@utahwind/weather';
+import { LAKE_CONFIGS, SpatialInterpolator, applySurfacePhysics, calculateFetchMultiplier, calculateVenturiMultiplier, weatherService, isIOS } from '@utahwind/weather';
 import { trackPinDrop } from '@utahwind/ui';
+import { impactMedium, impactLight } from '../services/HapticService';
 import { safeToFixed } from '../utils/safeToFixed';
 import SyntheticForecastCard from './map/SyntheticForecastCard';
 import StationPopupCard from './map/StationPopupCard';
@@ -343,6 +344,7 @@ export function VectorWindMap({
     setSelectedStation(null);
     setSelectedFeature(null);
     trackPinDrop(coords[0], coords[1], 'wind');
+    impactMedium();
 
     let stations = liveStationsWithCoords;
     const areaCenter = mapArea?.center;
@@ -380,6 +382,7 @@ export function VectorWindMap({
     }
     setSelectedStation({ station, live, physicsHints });
     setSelectedFeature(null);
+    impactLight();
   }, []);
 
   const launches = useMemo(() => {
@@ -397,11 +400,11 @@ export function VectorWindMap({
 
   const currentDirection = windData?.direction;
   const currentSpeed = windData?.speed;
-  const mapHeight = isFullscreen ? 'h-[85vh]' : 'h-72 sm:h-96';
+  const mapHeight = isFullscreen ? 'h-[100dvh]' : 'h-72 sm:h-96';
 
   return (
     <div className={`relative bg-slate-800/50 rounded-xl border border-slate-700 overflow-hidden ${
-      isFullscreen ? 'fixed inset-4 z-50 bg-slate-900' : ''
+      isFullscreen ? 'fixed inset-0 z-50 bg-slate-900 pt-[env(safe-area-inset-top)]' : ''
     }`}>
       {/* Header */}
       <div className="px-4 py-2 border-b border-slate-700 flex items-center justify-between bg-slate-800/80 z-10 relative">
@@ -455,7 +458,7 @@ export function VectorWindMap({
                   tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
                   encoding: 'terrarium',
                   tileSize: 256,
-                  maxzoom: 14,
+                  maxzoom: isIOS() ? 12 : 14,
                 });
               }
               
@@ -470,17 +473,17 @@ export function VectorWindMap({
                 });
               }
               
-              // Wait for source to load before setting terrain
+              const terrainExaggeration = isIOS() ? 0.8 : 1.3;
+
               map.on('sourcedata', (e) => {
                 if (e.sourceId === 'terrain-dem' && e.isSourceLoaded) {
                   if (!map.getTerrain()) {
-                    map.setTerrain({ source: 'terrain-dem', exaggeration: 1.3 });
+                    map.setTerrain({ source: 'terrain-dem', exaggeration: terrainExaggeration });
                   }
                 }
               });
               
-              // Try to set terrain immediately if source is ready
-              map.setTerrain({ source: 'terrain-dem', exaggeration: 1.3 });
+              map.setTerrain({ source: 'terrain-dem', exaggeration: terrainExaggeration });
               
               const layers = map.getStyle().layers;
               
@@ -734,7 +737,7 @@ export function VectorWindMap({
 
       {/* Synthetic forecast card — bottom sheet style for mobile */}
       {syntheticData && (
-        <div className="absolute bottom-0 left-0 right-0 z-30 p-4 pb-6 bg-gradient-to-t from-slate-900/95 via-slate-900/80 to-transparent">
+        <div className="absolute bottom-0 left-0 right-0 z-30 p-4 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] bg-gradient-to-t from-slate-900/95 via-slate-900/80 to-transparent">
           <div className="max-w-sm mx-auto">
             <SyntheticForecastCard data={syntheticData} onClose={handleClearPin} />
           </div>

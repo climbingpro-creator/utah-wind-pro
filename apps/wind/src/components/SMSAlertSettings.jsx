@@ -3,6 +3,7 @@ import { MessageSquare, X, Phone, Bell, BellOff, Clock, MapPin, Zap, Waves, Wind
 import { useTheme } from '../context/ThemeContext';
 import { getSMSPrefs, saveSMSPrefs, syncToServer, formatPhone, isValidPhone } from '../services/SMSNotificationService';
 import { getPushStatus, subscribeToPush, unsubscribeFromPush } from '../services/PushService';
+import { isNativeApp } from '@utahwind/weather';
 
 const ALERT_TYPES = [
   { id: 'windThreshold', label: 'Wind Threshold Reached', desc: 'Alert when wind hits your target speed', icon: Wind, color: 'text-emerald-500' },
@@ -57,7 +58,11 @@ export default function SMSAlertSettings({ isOpen, onClose }) {
       setSmsVerified(loaded.verified || false);
       setVerifyCode('');
       setVerifyError(null);
-      getPushStatus().then(setPushStatus);
+      if (isNativeApp()) {
+        import('../services/NativePushService').then(m => m.getNativePushStatus()).then(setPushStatus);
+      } else {
+        getPushStatus().then(setPushStatus);
+      }
       if (loaded.phone && loaded.enabled) {
         syncToServer(loaded).catch(() => {});
       }
@@ -151,23 +156,34 @@ export default function SMSAlertSettings({ isOpen, onClose }) {
   const handlePushToggle = async () => {
     setPushBusy(true);
     try {
-      if (pushStatus === 'subscribed') {
-        await unsubscribeFromPush();
-        setPushStatus('unsubscribed');
-      } else {
-        // Try to get auth token if user is logged in
-        let token = null;
-        try {
-          const { supabase } = await import('../lib/supabase');
-          if (supabase) {
-            const { data } = await supabase.auth.getSession();
-            token = data?.session?.access_token;
-          }
-        } catch {
-          /* optional session — ignore */
+      let token = null;
+      try {
+        const { supabase } = await import('../lib/supabase');
+        if (supabase) {
+          const { data } = await supabase.auth.getSession();
+          token = data?.session?.access_token;
         }
-        await subscribeToPush(token);
-        setPushStatus('subscribed');
+      } catch {
+        /* optional session — ignore */
+      }
+
+      if (isNativeApp()) {
+        const nativePush = await import('../services/NativePushService');
+        if (pushStatus === 'subscribed') {
+          await nativePush.unsubscribeFromNativePush(token);
+          setPushStatus('unsubscribed');
+        } else {
+          await nativePush.subscribeToNativePush(token);
+          setPushStatus('subscribed');
+        }
+      } else {
+        if (pushStatus === 'subscribed') {
+          await unsubscribeFromPush(token);
+          setPushStatus('unsubscribed');
+        } else {
+          await subscribeToPush(token);
+          setPushStatus('subscribed');
+        }
       }
     } catch (err) {
       if (err.message?.includes('denied')) setPushStatus('denied');
@@ -468,8 +484,8 @@ export default function SMSAlertSettings({ isOpen, onClose }) {
                       <div>
                         <p className="text-sm font-semibold text-[var(--text-primary)]">Push Notifications</p>
                         <p className="text-[11px] text-[var(--text-tertiary)]">
-                          {pushStatus === 'subscribed' ? 'Receiving browser push alerts' :
-                           pushStatus === 'denied' ? 'Permission denied — check browser settings' :
+                          {pushStatus === 'subscribed' ? (isNativeApp() ? 'Receiving native push alerts' : 'Receiving browser push alerts') :
+                           pushStatus === 'denied' ? (isNativeApp() ? 'Permission denied — check Settings > Notifications' : 'Permission denied — check browser settings') :
                            'Get instant alerts even when the app is closed'}
                         </p>
                       </div>

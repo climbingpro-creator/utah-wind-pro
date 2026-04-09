@@ -5,7 +5,8 @@
   "plugins": {
     "StatusBar": {
       "style": "DARK",
-      "backgroundColor": "#0f172a"
+      "backgroundColor": "#0f172a",
+      "overlaysWebView": true
     },
     "SplashScreen": {
       "launchShowDuration": 2000,
@@ -13,10 +14,19 @@
       "showSpinner": false,
       "androidSpinnerStyle": "small",
       "spinnerColor": "#06b6d4"
+    },
+    "Keyboard": {
+      "resize": "body",
+      "resizeOnFullScreen": true
+    },
+    "PushNotifications": {
+      "presentationOptions": ["badge", "sound", "alert"]
     }
   },
   "ios": {
-    "contentInset": "automatic"
+    "contentInset": "automatic",
+    "scheme": "UtahWindFinder",
+    "preferredContentMode": "mobile"
   },
   "android": {
     "allowMixedContent": false

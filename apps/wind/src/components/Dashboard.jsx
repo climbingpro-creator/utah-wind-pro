@@ -28,7 +28,6 @@ import { useAuth } from '../context/AuthContext';
 import { SafeComponent, IntelligentRecommendations, ModuleLoader } from '@utahwind/ui';
 import { CreditCard, Wind, Target, TrendingUp, Calendar, ChevronDown, ChevronUp } from 'lucide-react';
 
-import ForecastIntelligenceHero from './ForecastIntelligenceHero';
 import LiveBriefingCard from './LiveBriefingCard';
 import WelcomeCard from './WelcomeCard';
 import AppHeader from './AppHeader';
@@ -254,7 +253,15 @@ function LiveSensorNetwork({ stations, history, isLoading, theme }) {
 }
 
 export function Dashboard() {
-  const [selectedLake, setSelectedLake] = useState(() => localStorage.getItem('uwf_default_spot') || 'utah-lake');
+  const [selectedLake, setSelectedLake] = useState(() => {
+    const defaultSpot = localStorage.getItem('uwf_default_spot');
+    if (defaultSpot) return defaultSpot;
+    try {
+      const recents = JSON.parse(localStorage.getItem('uwf_recent_spots'));
+      if (recents?.length > 0) return recents[0];
+    } catch { /* ignore */ }
+    return 'utah-lake';
+  });
   const [showNotificationSettings, setShowNotificationSettings] = useState(false);
   const [showLearningDashboard, setShowLearningDashboard] = useState(false);
   const [selectedActivity, setSelectedActivity] = useState(() => localStorage.getItem('uwf_default_sport') || 'kiting');
@@ -329,7 +336,15 @@ export function Dashboard() {
     } else if (selectedActivity === 'paragliding' && !isPGSpot) {
       setSelectedLake('potm-south');
     } else if (selectedActivity !== 'snowkiting' && selectedActivity !== 'paragliding' && (isSnowSpot || isPGSpot)) {
-      setSelectedLake('utah-lake');
+      // Return to user's last non-specialty spot, not hardcoded utah-lake
+      try {
+        const recents = JSON.parse(localStorage.getItem('uwf_recent_spots')) || [];
+        const fallback = recents.find(id =>
+          !id.startsWith('strawberry') && id !== 'skyline-drive' &&
+          !['potm-south', 'potm-north', 'inspo', 'west-mountain', 'stockton-bar'].includes(id)
+        );
+        setSelectedLake(fallback || 'utah-lake-zigzag');
+      } catch { setSelectedLake('utah-lake-zigzag'); }
     }
   }, [selectedActivity, selectedLake]);
 
@@ -562,7 +577,7 @@ export function Dashboard() {
       )}
 
       {/* Activity Selector Toolbar — sticky below header */}
-      <div className={`border-b sticky top-14 z-30 transition-colors duration-200 ${
+      <div className={`border-b sticky top-[calc(3.5rem+env(safe-area-inset-top,0px))] z-30 transition-colors duration-200 ${
         theme === 'dark'
           ? 'border-slate-800 bg-slate-950/95 backdrop-blur-md'
           : 'border-slate-200 bg-white/95 backdrop-blur-md'
@@ -604,7 +619,6 @@ export function Dashboard() {
         <LakeSelector
           selectedLake={selectedLake}
           onSelectLake={handleSelectLake}
-          stationReadings={lakeState?.wind?.stations}
           activity={selectedActivity}
           pressureData={pressureData}
         />
@@ -633,19 +647,6 @@ export function Dashboard() {
             Natural-language analysis of current conditions and what to expect
             ═══════════════════════════════════════════════════════════════════ */}
         <LiveBriefingCard briefing={liveBriefing} lastUpdated={lastUpdated} />
-
-        {/* ═══════════════════════════════════════════════════════════════════
-            3. LIVE SPOT LEADERBOARD (Merged)
-            Combines: ForecastIntelligenceHero (cross-location) + SpotRanker
-            Now a single unified component showing "Where to Go"
-            ═══════════════════════════════════════════════════════════════════ */}
-        <ForecastIntelligenceHero
-          selectedActivity={selectedActivity}
-          onSelectActivity={setSelectedActivity}
-          onSelectSpot={handleSelectLake}
-          currentWindSpeed={currentWindSpeed}
-          currentWindDirection={currentWindDirection}
-        />
 
         {/* ═══════════════════════════════════════════════════════════════════
             4. TODAY'S BASIC OVERVIEW
@@ -882,7 +883,7 @@ export function Dashboard() {
       </main>
 
       <footer className="border-t border-[var(--border-color)] mt-8">
-        <div className="max-w-6xl mx-auto px-5 sm:px-8 py-6 text-center">
+        <div className="max-w-6xl mx-auto px-5 sm:px-8 py-6 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] text-center">
           {!isPro && (
             <button
               onClick={openPaywall}

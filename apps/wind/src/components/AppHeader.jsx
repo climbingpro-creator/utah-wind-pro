@@ -44,13 +44,13 @@ export default function AppHeader({
     }
   };
   const isAdmin = user && ADMIN_EMAILS.includes(user.email?.toLowerCase());
-  const btnBase = `flex flex-col items-center gap-0.5 px-1.5 py-1 rounded-lg transition-colors`;
+  const btnBase = `flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] px-1.5 py-1 rounded-lg transition-colors`;
   const btnColors = theme === 'dark'
     ? 'hover:bg-white/5 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
     : 'hover:bg-slate-100 text-slate-400 hover:text-slate-600';
 
   return (
-    <header className={`border-b sticky top-0 z-40 transition-colors duration-200 ${
+    <header className={`border-b sticky top-0 z-40 transition-colors duration-200 pt-[env(safe-area-inset-top)] ${
       theme === 'dark' 
         ? 'border-slate-800 bg-slate-950/95 backdrop-blur-md' 
         : 'border-slate-200 bg-white/95 backdrop-blur-md'
