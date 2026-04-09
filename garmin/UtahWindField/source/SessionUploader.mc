@@ -5,13 +5,13 @@ using Toybox.Application;
 using Toybox.Lang;
 using Toybox.Time;
 
-//! Uploads a session summary to utahwindfinder.com after the rider
+//! Uploads a session summary to liftforecast.com after the rider
 //! stops recording. The backend can store this for leaderboards,
 //! session history, and social sharing.
 
 class SessionUploader {
 
-    hidden const API_URL = "https://utahwindfinder.com/api/session-upload";
+    hidden const API_URL = "https://liftforecast.com/api/session-upload";
 
     var uploadStatus = "PENDING";
     var uploadMsg    = "";

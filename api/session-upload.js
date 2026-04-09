@@ -41,13 +41,26 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
 
-  const auth = await verifyAuth(req);
-  if (auth.error) {
-    return res.status(auth.status || 401).json({ error: auth.error });
-  }
-
   try {
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+
+    // Auth: try JWT first (web users), fall back to device_id (watch uploads)
+    const auth = await verifyAuth(req);
+    let userId = auth.error ? null : auth.user?.id;
+    const deviceId = body?.device || null;
+
+    if (!userId && deviceId) {
+      const supabase = getSupabase();
+      const { data: link } = await supabase
+        .from('garmin_devices')
+        .select('user_id')
+        .eq('device_id', deviceId)
+        .maybeSingle();
+      if (link) userId = link.user_id;
+    } else if (auth.error && !deviceId) {
+      return res.status(auth.status || 401).json({ error: auth.error });
+    }
+
     const activityType = body && TYPE_TO_ACTIVITY[body.type];
     if (!activityType) {
       return res.status(400).json({
@@ -56,17 +69,6 @@ export default async function handler(req, res) {
     }
 
     const supabase = getSupabase();
-
-    let userId = null;
-    const deviceId = body.device || null;
-    if (deviceId) {
-      const { data: link } = await supabase
-        .from('garmin_devices')
-        .select('user_id')
-        .eq('device_id', deviceId)
-        .maybeSingle();
-      if (link) userId = link.user_id;
-    }
 
     let spotId = null;
     if (body.track && Array.isArray(body.track) && body.track.length > 0) {
@@ -148,15 +150,15 @@ export default async function handler(req, res) {
       if (spotData) {
         const d = new Date();
         const dateStr = d.toISOString().split('T')[0];
-        dayUrl = `https://utahwindfinder.com/day/${spotData.slug}/${dateStr}?activity=${activityType}`;
+        dayUrl = `https://liftforecast.com/day/${spotData.slug}/${dateStr}?activity=${activityType}`;
       }
     }
 
     return res.status(200).json({
       success: true,
       sessionId,
-      url: `https://utahwindfinder.com/session/${sessionId}`,
-      editUrl: `https://utahwindfinder.com/session/${sessionId}/edit`,
+      url: `https://liftforecast.com/session/${sessionId}`,
+      editUrl: `https://liftforecast.com/session/${sessionId}/edit`,
       dayUrl,
     });
   } catch (err) {

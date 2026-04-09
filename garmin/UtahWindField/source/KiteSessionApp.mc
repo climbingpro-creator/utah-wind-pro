@@ -351,7 +351,7 @@ class KiteSessionApp extends Application.AppBase {
             foilC = viewFactory.counterView.foilRideCount;
         }
 
-        // Upload to utahwindfinder.com
+        // Upload to liftforecast.com
         uploader = new SessionUploader();
         var payload = {
             "type"          => "kite_session",

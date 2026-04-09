@@ -49,6 +49,7 @@ const WinterRiderTemplate = lazy(() => import('./WinterRiderTemplate'));
 const LearnView = lazy(() => import('./LearnView'));
 const PhotoSubmit = lazy(() => import('./PhotoSubmit'));
 const SMSAlertSettings = lazy(() => import('./SMSAlertSettings'));
+const GarminLink = lazy(() => import('./GarminLink'));
 const ModelStepCard = lazy(() => import('./ModelStepCard'));
 const SignalConvergence = lazy(() => import('./SignalConvergence'));
 const PropagationTracker = lazy(() => import('./PropagationTracker'));
@@ -259,6 +260,7 @@ export function Dashboard() {
   const [selectedActivity, setSelectedActivity] = useState(() => localStorage.getItem('uwf_default_sport') || 'kiting');
   const [showPhotoSubmit, setShowPhotoSubmit] = useState(false);
   const [showSMSSettings, setShowSMSSettings] = useState(false);
+  const [showGarminLink, setShowGarminLink] = useState(false);
   const [showDeepDive, setShowDeepDive] = useState(false);
   
   const { lakeState, history, status, isLoading, error, lastUpdated, refresh } = useWeatherData(selectedLake);
@@ -477,6 +479,7 @@ export function Dashboard() {
         lakeState={lakeState}
         getSMSPrefs={getSMSPrefsCallback}
         onSMSClick={() => isPro ? setShowSMSSettings(true) : openPaywall()}
+        onGarminClick={() => setShowGarminLink(true)}
         onPhotoClick={() => setShowPhotoSubmit(true)}
         onNotificationsClick={() => isPro ? setShowNotificationSettings(true) : openPaywall()}
         onLearningClick={() => setShowLearningDashboard(!showLearningDashboard)}
@@ -506,6 +509,14 @@ export function Dashboard() {
           <SMSAlertSettings
             isOpen={showSMSSettings}
             onClose={() => setShowSMSSettings(false)}
+          />
+        </Suspense>
+      )}
+      {showGarminLink && (
+        <Suspense fallback={null}>
+          <GarminLink
+            isOpen={showGarminLink}
+            onClose={() => setShowGarminLink(false)}
           />
         </Suspense>
       )}

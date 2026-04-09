@@ -9,7 +9,7 @@ using Toybox.Lang;
 
 class TopographyLoop {
 
-    hidden const API_URL = "https://api.utahwindfinder.com/v1/topo-warning";
+    hidden const API_URL = "https://liftforecast.com/api/topo-warning";
     hidden const LOOP_MS = 30000;
     hidden const GPS_LOG_MS = 5000;
 

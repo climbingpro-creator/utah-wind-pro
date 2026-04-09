@@ -36,7 +36,7 @@ using Toybox.Lang;
 
 class EmergencyView extends WatchUi.View {
 
-    hidden const API_URL = "https://api.utahwindfinder.com/v1/emergency-location";
+    hidden const API_URL = "https://liftforecast.com/api/emergency-location";
     hidden const REPEAT_MS = 60000;   // re-send every 60s while active
 
     // States

@@ -23,6 +23,7 @@ export default function AppHeader({
   selectedActivity,
   getSMSPrefs,
   onSMSClick,
+  onGarminClick,
   onPhotoClick,
   onNotificationsClick,
   onLearningClick,
@@ -107,6 +108,14 @@ export default function AppHeader({
               {getSMSPrefs().enabled && (
                 <span className="absolute top-0 right-0 w-1.5 h-1.5 bg-emerald-400 rounded-full" />
               )}
+            </button>
+
+            <button onClick={onGarminClick} aria-label="Link Garmin Watch" className={`${btnBase} ${btnColors}`}>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+              <span className="text-[8px] leading-none font-medium">Watch</span>
             </button>
 
             <button onClick={onPhotoClick} aria-label="Submit Photo" className={`${btnBase} ${btnColors}`}>
