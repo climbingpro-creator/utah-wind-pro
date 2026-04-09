@@ -122,7 +122,7 @@ export default function Onboarding({ onComplete }) {
     <div className={`min-h-screen flex items-center justify-center p-6 ${isDark ? 'bg-slate-950' : 'bg-slate-50'}`}>
       <div className="w-full max-w-lg">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-extrabold text-sky-500 mb-2">UtahWindFinder</h1>
+          <h1 className="text-3xl font-extrabold text-sky-500 mb-2">LiftForecast</h1>
           <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
             AI-powered forecasting for every outdoor sport
           </p>

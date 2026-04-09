@@ -202,7 +202,7 @@ export default function AccuracyScoreboard() {
           </button>
         </div>
         <p className="text-xs text-slate-500 mt-1">
-          UtahWindFinder vs National Weather Service — {displayTotalPreds.toLocaleString()} predictions tracked
+          LiftForecast vs National Weather Service — {displayTotalPreds.toLocaleString()} predictions tracked
           {!hasLiveData && (
             <span className="text-emerald-500/70 ml-1">(validated backtest)</span>
           )}
@@ -220,7 +220,7 @@ export default function AccuracyScoreboard() {
           <div className={`text-3xl font-bold ${displayWeWin ? 'text-green-400' : 'text-sky-400'}`}>
             {pct(displayOurOverall)}
           </div>
-          <div className="text-xs text-slate-400 mt-1">UtahWindFinder</div>
+          <div className="text-xs text-slate-400 mt-1">LiftForecast</div>
           {displayWeWin && (
             <div className="text-xs text-green-400 flex items-center justify-center gap-1 mt-1">
               <TrendingUp size={10} /> Leading

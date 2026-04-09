@@ -6,7 +6,7 @@ import { ErrorBoundary, FeedbackWidget, initAnalytics, trackPageView } from '@ut
 import { supabase } from '@utahwind/database';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { useWeatherData, getHourlyForecast, findAllSportWindows } from '@utahwind/weather';
+import { useWeatherData, getHourlyForecast, findAllSportWindows, isNativeApp } from '@utahwind/weather';
 import { IntelligentRecommendations } from '@utahwind/ui';
 import { predictGlass } from './services/BoatingPredictor';
 import { safeToFixed } from './utils/safeToFixed';
@@ -22,6 +22,31 @@ const ProUpgrade = lazy(() => import('./components/ProUpgrade'));
 const LearnView = lazy(() => import('./components/LearnView'));
 
 const ADMIN_EMAILS = ['tyler@aspenearth.com', 'climbingpro@gmail.com'];
+
+function useNativePlatform() {
+  const { theme } = useTheme();
+
+  useEffect(() => {
+    if (!isNativeApp()) return;
+    import('@capacitor/status-bar').then(({ StatusBar, Style }) => {
+      StatusBar.setOverlaysWebView({ overlay: true }).catch(() => {});
+      StatusBar.setStyle({ style: theme === 'dark' ? Style.Dark : Style.Light }).catch(() => {});
+      StatusBar.setBackgroundColor({ color: '#0c1220' }).catch(() => {});
+    }).catch(() => {});
+  }, [theme]);
+
+  useEffect(() => {
+    if (!isNativeApp()) return;
+    import('@capacitor/keyboard').then(({ Keyboard }) => {
+      Keyboard.setAccessoryBarVisible({ isVisible: true }).catch(() => {});
+      Keyboard.setScroll({ isDisabled: false }).catch(() => {});
+    }).catch(() => {});
+
+    import('./services/NativePushService').then(({ initNativePushListeners }) => {
+      initNativePushListeners();
+    }).catch(() => {});
+  }, []);
+}
 
 function useHashRoute() {
   const [hash, setHash] = useState(window.location.hash);
@@ -124,6 +149,7 @@ function generateWaterBriefing(activity, speed, gust, pressureData, boatingPred)
 
 function AppShell() {
   const hash = useHashRoute();
+  useNativePlatform();
 
   if (hash === '#admin') {
     return (
@@ -274,7 +300,7 @@ function WaterApp() {
   return (
     <div className="min-h-screen">
       {/* ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ HEADER ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ */}
-      <header className="border-b border-slate-800 bg-slate-950/95 backdrop-blur-md sticky top-0 z-40">
+      <header className="border-b border-slate-800 bg-slate-950/95 backdrop-blur-md sticky top-0 z-40 pt-[env(safe-area-inset-top)]">
         <div className="max-w-2xl mx-auto px-4">
           <div className="flex items-center justify-between h-12">
             <div className="flex items-center gap-2">
@@ -287,11 +313,11 @@ function WaterApp() {
                 {error ? <WifiOff className="w-3.5 h-3.5 text-red-500" /> : <Wifi className="w-3.5 h-3.5 text-emerald-500" />}
                 <span>{formatTime(lastUpdated)}</span>
               </div>
-              <button onClick={refresh} disabled={isLoading} className="flex flex-col items-center gap-0.5 p-1.5 rounded-lg hover:bg-white/5 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors disabled:opacity-40">
+              <button onClick={refresh} disabled={isLoading} className="flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] p-1.5 rounded-lg hover:bg-white/5 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors disabled:opacity-40">
                 <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
                 <span className="text-[8px] font-medium">Refresh</span>
               </button>
-              <button onClick={toggleTheme} className="flex flex-col items-center gap-0.5 p-1.5 rounded-lg hover:bg-white/5 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors">
+              <button onClick={toggleTheme} className="flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] p-1.5 rounded-lg hover:bg-white/5 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors">
                 {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                 <span className="text-[8px] font-medium">{isDark ? 'Light' : 'Dark'}</span>
               </button>
@@ -620,7 +646,7 @@ function WaterApp() {
 
         {/* ═══════ FOOTER ═══════ */}
         <footer className="border-t border-[var(--border-color)] mt-8">
-          <div className="max-w-6xl mx-auto px-5 sm:px-8 py-6 text-center">
+          <div className="max-w-6xl mx-auto px-5 sm:px-8 py-6 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] text-center">
             {!isPro && (
               <button
                 onClick={openPaywall}

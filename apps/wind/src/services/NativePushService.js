@@ -6,9 +6,17 @@
  */
 
 import { PushNotifications } from '@capacitor/push-notifications';
-import { apiUrl } from '@utahwind/weather';
+import { apiUrl, isIOS } from '@utahwind/weather';
 
 let registered = false;
+
+function getPlatformInfo() {
+  const ios = isIOS();
+  return {
+    token_type: ios ? 'apns' : 'fcm',
+    platform: ios ? 'ios' : 'android',
+  };
+}
 
 export async function getNativePushStatus() {
   try {
@@ -29,6 +37,8 @@ export async function subscribeToNativePush(authToken) {
     throw new Error('Push notification permission denied');
   }
 
+  const { token_type, platform } = getPlatformInfo();
+
   return new Promise((resolve, reject) => {
     PushNotifications.addListener('registration', async (token) => {
       registered = true;
@@ -41,8 +51,8 @@ export async function subscribeToNativePush(authToken) {
           },
           body: JSON.stringify({
             token: token.value,
-            token_type: 'apns',
-            platform: 'ios',
+            token_type,
+            platform,
           }),
         });
 
@@ -66,6 +76,7 @@ export async function subscribeToNativePush(authToken) {
 }
 
 export async function unsubscribeFromNativePush(authToken) {
+  const { platform } = getPlatformInfo();
   registered = false;
   if (authToken) {
     await fetch(apiUrl('/api/push-subscribe'), {
@@ -74,7 +85,7 @@ export async function unsubscribeFromNativePush(authToken) {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${authToken}`,
       },
-      body: JSON.stringify({ platform: 'ios' }),
+      body: JSON.stringify({ platform }),
     }).catch(() => {});
   }
 }

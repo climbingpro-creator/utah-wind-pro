@@ -83,7 +83,7 @@ function Page1() {
               <Wind className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-black text-slate-900 tracking-tight leading-none">UtahWindFinder</h1>
+              <h1 className="text-2xl font-black text-slate-900 tracking-tight leading-none">LiftForecast</h1>
               <p className="text-xs font-semibold text-sky-600">AI-Driven Microclimate Forecasting</p>
             </div>
           </div>
@@ -198,7 +198,7 @@ function Page1() {
 
       {/* Footer */}
       <div className="flex items-center justify-between pt-3 border-t border-slate-200 mt-auto">
-        <span className="text-[9px] text-slate-400">UtahWindFinder Technical Brief — Page 1 of 2</span>
+        <span className="text-[9px] text-slate-400">LiftForecast Technical Brief — Page 1 of 2</span>
         <span className="text-[9px] text-slate-400">liftforecast.com</span>
       </div>
     </div>
@@ -420,7 +420,7 @@ function Page2() {
 
       {/* Footer */}
       <div className="flex items-center justify-between pt-3 border-t border-slate-200 mt-auto">
-        <span className="text-[9px] text-slate-400">UtahWindFinder Technical Brief — Page 2 of 2</span>
+        <span className="text-[9px] text-slate-400">LiftForecast Technical Brief — Page 2 of 2</span>
         <span className="text-[9px] text-slate-400">Data: Synoptic PBC · NWS · UDOT RWIS · Weather Underground</span>
       </div>
     </div>

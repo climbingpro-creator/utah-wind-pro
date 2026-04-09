@@ -45,7 +45,7 @@ export default function WelcomeCard() {
           </div>
           <div className="min-w-0">
             <h2 className="text-lg font-extrabold text-white tracking-tight leading-tight">
-              Welcome to UtahWindFinder
+              Welcome to LiftForecast
             </h2>
             <div className="flex items-center gap-1.5 mt-1">
               <Sparkles className="w-3 h-3 text-amber-400 flex-shrink-0" />

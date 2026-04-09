@@ -39,7 +39,7 @@ coverage/
 
 # Capacitor — Android stays ignored; iOS is committed for Xcode config
 android/
-# ios/ is now tracked — see apps/wind/ios/
+# ios/ is tracked for both apps/wind/ios/ and apps/water/ios/
 assets/
 
 # Misc

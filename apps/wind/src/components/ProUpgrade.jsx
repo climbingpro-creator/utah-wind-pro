@@ -129,7 +129,7 @@ export default function ProUpgrade() {
               Unlock the full experience
             </div>
             <h2 className="text-2xl font-extrabold text-white mb-1">
-              UtahWindFinder <span className="text-yellow-300">Pro</span>
+              LiftForecast <span className="text-yellow-300">Pro</span>
             </h2>
             <p className="text-sm text-white/80">
               Every feature. Every lake. Every advantage.

@@ -69,7 +69,7 @@ export function InstallPrompt({ onUpdateAvailable }) {
         flex items-center gap-3 animate-slide-up">
         <div className="flex-1">
           <p className="font-semibold text-sm">Update Available</p>
-          <p className="text-xs text-cyan-100">A new version of UtahWindFinder is ready.</p>
+          <p className="text-xs text-cyan-100">A new version of LiftForecast is ready.</p>
         </div>
         <button
           onClick={handleUpdate}
@@ -90,7 +90,7 @@ export function InstallPrompt({ onUpdateAvailable }) {
       <Download className="w-8 h-8 text-cyan-400 shrink-0" />
       <div className="flex-1 min-w-0">
         <p className="font-semibold text-sm text-white">Add to Home Screen</p>
-        <p className="text-xs text-slate-400 truncate">Install UtahWindFinder for quick access</p>
+        <p className="text-xs text-slate-400 truncate">Install LiftForecast for quick access</p>
       </div>
       <button
         onClick={handleInstall}

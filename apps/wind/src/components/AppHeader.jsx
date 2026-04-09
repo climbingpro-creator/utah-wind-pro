@@ -59,7 +59,7 @@ export default function AppHeader({
         <div className="flex items-center justify-between h-14">
           <div className="flex items-center gap-3">
             <h1 className="text-lg font-extrabold tracking-tight text-sky-500">
-              UtahWindFinder
+              LiftForecast
             </h1>
             <span className={`hidden sm:inline text-[11px] font-medium px-2 py-0.5 rounded-full ${
               theme === 'dark' ? 'bg-sky-500/10 text-sky-400' : 'bg-sky-50 text-sky-600'

@@ -94,7 +94,7 @@ export default function Login() {
             <div className="w-14 h-14 rounded-2xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center mx-auto mb-4">
               <Wind className="w-7 h-7 text-sky-400" />
             </div>
-            <h1 className="text-xl font-extrabold text-white tracking-tight">Welcome to UtahWindFinder</h1>
+            <h1 className="text-xl font-extrabold text-white tracking-tight">Welcome to LiftForecast</h1>
             <p className="text-sm text-slate-500 mt-1">
               {mode === 'signup' ? 'Create your account' : 'Sign in to your account'}
             </p>

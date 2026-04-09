@@ -39,7 +39,7 @@ for (const pattern of CACHEABLE_API) {
 // ── Push notifications ──
 self.addEventListener('push', (event) => {
   const data = event.data?.json() || {};
-  const title = data.title || 'UtahWindFinder';
+  const title = data.title || 'LiftForecast';
   const options = {
     body: data.body || 'Wind conditions update',
     icon: '/icons/icon-192x192.png',

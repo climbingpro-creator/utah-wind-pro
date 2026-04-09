@@ -118,3 +118,20 @@ button, a, [role="button"] {
 .water-hover-glow {
   animation: water-pulse 1.5s ease-in-out infinite;
 }
+
+/* ─── Safe area insets for iOS ─── */
+@supports (padding: env(safe-area-inset-left)) {
+  body {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+/* ─── Scrollbar hide utility ─── */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

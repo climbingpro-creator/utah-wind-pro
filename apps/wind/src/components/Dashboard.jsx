@@ -894,9 +894,9 @@ export function Dashboard() {
             </button>
           )}
           <ManageSubscriptionFooter isPro={isPro} rawTier={rawTier} />
-          <p className="text-sm font-semibold text-[var(--text-tertiary)]">UtahWindFinder</p>
+          <p className="text-sm font-semibold text-[var(--text-tertiary)]">LiftForecast</p>
           <p className="text-[11px] mt-1 text-[var(--text-tertiary)] opacity-60">
-            AI-driven forecasting for Utah's lakes and mountains
+            AI-powered wind forecasting for your next session
           </p>
         </div>
       </footer>

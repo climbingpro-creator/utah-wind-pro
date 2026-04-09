@@ -233,7 +233,7 @@ function WhyWereDifferent() {
           <div className="flex items-center gap-3">
             <div className="flex-1">
               <div className="flex justify-between text-xs mb-1">
-                <span className="text-emerald-400 font-bold">UtahWindFinder (87.2%)</span>
+                <span className="text-emerald-400 font-bold">LiftForecast (87.2%)</span>
                 <span className="text-emerald-400">+29.2% vs NWS</span>
               </div>
               <div className="h-2 bg-slate-700 rounded-full overflow-hidden">

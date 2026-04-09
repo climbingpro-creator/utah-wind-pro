@@ -132,7 +132,7 @@ export default function GarminLink({ isOpen, onClose }) {
                 <div className={`p-4 rounded-lg ${isDark ? 'bg-slate-800/50 border border-slate-700' : 'bg-slate-50 border border-slate-200'}`}>
                   <p className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-2">How to link</p>
                   <ol className="text-xs text-[var(--text-secondary)] space-y-1.5 list-decimal pl-4">
-                    <li>Open the UtahWindField app on your Garmin watch</li>
+                    <li>Open the LiftForecast app on your Garmin watch</li>
                     <li>Your device ID is shown on the main screen</li>
                     <li>Enter that ID below and tap Link</li>
                     <li>Sessions will auto-upload to the leaderboard</li>

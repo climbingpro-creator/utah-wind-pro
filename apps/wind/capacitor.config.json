@@ -1,6 +1,6 @@
 {
-  "appId": "com.utahlakewindpro.app",
-  "appName": "UtahWindFinder",
+  "appId": "com.liftforecast.app",
+  "appName": "LiftForecast",
   "webDir": "dist",
   "plugins": {
     "StatusBar": {
@@ -25,7 +25,7 @@
   },
   "ios": {
     "contentInset": "automatic",
-    "scheme": "UtahWindFinder",
+    "scheme": "LiftForecast",
     "preferredContentMode": "mobile"
   },
   "android": {

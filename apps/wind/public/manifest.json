@@ -1,7 +1,7 @@
 {
-  "name": "UtahWindFinder",
-  "short_name": "WindFinder",
-  "description": "Professional wind forecasting for Utah Lake, Deer Creek, and Willard Bay. Real-time thermal predictions for kiteboarding, sailing, and boating.",
+  "name": "LiftForecast",
+  "short_name": "LiftForecast",
+  "description": "AI-powered wind forecasting. Real-time thermal predictions for kiteboarding, paragliding, sailing, and wind sports.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f172a",

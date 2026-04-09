@@ -131,7 +131,7 @@ function AppShell() {
 
 function App() {
   return (
-    <ErrorBoundary name="UtahWindFinder">
+    <ErrorBoundary name="LiftForecast">
       <AuthProvider>
         <ThemeProvider>
           <AppShell />
