@@ -19,6 +19,7 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
   if (req.method === 'OPTIONS') return res.status(204).end();
 
+  try {
   const auth = await verifyAuth(req);
   if (auth.error) return res.status(auth.status || 401).json({ error: auth.error });
   if (!ALLOWED_ADMINS.includes(auth.user.email?.toLowerCase())) {
@@ -30,8 +31,6 @@ export default async function handler(req, res) {
   const thirtyDaysAgo = new Date(now - 30 * 86400000).toISOString();
   const sevenDaysAgo = new Date(now - 7 * 86400000).toISOString();
   const sixtyDaysAgo = new Date(now - 60 * 86400000).toISOString();
-
-  try {
     // --- User counts via auth.admin (service role) ---
     let totalUsers = 0;
     let recentSignups = 0;
