@@ -321,12 +321,21 @@ class WeatherService {
   async getWuPwsCurrent(stationIds) {
     if (!stationIds || stationIds.length === 0) return [];
     try {
-      const response = await axiosWithRetry({
-        method: 'get',
-        url: apiUrl('/api/weather'),
-        params: { source: 'wu-pws', stationIds: stationIds.join(',') },
-      });
-      return response.data?.observations || [];
+      const BATCH_SIZE = 10;
+      const batches = [];
+      for (let i = 0; i < stationIds.length; i += BATCH_SIZE) {
+        batches.push(stationIds.slice(i, i + BATCH_SIZE));
+      }
+      const results = await Promise.allSettled(
+        batches.map(batch =>
+          axiosWithRetry({
+            method: 'get',
+            url: apiUrl('/api/weather'),
+            params: { source: 'wu-pws', stationIds: batch.join(',') },
+          }).then(r => r.data?.observations || [])
+        )
+      );
+      return results.flatMap(r => r.status === 'fulfilled' ? r.value : []);
     } catch (error) {
       console.error('WU PWS fetch error:', error.message);
       return [];
@@ -336,9 +345,11 @@ class WeatherService {
   async getDataForLake(lakeId) {
     const stationIds = getAllStationIds(lakeId);
     
-    const { getWuStationsForSpot, normalizeWuObservation } = await import('../config/wuPwsNetwork.js');
-    const wuStations = getWuStationsForSpot(lakeId);
-    const wuIds = wuStations.map(s => s.id);
+    const { getWuStationsForSpot, normalizeWuObservation, WU_PRIORITY_STATIONS } = await import('../config/wuPwsNetwork.js');
+    const spotWu = getWuStationsForSpot(lakeId);
+    const wuIdSet = new Set(spotWu.map(s => s.id));
+    for (const id of (WU_PRIORITY_STATIONS || [])) wuIdSet.add(id);
+    const wuIds = [...wuIdSet];
 
     const [ambientData, synopticData, wuData] = await Promise.allSettled([
       this.getAmbientWeatherData(),

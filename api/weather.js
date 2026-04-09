@@ -757,6 +757,72 @@ function normalizeAmbientData(ambientObs, stationMeta) {
   };
 }
 
+// Coordinates for MesoWest/Synoptic stations so Open-Meteo can substitute when token is unavailable
+const STATION_COORDS = {
+  FPS:   { lat: 40.452, lng: -111.890, name: 'Flight Park South',     elev: '5202' },
+  CSC:   { lat: 40.400, lng: -111.620, name: 'Cascade Peak',          elev: '10875' },
+  TIMU1: { lat: 40.390, lng: -111.640, name: 'Timpanogos Divide',     elev: '8170' },
+  QLN:   { lat: 40.338, lng: -111.696, name: 'Lindon',                elev: '4738' },
+  UTOLY: { lat: 40.330, lng: -111.890, name: 'Lake Shore / Zig Zag',  elev: '4489' },
+  UID28: { lat: 40.350, lng: -111.900, name: 'Saratoga Springs',      elev: '4500' },
+  QSF:   { lat: 40.050, lng: -111.550, name: 'Spanish Fork Canyon',   elev: '4550' },
+  UTALP: { lat: 40.453, lng: -111.758, name: 'Point of the Mountain', elev: '4796' },
+  SND:   { lat: 40.576, lng: -111.652, name: 'Snowbird',              elev: '9640' },
+  SKY:   { lat: 40.607, lng: -111.657, name: 'Solitude / Brighton',   elev: '8740' },
+  BERU1: { lat: 41.920, lng: -111.420, name: 'Bear Lake',             elev: '5930' },
+  MDAU1: { lat: 40.475, lng: -111.498, name: 'Midway',                elev: '5580' },
+  EPMU1: { lat: 41.382, lng: -111.930, name: 'East Promontory',       elev: '4210' },
+  GSLM:  { lat: 40.770, lng: -112.180, name: 'Great Salt Lake Marina',elev: '4200' },
+};
+
+async function fetchOpenMeteoForStations(stationIds) {
+  const results = [];
+  const toFetch = stationIds.filter(id => STATION_COORDS[id]);
+  if (toFetch.length === 0) return results;
+
+  const fetches = toFetch.map(async (stid) => {
+    const { lat, lng, name, elev } = STATION_COORDS[stid];
+    try {
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}` +
+        '&current=temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,relative_humidity_2m,surface_pressure' +
+        '&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto';
+      const resp = await fetch(url, { signal: AbortSignal.timeout(6000) });
+      if (!resp.ok) return null;
+      const data = await resp.json();
+      const c = data.current;
+      if (!c) return null;
+      return {
+        STID: stid,
+        NAME: `${name} (Model)`,
+        LATITUDE: String(lat),
+        LONGITUDE: String(lng),
+        ELEVATION: elev,
+        STATUS: 'ACTIVE',
+        OBSERVATIONS: {
+          date_time: c.time,
+          wind_speed_value_1: { value: c.wind_speed_10m ?? null, date_time: c.time },
+          wind_direction_value_1: { value: c.wind_direction_10m ?? null, date_time: c.time },
+          wind_gust_value_1: { value: c.wind_gusts_10m ?? null, date_time: c.time },
+          air_temp_value_1: { value: c.temperature_2m ?? null, date_time: c.time },
+          relative_humidity_value_1: { value: c.relative_humidity_2m ?? null, date_time: c.time },
+          altimeter_value_1: { value: c.surface_pressure ? +(c.surface_pressure / 33.8639).toFixed(2) : null, date_time: c.time },
+          sea_level_pressure_value_1: { value: null, date_time: c.time },
+        },
+        _source: 'open-meteo',
+      };
+    } catch (err) {
+      console.warn(`[OpenMeteo fallback] ${stid}:`, err.message);
+      return null;
+    }
+  });
+
+  const settled = await Promise.allSettled(fetches);
+  for (const r of settled) {
+    if (r.status === 'fulfilled' && r.value) results.push(r.value);
+  }
+  return results;
+}
+
 const ALLOWED_STATIONS = new Set([
   'KSLC','KPVU','KHCR','KOGD','KLGU','KHIF','KVEL','KPUC','KSGU','KPGA','KCDC',
   'KFGR','KBMC','BERU1','FPS','QSF','UTALP','UTOLY','CSC','UID28','TIMU1','SND','MDAU1',
@@ -805,20 +871,33 @@ async function handleSynopticLatest(res, stids) {
   }
 
   const token = process.env.SYNOPTIC_TOKEN;
+  let synopticFallbackIds = [];
   if (synopticIds.length > 0 || (udotIds.length > 0 && !udotKey)) {
-    const synopticFallbackIds = udotKey ? synopticIds : [...synopticIds, ...udotIds];
+    synopticFallbackIds = udotKey ? synopticIds : [...synopticIds, ...udotIds];
     if (token && synopticFallbackIds.length > 0) {
       fetches.push(
         fetchSynopticDirect(synopticFallbackIds.join(','), token).catch(err => { errors.synoptic = err.message; return []; })
       );
       sourceLabels.push('synoptic');
     } else if (!token && synopticFallbackIds.length > 0) {
-      errors.synoptic = 'SYNOPTIC_TOKEN not configured';
+      errors.synoptic = 'SYNOPTIC_TOKEN not configured — using Open-Meteo fallback';
     }
   }
 
   const results = await Promise.all(fetches);
   const allStations = results.flat();
+
+  // Open-Meteo fallback for stations that have no data from NWS/UDOT/Synoptic
+  if (!token && synopticFallbackIds.length > 0) {
+    const returnedIds = new Set(allStations.map(s => s.STID));
+    const missingIds = synopticFallbackIds.filter(id => !returnedIds.has(id));
+    if (missingIds.length > 0) {
+      const omResults = await fetchOpenMeteoForStations(missingIds);
+      if (omResults.length > 0) {
+        allStations.push(...omResults);
+      }
+    }
+  }
 
   if (Object.keys(errors).length > 0 || allStations.length < filtered.length / 2) {
     console.warn(`[Synoptic Latest] requested=${filtered.length} returned=${allStations.length} airport=${airport.length} udot=${udotIds.length} synoptic=${synopticIds.length} errors=${JSON.stringify(errors)} hasToken=${!!token} hasUdotKey=${!!udotKey}`);
