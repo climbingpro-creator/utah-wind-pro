@@ -19,45 +19,34 @@ const PRIORITY_SPOTS = [
   'deer-creek', 'willard-bay',
 ];
 
-// Activity-specific spots — expanded to cover all bodies of water per activity
+// Activity-specific spots (only spots with real sensor coverage)
 const ACTIVITY_SPOTS = {
   kiting: [
-    'utah-lake-zigzag', 'utah-lake-lincoln', 'utah-lake-vineyard', 'utah-lake-sandy', 'utah-lake-mm19',
-    'rush-lake', 'grantsville', 'deer-creek', 'willard-bay', 'jordanelle',
-    'sand-hollow', 'sulfur-creek', 'bear-lake', 'pineview', 'yuba',
+    'utah-lake-zigzag', 'utah-lake-lincoln', 'utah-lake-vineyard', 'utah-lake-sandy',
+    'deer-creek', 'willard-bay', 'jordanelle', 'sand-hollow', 'sulfur-creek',
   ],
   windsurfing: [
-    'utah-lake-zigzag', 'utah-lake-lincoln', 'utah-lake-vineyard', 'utah-lake-sandy',
+    'utah-lake-zigzag', 'utah-lake-lincoln', 'utah-lake-vineyard',
     'deer-creek', 'willard-bay', 'jordanelle', 'sulfur-creek',
-    'bear-lake', 'pineview', 'sand-hollow', 'yuba',
   ],
   sailing: [
-    'utah-lake-zigzag', 'utah-lake-lincoln', 'utah-lake-vineyard',
-    'deer-creek', 'willard-bay', 'jordanelle', 'sulfur-creek',
-    'bear-lake', 'pineview', 'sand-hollow', 'yuba',
+    'utah-lake-zigzag', 'utah-lake-lincoln', 'deer-creek', 'willard-bay', 'jordanelle', 'sulfur-creek',
   ],
   paragliding: [
-    'potm-south', 'potm-north', 'inspo', 'west-mountain', 'stockton-bar',
+    'potm-south', 'potm-north', 'inspo',
   ],
   snowkiting: [
-    'strawberry-ladders', 'strawberry-bay', 'strawberry-soldier', 'strawberry-view', 'strawberry-river',
-    'skyline-drive', 'powder-mountain', 'monte-cristo',
+    'strawberry-ladders', 'strawberry-bay', 'strawberry-soldier', 'strawberry-view',
   ],
   boating: [
-    'utah-lake-zigzag', 'utah-lake-lincoln', 'utah-lake-vineyard', 'utah-lake-sandy',
+    'utah-lake-zigzag', 'utah-lake-lincoln', 'utah-lake-vineyard',
     'deer-creek', 'willard-bay', 'jordanelle', 'sand-hollow',
-    'strawberry-bay', 'pineview', 'bear-lake', 'echo', 'rockport',
-    'flaming-gorge', 'lake-powell', 'yuba', 'quail-creek',
   ],
   paddling: [
-    'utah-lake-zigzag', 'utah-lake-lincoln', 'utah-lake-vineyard',
-    'deer-creek', 'willard-bay', 'jordanelle', 'pineview',
-    'strawberry-bay', 'echo', 'rockport', 'sand-hollow', 'quail-creek',
+    'utah-lake-zigzag', 'utah-lake-lincoln', 'deer-creek', 'willard-bay', 'jordanelle',
   ],
   fishing: [
-    'strawberry-bay', 'strawberry-ladders', 'deer-creek', 'jordanelle',
-    'utah-lake-lincoln', 'willard-bay', 'scofield', 'flaming-gorge',
-    'bear-lake', 'starvation', 'lake-powell', 'yuba', 'pineview',
+    'strawberry-ladders', 'strawberry-bay', 'deer-creek', 'jordanelle',
   ],
 };
 
@@ -172,28 +161,24 @@ export function useCrossLocationPredictions(activity) {
         const modelContext = getModelContext() || {};
 
         const results = [];
-        const batchSize = 4;
+        const batchSize = 3;
         
         for (let i = 0; i < spots.length; i += batchSize) {
           if (abortRef.current) break;
-          if (i > 0) await new Promise(r => setTimeout(r, 1500));
+          if (i > 0) await new Promise(r => setTimeout(r, 3000));
           
           const batch = spots.slice(i, i + batchSize);
           const batchResults = await Promise.all(
             batch.map(spotId => getPredictionForSpot(spotId, activity, modelContext))
           );
           results.push(...batchResults);
-
-          if (!abortRef.current) {
-            const ranked = rankSpots(results.filter(Boolean), activity);
-            setPredictions(ranked);
-            if (i === 0) setLoading(false);
-          }
         }
 
         if (abortRef.current) return;
 
+        // Rank and set results
         const ranked = rankSpots(results.filter(Boolean), activity);
+        
         setPredictions(ranked);
         setLastUpdated(new Date());
         setLoading(false);

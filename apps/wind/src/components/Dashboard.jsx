@@ -619,6 +619,7 @@ export function Dashboard() {
         <LakeSelector
           selectedLake={selectedLake}
           onSelectLake={handleSelectLake}
+          stationReadings={lakeState?.wind?.stations}
           activity={selectedActivity}
           pressureData={pressureData}
         />
