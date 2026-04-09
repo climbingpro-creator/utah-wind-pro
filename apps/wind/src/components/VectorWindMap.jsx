@@ -630,7 +630,8 @@ export function VectorWindMap({
 
   const currentDirection = windData?.direction;
   const currentSpeed = windData?.speed;
-  const mapHeight = isFullscreen ? 'h-[100dvh]' : 'h-72 sm:h-96';
+  const hasActiveCard = syntheticData || selectedStation;
+  const mapHeight = isFullscreen ? 'h-[100dvh]' : hasActiveCard ? 'h-[28rem] sm:h-[32rem]' : 'h-72 sm:h-96';
 
   return (
     <div className={`relative bg-slate-800/50 rounded-xl border border-slate-700 overflow-hidden ${
@@ -663,7 +664,7 @@ export function VectorWindMap({
       </div>
 
       {/* Map Container */}
-      <div className={`relative ${mapHeight}`}>
+      <div className={`relative transition-[height] duration-300 ease-in-out ${mapHeight}`}>
         <Map
           ref={mapRef}
           {...viewState}
