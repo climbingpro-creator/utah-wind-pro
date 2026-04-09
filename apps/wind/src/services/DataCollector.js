@@ -16,6 +16,7 @@ import { weatherService } from '@utahwind/weather';
 import { LakeState } from '@utahwind/weather';
 import { LAKE_CONFIGS, getAllStationIds } from '@utahwind/weather';
 import { setLearnedWeights, setStatisticalModels as setThermalStatisticalModels } from '@utahwind/weather';
+import { WU_PRIORITY_STATIONS, getWuStationsForSpot, normalizeWuObservation } from '@utahwind/weather';
 import { setParaglidingLearnedWeights, predictParagliding } from './ParaglidingPredictor';
 import { setBoatingLearnedWeights } from './BoatingPredictor';
 
@@ -442,7 +443,6 @@ class DataCollector {
 
     // SOURCE 3: WU PWS 24hr history for shadow/priority stations
     try {
-      const { WU_PRIORITY_STATIONS } = await import('@utahwind/weather/src/config/wuPwsNetwork.js');
       const WU_BACKFILL_STATIONS = (WU_PRIORITY_STATIONS || []).slice(0, 8);
 
       if (WU_BACKFILL_STATIONS.length > 0) {
@@ -561,7 +561,6 @@ class DataCollector {
 
       // Parallel: collect WU PWS live readings for cross-validation
       try {
-        const { getWuStationsForSpot, normalizeWuObservation, WU_PRIORITY_STATIONS } = await import('@utahwind/weather/src/config/wuPwsNetwork.js');
         const wuIdSet = new Set();
         for (const lakeId of lakes) {
           for (const s of getWuStationsForSpot(lakeId)) wuIdSet.add(s.id);
@@ -593,9 +592,8 @@ class DataCollector {
 
           // Run cross-validation comparison
           try {
-            const { crossValidationEngine } = await import('@utahwind/weather/src/services/CrossValidationEngine.js');
             crossValidationEngine.compare(synopticData, wuNormalized);
-          } catch (_e) { /* cross-validation engine not yet available */ }
+          } catch (_e) { /* cross-validation compare failed */ }
         }
       } catch (wuErr) {
         console.warn('WU PWS live collection failed (non-fatal):', wuErr.message);
