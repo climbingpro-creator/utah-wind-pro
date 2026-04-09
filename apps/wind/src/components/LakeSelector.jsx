@@ -1,7 +1,7 @@
 import { MapPin, ChevronDown, ChevronUp, Wind, Snowflake, Mountain, Fish, Clock, ArrowRight, TrendingUp, Droplets, Zap } from 'lucide-react';
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useTheme } from '../context/ThemeContext';
-import { LAKE_CONFIGS } from '@utahwind/weather';
+import { LAKE_CONFIGS, weatherService } from '@utahwind/weather';
 import { safeToFixed } from '../utils/safeToFixed';
 
 // ─── SPOT METADATA ──────────────────────────────────────────────────────────
@@ -580,16 +580,51 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
   const isDark = theme === 'dark';
 
   const cacheRef = useRef({});
+  const [bootstrapData, setBootstrapData] = useState({});
+  const bootstrapDone = useRef(false);
+
   useEffect(() => {
     cacheRef.current = mergeStationCache(cacheRef.current, stationReadings);
   }, [stationReadings]);
 
-  const stationCache = useMemo(
-    () => mergeStationCache(cacheRef.current, stationReadings),
-    [stationReadings]
-  );
-
   const spots = useMemo(() => getSpotList(activity), [activity]);
+
+  useEffect(() => {
+    if (bootstrapDone.current) return;
+    bootstrapDone.current = true;
+
+    const allMeters = new Set();
+    for (const spot of getSpotList(activity)) {
+      if (spot.meter && spot.meter !== 'PWS') allMeters.add(spot.meter);
+    }
+    const stids = [...allMeters];
+    if (stids.length === 0) return;
+
+    weatherService.getSynopticStationData(stids).then(stations => {
+      if (!stations?.length) return;
+      const map = {};
+      for (const s of stations) {
+        const id = s.stationId || s.stid || s.id;
+        if (!id) continue;
+        map[id] = {
+          id,
+          speed: s.windSpeed ?? s.wind_speed ?? null,
+          direction: s.windDirection ?? s.wind_direction ?? null,
+          gust: s.windGust ?? s.wind_gust ?? null,
+          temperature: s.temperature ?? s.air_temp ?? null,
+        };
+      }
+      setBootstrapData(map);
+    }).catch(() => {});
+  }, [activity]);
+
+  const stationCache = useMemo(
+    () => ({
+      ...bootstrapData,
+      ...mergeStationCache(cacheRef.current, stationReadings),
+    }),
+    [stationReadings, bootstrapData]
+  );
 
   const handleSelect = useCallback((id) => {
     if (id === 'utah-lake') {
