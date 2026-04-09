@@ -6,6 +6,7 @@ export { weatherService } from './services/WeatherService.js';
 export {
   generateWindField,
   setWindFieldLearnedWeights,
+  setCrossValidationEngine,
   STATION_NODES,
   PROPAGATION_EDGES,
   LOCATION_STATIONS,
@@ -107,6 +108,13 @@ export {
   fetchServerContext,
 } from './services/CrossLocationForecastService.js';
 export { default as CrossLocationForecastService } from './services/CrossLocationForecastService.js';
+
+// ─── Cross-Validation ────────────────────────────────────────
+export {
+  crossValidationEngine,
+  CROSS_VALIDATION_PAIRS,
+} from './services/CrossValidationEngine.js';
+export { default as CrossValidationEngine } from './services/CrossValidationEngine.js';
 
 // ─── Nowcasting ──────────────────────────────────────────────
 export { applyLiveCorrections } from './services/NowcastEngine.js';

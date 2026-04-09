@@ -162,39 +162,55 @@ const LOCATION_STATIONS = {
 };
 
 // Shadow station mappings: FREE WU PWS stations that can replace paid Synoptic stations
-// When the primary (paid) station is unavailable, use the shadow (free) station
 const SHADOW_STATIONS = {
-  'FPS': { shadow: 'KUTLEHI111', speedRatio: 1.0, name: 'Lehi (FPS Shadow)' },
+  'FPS':   { shadow: 'KUTLEHI111',  speedRatio: 1.0, name: 'Lehi (FPS Shadow)' },
   'UTALP': { shadow: 'KUTDRAPE132', speedRatio: 1.0, name: 'Draper E (UTALP Shadow)' },
+  'QLN':   { shadow: 'KUTPLEAS11',  speedRatio: 1.0, name: 'Pleasant Grove (QLN Shadow)' },
+  'UTOLY': { shadow: 'KUTSARAT50',  speedRatio: 1.0, name: 'Zigzag WU (UTOLY Shadow)' },
+  'UID28': { shadow: 'KUTSARAT88',  speedRatio: 1.0, name: 'Saratoga S (UID28 Shadow)' },
+  'UT7':   { shadow: 'KUTALPIN3',   speedRatio: 1.0, name: 'Alpine W (AF Shadow)' },
 };
 
+let _crossValEngine = null;
+
 /**
- * Resolve station data with automatic fallback to shadow stations
- * If the primary station (e.g., FPS) has no data, use the shadow (e.g., KUTLEHI111)
+ * Inject the cross-validation engine reference so resolveStationWithShadow
+ * can use live-calibrated speed ratios without a circular import.
+ */
+export function setCrossValidationEngine(engine) {
+  _crossValEngine = engine;
+}
+
+/**
+ * Resolve station data with automatic fallback to shadow stations.
+ * Uses live-calibrated speed ratios from CrossValidationEngine when available,
+ * falls back to static ratios otherwise.
  */
 export function resolveStationWithShadow(stationId, stationData) {
-  // If we have data for the requested station, return it
   if (stationData?.[stationId]?.speed != null || stationData?.[stationId]?.windSpeed != null) {
     return { station: stationData[stationId], source: stationId, isShadow: false };
   }
-  
-  // Check if this station has a shadow
+
   const shadowConfig = SHADOW_STATIONS[stationId];
   if (shadowConfig) {
     const shadowData = stationData?.[shadowConfig.shadow];
     if (shadowData?.speed != null || shadowData?.windSpeed != null) {
-      // Apply speed ratio adjustment if needed
+      const liveRatio = _crossValEngine ? _crossValEngine.getCalibratedSpeedRatio(stationId) : null;
+      const ratio = (liveRatio && liveRatio !== 1.0) ? liveRatio : shadowConfig.speedRatio;
+
       const speed = shadowData.speed ?? shadowData.windSpeed;
       const gust = shadowData.gust ?? shadowData.windGust;
       return {
         station: {
           ...shadowData,
-          speed: speed != null ? speed / shadowConfig.speedRatio : null,
-          windSpeed: speed != null ? speed / shadowConfig.speedRatio : null,
-          gust: gust != null ? gust / shadowConfig.speedRatio : null,
-          windGust: gust != null ? gust / shadowConfig.speedRatio : null,
+          speed: speed != null ? speed / ratio : null,
+          windSpeed: speed != null ? speed / ratio : null,
+          gust: gust != null ? gust / ratio : null,
+          windGust: gust != null ? gust / ratio : null,
           _shadowSource: shadowConfig.shadow,
           _shadowName: shadowConfig.name,
+          _speedRatio: ratio,
+          _ratioSource: liveRatio ? 'cross-validation' : 'static',
         },
         source: shadowConfig.shadow,
         isShadow: true,
@@ -202,8 +218,7 @@ export function resolveStationWithShadow(stationId, stationData) {
       };
     }
   }
-  
-  // No data available
+
   return { station: null, source: null, isShadow: false };
 }
 

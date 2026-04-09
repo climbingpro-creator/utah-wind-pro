@@ -1,13 +1,13 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@utahwind/database';
-import { weatherService, LAKE_CONFIGS, getAllStationIds } from '@utahwind/weather';
+import { weatherService, LAKE_CONFIGS, getAllStationIds, learningSystem, crossValidationEngine } from '@utahwind/weather';
 import { dataCollector } from '../services/DataCollector';
 import {
   Shield, ArrowLeft, CheckCircle, Clock, AlertTriangle, Bug, Lightbulb,
   MessageSquare, ExternalLink, RefreshCw, Trash2, BarChart3, CreditCard,
   Users, TrendingUp, TrendingDown, Zap, Map, Eye, DollarSign, Activity,
   Globe, Layers, Wind, Fish, Minus, Radio, Brain, Gauge, Wifi, WifiOff,
-  Server, Database, CloudRain, Phone, Send, AlertCircle, Bell,
+  Server, Database, CloudRain, Phone, Send, AlertCircle, Bell, RotateCcw, ShieldCheck,
 } from 'lucide-react';
 
 const ALLOWED_ADMINS = ['tyler@aspenearth.com', 'climbingpro@gmail.com'];
@@ -146,6 +146,16 @@ export default function AdminDashboard() {
   const [pushSending, setPushSending] = useState(false);
   const [pushResult, setPushResult] = useState(null);
   const [alertDiagnostics, setAlertDiagnostics] = useState(null);
+  const [resettingWeights, setResettingWeights] = useState(false);
+  const [weightResetResult, setWeightResetResult] = useState(null);
+  const [wuSearchLat, setWuSearchLat] = useState('');
+  const [wuSearchLon, setWuSearchLon] = useState('');
+  const [wuSearching, setWuSearching] = useState(false);
+  const [wuResults, setWuResults] = useState(null);
+  const [cvHealth, setCvHealth] = useState(null);
+  const [cvLoading, setCvLoading] = useState(false);
+  const [cycleRunning, setCycleRunning] = useState(false);
+  const [cycleResult, setCycleResult] = useState(null);
 
   useEffect(() => {
     async function checkAdmin() {
@@ -232,6 +242,11 @@ export default function AdminDashboard() {
         ambientOnline = !!(amb && amb.windSpeed != null);
       } catch { /* ignore */ }
 
+      const nwsIds = onlineStations.filter(s => s._source === 'nws' || ['KSLC', 'KPVU', 'KOGD', 'KPUC'].includes(s.stationId));
+      const nwsOnline = nwsIds.length > 0;
+      const udotIds = onlineStations.filter(s => s._source === 'udot' || s.stationId?.startsWith?.('UID'));
+      const udotOnline = udotIds.length > 0;
+
       const respondingIds = new Set(onlineStations.map(s => s.stationId));
       const windIds = new Set(onlineStations.filter(s => s.windSpeed != null).map(s => s.stationId));
       const dataOnlyIds = new Set(onlineStations.filter(s => s.windSpeed == null && (s.temperature != null || s.pressure != null)).map(s => s.stationId));
@@ -280,6 +295,9 @@ export default function AdminDashboard() {
         notRespondingCount,
         udotCount,
         ambientOnline,
+        nwsOnline,
+        udotOnline,
+        synopticOnline: respondingIds.size > 0 && !synopticError,
         synopticError,
         spotHealth,
         collector: collectorStats,
@@ -331,6 +349,71 @@ export default function AdminDashboard() {
     setTestSending(false);
   }, [testPhone, getAuthHeader]);
 
+  const searchWuNearby = useCallback(async () => {
+    if (!wuSearchLat || !wuSearchLon) return;
+    setWuSearching(true);
+    setWuResults(null);
+    try {
+      const apiOrigin = import.meta.env.VITE_API_ORIGIN || '';
+      const resp = await fetch(`${apiOrigin}/api/weather?source=wu-nearby&lat=${wuSearchLat}&lon=${wuSearchLon}`);
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const data = await resp.json();
+      const stations = data?.location?.stationId?.map((id, i) => ({
+        id,
+        name: data.location?.stationName?.[i] || id,
+        lat: data.location?.latitude?.[i],
+        lon: data.location?.longitude?.[i],
+        distKm: data.location?.distanceKm?.[i],
+        distMi: data.location?.distanceMi?.[i],
+        qcStatus: data.location?.qcStatus?.[i],
+      })) || [];
+      setWuResults(stations);
+    } catch (err) {
+      setWuResults({ error: err.message });
+    }
+    setWuSearching(false);
+  }, [wuSearchLat, wuSearchLon]);
+
+  const fetchCrossValidationHealth = useCallback(async () => {
+    setCvLoading(true);
+    try {
+      const summary = await crossValidationEngine.getHealthSummary();
+      setCvHealth(summary);
+    } catch (err) {
+      console.warn('Cross-validation health fetch failed:', err.message);
+    }
+    setCvLoading(false);
+  }, []);
+
+  const runLearningCycle = useCallback(async () => {
+    setCycleRunning(true);
+    setCycleResult(null);
+    try {
+      await dataCollector.forceCollection();
+      await dataCollector.forceLearning();
+      setCycleResult({ success: true });
+      fetchSystemHealth();
+      fetchCrossValidationHealth();
+    } catch (err) {
+      setCycleResult({ error: err.message });
+    }
+    setCycleRunning(false);
+  }, [fetchSystemHealth, fetchCrossValidationHealth]);
+
+  const resetLearningWeights = useCallback(async () => {
+    if (!confirm('Reset all learned weights? The engine will recalibrate from scratch using current data sources. This cannot be undone.')) return;
+    setResettingWeights(true);
+    setWeightResetResult(null);
+    try {
+      await learningSystem.resetWeights('admin-dashboard');
+      setWeightResetResult({ success: true });
+      fetchSystemHealth();
+    } catch (err) {
+      setWeightResetResult({ error: err.message });
+    }
+    setResettingWeights(false);
+  }, [fetchSystemHealth]);
+
   const sendTestPush = useCallback(async () => {
     setPushSending(true);
     setPushResult(null);
@@ -357,8 +440,9 @@ export default function AdminDashboard() {
       fetchFeedback();
       fetchSystemHealth();
       fetchAlertDiagnostics();
+      fetchCrossValidationHealth();
     }
-  }, [authorized, fetchAnalytics, fetchFeedback, fetchSystemHealth, fetchAlertDiagnostics]);
+  }, [authorized, fetchAnalytics, fetchFeedback, fetchSystemHealth, fetchAlertDiagnostics, fetchCrossValidationHealth]);
 
   async function updateStatus(id, newStatus) {
     if (!supabase) return;
@@ -431,7 +515,7 @@ export default function AdminDashboard() {
                 </span>
               )}
               <button
-                onClick={() => { fetchAnalytics(); fetchFeedback(); fetchSystemHealth(); }}
+                onClick={() => { fetchAnalytics(); fetchFeedback(); fetchSystemHealth(); fetchCrossValidationHealth(); }}
                 disabled={analyticsLoading || loading || systemLoading}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-sm text-slate-300 transition-colors"
               >
@@ -596,10 +680,10 @@ export default function AdminDashboard() {
                   </h3>
                   <div className="space-y-3">
                     {[
-                      { name: 'NWS (Airport ASOS)', status: systemHealth.onlineCount > 0, desc: 'Free — api.weather.gov' },
-                      { name: 'UDOT RWIS', status: systemHealth.onlineCount > 0, desc: 'UDOT_API_KEY' },
-                      { name: 'Synoptic / MesoWest', status: !systemHealth.synopticError, desc: 'SYNOPTIC_TOKEN' },
-                      { name: 'Weather Underground PWS', status: true, desc: 'WU_API_KEY — Shadow fallback' },
+                      { name: 'NWS (Airport ASOS)', status: systemHealth.nwsOnline, desc: 'Free — api.weather.gov' },
+                      { name: 'UDOT RWIS', status: systemHealth.udotOnline, desc: 'UDOT_API_KEY' },
+                      { name: 'Synoptic / MesoWest', status: systemHealth.synopticOnline, desc: 'SYNOPTIC_TOKEN' },
+                      { name: 'Weather Underground PWS', status: true, desc: 'WU_API_KEY — Parallel cross-validation' },
                       { name: 'Ambient Weather', status: systemHealth.ambientOnline, desc: 'AMBIENT_API_KEY' },
                     ].map(src => (
                       <div key={src.name} className="flex items-center justify-between">
@@ -643,6 +727,55 @@ export default function AdminDashboard() {
                     ) : (
                       <p className="text-xs text-slate-600">No learning data stored yet</p>
                     )}
+
+                    <div className="border-t border-white/[0.06] mt-4 pt-4">
+                      <button
+                        onClick={resetLearningWeights}
+                        disabled={resettingWeights}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                      >
+                        <RotateCcw className={`w-3 h-3 ${resettingWeights ? 'animate-spin' : ''}`} />
+                        {resettingWeights ? 'Resetting...' : 'Reset Learned Weights'}
+                      </button>
+                      <p className="text-[10px] text-slate-600 mt-1.5">
+                        Clears all learned weights, accuracy records, and patterns. Use when data sources change (e.g. Synoptic restored).
+                        The engine will recalibrate within a few hours.
+                      </p>
+                      {weightResetResult?.success && (
+                        <div className="mt-2 p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-[11px] text-emerald-400 font-semibold flex items-center gap-1.5">
+                          <CheckCircle className="w-3.5 h-3.5" /> Weights reset. Engine will recalibrate on next data cycle.
+                        </div>
+                      )}
+                      {weightResetResult?.error && (
+                        <div className="mt-2 p-2 rounded-lg bg-red-500/10 border border-red-500/20 text-[11px] text-red-400 font-semibold flex items-center gap-1.5">
+                          <AlertCircle className="w-3.5 h-3.5" /> Reset failed: {weightResetResult.error}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="border-t border-white/[0.06] mt-4 pt-4">
+                      <button
+                        onClick={runLearningCycle}
+                        disabled={cycleRunning}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold bg-sky-500/10 border border-sky-500/20 text-sky-400 hover:bg-sky-500/20 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                      >
+                        <Zap className={`w-3 h-3 ${cycleRunning ? 'animate-pulse' : ''}`} />
+                        {cycleRunning ? 'Running Cycle...' : 'Run Learning Cycle Now'}
+                      </button>
+                      <p className="text-[10px] text-slate-600 mt-1.5">
+                        Collects actuals from all sources, records predictions, runs cross-validation, and triggers a learning update.
+                      </p>
+                      {cycleResult?.success && (
+                        <div className="mt-2 p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-[11px] text-emerald-400 font-semibold flex items-center gap-1.5">
+                          <CheckCircle className="w-3.5 h-3.5" /> Learning cycle complete. Check Cross-Validation Health for results.
+                        </div>
+                      )}
+                      {cycleResult?.error && (
+                        <div className="mt-2 p-2 rounded-lg bg-red-500/10 border border-red-500/20 text-[11px] text-red-400 font-semibold flex items-center gap-1.5">
+                          <AlertCircle className="w-3.5 h-3.5" /> Cycle failed: {cycleResult.error}
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
@@ -800,6 +933,189 @@ export default function AdminDashboard() {
                       </div>
                     )}
                   </div>
+                </div>
+
+                {/* WU Station Discovery */}
+                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+                  <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                    <Map className="w-4 h-4 text-cyan-400" />
+                    WU Station Discovery
+                  </h3>
+                  <p className="text-[10px] text-slate-500 mb-3">
+                    Search Weather Underground for PWS stations near a coordinate. Use this to find new shadow stations or fill coverage gaps.
+                  </p>
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {[
+                      { label: 'Spanish Fork Canyon', lat: '40.05', lon: '-111.55' },
+                      { label: 'Timpanogos Foothills', lat: '40.39', lon: '-111.64' },
+                      { label: 'South Valley', lat: '40.52', lon: '-111.90' },
+                      { label: 'Point of Mountain', lat: '40.45', lon: '-111.89' },
+                    ].map(preset => (
+                      <button
+                        key={preset.label}
+                        onClick={() => { setWuSearchLat(preset.lat); setWuSearchLon(preset.lon); }}
+                        className="text-[10px] px-2 py-1 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 hover:bg-cyan-500/20 transition-colors"
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      type="text" value={wuSearchLat} onChange={e => setWuSearchLat(e.target.value)}
+                      placeholder="Lat (e.g. 40.35)" className="flex-1 px-3 py-2 rounded-lg text-sm bg-slate-800 border border-slate-600 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500"
+                    />
+                    <input
+                      type="text" value={wuSearchLon} onChange={e => setWuSearchLon(e.target.value)}
+                      placeholder="Lon (e.g. -111.90)" className="flex-1 px-3 py-2 rounded-lg text-sm bg-slate-800 border border-slate-600 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500"
+                    />
+                    <button
+                      onClick={searchWuNearby} disabled={wuSearching || !wuSearchLat || !wuSearchLon}
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold bg-cyan-500 text-white hover:bg-cyan-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    >
+                      {wuSearching ? 'Searching...' : 'Search'}
+                    </button>
+                  </div>
+                  {wuResults && !wuResults.error && (
+                    <div className="mt-3 space-y-1 max-h-60 overflow-y-auto">
+                      {wuResults.length === 0 ? (
+                        <p className="text-xs text-slate-500">No stations found nearby</p>
+                      ) : wuResults.map((s, i) => (
+                        <div key={i} className="flex items-center justify-between text-xs p-2 rounded-lg bg-white/[0.02] border border-white/[0.04]">
+                          <div>
+                            <span className="font-bold text-cyan-400 font-mono">{s.id}</span>
+                            <span className="text-slate-400 ml-2">{s.name}</span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span className="text-slate-500 tabular-nums">{s.distMi?.toFixed(1)} mi</span>
+                            <span className={`text-[10px] font-bold ${s.qcStatus === 1 ? 'text-emerald-400' : 'text-red-400'}`}>
+                              {s.qcStatus === 1 ? 'Active' : 'Stale'}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {wuResults?.error && (
+                    <div className="mt-3 p-2 rounded-lg bg-red-500/10 border border-red-500/20 text-[11px] text-red-400">
+                      Search failed: {wuResults.error}
+                    </div>
+                  )}
+                </div>
+
+                {/* Cross-Validation Health */}
+                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+                  <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-violet-400" />
+                    Cross-Validation Health
+                    {cvHealth && (
+                      <span className={`ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                        cvHealth.overallConfidence >= 0.7 ? 'bg-emerald-500/15 text-emerald-400'
+                        : cvHealth.overallConfidence >= 0.4 ? 'bg-amber-500/15 text-amber-400'
+                        : 'bg-red-500/15 text-red-400'
+                      }`}>
+                        {(cvHealth.overallConfidence * 100).toFixed(0)}% confidence
+                      </span>
+                    )}
+                  </h3>
+
+                  {cvLoading && !cvHealth && (
+                    <div className="text-center py-6 text-slate-500 text-xs animate-pulse">Loading cross-validation data...</div>
+                  )}
+
+                  {cvHealth && (
+                    <>
+                      <div className="grid grid-cols-4 gap-3 mb-4">
+                        <div className="text-center">
+                          <div className="text-lg font-bold text-white tabular-nums">{cvHealth.totalPairs}</div>
+                          <div className="text-[10px] text-slate-500">Paired Stations</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-lg font-bold text-emerald-400 tabular-nums">{cvHealth.bothOnlineCount}</div>
+                          <div className="text-[10px] text-slate-500">Both Online</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-lg font-bold text-sky-400 tabular-nums">{cvHealth.crossValidatedCount}</div>
+                          <div className="text-[10px] text-slate-500">Agreeing</div>
+                        </div>
+                        <div className="text-center">
+                          <div className={`text-lg font-bold tabular-nums ${
+                            cvHealth.overallConfidence >= 0.7 ? 'text-emerald-400' : cvHealth.overallConfidence >= 0.4 ? 'text-amber-400' : 'text-red-400'
+                          }`}>{(cvHealth.overallConfidence * 100).toFixed(0)}%</div>
+                          <div className="text-[10px] text-slate-500">Overall</div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        {cvHealth.pairs.map((pair) => {
+                          const confColor = pair.confidence >= 0.7 ? 'emerald' : pair.confidence >= 0.4 ? 'amber' : 'red';
+                          return (
+                            <div key={`${pair.synopticId}:${pair.wuId}`} className="p-3 rounded-lg bg-white/[0.02] border border-white/[0.04]">
+                              <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs font-bold text-white">{pair.name}</span>
+                                  {pair.latestAgrees === true && (
+                                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400">AGREE</span>
+                                  )}
+                                  {pair.latestAgrees === false && (
+                                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-red-500/15 text-red-400">DIVERGENT</span>
+                                  )}
+                                </div>
+                                <span className={`text-[10px] font-bold text-${confColor}-400 tabular-nums`}>
+                                  {(pair.confidence * 100).toFixed(0)}%
+                                </span>
+                              </div>
+                              <div className="grid grid-cols-2 gap-3 text-[10px]">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-slate-500">Synoptic <span className="font-mono text-slate-400">{pair.synopticId}</span></span>
+                                  <span className={pair.synOnline ? 'text-emerald-400 font-bold' : 'text-red-400'}>
+                                    {pair.synOnline ? `${pair.latestSynSpeed?.toFixed(1) ?? '—'} mph` : 'OFFLINE'}
+                                  </span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-slate-500">WU <span className="font-mono text-slate-400">{pair.wuId}</span></span>
+                                  <span className={pair.wuOnline ? 'text-emerald-400 font-bold' : 'text-red-400'}>
+                                    {pair.wuOnline ? `${pair.latestWuSpeed?.toFixed(1) ?? '—'} mph` : 'OFFLINE'}
+                                  </span>
+                                </div>
+                              </div>
+                              {pair.totalRecords > 0 && (
+                                <div className="flex items-center gap-4 mt-2 text-[10px] text-slate-500">
+                                  <span>Agreement: <strong className="text-slate-300">{pair.agreementRate != null ? `${(pair.agreementRate * 100).toFixed(0)}%` : '—'}</strong></span>
+                                  <span>Speed ratio: <strong className="text-slate-300">{pair.rollingSpeedRatio?.toFixed(3) ?? '—'}</strong></span>
+                                  <span>Records: <strong className="text-slate-300">{pair.totalRecords}</strong></span>
+                                </div>
+                              )}
+                              {pair.totalRecords === 0 && (
+                                <p className="mt-2 text-[10px] text-slate-600">No cross-validation records yet — data will appear after both sources report simultaneously.</p>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      <button
+                        onClick={fetchCrossValidationHealth}
+                        disabled={cvLoading}
+                        className="mt-3 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold bg-violet-500/10 border border-violet-500/20 text-violet-400 hover:bg-violet-500/20 disabled:opacity-40 transition-colors"
+                      >
+                        <RefreshCw className={`w-3 h-3 ${cvLoading ? 'animate-spin' : ''}`} />
+                        Refresh Cross-Validation
+                      </button>
+                    </>
+                  )}
+
+                  {!cvHealth && !cvLoading && (
+                    <div className="text-center py-6">
+                      <p className="text-xs text-slate-600 mb-2">Cross-validation engine not yet initialized.</p>
+                      <button
+                        onClick={fetchCrossValidationHealth}
+                        className="text-[11px] font-bold text-violet-400 hover:text-violet-300 transition-colors"
+                      >
+                        Initialize Now
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Spot-by-Spot Station Health */}

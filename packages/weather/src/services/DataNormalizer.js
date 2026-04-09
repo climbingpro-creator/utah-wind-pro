@@ -3,6 +3,7 @@ import { safeToFixed } from '../utils/safeToFixed';
 import { predictThermal } from './ThermalPredictor';
 import { analyzePropagation } from './ThermalPropagation';
 import { learningSystem } from './LearningSystem';
+import { crossValidationEngine, CROSS_VALIDATION_PAIRS } from './CrossValidationEngine';
 
 // Learned weights cache for DataNormalizer's probability calculation
 let _learnedWeightsForNorm = null;
@@ -301,8 +302,23 @@ export class LakeState {
     function addStationOrShadow(stationConfig) {
       if (addedIds.has(stationConfig.id)) return;
       const station = stationMap.get(stationConfig.id);
-      if (station) {
-        const info = STATION_INFO[stationConfig.id] || {};
+      const shadow = SHADOW_MAP[stationConfig.id];
+      const wu = shadow ? wuLookup.get(shadow.wuId) : null;
+      const hasSyn = station?.windSpeed != null;
+      const hasWu = wu?.windSpeed != null;
+      const info = STATION_INFO[stationConfig.id] || {};
+
+      if (hasSyn && hasWu) {
+        const speedDelta = Math.abs(station.windSpeed - wu.windSpeed);
+        const dirA = station.windDirection;
+        const dirB = wu.windDirection;
+        let dirDelta = null;
+        if (dirA != null && dirB != null) {
+          dirDelta = Math.abs(dirA - dirB) % 360;
+          if (dirDelta > 180) dirDelta = 360 - dirDelta;
+        }
+        const agrees = speedDelta <= 2 && (dirDelta == null || dirDelta <= 30);
+
         state.wind.stations.push({
           id: station.stationId,
           name: stationConfig.name,
@@ -314,31 +330,57 @@ export class LakeState {
           role: stationConfig.role,
           network: info.network,
           isPWS: false,
+          crossValidated: true,
+          crossValidationAgrees: agrees,
+          confidence: agrees ? 'HIGH' : 'DIVERGENT',
+          _wuComparison: {
+            wuId: shadow.wuId,
+            wuSpeed: wu.windSpeed,
+            wuDir: wu.windDirection,
+            speedDelta,
+            dirDelta,
+          },
         });
         addedIds.add(stationConfig.id);
-        return;
-      }
-      const shadow = SHADOW_MAP[stationConfig.id];
-      if (shadow) {
-        const wu = wuLookup.get(shadow.wuId);
-        if (wu && wu.windSpeed != null) {
-          state.wind.stations.push({
-            id: stationConfig.id,
-            name: `${stationConfig.name} (WU)`,
-            speed: wu.windSpeed,
-            gust: wu.windGust,
-            direction: wu.windDirection,
-            temperature: wu.temperature,
-            elevation: stationConfig.elevation,
-            role: stationConfig.role,
-            network: 'WU-shadow',
-            isPWS: true,
-            isShadow: true,
-            shadowSource: shadow.wuId,
-          });
-          addedIds.add(stationConfig.id);
-          addedIds.add(shadow.wuId);
-        }
+        addedIds.add(shadow.wuId);
+      } else if (hasSyn) {
+        state.wind.stations.push({
+          id: station.stationId,
+          name: stationConfig.name,
+          speed: station.windSpeed,
+          gust: station.windGust,
+          direction: station.windDirection,
+          temperature: station.temperature,
+          elevation: stationConfig.elevation,
+          role: stationConfig.role,
+          network: info.network,
+          isPWS: false,
+          crossValidated: false,
+          confidence: 'MEDIUM',
+        });
+        addedIds.add(stationConfig.id);
+      } else if (hasWu) {
+        const liveRatio = crossValidationEngine.getCalibratedSpeedRatio(stationConfig.id);
+        const ratio = (liveRatio && liveRatio !== 1.0) ? liveRatio : 1.0;
+        state.wind.stations.push({
+          id: stationConfig.id,
+          name: `${stationConfig.name} (WU)`,
+          speed: ratio !== 1.0 ? wu.windSpeed / ratio : wu.windSpeed,
+          gust: ratio !== 1.0 && wu.windGust != null ? wu.windGust / ratio : wu.windGust,
+          direction: wu.windDirection,
+          temperature: wu.temperature,
+          elevation: stationConfig.elevation,
+          role: stationConfig.role,
+          network: 'WU-shadow',
+          isPWS: true,
+          isShadow: true,
+          shadowSource: shadow.wuId,
+          confidence: 'MEDIUM',
+          _speedRatio: ratio,
+          _ratioSource: liveRatio !== 1.0 ? 'cross-validation' : 'static',
+        });
+        addedIds.add(stationConfig.id);
+        addedIds.add(shadow.wuId);
       }
     }
 

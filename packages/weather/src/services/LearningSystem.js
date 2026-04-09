@@ -221,6 +221,7 @@ class LearningSystem {
       minute: now.getMinutes(),
       lakeId,
       stationId,
+      dataSource: data.dataSource || 'unknown',
       
       // Actual measurements
       windSpeed: data.windSpeed,
@@ -1394,6 +1395,34 @@ class LearningSystem {
       };
     }
     return this.getDefaultWeights();
+  }
+
+  /**
+   * Reset all learned weights and accuracy data.
+   * Used when data sources change (e.g. Synoptic restored) so the engine
+   * recalibrates on the new, more accurate inputs instead of old biases.
+   * Returns the bootstrap weights that the system falls back to.
+   */
+  async resetWeights(reason = 'manual') {
+    await this.initialize();
+
+    const stores = [STORES.MODEL_WEIGHTS, STORES.ACCURACY, STORES.PATTERNS];
+    for (const storeName of stores) {
+      try {
+        const tx = this.db.transaction(storeName, 'readwrite');
+        tx.objectStore(storeName).clear();
+        await new Promise((resolve) => {
+          tx.oncomplete = resolve;
+          tx.onerror = resolve;
+        });
+      } catch (_e) { /* store may not exist yet */ }
+    }
+
+    this.currentWeights = this._getBootstrapWeights();
+    this._pushWeightsToPredictor();
+
+    console.log(`Learning weights reset (reason: ${reason}). Recalibration will begin with next data cycle.`);
+    return this.currentWeights;
   }
 
   async saveWeights(weights) {

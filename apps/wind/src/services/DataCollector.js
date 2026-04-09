@@ -19,7 +19,7 @@ import { setLearnedWeights, setStatisticalModels as setThermalStatisticalModels 
 import { setParaglidingLearnedWeights, predictParagliding } from './ParaglidingPredictor';
 import { setBoatingLearnedWeights } from './BoatingPredictor';
 
-import { setWindFieldLearnedWeights } from '@utahwind/weather';
+import { setWindFieldLearnedWeights, setCrossValidationEngine, crossValidationEngine } from '@utahwind/weather';
 import { scoreSessionForActivity } from './ActivityScoring';
 import { predictWindEvents, setWindEventLearnedPatterns, getUpstreamSignals, setStatisticalModels as setWindEventStatisticalModels } from './WindEventPredictor';
 import { setLearnedLags, setLearnedSessions, validateHistorical, lagAdjustmentsFromValidation } from '@utahwind/weather';
@@ -66,6 +66,8 @@ class DataCollector {
     console.log('Starting Data Collector for Learning System...');
     
     await learningSystem.initialize();
+    await crossValidationEngine.initialize();
+    setCrossValidationEngine(crossValidationEngine);
     this.isRunning = true;
 
     // Load previously learned propagation lags
@@ -438,6 +440,56 @@ class DataCollector {
       console.error('Backfill error (non-fatal):', error.message);
     }
 
+    // SOURCE 3: WU PWS 24hr history for shadow/priority stations
+    try {
+      const { WU_PRIORITY_STATIONS } = await import('@utahwind/weather/src/config/wuPwsNetwork.js');
+      const WU_BACKFILL_STATIONS = (WU_PRIORITY_STATIONS || []).slice(0, 8);
+
+      if (WU_BACKFILL_STATIONS.length > 0) {
+        let wuRecordCount = 0;
+        const pause = (ms) => new Promise(r => setTimeout(r, ms));
+
+        for (const wuId of WU_BACKFILL_STATIONS) {
+          const history = await weatherService.getWuPwsHistory(wuId);
+          if (!history || history.length === 0) continue;
+
+          for (const reading of history) {
+            if (reading.windSpeed == null) continue;
+            const wind = { speed: reading.windSpeed, gust: reading.windGust, direction: reading.windDirection };
+            const conditions = { temperature: reading.temperature, pressure: null };
+            const lakes = getAllLakeIds();
+            for (const lakeId of lakes) {
+              await learningSystem.recordActual(lakeId, wuId, {
+                windSpeed: reading.windSpeed,
+                windGust: reading.windGust,
+                windDirection: reading.windDirection,
+                temperature: reading.temperature,
+                pressure: null,
+                dataSource: 'wu-pws',
+                activityScores: {
+                  kiting: scoreSessionForActivity('kiting', wind, conditions),
+                  sailing: scoreSessionForActivity('sailing', wind, conditions),
+                  paragliding: scoreSessionForActivity('paragliding', wind, conditions),
+                  fishing: scoreSessionForActivity('fishing', wind, conditions),
+                  boating: scoreSessionForActivity('boating', wind, conditions),
+                  paddling: scoreSessionForActivity('paddling', wind, conditions),
+                },
+              }, reading.timestamp);
+              wuRecordCount++;
+            }
+          }
+          await pause(1500);
+        }
+
+        if (wuRecordCount > 0) {
+          console.log(`WU PWS backfill: ${wuRecordCount} observations from ${WU_BACKFILL_STATIONS.length} stations`);
+          this.collectionStats.actualsCollected += wuRecordCount;
+        }
+      }
+    } catch (error) {
+      console.log('WU PWS backfill unavailable (non-fatal):', error.message);
+    }
+
     // After backfill, verify predictions and conditionally learn (requires >=10 accuracy records)
     try {
       await learningSystem.verifyPredictions();
@@ -500,10 +552,53 @@ class DataCollector {
             windDirection: station.windDirection,
             temperature: station.temperature,
             pressure: station.pressure,
+            dataSource: station._source || 'synoptic',
             activityScores: scoreAll(wind, conditions),
           });
           this.collectionStats.actualsCollected++;
         }
+      }
+
+      // Parallel: collect WU PWS live readings for cross-validation
+      try {
+        const { getWuStationsForSpot, normalizeWuObservation, WU_PRIORITY_STATIONS } = await import('@utahwind/weather/src/config/wuPwsNetwork.js');
+        const wuIdSet = new Set();
+        for (const lakeId of lakes) {
+          for (const s of getWuStationsForSpot(lakeId)) wuIdSet.add(s.id);
+        }
+        for (const id of (WU_PRIORITY_STATIONS || [])) wuIdSet.add(id);
+        const wuIds = [...wuIdSet];
+
+        if (wuIds.length > 0) {
+          const wuRaw = await weatherService.getWuPwsCurrent(wuIds);
+          const wuNormalized = wuRaw.map(normalizeWuObservation).filter(Boolean);
+
+          for (const wu of wuNormalized) {
+            if (wu.windSpeed == null) continue;
+            const wind = { speed: wu.windSpeed, gust: wu.windGust, direction: wu.windDirection };
+            const conditions = { temperature: wu.temperature, pressure: wu.pressure };
+            for (const lakeId of lakes) {
+              await learningSystem.recordActual(lakeId, wu.stationId, {
+                windSpeed: wu.windSpeed,
+                windGust: wu.windGust,
+                windDirection: wu.windDirection,
+                temperature: wu.temperature,
+                pressure: wu.pressure,
+                dataSource: 'wu-pws',
+                activityScores: scoreAll(wind, conditions),
+              });
+              this.collectionStats.actualsCollected++;
+            }
+          }
+
+          // Run cross-validation comparison
+          try {
+            const { crossValidationEngine } = await import('@utahwind/weather/src/services/CrossValidationEngine.js');
+            crossValidationEngine.compare(synopticData, wuNormalized);
+          } catch (_e) { /* cross-validation engine not yet available */ }
+        }
+      } catch (wuErr) {
+        console.warn('WU PWS live collection failed (non-fatal):', wuErr.message);
       }
 
       // Buffer latest reading per lake for wind event prediction
@@ -538,6 +633,7 @@ class DataCollector {
           windDirection: ambientData.windDirection,
           temperature: ambientData.temperature,
           pressure: ambientData.pressure,
+          dataSource: 'ambient',
           activityScores: scoreAll(pwsWind, pwsConditions),
         });
         this.collectionStats.actualsCollected++;
@@ -574,7 +670,7 @@ class DataCollector {
         const lakeId = lakes[i];
         const data = await weatherService.getDataForLake(lakeId);
         
-        const lakeState = LakeState.fromRawData(lakeId, data.ambient, data.synoptic);
+        const lakeState = LakeState.fromRawData(lakeId, data.ambient, data.synoptic, null, data.wuPws);
         
         if (lakeState.thermalPrediction) {
           // Record the prediction

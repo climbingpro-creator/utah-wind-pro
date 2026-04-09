@@ -154,6 +154,7 @@ class WeatherService {
           windGust: station.OBSERVATIONS?.wind_gust_value_1?.value,
           pressure: station.OBSERVATIONS?.altimeter_value_1?.value 
             || station.OBSERVATIONS?.sea_level_pressure_value_1?.value,
+          _source: station._source || 'synoptic',
         }));
       }
       
@@ -367,6 +368,26 @@ class WeatherService {
       wuPws: normalizedWu,
       fetchedAt: new Date().toISOString(),
     };
+  }
+
+  /**
+   * Fetch 24hr history for a single WU PWS station.
+   * Returns array of normalized observations or empty array on failure.
+   */
+  async getWuPwsHistory(stationId) {
+    try {
+      const { normalizeWuHistoryObs } = await import('../config/wuPwsNetwork.js');
+      const response = await axiosWithRetry({
+        method: 'get',
+        url: apiUrl('/api/weather'),
+        params: { source: 'wu-pws-history', stationId },
+      });
+      const observations = response.data?.observations || [];
+      return observations.map(normalizeWuHistoryObs).filter(Boolean);
+    } catch (err) {
+      console.warn(`WU PWS history failed for ${stationId}:`, err.message);
+      return [];
+    }
   }
 
   async getHistoryForLake(lakeId, hours = 3) {
