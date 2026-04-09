@@ -144,7 +144,7 @@ async function handleAmbient(res) {
   }
 
   const data = await response.json();
-  res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=120');
+  res.setHeader('Cache-Control', 's-maxage=10, stale-while-revalidate=30');
   return res.status(200).json(data);
 }
 
