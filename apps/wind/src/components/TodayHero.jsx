@@ -132,7 +132,7 @@ function getActivityVerdict(id, speed, gust, thermalPrediction, _boatingPredicti
       const sessionStr = session ? ` — ${sessionLabel(session.avgMinutes)} expected` : '';
       return {
         status: 'caution', label: 'MARGINAL',
-        reason: `${Math.round(speed)} mph — barely rideable, may not sustain${sessionStr}`,
+        reason: `${Math.round(speed)} mph — barely usable, may not sustain${sessionStr}`,
         color: 'amber',
       };
     }
@@ -195,10 +195,10 @@ function getActivityVerdict(id, speed, gust, thermalPrediction, _boatingPredicti
       const tooLight = cfg.thresholds?.tooLight || 6;
       const sessionStr = session ? ` — ${sessionLabel(session.avgMinutes)} session` : '';
       if (isNonThermalWind && gf < 1.4) {
-        return { status: 'go', label: 'RIDEABLE', reason: `${Math.round(speed)} mph ${isNorthFlow ? 'north flow' : ''} — clean wind${sessionStr}`, color: 'lime' };
+        return { status: 'go', label: 'USABLE', reason: `${Math.round(speed)} mph ${isNorthFlow ? 'north flow' : ''} — clean wind${sessionStr}`, color: 'lime' };
       }
       if (gf < 1.3) {
-        return { status: 'caution', label: 'FOILABLE', reason: `${Math.round(speed)} mph — light but rideable${sessionStr}`, color: 'amber' };
+        return { status: 'caution', label: 'FOILABLE', reason: `${Math.round(speed)} mph — light but usable${sessionStr}`, color: 'amber' };
       }
       if (isNorthFlow || isNonThermalWind) {
         return { status: 'wait', label: 'BUILDING', reason: `${Math.round(speed)} mph ${isNorthFlow ? 'north flow' : ''} — watching for increase`, color: 'amber' };
@@ -410,7 +410,7 @@ function ForecastSparkline({ hours, isDark, bgImage }) {
   const getSegmentLabel = (speed) => {
     if (speed >= 18) return 'Strong';
     if (speed >= 12) return 'Ideal';
-    if (speed >= 8) return 'Rideable';
+    if (speed >= 8) return 'Usable';
     return 'Light';
   };
 
@@ -423,7 +423,7 @@ function ForecastSparkline({ hours, isDark, bgImage }) {
         </span>
         <div className="flex items-center gap-2 ml-auto text-[9px]">
           <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-slate-500" /> Light</span>
-          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-cyan-500" /> Rideable</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-cyan-500" /> Usable</span>
           <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500" /> Ideal</span>
           <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500" /> Strong</span>
         </div>
@@ -675,7 +675,7 @@ export default function TodayHero({ windSpeed, windGust, windDirection, thermalP
                   Rest Day
                 </h2>
                 <p className={`text-sm sm:text-base mt-2 font-medium leading-relaxed ${bgImage ? 'text-white/50' : 'text-[var(--text-tertiary)]'}`}>
-                  No rideable wind forecasted today. Check back tomorrow or explore other activities.
+                  No usable wind forecasted today. Check back tomorrow or explore other activities.
                 </p>
               </div>
               <div className="text-right flex-shrink-0">

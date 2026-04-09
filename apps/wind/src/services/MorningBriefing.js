@@ -57,7 +57,11 @@ function formatHour(hour) {
 }
 
 function dirLabel(dir) {
-  if (!dir) return '';
+  if (dir == null) return '';
+  if (typeof dir === 'number') {
+    const cardinals = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+    return DIRECTION_LABELS[cardinals[Math.round(((dir % 360) + 360) % 360 / 22.5) % 16]] || cardinals[Math.round(((dir % 360) + 360) % 360 / 22.5) % 16];
+  }
   const upper = String(dir).toUpperCase().trim();
   return DIRECTION_LABELS[upper] || upper;
 }
@@ -141,17 +145,22 @@ function buildUpstreamSnippet(upstream) {
   if (!upstream) return '';
   const parts = [];
   if (upstream.kslcSpeed != null) {
-    parts.push(`KSLC pushing ${upstream.kslcSpeed} mph ${upstream.kslcDirection || ''}`);
+    parts.push(`KSLC pushing ${Math.round(upstream.kslcSpeed)} mph ${dirLabel(upstream.kslcDirection) || ''}`);
   }
   if (upstream.kpvuSpeed != null) {
-    parts.push(`KPVU at ${upstream.kpvuSpeed} mph ${upstream.kpvuDirection || ''}`);
+    parts.push(`KPVU at ${Math.round(upstream.kpvuSpeed)} mph ${dirLabel(upstream.kpvuDirection) || ''}`);
   }
   return parts.join(', ');
 }
 
+function toPercent(v) {
+  if (v == null) return 0;
+  return v >= 1 ? Math.round(v) : Math.round(v * 100);
+}
+
 function buildWindSnippet(thermal, regime) {
   if (!thermal || thermal.probability == null) return '';
-  const pct = Math.round(thermal.probability * 100);
+  const pct = toPercent(thermal.probability);
   const start = thermal.startHour ? formatHour(thermal.startHour) : null;
   const peak = thermal.peakHour ? formatHour(thermal.peakHour) : null;
   const end = thermal.endHour ? formatHour(thermal.endHour) : null;
@@ -216,7 +225,7 @@ function briefWind(activity, params) {
     }
   } else if (excitement === 2) {
     if (isNonThermal && speed >= foilMin) {
-      headline = `${dirLabel(dir) || 'North'} flow active — foil-rideable for ${activity}`;
+      headline = `${dirLabel(dir) || 'North'} flow active — foil-usable for ${activity}`;
     } else {
       headline = `Marginal ${activity} conditions — could improve`;
     }
@@ -230,7 +239,7 @@ function briefWind(activity, params) {
 
   const bodyParts = [];
   if (speed > 0) {
-    bodyParts.push(`Currently ${speed} mph${gust > speed ? ` gusting ${gust}` : ''} from the ${dirLabel(dir) || 'variable directions'}. ${gustDescription(gf)}.`);
+    bodyParts.push(`Currently ${Math.round(speed)} mph${gust > speed ? ` gusting ${Math.round(gust)}` : ''} from the ${dirLabel(dir) || 'variable directions'}. ${gustDescription(gf)}.`);
   } else {
     bodyParts.push('Calm right now.');
   }
@@ -283,14 +292,13 @@ function briefWind(activity, params) {
   }
 
   if (isNonThermal && speed >= foilMin) {
-    bullets.push({ icon: '🧭', text: `${dirLabel(dir) || 'North'} flow: ${speed} mph sustained, ${gustDescription(gf)}` });
+    bullets.push({ icon: '🧭', text: `${dirLabel(dir) || 'North'} flow: ${Math.round(speed)} mph sustained, ${gustDescription(gf)}` });
   }
 
-  // Thermal probability — the most important number
   if (!isNonThermal && prob > 0) {
-    const pctStr = prob >= 1 ? `${Math.round(prob)}%` : `${Math.round(prob * 100)}%`;
-    const qualifier = prob >= 0.7 || prob >= 70 ? 'strong' : prob >= 0.4 || prob >= 40 ? 'moderate' : 'possible';
-    bullets.push({ icon: '🌡️', text: `${pctStr} thermal probability — ${qualifier} signal` });
+    const pctVal = toPercent(prob);
+    const qualifier = pctVal >= 70 ? 'strong' : pctVal >= 40 ? 'moderate' : 'possible';
+    bullets.push({ icon: '🌡️', text: `${pctVal}% thermal probability — ${qualifier} signal` });
   }
 
   if (thermal.startHour && prob >= 0.5 && !isNonThermal) {
@@ -300,7 +308,7 @@ function briefWind(activity, params) {
   }
 
   if (speed > 0) {
-    bullets.push({ icon: '💨', text: `${speed}–${gust} mph ${dirLabel(dir) || ''} — ${gustDescription(gf)}` });
+    bullets.push({ icon: '💨', text: `${Math.round(speed)}–${Math.round(gust)} mph ${dirLabel(dir) || ''} — ${gustDescription(gf)}` });
   }
 
   if (upstreamSnip) {
@@ -324,13 +332,13 @@ function briefWind(activity, params) {
 
   let bestAction = '';
   if (isNonThermal && speed >= foilMin && excitement >= 2) {
-    const gearNote = speed >= thresholds.rideable[0] ? 'full-power conditions' : 'foil-rideable';
+    const gearNote = speed >= thresholds.rideable[0] ? 'full-power conditions' : 'foil-usable';
     bestAction = `Get on the water — ${Math.round(speed)} mph ${dirLabel(dir) || 'north'} flow, ${gearNote}`;
   } else if (excitement >= 3 && thermal.startHour) {
     const arriveHour = Math.max(0, thermal.startHour - 1);
     bestAction = `Be rigged and ready by ${formatHour(arriveHour)} — wind onset expected ${formatHour(thermal.startHour)}`;
   } else if (excitement >= 3) {
-    bestAction = `Get out there — ${speed} mph and ${gustDescription(gf)}`;
+    bestAction = `Get out there — ${Math.round(speed)} mph and ${gustDescription(gf)}`;
   } else if (prob >= 0.5) {
     bestAction = `Watch upstream stations after ${formatHour(thermal.startHour || 12)} for confirmation`;
   } else if (isNonThermal && speed >= 5) {
@@ -369,9 +377,9 @@ function briefCalm(activity, params) {
 
   const bodyParts = [];
   if (speed <= 5) {
-    bodyParts.push(`Water is ${speed <= 2 ? 'glass' : 'nearly glass'} at ${speed} mph.`);
+    bodyParts.push(`Water is ${speed <= 2 ? 'glass' : 'nearly glass'} at ${Math.round(speed)} mph.`);
   } else {
-    bodyParts.push(`Currently ${speed} mph${gust > speed ? ` gusting ${gust}` : ''} — choppy for ${activity}.`);
+    bodyParts.push(`Currently ${Math.round(speed)} mph${gust > speed ? ` gusting ${Math.round(gust)}` : ''} — choppy for ${activity}.`);
   }
 
   if (glassInfo.glassUntil) {
@@ -395,7 +403,7 @@ function briefCalm(activity, params) {
   }
 
   if (speed > 0) {
-    bullets.push({ icon: '💨', text: `Current: ${speed} mph ${dirLabel(currentWind?.direction) || ''}` });
+    bullets.push({ icon: '💨', text: `Current: ${Math.round(speed)} mph ${dirLabel(currentWind?.direction) || ''}` });
   }
 
   if (upstreamSnip) {
@@ -461,7 +469,7 @@ function briefFishing(params) {
   }
 
   if (speed > 0) {
-    bodyParts.push(`Wind ${speed} mph ${dirLabel(currentWind?.direction) || ''} — ${speed <= 8 ? 'nice ripple on the water' : 'choppy, fish sheltered banks'}.`);
+    bodyParts.push(`Wind ${Math.round(speed)} mph ${dirLabel(currentWind?.direction) || ''} — ${speed <= 8 ? 'nice ripple on the water' : 'choppy, fish sheltered banks'}.`);
   }
 
   const upstreamSnip = buildUpstreamSnippet(upstream);
@@ -557,9 +565,9 @@ function briefParagliding(params) {
 
   const bodyParts = [];
   if (speed > 0) {
-    const gustStr = gust > speed ? ` gusting ${gust}` : '';
+    const gustStr = gust > speed ? ` gusting ${Math.round(gust)}` : '';
     const laminarStr = laminar ? ' (laminar)' : gf > 0.4 ? ' (gusty — caution)' : '';
-    bodyParts.push(`${speed} mph${gustStr} from the ${dirLabel(dir) || 'variable'}${laminarStr}.`);
+    bodyParts.push(`${Math.round(speed)} mph${gustStr} from the ${dirLabel(dir) || 'variable'}${laminarStr}.`);
   }
 
   if (isActiveNorth && speed >= 5) {
@@ -584,7 +592,7 @@ function briefParagliding(params) {
   bullets.push({ icon: '🪂', text: `Recommended: ${siteRec}` });
 
   if (speed > 0) {
-    bullets.push({ icon: '💨', text: `${speed}–${gust} mph ${dirLabel(dir) || ''} — ${gustDescription(gustFactor(speed, gust))}` });
+    bullets.push({ icon: '💨', text: `${Math.round(speed)}–${Math.round(gust)} mph ${dirLabel(dir) || ''} — ${gustDescription(gustFactor(speed, gust))}` });
   }
 
   if (thermal.windType) {
@@ -611,7 +619,7 @@ function briefParagliding(params) {
   } else if (excitement >= 3 && thermal.startHour) {
     bestAction = `Set up at ${siteRec} by ${formatHour(thermal.startHour)} for best thermals`;
   } else if (excitement >= 3) {
-    bestAction = `Flyable now at ${siteRec} — ${speed} mph ${dirLabel(dir) || ''}`;
+    bestAction = `Flyable now at ${siteRec} — ${Math.round(speed)} mph ${dirLabel(dir) || ''}`;
   } else if (excitement === 2 && isActiveNorth && speed >= 5 && laminar) {
     bestAction = `Light north flow at PotM North — flyable for experienced pilots`;
   } else if (swingWarn) {
@@ -638,16 +646,16 @@ function briefMinimal(activity, params) {
   const dir = currentWind?.direction;
 
   const headline = speed > 0
-    ? `${speed} mph ${dirLabel(dir) || ''} — limited forecast data available`
+    ? `${Math.round(speed)} mph ${dirLabel(dir) || ''} — limited forecast data available`
     : 'Calm conditions — limited forecast data available';
 
   return {
     headline,
     body: speed > 0
-      ? `Currently seeing ${speed} mph from the ${dirLabel(dir) || 'unknown direction'}. Full forecast data isn't available yet — check back soon for a complete ${activity} briefing.`
+      ? `Currently seeing ${Math.round(speed)} mph from the ${dirLabel(dir) || 'unknown direction'}. Full forecast data isn't available yet — check back soon for a complete ${activity} briefing.`
       : `No measurable wind right now. Full forecast data isn't available yet — check back soon for a complete ${activity} briefing.`,
     bullets: [
-      { icon: '💨', text: speed > 0 ? `${speed} mph ${dirLabel(dir) || ''}` : 'Calm' },
+      { icon: '💨', text: speed > 0 ? `${Math.round(speed)} mph ${dirLabel(dir) || ''}` : 'Calm' },
       { icon: '📡', text: 'Waiting on upstream data' },
       { icon: '🔄', text: 'Check back for full briefing' },
     ],

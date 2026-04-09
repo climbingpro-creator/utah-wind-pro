@@ -246,7 +246,7 @@ const SmartTimeline = ({
           )}% of upstream wind reaching lake
         </span>
         <span>
-          {forecast.thermalPrediction.probability}% {
+          {Math.round(forecast.thermalPrediction.probability >= 1 ? forecast.thermalPrediction.probability : forecast.thermalPrediction.probability * 100)}% {
             forecast.thermalPrediction.windType === 'north_flow' ? 'wind probability (north flow)'
             : forecast.thermalPrediction.windType === 'postfrontal' ? 'wind probability (clearing)'
             : forecast.thermalPrediction.windType === 'synoptic' ? 'wind probability'

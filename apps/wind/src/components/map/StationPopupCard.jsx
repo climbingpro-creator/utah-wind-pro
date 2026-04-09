@@ -223,7 +223,7 @@ export default function StationPopupCard({
  */
 const FOMO_TEASERS = [
   'Upcoming session detected!',
-  'AI has detected a rideable window in the next 48 hours.',
+  'AI has detected a usable window in the next 48 hours.',
   'A session window is forming — upgrade to see when.',
   'Our model found wind. Unlock Pro for exact timing.',
   'Rideable conditions ahead — details locked.',

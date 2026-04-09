@@ -25,7 +25,7 @@ const SPORT_PROFILES = {
       return Math.max(10, 80 - (s - 22) * 5);                                // Strong: decreasing
     },
     reasonTemplate: (peak, window) =>
-      `Rideable winds from ${window.startLabel} to ${window.endLabel}. Peak ${Math.round(peak.windSpeed)} mph at ${peak.label}.`,
+      `Usable winds from ${window.startLabel} to ${window.endLabel}. Peak ${Math.round(peak.windSpeed)} mph at ${peak.label}.`,
   },
 
   'windsurfing': {
@@ -46,7 +46,7 @@ const SPORT_PROFILES = {
       return Math.max(10, 80 - (s - 20) * 6);
     },
     reasonTemplate: (peak, window) =>
-      `Rideable wind from ${window.startLabel} to ${window.endLabel}. Peak ${Math.round(peak.windSpeed)} mph at ${peak.label}.`,
+      `Usable wind from ${window.startLabel} to ${window.endLabel}. Peak ${Math.round(peak.windSpeed)} mph at ${peak.label}.`,
   },
 
   'sailing': {
@@ -162,7 +162,7 @@ const SPORT_PROFILES = {
       return Math.max(10, 80 - (s - 22) * 4);
     },
     reasonTemplate: (peak, window) =>
-      `Rideable wind from ${window.startLabel} to ${window.endLabel}. Peak ${Math.round(peak.windSpeed)} mph at ${peak.label}.`,
+      `Usable wind from ${window.startLabel} to ${window.endLabel}. Peak ${Math.round(peak.windSpeed)} mph at ${peak.label}.`,
   },
 };
 
