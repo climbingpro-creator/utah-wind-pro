@@ -70,7 +70,7 @@ export default function PropagationBanner({ locationId, stationReadings, current
             <Clock className="w-3.5 h-3.5" />
             <span className="text-sm font-bold">{primary.etaMinutes}m</span>
           </div>
-          <div className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+          <div className={`text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
             ~{primary.etaTime}
           </div>
         </div>
@@ -82,7 +82,7 @@ export default function PropagationBanner({ locationId, stationReadings, current
           {alerts.slice(1, 3).map(a => {
             const s = URGENCY_STYLES[a.urgency] || URGENCY_STYLES.developing;
             return (
-              <div key={a.id} className={`flex items-center gap-1.5 text-[10px] px-2 py-1 rounded-lg ${isDark ? 'bg-slate-800/40 text-slate-400' : 'bg-white/60 text-slate-500'}`}>
+              <div key={a.id} className={`flex items-center gap-1.5 text-[10px] px-2 py-1 rounded-lg ${isDark ? 'bg-slate-800/40 text-slate-300' : 'bg-white/60 text-slate-600'}`}>
                 <Zap className={`w-3 h-3 ${s.icon}`} />
                 <span>{a.stationName}: {safeToFixed(a.upstreamSpeed, 0)} mph {a.dirLabel}</span>
                 <span className={`font-medium ${s.icon}`}>→ {a.expectedSpeed} mph by {a.etaTime}</span>

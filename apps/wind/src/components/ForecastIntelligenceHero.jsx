@@ -112,7 +112,7 @@ function SpotCard({ spot, rank, onSelect, bgImage }) {
         <div className={`text-base font-bold ${style.text}`}>
           {Math.round(spot.windSpeed)} mph
         </div>
-        <div className={`text-[10px] ${bgImage ? 'text-white/50' : 'text-[var(--text-tertiary)]'}`}>
+        <div className={`text-[10px] ${bgImage ? 'text-white/70' : 'text-[var(--text-secondary)]'}`}>
           {cardinal} {spot.windGust ? `G${Math.round(spot.windGust)}` : ''}
         </div>
       </div>
@@ -123,11 +123,11 @@ function SpotCard({ spot, rank, onSelect, bgImage }) {
       </div>
 
       {/* Confidence */}
-      <div className={`text-xs font-bold shrink-0 ${bgImage ? 'text-white/40' : 'text-[var(--text-tertiary)]'}`}>
+      <div className={`text-xs font-bold shrink-0 ${bgImage ? 'text-white/60' : 'text-[var(--text-secondary)]'}`}>
         {spot.confidence}%
       </div>
 
-      <ChevronRight className={`w-4 h-4 shrink-0 opacity-40 group-hover:opacity-100 transition-opacity ${bgImage ? 'text-white' : 'text-[var(--text-tertiary)]'}`} />
+      <ChevronRight className={`w-4 h-4 shrink-0 opacity-60 group-hover:opacity-100 transition-opacity ${bgImage ? 'text-white' : 'text-[var(--text-tertiary)]'}`} />
     </button>
   );
 }
@@ -280,11 +280,11 @@ export default function ForecastIntelligenceHero({
             {/* No Good Spots */}
             {goSpots.length === 0 && waitSpots.length === 0 && (
               <div className={`px-4 py-8 rounded-xl text-center ${bgImage ? 'bg-white/10' : 'bg-[var(--bg-card)] border border-[var(--border-color)]'}`}>
-                <Wind className={`w-10 h-10 mx-auto mb-3 ${bgImage ? 'text-white/30' : 'text-[var(--text-tertiary)]'}`} />
-                <p className={`text-sm font-medium ${bgImage ? 'text-white/60' : 'text-[var(--text-secondary)]'}`}>
-                  No {activityConfig?.name || 'rideable'} conditions right now
+                <Wind className={`w-10 h-10 mx-auto mb-3 ${bgImage ? 'text-white/50' : 'text-[var(--text-tertiary)]'}`} />
+                <p className={`text-sm font-medium ${bgImage ? 'text-white/70' : 'text-[var(--text-secondary)]'}`}>
+                  No {activityConfig?.name || 'usable'} conditions right now
                 </p>
-                <p className={`text-xs mt-1 ${bgImage ? 'text-white/40' : 'text-[var(--text-tertiary)]'}`}>
+                <p className={`text-xs mt-1 ${bgImage ? 'text-white/60' : 'text-[var(--text-tertiary)]'}`}>
                   Predictions updated every minute from live sensors
                 </p>
               </div>
@@ -306,7 +306,7 @@ export default function ForecastIntelligenceHero({
                 <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400`} title="Predictions calibrated from historical accuracy">
                   ML CALIBRATED
                 </span>
-                <span className={`text-[10px] ${bgImage ? 'text-white/40' : 'text-[var(--text-tertiary)]'}`}>
+                <span className={`text-[10px] ${bgImage ? 'text-white/60' : 'text-[var(--text-tertiary)]'}`}>
                   {predictions.length} spots
                 </span>
               </div>
@@ -321,7 +321,7 @@ export default function ForecastIntelligenceHero({
             <p className={`text-sm font-medium ${bgImage ? 'text-white/60' : 'text-[var(--text-secondary)]'}`}>
               Unable to load predictions
             </p>
-            <p className={`text-xs mt-1 ${bgImage ? 'text-white/40' : 'text-[var(--text-tertiary)]'}`}>
+            <p className={`text-xs mt-1 ${bgImage ? 'text-white/60' : 'text-[var(--text-tertiary)]'}`}>
               Check sensor connectivity
             </p>
           </div>

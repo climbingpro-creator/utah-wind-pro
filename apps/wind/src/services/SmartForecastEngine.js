@@ -43,7 +43,7 @@ const SCORE_LABELS = {
   paddling:    { high: 'Perfect', good: 'Great', ok: 'Some chop', low: 'Challenging', off: 'Stay home', emoji: ['⚠️','🌊','〰️','✨','🪞'] },
   fishing:     { high: 'Fish ON', good: 'Good bite', ok: 'Fair', low: 'Slow', off: 'Tough day', emoji: ['❌','〰️','〰️','✅','🎣'] },
   paragliding: { high: 'Epic', good: 'Flyable', ok: 'Marginal', low: 'Marginal', off: 'Grounded', emoji: ['❌','⚠️','⚠️','✅','🪂'] },
-  snowkiting:  { high: 'Send it', good: 'Good session', ok: 'Light but rideable', low: 'Barely', off: 'No wind', emoji: ['❌','〰️','〰️','✅','🔥'] },
+  snowkiting:  { high: 'Send it', good: 'Good session', ok: 'Light but usable', low: 'Barely', off: 'No wind', emoji: ['❌','〰️','〰️','✅','🔥'] },
 };
 
 function getLabel(activity, score) {

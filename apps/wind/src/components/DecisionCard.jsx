@@ -23,7 +23,8 @@ function getDecision(activity, windSpeed, windGust, thermalPrediction, boatingPr
   const gust = windGust ?? speed;
   const dir = windDirection;
   const thermal = thermalPrediction || {};
-  const prob = thermal.windProbability ?? thermal.probability ?? 0;
+  const rawProb = thermal.windProbability ?? thermal.probability ?? 0;
+  const prob = rawProb >= 1 ? Math.round(rawProb) : Math.round(rawProb * 100);
   const startHour = thermal.startHour;
   const endHour = thermal.endHour;
   const now = new Date().getHours();
@@ -60,7 +61,7 @@ function getDecision(activity, windSpeed, windGust, thermalPrediction, boatingPr
         decision: 'GO',
         headline: `GO — ${cfg.name} is on`,
         detail: `${Math.round(speed)} mph ${dirLabel(dir)}${untilStr}`,
-        action: briefing?.bestAction || (isPG ? 'Flyable conditions — head to launch' : `Conditions are ${goVerb}able — get out there`),
+        action: briefing?.bestAction || (isPG ? 'Flyable conditions — head to launch' : 'Conditions are usable — get out there'),
         color: 'emerald',
         icon: CheckCircle,
       };
@@ -76,7 +77,7 @@ function getDecision(activity, windSpeed, windGust, thermalPrediction, boatingPr
           : `Light wind session — bring your big kite or foil`);
         return {
           decision: 'GO',
-          headline: isPG ? `GO — light but flyable` : activity === 'sailing' ? `GO — light air` : `GO — light but rideable`,
+          headline: isPG ? `GO — light but flyable` : activity === 'sailing' ? `GO — light air` : `GO — light but usable`,
           detail: lightDetail,
           action: lightAction,
           color: 'lime',
@@ -373,7 +374,7 @@ export default function DecisionCard({
               {result.decision}
             </span>
             {locationName && (
-              <span className={`text-[11px] font-medium flex items-center gap-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+              <span className={`text-[11px] font-medium flex items-center gap-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                 <MapPin className="w-3 h-3" /> {locationName}
               </span>
             )}
@@ -381,7 +382,7 @@ export default function DecisionCard({
           <h3 className={`text-lg font-extrabold leading-snug ${isDark ? s.text.dark : s.text.light}`}>
             {result.headline}
           </h3>
-          <p className={`text-sm mt-1 leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+          <p className={`text-sm mt-1 leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
             {result.detail}
           </p>
         </div>
@@ -394,7 +395,7 @@ export default function DecisionCard({
               isDark ? 'bg-white/[0.04] text-slate-300' : 'bg-slate-100 text-slate-600'
             }`}>
               <span>{item.icon}</span>
-              <span className={isDark ? 'text-slate-500' : 'text-slate-400'}>{item.label}:</span>
+              <span className={isDark ? 'text-slate-400' : 'text-slate-500'}>{item.label}:</span>
               <span className="font-semibold">{item.value}</span>
             </div>
           ))}
@@ -405,7 +406,7 @@ export default function DecisionCard({
         <div className={`mt-3 px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 border ${isDark ? s.action.dark : s.action.light}`}>
           <Lightbulb className="w-4 h-4 shrink-0" />
           <span className="flex-1">{result.action}</span>
-          <ArrowRight className="w-4 h-4 shrink-0 opacity-50" />
+          <ArrowRight className="w-4 h-4 shrink-0 opacity-70" />
         </div>
       )}
     </div>

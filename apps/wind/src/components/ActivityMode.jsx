@@ -20,7 +20,7 @@ export const ACTIVITY_CONFIGS = {
     id: 'kiting',
     name: 'Kiting',
     icon: <Wind className="w-10 h-10" />,
-    description: 'Kiteboarding & Foiling — rideable 8+ mph, ideal 12-22',
+    description: 'Kiteboarding & Foiling — usable 8+ mph, ideal 12-22',
     heroImage: '/images/kiting-utah-lake.png',
     thresholds: {
       tooLight: 8,

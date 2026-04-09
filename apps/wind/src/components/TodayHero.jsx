@@ -99,7 +99,8 @@ function getActivityVerdict(id, speed, gust, thermalPrediction, _boatingPredicti
   const thermal = thermalPrediction || {};
   const thermalStart = thermal.startHour || 10;
   const thermalEnd = thermal.endHour || 17;
-  const prob = thermal.probability || 0;
+  const rawProb = thermal.probability || 0;
+  const prob = rawProb >= 1 ? Math.round(rawProb) : Math.round(rawProb * 100);
 
   const dominantChain = propagation?.dominant?.type;
   const session = dominantChain ? estimateSessionDuration(dominantChain, id) : null;
@@ -421,7 +422,7 @@ function ForecastSparkline({ hours, isDark, bgImage }) {
         <span className={`text-[10px] font-bold uppercase tracking-wider ${bgImage ? 'text-white/50' : 'text-[var(--text-tertiary)]'}`}>
           24-Hour Forecast
         </span>
-        <div className="flex items-center gap-2 ml-auto text-[9px]">
+        <div className={`flex items-center gap-2 ml-auto text-[9px] font-medium ${bgImage ? 'text-white/70' : 'text-[var(--text-secondary)]'}`}>
           <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-slate-500" /> Light</span>
           <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-cyan-500" /> Usable</span>
           <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500" /> Ideal</span>
@@ -639,7 +640,7 @@ export default function TodayHero({ windSpeed, windGust, windDirection, thermalP
                 <div className={`text-3xl font-black tabular-nums ${bgImage ? 'text-emerald-300' : 'text-emerald-500'}`}>
                   {nextSession.avgScore}
                 </div>
-                <p className={`text-[9px] font-bold uppercase tracking-wider ${bgImage ? 'text-emerald-300/60' : 'text-emerald-600'}`}>
+                <p className={`text-[9px] font-bold uppercase tracking-wider ${bgImage ? 'text-emerald-300/80' : 'text-emerald-600'}`}>
                   score
                 </p>
               </div>
@@ -674,15 +675,15 @@ export default function TodayHero({ windSpeed, windGust, windDirection, thermalP
                 <h2 className={`text-2xl sm:text-3xl lg:text-4xl font-black leading-tight tracking-tight ${bgImage ? 'text-white/80' : 'text-slate-400'}`}>
                   Rest Day
                 </h2>
-                <p className={`text-sm sm:text-base mt-2 font-medium leading-relaxed ${bgImage ? 'text-white/50' : 'text-[var(--text-tertiary)]'}`}>
+                <p className={`text-sm sm:text-base mt-2 font-medium leading-relaxed ${bgImage ? 'text-white/70' : 'text-[var(--text-secondary)]'}`}>
                   No usable wind forecasted today. Check back tomorrow or explore other activities.
                 </p>
               </div>
               <div className="text-right flex-shrink-0">
-                <div className={`text-4xl font-black tabular-nums ${bgImage ? 'text-white/40' : 'text-slate-500'}`}>
+                <div className={`text-4xl font-black tabular-nums ${bgImage ? 'text-white/60' : 'text-slate-500'}`}>
                   {outlookSpeed > 0 ? Math.round(outlookSpeed) : '--'}
                 </div>
-                <p className={`text-[11px] font-semibold uppercase tracking-widest mt-1 ${bgImage ? 'text-white/30' : 'text-[var(--text-tertiary)]'}`}>
+                <p className={`text-[11px] font-semibold uppercase tracking-widest mt-1 ${bgImage ? 'text-white/50' : 'text-[var(--text-tertiary)]'}`}>
                   mph now
                 </p>
               </div>
@@ -737,7 +738,7 @@ export default function TodayHero({ windSpeed, windGust, windDirection, thermalP
                     ? (bgImage ? 'bg-emerald-500/20 text-emerald-300' : 'bg-emerald-500/10 text-emerald-600')
                     : chain.status === 'active'
                       ? (bgImage ? 'bg-amber-500/20 text-amber-300' : 'bg-amber-500/10 text-amber-600')
-                      : (bgImage ? 'bg-white/10 text-white/40' : 'bg-slate-100 text-slate-400')
+                      : (bgImage ? 'bg-white/10 text-white/60' : 'bg-slate-100 text-slate-500')
                 }`}>
                   {chain.name || chain.source}
                   {chain.speed != null && <span className="font-bold">{Math.round(chain.speed)}</span>}
@@ -789,7 +790,7 @@ export default function TodayHero({ windSpeed, windGust, windDirection, thermalP
                   <span className={`${isSelected ? 'text-sky-400' : bgImage ? 'text-white/80' : 'text-[var(--text-secondary)]'}`}>{cfg.icon}</span>
                   <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded-full uppercase tracking-wider ${
                     bgImage
-                      ? (isGo ? 'bg-emerald-500 text-white' : verdict.status === 'wait' ? 'bg-amber-500/30 text-amber-300' : 'bg-white/10 text-white/40')
+                      ? (isGo ? 'bg-emerald-500 text-white' : verdict.status === 'wait' ? 'bg-amber-500/30 text-amber-300' : 'bg-white/10 text-white/60')
                       : (styles[verdict.status]?.badge || '')
                   }`}>
                     {verdict.label}
@@ -799,7 +800,7 @@ export default function TodayHero({ windSpeed, windGust, windDirection, thermalP
                   {cfg.name}
                 </span>
                 <span className={`text-[11px] leading-tight line-clamp-2 ${
-                  bgImage ? 'text-white/60' : (styles[verdict.status]?.text || 'text-[var(--text-tertiary)]')
+                  bgImage ? 'text-white/70' : (styles[verdict.status]?.text || 'text-[var(--text-secondary)]')
                 }`}>
                   {verdict.reason}
                 </span>

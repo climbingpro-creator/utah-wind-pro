@@ -226,7 +226,7 @@ const FOMO_TEASERS = [
   'AI has detected a usable window in the next 48 hours.',
   'A session window is forming — upgrade to see when.',
   'Our model found wind. Unlock Pro for exact timing.',
-  'Rideable conditions ahead — details locked.',
+  'Usable conditions ahead — details locked.',
 ];
 
 function pickTeaser() {
@@ -267,7 +267,7 @@ function NextSessionBlock({ nextSession, loadError, isPro, onUpgrade, selectedAc
           <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Next Session</span>
         </div>
         <p className="text-[11px] text-slate-500">
-          No rideable windows detected for {selectedActivity} in the next 48h.
+          No usable windows detected for {selectedActivity} in the next 48h.
         </p>
       </div>
     );

@@ -119,8 +119,8 @@ const STATUS_COLORS = {
 };
 
 const ACTIVITY_LEGENDS = {
-  kiting:      { ideal: 'Ideal wind',   good: 'Rideable',      marginal: 'Gusty / marginal', off: 'Too light' },
-  snowkiting:  { ideal: 'Ideal wind',   good: 'Rideable',      marginal: 'Gusty / marginal', off: 'Too light' },
+  kiting:      { ideal: 'Ideal wind',   good: 'Usable',         marginal: 'Gusty / marginal', off: 'Too light' },
+  snowkiting:  { ideal: 'Ideal wind',   good: 'Usable',         marginal: 'Gusty / marginal', off: 'Too light' },
   windsurfing: { ideal: 'Ideal wind',   good: 'Planing',       marginal: 'Overpowered',      off: 'Too light' },
   sailing:     { ideal: 'Racing wind',  good: 'Good breeze',   marginal: 'Heavy air',         off: 'Drifter' },
   boating:     { ideal: 'Glass / calm', good: 'Light chop',    marginal: 'Choppy',            off: null },
@@ -130,8 +130,8 @@ const ACTIVITY_LEGENDS = {
 };
 
 const ACTIVITY_WINDOW_LABELS = {
-  kiting:      { best: 'Best session ahead', none: 'No rideable window remaining' },
-  snowkiting:  { best: 'Best session ahead', none: 'No rideable window remaining' },
+  kiting:      { best: 'Best session ahead', none: 'No usable window remaining' },
+  snowkiting:  { best: 'Best session ahead', none: 'No usable window remaining' },
   windsurfing: { best: 'Best session ahead', none: 'No planing wind remaining' },
   sailing:     { best: 'Best racing window', none: 'No strong breeze remaining' },
   boating:     { best: 'Calmest window ahead', none: 'Windy through evening — rough conditions' },

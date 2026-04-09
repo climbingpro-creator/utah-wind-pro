@@ -228,15 +228,15 @@ export default function DetailedPanels({
                     trigger.type === 'penalty' ? 'bg-red-400' : 'bg-current animate-pulse'
                   }`} />
                   <span className="font-medium">{trigger.label}</span>
-                  <span className="opacity-60">{trigger.impact}</span>
+                  <span className="opacity-75">{trigger.impact}</span>
                 </div>
               ))}
             </div>
             {correlation.refinedSpeed > 0 && correlation.baseSpeed > 0 && correlation.multiplier !== 1.0 && (
               <div className={`mt-2 pt-2 border-t text-xs ${
-                theme === 'dark' ? 'border-blue-500/20 text-blue-400/70' : 'border-blue-200 text-blue-600/70'
+                theme === 'dark' ? 'border-blue-500/20 text-blue-400' : 'border-blue-200 text-blue-600'
               }`}>
-                Base: {safeToFixed(correlation.baseSpeed, 0)} mph → Refined: {correlation.refinedSpeed ?? '--'} mph
+                Base: {safeToFixed(correlation.baseSpeed, 0)} mph → Refined: {safeToFixed(correlation.refinedSpeed, 0)} mph
               </div>
             )}
           </div>

@@ -17,7 +17,8 @@ export default function ActivityScoreBanner({
 }) {
   const score = activityScore.score;
   const prediction = lakeState?.thermalPrediction;
-  const prob = prediction?.windProbability ?? prediction?.probability ?? 0;
+  const rawProb = prediction?.windProbability ?? prediction?.probability ?? 0;
+  const prob = rawProb >= 1 ? Math.round(rawProb) : Math.round(rawProb * 100);
   const startHour = prediction?.startHour;
   const windType = prediction?.windType;
   const consistencyForecast = prediction?.consistencyForecast;
@@ -68,7 +69,7 @@ export default function ActivityScoreBanner({
     const timeStr = startHour ? (startHour > 12 ? `${startHour - 12} PM` : `${startHour} AM`) : null;
     if (windType === 'north_flow' && isWindBlowingNow) {
       headline = `${actName} — North flow active`;
-      subline = `${Math.round(currentWindSpeed)} mph from north — rideable and building`;
+      subline = `${Math.round(currentWindSpeed)} mph from north — usable and building`;
       bannerColor = prob >= 60 ? 'green' : 'yellow';
       badge = { text: 'ACTIVE', color: prob >= 60 ? 'bg-green-500/20 text-green-400 border border-green-500/50' : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/50' };
     } else {
