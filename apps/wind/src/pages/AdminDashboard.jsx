@@ -234,10 +234,21 @@ export default function AdminDashboard() {
 
       const collectorStats = dataCollector.getStats();
 
-      const learnedWeightsRaw = localStorage.getItem('learningSystem:weights');
       let learningInfo = null;
       try {
-        const w = JSON.parse(learnedWeightsRaw);
+        const w = await new Promise((resolve) => {
+          const req = indexedDB.open('UtahWindProLearning', 2);
+          req.onerror = () => resolve(null);
+          req.onsuccess = () => {
+            const db = req.result;
+            if (!db.objectStoreNames.contains('modelWeights')) { db.close(); resolve(null); return; }
+            const tx = db.transaction('modelWeights', 'readonly');
+            const store = tx.objectStore('modelWeights');
+            const get = store.get('current');
+            get.onsuccess = () => { db.close(); resolve(get.result); };
+            get.onerror = () => { db.close(); resolve(null); };
+          };
+        });
         if (w) {
           learningInfo = {
             version: w.version,
