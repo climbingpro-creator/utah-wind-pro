@@ -20,14 +20,8 @@ const MAP_AREAS = {
     zoom: 10,
     launches: ['utah-lake-lincoln', 'utah-lake-sandy', 'utah-lake-vineyard', 'utah-lake-zigzag', 'utah-lake-mm19'],
     stations: [
-      // Launch sites — clickable for forecast
-      { id: 'PWS', name: 'Zig Zag Launch', lat: 40.3027, lng: -111.880, type: 'launch', elevation: 4489, launchId: 'utah-lake-zigzag' },
-      { id: 'KPVU', name: 'Lincoln Beach', lat: 40.2192, lng: -111.7236, type: 'launch', elevation: 4495, launchId: 'utah-lake-lincoln', isNorthFlowIndicator: true, isSouthernIndicator: true },
-      { id: 'LAUNCH-SANDY', name: 'Sandy Beach Launch', lat: 40.255, lng: -111.815, type: 'launch', elevation: 4489, launchId: 'utah-lake-sandy' },
-      { id: 'LAUNCH-VINE', name: 'Vineyard Launch', lat: 40.305, lng: -111.755, type: 'launch', elevation: 4489, launchId: 'utah-lake-vineyard' },
-      { id: 'LAUNCH-MM19', name: 'Mile Marker 19', lat: 40.345, lng: -111.810, type: 'launch', elevation: 4489, launchId: 'utah-lake-mm19' },
-      // Weather stations
       { id: 'FPS', name: 'Flight Park South', lat: 40.4555, lng: -111.9208, type: 'mesowest', elevation: 5202 },
+      { id: 'KPVU', name: 'Provo Airport', lat: 40.2192, lng: -111.7236, type: 'mesowest', elevation: 4495, isNorthFlowIndicator: true, isSouthernIndicator: true },
       { id: 'KSLC', name: 'Salt Lake City', lat: 40.7884, lng: -111.9778, type: 'mesowest', elevation: 4226, isNorthFlowIndicator: true },
       { id: 'QLN', name: 'Lindon', lat: 40.3431, lng: -111.7136, type: 'mesowest', elevation: 4738 },
       { id: 'UTALP', name: 'Point of Mountain', lat: 40.4456, lng: -111.8983, type: 'mesowest', elevation: 4796, isNorthFlowIndicator: true, isGapIndicator: true },
@@ -35,6 +29,7 @@ const MAP_AREAS = {
       { id: 'TIMU1', name: 'Timpanogos', lat: 40.3833, lng: -111.6333, type: 'mesowest', elevation: 8170, isRidge: true },
       { id: 'SND', name: 'Arrowhead Summit', lat: 40.4389, lng: -111.5875, type: 'mesowest', elevation: 8252, isRidge: true },
       { id: 'QSF', name: 'Spanish Fork', lat: 40.115, lng: -111.655, type: 'mesowest', elevation: 4550, isEarlyIndicator: true },
+      { id: 'PWS', name: 'Zig Zag PWS', lat: 40.30268164473557, lng: -111.8799503518146, type: 'pws', elevation: 4489 },
     ],
   },
   'deer-creek': {
@@ -43,9 +38,7 @@ const MAP_AREAS = {
     zoom: 11,
     launches: ['deer-creek'],
     stations: [
-      // Launch site
-      { id: 'UTDCD', name: 'Deer Creek Launch', lat: 40.4090, lng: -111.5100, type: 'launch', elevation: 5400, launchId: 'deer-creek' },
-      // Weather stations
+      { id: 'UTDCD', name: 'Deer Creek Dam (UDOT)', lat: 40.4090, lng: -111.5100, type: 'udot', elevation: 5400 },
       { id: 'UTLPC', name: 'Lower Provo Canyon', lat: 40.3800, lng: -111.5800, type: 'udot', elevation: 5100, isEarlyIndicator: true },
       { id: 'UTPCY', name: 'Provo Canyon MP10', lat: 40.3600, lng: -111.6100, type: 'udot', elevation: 5200 },
       { id: 'UTCHL', name: 'Charleston (UDOT)', lat: 40.4800, lng: -111.4600, type: 'udot', elevation: 5500 },
@@ -65,7 +58,6 @@ const MAP_AREAS = {
     zoom: 10,
     launches: ['willard-bay'],
     stations: [
-      { id: 'LAUNCH-WB', name: 'Willard Bay Launch', lat: 41.3900, lng: -112.090, type: 'launch', elevation: 4200, launchId: 'willard-bay' },
       { id: 'KOGD', name: 'Ogden Airport', lat: 41.1961, lng: -112.0122, type: 'mesowest', elevation: 4440 },
       { id: 'KSLC', name: 'Salt Lake City', lat: 40.7884, lng: -111.9778, type: 'mesowest', elevation: 4226 },
       { id: 'KHIF', name: 'Hill AFB', lat: 41.1239, lng: -111.9731, type: 'mesowest', elevation: 4789 },
@@ -78,7 +70,6 @@ const MAP_AREAS = {
     zoom: 11,
     launches: ['sulfur-creek'],
     stations: [
-      { id: 'LAUNCH-SC', name: 'Sulphur Creek Launch', lat: 41.095, lng: -110.955, type: 'launch', elevation: 7200, launchId: 'sulfur-creek' },
       { id: 'KFIR', name: 'First Divide (WYDOT)', lat: 41.2765, lng: -110.8007, type: 'mesowest', elevation: 7579 },
       { id: 'KEVW', name: 'Evanston Airport', lat: 41.2750, lng: -111.0350, type: 'mesowest', elevation: 7143 },
       { id: 'UT1', name: 'Wahsatch EB (UDOT)', lat: 41.1952, lng: -111.114, type: 'udot', elevation: 6814 },
@@ -89,7 +80,6 @@ const MAP_AREAS = {
 const BASEMAP_STYLE = 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json';
 
 function getStationColor(station) {
-  if (station.type === 'launch') return '#06b6d4';
   if (station.type === 'pws') return '#22d3ee';
   if (station.isNorthFlowIndicator) return '#3b82f6';
   if (station.isEarlyIndicator) return '#10b981';
@@ -108,11 +98,10 @@ function StationMarker({ station, stationData, onClick }) {
   const live = stationData?.find(s => s.id === station.id || s.name?.includes(station.name));
   const hasData = live?.speed != null;
   const color = getStationColor(station);
-  
-  const isLaunch = station.type === 'launch';
+
   const isRidge = station.isRidge;
   const isIndicator = station.isEarlyIndicator || station.isNorthFlowIndicator;
-  const size = isLaunch ? 22 : isIndicator ? 18 : 16;
+  const size = isIndicator ? 18 : 16;
 
   return (
     <Marker
@@ -124,41 +113,25 @@ function StationMarker({ station, stationData, onClick }) {
         onClick?.({ station, live });
       }}
     >
-      {isLaunch ? (
-        <div
-          className="cursor-pointer transition-transform active:scale-110 flex items-center justify-center"
-          style={{
-            width: size,
-            height: size,
-            background: `linear-gradient(135deg, #06b6d4, #0891b2)`,
-            border: '2.5px solid #22d3ee',
-            borderRadius: '50%',
-            boxShadow: '0 0 8px rgba(6,182,212,0.5), 0 2px 4px rgba(0,0,0,0.3)',
-          }}
-        >
-          <Wind style={{ width: 12, height: 12, color: '#fff' }} />
-        </div>
-      ) : (
-        <div
-          className="cursor-pointer transition-transform active:scale-110"
-          style={{
-            width: size,
-            height: size,
-            background: color,
-            border: `2px solid ${color}`,
-            borderRadius: isRidge ? '2px' : '50%',
-            transform: isRidge ? 'rotate(45deg)' : 'none',
-            opacity: hasData ? 1 : 0.5,
-            boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
-          }}
-        />
-      )}
+      <div
+        className="cursor-pointer transition-transform active:scale-110"
+        style={{
+          width: size,
+          height: size,
+          background: color,
+          border: `2px solid ${color}`,
+          borderRadius: isRidge ? '2px' : '50%',
+          transform: isRidge ? 'rotate(45deg)' : 'none',
+          opacity: hasData ? 1 : 0.5,
+          boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+        }}
+      />
     </Marker>
   );
 }
 
 function LaunchMarker({ launch, isSelected, onClick }) {
-  const size = isSelected ? 22 : 16;
+  const size = 22;
   return (
     <Marker
       longitude={launch.position[1]}
@@ -166,20 +139,26 @@ function LaunchMarker({ launch, isSelected, onClick }) {
       anchor="center"
       onClick={(e) => {
         e.originalEvent.stopPropagation();
-        onClick?.(launch.id);
+        onClick?.(launch);
       }}
     >
       <div
-        className="cursor-pointer transition-transform active:scale-110"
+        className="cursor-pointer transition-transform active:scale-110 flex items-center justify-center"
         style={{
           width: size,
           height: size,
-          background: isSelected ? '#22d3ee' : '#64748b',
-          border: `2px solid ${isSelected ? '#06b6d4' : '#475569'}`,
+          background: isSelected
+            ? 'linear-gradient(135deg, #06b6d4, #0891b2)'
+            : 'linear-gradient(135deg, #0891b2, #164e63)',
+          border: `2.5px solid ${isSelected ? '#22d3ee' : '#06b6d4'}`,
           borderRadius: '50%',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+          boxShadow: isSelected
+            ? '0 0 12px rgba(6,182,212,0.7), 0 2px 4px rgba(0,0,0,0.3)'
+            : '0 0 8px rgba(6,182,212,0.4), 0 2px 4px rgba(0,0,0,0.3)',
         }}
-      />
+      >
+        <Wind style={{ width: 12, height: 12, color: '#fff' }} />
+      </div>
     </Marker>
   );
 }
@@ -831,13 +810,24 @@ export function VectorWindMap({
             />
           ))}
 
-          {/* Launch markers */}
+          {/* Launch site forecast markers */}
           {launches.map(launch => (
             <LaunchMarker
               key={launch.id}
               launch={launch}
               isSelected={selectedLake === launch.id}
-              onClick={onSelectLaunch}
+              onClick={(l) => {
+                onSelectLaunch?.(l.id);
+                const fakeStation = {
+                  id: l.id,
+                  name: l.name,
+                  lat: l.position[0],
+                  lng: l.position[1],
+                  type: 'launch',
+                  launchId: l.id,
+                };
+                handleStationClick({ station: fakeStation, live: null });
+              }}
             />
           ))}
 

@@ -186,7 +186,7 @@ function getSpotList(activity) {
   ];
 
   const spots = [
-    { id: 'utah-lake', name: 'Utah Lake', wind: 'SE Thermal', meter: 'PWS', subLaunches: UTAH_LAKE_LAUNCHES, group: 'main' },
+    { id: 'utah-lake', name: 'Utah Lake', wind: 'SE Thermal', meter: 'KPVU', subLaunches: UTAH_LAKE_LAUNCHES, group: 'main' },
     { id: 'deer-creek', name: 'Deer Creek', wind: 'SW Canyon', meter: 'KHCR', group: 'main' },
     { id: 'willard-bay', name: 'Willard Bay', wind: 'S Flow', meter: 'KHIF', group: 'main' },
     { id: 'jordanelle', name: 'Jordanelle', wind: 'Canyon', meter: 'KHCR', group: 'main' },
@@ -600,10 +600,9 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
     const stids = [...allMeters];
     if (stids.length === 0) return;
 
-    weatherService.getSynopticStationData(stids).then(stations => {
-      if (!stations?.length) return;
+    function parseStations(stations) {
       const map = {};
-      for (const s of stations) {
+      for (const s of (stations || [])) {
         const id = s.stationId || s.stid || s.id;
         if (!id) continue;
         map[id] = {
@@ -614,7 +613,24 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
           temperature: s.temperature ?? s.air_temp ?? null,
         };
       }
+      return map;
+    }
+
+    weatherService.getSynopticStationData(stids).then(stations => {
+      const map = parseStations(stations);
       setBootstrapData(map);
+
+      const missing = stids.filter(id => !map[id]);
+      if (missing.length > 0) {
+        setTimeout(() => {
+          weatherService.getSynopticStationData(missing).then(retry => {
+            const retryMap = parseStations(retry);
+            if (Object.keys(retryMap).length > 0) {
+              setBootstrapData(prev => ({ ...prev, ...retryMap }));
+            }
+          }).catch(() => {});
+        }, 4000);
+      }
     }).catch(() => {});
   }, [activity]);
 
