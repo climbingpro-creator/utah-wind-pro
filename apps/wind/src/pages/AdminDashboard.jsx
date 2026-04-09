@@ -159,6 +159,9 @@ export default function AdminDashboard() {
   const [cvLoading, setCvLoading] = useState(false);
   const [cycleRunning, setCycleRunning] = useState(false);
   const [cycleResult, setCycleResult] = useState(null);
+  const [usersData, setUsersData] = useState(null);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [usersSearch, setUsersSearch] = useState('');
 
   useEffect(() => {
     async function checkAdmin() {
@@ -313,6 +316,22 @@ export default function AdminDashboard() {
     setSystemLoading(false);
   }, []);
 
+  const fetchUsers = useCallback(async () => {
+    setUsersLoading(true);
+    try {
+      const headers = await getAuthHeader();
+      const apiOrigin = import.meta.env.VITE_API_ORIGIN || '';
+      const resp = await fetch(`${apiOrigin}/api/admin/users`, { headers });
+      if (resp.ok) {
+        const data = await resp.json();
+        setUsersData(data);
+      }
+    } catch (err) {
+      console.warn('[Admin] users fetch error:', err);
+    }
+    setUsersLoading(false);
+  }, [getAuthHeader]);
+
   const fetchAlertDiagnostics = useCallback(async () => {
     try {
       const headers = await getAuthHeader();
@@ -464,8 +483,9 @@ export default function AdminDashboard() {
       fetchSystemHealth();
       fetchAlertDiagnostics();
       fetchCrossValidationHealth();
+      fetchUsers();
     }
-  }, [authorized, fetchAnalytics, fetchFeedback, fetchSystemHealth, fetchAlertDiagnostics, fetchCrossValidationHealth]);
+  }, [authorized, fetchAnalytics, fetchFeedback, fetchSystemHealth, fetchAlertDiagnostics, fetchCrossValidationHealth, fetchUsers]);
 
   async function updateStatus(id, newStatus) {
     if (!supabase) return;
@@ -509,6 +529,7 @@ export default function AdminDashboard() {
 
   const TABS = [
     { id: 'overview', label: 'Overview', icon: BarChart3 },
+    { id: 'users', label: `Users${usersData?.summary ? ` (${usersData.summary.total})` : ''}`, icon: Users },
     { id: 'system', label: 'System Health', icon: Radio },
     { id: 'engagement', label: 'Engagement', icon: Activity },
     { id: 'financials', label: 'Financials', icon: DollarSign },
@@ -1168,6 +1189,133 @@ export default function AdminDashboard() {
                 <p className="text-[10px] text-slate-600 text-right">
                   Last checked: {new Date(systemHealth.checkedAt).toLocaleString()}
                 </p>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* ═══════ USERS TAB ═══════ */}
+        {activeTab === 'users' && (
+          <div className="space-y-6">
+            {usersLoading && !usersData && (
+              <div className="text-center py-12 text-slate-500 animate-pulse">Loading users...</div>
+            )}
+            {usersData && (
+              <>
+                <div className="grid grid-cols-2 sm:grid-cols-6 gap-3">
+                  <KPICard icon={Users} label="Total Users" value={usersData.summary.total} color="sky" />
+                  <KPICard icon={Zap} label="Pro" value={usersData.summary.pro} color="violet"
+                    sub={`${usersData.summary.total > 0 ? ((usersData.summary.pro / usersData.summary.total) * 100).toFixed(0) : 0}% conversion`} />
+                  <KPICard icon={Activity} label="Active 7d" value={usersData.summary.active7d} color="emerald"
+                    sub={`${usersData.summary.active30d} in 30d`} />
+                  <KPICard icon={Bell} label="Push Enabled" value={usersData.summary.withPush} color="amber" />
+                  <KPICard icon={Phone} label="SMS Verified" value={usersData.summary.withSms} color="cyan" />
+                  <KPICard icon={Wind} label="With Sessions" value={usersData.users.filter(u => u.sessionCount > 0).length} color="sky" />
+                </div>
+
+                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                      <Users className="w-4 h-4 text-sky-400" />
+                      All Users
+                    </h3>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={usersSearch}
+                        onChange={e => setUsersSearch(e.target.value)}
+                        placeholder="Search email..."
+                        className="px-3 py-1.5 rounded-lg text-xs bg-slate-800 border border-slate-700 text-white placeholder:text-slate-500 outline-none focus:border-sky-500 w-48"
+                      />
+                      <button
+                        onClick={fetchUsers}
+                        disabled={usersLoading}
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 transition-colors"
+                      >
+                        <RefreshCw className={`w-3 h-3 ${usersLoading ? 'animate-spin' : ''}`} />
+                        Refresh
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="text-left text-slate-500 border-b border-white/[0.06]">
+                          <th className="pb-2 pr-4 font-semibold">Email</th>
+                          <th className="pb-2 pr-4 font-semibold">Tier</th>
+                          <th className="pb-2 pr-4 font-semibold">Signed Up</th>
+                          <th className="pb-2 pr-4 font-semibold">Last Active</th>
+                          <th className="pb-2 pr-4 font-semibold">Sessions</th>
+                          <th className="pb-2 pr-4 font-semibold">Alerts</th>
+                          <th className="pb-2 font-semibold">Activities</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/[0.04]">
+                        {usersData.users
+                          .filter(u => !usersSearch || u.email?.toLowerCase().includes(usersSearch.toLowerCase()))
+                          .map(user => {
+                            const daysSinceActive = user.lastSignIn
+                              ? Math.floor((Date.now() - new Date(user.lastSignIn).getTime()) / 86400000)
+                              : null;
+                            return (
+                              <tr key={user.id} className="hover:bg-white/[0.02]">
+                                <td className="py-2.5 pr-4">
+                                  <div className="flex items-center gap-2">
+                                    <div className={`w-2 h-2 rounded-full shrink-0 ${
+                                      daysSinceActive != null && daysSinceActive <= 7 ? 'bg-emerald-400'
+                                      : daysSinceActive != null && daysSinceActive <= 30 ? 'bg-amber-400'
+                                      : 'bg-slate-600'
+                                    }`} />
+                                    <span className="text-white font-medium truncate max-w-[200px]">{user.email}</span>
+                                    {!user.confirmed && <span className="text-[9px] px-1 py-0.5 rounded bg-amber-500/15 text-amber-400">unverified</span>}
+                                  </div>
+                                </td>
+                                <td className="py-2.5 pr-4">
+                                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                                    user.tier === 'pro' ? 'bg-violet-500/15 text-violet-400' : 'bg-slate-500/15 text-slate-400'
+                                  }`}>
+                                    {user.tier === 'pro' ? 'PRO' : 'FREE'}
+                                  </span>
+                                </td>
+                                <td className="py-2.5 pr-4 text-slate-400 tabular-nums">
+                                  {new Date(user.createdAt).toLocaleDateString()}
+                                </td>
+                                <td className="py-2.5 pr-4 tabular-nums">
+                                  {daysSinceActive != null ? (
+                                    <span className={
+                                      daysSinceActive <= 1 ? 'text-emerald-400 font-bold' :
+                                      daysSinceActive <= 7 ? 'text-emerald-400' :
+                                      daysSinceActive <= 30 ? 'text-amber-400' : 'text-slate-500'
+                                    }>
+                                      {daysSinceActive === 0 ? 'Today' : daysSinceActive === 1 ? 'Yesterday' : `${daysSinceActive}d ago`}
+                                    </span>
+                                  ) : <span className="text-slate-600">Never</span>}
+                                </td>
+                                <td className="py-2.5 pr-4 text-slate-300 tabular-nums font-bold">
+                                  {user.sessionCount || '—'}
+                                </td>
+                                <td className="py-2.5 pr-4">
+                                  <div className="flex items-center gap-1">
+                                    {user.hasPush && <span className="text-[9px] px-1 py-0.5 rounded bg-amber-500/15 text-amber-400">Push</span>}
+                                    {user.hasSms && <span className="text-[9px] px-1 py-0.5 rounded bg-cyan-500/15 text-cyan-400">SMS</span>}
+                                    {!user.hasPush && !user.hasSms && <span className="text-slate-600">—</span>}
+                                  </div>
+                                </td>
+                                <td className="py-2.5">
+                                  <div className="flex flex-wrap gap-1">
+                                    {user.activities.length > 0 ? user.activities.slice(0, 3).map(a => (
+                                      <span key={a} className="text-[9px] px-1 py-0.5 rounded bg-sky-500/10 text-sky-400">{a}</span>
+                                    )) : <span className="text-slate-600">—</span>}
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               </>
             )}
           </div>
