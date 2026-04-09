@@ -35,6 +35,7 @@ const KITE_SPOTS = [
   { id: 'grantsville', name: 'Grantsville Reservoir', wind: 'S/SW', meter: 'KSLC', desc: 'Alternative to Rush — deeper water for larger skegs' },
   { id: 'deer-creek', name: 'Deer Creek', wind: 'SW Canyon', meter: 'KHCR', desc: 'Canyon thermal kiting — afternoon SW wind' },
   { id: 'willard-bay', name: 'Willard Bay', wind: 'S Flow', meter: 'KHIF', desc: 'South beach near state park — south wind under south flow' },
+  { id: 'sulfur-creek', name: 'Sulphur Creek (WY)', wind: 'W Jet', meter: 'KEVW', desc: 'July wind escape — 90 min NE of SLC, fires when jet stream is due W' },
 ];
 
 // ─── VERIFIED SNOWKITE SPOTS ──────────────────────────────────
@@ -88,6 +89,14 @@ const LAKE_REGIONS = [
       { id: 'flaming-gorge', name: 'Flaming Gorge', wind: 'Canyon/SE', meter: 'KFGR', fish: '🐟 Lake Trout (51 lb record!), Kokanee' },
       { id: 'steinaker', name: 'Steinaker', wind: 'Basin', meter: 'KVEL', fish: '🐟 Rainbow, LMB' },
       { id: 'red-fleet', name: 'Red Fleet', wind: 'Basin', meter: 'KVEL', fish: '🐟 Rainbow, Brown' },
+    ],
+  },
+  {
+    id: 'wyoming',
+    label: 'SW Wyoming (Wind Escape)',
+    icon: '🍺',
+    lakes: [
+      { id: 'sulfur-creek', name: 'Sulphur Creek', wind: 'W Jet Stream', meter: 'KEVW', fish: '🐟 Rainbow, Brown Trout', desc: 'July wind escape — 90 min NE of SLC, fires when jet stream is due west' },
     ],
   },
   {

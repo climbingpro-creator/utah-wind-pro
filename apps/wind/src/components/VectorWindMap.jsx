@@ -56,6 +56,15 @@ const MAP_AREAS = {
       { id: 'BLM', name: 'Ben Lomond', lat: 41.3667, lng: -111.9500, type: 'mesowest', elevation: 9712, isRidge: true },
     ],
   },
+  'sulfur-creek': {
+    name: 'Sulphur Creek',
+    center: [-110.955, 41.095],
+    zoom: 12,
+    launches: ['sulfur-creek'],
+    stations: [
+      { id: 'KEVW', name: 'Evanston Airport', lat: 41.2750, lng: -111.0350, type: 'mesowest', elevation: 7143 },
+    ],
+  },
 };
 
 const BASEMAP_STYLE = 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json';
@@ -255,6 +264,8 @@ export function VectorWindMap({
       area = MAP_AREAS['deer-creek'];
     } else if (selectedLake === 'willard-bay') {
       area = MAP_AREAS['willard-bay'];
+    } else if (selectedLake === 'sulfur-creek') {
+      area = MAP_AREAS['sulfur-creek'];
     }
     setMapArea(area);
     if (area) {

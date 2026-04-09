@@ -33,6 +33,7 @@ const FORECAST_POINTS = {
   'scofield': { lat: 39.77, lng: -111.14 },
   'vernal': { lat: 40.45, lng: -109.52 },
   'panguitch': { lat: 37.82, lng: -112.44 },
+  'sulfur-creek': { lat: 41.095, lng: -110.955 },
 };
 
 const LOCATION_TO_FORECAST_KEY = {

@@ -23,14 +23,14 @@ const PRIORITY_SPOTS = [
 const ACTIVITY_SPOTS = {
   kiting: [
     'utah-lake-zigzag', 'utah-lake-lincoln', 'utah-lake-vineyard', 'utah-lake-sandy',
-    'deer-creek', 'willard-bay', 'jordanelle', 'sand-hollow',
+    'deer-creek', 'willard-bay', 'jordanelle', 'sand-hollow', 'sulfur-creek',
   ],
   windsurfing: [
     'utah-lake-zigzag', 'utah-lake-lincoln', 'utah-lake-vineyard',
-    'deer-creek', 'willard-bay', 'jordanelle',
+    'deer-creek', 'willard-bay', 'jordanelle', 'sulfur-creek',
   ],
   sailing: [
-    'utah-lake-zigzag', 'utah-lake-lincoln', 'deer-creek', 'willard-bay', 'jordanelle',
+    'utah-lake-zigzag', 'utah-lake-lincoln', 'deer-creek', 'willard-bay', 'jordanelle', 'sulfur-creek',
   ],
   paragliding: [
     'potm-south', 'potm-north', 'inspo',

@@ -26,6 +26,7 @@ import { southernUtahConfigs } from './lakes/southernUtah';
 import { wasatchBackConfigs } from './lakes/wasatchBack';
 import { saltLakeAreaConfigs } from './lakes/saltLakeArea';
 import { otherConfigs } from './lakes/other';
+import { sulfurCreekConfigs } from './lakes/sulfurCreek';
 
 export const LAKE_CONFIGS = {
   ...utahLakeConfigs,
@@ -38,6 +39,7 @@ export const LAKE_CONFIGS = {
   ...wasatchBackConfigs,
   ...saltLakeAreaConfigs,
   ...otherConfigs,
+  ...sulfurCreekConfigs,
 };
 
 /**
