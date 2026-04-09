@@ -1,6 +1,9 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@utahwind/database';
-import { weatherService, LAKE_CONFIGS, getAllStationIds, learningSystem, crossValidationEngine } from '@utahwind/weather';
+import {
+  weatherService, LAKE_CONFIGS, getAllStationIds, learningSystem,
+  crossValidationEngine, CROSS_VALIDATION_PAIRS, normalizeWuObservation,
+} from '@utahwind/weather';
 import { dataCollector } from '../services/DataCollector';
 import {
   Shield, ArrowLeft, CheckCircle, Clock, AlertTriangle, Bug, Lightbulb,
@@ -377,6 +380,26 @@ export default function AdminDashboard() {
   const fetchCrossValidationHealth = useCallback(async () => {
     setCvLoading(true);
     try {
+      await crossValidationEngine.initialize();
+      const allStationIds = new Set();
+      const lakeIds = Object.keys(LAKE_CONFIGS).filter(id => id !== 'utah-lake');
+      for (const id of lakeIds) getAllStationIds(id).forEach(s => allStationIds.add(s));
+
+      const [synopticData, wuRawData] = await Promise.allSettled([
+        weatherService.getSynopticStationData(Array.from(allStationIds)),
+        weatherService.getWuPwsCurrent(
+          CROSS_VALIDATION_PAIRS.map(p => p.wuId)
+        ),
+      ]);
+
+      const synStations = synopticData.status === 'fulfilled' ? synopticData.value : [];
+      const wuRaw = wuRawData.status === 'fulfilled' ? wuRawData.value : [];
+      const wuNormalized = wuRaw.map(normalizeWuObservation).filter(Boolean);
+
+      if (synStations.length > 0 || wuNormalized.length > 0) {
+        await crossValidationEngine.compare(synStations, wuNormalized);
+      }
+
       const summary = await crossValidationEngine.getHealthSummary();
       setCvHealth(summary);
     } catch (err) {
