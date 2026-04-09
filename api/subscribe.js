@@ -38,16 +38,26 @@ export default async function handler(req, res) {
   }
 }
 
+function detectApp(req) {
+  const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
+  if (body.app === 'water' || body.app === 'wind') return body.app;
+  const origin = req.headers.origin || req.headers.referer || '';
+  if (/notwindy/i.test(origin)) return 'water';
+  return 'wind';
+}
+
 async function createCheckout(req, res, user) {
   const stripe = getStripe();
-  const priceId = process.env.STRIPE_PRO_PRICE_ID;
+  const app = detectApp(req);
+
+  const priceId = app === 'water'
+    ? (process.env.STRIPE_WATER_PRO_PRICE_ID || process.env.STRIPE_PRO_PRICE_ID)
+    : process.env.STRIPE_PRO_PRICE_ID;
   if (!priceId) return res.status(500).json({ error: 'STRIPE_PRO_PRICE_ID not configured' });
 
-  // Determine origin for success/cancel URLs - try origin header, then referer, then fallback
   const origin = req.headers.origin || req.headers.referer?.split('/').slice(0, 3).join('/') || 'https://liftforecast.com';
 
-  // Get or create Stripe customer
-  const customerId = await getOrCreateCustomer(stripe, user);
+  const customerId = await getOrCreateCustomer(stripe, user, app);
 
   const session = await stripe.checkout.sessions.create({
     customer: customerId,
@@ -55,7 +65,7 @@ async function createCheckout(req, res, user) {
     line_items: [{ price: priceId, quantity: 1 }],
     success_url: `${origin}/?subscription=success`,
     cancel_url: `${origin}/?subscription=cancelled`,
-    metadata: { supabase_user_id: user.id },
+    metadata: { supabase_user_id: user.id, app },
   });
 
   return res.status(200).json({ url: session.url });
@@ -63,10 +73,10 @@ async function createCheckout(req, res, user) {
 
 async function createPortal(req, res, user) {
   const stripe = getStripe();
-  // Determine origin for return URL - try origin header, then referer, then fallback
+  const app = detectApp(req);
   const origin = req.headers.origin || req.headers.referer?.split('/').slice(0, 3).join('/') || 'https://liftforecast.com';
 
-  const customerId = await getOrCreateCustomer(stripe, user);
+  const customerId = await getOrCreateCustomer(stripe, user, app);
 
   const session = await stripe.billingPortal.sessions.create({
     customer: customerId,
@@ -76,33 +86,49 @@ async function createPortal(req, res, user) {
   return res.status(200).json({ url: session.url });
 }
 
-async function getOrCreateCustomer(stripe, user) {
+async function getOrCreateCustomer(stripe, user, app) {
   const supabase = getSupabase();
 
-  // Check if we already have a Stripe customer ID stored
   const { data } = await supabase
     .from('subscriptions')
     .select('stripe_customer_id')
     .eq('user_id', user.id)
+    .eq('app', app)
     .single();
 
   if (data?.stripe_customer_id) return data.stripe_customer_id;
 
-  // Create a new Stripe customer
+  // Fall back: check for a legacy row without app set
+  const { data: legacy } = await supabase
+    .from('subscriptions')
+    .select('stripe_customer_id')
+    .eq('user_id', user.id)
+    .is('app', null)
+    .single();
+
+  if (legacy?.stripe_customer_id && app === 'wind') {
+    await supabase
+      .from('subscriptions')
+      .update({ app: 'wind' })
+      .eq('user_id', user.id)
+      .is('app', null);
+    return legacy.stripe_customer_id;
+  }
+
   const customer = await stripe.customers.create({
     email: user.email,
-    metadata: { supabase_user_id: user.id },
+    metadata: { supabase_user_id: user.id, app },
   });
 
-  // Store the mapping
   await supabase
     .from('subscriptions')
-    .upsert({
+    .insert({
       user_id: user.id,
       stripe_customer_id: customer.id,
       tier: 'free',
       status: 'inactive',
-    }, { onConflict: 'user_id' });
+      app,
+    });
 
   return customer.id;
 }

@@ -65,7 +65,7 @@ export function AuthProvider({ children }) {
 
   async function fetchTier(token) {
     try {
-      const resp = await fetch(apiUrl('/api/user-preferences'), {
+      const resp = await fetch(apiUrl('/api/user-preferences?app=wind'), {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (resp.ok) {
@@ -95,7 +95,11 @@ export function AuthProvider({ children }) {
 
   async function signUp(email, password) {
     if (!supabase) throw new Error('Auth not configured');
-    const { data, error } = await supabase.auth.signUp({ email, password });
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: window.location.origin },
+    });
     if (error) throw error;
     return data;
   }
@@ -135,6 +139,7 @@ export function AuthProvider({ children }) {
         Authorization: `Bearer ${session.access_token}`,
         'Content-Type': 'application/json',
       },
+      body: JSON.stringify({ app: 'wind' }),
     });
     const text = await resp.text();
     let data;

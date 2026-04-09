@@ -15,6 +15,12 @@
  */
 import { verifyAuth, getSupabase } from './lib/supabase.js';
 
+function detectAppFromOrigin(req) {
+  const origin = req.headers.origin || req.headers.referer || '';
+  if (/notwindy/i.test(origin)) return 'water';
+  return 'wind';
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -29,8 +35,10 @@ export default async function handler(req, res) {
 
   const userId = auth.user.id;
 
+  const app = req.query?.app || detectAppFromOrigin(req);
+
   try {
-    if (req.method === 'GET') return await getPreferences(res, userId);
+    if (req.method === 'GET') return await getPreferences(res, userId, app);
     if (req.method === 'POST') return await savePreferences(req, res, userId);
     return res.status(405).json({ error: 'Method not allowed' });
   } catch (err) {
@@ -39,7 +47,7 @@ export default async function handler(req, res) {
   }
 }
 
-async function getPreferences(res, userId) {
+async function getPreferences(res, userId, app) {
   const supabase = getSupabase();
 
   const [prefsResult, tierResult] = await Promise.all([
@@ -48,7 +56,7 @@ async function getPreferences(res, userId) {
       .select('*')
       .eq('user_id', userId)
       .single(),
-    getUserTier(supabase, userId),
+    getUserTier(supabase, userId, app),
   ]);
 
   if (prefsResult.error && prefsResult.error.code !== 'PGRST116') {
@@ -78,21 +86,21 @@ async function getPreferences(res, userId) {
   return res.status(200).json(prefs);
 }
 
-async function getUserTier(supabase, userId) {
+async function getUserTier(supabase, userId, app = 'wind') {
   try {
-    const { data, error } = await supabase.rpc('get_user_tier', { uid: userId });
-    if (error) {
-      const { data: row } = await supabase
-        .from('subscriptions')
-        .select('tier, status, current_period_end')
-        .eq('user_id', userId)
-        .eq('status', 'active')
-        .single();
-      if (!row) return 'free';
-      if (row.current_period_end && new Date(row.current_period_end) < new Date()) return 'free';
-      return row.tier || 'free';
-    }
-    return data || 'free';
+    let query = supabase
+      .from('subscriptions')
+      .select('tier, status, current_period_end, app')
+      .eq('user_id', userId)
+      .eq('status', 'active');
+
+    const { data: rows } = await query;
+    if (!rows?.length) return 'free';
+
+    const match = rows.find(r => r.app === app) || rows.find(r => !r.app && app === 'wind');
+    if (!match) return 'free';
+    if (match.current_period_end && new Date(match.current_period_end) < new Date()) return 'free';
+    return match.tier || 'free';
   } catch {
     return 'free';
   }

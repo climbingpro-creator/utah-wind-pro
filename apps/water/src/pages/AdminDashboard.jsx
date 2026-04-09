@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 
 const ALLOWED_ADMINS = ['tyler@aspenearth.com', 'climbingpro@gmail.com'];
+const API_ORIGIN = import.meta.env.VITE_API_ORIGIN || import.meta.env.VITE_WIND_APP_URL || '';
 
 const TYPE_CONFIG = {
   bug:     { label: 'Bug Report',       icon: Bug,           color: 'text-red-400',    bg: 'bg-red-500/10 border-red-500/20' },
@@ -167,8 +168,7 @@ export default function AdminDashboard() {
     setAnalyticsError(null);
     try {
       const headers = await getAuthHeader();
-      const apiOrigin = import.meta.env.VITE_API_ORIGIN || '';
-      const resp = await fetch(`${apiOrigin}/api/admin/analytics`, { headers });
+      const resp = await fetch(`${API_ORIGIN}/api/admin/analytics`, { headers });
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const data = await resp.json();
       setAnalytics(data);
@@ -199,8 +199,7 @@ export default function AdminDashboard() {
     setUsersLoading(true);
     try {
       const headers = await getAuthHeader();
-      const apiOrigin = import.meta.env.VITE_API_ORIGIN || '';
-      const resp = await fetch(`${apiOrigin}/api/admin/users`, { headers });
+      const resp = await fetch(`${API_ORIGIN}/api/admin/users`, { headers });
       if (resp.ok) {
         const data = await resp.json();
         setUsersData(data);

@@ -47,6 +47,7 @@ export default async function handler(req, res) {
         const session = event.data.object;
         const userId = session.metadata?.supabase_user_id;
         if (!userId) break;
+        const app = session.metadata?.app || 'wind';
 
         const { error: upsertErr } = await supabase.from('subscriptions').upsert({
           user_id: userId,
@@ -55,7 +56,8 @@ export default async function handler(req, res) {
           tier: 'pro',
           status: 'active',
           current_period_end: null,
-        }, { onConflict: 'user_id' });
+          app,
+        }, { onConflict: 'user_id,app' });
         if (upsertErr) {
           console.error('checkout upsert failed:', upsertErr);
           return res.status(500).json({ error: 'DB write failed — Stripe will retry' });
@@ -65,44 +67,46 @@ export default async function handler(req, res) {
 
       case 'customer.subscription.updated': {
         const sub = event.data.object;
-        const { data: row, error: lookupErr } = await supabase
+        const { data: rows, error: lookupErr } = await supabase
           .from('subscriptions')
-          .select('user_id')
-          .eq('stripe_customer_id', sub.customer)
-          .single();
-        if (lookupErr || !row) break;
+          .select('user_id, app')
+          .eq('stripe_customer_id', sub.customer);
+        if (lookupErr || !rows?.length) break;
 
         const isActive = sub.status === 'active' || sub.status === 'trialing';
-        const { error: updateErr } = await supabase.from('subscriptions').update({
-          tier: isActive ? 'pro' : 'free',
-          status: sub.status,
-          current_period_end: sub.current_period_end
-            ? new Date(sub.current_period_end * 1000).toISOString()
-            : null,
-        }).eq('user_id', row.user_id);
-        if (updateErr) {
-          console.error('subscription update failed:', updateErr);
-          return res.status(500).json({ error: 'DB write failed — Stripe will retry' });
+        for (const row of rows) {
+          const q = supabase.from('subscriptions').update({
+            tier: isActive ? 'pro' : 'free',
+            status: sub.status,
+            current_period_end: sub.current_period_end
+              ? new Date(sub.current_period_end * 1000).toISOString()
+              : null,
+          }).eq('user_id', row.user_id);
+          if (row.app) q.eq('app', row.app);
+          else q.is('app', null);
+          const { error: updateErr } = await q;
+          if (updateErr) console.error('subscription update failed:', updateErr);
         }
         break;
       }
 
       case 'customer.subscription.deleted': {
         const sub = event.data.object;
-        const { data: row, error: lookupErr } = await supabase
+        const { data: rows, error: lookupErr } = await supabase
           .from('subscriptions')
-          .select('user_id')
-          .eq('stripe_customer_id', sub.customer)
-          .single();
-        if (lookupErr || !row) break;
+          .select('user_id, app')
+          .eq('stripe_customer_id', sub.customer);
+        if (lookupErr || !rows?.length) break;
 
-        const { error: delErr } = await supabase.from('subscriptions').update({
-          tier: 'free',
-          status: 'cancelled',
-        }).eq('user_id', row.user_id);
-        if (delErr) {
-          console.error('subscription delete failed:', delErr);
-          return res.status(500).json({ error: 'DB write failed — Stripe will retry' });
+        for (const row of rows) {
+          const q = supabase.from('subscriptions').update({
+            tier: 'free',
+            status: 'cancelled',
+          }).eq('user_id', row.user_id);
+          if (row.app) q.eq('app', row.app);
+          else q.is('app', null);
+          const { error: delErr } = await q;
+          if (delErr) console.error('subscription delete failed:', delErr);
         }
         break;
       }

@@ -4,6 +4,7 @@ import { supabase } from '@utahwind/database';
 const TRIAL_KEY = 'uwg_trial_start';
 const TRIAL_DAYS = 7;
 const ADMIN_EMAILS = ['tyler@aspenearth.com', 'climbingpro@gmail.com'];
+const API_ORIGIN = import.meta.env.VITE_API_ORIGIN || import.meta.env.VITE_WIND_APP_URL || '';
 
 const AuthContext = createContext({
   user: null, session: null, tier: 'free', loading: true,
@@ -64,8 +65,7 @@ export function AuthProvider({ children }) {
 
   async function fetchTier(token) {
     try {
-      const apiOrigin = import.meta.env.VITE_API_ORIGIN || '';
-      const resp = await fetch(`${apiOrigin}/api/user-preferences`, {
+      const resp = await fetch(`${API_ORIGIN}/api/user-preferences?app=water`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (resp.ok) {
@@ -86,7 +86,11 @@ export function AuthProvider({ children }) {
 
   async function signUp(email, password) {
     if (!supabase) throw new Error('Auth not configured');
-    const { data, error } = await supabase.auth.signUp({ email, password });
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: window.location.origin },
+    });
     if (error) throw error;
     return data;
   }
@@ -120,13 +124,13 @@ export function AuthProvider({ children }) {
       setShowPaywall(true);
       return;
     }
-    const apiOrigin = import.meta.env.VITE_API_ORIGIN || '';
-    const resp = await fetch(`${apiOrigin}/api/subscribe`, {
+    const resp = await fetch(`${API_ORIGIN}/api/subscribe`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${session.access_token}`,
         'Content-Type': 'application/json',
       },
+      body: JSON.stringify({ app: 'water' }),
     });
     const text = await resp.text();
     let data;
@@ -142,8 +146,7 @@ export function AuthProvider({ children }) {
 
   async function manageSubscription() {
     if (!session) throw new Error('Must be signed in - no session found');
-    const apiOrigin = import.meta.env.VITE_API_ORIGIN || '';
-    const endpoint = `${apiOrigin}/api/subscribe?action=portal`;
+    const endpoint = `${API_ORIGIN}/api/subscribe?action=portal`;
     const resp = await fetch(endpoint, {
       headers: { Authorization: `Bearer ${session.access_token}` },
     });

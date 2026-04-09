@@ -26,14 +26,19 @@ export default async function handler(req, res) {
 
     const [authResult, subsResult, prefsResult, pushResult, sessionsResult] = await Promise.all([
       supabase.auth.admin.listUsers({ perPage: 1000 }),
-      supabase.from('subscriptions').select('user_id, tier, status, current_period_end'),
+      supabase.from('subscriptions').select('user_id, tier, status, current_period_end, app'),
       supabase.from('user_preferences').select('user_id, alerts, favorite_spots, created_at, updated_at'),
       supabase.from('push_subscriptions').select('user_id'),
       supabase.from('kite_sessions').select('user_id, created_at, activity_type').order('created_at', { ascending: false }).limit(5000),
     ]);
 
     const authUsers = authResult.data?.users || [];
-    const subs = new Map((subsResult.data || []).map(s => [s.user_id, s]));
+    const subsAll = subsResult.data || [];
+    const subsByUser = {};
+    for (const s of subsAll) {
+      if (!subsByUser[s.user_id]) subsByUser[s.user_id] = [];
+      subsByUser[s.user_id].push(s);
+    }
     const prefs = new Map((prefsResult.data || []).map(p => [p.user_id, p]));
     const pushUsers = new Set((pushResult.data || []).map(p => p.user_id));
 
@@ -44,10 +49,14 @@ export default async function handler(req, res) {
     }
 
     const users = authUsers.map(u => {
-      const sub = subs.get(u.id);
+      const userSubs = subsByUser[u.id] || [];
+      const windSub = userSubs.find(s => s.app === 'wind') || userSubs.find(s => !s.app);
+      const waterSub = userSubs.find(s => s.app === 'water');
       const pref = prefs.get(u.id);
       const alerts = pref?.alerts || {};
       const userSessions = sessionsByUser[u.id] || [];
+
+      const tierFor = (sub) => sub?.status === 'active' ? (sub.tier || 'pro') : 'free';
 
       return {
         id: u.id,
@@ -56,9 +65,11 @@ export default async function handler(req, res) {
         lastSignIn: u.last_sign_in_at,
         provider: u.app_metadata?.provider || 'email',
         confirmed: !!u.email_confirmed_at,
-        tier: sub?.status === 'active' ? (sub.tier || 'pro') : 'free',
-        subStatus: sub?.status || null,
-        subExpires: sub?.current_period_end || null,
+        tier: tierFor(windSub),
+        windTier: tierFor(windSub),
+        waterTier: tierFor(waterSub),
+        subStatus: windSub?.status || waterSub?.status || null,
+        subExpires: windSub?.current_period_end || waterSub?.current_period_end || null,
         hasPush: pushUsers.has(u.id),
         hasSms: !!(alerts.phone && alerts.sms_verified),
         phone: alerts.phone || null,
