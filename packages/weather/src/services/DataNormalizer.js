@@ -274,6 +274,10 @@ export class LakeState {
     const SHADOW_MAP = {
       FPS:   { wuId: 'KUTLEHI111',  label: 'Lehi (FPS Shadow)' },
       UTALP: { wuId: 'KUTDRAPE132', label: 'Draper E (UTALP Shadow)' },
+      QLN:   { wuId: 'KUTPLEAS11',  label: 'Pleasant Grove (QLN Shadow)' },
+      UID28: { wuId: 'KUTSARAT88',  label: 'Saratoga S (UID28 Shadow)' },
+      UTOLY: { wuId: 'KUTSARAT50',  label: 'Zigzag WU (UTOLY Shadow)' },
+      UT7:   { wuId: 'KUTALPIN3',   label: 'Alpine W (AF Shadow)' },
     };
 
     state.wind.stations = [];

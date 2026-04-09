@@ -788,39 +788,54 @@ async function handleSynopticLatest(res, stids) {
   const synopticIds = other.filter(id => !isUdotStation(id));
 
   const fetches = [];
+  const sourceLabels = [];
+  const errors = {};
 
   if (airport.length > 0) {
-    fetches.push(fetchNwsLatest(airport).catch(() => []));
+    fetches.push(fetchNwsLatest(airport).catch(err => { errors.nws = err.message; return []; }));
+    sourceLabels.push('nws');
   }
 
   const udotKey = process.env.UDOT_API_KEY;
   if (udotIds.length > 0 && udotKey) {
-    fetches.push(fetchUdotLatest(udotIds, udotKey).catch(() => []));
+    fetches.push(fetchUdotLatest(udotIds, udotKey).catch(err => { errors.udot = err.message; return []; }));
+    sourceLabels.push('udot');
+  } else if (udotIds.length > 0) {
+    errors.udot = 'UDOT_API_KEY not configured';
   }
 
+  const token = process.env.SYNOPTIC_TOKEN;
   if (synopticIds.length > 0 || (udotIds.length > 0 && !udotKey)) {
     const synopticFallbackIds = udotKey ? synopticIds : [...synopticIds, ...udotIds];
-    const token = process.env.SYNOPTIC_TOKEN;
     if (token && synopticFallbackIds.length > 0) {
       fetches.push(
-        fetchSynopticDirect(synopticFallbackIds.join(','), token).catch(() => [])
+        fetchSynopticDirect(synopticFallbackIds.join(','), token).catch(err => { errors.synoptic = err.message; return []; })
       );
+      sourceLabels.push('synoptic');
+    } else if (!token && synopticFallbackIds.length > 0) {
+      errors.synoptic = 'SYNOPTIC_TOKEN not configured';
     }
   }
 
   const results = await Promise.all(fetches);
   const allStations = results.flat();
 
+  if (Object.keys(errors).length > 0 || allStations.length < filtered.length / 2) {
+    console.warn(`[Synoptic Latest] requested=${filtered.length} returned=${allStations.length} airport=${airport.length} udot=${udotIds.length} synoptic=${synopticIds.length} errors=${JSON.stringify(errors)} hasToken=${!!token} hasUdotKey=${!!udotKey}`);
+  }
+
   const data = {
     SUMMARY: {
       RESPONSE_CODE: 1,
       RESPONSE_MESSAGE: 'OK',
       NUMBER_OF_OBJECTS: allStations.length,
+      _requested: filtered.length,
       _sources: allStations.reduce((acc, s) => {
         const src = s._source || 'synoptic';
         acc[src] = (acc[src] || 0) + 1;
         return acc;
       }, {}),
+      _errors: Object.keys(errors).length > 0 ? errors : undefined,
     },
     STATION: allStations,
   };
