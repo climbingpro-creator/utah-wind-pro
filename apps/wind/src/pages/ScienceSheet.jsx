@@ -8,7 +8,7 @@ import { ArrowRight, ArrowDown, Wind, Thermometer, Gauge, Radio, CheckCircle, Tr
 
 /* ─────────────────────────── PAGE 1: THE SCIENCE ─────────────────────────── */
 
-function PipelineStep({ step, icon: _Icon, title, subtitle, color, children }) {
+function PipelineStep({ step, icon: Icon, title, subtitle, color, children }) {
   return (
     <div className="flex gap-4">
       <div className="flex flex-col items-center">
