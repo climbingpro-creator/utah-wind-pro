@@ -193,8 +193,12 @@ export default function AdminDashboard() {
       const headers = await getAuthHeader();
       const apiOrigin = import.meta.env.VITE_API_ORIGIN || '';
       const resp = await fetch(`${apiOrigin}/api/admin/analytics`, { headers });
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const ct = resp.headers.get('content-type') || '';
+      if (!ct.includes('application/json')) {
+        throw new Error(`API returned non-JSON (${resp.status}). Check SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY env vars.`);
+      }
       const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || `HTTP ${resp.status}`);
       setAnalytics(data);
     } catch (err) {
       console.error('[Admin] analytics error:', err);

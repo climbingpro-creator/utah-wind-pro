@@ -6,7 +6,6 @@
  *
  * Uses the service-role key to bypass RLS and auth.admin to enumerate users.
  */
-import Stripe from 'stripe';
 import { verifyAuth, getSupabase } from '../lib/supabase.js';
 
 const ALLOWED_ADMINS = ['tyler@aspenearth.com', 'climbingpro@gmail.com'];
@@ -17,6 +16,7 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
+  res.setHeader('Content-Type', 'application/json');
   if (req.method === 'OPTIONS') return res.status(204).end();
 
   try {
@@ -80,6 +80,7 @@ export default async function handler(req, res) {
     try {
       const stripeKey = process.env.STRIPE_SECRET_KEY;
       if (stripeKey) {
+        const { default: Stripe } = await import('stripe');
         const stripe = new Stripe(stripeKey);
         const periodStart = Math.floor(new Date(now - 30 * 86400000).getTime() / 1000);
         const charges = await stripe.charges.list({ created: { gte: periodStart }, limit: 100 });

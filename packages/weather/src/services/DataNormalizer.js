@@ -72,7 +72,6 @@ export class LakeState {
     const config = state.config;
     
     if (!config) {
-      console.error(`Unknown lake ID: ${lakeId}`);
       return state;
     }
 

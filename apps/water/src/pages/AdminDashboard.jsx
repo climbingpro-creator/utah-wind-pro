@@ -169,8 +169,12 @@ export default function AdminDashboard() {
     try {
       const headers = await getAuthHeader();
       const resp = await fetch(`${API_ORIGIN}/api/admin/analytics`, { headers });
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const ct = resp.headers.get('content-type') || '';
+      if (!ct.includes('application/json')) {
+        throw new Error(`API returned non-JSON (${resp.status}). Check SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY env vars.`);
+      }
       const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || `HTTP ${resp.status}`);
       setAnalytics(data);
     } catch (err) {
       console.error('[Admin] analytics error:', err);
