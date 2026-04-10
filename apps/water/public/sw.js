@@ -2,7 +2,7 @@
 // Aggressively clears ALL old caches and forces fresh content
 // This fixes the issue where old Utah Wind Finder content persists
 
-const CACHE_VERSION = 'notwindy-v2';
+const CACHE_VERSION = 'notwindy-v3';
 
 // On install: immediately take over and clear ALL caches
 self.addEventListener('install', (event) => {
@@ -54,26 +54,10 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch: ALWAYS go to network, never serve from cache
-// This ensures users always get fresh content
+// Fetch: pass through to network - service worker does NOT cache
 self.addEventListener('fetch', (event) => {
-  // Skip non-GET requests
-  if (event.request.method !== 'GET') return;
-  
-  // Skip chrome-extension and other non-http requests
-  if (!event.request.url.startsWith('http')) return;
-  
-  event.respondWith(
-    fetch(event.request, {
-      // Bypass HTTP cache to ensure fresh content
-      cache: 'no-store',
-    }).catch((error) => {
-      console.log('[NotWindy SW] Network failed, no cache fallback:', error);
-      // Don't serve from cache - let the error propagate
-      // This forces users to see the real state of the network
-      return new Response('Network error', { status: 503 });
-    })
-  );
+  // Let the browser handle everything natively — no interception
+  return;
 });
 
 // Listen for messages from the app
