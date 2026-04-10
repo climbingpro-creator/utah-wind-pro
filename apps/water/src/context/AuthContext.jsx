@@ -4,7 +4,7 @@ import { supabase } from '@utahwind/database';
 const TRIAL_KEY = 'uwg_trial_start';
 const TRIAL_DAYS = 7;
 const ADMIN_EMAILS = ['tyler@aspenearth.com', 'climbingpro@gmail.com'];
-const API_ORIGIN = import.meta.env.VITE_API_ORIGIN || import.meta.env.VITE_WIND_APP_URL || 'https://utah-wind-pro.vercel.app';
+const API_ORIGIN = import.meta.env.VITE_API_ORIGIN || '';
 
 const AuthContext = createContext({
   user: null, session: null, tier: 'free', loading: true,
