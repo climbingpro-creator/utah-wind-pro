@@ -2,7 +2,8 @@
  * Water Temperature & River Flow Service
  * 
  * Rivers: USGS gauges where the sensor IS in the river
- *   - Provo River (10155500), Middle Provo (10155500), Green River (09261000 & 09234500)
+ *   - Provo River (10155500), Middle Provo (10155500)
+ *   - Green River A/B/C (09234500 — Greendale, below Flaming Gorge Dam)
  *   - Weber River (10130500 discharge, 10128500 temp)
  * 
  * Lakes/Reservoirs: Calibrated seasonal model built from multi-year
@@ -35,9 +36,9 @@ export const WATER_TEMP_SOURCES = {
   },
   'green-river': {
     type: 'usgs',
-    siteId: '09261000',
-    name: 'Green River nr Jensen',
-    note: 'Direct gauge — A/B/C sections',
+    siteId: '09234500',
+    name: 'Green River nr Greendale (below Flaming Gorge Dam)',
+    note: 'Tailwater gauge — directly below dam, serving A/B/C fishing sections',
   },
   'flaming-gorge': {
     type: 'usgs',
@@ -83,7 +84,7 @@ export const RIVER_FLOW_SOURCES = {
   'middle-provo': { siteId: '10155500', name: 'Provo River nr Charleston' },
   'lower-provo':  { siteId: '10159500', name: 'Provo River bl Deer Creek Dam' },
   'weber-river':  { siteId: '10130500', name: 'Weber River nr Coalville' },
-  'green-river':  { siteId: '09261000', name: 'Green River nr Jensen' },
+  'green-river':  { siteId: '09234500', name: 'Green River nr Greendale (below dam)' },
   'flaming-gorge': { siteId: '09234500', name: 'Green River bl Flaming Gorge Dam' },
 };
 
@@ -153,9 +154,24 @@ export const RIVER_FLOW_THRESHOLDS = {
   },
 };
 
+const MINIMUM_EXPECTED_CFS = {
+  'green-river':    50,
+  'flaming-gorge':  50,
+  'provo-river':    15,
+  'middle-provo':   15,
+  'lower-provo':    15,
+  'weber-river':    10,
+};
+
 export function getRiverFlowStatus(locationId, cfs) {
   const config = RIVER_FLOW_THRESHOLDS[locationId];
   if (!config || cfs == null) return null;
+
+  const minExpected = MINIMUM_EXPECTED_CFS[locationId];
+  if (minExpected && cfs < minExpected) {
+    return { label: 'Flow Data Delayed', severity: 'ok', maxCfs: Infinity, dataDelayed: true };
+  }
+
   for (const [maxCfs, label, severity] of config.levels) {
     if (cfs <= maxCfs) return { label, severity, maxCfs };
   }

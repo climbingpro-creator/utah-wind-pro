@@ -10,6 +10,7 @@ import { useWeatherData, getHourlyForecast, findAllSportWindows, isNativeApp } f
 import { IntelligentRecommendations } from '@utahwind/ui';
 import { predictGlass } from './services/BoatingPredictor';
 import { safeToFixed } from './utils/safeToFixed';
+import { getUtahVernacular, getVernacularWindLabel } from './services/UtahVernacular';
 import LocationSelector from './components/LocationSelector';
 
 const FishingMode = lazy(() => import('./components/FishingMode'));
@@ -77,30 +78,60 @@ function getGreeting() {
   return 'Good evening';
 }
 
-function getWaterVerdict(activity, speed, gust) {
-  const s = speed ?? 0;
-  const _g = gust ?? s;
+function getWaterVerdict(activity, speed, gust, vernacularCtx) {
+  if (speed == null) {
+    return { status: 'unknown', label: 'CHECKING', reason: 'Waiting for station data', color: 'slate' };
+  }
+  const s = speed;
+  const g = gust ?? s;
+  const gusty = g > s * 1.5 && g > 8;
+
+  const vernacularLabel = vernacularCtx
+    ? getVernacularWindLabel(vernacularCtx)
+    : null;
+
   if (activity === 'fishing') {
-    if (s <= 3) return { status: 'go', label: 'GO FISH', reason: 'Calm water — fish are active', color: 'emerald' };
-    if (s <= 8) return { status: 'go', label: 'GOOD', reason: `Light ripple (${Math.round(s)} mph) — great casting`, color: 'lime' };
-    if (s <= 15) return { status: 'caution', label: 'MODERATE', reason: `${Math.round(s)} mph — switch to jigs or deep bait`, color: 'amber' };
-    return { status: 'off', label: 'ROUGH', reason: `${Math.round(s)} mph — fish from shore`, color: 'red' };
+    if (s <= 3 && !gusty) return { status: 'go', label: 'GO FISH', reason: 'Calm water — fish are active', color: 'emerald' };
+    if (s <= 8 && g <= 15) return { status: 'go', label: 'GOOD', reason: `Light ripple (${Math.round(s)} mph) — great casting`, color: 'lime' };
+    if (s <= 15 || g <= 20) {
+      const label = vernacularLabel || 'MODERATE';
+      const reason = vernacularLabel
+        ? `${vernacularLabel} — ${Math.round(s)} mph${gusty ? ` gusting ${Math.round(g)}` : ''}`
+        : `${Math.round(s)} mph${gusty ? ` gusting ${Math.round(g)}` : ''} — switch to jigs or deep bait`;
+      return { status: 'caution', label, reason, color: 'amber' };
+    }
+    return { status: 'off', label: 'ROUGH', reason: `${Math.round(s)} mph${gusty ? ` gusting ${Math.round(g)}` : ''} — fish from shore`, color: 'red' };
   }
   if (activity === 'paddling') {
+    if (gusty && g > 12) {
+      const label = vernacularLabel || 'GUSTY';
+      return { status: 'caution', label, reason: `${Math.round(s)} mph with gusts to ${Math.round(g)} — ${vernacularLabel ? vernacularLabel.toLowerCase() : 'unpredictable'}`, color: 'amber' };
+    }
     if (s <= 2) return { status: 'go', label: 'GLASS', reason: 'Mirror-flat — perfect paddle', color: 'emerald' };
-    if (s <= 6) return { status: 'go', label: 'GOOD', reason: `Light wind (${Math.round(s)} mph) — easy paddle`, color: 'lime' };
-    if (s <= 10) return { status: 'caution', label: 'CHOPPY', reason: `${Math.round(s)} mph — experienced only`, color: 'amber' };
+    if (s <= 6 && g <= 10) return { status: 'go', label: 'GOOD', reason: `Light wind (${Math.round(s)} mph) — easy paddle`, color: 'lime' };
+    if (s <= 10) {
+      const label = vernacularLabel || 'CHOPPY';
+      return { status: 'caution', label, reason: `${Math.round(s)} mph${gusty ? ` gusting ${Math.round(g)}` : ''} — ${vernacularLabel ? vernacularLabel.toLowerCase() : 'experienced only'}`, color: 'amber' };
+    }
     return { status: 'off', label: 'ROUGH', reason: `${Math.round(s)} mph — not recommended`, color: 'red' };
   }
   // boating
+  if (gusty && g > 15) {
+    const label = vernacularLabel || 'GUSTY';
+    return { status: 'caution', label, reason: `${Math.round(s)} mph with gusts to ${Math.round(g)} — ${vernacularLabel ? vernacularLabel.toLowerCase() : 'use caution'}`, color: 'amber' };
+  }
   if (s <= 2) return { status: 'go', label: 'GLASS', reason: 'Perfect glass — smooth cruising', color: 'emerald' };
-  if (s <= 8) return { status: 'go', label: 'GOOD', reason: `Light wind (${Math.round(s)} mph) — great conditions`, color: 'lime' };
-  if (s <= 15) return { status: 'caution', label: 'CHOPPY', reason: `${Math.round(s)} mph — noticeable waves`, color: 'amber' };
-  return { status: 'off', label: 'ROUGH', reason: `${Math.round(s)} mph — stay close to shore`, color: 'red' };
+  if (s <= 8 && g <= 12) return { status: 'go', label: 'GOOD', reason: `Light wind (${Math.round(s)} mph) — great conditions`, color: 'lime' };
+  if (s <= 15) {
+    const label = vernacularLabel || 'CHOPPY';
+    return { status: 'caution', label, reason: `${Math.round(s)} mph${gusty ? ` gusting ${Math.round(g)}` : ''} — ${vernacularLabel ? vernacularLabel.toLowerCase() : 'noticeable waves'}`, color: 'amber' };
+  }
+  return { status: 'off', label: 'ROUGH', reason: `${Math.round(s)} mph${gusty ? ` gusting ${Math.round(g)}` : ''} — stay close to shore`, color: 'red' };
 }
 
 function getSkillRec(activity, speed) {
-  const s = speed ?? 0;
+  if (speed == null) return null;
+  const s = speed;
   if (activity === 'paddling') {
     return {
       beginner: s <= 5 ? { label: 'GO', msg: 'Perfect for beginners', color: 'emerald' } : s <= 8 ? { label: 'CAUTION', msg: 'Stay near shore', color: 'amber' } : { label: 'NO', msg: 'Too windy', color: 'red' },
@@ -116,8 +147,11 @@ function getSkillRec(activity, speed) {
   return null;
 }
 
-function generateWaterBriefing(activity, speed, gust, pressureData, boatingPred) {
-  const s = speed ?? 0;
+function generateWaterBriefing(activity, speed, gust, pressureData, boatingPred, vernacularLabels) {
+  if (speed == null) {
+    return { headline: 'Connecting to stations', body: 'Waiting for real-time weather data from nearby stations.', bestAction: 'Data should arrive momentarily', bullets: [], excitement: 0 };
+  }
+  const s = speed;
   const hour = new Date().getHours();
   const glassEnd = boatingPred?.glassWindow?.end;
   const gradient = pressureData?.gradient ?? 0;
@@ -125,21 +159,40 @@ function generateWaterBriefing(activity, speed, gust, pressureData, boatingPred)
   let headline, body, bestAction;
   const bullets = [];
 
+  const thermalLabel = vernacularLabels?.find(v => v.label === 'Afternoon Thermal Pull');
+  const canyonLabel = vernacularLabels?.find(v => v.label === 'Canyon Winds Expected');
+  const preFrontLabel = vernacularLabels?.find(v => v.fishingBoost);
+
   if (s <= 3) {
     headline = activity === 'fishing' ? 'Prime fishing conditions' : 'Glass conditions — get out now';
     body = `Current wind is just ${Math.round(s)} mph. ${hour < 10 ? 'Morning calm should hold for a few hours before thermals build.' : hour > 17 ? 'Evening calm settling in nicely.' : 'Calm pocket — thermals may build by midday.'}`;
     bestAction = activity === 'fishing' ? 'Hit the water now — topwater lures will be effective' : `Best window is now${glassEnd ? ` until ~${glassEnd > 12 ? glassEnd - 12 + ' PM' : glassEnd + ' AM'}` : ''}`;
   } else if (s <= 8) {
-    headline = 'Light conditions — still good';
-    body = `${Math.round(s)} mph with ${gust && gust > s * 1.2 ? `gusts to ${Math.round(gust)}` : 'steady winds'}. Manageable for most activities.`;
+    headline = thermalLabel ? 'Afternoon Thermal Pull building' : 'Light conditions — still good';
+    body = thermalLabel
+      ? `${thermalLabel.description}`
+      : `${Math.round(s)} mph with ${gust && gust > s * 1.2 ? `gusts to ${Math.round(gust)}` : 'steady winds'}. Manageable for most activities.`;
     bestAction = activity === 'fishing' ? 'Try subsurface lures — surface bite may be off' : 'Good conditions but watch for afternoon thermals';
   } else {
-    headline = 'Wind advisory — plan accordingly';
-    body = `${Math.round(s)} mph winds making conditions challenging. ${hour < 17 ? 'May calm by evening.' : 'Conditions unlikely to improve tonight.'}`;
+    headline = canyonLabel ? 'Canyon Winds Expected' : thermalLabel ? 'Strong Thermal Pull' : 'Wind advisory — plan accordingly';
+    body = canyonLabel
+      ? canyonLabel.description
+      : thermalLabel
+        ? thermalLabel.description
+        : `${Math.round(s)} mph winds making conditions challenging. ${hour < 17 ? 'May calm by evening.' : 'Conditions unlikely to improve tonight.'}`;
     bestAction = activity === 'fishing' ? 'Fish sheltered coves or switch to shore' : 'Wait for calmer conditions or stick to sheltered areas';
   }
 
-  if (Math.abs(gradient) > 1.5) bullets.push({ icon: '📊', text: `Pressure gradient ${safeToFixed(Math.abs(gradient), 1)} mb — ${gradient > 0 ? 'rising' : 'falling'} trend` });
+  if (preFrontLabel) {
+    bullets.push({ icon: '⚡', text: 'Pre-Frontal Bite — pressure dropping, fish feeding aggressively before the front' });
+  }
+  if (thermalLabel && s > 3) {
+    bullets.push({ icon: '🌡️', text: 'Afternoon Thermal Pull — classic Utah valley onshore wind pattern' });
+  }
+  if (canyonLabel) {
+    bullets.push({ icon: '🏔️', text: 'Canyon Winds — cold air funneling through Wasatch canyons' });
+  }
+  if (Math.abs(gradient) > 1.5 && !canyonLabel) bullets.push({ icon: '📊', text: `Pressure gradient ${safeToFixed(Math.abs(gradient), 1)} mb — ${gradient > 0 ? 'rising' : 'falling'} trend` });
   if (glassEnd) bullets.push({ icon: '🪞', text: `Glass window predicted until ~${glassEnd > 12 ? (glassEnd - 12) + ' PM' : glassEnd + ' AM'}` });
   if (hour < 7) bullets.push({ icon: '🌅', text: 'Dawn patrol — best conditions of the day' });
   else if (hour >= 17) bullets.push({ icon: '🌇', text: 'Evening calm settling in' });
@@ -226,9 +279,10 @@ function WaterApp() {
         { speed: currentWindSpeed, gust: currentWindGust },
         { slcPressure: pressureData?.slcPressure, provoPressure: pressureData?.provoPressure, gradient: pressureData?.gradient },
         selectedActivity,
+        selectedLocation,
       );
     } catch (_e) { return null; }
-  }, [currentWindSpeed, currentWindGust, pressureData, selectedActivity]);
+  }, [currentWindSpeed, currentWindGust, pressureData, selectedActivity, selectedLocation]);
 
   const upstreamData = useMemo(() => ({
     kslcSpeed: lakeState?.kslcStation?.speed,
@@ -246,14 +300,28 @@ function WaterApp() {
     return data;
   }, [lakeState]);
 
+  const vernacularCtx = useMemo(() => ({
+    locationId: selectedLocation,
+    windSpeed: currentWindSpeed,
+    windDirection: currentWindDirection,
+    temperature: lakeState?.pws?.temperature,
+    pressureGradient: pressureData?.gradient,
+    pressureTrend: pressureData?.gradient != null
+      ? (pressureData.gradient < -0.5 ? 'falling' : pressureData.gradient > 0.5 ? 'rising' : 'stable')
+      : null,
+    pressure: pressureData?.provoPressure ?? pressureData?.slcPressure,
+  }), [selectedLocation, currentWindSpeed, currentWindDirection, lakeState?.pws?.temperature, pressureData]);
+
+  const vernacularLabels = useMemo(() => getUtahVernacular(vernacularCtx), [vernacularCtx]);
+
   const verdicts = useMemo(() =>
-    WATER_ACTIVITIES.map(a => ({ ...a, verdict: getWaterVerdict(a.id, currentWindSpeed, currentWindGust) })),
-    [currentWindSpeed, currentWindGust]
+    WATER_ACTIVITIES.map(a => ({ ...a, verdict: getWaterVerdict(a.id, currentWindSpeed, currentWindGust, vernacularCtx) })),
+    [currentWindSpeed, currentWindGust, vernacularCtx]
   );
 
   const selectedVerdict = verdicts.find(v => v.id === selectedActivity)?.verdict;
   const skillRec = useMemo(() => getSkillRec(selectedActivity, currentWindSpeed), [selectedActivity, currentWindSpeed]);
-  const briefing = useMemo(() => generateWaterBriefing(selectedActivity, currentWindSpeed, currentWindGust, pressureData, boatingPrediction), [selectedActivity, currentWindSpeed, currentWindGust, pressureData, boatingPrediction]);
+  const briefing = useMemo(() => generateWaterBriefing(selectedActivity, currentWindSpeed, currentWindGust, pressureData, boatingPrediction, vernacularLabels), [selectedActivity, currentWindSpeed, currentWindGust, pressureData, boatingPrediction, vernacularLabels]);
 
   const heroImage = useMemo(() => {
     const day = new Date().getDate();
@@ -295,6 +363,7 @@ function WaterApp() {
     go: 'bg-emerald-500 text-white',
     caution: 'bg-amber-500/30 text-amber-300',
     off: 'bg-white/10 text-white/40',
+    unknown: 'bg-slate-500/30 text-slate-300 animate-pulse',
   };
 
   return (
@@ -447,7 +516,9 @@ function WaterApp() {
                           ? 'bg-white/15 border-emerald-400/40 backdrop-blur-sm hover:bg-white/20'
                           : verdict.status === 'caution'
                             ? 'bg-white/8 border-amber-400/30 backdrop-blur-sm hover:bg-white/12'
-                            : 'bg-white/5 border-white/10 backdrop-blur-sm hover:bg-white/8'
+                            : verdict.status === 'unknown'
+                              ? 'bg-white/5 border-slate-400/20 backdrop-blur-sm'
+                              : 'bg-white/5 border-white/10 backdrop-blur-sm hover:bg-white/8'
                     }`}
                   >
                     {isSelected && (

@@ -10,7 +10,7 @@ export const southernUtahConfigs = {
     name: 'Lake Powell',
     shortName: 'Powell',
     region: 'Kane/San Juan County',
-    coordinates: { lat: 37.070, lng: -111.240 },
+    coordinates: { lat: 37.0173, lng: -111.4858 }, // Wahweap Marina — primary boat launch
     elevation: 3700,
     surfaceAcres: 161390,
     maxDepth: 583,
@@ -66,7 +66,7 @@ export const southernUtahConfigs = {
     name: 'Minersville Reservoir',
     shortName: 'Minersville',
     region: 'Beaver County',
-    coordinates: { lat: 38.210, lng: -112.870 },
+    coordinates: { lat: 38.2130, lng: -112.8740 }, // Minersville State Park boat ramp
     elevation: 5530,
     surfaceAcres: 900,
     maxDepth: 60,
@@ -120,7 +120,7 @@ export const southernUtahConfigs = {
     name: 'Panguitch Lake',
     shortName: 'Panguitch',
     region: 'Garfield County',
-    coordinates: { lat: 37.710, lng: -112.650 },
+    coordinates: { lat: 37.7130, lng: -112.6530 }, // Panguitch Lake north shore boat ramp
     elevation: 8215,
     surfaceAcres: 1248,
     maxDepth: 50,
@@ -172,7 +172,7 @@ export const southernUtahConfigs = {
     name: 'Sand Hollow Reservoir',
     shortName: 'Sand Hollow',
     region: 'Washington County',
-    coordinates: { lat: 37.105, lng: -113.380 },
+    coordinates: { lat: 37.1072, lng: -113.3850 }, // Sand Hollow State Park main boat ramp
     elevation: 3000,
     surfaceAcres: 1322,
     maxDepth: 80,
@@ -228,7 +228,7 @@ export const southernUtahConfigs = {
     name: 'Quail Creek Reservoir',
     shortName: 'Quail Creek',
     region: 'Washington County',
-    coordinates: { lat: 37.190, lng: -113.380 },
+    coordinates: { lat: 37.1920, lng: -113.3780 }, // Quail Creek State Park boat ramp
     elevation: 3300,
     surfaceAcres: 590,
     maxDepth: 90,

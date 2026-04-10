@@ -176,7 +176,7 @@ const WaterForecast = ({ locationId = 'utah-lake', currentWind = {}, pressureDat
       try {
         const [hourlyResult, upstreamResult] = await Promise.all([
           getHourlyGlassForecast(locationId, currentWind, upstreamData, lakeState, mesoData),
-          getUpstreamWarnings(mesoData),
+          getUpstreamWarnings(mesoData, locationId),
         ]);
         if (!cancelled) {
           setForecast(hourlyResult);

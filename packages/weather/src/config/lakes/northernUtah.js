@@ -10,7 +10,7 @@ export const northernUtahConfigs = {
     id: 'pineview',
     name: 'Pineview Reservoir',
     region: 'Weber County',
-    coordinates: { lat: 41.2697, lng: -111.8208 },
+    coordinates: { lat: 41.2552, lng: -111.8484 }, // Cemetery Point boat ramp
     elevation: 4900,
     
     primaryWindType: 'East/West Canyon',
@@ -118,7 +118,7 @@ export const northernUtahConfigs = {
     name: 'Bear Lake',
     shortName: 'Bear Lake',
     region: 'Rich County',
-    coordinates: { lat: 41.950, lng: -111.330 },
+    coordinates: { lat: 41.9600, lng: -111.3020 }, // Rendezvous Beach / Cisco Beach — primary shore access
     elevation: 5924,
     surfaceAcres: 69000,
     maxDepth: 208,
@@ -179,7 +179,7 @@ export const northernUtahConfigs = {
     name: 'East Canyon Reservoir',
     shortName: 'East Canyon',
     region: 'Morgan County',
-    coordinates: { lat: 40.890, lng: -111.590 },
+    coordinates: { lat: 40.8920, lng: -111.5940 }, // East Canyon State Park boat ramp
     elevation: 5700,
     surfaceAcres: 680,
     maxDepth: 120,
@@ -233,7 +233,7 @@ export const northernUtahConfigs = {
     name: 'Hyrum Reservoir',
     shortName: 'Hyrum',
     region: 'Cache County',
-    coordinates: { lat: 41.620, lng: -111.870 },
+    coordinates: { lat: 41.6225, lng: -111.8680 }, // Hyrum State Park boat ramp
     elevation: 4670,
     surfaceAcres: 480,
     maxDepth: 50,

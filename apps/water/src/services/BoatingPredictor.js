@@ -13,6 +13,7 @@
  */
 
 import boatWeightsData from '../config/trainedWeights-boating.json';
+import waterWeightsData from '../config/trainedWeights-water.json';
 
 let learnedWeights = null;
 
@@ -29,7 +30,7 @@ function getWeights() {
  * Predict glass/calm conditions.
  * Returns probability, glass window forecast, and wave estimate.
  */
-export function predictGlass(windData, pressureData = {}, activity = 'boating') {
+export function predictGlass(windData, pressureData = {}, activity = 'boating', locationId = null) {
   const w = getWeights();
   const hour = new Date().getHours();
   const month = new Date().getMonth() + 1;
@@ -39,6 +40,9 @@ export function predictGlass(windData, pressureData = {}, activity = 'boating') 
   const slcPressure = pressureData?.slcPressure;
   const provoPressure = pressureData?.provoPressure;
   const gradient = pressureData?.gradient;
+
+  const lakeKey = locationId?.replace(/-\w+$/, '') || locationId;
+  const perLake = waterWeightsData?.locations?.[lakeKey] || waterWeightsData?.locations?.[locationId] || null;
 
   let probability = 40;
 
@@ -77,6 +81,17 @@ export function predictGlass(windData, pressureData = {}, activity = 'boating') 
   const avgRate = rates.length > 0 ? rates.reduce((a, b) => a + b, 0) / rates.length : 0.03;
   const seasonalMult = avgRate > 0 ? Math.min(1.4, Math.max(0.6, monthlyRate / avgRate)) : 1.0;
   probability *= seasonalMult;
+
+  if (perLake) {
+    const isBest = perLake.bestMonths?.includes(month);
+    if (isBest) probability *= 1.08;
+    else if (perLake.bestMonths?.length) probability *= 0.94;
+
+    if (perLake.boatingAccuracy != null) {
+      const accuracyFactor = perLake.boatingAccuracy / 95;
+      probability *= Math.max(0.85, Math.min(1.15, accuracyFactor));
+    }
+  }
 
   // Apply probability calibration conservatively (blend with raw)
   const bucket = Math.floor(Math.max(0, probability) / 20) * 20;
@@ -140,6 +155,8 @@ export function predictGlass(windData, pressureData = {}, activity = 'boating') 
     hourlyMult: +hourlyMult.toFixed(2),
     isUsingLearnedWeights: !!learnedWeights || !!boatWeightsData?.weights,
     weightsVersion: (learnedWeights || boatWeightsData?.weights)?.version || 'default',
+    hasPerLakeCalibration: !!perLake,
+    locationId: locationId || null,
     recommendation: getBoatingRec(probability, currentSpeed, waveEstimate, hour, isInGlassWindow, activity),
   };
 }

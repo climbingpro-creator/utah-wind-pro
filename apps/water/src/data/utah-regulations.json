@@ -1,0 +1,1088 @@
+{
+  "_meta": {
+    "source": "Utah Division of Wildlife Resources — Fishing Guidebook 2025–2026",
+    "url": "https://wildlife.utah.gov/fishing",
+    "lastUpdated": "2026-04-10",
+    "notes": "Only waters with SPECIAL regulations are listed here. Any water NOT in this file follows General Statewide rules (4 trout, any species, no size restrictions, all methods). Seasonal closures and emergency orders may override these — always check wildlife.utah.gov."
+  },
+
+  "waters": {
+    "strawberry-reservoir": {
+      "waterbody": "Strawberry Reservoir",
+      "aliases": ["strawberry", "strawberry-ladders", "strawberry-bay", "strawberry-soldier", "strawberry-view", "strawberry-river"],
+      "region": "Wasatch",
+      "rules": [
+        { "type": "limit", "text": "Trout limit: 4 fish" },
+        { "type": "slot", "text": "All cutthroat trout between 15\" and 22\" must be immediately released" },
+        { "type": "info", "text": "Only 1 cutthroat over 22\" may be kept" },
+        { "type": "info", "text": "No live baitfish — dead bait or artificial only" }
+      ],
+      "special": "SLOT LIMIT — All cutthroat trout between 15\" and 22\" must be released immediately. This protects the spawning-age fish that sustain this Blue Ribbon fishery."
+    },
+
+    "scofield-reservoir": {
+      "waterbody": "Scofield Reservoir",
+      "aliases": ["scofield", "scofield-reservoir"],
+      "region": "Carbon",
+      "rules": [
+        { "type": "limit", "text": "Combined trout limit: 4 fish" },
+        { "type": "slot", "text": "Cutthroat and tiger trout 15–22\" must be immediately released" },
+        { "type": "info", "text": "Only 1 cutthroat/tiger trout over 22\" may be kept" }
+      ],
+      "special": "SLOT LIMIT — Same protective slot as Strawberry. All cutthroat and tiger trout between 15\" and 22\" must be released."
+    },
+
+    "provo-river-lower": {
+      "waterbody": "Provo River — Olmstead Diversion to Utah Lake",
+      "aliases": ["provo-river", "lower-provo"],
+      "region": "Utah / Wasatch",
+      "rules": [
+        { "type": "gear", "text": "Artificial flies and lures only — no bait" },
+        { "type": "limit", "text": "Trout limit: 2 fish under 15\"" },
+        { "type": "limit", "text": "Closed to cutthroat trout harvest" }
+      ],
+      "special": "ARTIFICIAL ONLY — Bait is prohibited. Cutthroat harvest is closed. Only 2 trout under 15\" may be kept."
+    },
+
+    "provo-river-middle": {
+      "waterbody": "Provo River — Jordanelle Dam to Deer Creek Reservoir",
+      "aliases": ["middle-provo"],
+      "region": "Wasatch",
+      "rules": [
+        { "type": "gear", "text": "Artificial flies and lures only — no bait" },
+        { "type": "limit", "text": "Trout limit: 2 fish under 15\"" },
+        { "type": "limit", "text": "Closed to cutthroat trout harvest" }
+      ],
+      "special": "ARTIFICIAL ONLY — Blue Ribbon tailwater section. Bait is prohibited. Special reduced limits protect wild trout."
+    },
+
+    "provo-river-upper": {
+      "waterbody": "Provo River — Woodland to Jordanelle Reservoir",
+      "aliases": [],
+      "region": "Wasatch",
+      "rules": [
+        { "type": "gear", "text": "Artificial flies and lures only — no bait" },
+        { "type": "limit", "text": "Trout limit: 2 fish" }
+      ],
+      "special": "ARTIFICIAL ONLY — Upper Provo above Jordanelle. Bait prohibited."
+    },
+
+    "provo-river-legacy-to-olmstead": {
+      "waterbody": "Provo River — Legacy Bridge to Olmstead Diversion",
+      "aliases": [],
+      "region": "Utah",
+      "rules": [
+        { "type": "gear", "text": "Artificial flies and lures only — no bait" },
+        { "type": "limit", "text": "Catch and release only for all trout" }
+      ],
+      "special": "CATCH AND RELEASE ONLY — No trout may be harvested between Legacy Bridge and Olmstead Diversion. Artificial flies and lures only."
+    },
+
+    "green-river-a": {
+      "waterbody": "Green River — A Section (Flaming Gorge Dam to Little Hole)",
+      "aliases": ["green-river"],
+      "region": "Daggett",
+      "rules": [
+        { "type": "gear", "text": "Artificial flies and lures only — no bait" },
+        { "type": "limit", "text": "Trout limit: 3 fish, only 1 over 20\"" }
+      ],
+      "special": "ARTIFICIAL ONLY — A Section. Most popular 7-mile stretch. Reduced limits and no bait."
+    },
+
+    "green-river-b": {
+      "waterbody": "Green River — B Section (Little Hole to Indian Crossing)",
+      "aliases": [],
+      "region": "Daggett",
+      "rules": [
+        { "type": "gear", "text": "Artificial flies and lures only — no bait" },
+        { "type": "limit", "text": "Trout limit: 2 fish, only 1 over 20\"" }
+      ],
+      "special": "ARTIFICIAL ONLY — B Section. Most restrictive section. Technical water with trophy potential."
+    },
+
+    "green-river-c": {
+      "waterbody": "Green River — C Section (Indian Crossing to Colorado Border)",
+      "aliases": [],
+      "region": "Daggett / Uintah",
+      "rules": [
+        { "type": "limit", "text": "Trout limit: 8 fish" },
+        { "type": "gear", "text": "All methods allowed including bait" }
+      ]
+    },
+
+    "flaming-gorge-reservoir": {
+      "waterbody": "Flaming Gorge Reservoir",
+      "aliases": ["flaming-gorge"],
+      "region": "Daggett",
+      "rules": [
+        { "type": "limit", "text": "Lake trout: 8 fish, only 1 over 28\"" },
+        { "type": "limit", "text": "Smallmouth bass: 10 fish limit" },
+        { "type": "limit", "text": "Kokanee salmon: 6 fish limit" },
+        { "type": "limit", "text": "Rainbow/brown trout: 8 fish" }
+      ]
+    },
+
+    "deer-creek-reservoir": {
+      "waterbody": "Deer Creek Reservoir",
+      "aliases": ["deer-creek"],
+      "region": "Wasatch",
+      "rules": [
+        { "type": "limit", "text": "Walleye: 6 fish, only 1 over 24\"" },
+        { "type": "limit", "text": "Trout: 4 fish" },
+        { "type": "limit", "text": "Smallmouth bass: 6 fish" }
+      ]
+    },
+
+    "jordanelle-reservoir": {
+      "waterbody": "Jordanelle Reservoir",
+      "aliases": ["jordanelle"],
+      "region": "Wasatch",
+      "rules": [
+        { "type": "limit", "text": "Smallmouth bass: 6 fish, immediate kill required" },
+        { "type": "limit", "text": "Trout: 4 fish" }
+      ],
+      "special": "BASS KILL RULE — All smallmouth bass must be killed immediately upon catch. Do not release alive."
+    },
+
+    "utah-lake": {
+      "waterbody": "Utah Lake",
+      "aliases": ["utah-lake-lincoln", "utah-lake-zigzag", "utah-lake-vineyard", "utah-lake-sandy", "utah-lake-mm19"],
+      "region": "Utah",
+      "rules": [
+        { "type": "limit", "text": "Channel catfish: No limit" },
+        { "type": "limit", "text": "White bass: No limit" },
+        { "type": "limit", "text": "Carp: No limit (bow fishing allowed)" },
+        { "type": "limit", "text": "Walleye: 6 fish, only 1 over 24\"" },
+        { "type": "limit", "text": "Black crappie: 50 fish" },
+        { "type": "limit", "text": "June sucker: Protected — catch and release only" }
+      ],
+      "special": "LIBERAL LIMITS — Help the fishery by harvesting catfish, white bass, and carp. June sucker is endangered — release all immediately."
+    },
+
+    "bear-lake": {
+      "waterbody": "Bear Lake",
+      "aliases": ["bear-lake"],
+      "region": "Rich",
+      "rules": [
+        { "type": "limit", "text": "Lake trout: 3 fish" },
+        { "type": "limit", "text": "Cutthroat trout: 2 fish" },
+        { "type": "limit", "text": "Bonneville cisco: 30 fish (dip net, Jan season only)" },
+        { "type": "limit", "text": "Bonneville whitefish: 10 fish" }
+      ],
+      "special": "ENDEMIC SPECIES — Bear Lake cutthroat, cisco, sculpin, and whitefish are found NOWHERE else on Earth. Handle with extreme care."
+    },
+
+    "willard-bay-reservoir": {
+      "waterbody": "Willard Bay Reservoir",
+      "aliases": ["willard-bay"],
+      "region": "Box Elder",
+      "rules": [
+        { "type": "limit", "text": "Wiper: 6 fish" },
+        { "type": "limit", "text": "Walleye: 6 fish" },
+        { "type": "limit", "text": "Channel catfish: 12 fish" },
+        { "type": "info", "text": "Gizzard shad: Unlawful to possess alive (forage species)" }
+      ]
+    },
+
+    "fish-lake": {
+      "waterbody": "Fish Lake",
+      "aliases": ["fish-lake"],
+      "region": "Sevier",
+      "rules": [
+        { "type": "limit", "text": "Lake trout: No limit — remove all caught" },
+        { "type": "limit", "text": "Splake: 4 fish" },
+        { "type": "limit", "text": "Rainbow trout: 4 fish" },
+        { "type": "limit", "text": "Yellow perch: 20 fish" }
+      ],
+      "special": "REMOVE ALL LAKE TROUT — UDWR encourages 100% harvest. Lake trout are invasive and outcompete native splake. Keep every laker."
+    },
+
+    "lake-powell": {
+      "waterbody": "Lake Powell",
+      "aliases": ["lake-powell"],
+      "region": "Kane / San Juan",
+      "rules": [
+        { "type": "limit", "text": "Striped bass: No limit, no size restriction" },
+        { "type": "limit", "text": "Largemouth bass: 5 fish" },
+        { "type": "limit", "text": "Smallmouth bass: 20 fish (must be killed)" },
+        { "type": "limit", "text": "Walleye: 10 fish" },
+        { "type": "limit", "text": "Channel catfish: No limit" },
+        { "type": "limit", "text": "Crappie: 20 fish" }
+      ],
+      "special": "KEEP ALL STRIPERS & SMALLMOUTH — Unlimited striped bass harvest encouraged. All smallmouth bass must be killed immediately."
+    },
+
+    "yuba-reservoir": {
+      "waterbody": "Yuba Reservoir",
+      "aliases": ["yuba"],
+      "region": "Juab",
+      "rules": [
+        { "type": "limit", "text": "Northern pike: No limit — invasive, remove all" },
+        { "type": "limit", "text": "Walleye: 6 fish" },
+        { "type": "limit", "text": "Yellow perch: 50 fish" }
+      ],
+      "special": "REMOVE ALL NORTHERN PIKE — Illegally introduced pike threaten stocked and native fish. Keep every single pike."
+    },
+
+    "starvation-reservoir": {
+      "waterbody": "Starvation Reservoir",
+      "aliases": ["starvation"],
+      "region": "Duchesne",
+      "rules": [
+        { "type": "limit", "text": "Walleye: 6 fish, only 1 over 24\"" },
+        { "type": "limit", "text": "Smallmouth bass: 6 fish (must be killed)" },
+        { "type": "limit", "text": "Yellow perch: 50 fish" }
+      ],
+      "special": "BASS KILL RULE — All smallmouth bass must be killed immediately to protect walleye fishery."
+    },
+
+    "steinaker-reservoir": {
+      "waterbody": "Steinaker Reservoir",
+      "aliases": ["steinaker"],
+      "region": "Uintah",
+      "rules": [
+        { "type": "limit", "text": "Largemouth bass: 6 fish" },
+        { "type": "limit", "text": "Rainbow trout: 4 fish" },
+        { "type": "limit", "text": "Bluegill: 50 fish" }
+      ]
+    },
+
+    "red-fleet-reservoir": {
+      "waterbody": "Red Fleet Reservoir",
+      "aliases": ["red-fleet"],
+      "region": "Uintah",
+      "rules": [
+        { "type": "limit", "text": "Rainbow trout: 4 fish" },
+        { "type": "limit", "text": "Bluegill: 50 fish" }
+      ]
+    },
+
+    "pineview-reservoir": {
+      "waterbody": "Pineview Reservoir",
+      "aliases": ["pineview"],
+      "region": "Weber",
+      "rules": [
+        { "type": "limit", "text": "Tiger muskie: Catch and release only" },
+        { "type": "limit", "text": "Largemouth bass: 6 fish" },
+        { "type": "limit", "text": "Yellow perch: 50 fish" }
+      ],
+      "special": "CATCH AND RELEASE — Tiger muskie are catch and release only. State record muskie water."
+    },
+
+    "sand-hollow-reservoir": {
+      "waterbody": "Sand Hollow Reservoir",
+      "aliases": ["sand-hollow"],
+      "region": "Washington",
+      "rules": [
+        { "type": "limit", "text": "Largemouth bass: 6 fish" },
+        { "type": "limit", "text": "Bluegill: 50 fish" },
+        { "type": "limit", "text": "Rainbow trout: 4 fish (stocked Nov–Apr)" }
+      ]
+    },
+
+    "quail-creek-reservoir": {
+      "waterbody": "Quail Creek Reservoir",
+      "aliases": ["quail-creek"],
+      "region": "Washington",
+      "rules": [
+        { "type": "limit", "text": "Largemouth bass: 6 fish" },
+        { "type": "limit", "text": "Bluegill: 50 fish" },
+        { "type": "limit", "text": "Rainbow trout: 4 fish (stocked Nov–Apr)" }
+      ]
+    },
+
+    "kolob-reservoir": {
+      "waterbody": "Kolob Reservoir",
+      "aliases": ["kolob"],
+      "region": "Washington",
+      "rules": [
+        { "type": "gear", "text": "Artificial flies and lures only — no bait" },
+        { "type": "limit", "text": "Trout limit: 2 fish" }
+      ],
+      "special": "ARTIFICIAL ONLY — Trophy cutthroat water with reduced limits. Bait prohibited."
+    },
+
+    "panguitch-lake": {
+      "waterbody": "Panguitch Lake",
+      "aliases": ["panguitch"],
+      "region": "Garfield",
+      "rules": [
+        { "type": "limit", "text": "Trout: 4 fish" },
+        { "type": "limit", "text": "No more than 2 may be cutthroat" }
+      ]
+    },
+
+    "otter-creek-reservoir": {
+      "waterbody": "Otter Creek Reservoir",
+      "aliases": ["otter-creek"],
+      "region": "Piute",
+      "rules": [
+        { "type": "limit", "text": "Trout: 4 fish" }
+      ]
+    },
+
+    "minersville-reservoir": {
+      "waterbody": "Minersville Reservoir",
+      "aliases": ["minersville"],
+      "region": "Beaver",
+      "rules": [
+        { "type": "limit", "text": "Trout: 4 fish" },
+        { "type": "limit", "text": "Smallmouth bass: 6 fish" }
+      ]
+    },
+
+    "piute-reservoir": {
+      "waterbody": "Piute Reservoir",
+      "aliases": ["piute"],
+      "region": "Piute",
+      "rules": [
+        { "type": "limit", "text": "Trout: 4 fish" }
+      ]
+    },
+
+    "weber-river-upper": {
+      "waterbody": "Weber River — Oakley to Echo Reservoir",
+      "aliases": ["weber-river"],
+      "region": "Summit",
+      "rules": [
+        { "type": "gear", "text": "Artificial flies and lures only — no bait" },
+        { "type": "limit", "text": "Trout: 2 fish under 15\"" }
+      ],
+      "special": "ARTIFICIAL ONLY — Blue Ribbon upper Weber. Bait prohibited, reduced limits."
+    },
+
+    "weber-river-lower": {
+      "waterbody": "Weber River — Morgan to Ogden",
+      "aliases": [],
+      "region": "Morgan / Weber",
+      "rules": [
+        { "type": "limit", "text": "Trout: 4 fish" },
+        { "type": "gear", "text": "All methods allowed" }
+      ]
+    },
+
+    "logan-river": {
+      "waterbody": "Logan River",
+      "aliases": [],
+      "region": "Cache",
+      "rules": [
+        { "type": "gear", "text": "Artificial flies and lures only below Second Dam" },
+        { "type": "limit", "text": "Trout limit: 2 fish below Second Dam" },
+        { "type": "limit", "text": "General limit (4 trout) above Second Dam" }
+      ],
+      "special": "ARTIFICIAL ONLY below Second Dam — Reduced limits protect wild Bonneville cutthroat."
+    },
+
+    "blacksmith-fork": {
+      "waterbody": "Blacksmith Fork River",
+      "aliases": [],
+      "region": "Cache",
+      "rules": [
+        { "type": "gear", "text": "Artificial flies and lures only" },
+        { "type": "limit", "text": "Trout: 2 fish" },
+        { "type": "limit", "text": "Bonneville cutthroat: Catch and release only" }
+      ],
+      "special": "CATCH AND RELEASE — Bonneville cutthroat. Artificial only. Critical native cutthroat recovery stream."
+    },
+
+    "ogden-river-lower": {
+      "waterbody": "Ogden River — Below Pineview Dam",
+      "aliases": [],
+      "region": "Weber",
+      "rules": [
+        { "type": "gear", "text": "Artificial flies and lures only" },
+        { "type": "limit", "text": "Brown trout: 2 fish" }
+      ],
+      "special": "ARTIFICIAL ONLY — Tailwater section below Pineview. Reduced limits on browns."
+    },
+
+    "south-fork-ogden": {
+      "waterbody": "South Fork Ogden River",
+      "aliases": [],
+      "region": "Weber",
+      "rules": [
+        { "type": "gear", "text": "Artificial flies and lures only" },
+        { "type": "limit", "text": "Trout: 2 fish" }
+      ]
+    },
+
+    "chalk-creek": {
+      "waterbody": "Chalk Creek",
+      "aliases": [],
+      "region": "Summit",
+      "rules": [
+        { "type": "limit", "text": "Bonneville cutthroat: Catch and release only" },
+        { "type": "gear", "text": "Artificial flies and lures only" }
+      ],
+      "special": "CATCH AND RELEASE — Bonneville cutthroat recovery water. All cutthroat must be released."
+    },
+
+    "east-canyon-reservoir": {
+      "waterbody": "East Canyon Reservoir",
+      "aliases": ["east-canyon"],
+      "region": "Morgan",
+      "rules": [
+        { "type": "limit", "text": "Rainbow trout: 4 fish" },
+        { "type": "limit", "text": "Smallmouth bass: 6 fish" }
+      ]
+    },
+
+    "echo-reservoir": {
+      "waterbody": "Echo Reservoir",
+      "aliases": ["echo"],
+      "region": "Summit",
+      "rules": [
+        { "type": "limit", "text": "Rainbow trout: 4 fish" },
+        { "type": "limit", "text": "Smallmouth bass: 6 fish" },
+        { "type": "limit", "text": "Yellow perch: 50 fish" }
+      ]
+    },
+
+    "rockport-reservoir": {
+      "waterbody": "Rockport Reservoir",
+      "aliases": ["rockport"],
+      "region": "Summit",
+      "rules": [
+        { "type": "limit", "text": "Rainbow trout: 4 fish" },
+        { "type": "limit", "text": "Brown trout: 4 fish" },
+        { "type": "limit", "text": "Smallmouth bass: 6 fish" },
+        { "type": "limit", "text": "Yellow perch: 50 fish" }
+      ]
+    },
+
+    "hyrum-reservoir": {
+      "waterbody": "Hyrum Reservoir",
+      "aliases": ["hyrum"],
+      "region": "Cache",
+      "rules": [
+        { "type": "limit", "text": "Rainbow trout: 4 fish" },
+        { "type": "limit", "text": "Bluegill: 50 fish" },
+        { "type": "limit", "text": "Yellow perch: 50 fish" }
+      ]
+    },
+
+    "mantua-reservoir": {
+      "waterbody": "Mantua Reservoir",
+      "aliases": [],
+      "region": "Box Elder",
+      "rules": [
+        { "type": "limit", "text": "Trout: 4 fish" },
+        { "type": "limit", "text": "Bluegill: 50 fish" }
+      ]
+    },
+
+    "causey-reservoir": {
+      "waterbody": "Causey Reservoir",
+      "aliases": [],
+      "region": "Weber",
+      "rules": [
+        { "type": "gear", "text": "Artificial flies and lures only" },
+        { "type": "limit", "text": "Trout: 2 fish" }
+      ],
+      "special": "ARTIFICIAL ONLY — Trophy water with reduced limits."
+    },
+
+    "lost-creek-reservoir": {
+      "waterbody": "Lost Creek Reservoir",
+      "aliases": [],
+      "region": "Morgan",
+      "rules": [
+        { "type": "limit", "text": "Trout: 4 fish" },
+        { "type": "limit", "text": "Cutthroat: 2 fish" }
+      ]
+    },
+
+    "currant-creek-reservoir": {
+      "waterbody": "Currant Creek Reservoir",
+      "aliases": [],
+      "region": "Wasatch",
+      "rules": [
+        { "type": "limit", "text": "Trout: 4 fish" },
+        { "type": "limit", "text": "No cutthroat slot but check UDWR for closures" }
+      ]
+    },
+
+    "mill-meadow-reservoir": {
+      "waterbody": "Mill Meadow Reservoir",
+      "aliases": [],
+      "region": "Wayne",
+      "rules": [
+        { "type": "limit", "text": "Trout: 4 fish" }
+      ]
+    },
+
+    "fremont-river": {
+      "waterbody": "Fremont River",
+      "aliases": [],
+      "region": "Wayne",
+      "rules": [
+        { "type": "limit", "text": "Trout: 4 fish" },
+        { "type": "info", "text": "Brown trout present in lower sections" }
+      ]
+    },
+
+    "boulder-mountain-lakes": {
+      "waterbody": "Boulder Mountain Lakes (General — Aquarius Plateau)",
+      "aliases": [],
+      "region": "Garfield / Wayne",
+      "rules": [
+        { "type": "limit", "text": "Trout: 4 fish (most lakes)" },
+        { "type": "info", "text": "Some lakes are sterile plants — check specific lake for bonus limits" },
+        { "type": "info", "text": "Brook trout: Bonus limit of 8 additional on specified lakes" }
+      ],
+      "special": "BONUS BROOK TROUT LIMITS — Many Boulder Mtn lakes have bonus brook trout harvest (8 extra) to manage overpopulation. Check UDWR lake-by-lake list."
+    },
+
+    "boulder-creek": {
+      "waterbody": "Boulder Creek",
+      "aliases": [],
+      "region": "Garfield",
+      "rules": [
+        { "type": "limit", "text": "Trout: 2 fish" },
+        { "type": "gear", "text": "Artificial flies and lures only" }
+      ],
+      "special": "ARTIFICIAL ONLY — Native cutthroat recovery water."
+    },
+
+    "high-uintas-general": {
+      "waterbody": "High Uintas Wilderness — General Lakes",
+      "aliases": [],
+      "region": "Duchesne / Summit / Uintah / Daggett",
+      "rules": [
+        { "type": "limit", "text": "Trout: 8 fish (general High Uintas limit)" },
+        { "type": "info", "text": "Brook trout: Bonus limit of 8 additional on most lakes" },
+        { "type": "info", "text": "Some lakes have specific cutthroat protections — check UDWR" }
+      ],
+      "special": "LIBERAL LIMITS — 8-trout general limit plus 8 bonus brook trout on most wilderness lakes. High Uintas are managed for harvest to maintain healthy fish size."
+    },
+
+    "high-uintas-cutthroat-recovery": {
+      "waterbody": "High Uintas — Designated Cutthroat Recovery Lakes",
+      "aliases": [],
+      "region": "Duchesne / Summit",
+      "rules": [
+        { "type": "limit", "text": "Cutthroat: Catch and release only" },
+        { "type": "gear", "text": "Artificial flies and lures only" },
+        { "type": "info", "text": "Applies to designated lakes posted with signs — check UDWR for specific lake list" }
+      ],
+      "special": "CATCH AND RELEASE — Bonneville cutthroat recovery. These high-alpine lakes are critical genetic refuges. Zero harvest, artificial only."
+    },
+
+    "matt-warner-reservoir": {
+      "waterbody": "Matt Warner Reservoir",
+      "aliases": [],
+      "region": "Uintah",
+      "rules": [
+        { "type": "limit", "text": "Trout: 4 fish" }
+      ]
+    },
+
+    "pelican-lake": {
+      "waterbody": "Pelican Lake",
+      "aliases": [],
+      "region": "Uintah",
+      "rules": [
+        { "type": "limit", "text": "Largemouth bass: 6 fish" },
+        { "type": "limit", "text": "Bluegill: 50 fish" }
+      ]
+    },
+
+    "moon-lake": {
+      "waterbody": "Moon Lake",
+      "aliases": [],
+      "region": "Duchesne",
+      "rules": [
+        { "type": "limit", "text": "Trout: 4 fish" }
+      ]
+    },
+
+    "trial-lake": {
+      "waterbody": "Trial Lake",
+      "aliases": [],
+      "region": "Summit",
+      "rules": [
+        { "type": "limit", "text": "Brook trout: 8 fish" },
+        { "type": "limit", "text": "All other trout: 4 fish" }
+      ]
+    },
+
+    "washington-lake": {
+      "waterbody": "Washington Lake",
+      "aliases": [],
+      "region": "Summit",
+      "rules": [
+        { "type": "limit", "text": "Brook trout: 8 fish" },
+        { "type": "limit", "text": "All other trout: 4 fish" }
+      ]
+    },
+
+    "mirror-lake": {
+      "waterbody": "Mirror Lake",
+      "aliases": [],
+      "region": "Summit",
+      "rules": [
+        { "type": "limit", "text": "Trout: 4 fish" },
+        { "type": "limit", "text": "Brook trout: Bonus 8 additional" }
+      ]
+    },
+
+    "duchesne-river": {
+      "waterbody": "Duchesne River",
+      "aliases": [],
+      "region": "Duchesne",
+      "rules": [
+        { "type": "limit", "text": "Trout: 4 fish" },
+        { "type": "info", "text": "Tribal permits required for fishing on Ute Reservation sections" }
+      ]
+    },
+
+    "whiterocks-river": {
+      "waterbody": "Whiterocks River",
+      "aliases": [],
+      "region": "Uintah",
+      "rules": [
+        { "type": "limit", "text": "Trout: 4 fish" },
+        { "type": "info", "text": "Upper sections on Ute Tribal land — tribal permit required" }
+      ]
+    },
+
+    "lake-fork-river": {
+      "waterbody": "Lake Fork River",
+      "aliases": [],
+      "region": "Duchesne",
+      "rules": [
+        { "type": "limit", "text": "Trout: 4 fish" }
+      ]
+    },
+
+    "yellowstone-river-ut": {
+      "waterbody": "Yellowstone River (Utah — Uinta Basin)",
+      "aliases": [],
+      "region": "Duchesne",
+      "rules": [
+        { "type": "limit", "text": "Trout: 4 fish" }
+      ]
+    },
+
+    "huntington-reservoir": {
+      "waterbody": "Huntington Reservoir (Mammoth)",
+      "aliases": [],
+      "region": "Emery",
+      "rules": [
+        { "type": "limit", "text": "Trout: 4 fish" },
+        { "type": "limit", "text": "Tiger trout: Catch and release only" }
+      ],
+      "special": "TIGER TROUT CATCH AND RELEASE — All tiger trout must be released immediately."
+    },
+
+    "cleveland-reservoir": {
+      "waterbody": "Cleveland Reservoir",
+      "aliases": [],
+      "region": "Emery",
+      "rules": [
+        { "type": "limit", "text": "Trout: 4 fish" }
+      ]
+    },
+
+    "electric-lake": {
+      "waterbody": "Electric Lake",
+      "aliases": [],
+      "region": "Emery",
+      "rules": [
+        { "type": "limit", "text": "Cutthroat trout: 4 fish" },
+        { "type": "info", "text": "Primarily cutthroat fishery stocked by UDWR" }
+      ]
+    },
+
+    "joes-valley-reservoir": {
+      "waterbody": "Joe's Valley Reservoir",
+      "aliases": [],
+      "region": "Emery",
+      "rules": [
+        { "type": "limit", "text": "Splake: 4 fish" },
+        { "type": "limit", "text": "Tiger trout: Catch and release only" }
+      ],
+      "special": "TIGER TROUT CATCH AND RELEASE — All tiger trout must be released. Trophy splake water."
+    },
+
+    "huntington-creek": {
+      "waterbody": "Huntington Creek — Left Fork",
+      "aliases": [],
+      "region": "Emery",
+      "rules": [
+        { "type": "gear", "text": "Artificial flies and lures only" },
+        { "type": "limit", "text": "Cutthroat: Catch and release only" }
+      ],
+      "special": "CATCH AND RELEASE — Bonneville cutthroat recovery stream. Artificial only, zero harvest."
+    },
+
+    "salina-creek": {
+      "waterbody": "Salina Creek",
+      "aliases": [],
+      "region": "Sevier",
+      "rules": [
+        { "type": "limit", "text": "Trout: 4 fish" }
+      ]
+    },
+
+    "east-fork-sevier": {
+      "waterbody": "East Fork Sevier River",
+      "aliases": [],
+      "region": "Garfield",
+      "rules": [
+        { "type": "limit", "text": "Trout: 4 fish" }
+      ]
+    },
+
+    "manning-meadow-reservoir": {
+      "waterbody": "Manning Meadow Reservoir",
+      "aliases": [],
+      "region": "Garfield",
+      "rules": [
+        { "type": "limit", "text": "Trout: 4 fish" },
+        { "type": "info", "text": "High-altitude brook trout fishery" }
+      ]
+    },
+
+    "wide-hollow-reservoir": {
+      "waterbody": "Wide Hollow Reservoir",
+      "aliases": [],
+      "region": "Garfield",
+      "rules": [
+        { "type": "limit", "text": "Trout: 4 fish" },
+        { "type": "limit", "text": "Bluegill: 50 fish" }
+      ]
+    },
+
+    "navajo-lake": {
+      "waterbody": "Navajo Lake",
+      "aliases": [],
+      "region": "Kane",
+      "rules": [
+        { "type": "limit", "text": "Trout: 4 fish" },
+        { "type": "limit", "text": "Splake: 4 fish" }
+      ]
+    },
+
+    "duck-fork-reservoir": {
+      "waterbody": "Duck Fork Reservoir",
+      "aliases": [],
+      "region": "Emery",
+      "rules": [
+        { "type": "limit", "text": "Trout: 4 fish" }
+      ]
+    },
+
+    "ferron-reservoir": {
+      "waterbody": "Ferron Reservoir",
+      "aliases": [],
+      "region": "Emery",
+      "rules": [
+        { "type": "limit", "text": "Trout: 4 fish" }
+      ]
+    },
+
+    "koosharem-reservoir": {
+      "waterbody": "Koosharem Reservoir",
+      "aliases": [],
+      "region": "Sevier",
+      "rules": [
+        { "type": "limit", "text": "Trout: 4 fish" }
+      ]
+    },
+
+    "enterprise-reservoir": {
+      "waterbody": "Enterprise Reservoir (Upper & Lower)",
+      "aliases": [],
+      "region": "Iron",
+      "rules": [
+        { "type": "limit", "text": "Trout: 4 fish" },
+        { "type": "limit", "text": "Smallmouth bass: 6 fish" }
+      ]
+    },
+
+    "newcastle-reservoir": {
+      "waterbody": "Newcastle Reservoir",
+      "aliases": [],
+      "region": "Iron",
+      "rules": [
+        { "type": "limit", "text": "Trout: 4 fish" },
+        { "type": "limit", "text": "Largemouth bass: 6 fish" }
+      ]
+    },
+
+    "gunlock-reservoir": {
+      "waterbody": "Gunlock Reservoir",
+      "aliases": [],
+      "region": "Washington",
+      "rules": [
+        { "type": "limit", "text": "Largemouth bass: 6 fish" },
+        { "type": "limit", "text": "Trout: 4 fish (stocked winters)" }
+      ]
+    },
+
+    "ivins-reservoir": {
+      "waterbody": "Ivins Reservoir",
+      "aliases": [],
+      "region": "Washington",
+      "rules": [
+        { "type": "limit", "text": "Trout: 4 fish (stocked Nov–Mar)" },
+        { "type": "limit", "text": "Largemouth bass: 6 fish" }
+      ]
+    },
+
+    "tonaquint-pond": {
+      "waterbody": "Tonaquint Nature Park Pond",
+      "aliases": [],
+      "region": "Washington",
+      "rules": [
+        { "type": "limit", "text": "Trout: 4 fish" },
+        { "type": "info", "text": "Community pond — youth & family priority" }
+      ]
+    },
+
+    "salem-pond": {
+      "waterbody": "Salem Pond",
+      "aliases": [],
+      "region": "Utah",
+      "rules": [
+        { "type": "limit", "text": "Trout: 4 fish" },
+        { "type": "limit", "text": "Channel catfish: 4 fish" },
+        { "type": "info", "text": "Community pond — urban fishery" }
+      ]
+    },
+
+    "payson-community-pond": {
+      "waterbody": "Payson Community Pond",
+      "aliases": [],
+      "region": "Utah",
+      "rules": [
+        { "type": "limit", "text": "Trout: 4 fish" },
+        { "type": "info", "text": "Community pond" }
+      ]
+    },
+
+    "spring-lake": {
+      "waterbody": "Spring Lake (Payson)",
+      "aliases": [],
+      "region": "Utah",
+      "rules": [
+        { "type": "limit", "text": "Trout: 4 fish" }
+      ]
+    },
+
+    "highland-glen-pond": {
+      "waterbody": "Highland Glen Park Pond",
+      "aliases": [],
+      "region": "Utah",
+      "rules": [
+        { "type": "limit", "text": "Trout: 4 fish" },
+        { "type": "info", "text": "Community pond — urban fishery" }
+      ]
+    },
+
+    "bountiful-pond": {
+      "waterbody": "Bountiful Pond",
+      "aliases": [],
+      "region": "Davis",
+      "rules": [
+        { "type": "limit", "text": "Trout: 4 fish" },
+        { "type": "limit", "text": "Bluegill: 50 fish" },
+        { "type": "info", "text": "Community pond" }
+      ]
+    },
+
+    "murray-pond": {
+      "waterbody": "Murray Pond",
+      "aliases": [],
+      "region": "Salt Lake",
+      "rules": [
+        { "type": "limit", "text": "Trout: 4 fish" },
+        { "type": "info", "text": "Community pond" }
+      ]
+    },
+
+    "millsite-reservoir": {
+      "waterbody": "Millsite Reservoir",
+      "aliases": [],
+      "region": "Emery",
+      "rules": [
+        { "type": "limit", "text": "Trout: 4 fish" }
+      ]
+    },
+
+    "huntington-north-reservoir": {
+      "waterbody": "Huntington North Reservoir",
+      "aliases": [],
+      "region": "Emery",
+      "rules": [
+        { "type": "limit", "text": "Trout: 4 fish" },
+        { "type": "limit", "text": "Largemouth bass: 6 fish" }
+      ]
+    },
+
+    "cutler-reservoir": {
+      "waterbody": "Cutler Reservoir",
+      "aliases": [],
+      "region": "Cache / Box Elder",
+      "rules": [
+        { "type": "limit", "text": "Largemouth bass: 6 fish" },
+        { "type": "limit", "text": "Walleye: 6 fish" },
+        { "type": "limit", "text": "Yellow perch: 50 fish" },
+        { "type": "limit", "text": "Channel catfish: No limit" }
+      ]
+    },
+
+    "newton-reservoir": {
+      "waterbody": "Newton Reservoir",
+      "aliases": [],
+      "region": "Cache",
+      "rules": [
+        { "type": "limit", "text": "Trout: 4 fish" }
+      ]
+    },
+
+    "sulfur-creek-reservoir": {
+      "waterbody": "Sulfur Creek Reservoir",
+      "aliases": ["sulfur-creek"],
+      "region": "Summit (WY border)",
+      "rules": [
+        { "type": "gear", "text": "Artificial flies and lures only" },
+        { "type": "limit", "text": "Trout: 4 fish" }
+      ],
+      "special": "ARTIFICIAL ONLY — Small high-altitude reservoir on the Wyoming border. Flies and lures only."
+    },
+
+    "browns-park-nwr": {
+      "waterbody": "Browns Park NWR Ponds",
+      "aliases": [],
+      "region": "Daggett",
+      "rules": [
+        { "type": "limit", "text": "Trout: 4 fish" },
+        { "type": "info", "text": "Federal refuge — check NWR-specific rules" }
+      ]
+    },
+
+    "steinaker-creek": {
+      "waterbody": "Steinaker Service Canal",
+      "aliases": [],
+      "region": "Uintah",
+      "rules": [
+        { "type": "limit", "text": "Trout: 4 fish" },
+        { "type": "info", "text": "Irrigation diversion — seasonal only" }
+      ]
+    },
+
+    "virgin-river": {
+      "waterbody": "Virgin River (within Zion National Park)",
+      "aliases": [],
+      "region": "Washington",
+      "rules": [
+        { "type": "gear", "text": "Artificial flies and lures only" },
+        { "type": "limit", "text": "Trout: Catch and release only" },
+        { "type": "info", "text": "Virgin River spinedace (endangered) — handle with extreme care" }
+      ],
+      "special": "CATCH AND RELEASE — Virgin River within Zion. Protected native fish habitat. Artificial only, zero harvest."
+    },
+
+    "right-fork-bunker-creek": {
+      "waterbody": "Right Fork Bunker Creek",
+      "aliases": [],
+      "region": "Cache",
+      "rules": [
+        { "type": "gear", "text": "Artificial flies and lures only" },
+        { "type": "limit", "text": "Bonneville cutthroat: Catch and release only" }
+      ],
+      "special": "CATCH AND RELEASE — Bonneville cutthroat genetic refuge."
+    },
+
+    "spawn-creek": {
+      "waterbody": "Spawn Creek",
+      "aliases": [],
+      "region": "Cache",
+      "rules": [
+        { "type": "gear", "text": "Artificial flies and lures only" },
+        { "type": "limit", "text": "Bonneville cutthroat: Catch and release only" }
+      ],
+      "special": "CATCH AND RELEASE — Bonneville cutthroat genetic refuge. Famously tiny stream with world-class micro-fishing."
+    },
+
+    "diamond-fork-river": {
+      "waterbody": "Diamond Fork River",
+      "aliases": [],
+      "region": "Utah",
+      "rules": [
+        { "type": "gear", "text": "Artificial flies and lures only below Three Forks" },
+        { "type": "limit", "text": "Trout: 2 fish below Three Forks" }
+      ],
+      "special": "ARTIFICIAL ONLY below Three Forks — Hot springs influence creates unique tailwater-like habitat."
+    },
+
+    "sixth-water-creek": {
+      "waterbody": "Sixth Water Creek",
+      "aliases": [],
+      "region": "Utah",
+      "rules": [
+        { "type": "limit", "text": "Trout: 4 fish" }
+      ]
+    },
+
+    "thistle-creek": {
+      "waterbody": "Thistle Creek",
+      "aliases": [],
+      "region": "Utah",
+      "rules": [
+        { "type": "limit", "text": "Trout: 4 fish" }
+      ]
+    },
+
+    "american-fork-river": {
+      "waterbody": "American Fork River",
+      "aliases": [],
+      "region": "Utah",
+      "rules": [
+        { "type": "limit", "text": "Trout: 4 fish" }
+      ]
+    },
+
+    "tibble-fork-reservoir": {
+      "waterbody": "Tibble Fork Reservoir",
+      "aliases": [],
+      "region": "Utah",
+      "rules": [
+        { "type": "limit", "text": "Trout: 4 fish" }
+      ]
+    },
+
+    "silver-lake-flat-reservoir": {
+      "waterbody": "Silver Lake Flat Reservoir",
+      "aliases": [],
+      "region": "Utah",
+      "rules": [
+        { "type": "limit", "text": "Trout: 4 fish" }
+      ]
+    },
+
+    "little-dell-reservoir": {
+      "waterbody": "Little Dell Reservoir",
+      "aliases": [],
+      "region": "Salt Lake",
+      "rules": [
+        { "type": "gear", "text": "Artificial flies and lures only" },
+        { "type": "limit", "text": "Trout: 2 fish" }
+      ],
+      "special": "ARTIFICIAL ONLY — SLC watershed. No bait, no float tubes, reduced limits."
+    },
+
+    "mountain-dell-reservoir": {
+      "waterbody": "Mountain Dell Reservoir",
+      "aliases": [],
+      "region": "Salt Lake",
+      "rules": [
+        { "type": "gear", "text": "Artificial flies and lures only" },
+        { "type": "limit", "text": "Trout: 2 fish" }
+      ],
+      "special": "ARTIFICIAL ONLY — SLC watershed. Restricted access, no bait, reduced limits."
+    }
+  }
+}

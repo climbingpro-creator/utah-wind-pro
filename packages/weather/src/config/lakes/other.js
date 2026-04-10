@@ -10,7 +10,7 @@ export const otherConfigs = {
     name: 'Jordanelle Reservoir',
     shortName: 'Jordanelle',
     region: 'Wasatch County',
-    coordinates: { lat: 40.600, lng: -111.420 },
+    coordinates: { lat: 40.5990, lng: -111.4302 }, // Hailstone Marina — primary boat ramp
     elevation: 6166,
     surfaceAcres: 3050,
     maxDepth: 292,

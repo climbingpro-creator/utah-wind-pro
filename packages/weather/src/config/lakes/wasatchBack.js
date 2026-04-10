@@ -10,7 +10,7 @@ export const wasatchBackConfigs = {
     name: 'Starvation Reservoir',
     shortName: 'Starvation',
     region: 'Duchesne County',
-    coordinates: { lat: 40.190, lng: -110.450 },
+    coordinates: { lat: 40.1855, lng: -110.4415 }, // Starvation State Park main boat ramp
     elevation: 5710,
     surfaceAcres: 3500,
     maxDepth: 165,
@@ -64,7 +64,7 @@ export const wasatchBackConfigs = {
     name: 'Flaming Gorge',
     shortName: 'Flaming Gorge',
     region: 'Daggett County',
-    coordinates: { lat: 41.050, lng: -109.600 },
+    coordinates: { lat: 41.0385, lng: -109.5725 }, // Lucerne Valley Marina
     elevation: 6040,
     surfaceAcres: 42020,
     maxDepth: 436,
@@ -119,7 +119,7 @@ export const wasatchBackConfigs = {
     name: 'Echo Reservoir',
     shortName: 'Echo',
     region: 'Summit County',
-    coordinates: { lat: 40.970, lng: -111.440 },
+    coordinates: { lat: 40.9645, lng: -111.4380 }, // Echo Dam boat ramp
     elevation: 5560,
     surfaceAcres: 1450,
     maxDepth: 126,
@@ -173,7 +173,7 @@ export const wasatchBackConfigs = {
     name: 'Rockport Reservoir',
     shortName: 'Rockport',
     region: 'Summit County',
-    coordinates: { lat: 40.780, lng: -111.400 },
+    coordinates: { lat: 40.7830, lng: -111.3955 }, // Rockport State Park boat ramp
     elevation: 5955,
     surfaceAcres: 1080,
     maxDepth: 150,
@@ -227,7 +227,7 @@ export const wasatchBackConfigs = {
     name: 'Steinaker Reservoir',
     shortName: 'Steinaker',
     region: 'Uintah County',
-    coordinates: { lat: 40.530, lng: -109.530 },
+    coordinates: { lat: 40.5262, lng: -109.5340 }, // Steinaker State Park boat ramp
     elevation: 5500,
     surfaceAcres: 820,
     maxDepth: 100,
@@ -280,7 +280,7 @@ export const wasatchBackConfigs = {
     name: 'Red Fleet Reservoir',
     shortName: 'Red Fleet',
     region: 'Uintah County',
-    coordinates: { lat: 40.580, lng: -109.460 },
+    coordinates: { lat: 40.5748, lng: -109.4635 }, // Red Fleet State Park boat ramp
     elevation: 5500,
     surfaceAcres: 520,
     maxDepth: 120,

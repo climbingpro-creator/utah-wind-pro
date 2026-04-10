@@ -1,0 +1,15 @@
+{
+  "_meta": {
+    "notes": "Map display names to public image paths. Place actual .jpg/.png files in apps/water/public/tackle-images/. Extensions assumed .jpg — update if actual files differ."
+  },
+  "Parachute Adams": "/tackle-images/parachute-adams.jpg",
+  "Pheasant Tail": "/tackle-images/pheasant-tail.jpg",
+  "Zebra Midge": "/tackle-images/zebra-midge.jpg",
+  "Olive Woolly Bugger": "/tackle-images/woolly-bugger.jpg",
+  "Chironomid": "/tackle-images/chironomid.jpg",
+  "Orange Scud": "/tackle-images/orange-scud.jpg",
+  "Kastmaster": "/tackle-images/kastmaster.jpg",
+  "Tube Jig": "/tackle-images/tube-jig.jpg",
+  "Dodger + Hoochie": "/tackle-images/dodger-hoochie.jpg",
+  "Rapala Original Floating": "/tackle-images/rapala.jpg"
+}

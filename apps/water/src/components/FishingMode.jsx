@@ -7,7 +7,35 @@ import { getDailyFlyPick, parseSkyCondition, TIME_WINDOW_LABELS } from '../servi
 import { getDailyLurePick, LURES, getShoreStrategy, TIME_WINDOW_LABELS as LURE_TIME_LABELS } from '../services/LureRecommender';
 import WaterForecast from './WaterForecast';
 import { safeToFixed } from '../utils/safeToFixed';
+import { getUtahVernacular } from '../services/UtahVernacular';
 import ProTeaser from './ProTeaser';
+import RegulationsCard from './RegulationsCard';
+import stockingData from '../data/stocking-data.json';
+import tackleImageMap from '../data/image-map.json';
+
+const _tackleKeys = Object.keys(tackleImageMap).filter(k => k !== '_meta');
+function getTackleImage(name) {
+  if (!name) return null;
+  const exact = tackleImageMap[name];
+  if (exact) return exact;
+  const match = _tackleKeys.find(k => name.includes(k) || k.includes(name));
+  return match ? tackleImageMap[match] : null;
+}
+
+function TackleThumb({ name, className = '' }) {
+  const src = getTackleImage(name);
+  const [failed, setFailed] = React.useState(false);
+  if (!src || failed) return null;
+  return (
+    <img
+      src={src}
+      alt={name}
+      loading="lazy"
+      onError={() => setFailed(true)}
+      className={`object-cover rounded-lg border border-white/10 shadow-sm flex-shrink-0 ${className}`}
+    />
+  );
+}
 
 // Utah Fishing Locations Configuration
 export const FISHING_LOCATIONS = {
@@ -16,7 +44,7 @@ export const FISHING_LOCATIONS = {
     name: 'Strawberry Reservoir',
     region: 'Wasatch',
     elevation: 7600,
-    coordinates: { lat: 40.1717, lng: -111.1847 },
+    coordinates: { lat: 40.1783, lng: -111.1952 }, // Strawberry Bay Marina boat ramp
     type: 'reservoir',
     species: ['Rainbow Trout', 'Cutthroat Trout', 'Kokanee Salmon'],
     primarySpecies: 'Cutthroat Trout',
@@ -45,7 +73,7 @@ export const FISHING_LOCATIONS = {
       { name: 'Chicken Creek Arm', description: 'Less pressure, quality fish', species: ['Cutthroat Trout'], coordinates: { lat: 40.155, lng: -111.225 } },
       { name: 'Indian Creek Inlet', description: 'Spring spawning run hotspot', species: ['Cutthroat Trout', 'Rainbow Trout'], coordinates: { lat: 40.142, lng: -111.168 } },
     ],
-    regulations: 'Cutthroat: 15" minimum, 4 fish limit',
+    regulations: 'Limit 4 trout. NO KEEPING Cutthroat between 15-22 inches. All Cutthroat in the slot must be immediately released.',
     tips: 'Soldier Creek arm is most productive. Use tube jigs tipped with worm.',
   },
   'flaming-gorge': {
@@ -53,7 +81,7 @@ export const FISHING_LOCATIONS = {
     name: 'Flaming Gorge',
     region: 'Daggett',
     elevation: 6040,
-    coordinates: { lat: 41.0917, lng: -109.5417 },
+    coordinates: { lat: 41.0385, lng: -109.5725 }, // Lucerne Valley Marina
     type: 'reservoir',
     species: ['Lake Trout', 'Rainbow Trout', 'Kokanee Salmon', 'Smallmouth Bass'],
     primarySpecies: 'Lake Trout',
@@ -91,7 +119,7 @@ export const FISHING_LOCATIONS = {
     name: 'Deer Creek Reservoir',
     region: 'Wasatch',
     elevation: 5417,
-    coordinates: { lat: 40.4067, lng: -111.5217 },
+    coordinates: { lat: 40.4093, lng: -111.5084 }, // Deer Creek State Park main boat ramp
     type: 'reservoir',
     species: ['Rainbow Trout', 'Brown Trout', 'Largemouth Bass', 'Walleye', 'Yellow Perch'],
     primarySpecies: 'Walleye',
@@ -128,7 +156,7 @@ export const FISHING_LOCATIONS = {
     name: 'Provo River',
     region: 'Wasatch/Utah',
     elevation: 5500,
-    coordinates: { lat: 40.3267, lng: -111.6017 },
+    coordinates: { lat: 40.3340, lng: -111.6105 }, // Olmstead Diversion — primary lower Provo access
     type: 'river',
     species: ['Brown Trout', 'Rainbow Trout', 'Cutthroat Trout', 'Mountain Whitefish'],
     primarySpecies: 'Brown Trout',
@@ -155,7 +183,7 @@ export const FISHING_LOCATIONS = {
       { name: 'Deer Creek Tailwater', description: 'Cold water, year-round fishing', species: ['Brown Trout', 'Rainbow Trout'], coordinates: { lat: 40.385, lng: -111.545 } },
       { name: 'Olmstead Diversion', description: 'Classic dry fly water', species: ['Brown Trout'], coordinates: { lat: 40.335, lng: -111.615 } },
     ],
-    regulations: 'Lower section: Artificial flies/lures only, catch & release',
+    regulations: 'Artificial flies and lures only. Closed to cutthroat harvest.',
     tips: 'Blue Winged Olive hatches in March-May. Match the hatch!',
   },
   'middle-provo': {
@@ -163,7 +191,7 @@ export const FISHING_LOCATIONS = {
     name: 'Middle Provo River',
     region: 'Wasatch',
     elevation: 5600,
-    coordinates: { lat: 40.4800, lng: -111.4600 },
+    coordinates: { lat: 40.5128, lng: -111.4640 }, // Midway stretch — primary wade access below Jordanelle
     type: 'river',
     species: ['Brown Trout', 'Rainbow Trout', 'Mountain Whitefish', 'Cutthroat Trout'],
     primarySpecies: 'Brown Trout',
@@ -198,7 +226,7 @@ export const FISHING_LOCATIONS = {
     name: 'Weber River',
     region: 'Summit/Morgan',
     elevation: 5600,
-    coordinates: { lat: 40.7300, lng: -111.4100 },
+    coordinates: { lat: 40.7910, lng: -111.3970 }, // Wanship/Coalville public wade access
     type: 'river',
     species: ['Brown Trout', 'Rainbow Trout', 'Mountain Whitefish', 'Cutthroat Trout'],
     primarySpecies: 'Brown Trout',
@@ -233,7 +261,7 @@ export const FISHING_LOCATIONS = {
     name: 'Green River',
     region: 'Daggett',
     elevation: 5600,
-    coordinates: { lat: 40.9117, lng: -109.4217 },
+    coordinates: { lat: 40.902, lng: -109.401 },
     type: 'river',
     species: ['Rainbow Trout', 'Brown Trout', 'Cutthroat Trout'],
     primarySpecies: 'Rainbow Trout',
@@ -268,7 +296,7 @@ export const FISHING_LOCATIONS = {
     name: 'Utah Lake',
     region: 'Utah',
     elevation: 4489,
-    coordinates: { lat: 40.2167, lng: -111.7917 },
+    coordinates: { lat: 40.1437, lng: -111.8019 }, // Lincoln Beach Marina — most popular access
     type: 'lake',
     species: ['Channel Catfish', 'White Bass', 'Walleye', 'Largemouth Bass', 'Black Crappie'],
     primarySpecies: 'Channel Catfish',
@@ -306,7 +334,7 @@ export const FISHING_LOCATIONS = {
     name: 'Jordanelle Reservoir',
     region: 'Wasatch',
     elevation: 6166,
-    coordinates: { lat: 40.6017, lng: -111.4217 },
+    coordinates: { lat: 40.5990, lng: -111.4302 }, // Hailstone Marina — primary boat ramp
     type: 'reservoir',
     species: ['Rainbow Trout', 'Brown Trout', 'Smallmouth Bass', 'Yellow Perch'],
     primarySpecies: 'Smallmouth Bass',
@@ -342,7 +370,7 @@ export const FISHING_LOCATIONS = {
     name: 'Pineview Reservoir',
     region: 'Weber',
     elevation: 4900,
-    coordinates: { lat: 41.2567, lng: -111.8417 },
+    coordinates: { lat: 41.2552, lng: -111.8484 }, // Cemetery Point boat ramp — primary access
     type: 'reservoir',
     species: ['Tiger Muskie', 'Largemouth Bass', 'Crappie', 'Yellow Perch', 'Rainbow Trout'],
     primarySpecies: 'Tiger Muskie',
@@ -375,7 +403,8 @@ export const FISHING_LOCATIONS = {
   },
   'bear-lake': {
     id: 'bear-lake', name: 'Bear Lake', region: 'Rich', elevation: 5924,
-    coordinates: { lat: 41.950, lng: -111.330 }, type: 'lake',
+    coordinates: { lat: 41.9600, lng: -111.3020 }, // Rendezvous Beach / Cisco Beach — primary shore access
+    type: 'lake',
     species: ['Cutthroat Trout', 'Lake Trout', 'Rainbow Trout'],
     primarySpecies: 'Cutthroat Trout',
     bestMonths: [1, 5, 6, 9, 10],
@@ -415,7 +444,8 @@ export const FISHING_LOCATIONS = {
   },
   'starvation': {
     id: 'starvation', name: 'Starvation Reservoir', region: 'Duchesne', elevation: 5710,
-    coordinates: { lat: 40.190, lng: -110.450 }, type: 'reservoir',
+    coordinates: { lat: 40.1855, lng: -110.4415 }, // Starvation State Park main boat ramp
+    type: 'reservoir',
     species: ['Walleye', 'Rainbow Trout', 'Smallmouth Bass', 'Brown Trout'],
     primarySpecies: 'Walleye',
     bestMonths: [3, 4, 5, 10, 11],
@@ -433,7 +463,8 @@ export const FISHING_LOCATIONS = {
   },
   'yuba': {
     id: 'yuba', name: 'Yuba Reservoir', region: 'Juab', elevation: 5100,
-    coordinates: { lat: 39.430, lng: -111.920 }, type: 'reservoir',
+    coordinates: { lat: 39.4050, lng: -111.9280 }, // Painted Rocks boat ramp
+    type: 'reservoir',
     species: ['Walleye', 'Northern Pike', 'Channel Catfish', 'Wiper', 'Tiger Muskie'],
     primarySpecies: 'Walleye',
     bestMonths: [3, 4, 5, 9, 10],
@@ -452,7 +483,8 @@ export const FISHING_LOCATIONS = {
   },
   'scofield': {
     id: 'scofield', name: 'Scofield Reservoir', region: 'Carbon', elevation: 7618,
-    coordinates: { lat: 39.790, lng: -111.150 }, type: 'reservoir',
+    coordinates: { lat: 39.7865, lng: -111.1518 }, // Scofield State Park boat ramp (Madsen Bay)
+    type: 'reservoir',
     species: ['Cutthroat Trout', 'Rainbow Trout', 'Tiger Trout'],
     primarySpecies: 'Cutthroat Trout',
     bestMonths: [5, 6, 9, 10],
@@ -470,7 +502,8 @@ export const FISHING_LOCATIONS = {
   },
   'lake-powell': {
     id: 'lake-powell', name: 'Lake Powell', region: 'Kane/San Juan', elevation: 3700,
-    coordinates: { lat: 37.070, lng: -111.240 }, type: 'reservoir',
+    coordinates: { lat: 37.0173, lng: -111.4858 }, // Wahweap Marina — primary boat launch
+    type: 'reservoir',
     species: ['Striped Bass', 'Largemouth Bass', 'Smallmouth Bass', 'Walleye'],
     primarySpecies: 'Striped Bass',
     bestMonths: [3, 4, 5, 10, 11],
@@ -490,7 +523,8 @@ export const FISHING_LOCATIONS = {
   },
   'sand-hollow': {
     id: 'sand-hollow', name: 'Sand Hollow', region: 'Washington', elevation: 3000,
-    coordinates: { lat: 37.105, lng: -113.380 }, type: 'reservoir',
+    coordinates: { lat: 37.1072, lng: -113.3850 }, // Sand Hollow State Park main boat ramp
+    type: 'reservoir',
     species: ['Largemouth Bass', 'Bluegill', 'Rainbow Trout'],
     primarySpecies: 'Largemouth Bass',
     bestMonths: [3, 4, 5, 9, 10, 11],
@@ -506,7 +540,239 @@ export const FISHING_LOCATIONS = {
     regulations: 'Bass: 6 fish limit',
     tips: 'Dixie bass fishing year-round. Rainbow trout stocked Nov-Apr only.',
   },
+  'sulfur-creek': {
+    id: 'sulfur-creek', name: 'Sulfur Creek Reservoir', region: 'Summit (WY border)', elevation: 7550,
+    coordinates: { lat: 41.095, lng: -110.955 }, type: 'reservoir',
+    species: ['Rainbow Trout', 'Cutthroat Trout'],
+    primarySpecies: 'Rainbow Trout',
+    bestMonths: [6, 7, 8, 9],
+    depths: { spring: { min: 5, max: 15, description: 'Post ice-off shallows' }, summer: { min: 10, max: 25, description: 'Thermocline fishing' }, fall: { min: 8, max: 20, description: 'Pre-winter feed' } },
+    spawning: { 'Rainbow Trout': { months: [5, 6], location: 'Inlet streams', behavior: 'Run up inlet creek' } },
+    structure: [
+      { type: 'Rocky Shoreline', description: 'Natural rock shelves', bestFor: ['Rainbow Trout'] },
+      { type: 'Dam Face', description: 'Deepest water near dam', bestFor: ['Rainbow Trout', 'Cutthroat Trout'] },
+    ],
+    hotspots: [
+      { name: 'North Inlet', description: 'Best shore fishing access', species: ['Rainbow Trout'], coordinates: { lat: 41.098, lng: -110.958 } },
+    ],
+    regulations: 'Trout: 4 fish limit, artificial flies and lures only',
+    tips: 'Small high-altitude lake near Evanston, WY. Cold water year-round. Best when jet stream is overhead.',
+  },
+  'echo': {
+    id: 'echo', name: 'Echo Reservoir', region: 'Summit', elevation: 5560,
+    coordinates: { lat: 40.96, lng: -111.44 }, type: 'reservoir',
+    species: ['Rainbow Trout', 'Smallmouth Bass', 'Yellow Perch'],
+    primarySpecies: 'Rainbow Trout',
+    bestMonths: [5, 6, 9, 10],
+    depths: { spring: { min: 5, max: 15, description: 'Warming shallows' }, summer: { min: 15, max: 35, description: 'Deeper structure' }, fall: { min: 10, max: 25, description: 'Turnover feeding' } },
+    spawning: {},
+    structure: [
+      { type: 'Dam Face', description: 'Deepest point, trout hold here in summer', bestFor: ['Rainbow Trout'] },
+      { type: 'Inlet Channel', description: 'Weber River inlet — moving water', bestFor: ['Rainbow Trout', 'Smallmouth Bass'] },
+    ],
+    hotspots: [
+      { name: 'Dam Area', description: 'Best for shore anglers', species: ['Rainbow Trout'], coordinates: { lat: 40.97, lng: -111.44 } },
+    ],
+    regulations: 'Standard Utah trout regs',
+    tips: 'Popular I-80 corridor reservoir. Wind can pick up quickly through the canyon.',
+  },
+  'rockport': {
+    id: 'rockport', name: 'Rockport Reservoir', region: 'Summit', elevation: 6020,
+    coordinates: { lat: 40.78, lng: -111.39 }, type: 'reservoir',
+    species: ['Rainbow Trout', 'Brown Trout', 'Smallmouth Bass', 'Yellow Perch'],
+    primarySpecies: 'Rainbow Trout',
+    bestMonths: [5, 6, 9, 10],
+    depths: { spring: { min: 5, max: 20, description: 'Trout cruise warming shallows' }, summer: { min: 15, max: 40, description: 'Thermocline depth' }, fall: { min: 10, max: 30, description: 'Aggressive fall feed' } },
+    spawning: { 'Brown Trout': { months: [10, 11], location: 'Weber River inlet', behavior: 'Run upstream to spawn' } },
+    structure: [
+      { type: 'Weber River Inlet', description: 'Moving water attracts trout', bestFor: ['Rainbow Trout', 'Brown Trout'] },
+      { type: 'Submerged Points', description: 'Rocky structure holds bass', bestFor: ['Smallmouth Bass'] },
+    ],
+    hotspots: [
+      { name: 'Weber Inlet', description: 'Best for trout year-round', species: ['Rainbow Trout', 'Brown Trout'], coordinates: { lat: 40.79, lng: -111.40 } },
+    ],
+    regulations: 'Standard Utah trout regs',
+    tips: 'Excellent brown trout fishery. Fall spawn run can produce trophy fish.',
+  },
+  'east-canyon': {
+    id: 'east-canyon', name: 'East Canyon Reservoir', region: 'Morgan', elevation: 5700,
+    coordinates: { lat: 40.90, lng: -111.59 }, type: 'reservoir',
+    species: ['Rainbow Trout', 'Smallmouth Bass', 'Yellow Perch'],
+    primarySpecies: 'Rainbow Trout',
+    bestMonths: [5, 6, 9, 10],
+    depths: { spring: { min: 5, max: 15, description: 'Shallows warm first' }, summer: { min: 15, max: 35, description: 'Thermocline' }, fall: { min: 10, max: 25, description: 'Turnover zone' } },
+    spawning: {},
+    structure: [
+      { type: 'Rocky Points', description: 'Bass ambush points', bestFor: ['Smallmouth Bass'] },
+      { type: 'Dam Face', description: 'Deep water trout', bestFor: ['Rainbow Trout'] },
+    ],
+    hotspots: [
+      { name: 'East Shore Points', description: 'Bass and perch structure', species: ['Smallmouth Bass', 'Yellow Perch'], coordinates: { lat: 40.91, lng: -111.58 } },
+    ],
+    regulations: 'Standard Utah regs',
+    tips: 'Close to SLC, can get crowded weekends. Early morning produces best.',
+  },
+  'hyrum': {
+    id: 'hyrum', name: 'Hyrum Reservoir', region: 'Cache', elevation: 4670,
+    coordinates: { lat: 41.64, lng: -111.86 }, type: 'reservoir',
+    species: ['Rainbow Trout', 'Bluegill', 'Yellow Perch'],
+    primarySpecies: 'Rainbow Trout',
+    bestMonths: [5, 6, 9, 10],
+    depths: { spring: { min: 5, max: 15, description: 'Warming flats' }, summer: { min: 10, max: 25, description: 'Deeper water' }, fall: { min: 8, max: 20, description: 'Fall feeding' } },
+    spawning: {},
+    structure: [
+      { type: 'Weed Beds', description: 'Panfish habitat', bestFor: ['Bluegill', 'Yellow Perch'] },
+    ],
+    hotspots: [
+      { name: 'State Park Shore', description: 'Easy access', species: ['Rainbow Trout'], coordinates: { lat: 41.64, lng: -111.86 } },
+    ],
+    regulations: 'Standard Utah regs',
+    tips: 'Good family fishing with easy shore access. Stocked regularly.',
+  },
+  'otter-creek': {
+    id: 'otter-creek', name: 'Otter Creek Reservoir', region: 'Piute', elevation: 6372,
+    coordinates: { lat: 38.27, lng: -112.06 }, type: 'reservoir',
+    species: ['Rainbow Trout', 'Cutthroat Trout'],
+    primarySpecies: 'Rainbow Trout',
+    bestMonths: [5, 6, 9, 10],
+    depths: { spring: { min: 5, max: 15, description: 'Post ice-off shallows' }, summer: { min: 12, max: 30, description: 'Deeper water' }, fall: { min: 8, max: 20, description: 'Fall feed' } },
+    spawning: {},
+    structure: [
+      { type: 'Weed Beds', description: 'Insect production zones', bestFor: ['Rainbow Trout'] },
+      { type: 'Dam Face', description: 'Deep water', bestFor: ['Rainbow Trout'] },
+    ],
+    hotspots: [
+      { name: 'North End', description: 'Shallow productive flats', species: ['Rainbow Trout'], coordinates: { lat: 38.29, lng: -112.06 } },
+    ],
+    regulations: 'Standard Utah trout regs',
+    tips: 'Remote south-central Utah. Great scenery, light pressure.',
+  },
+  'fish-lake': {
+    id: 'fish-lake', name: 'Fish Lake', region: 'Sevier', elevation: 8848,
+    coordinates: { lat: 38.54, lng: -111.72 }, type: 'natural_lake',
+    species: ['Lake Trout', 'Splake', 'Rainbow Trout', 'Yellow Perch'],
+    primarySpecies: 'Lake Trout',
+    bestMonths: [6, 7, 8, 9],
+    depths: { spring: { min: 10, max: 30, description: 'Post ice-off' }, summer: { min: 30, max: 80, description: 'Deep lake trout water' }, fall: { min: 20, max: 50, description: 'Fall turnover' } },
+    spawning: { 'Lake Trout': { months: [10, 11], location: 'Rocky reefs in 20-40 ft', behavior: 'Spawn on rocky substrate' } },
+    structure: [
+      { type: 'Deep Reef', description: 'Underwater rock structure at 40-60 ft', bestFor: ['Lake Trout'] },
+      { type: 'Weed Edges', description: 'Drop-offs from weed beds', bestFor: ['Rainbow Trout', 'Yellow Perch'] },
+    ],
+    hotspots: [
+      { name: 'Twin Creeks', description: 'Inlet area, good shore fishing', species: ['Rainbow Trout'], coordinates: { lat: 38.55, lng: -111.73 } },
+    ],
+    regulations: 'Lake trout: No limit. Help remove invasive lakers.',
+    tips: 'Utah\'s deepest natural lake. Troll deep for lakers, shore fish for rainbow.',
+  },
+  'piute': {
+    id: 'piute', name: 'Piute Reservoir', region: 'Piute', elevation: 5900,
+    coordinates: { lat: 38.33, lng: -112.14 }, type: 'reservoir',
+    species: ['Rainbow Trout', 'Brown Trout'],
+    primarySpecies: 'Rainbow Trout',
+    bestMonths: [4, 5, 9, 10],
+    depths: { spring: { min: 5, max: 15, description: 'Shallows' }, summer: { min: 10, max: 25, description: 'Deeper runs' }, fall: { min: 8, max: 20, description: 'Fall fishing' } },
+    spawning: {},
+    structure: [
+      { type: 'Inlet Channel', description: 'Sevier River inflow', bestFor: ['Rainbow Trout'] },
+    ],
+    hotspots: [
+      { name: 'Dam Area', description: 'Deepest water', species: ['Rainbow Trout'], coordinates: { lat: 38.32, lng: -112.13 } },
+    ],
+    regulations: 'Standard Utah regs',
+    tips: 'Small but productive. Light pressure, good scenery.',
+  },
+  'minersville': {
+    id: 'minersville', name: 'Minersville Reservoir', region: 'Beaver', elevation: 5840,
+    coordinates: { lat: 38.22, lng: -112.85 }, type: 'reservoir',
+    species: ['Rainbow Trout', 'Smallmouth Bass'],
+    primarySpecies: 'Rainbow Trout',
+    bestMonths: [4, 5, 10, 11],
+    depths: { spring: { min: 5, max: 15, description: 'Warming shallows' }, summer: { min: 10, max: 25, description: 'Deeper' }, fall: { min: 8, max: 20, description: 'Cooling water' } },
+    spawning: {},
+    structure: [
+      { type: 'Rocky Shores', description: 'Bass habitat', bestFor: ['Smallmouth Bass'] },
+    ],
+    hotspots: [
+      { name: 'North Arm', description: 'Good shore access', species: ['Rainbow Trout'], coordinates: { lat: 38.23, lng: -112.85 } },
+    ],
+    regulations: 'Standard Utah regs',
+    tips: 'Can produce big trout. Water levels vary significantly by year.',
+  },
+  'steinaker': {
+    id: 'steinaker', name: 'Steinaker Reservoir', region: 'Uintah', elevation: 5510,
+    coordinates: { lat: 40.52, lng: -109.53 }, type: 'reservoir',
+    species: ['Rainbow Trout', 'Largemouth Bass'],
+    primarySpecies: 'Rainbow Trout',
+    bestMonths: [4, 5, 9, 10],
+    depths: { spring: { min: 5, max: 15, description: 'Spring warming' }, summer: { min: 12, max: 30, description: 'Bass in structure' }, fall: { min: 8, max: 20, description: 'Fall feeding' } },
+    spawning: { 'Largemouth Bass': { months: [5, 6], location: 'Shallow coves', behavior: 'Bed in warm shallows' } },
+    structure: [
+      { type: 'Coves', description: 'Protected bass habitat', bestFor: ['Largemouth Bass'] },
+      { type: 'Dam Face', description: 'Deep trout water', bestFor: ['Rainbow Trout'] },
+    ],
+    hotspots: [
+      { name: 'East Coves', description: 'Bass fishing', species: ['Largemouth Bass'], coordinates: { lat: 40.53, lng: -109.52 } },
+    ],
+    regulations: 'Standard Utah regs',
+    tips: 'Near Vernal. Warm-water species do well here. Good ice fishing.',
+  },
+  'red-fleet': {
+    id: 'red-fleet', name: 'Red Fleet Reservoir', region: 'Uintah', elevation: 5600,
+    coordinates: { lat: 40.57, lng: -109.47 }, type: 'reservoir',
+    species: ['Rainbow Trout', 'Brown Trout', 'Bluegill'],
+    primarySpecies: 'Rainbow Trout',
+    bestMonths: [5, 6, 9, 10],
+    depths: { spring: { min: 5, max: 15, description: 'Post ice-off' }, summer: { min: 12, max: 30, description: 'Mid-depth structure' }, fall: { min: 8, max: 20, description: 'Cooling feed' } },
+    spawning: {},
+    structure: [
+      { type: 'Red Rock Formations', description: 'Unique underwater geology', bestFor: ['Rainbow Trout', 'Bluegill'] },
+    ],
+    hotspots: [
+      { name: 'Dinosaur Trackway', description: 'Famous red rock shore area', species: ['Rainbow Trout'], coordinates: { lat: 40.57, lng: -109.46 } },
+    ],
+    regulations: 'Standard Utah regs',
+    tips: 'Beautiful red rock scenery. Famous for dinosaur tracks near shore.',
+  },
+  'quail-creek': {
+    id: 'quail-creek', name: 'Quail Creek Reservoir', region: 'Washington', elevation: 3300,
+    coordinates: { lat: 37.20, lng: -113.38 }, type: 'reservoir',
+    species: ['Largemouth Bass', 'Bluegill', 'Rainbow Trout'],
+    primarySpecies: 'Largemouth Bass',
+    bestMonths: [3, 4, 5, 10, 11],
+    depths: { spring: { min: 3, max: 12, description: 'Bass beds' }, summer: { min: 10, max: 25, description: 'Deeper structure' }, fall: { min: 5, max: 15, description: 'Fall flats' } },
+    spawning: { 'Largemouth Bass': { months: [3, 4], location: 'Sandy coves', behavior: 'Early spring in Dixie warmth' } },
+    structure: [
+      { type: 'Sandy Coves', description: 'Bass spawning habitat', bestFor: ['Largemouth Bass'] },
+    ],
+    hotspots: [
+      { name: 'Main Cove', description: 'Primary bass area', species: ['Largemouth Bass', 'Bluegill'], coordinates: { lat: 37.20, lng: -113.38 } },
+    ],
+    regulations: 'Standard Utah warm-water regs',
+    tips: 'Dixie warm-water fishery. Year-round bass fishing in southern Utah.',
+  },
 };
+
+function buildDefaultFishingLocation(locationId) {
+  return {
+    id: locationId,
+    name: locationId.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+    region: 'Utah',
+    elevation: null,
+    coordinates: null,
+    type: 'reservoir',
+    species: [],
+    primarySpecies: null,
+    bestMonths: [],
+    depths: {},
+    spawning: {},
+    structure: [],
+    hotspots: [],
+    regulations: null,
+    tips: null,
+    _isDefault: true,
+  };
+}
 
 // Fish Species Data — temperature ranges, tactics by season, and recommended gear
 const FISH_SPECIES = {
@@ -831,7 +1097,11 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   
-  const location = FISHING_LOCATIONS[selectedLocation] || FISHING_LOCATIONS['strawberry'];
+  const location = FISHING_LOCATIONS[selectedLocation] || buildDefaultFishingLocation(selectedLocation);
+  const recentlyStocked = useMemo(() => {
+    const list = stockingData?.stocked || [];
+    return list.includes(selectedLocation) || list.some(id => selectedLocation.startsWith(id + '-') || id.startsWith(selectedLocation + '-'));
+  }, [selectedLocation]);
   const season = getCurrentSeason();
   const moonPhase = getMoonPhase();
   const solunar = getSolunarPeriods();
@@ -839,9 +1109,23 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
   
   // Get conditions
   const windSpeed = windData?.stations?.[0]?.speed || windData?.speed || 5;
+  const windDirection = windData?.stations?.[0]?.direction;
   const pressure = pressureData?.slcPressure || 30.0;
   const pressureTrend = pressureData?.gradient > 0 ? 'rising' : pressureData?.gradient < 0 ? 'falling' : 'stable';
-  
+
+  const vernacularLabels = useMemo(() => getUtahVernacular({
+    locationId: selectedLocation,
+    hour: currentHour,
+    windSpeed,
+    windDirection,
+    pressureGradient: pressureData?.gradient,
+    pressureTrend,
+    pressure,
+  }), [selectedLocation, currentHour, windSpeed, windDirection, pressureData?.gradient, pressureTrend, pressure]);
+
+  const preFrontalBite = vernacularLabels.find(v => v.fishingBoost);
+  const activeVernacular = vernacularLabels.length > 0 ? vernacularLabels[0] : null;
+
   // Fetch all USGS water temps and river flows once
   const [allWaterTemps, setAllWaterTemps] = useState({});
   const [allRiverFlows, setAllRiverFlows] = useState({});
@@ -900,20 +1184,29 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
     const pressureFalling = aiPrediction?.pressureTrend?.trend?.includes('falling');
     const now = new Date().getHours();
 
+    // Pre-Frontal Bite overrides other badges when active
+    const preFrontBadge = preFrontalBite
+      ? { text: 'PRE-FRONTAL BITE', color: isDark ? 'bg-purple-500/30 text-purple-300 border border-purple-500/50 animate-pulse' : 'bg-purple-100 text-purple-700 border border-purple-300 animate-pulse' }
+      : null;
+
     // Currently a great time
-    if (score >= 70 || goldenHour || solunarActive) {
+    if (score >= 70 || goldenHour || solunarActive || preFrontalBite) {
       const reasons = [];
+      if (preFrontalBite) reasons.push('Pre-Frontal Bite');
       if (goldenHour) reasons.push('Golden Hour');
       if (solunarActive) reasons.push(`${solunarActive} Solunar`);
-      if (pressureFalling) reasons.push('Falling Pressure');
+      if (pressureFalling && !preFrontalBite) reasons.push('Falling Pressure');
       if (moonGood) reasons.push('Strong Moon Phase');
       return {
-        color: 'green', headline: 'Fish Are Biting!',
+        color: 'green',
+        headline: preFrontalBite ? 'Pre-Frontal Bite — Fish Now!' : 'Fish Are Biting!',
         subline: reasons.length > 0 ? reasons.join(' + ') : `${score}% activity — conditions are excellent`,
-        displayScore: Math.max(score, aiProb),
-        badge: goldenHour ? { text: 'GOLDEN HOUR', color: 'bg-amber-500 text-white animate-pulse' }
+        displayScore: Math.max(score, aiProb, preFrontalBite ? 75 : 0),
+        badge: preFrontBadge
+          || (goldenHour ? { text: 'GOLDEN HOUR', color: 'bg-amber-500 text-white animate-pulse' }
           : solunarActive ? { text: 'SOLUNAR', color: 'bg-green-500 text-white animate-pulse' }
-          : { text: 'GO FISH', color: 'bg-green-500 text-white' },
+          : { text: 'GO FISH', color: 'bg-green-500 text-white' }),
+        vernacular: vernacularLabels,
       };
     }
 
@@ -928,28 +1221,32 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
         color: aiProb >= 60 ? 'green' : 'yellow',
         headline: nextGoodHour ? `Best Bite at ${timeStr}` : `Peak Hours: ${bestHours.slice(0, 3).join(', ')}`,
         subline: [
+          preFrontalBite ? 'Pre-Frontal Bite — fish feeding aggressively' : null,
           moonGood ? 'Strong moon' : null,
           pressureFalling ? 'Falling pressure (active fish)' : null,
           aiPrediction?.recommendation,
         ].filter(Boolean)[0] || `${aiProb}% activity predicted`,
         displayScore: aiProb,
-        badge: { text: 'PREDICTED', color: aiProb >= 60
+        badge: preFrontBadge || { text: 'PREDICTED', color: aiProb >= 60
           ? (isDark ? 'bg-green-500/20 text-green-400 border border-green-500/50' : 'bg-green-100 text-green-700 border border-green-300')
           : (isDark ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/50' : 'bg-yellow-100 text-yellow-700 border border-yellow-300') },
         arriveBy: nextGoodHour,
+        vernacular: vernacularLabels,
       };
     }
 
     return {
       color: score >= 50 ? 'yellow' : 'red',
-      headline: `${location.name} — ${fishingScore.recommendation}`,
-      subline: 'Monitoring conditions',
-      displayScore: score, badge: null,
+      headline: activeVernacular ? `${location.name} — ${activeVernacular.label}` : `${location.name} — ${fishingScore.recommendation}`,
+      subline: activeVernacular ? activeVernacular.description : 'Monitoring conditions',
+      displayScore: score,
+      badge: preFrontBadge,
+      vernacular: vernacularLabels,
     };
-  }, [fishingScore, aiPrediction, location, isDark]);
+  }, [fishingScore, aiPrediction, location, isDark, preFrontalBite, activeVernacular, vernacularLabels]);
 
-  // ── Sky condition for recommendations ──
-  const currentSky = useMemo(() => {
+  // ── Sky condition + cloud cover for recommendations ──
+  const { currentSky, currentCloudCover } = useMemo(() => {
     const now = new Date();
     const currentHourObj = hourlyForecast?.find(h => {
       if (h.time) {
@@ -959,8 +1256,53 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
       return false;
     }) || hourlyForecast?.[0];
     const skyText = currentHourObj?.shortForecast || currentHourObj?.text || '';
-    return parseSkyCondition(skyText);
+    return {
+      currentSky: parseSkyCondition(skyText),
+      currentCloudCover: currentHourObj?.cloudCover ?? null,
+    };
   }, [hourlyForecast]);
+
+  // ── Dynamic Weather-Tied Hatch Triggers ──
+  const weatherHatchTriggers = useMemo(() => {
+    const now = new Date();
+    const month = now.getMonth() + 1;
+    const triggers = [];
+
+    const isSpringFall = (month >= 3 && month <= 5) || (month >= 9 && month <= 11);
+    const isSummer = month >= 6 && month <= 8;
+
+    const effectiveCloudCover = currentCloudCover ?? (
+      currentSky === 'overcast' ? 90 : currentSky === 'cloudy' ? 75 : currentSky === 'partly' ? 40 : 10
+    );
+
+    if (isSpringFall && effectiveCloudCover > 65) {
+      triggers.push({
+        id: 'bwo-hatch',
+        label: 'BWO Hatch Highly Likely',
+        detail: `Cloud cover ${effectiveCloudCover}% — ideal conditions for Blue Winged Olives. Baetis love low light.`,
+        badge: 'LIVE WEATHER MATCH',
+        icon: '🪰',
+        color: 'emerald',
+        flyKey: 'bwo',
+        priority: 1,
+      });
+    }
+
+    if (isSummer && windSpeed > 8) {
+      triggers.push({
+        id: 'hopper-wind',
+        label: 'Hoppers Blown Into Water',
+        detail: `Wind ${Math.round(windSpeed)} mph — breezy conditions blowing terrestrials into the water. Throw Hoppers.`,
+        badge: 'LIVE WEATHER MATCH',
+        icon: '🦗',
+        color: 'amber',
+        flyKey: 'hopper',
+        priority: 2,
+      });
+    }
+
+    return triggers;
+  }, [currentSky, currentCloudCover, windSpeed]);
 
   // ── Daily Fly Recommendation ──
   const flyPick = useMemo(() => {
@@ -975,8 +1317,9 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
       hour: now.getHours(),
       locationId: selectedLocation,
       locationType: location.type,
+      cloudCover: currentCloudCover,
     });
-  }, [currentSky, waterTemp, windSpeed, pressure, pressureTrend, selectedLocation, location.type]);
+  }, [currentSky, currentCloudCover, waterTemp, windSpeed, pressure, pressureTrend, selectedLocation, location.type]);
 
   // ── Daily Lure/Bait Recommendation ──
   const lurePick = useMemo(() => {
@@ -1017,6 +1360,16 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
 
   return (
     <div className="space-y-6">
+      {location._isDefault && (
+        <div className={`rounded-xl p-3 border ${isDark ? 'bg-amber-500/10 border-amber-500/30' : 'bg-amber-50 border-amber-200'}`}>
+          <div className={`text-sm font-medium ${isDark ? 'text-amber-300' : 'text-amber-700'}`}>
+            Fishing data coming soon for {location.name}
+          </div>
+          <div className={`text-xs mt-1 ${isDark ? 'text-amber-400/70' : 'text-amber-600'}`}>
+            Wind, pressure, and general conditions are still available below.
+          </div>
+        </div>
+      )}
       {/* Header — Forecast-driven */}
       <div className={`rounded-xl p-4 border ${fishBannerColors[fishOpp.color]}`}>
         <div className="flex items-center gap-3 mb-3">
@@ -1027,7 +1380,14 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
           </div>
           <div className="flex-1">
             <h2 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>Utah Fishing Forecast</h2>
-            <p className={`text-xs ${isDark ? 'text-blue-300' : 'text-blue-600'}`}>{location.name}</p>
+            <div className="flex items-center gap-2">
+              <p className={`text-xs ${isDark ? 'text-blue-300' : 'text-blue-600'}`}>{location.name}</p>
+              {recentlyStocked && (
+                <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-sm shadow-cyan-500/30">
+                  🐟 RECENTLY STOCKED
+                </span>
+              )}
+            </div>
           </div>
           {fishOpp.badge && (
             <div className={`text-[10px] font-bold px-3 py-1 rounded-full ${fishOpp.badge.color}`}>
@@ -1065,7 +1425,53 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
           </div>
         </div>
       </div>
+
+      {/* Recently Stocked Callout */}
+      {recentlyStocked && (
+        <div className={`rounded-xl p-4 border ${isDark ? 'bg-cyan-500/10 border-cyan-500/40' : 'bg-cyan-50 border-cyan-300'}`}>
+          <div className="flex items-center gap-3">
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${isDark ? 'bg-cyan-500/25' : 'bg-cyan-200'}`}>
+              <span className="text-xl">🐟</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <span className={`text-sm font-bold ${isDark ? 'text-cyan-300' : 'text-cyan-800'}`}>Recently Stocked by Utah DWR</span>
+                <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full ${isDark ? 'bg-cyan-500/30 text-cyan-200 border border-cyan-500/50' : 'bg-cyan-200 text-cyan-800 border border-cyan-400'}`}>
+                  CHEAT CODE
+                </span>
+              </div>
+              <p className={`text-xs mt-0.5 ${isDark ? 'text-cyan-300/70' : 'text-cyan-700'}`}>
+                This water was stocked within the last 7–14 days. Fresh planters are aggressive and willing biters — adjust tactics accordingly.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
       
+      {/* Utah Weather Vernacular Badges */}
+      {vernacularLabels.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {vernacularLabels.map((v, i) => (
+            <div
+              key={i}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm ${
+                v.fishingBoost
+                  ? (isDark ? 'bg-purple-500/15 border-purple-500/40 text-purple-300' : 'bg-purple-50 border-purple-200 text-purple-700')
+                  : v.label === 'Canyon Winds Expected'
+                    ? (isDark ? 'bg-sky-500/15 border-sky-500/40 text-sky-300' : 'bg-sky-50 border-sky-200 text-sky-700')
+                    : (isDark ? 'bg-orange-500/15 border-orange-500/40 text-orange-300' : 'bg-orange-50 border-orange-200 text-orange-700')
+              }`}
+            >
+              <span className="text-base">{v.icon}</span>
+              <div>
+                <div className="font-bold text-xs">{v.label}</div>
+                <div className={`text-[11px] ${isDark ? 'opacity-70' : 'opacity-60'}`}>{v.description}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* AI Prediction Panel */}
       {aiPrediction && (
         <div className={`rounded-xl p-4 border ${isDark ? 'bg-slate-800/50 border-blue-500/30' : 'bg-blue-50 border-blue-200 shadow-sm'}`}>
@@ -1207,10 +1613,19 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
               {cfs != null && (
                 <div>
                   <div className={`text-xs mb-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Flow Rate</div>
-                  <div className={`text-3xl font-black ${sev.text}`}>
-                    {Math.round(cfs)}
-                  </div>
-                  <div className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>cfs</div>
+                  {status?.dataDelayed ? (
+                    <>
+                      <div className={`text-lg font-bold ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>Delayed</div>
+                      <div className={`text-[10px] ${isDark ? 'text-amber-400/70' : 'text-amber-600/70'}`}>USGS updating</div>
+                    </>
+                  ) : (
+                    <>
+                      <div className={`text-3xl font-black ${sev.text}`}>
+                        {Math.round(cfs)}
+                      </div>
+                      <div className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>cfs</div>
+                    </>
+                  )}
                 </div>
               )}
               {gage != null && (
@@ -1337,12 +1752,15 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
           {/* Top Lure Pick */}
           <div className={`mx-4 mb-3 p-4 rounded-xl border ${isDark ? 'bg-amber-500/10 border-amber-500/30' : 'bg-amber-50 border-amber-200'}`}>
             <div className="flex items-start justify-between mb-2">
-              <div>
-                <div className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>
-                  {lurePick.topPick.lure.name}
-                </div>
-                <div className={`text-sm font-medium ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>
-                  {lurePick.topPick.lure.size}
+              <div className="flex items-start gap-3">
+                <TackleThumb name={lurePick.topPick.lure.name} className="w-14 h-14" />
+                <div>
+                  <div className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                    {lurePick.topPick.lure.name}
+                  </div>
+                  <div className={`text-sm font-medium ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>
+                    {lurePick.topPick.lure.size}
+                  </div>
                 </div>
               </div>
               <div className="text-right">
@@ -1390,15 +1808,20 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
                   .slice(0, 4)
                   .map((alt, i) => (
                   <div key={i} className={`p-2.5 rounded-lg border ${isDark ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-200'}`}>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className={`text-xs font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>{alt.lure.name}</span>
-                      <span className={`text-[10px] font-bold ${alt.confidence >= 80 ? (isDark ? 'text-amber-400' : 'text-amber-600') : alt.confidence >= 60 ? (isDark ? 'text-yellow-400' : 'text-yellow-600') : (isDark ? 'text-slate-400' : 'text-slate-500')}`}>{alt.confidence}%</span>
-                    </div>
-                    <div className={`text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                      {alt.lure.size} {alt.lure.colors ? `• ${alt.lure.colors[0]}` : ''}
-                    </div>
-                    <div className={`text-[10px] mt-1 italic ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                      {alt.reason.length > 70 ? alt.reason.slice(0, 67) + '...' : alt.reason}
+                    <div className="flex items-start gap-2.5">
+                      <TackleThumb name={alt.lure.name} className="w-10 h-10 mt-0.5" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className={`text-xs font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>{alt.lure.name}</span>
+                          <span className={`text-[10px] font-bold ${alt.confidence >= 80 ? (isDark ? 'text-amber-400' : 'text-amber-600') : alt.confidence >= 60 ? (isDark ? 'text-yellow-400' : 'text-yellow-600') : (isDark ? 'text-slate-400' : 'text-slate-500')}`}>{alt.confidence}%</span>
+                        </div>
+                        <div className={`text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                          {alt.lure.size} {alt.lure.colors ? `• ${alt.lure.colors[0]}` : ''}
+                        </div>
+                        <div className={`text-[10px] mt-1 italic ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                          {alt.reason.length > 70 ? alt.reason.slice(0, 67) + '...' : alt.reason}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -1506,6 +1929,49 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
         </div>
       )}
 
+      {/* ═══════ WEATHER-TRIGGERED HATCH ALERTS ═══════ */}
+      {weatherHatchTriggers.length > 0 && (
+        <div className="space-y-2">
+          {weatherHatchTriggers.map(trigger => (
+            <div
+              key={trigger.id}
+              className={`rounded-xl border p-4 ${
+                trigger.color === 'emerald'
+                  ? (isDark ? 'bg-emerald-500/15 border-emerald-500/40' : 'bg-emerald-50 border-emerald-300')
+                  : (isDark ? 'bg-amber-500/15 border-amber-500/40' : 'bg-amber-50 border-amber-300')
+              }`}
+            >
+              <div className="flex items-center justify-between mb-1.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">{trigger.icon}</span>
+                  <span className={`text-sm font-bold ${
+                    trigger.color === 'emerald'
+                      ? (isDark ? 'text-emerald-300' : 'text-emerald-800')
+                      : (isDark ? 'text-amber-300' : 'text-amber-800')
+                  }`}>
+                    {trigger.label}
+                  </span>
+                </div>
+                <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full animate-pulse ${
+                  trigger.color === 'emerald'
+                    ? (isDark ? 'bg-emerald-500/30 text-emerald-300 border border-emerald-500/50' : 'bg-emerald-200 text-emerald-800 border border-emerald-400')
+                    : (isDark ? 'bg-amber-500/30 text-amber-300 border border-amber-500/50' : 'bg-amber-200 text-amber-800 border border-amber-400')
+                }`}>
+                  {trigger.badge}
+                </span>
+              </div>
+              <p className={`text-xs ${
+                trigger.color === 'emerald'
+                  ? (isDark ? 'text-emerald-300/80' : 'text-emerald-700')
+                  : (isDark ? 'text-amber-300/80' : 'text-amber-700')
+              }`}>
+                {trigger.detail}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* ═══════ DAILY FLY PICK ═══════ */}
       {flyPick?.topPick && (
         <div className={`rounded-xl border overflow-hidden ${isDark ? 'bg-gradient-to-br from-emerald-900/30 to-slate-800/50 border-emerald-500/30' : 'bg-gradient-to-br from-emerald-50 to-white border-emerald-200 shadow-sm'}`}>
@@ -1539,12 +2005,15 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
           {/* Top Pick */}
           <div className={`mx-4 mb-3 p-4 rounded-xl border ${isDark ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-emerald-50 border-emerald-200'}`}>
             <div className="flex items-start justify-between mb-2">
-              <div>
-                <div className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>
-                  {flyPick.topPick.name}
-                </div>
-                <div className={`text-sm font-medium ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>
-                  {flyPick.topPick.size}
+              <div className="flex items-start gap-3">
+                <TackleThumb name={flyPick.topPick.name} className="w-14 h-14" />
+                <div>
+                  <div className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                    {flyPick.topPick.name}
+                  </div>
+                  <div className={`text-sm font-medium ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>
+                    {flyPick.topPick.size}
+                  </div>
                 </div>
               </div>
               <div className="text-right">
@@ -1563,13 +2032,18 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
             <div className={`text-xs mt-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
               <span className="font-medium">Method:</span> {flyPick.topPick.method}
             </div>
-            <div className="flex items-center gap-2 mt-2">
+            <div className="flex items-center gap-2 mt-2 flex-wrap">
               <span className={`text-[10px] px-2 py-0.5 rounded-full ${isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-700'}`}>
                 {TIME_WINDOW_LABELS[flyPick.topPick.timeWindow] || flyPick.topPick.timeWindow}
               </span>
               <span className={`text-[10px] px-2 py-0.5 rounded-full capitalize ${isDark ? 'bg-slate-600/40 text-slate-300' : 'bg-slate-200 text-slate-600'}`}>
                 {flyPick.topPick.category}
               </span>
+              {weatherHatchTriggers.some(t => t.flyKey === flyPick.topPick.flyKey) && (
+                <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full ${isDark ? 'bg-cyan-500/25 text-cyan-300 border border-cyan-500/50' : 'bg-cyan-100 text-cyan-700 border border-cyan-300'}`}>
+                  ⚡ LIVE WEATHER MATCH
+                </span>
+              )}
             </div>
           </div>
 
@@ -1585,23 +2059,33 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
                     key={i}
                     className={`p-2.5 rounded-lg border ${isDark ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-200'}`}
                   >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className={`text-xs font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>
-                        {alt.name}
-                      </span>
-                      <span className={`text-[10px] font-bold ${
-                        alt.confidence >= 70 ? (isDark ? 'text-emerald-400' : 'text-emerald-600')
-                        : alt.confidence >= 50 ? (isDark ? 'text-yellow-400' : 'text-yellow-600')
-                        : (isDark ? 'text-slate-400' : 'text-slate-500')
-                      }`}>
-                        {alt.confidence}%
-                      </span>
-                    </div>
-                    <div className={`text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                      {alt.size} • {alt.patterns[0]}
-                    </div>
-                    <div className={`text-[10px] mt-1 italic ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                      {alt.reason.length > 60 ? alt.reason.slice(0, 57) + '...' : alt.reason}
+                    <div className="flex items-start gap-2.5">
+                      <TackleThumb name={alt.name} className="w-10 h-10 mt-0.5" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className={`text-xs font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                            {alt.name}
+                          </span>
+                          <span className={`text-[10px] font-bold ${
+                            alt.confidence >= 70 ? (isDark ? 'text-emerald-400' : 'text-emerald-600')
+                            : alt.confidence >= 50 ? (isDark ? 'text-yellow-400' : 'text-yellow-600')
+                            : (isDark ? 'text-slate-400' : 'text-slate-500')
+                          }`}>
+                            {alt.confidence}%
+                          </span>
+                        </div>
+                        <div className={`text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                          {alt.size} • {alt.patterns[0]}
+                        </div>
+                        <div className={`text-[10px] mt-1 italic ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                          {alt.reason.length > 60 ? alt.reason.slice(0, 57) + '...' : alt.reason}
+                        </div>
+                        {weatherHatchTriggers.some(t => t.flyKey === alt.flyKey) && (
+                          <span className={`inline-block mt-1 text-[8px] font-extrabold px-1.5 py-0.5 rounded-full ${isDark ? 'bg-cyan-500/25 text-cyan-300' : 'bg-cyan-100 text-cyan-700'}`}>
+                            ⚡ WEATHER MATCH
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -1702,9 +2186,11 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
           <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>
             {waterTemp}°F
           </div>
+          {location.primarySpecies && FISH_SPECIES[location.primarySpecies] && (
           <div className={`text-xs mt-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-            {location.primarySpecies} optimal: {FISH_SPECIES[location.primarySpecies]?.tempOptimal.join('-')}°F
+            {location.primarySpecies} optimal: {FISH_SPECIES[location.primarySpecies]?.tempOptimal?.join('-')}°F
           </div>
+          )}
           {waterTempData?.sourceName && waterTempSource !== 'estimate' && (
             <div className={`text-[10px] mt-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
               {waterTempData.note}
@@ -1892,14 +2378,9 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
         ) : null;
       })()}
 
-      {/* Tips & Regulations */}
+      {/* Regulations & Tips */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className={`rounded-xl p-4 border ${isDark ? 'bg-amber-500/10 border-amber-500/30' : 'bg-amber-50 border-amber-200 shadow-sm'}`}>
-          <div className={`text-xs font-semibold mb-2 flex items-center gap-2 ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>
-            <AlertTriangle className="w-3.5 h-3.5" /> Regulations
-          </div>
-          <div className={`text-sm ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>{location.regulations}</div>
-        </div>
+        <RegulationsCard locationId={selectedLocation} locationName={location.name} />
         <div className={`rounded-xl p-4 border ${isDark ? 'bg-blue-500/10 border-blue-500/30' : 'bg-blue-50 border-blue-200 shadow-sm'}`}>
           <div className={`text-xs font-semibold mb-2 flex items-center gap-2 ${isDark ? 'text-blue-400' : 'text-blue-700'}`}>
             <Zap className="w-3.5 h-3.5" /> Pro Tip

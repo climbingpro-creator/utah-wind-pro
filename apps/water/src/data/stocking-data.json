@@ -1,0 +1,14 @@
+{
+  "_meta": {
+    "source": "Utah Division of Wildlife Resources — Stocking Reports",
+    "url": "https://wildlife.utah.gov/fishing/stocking-report.html",
+    "lastUpdated": "2026-04-10",
+    "notes": "Manually updated from DWR weekly stocking reports. Waters in the 'stocked' array have been stocked within the last 7-14 days."
+  },
+  "stocked": [
+    "strawberry",
+    "deer-creek",
+    "utah-lake-lincoln",
+    "community-pond-example"
+  ]
+}

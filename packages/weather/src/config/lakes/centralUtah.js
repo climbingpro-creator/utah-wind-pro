@@ -115,7 +115,7 @@ export const centralUtahConfigs = {
     name: 'Yuba Reservoir',
     shortName: 'Yuba',
     region: 'Juab/Sanpete County',
-    coordinates: { lat: 39.430, lng: -111.920 },
+    coordinates: { lat: 39.4050, lng: -111.9280 }, // Painted Rocks boat ramp
     elevation: 5100,
     surfaceAcres: 10500,
     maxDepth: 80,
@@ -177,7 +177,7 @@ export const centralUtahConfigs = {
     name: 'Scofield Reservoir',
     shortName: 'Scofield',
     region: 'Carbon County',
-    coordinates: { lat: 39.790, lng: -111.150 },
+    coordinates: { lat: 39.7865, lng: -111.1518 }, // Scofield State Park boat ramp (Madsen Bay)
     elevation: 7618,
     surfaceAcres: 2815,
     maxDepth: 50,
@@ -231,7 +231,7 @@ export const centralUtahConfigs = {
     name: 'Otter Creek Reservoir',
     shortName: 'Otter Creek',
     region: 'Piute County',
-    coordinates: { lat: 38.350, lng: -111.990 },
+    coordinates: { lat: 38.3520, lng: -111.9870 }, // Otter Creek State Park boat ramp
     elevation: 6372,
     surfaceAcres: 2520,
     maxDepth: 70,
@@ -283,7 +283,7 @@ export const centralUtahConfigs = {
     name: 'Fish Lake',
     shortName: 'Fish Lake',
     region: 'Sevier County',
-    coordinates: { lat: 38.549, lng: -111.711 },
+    coordinates: { lat: 38.5462, lng: -111.7135 }, // Fish Lake Lodge / main boat ramp
     elevation: 8848,
     surfaceAcres: 2500,
     maxDepth: 175,
@@ -336,7 +336,7 @@ export const centralUtahConfigs = {
     name: 'Piute Reservoir',
     shortName: 'Piute',
     region: 'Piute County',
-    coordinates: { lat: 38.330, lng: -112.160 },
+    coordinates: { lat: 38.3280, lng: -112.1620 }, // Piute State Park boat ramp
     elevation: 5900,
     surfaceAcres: 3360,
     maxDepth: 65,

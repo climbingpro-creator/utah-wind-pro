@@ -191,7 +191,7 @@ function getMLCorrectedHourly(gridKey, context) {
   return hourly.map(h => ({
     startTime: h.startTime || h.time,
     time: h.startTime || h.time,
-    windSpeed: h.adjustedWind ?? h.windSpeed ?? h.speed ?? 0,
+    windSpeed: h.adjustedWind ?? h.windSpeed ?? h.speed ?? null,
     windDirection: h.windDirection ?? h.dir,
     temperature: h.temperature ?? h.temp,
     shortForecast: h.shortForecast ?? h.text ?? '',
@@ -347,7 +347,8 @@ function applyOnWaterPhysics(hourlyForecast, spot) {
   
   return hourlyForecast.map(hour => {
     const windDir = hour.windDirection ?? 270; // Default to W if not specified
-    const rawSpeed = hour.windSpeed ?? 0;
+    const rawSpeed = hour.windSpeed ?? null;
+    if (rawSpeed == null) return hour;
     
     // Calculate fetch acceleration (wind over open water)
     const fetch = calculateFetchMultiplier(lat, lng, windDir);

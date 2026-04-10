@@ -12,6 +12,7 @@
 
 import axios from 'axios';
 import { safeToFixed } from '../utils/safeToFixed';
+import { LAKE_CONFIGS } from '../config/lakeStations.js';
 
 // NWS API configuration
 const NWS_BASE_URL = 'https://api.weather.gov';
@@ -56,7 +57,39 @@ const LOCATION_TO_FORECAST_KEY = {
 function resolveForecastKey(locationId) {
   if (LOCATION_TO_FORECAST_KEY[locationId]) return LOCATION_TO_FORECAST_KEY[locationId];
   if (FORECAST_POINTS[locationId]) return locationId;
-  return 'utah-lake';
+  return null;
+}
+
+/**
+ * Resolve coordinates for a location: prefer LAKE_CONFIGS real coordinates,
+ * fall back to FORECAST_POINTS hardcoded grid, return null if neither exists.
+ */
+function resolveCoordinates(locationId) {
+  const lakeConfig = LAKE_CONFIGS[locationId];
+  if (lakeConfig?.coordinates) {
+    return { lat: lakeConfig.coordinates.lat, lng: lakeConfig.coordinates.lng };
+  }
+  const forecastKey = resolveForecastKey(locationId);
+  if (forecastKey && FORECAST_POINTS[forecastKey]) {
+    return FORECAST_POINTS[forecastKey];
+  }
+  return null;
+}
+
+const nwsGridCache = new Map();
+const NWS_GRID_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours - NWS grids don't change
+
+async function getCachedForecastGrid(lat, lng) {
+  const key = `${lat.toFixed(2)},${lng.toFixed(2)}`;
+  const cached = nwsGridCache.get(key);
+  if (cached && Date.now() - cached.timestamp < NWS_GRID_CACHE_TTL) {
+    return cached.data;
+  }
+  const grid = await getForecastGrid(lat, lng);
+  if (grid) {
+    nwsGridCache.set(key, { data: grid, timestamp: Date.now() });
+  }
+  return grid;
 }
 
 // Weather pattern keywords and their wind implications
@@ -148,13 +181,27 @@ async function getForecastGrid(lat, lng) {
   }
 }
 
+function resolveStateFromCoordinates(locationId) {
+  const coords = resolveCoordinates(locationId);
+  if (!coords) return 'UT';
+
+  const { lat, lng } = coords;
+  if (lat >= 41.0 && lng >= -111.05 && lng <= -104.05) return 'WY';
+  if (lat <= 37.0 && lng <= -109.05) return 'AZ';
+  if (lng <= -114.05) return 'NV';
+  if (lat >= 42.0) return 'ID';
+  if (lng >= -109.05 && lat <= 39.0) return 'CO';
+  return 'UT';
+}
+
 /**
- * Fetch active weather alerts for Utah
+ * Fetch active weather alerts for a location's state
  */
-export async function getActiveAlerts() {
+export async function getActiveAlerts(locationId) {
+  const state = resolveStateFromCoordinates(locationId);
   try {
     const response = await axios.get(`${NWS_BASE_URL}/alerts/active`, {
-      params: { area: 'UT' },
+      params: { area: state },
       headers: NWS_HEADERS,
       timeout: 10000,
     });
@@ -236,10 +283,11 @@ function parseWindFromAlert(description) {
  * Now includes sky condition, cloud cover, and precip chance for fishing intelligence
  */
 export async function get7DayForecast(locationId = 'utah-lake') {
-  const point = FORECAST_POINTS[resolveForecastKey(locationId)];
+  const point = resolveCoordinates(locationId);
+  if (!point) return null;
   
   try {
-    const grid = await getForecastGrid(point.lat, point.lng);
+    const grid = await getCachedForecastGrid(point.lat, point.lng);
     if (!grid) return null;
     
     const response = await axios.get(grid.forecastUrl, {
@@ -341,10 +389,11 @@ function estimatePrecipChance(shortForecast) {
  * Now includes cloudCover, precipChance, and sky condition for fishing intelligence
  */
 export async function getHourlyForecast(locationId = 'utah-lake') {
-  const point = FORECAST_POINTS[resolveForecastKey(locationId)];
+  const point = resolveCoordinates(locationId);
+  if (!point) return null;
   
   try {
-    const grid = await getForecastGrid(point.lat, point.lng);
+    const grid = await getCachedForecastGrid(point.lat, point.lng);
     if (!grid) return null;
     
     const response = await axios.get(grid.forecastHourlyUrl, {
@@ -561,7 +610,7 @@ export async function getKiteWindows(locationId = 'utah-lake') {
  */
 export async function getForecastSummary(locationId = 'utah-lake') {
   const [alerts, forecast, kiteWindows] = await Promise.all([
-    getActiveAlerts(),
+    getActiveAlerts(locationId),
     get7DayForecast(locationId),
     getKiteWindows(locationId),
   ]);

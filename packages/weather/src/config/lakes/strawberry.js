@@ -10,7 +10,7 @@ export const strawberryConfigs = {
     name: 'Strawberry Reservoir',
     shortName: 'Strawberry',
     region: 'Strawberry Reservoir',
-    coordinates: { lat: 40.17, lng: -111.17 },
+    coordinates: { lat: 40.1783, lng: -111.1952 }, // Strawberry Bay Marina boat ramp
     elevation: 7600,
 
     primaryWindType: 'W/NW Frontal',

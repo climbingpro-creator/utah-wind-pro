@@ -4,14 +4,38 @@
  * Powered by @utahwind/weather's shared data engine.
  */
 
-import { weatherService, monitorSwings, generateWindField } from '@utahwind/weather';
+import { weatherService, monitorSwings, generateWindField, LAKE_CONFIGS } from '@utahwind/weather';
 import { safeToFixed } from '../utils/safeToFixed';
 
-const UPSTREAM_STATIONS = {
+const DEFAULT_UPSTREAM_STATIONS = {
   KSLC: { name: 'SLC Airport', leadTimeMin: 45, role: 'North flow / cold front origin' },
   KPVU: { name: 'Provo Airport', leadTimeMin: 30, role: 'South flow / thermal indicator' },
   QSF:  { name: 'Spanish Fork Canyon', leadTimeMin: 60, role: 'Canyon wind / SE thermal' },
 };
+
+function getUpstreamStationsForLake(locationId) {
+  const config = LAKE_CONFIGS?.[locationId];
+  if (!config?.stations) return DEFAULT_UPSTREAM_STATIONS;
+
+  const result = {};
+  const pressHigh = config.stations.pressure?.high;
+  const pressLow = config.stations.pressure?.low;
+  const refs = config.stations.reference || [];
+
+  if (pressHigh?.id) {
+    result[pressHigh.id] = { name: pressHigh.name, leadTimeMin: 45, role: pressHigh.role || 'Pressure reference (high)' };
+  }
+  if (pressLow?.id && pressLow.id !== pressHigh?.id) {
+    result[pressLow.id] = { name: pressLow.name, leadTimeMin: 30, role: pressLow.role || 'Pressure reference (low)' };
+  }
+  for (const ref of refs) {
+    if (ref.id && !result[ref.id]) {
+      result[ref.id] = { name: ref.name, leadTimeMin: 40, role: 'Reference station' };
+    }
+  }
+
+  return Object.keys(result).length > 0 ? result : DEFAULT_UPSTREAM_STATIONS;
+}
 
 const WAVE_THRESHOLDS = [
   { max: 2,  label: 'Glass',      emoji: '🪞', color: 'emerald', score: 100 },
@@ -23,9 +47,11 @@ const WAVE_THRESHOLDS = [
 ];
 
 function getWaveInfo(speed) {
-  const s = speed ?? 0;
+  if (speed == null) {
+    return { max: Infinity, label: 'No Data', emoji: '❓', color: 'slate', score: null };
+  }
   for (const t of WAVE_THRESHOLDS) {
-    if (s <= t.max) return t;
+    if (speed <= t.max) return t;
   }
   return WAVE_THRESHOLDS[WAVE_THRESHOLDS.length - 1];
 }
@@ -44,7 +70,7 @@ function formatHour(h) {
 export async function getHourlyGlassForecast(locationId, currentWind, upstreamData, _lakeState, _mesoData) {
   const now = new Date();
   const currentHour = now.getHours();
-  const speed = currentWind?.speed ?? 0;
+  const speed = currentWind?.speed ?? null;
 
   const hours = [];
   const glassWindows = [];
@@ -57,11 +83,13 @@ export async function getHourlyGlassForecast(locationId, currentWind, upstreamDa
 
     if (offset === 0) {
       predictedSpeed = speed;
-    } else {
-      const hourFactor = getHourlyWindFactor(h);
+    } else if (speed != null) {
+      const hourFactor = getHourlyWindFactor(h, locationId);
       const baseDrift = speed * hourFactor;
-      const upstreamPull = getUpstreamInfluence(h, upstreamData);
+      const upstreamPull = getUpstreamInfluence(h, upstreamData, locationId);
       predictedSpeed = Math.max(0, baseDrift + upstreamPull);
+    } else {
+      predictedSpeed = null;
     }
 
     const wave = getWaveInfo(predictedSpeed);
@@ -79,7 +107,7 @@ export async function getHourlyGlassForecast(locationId, currentWind, upstreamDa
       cloudCover: null,
     });
 
-    if (predictedSpeed <= 5) {
+    if (predictedSpeed != null && predictedSpeed <= 5) {
       if (windowStart === null) windowStart = { h, offset };
     } else {
       if (windowStart !== null) {
@@ -94,7 +122,7 @@ export async function getHourlyGlassForecast(locationId, currentWind, upstreamDa
         }
         windowStart = null;
       }
-      if (predictedSpeed > 15) {
+      if (predictedSpeed != null && predictedSpeed > 15) {
         windEvents.push({
           time: formatHour(h),
           message: `Strong wind expected: ~${safeToFixed(predictedSpeed, 0)} mph`,
@@ -121,36 +149,71 @@ export async function getHourlyGlassForecast(locationId, currentWind, upstreamDa
   return { hours, glassWindows, windEvents, flowBlocked };
 }
 
-function getHourlyWindFactor(hour) {
-  // Diurnal thermal pattern: calm early morning & late evening, peak afternoon
-  const factors = [
-    0.3, 0.25, 0.2, 0.2, 0.25, 0.3,   // 0-5 AM
-    0.4, 0.5, 0.65, 0.8, 0.95, 1.1,    // 6-11 AM
-    1.2, 1.25, 1.3, 1.25, 1.15, 1.0,   // 12-5 PM
-    0.8, 0.6, 0.45, 0.4, 0.35, 0.3,    // 6-11 PM
-  ];
-  return factors[hour] ?? 1.0;
+const VALLEY_FACTORS = [
+  0.30, 0.25, 0.20, 0.20, 0.25, 0.30,   // 0-5 AM
+  0.40, 0.50, 0.65, 0.80, 0.95, 1.10,   // 6-11 AM
+  1.20, 1.25, 1.30, 1.25, 1.15, 1.00,   // 12-5 PM
+  0.80, 0.60, 0.45, 0.40, 0.35, 0.30,   // 6-11 PM
+];
+
+const HIGH_ALTITUDE_FACTORS = [
+  0.25, 0.20, 0.18, 0.18, 0.20, 0.28,   // 0-5 AM: calmer nights at altitude
+  0.45, 0.60, 0.80, 1.00, 1.15, 1.30,   // 6-11 AM: thermals ramp faster
+  1.40, 1.45, 1.40, 1.30, 1.10, 0.85,   // 12-5 PM: earlier peak, sharper drop
+  0.55, 0.38, 0.30, 0.28, 0.26, 0.25,   // 6-11 PM: faster evening die-off
+];
+
+function getHourlyWindFactor(hour, locationId) {
+  const config = LAKE_CONFIGS?.[locationId];
+  const elevation = config?.elevation ?? 4500;
+
+  if (elevation >= 7000) {
+    return HIGH_ALTITUDE_FACTORS[hour] ?? 1.0;
+  }
+  if (elevation >= 5500) {
+    const t = (elevation - 5500) / 1500;
+    const valley = VALLEY_FACTORS[hour] ?? 1.0;
+    const high = HIGH_ALTITUDE_FACTORS[hour] ?? 1.0;
+    return valley * (1 - t) + high * t;
+  }
+  return VALLEY_FACTORS[hour] ?? 1.0;
 }
 
-function getUpstreamInfluence(hour, upstreamData) {
+function getUpstreamInfluence(hour, upstreamData, locationId) {
   if (!upstreamData) return 0;
-  const kslc = upstreamData.kslcSpeed ?? 0;
-  const kpvu = upstreamData.kpvuSpeed ?? 0;
-  const peak = Math.max(kslc, kpvu);
+
+  const stationMap = getUpstreamStationsForLake(locationId);
+  const stationIds = Object.keys(stationMap);
+
+  let peak = 0;
+  for (const id of stationIds) {
+    const key = `${id.toLowerCase()}Speed`;
+    const altKey = `${id}Speed`;
+    const speed = upstreamData[key] ?? upstreamData[altKey] ?? 0;
+    if (speed > peak) peak = speed;
+  }
+
+  if (peak === 0) {
+    const kslc = upstreamData.kslcSpeed ?? 0;
+    const kpvu = upstreamData.kpvuSpeed ?? 0;
+    peak = Math.max(kslc, kpvu);
+  }
+
   if (peak < 8) return 0;
   const thermalHours = hour >= 10 && hour <= 17;
   const factor = thermalHours ? 0.4 : 0.15;
   return peak * factor;
 }
 
-export function getUpstreamWarnings(stationData) {
+export function getUpstreamWarnings(stationData, locationId) {
   if (!stationData) return [];
   const warnings = [];
+  const stations = getUpstreamStationsForLake(locationId);
 
   if (typeof stationData === 'object' && !Array.isArray(stationData)) {
-    for (const [id, cfg] of Object.entries(UPSTREAM_STATIONS)) {
+    for (const [id, cfg] of Object.entries(stations)) {
       const data = stationData[id];
-      if (data && (data.speed ?? 0) > 15) {
+      if (data && data.speed != null && data.speed > 15) {
         warnings.push({
           id, station: cfg.name, severity: 'warning',
           icon: '💨',
