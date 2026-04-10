@@ -47,7 +47,7 @@ function useFavorites() {
 
 export { useFavorites, LIVE_LAKES, UTAH_WATERS };
 
-export default function LocationSelector({ selectedLocation, onSelectLocation, onOpenMap, favorites = [], onToggleFavorite }) {
+export default function LocationSelector({ selectedLocation, onSelectLocation, onOpenMap, favorites = [], onToggleFavorite: _onToggleFavorite }) {
   const scrollRef = useRef(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
@@ -82,7 +82,6 @@ export default function LocationSelector({ selectedLocation, onSelectLocation, o
   }, []);
 
   const liveIds = new Set(LIVE_LAKES.map(l => l.id));
-  const utahIds = new Set(UTAH_WATERS.map(l => l.id));
   const favSet = new Set(favorites);
 
   const favoritePills = [...LIVE_LAKES, ...UTAH_WATERS].filter(l => favSet.has(l.id));
