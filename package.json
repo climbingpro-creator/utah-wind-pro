@@ -16,7 +16,8 @@
     "rebuild-models": "node scripts/rebuild-models-365.js",
     "rebuild-models:dry": "node scripts/rebuild-models-365.js --dry-run",
     "backtest:compare-models": "node scripts/compare-models-365-backtest.mjs",
-    "generate:icons": "node scripts/generate-icons.js"
+    "generate:icons": "node scripts/generate-icons.js",
+    "update-stocking": "npm run update-stocking --workspace=apps/water"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
