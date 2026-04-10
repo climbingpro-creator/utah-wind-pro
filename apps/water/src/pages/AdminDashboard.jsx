@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 
 const ALLOWED_ADMINS = ['tyler@aspenearth.com', 'climbingpro@gmail.com'];
-const API_ORIGIN = import.meta.env.VITE_API_ORIGIN || 'https://liftforecast.com';
+const ADMIN_API = 'https://liftforecast.com/api/admin';
 
 const TYPE_CONFIG = {
   bug:     { label: 'Bug Report',       icon: Bug,           color: 'text-red-400',    bg: 'bg-red-500/10 border-red-500/20' },
@@ -168,7 +168,7 @@ export default function AdminDashboard() {
     setAnalyticsError(null);
     try {
       const headers = await getAuthHeader();
-      const resp = await fetch(`${API_ORIGIN}/api/admin/analytics?_=${Date.now()}`, { headers, cache: 'no-store' });
+      const resp = await fetch(`${ADMIN_API}/analytics`, { headers, mode: 'cors' });
       const ct = resp.headers.get('content-type') || '';
       if (!ct.includes('application/json')) {
         throw new Error(`API returned non-JSON (${resp.status}). Check SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY env vars.`);
@@ -203,7 +203,7 @@ export default function AdminDashboard() {
     setUsersLoading(true);
     try {
       const headers = await getAuthHeader();
-      const resp = await fetch(`${API_ORIGIN}/api/admin/users?_=${Date.now()}`, { headers, cache: 'no-store' });
+      const resp = await fetch(`${ADMIN_API}/users`, { headers, mode: 'cors' });
       if (resp.ok) {
         const data = await resp.json();
         setUsersData(data);
