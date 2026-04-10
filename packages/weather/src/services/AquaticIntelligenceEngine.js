@@ -145,7 +145,7 @@ function getTailwaterGauge(lat, lng, riverName) {
 export async function fetchNearbyWeather(lat, lng, radiusMiles = 100) {
   try {
     // Call our server-side radial endpoint that uses FREE sources only
-    const apiBase = import.meta.env.VITE_API_URL || '';
+    const apiBase = import.meta.env.VITE_API_URL || 'https://liftforecast.com';
     const url = `${apiBase}/api/weather?source=radial&lat=${lat}&lng=${lng}&radius=${radiusMiles}`;
     
     console.log(`[Radial] Fetching nearest FREE station to ${lat.toFixed(3)}, ${lng.toFixed(3)}`);
@@ -1060,13 +1060,10 @@ export async function generateFisheryProfile(lat, lng, elevation = 4500, current
   console.log(`[FisheryProfile] Input - vectorFeatureName: "${vectorFeatureName}", vectorFeatureType: "${vectorFeatureType}"`);
   console.log(`[FisheryProfile] Detection - typeIndicatesRiver: ${typeIndicatesRiver}, nameIndicatesRiver: ${nameIndicatesRiver}, clickedOnRiver: ${clickedOnRiver}`);
 
-  // ── Fetch Ambient Weather if no ambient data provided ──
-  // Uses our custom Supabase database + Ambient Weather API (NO Synoptic/MesoWest)
-  if (ambientTemp == null) {
-    ambientWeather = await fetchNearbyWeather(lat, lng, 50);
-    if (ambientWeather?.temperature != null) {
-      ambientTemp = ambientWeather.temperature;
-    }
+  // ── Always fetch real weather from nearest station to the clicked point ──
+  ambientWeather = await fetchNearbyWeather(lat, lng, 50);
+  if (ambientWeather?.temperature != null) {
+    ambientTemp = ambientWeather.temperature;
   }
   
   // Merge weather data for tactical engine

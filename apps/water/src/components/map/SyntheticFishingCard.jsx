@@ -864,7 +864,9 @@ export default function SyntheticFishingCard({ data, isLoading, onClose }) {
                 : 'text-teal-400/70'
               }`}>
                 {data.ambientWeather.source === 'nws' ? 'NWS Airport' 
-                  : data.ambientWeather.source === 'udot' ? 'UDOT RWIS' 
+                  : data.ambientWeather.source === 'udot' ? 'UDOT RWIS'
+                  : data.ambientWeather.source === 'wu-pws' ? 'Weather Station (PWS)'
+                  : data.ambientWeather.source === 'open-meteo' ? 'Open-Meteo Forecast'
                   : 'Live Weather'}
               </span>
               <span className="ml-auto text-[8px] text-slate-500 truncate max-w-[100px]">{data.ambientWeather.stationName}</span>
