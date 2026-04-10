@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 
 const ALLOWED_ADMINS = ['tyler@aspenearth.com', 'climbingpro@gmail.com'];
-const API_ORIGIN = import.meta.env.VITE_API_ORIGIN || import.meta.env.VITE_WIND_APP_URL || '';
+const API_ORIGIN = import.meta.env.VITE_API_ORIGIN || import.meta.env.VITE_WIND_APP_URL || 'https://utah-wind-pro.vercel.app';
 
 const TYPE_CONFIG = {
   bug:     { label: 'Bug Report',       icon: Bug,           color: 'text-red-400',    bg: 'bg-red-500/10 border-red-500/20' },
