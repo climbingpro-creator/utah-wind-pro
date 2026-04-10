@@ -1,0 +1,59 @@
+{
+  "_meta": {
+    "source": "YouTube transcript ingestion — Utah fishing channels",
+    "lastUpdated": "2026-04-10T21:39:14.001Z",
+    "channelsScanned": 8,
+    "videosProcessed": 13,
+    "transcriptsFound": 13,
+    "locationsMatched": 5,
+    "totalReports": 5,
+    "lookbackDays": 7
+  },
+  "reports": {
+    "fish-lake": [
+      {
+        "channel": "Ventures Fly Co.",
+        "title": "The Pros & Cons of Indicator Nymphing | Ep. 174",
+        "videoId": "oDuBPDjL8EU",
+        "date": "2026-04-08",
+        "excerpt": "...treamers and whatnot. It's all been sight fishing. So, I didn't really know that indicator nymphing for carp is a thing, but apparently it is. And that's freaking awesome. So, you really do have a lot of variety to fish with this rig because whether you've got trout in a river nearby or bass or pan fish lake or whatever it is, indicator nymph rig is going to work for that. And all of the all of the fundamentals still apply. Get the flies in front of the fish, make them look real, make sure there's not drag, have good fly selection, get the flies down into the strike zone. So, yeah, they're not really g..."
+      }
+    ],
+    "scofield": [
+      {
+        "channel": "Utah Fishing Channel",
+        "title": "Spring Fishing at Scofield Reservoir 2026",
+        "videoId": "DqIO6GxKySg",
+        "date": "2026-04-06",
+        "excerpt": "Oh, yes. That's a good fish. I have never tried orange before [music] as a tube jig. Welcome back to the Utah Fishing Channel. Today, I am at Scofield Reservoir. I'm going to be trying out some new baits that I picked [music] up from Fish Tech. All right, I've never used orange before, but I've been hearing that these are really good for places like Scofield right now. I've tried tube jigs from Gear Delly before, um but I have not tried these colors. All r..."
+      }
+    ],
+    "deer-creek": [
+      {
+        "channel": "TroutFlies",
+        "title": "Euro Dry-Dropper Is A Super Effective Technique",
+        "videoId": "lGFC_wLXOmg",
+        "date": "2026-04-09",
+        "excerpt": "...'d be that big. Okay. Was a fish in there. Good one, too. Good. Oh, a lot of stuff to get stuck on in there. This a bow. It's fighting like a bow. I'm going to start needing to think about a landing plan for this guy. No, no, no, no, no, no, no. This is a bell. Okay, that's a stalker that came from Deer Creek. These rainbows like these little side areas for sure. Chunky one. Hit the main image. All right. All right. I'm going to walk in through here and see what that looks like. what this little lane looks like. Just kind of scout out for lanes in here. Looks like the drop's better than what's around he..."
+      }
+    ],
+    "green-a": [
+      {
+        "channel": "Skiddy Fishing",
+        "title": "Green River FLOAT & FLY!",
+        "videoId": "8zj9YIziSwY",
+        "date": "2026-04-09",
+        "excerpt": "[music] Wow. Heat. >> [music] >> Good morning everyone. Welcome to this episode of Skinny Fishing. And today I'm going to be floating the Green River, the infamous Green River. We are at uh basically the dam of Flaming Gorge. I'm going to be floating a section today. Got a little drift boat here. This is my uncle's drift boat. It's just the Dave Scatteren um Dragonfly XT2. Uh my uncle's just parking right now, so I'm just going to kind of fish t..."
+      }
+    ],
+    "flaming-gorge": [
+      {
+        "channel": "Skiddy Fishing",
+        "title": "Green River FLOAT & FLY!",
+        "videoId": "8zj9YIziSwY",
+        "date": "2026-04-09",
+        "excerpt": "[music] Wow. Heat. >> [music] >> Good morning everyone. Welcome to this episode of Skinny Fishing. And today I'm going to be floating the Green River, the infamous Green River. We are at uh basically the dam of Flaming Gorge. I'm going to be floating a section today. Got a little drift boat here. This is my uncle's drift boat. It's just the Dave Scatteren um Dragonfly XT2. Uh my uncle's just parking right now, so I'm just going to kind of fish this little stretch of water here. Uh I have no idea what's going to work to..."
+      }
+    ]
+  }
+}
