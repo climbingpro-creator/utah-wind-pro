@@ -151,9 +151,9 @@ export const FISHING_LOCATIONS = {
     regulations: 'Walleye: 6 fish limit, only 1 over 24"',
     tips: 'Night fishing for walleye is excellent. Try the dam area.',
   },
-  'provo-river': {
-    id: 'provo-river',
-    name: 'Provo River',
+  'provo-lower': {
+    id: 'provo-lower',
+    name: 'Lower Provo River',
     region: 'Wasatch/Utah',
     elevation: 5500,
     coordinates: { lat: 40.3340, lng: -111.6105 }, // Olmstead Diversion — primary lower Provo access
@@ -186,8 +186,8 @@ export const FISHING_LOCATIONS = {
     regulations: 'Artificial flies and lures only. Closed to cutthroat harvest.',
     tips: 'Blue Winged Olive hatches in March-May. Match the hatch!',
   },
-  'middle-provo': {
-    id: 'middle-provo',
+  'provo-middle': {
+    id: 'provo-middle',
     name: 'Middle Provo River',
     region: 'Wasatch',
     elevation: 5600,
@@ -220,6 +220,37 @@ export const FISHING_LOCATIONS = {
     ],
     regulations: 'Artificial flies and lures only on some sections. Check UDWR for current regs.',
     tips: 'Tailwater section below Jordanelle fishes well year-round. BWO hatches in March–May are outstanding. Flow-dependent — check USGS gauge before going.',
+  },
+  'provo-upper': {
+    id: 'provo-upper',
+    name: 'Upper Provo River',
+    region: 'Wasatch',
+    elevation: 6400,
+    coordinates: { lat: 40.5670, lng: -111.3580 }, // Woodland access — upper Provo above Jordanelle
+    type: 'river',
+    species: ['Brown Trout', 'Rainbow Trout', 'Cutthroat Trout', 'Mountain Whitefish'],
+    primarySpecies: 'Brown Trout',
+    bestMonths: [6, 7, 8, 9, 10],
+    sections: {
+      upper: { description: 'Above Woodland — headwaters, small wild fish' },
+      lower: { description: 'Woodland to Jordanelle — good access, mix of wild and planted' },
+    },
+    spawning: {
+      'Brown Trout': { months: [10, 11], location: 'Gravel runs', behavior: 'Build redds in moderate current' },
+      'Rainbow Trout': { months: [3, 4, 5], location: 'Riffle gravel', behavior: 'Spring spawners' },
+      'Cutthroat Trout': { months: [5, 6], location: 'Smaller tributaries', behavior: 'Move into feeders to spawn' },
+    },
+    structure: [
+      { type: 'Pocket Water', description: 'Boulder-strewn runs with holding pockets', bestFor: ['Brown Trout', 'Rainbow Trout'] },
+      { type: 'Undercut Banks', description: 'Eroded banks along meadow bends', bestFor: ['Brown Trout'] },
+      { type: 'Beaver Ponds', description: 'Backed-up pools with deeper holding water', bestFor: ['Brown Trout', 'Cutthroat Trout'] },
+    ],
+    hotspots: [
+      { name: 'Woodland Bridge', description: 'Easy access, good pocket water', species: ['Brown Trout', 'Rainbow Trout'], coordinates: { lat: 40.567, lng: -111.358 } },
+      { name: 'Pine Valley', description: 'Less pressure, wild fish', species: ['Cutthroat Trout', 'Brown Trout'], coordinates: { lat: 40.590, lng: -111.340 } },
+    ],
+    regulations: 'Artificial flies and lures only. Check UDWR for current section-specific regulations.',
+    tips: 'Less pressured than the lower or middle sections. Great summer hopper fishing. Smaller water — lighter tippets and stealthy approaches pay off.',
   },
   'weber-river': {
     id: 'weber-river',
@@ -256,40 +287,100 @@ export const FISHING_LOCATIONS = {
     regulations: 'Check UDWR for current section-specific regulations',
     tips: 'Underrated fishery with less pressure than the Provo. Fall streamer fishing for browns is exceptional. Hopper-dropper rigs in summer are deadly along grassy banks.',
   },
-  'green-river': {
-    id: 'green-river',
-    name: 'Green River',
+  'green-a': {
+    id: 'green-a',
+    name: 'Green River — A Section',
     region: 'Daggett',
     elevation: 5600,
-    coordinates: { lat: 40.902, lng: -109.401 },
+    coordinates: { lat: 40.9140, lng: -109.4220 }, // Spillway boat ramp — A Section put-in below Flaming Gorge Dam
     type: 'river',
     species: ['Rainbow Trout', 'Brown Trout', 'Cutthroat Trout'],
     primarySpecies: 'Rainbow Trout',
     bestMonths: [3, 4, 5, 9, 10],
     sections: {
-      a: { description: 'Dam to Little Hole - 7 miles, most popular' },
-      b: { description: 'Little Hole to Indian Crossing - 9 miles, technical' },
-      c: { description: 'Indian Crossing to Ouray - remote, big fish' },
+      upper: { description: 'Dam to Dripping Springs — turbid cold water, nymph heaven' },
+      lower: { description: 'Dripping Springs to Little Hole — classic dry fly water' },
     },
     spawning: {
-      'Rainbow Trout': { months: [3, 4, 5], location: 'Gravel bars A & B sections', behavior: 'Spring spawners, aggressive feeders' },
-      'Brown Trout': { months: [10, 11], location: 'Throughout river', behavior: 'Fall spawners, territorial' },
-      'Cutthroat Trout': { months: [5, 6], location: 'Upper sections', behavior: 'Late spring spawners' },
+      'Rainbow Trout': { months: [3, 4, 5], location: 'Gravel bars throughout A Section', behavior: 'Spring spawners, aggressive feeders pre-spawn' },
+      'Brown Trout': { months: [10, 11], location: 'Deeper runs', behavior: 'Fall spawners, territorial — watch for redds' },
     },
     structure: [
       { type: 'Tailouts', description: 'End of pools where water speeds up', bestFor: ['Rainbow Trout', 'Brown Trout'] },
       { type: 'Seams', description: 'Current breaks between fast/slow water', bestFor: ['Rainbow Trout', 'Brown Trout'] },
-      { type: 'Boulders', description: 'Large rocks creating eddies', bestFor: ['Brown Trout'] },
-      { type: 'Weed Beds', description: 'Aquatic vegetation', bestFor: ['Rainbow Trout'] },
+      { type: 'Weed Beds', description: 'Aquatic vegetation — scud and midge habitat', bestFor: ['Rainbow Trout'] },
+      { type: 'Boulders', description: 'Large rocks creating eddies and holding lies', bestFor: ['Brown Trout'] },
     ],
     hotspots: [
-      { name: 'Little Hole', description: 'Classic access point, consistent fishing', species: ['Rainbow Trout', 'Brown Trout'], coordinates: { lat: 40.905, lng: -109.395 } },
-      { name: 'Red Creek Rapids', description: 'Technical water, big fish', species: ['Brown Trout', 'Rainbow Trout'], coordinates: { lat: 40.875, lng: -109.365 } },
-      { name: 'Grasshopper Flats', description: 'Summer terrestrial fishing', species: ['Rainbow Trout'], coordinates: { lat: 40.895, lng: -109.385 } },
-      { name: 'Browns Park', description: 'Remote, trophy browns', species: ['Brown Trout'], coordinates: { lat: 40.825, lng: -109.025 } },
+      { name: 'Spillway Put-In', description: 'Cold tailwater immediately below dam', species: ['Rainbow Trout'], coordinates: { lat: 40.914, lng: -109.422 } },
+      { name: 'Dripping Springs', description: 'Mid-A Section, consistent hatches', species: ['Rainbow Trout', 'Brown Trout'], coordinates: { lat: 40.910, lng: -109.410 } },
+      { name: 'Red Creek Rapids', description: 'Technical water, big fish hold here', species: ['Brown Trout', 'Rainbow Trout'], coordinates: { lat: 40.905, lng: -109.395 } },
+      { name: 'Little Hole Take-Out', description: 'Classic access, heavy pressure but productive', species: ['Rainbow Trout', 'Brown Trout'], coordinates: { lat: 40.905, lng: -109.395 } },
     ],
-    regulations: 'A Section: 3 trout limit, 1 over 20"',
-    tips: 'World-class tailwater. Cicada hatch in June is legendary.',
+    regulations: 'Artificial flies and lures only. 3 trout limit, only 1 over 20".',
+    tips: 'Most popular 7-mile stretch. Cicada hatch in June is legendary. Scuds and midges produce year-round. Float or wade — both productive.',
+  },
+  'green-b': {
+    id: 'green-b',
+    name: 'Green River — B Section',
+    region: 'Daggett',
+    elevation: 5500,
+    coordinates: { lat: 40.9050, lng: -109.3950 }, // Little Hole trailhead — B Section put-in
+    type: 'river',
+    species: ['Rainbow Trout', 'Brown Trout', 'Cutthroat Trout'],
+    primarySpecies: 'Brown Trout',
+    bestMonths: [4, 5, 9, 10, 11],
+    sections: {
+      upper: { description: 'Little Hole to Grasshopper Flats — varied structure' },
+      lower: { description: 'Grasshopper Flats to Indian Crossing — remote, technical' },
+    },
+    spawning: {
+      'Brown Trout': { months: [10, 11], location: 'Gravel runs throughout B Section', behavior: 'Fall spawners — prime streamer water during pre-spawn aggression' },
+      'Rainbow Trout': { months: [3, 4, 5], location: 'Gravel bars', behavior: 'Spring spawners, less concentrated than A Section' },
+    },
+    structure: [
+      { type: 'Deep Pools', description: 'Slow, deep holding water for trophy browns', bestFor: ['Brown Trout'] },
+      { type: 'Boulders', description: 'Large rock gardens creating eddies', bestFor: ['Brown Trout', 'Rainbow Trout'] },
+      { type: 'Riffles', description: 'Shallow gravel runs, great nymph water', bestFor: ['Rainbow Trout'] },
+      { type: 'Seams', description: 'Current breaks between fast and slow', bestFor: ['Brown Trout', 'Rainbow Trout'] },
+    ],
+    hotspots: [
+      { name: 'Little Hole Trail', description: 'Wade access along B Section', species: ['Brown Trout', 'Rainbow Trout'], coordinates: { lat: 40.905, lng: -109.395 } },
+      { name: 'Grasshopper Flats', description: 'Summer terrestrial fishing — hoppers and beetles', species: ['Rainbow Trout'], coordinates: { lat: 40.895, lng: -109.385 } },
+      { name: 'Indian Crossing', description: 'Remote take-out, less pressure', species: ['Brown Trout'], coordinates: { lat: 40.870, lng: -109.350 } },
+    ],
+    regulations: 'Artificial flies and lures only. 2 trout limit, only 1 over 20".',
+    tips: 'Most restrictive and technical section. Trophy brown trout water. Best approached by drift boat. Fall streamer fishing here is world-class.',
+  },
+  'green-c': {
+    id: 'green-c',
+    name: 'Green River — C Section',
+    region: 'Daggett/Uintah',
+    elevation: 5400,
+    coordinates: { lat: 40.8250, lng: -109.0250 }, // Browns Park — remote C Section access
+    type: 'river',
+    species: ['Brown Trout', 'Rainbow Trout', 'Channel Catfish', 'Smallmouth Bass'],
+    primarySpecies: 'Brown Trout',
+    bestMonths: [5, 6, 9, 10],
+    sections: {
+      upper: { description: 'Indian Crossing to Swallow Canyon — transition zone' },
+      lower: { description: 'Browns Park to Colorado border — remote, bait allowed' },
+    },
+    spawning: {
+      'Brown Trout': { months: [10, 11], location: 'Throughout river', behavior: 'Fall spawners, trophy potential in remote water' },
+      'Smallmouth Bass': { months: [5, 6], location: 'Gravel/cobble areas', behavior: 'Nest builders in shallow areas' },
+    },
+    structure: [
+      { type: 'Deep Pools', description: 'Large holding water', bestFor: ['Brown Trout', 'Channel Catfish'] },
+      { type: 'Riffles', description: 'Shallow runs', bestFor: ['Rainbow Trout', 'Smallmouth Bass'] },
+      { type: 'Boulders', description: 'Rock structure creating eddies', bestFor: ['Brown Trout'] },
+    ],
+    hotspots: [
+      { name: 'Browns Park', description: 'Remote, trophy browns, less angler pressure', species: ['Brown Trout'], coordinates: { lat: 40.825, lng: -109.025 } },
+      { name: 'Swallow Canyon', description: 'Scenic, technical wade fishing', species: ['Brown Trout', 'Rainbow Trout'], coordinates: { lat: 40.850, lng: -109.100 } },
+    ],
+    regulations: 'All methods allowed including bait. 8 trout limit.',
+    tips: 'Most remote and least pressured section. Trophy browns in deep pools. Bait is legal here. Multi-day float trips recommended.',
   },
   'utah-lake': {
     id: 'utah-lake',
@@ -752,6 +843,11 @@ export const FISHING_LOCATIONS = {
     tips: 'Dixie warm-water fishery. Year-round bass fishing in southern Utah.',
   },
 };
+
+// Legacy aliases — old IDs resolve to the correct segment
+FISHING_LOCATIONS['provo-river'] = FISHING_LOCATIONS['provo-lower'];
+FISHING_LOCATIONS['middle-provo'] = FISHING_LOCATIONS['provo-middle'];
+FISHING_LOCATIONS['green-river'] = FISHING_LOCATIONS['green-a'];
 
 function buildDefaultFishingLocation(locationId) {
   return {
@@ -1675,8 +1771,50 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
         );
       })()}
 
-      {/* ═══════ DAILY FLY PICK ═══════ */}
-      {/* ═══════ TODAY'S GAME PLAN ═══════ */}
+      {/* ═══════ WEATHER-TRIGGERED HATCH ALERTS ═══════ */}
+      {weatherHatchTriggers.length > 0 && (
+        <div className="space-y-2">
+          {weatherHatchTriggers.map(trigger => (
+            <div
+              key={trigger.id}
+              className={`rounded-xl border p-4 ${
+                trigger.color === 'emerald'
+                  ? (isDark ? 'bg-emerald-500/15 border-emerald-500/40' : 'bg-emerald-50 border-emerald-300')
+                  : (isDark ? 'bg-amber-500/15 border-amber-500/40' : 'bg-amber-50 border-amber-300')
+              }`}
+            >
+              <div className="flex items-center justify-between mb-1.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">{trigger.icon}</span>
+                  <span className={`text-sm font-bold ${
+                    trigger.color === 'emerald'
+                      ? (isDark ? 'text-emerald-300' : 'text-emerald-800')
+                      : (isDark ? 'text-amber-300' : 'text-amber-800')
+                  }`}>
+                    {trigger.label}
+                  </span>
+                </div>
+                <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full animate-pulse ${
+                  trigger.color === 'emerald'
+                    ? (isDark ? 'bg-emerald-500/30 text-emerald-300 border border-emerald-500/50' : 'bg-emerald-200 text-emerald-800 border border-emerald-400')
+                    : (isDark ? 'bg-amber-500/30 text-amber-300 border border-amber-500/50' : 'bg-amber-200 text-amber-800 border border-amber-400')
+                }`}>
+                  {trigger.badge}
+                </span>
+              </div>
+              <p className={`text-xs ${
+                trigger.color === 'emerald'
+                  ? (isDark ? 'text-emerald-300/80' : 'text-emerald-700')
+                  : (isDark ? 'text-amber-300/80' : 'text-amber-700')
+              }`}>
+                {trigger.detail}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ═══════ TODAY'S GAME PLAN (Lure Selection) ═══════ */}
       {lurePick?.topPick && (
         <div className={`rounded-xl border overflow-hidden ${isDark ? 'bg-gradient-to-br from-amber-900/20 to-slate-800/50 border-amber-500/30' : 'bg-gradient-to-br from-amber-50 to-white border-amber-200 shadow-sm'}`}>
           <div className="p-4 pb-3">
@@ -1869,110 +2007,7 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
         </div>
       )}
 
-      {/* ═══════ TROLLING INTELLIGENCE ═══════ */}
-      {lurePick?.trollingSetup && location.type !== 'river' && (
-        <div className={`rounded-xl p-4 border ${isDark ? 'bg-slate-800/30 border-blue-500/30' : 'bg-blue-50/50 border-blue-200 shadow-sm'}`}>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className={`text-sm font-bold flex items-center gap-2 ${isDark ? 'text-blue-400' : 'text-blue-700'}`}>
-              <Ship className="w-4 h-4" />
-              Trolling Intelligence — {lurePick.trollingSpecies}
-            </h3>
-          </div>
-          <div className="grid grid-cols-3 gap-4 mb-3">
-            <div>
-              <div className={`text-xs mb-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Target Depth</div>
-              <div className={`text-2xl font-black ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>{lurePick.trollingSetup.depth[0]}-{lurePick.trollingSetup.depth[1]}</div>
-              <div className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>feet</div>
-            </div>
-            <div>
-              <div className={`text-xs mb-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Troll Speed</div>
-              <div className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{lurePick.trollingSetup.speed}</div>
-            </div>
-            <div>
-              <div className={`text-xs mb-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Setup</div>
-              <div className={`text-xs font-medium ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>{lurePick.trollingSetup.rig}</div>
-            </div>
-          </div>
-          <div className={`text-xs ${isDark ? 'text-blue-300' : 'text-blue-700'}`}>{lurePick.trollingSetup.note}</div>
-          {lurePick.trollingSetup.tempAdvice && (
-            <div className={`text-xs mt-2 italic ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{lurePick.trollingSetup.tempAdvice}</div>
-          )}
-        </div>
-      )}
-
-      {/* ═══════ SHORE ANGLER GUIDE ═══════ */}
-      {shoreAdvice && location.type !== 'river' && (
-        <div className={`rounded-xl p-4 border ${isDark ? 'bg-slate-800/30 border-cyan-500/30' : 'bg-cyan-50/50 border-cyan-200 shadow-sm'}`}>
-          <h3 className={`text-sm font-bold flex items-center gap-2 mb-3 ${isDark ? 'text-cyan-400' : 'text-cyan-700'}`}>
-            <Anchor className="w-4 h-4" />
-            Shore Angler Guide
-          </h3>
-          {shoreAdvice.bankRecommendation && (
-            <div className={`rounded-lg p-3 mb-3 ${isDark ? 'bg-cyan-500/10 border border-cyan-500/30' : 'bg-cyan-50 border border-cyan-200'}`}>
-              <div className={`text-xs font-medium uppercase mb-1 ${isDark ? 'text-cyan-400/60' : 'text-cyan-500'}`}>Best Bank</div>
-              <div className={`text-sm font-semibold mb-1 capitalize ${isDark ? 'text-white' : 'text-slate-800'}`}>Fish the {shoreAdvice.bankRecommendation.direction} side</div>
-              <div className={`text-xs ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>{shoreAdvice.bankRecommendation.reason}</div>
-            </div>
-          )}
-          <div className={`rounded-lg p-3 mb-3 ${isDark ? 'bg-slate-700/30' : 'bg-white border border-slate-200'}`}>
-            <div className={`text-xs font-medium uppercase mb-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Recommended Rig</div>
-            <div className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>{shoreAdvice.recommendedRig}</div>
-          </div>
-          <div className="space-y-1.5">
-            {shoreAdvice.tips.map((tip, i) => (
-              <div key={i} className={`flex items-start gap-2 text-xs ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
-                <CheckCircle className={`w-3 h-3 mt-0.5 shrink-0 ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`} />
-                {tip}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ═══════ WEATHER-TRIGGERED HATCH ALERTS ═══════ */}
-      {weatherHatchTriggers.length > 0 && (
-        <div className="space-y-2">
-          {weatherHatchTriggers.map(trigger => (
-            <div
-              key={trigger.id}
-              className={`rounded-xl border p-4 ${
-                trigger.color === 'emerald'
-                  ? (isDark ? 'bg-emerald-500/15 border-emerald-500/40' : 'bg-emerald-50 border-emerald-300')
-                  : (isDark ? 'bg-amber-500/15 border-amber-500/40' : 'bg-amber-50 border-amber-300')
-              }`}
-            >
-              <div className="flex items-center justify-between mb-1.5">
-                <div className="flex items-center gap-2">
-                  <span className="text-lg">{trigger.icon}</span>
-                  <span className={`text-sm font-bold ${
-                    trigger.color === 'emerald'
-                      ? (isDark ? 'text-emerald-300' : 'text-emerald-800')
-                      : (isDark ? 'text-amber-300' : 'text-amber-800')
-                  }`}>
-                    {trigger.label}
-                  </span>
-                </div>
-                <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full animate-pulse ${
-                  trigger.color === 'emerald'
-                    ? (isDark ? 'bg-emerald-500/30 text-emerald-300 border border-emerald-500/50' : 'bg-emerald-200 text-emerald-800 border border-emerald-400')
-                    : (isDark ? 'bg-amber-500/30 text-amber-300 border border-amber-500/50' : 'bg-amber-200 text-amber-800 border border-amber-400')
-                }`}>
-                  {trigger.badge}
-                </span>
-              </div>
-              <p className={`text-xs ${
-                trigger.color === 'emerald'
-                  ? (isDark ? 'text-emerald-300/80' : 'text-emerald-700')
-                  : (isDark ? 'text-amber-300/80' : 'text-amber-700')
-              }`}>
-                {trigger.detail}
-              </p>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* ═══════ DAILY FLY PICK ═══════ */}
+      {/* ═══════ TODAY'S FLY PICK ═══════ */}
       {flyPick?.topPick && (
         <div className={`rounded-xl border overflow-hidden ${isDark ? 'bg-gradient-to-br from-emerald-900/30 to-slate-800/50 border-emerald-500/30' : 'bg-gradient-to-br from-emerald-50 to-white border-emerald-200 shadow-sm'}`}>
           {/* Header */}
@@ -2129,7 +2164,68 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
             </div>
           )}
         </div>
-      )}      
+      )}
+
+      {/* ═══════ TROLLING INTELLIGENCE ═══════ */}
+      {lurePick?.trollingSetup && location.type !== 'river' && (
+        <div className={`rounded-xl p-4 border ${isDark ? 'bg-slate-800/30 border-blue-500/30' : 'bg-blue-50/50 border-blue-200 shadow-sm'}`}>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className={`text-sm font-bold flex items-center gap-2 ${isDark ? 'text-blue-400' : 'text-blue-700'}`}>
+              <Ship className="w-4 h-4" />
+              Trolling Intelligence — {lurePick.trollingSpecies}
+            </h3>
+          </div>
+          <div className="grid grid-cols-3 gap-4 mb-3">
+            <div>
+              <div className={`text-xs mb-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Target Depth</div>
+              <div className={`text-2xl font-black ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>{lurePick.trollingSetup.depth[0]}-{lurePick.trollingSetup.depth[1]}</div>
+              <div className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>feet</div>
+            </div>
+            <div>
+              <div className={`text-xs mb-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Troll Speed</div>
+              <div className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{lurePick.trollingSetup.speed}</div>
+            </div>
+            <div>
+              <div className={`text-xs mb-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Setup</div>
+              <div className={`text-xs font-medium ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>{lurePick.trollingSetup.rig}</div>
+            </div>
+          </div>
+          <div className={`text-xs ${isDark ? 'text-blue-300' : 'text-blue-700'}`}>{lurePick.trollingSetup.note}</div>
+          {lurePick.trollingSetup.tempAdvice && (
+            <div className={`text-xs mt-2 italic ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{lurePick.trollingSetup.tempAdvice}</div>
+          )}
+        </div>
+      )}
+
+      {/* ═══════ SHORE ANGLER GUIDE ═══════ */}
+      {shoreAdvice && location.type !== 'river' && (
+        <div className={`rounded-xl p-4 border ${isDark ? 'bg-slate-800/30 border-cyan-500/30' : 'bg-cyan-50/50 border-cyan-200 shadow-sm'}`}>
+          <h3 className={`text-sm font-bold flex items-center gap-2 mb-3 ${isDark ? 'text-cyan-400' : 'text-cyan-700'}`}>
+            <Anchor className="w-4 h-4" />
+            Shore Angler Guide
+          </h3>
+          {shoreAdvice.bankRecommendation && (
+            <div className={`rounded-lg p-3 mb-3 ${isDark ? 'bg-cyan-500/10 border border-cyan-500/30' : 'bg-cyan-50 border border-cyan-200'}`}>
+              <div className={`text-xs font-medium uppercase mb-1 ${isDark ? 'text-cyan-400/60' : 'text-cyan-500'}`}>Best Bank</div>
+              <div className={`text-sm font-semibold mb-1 capitalize ${isDark ? 'text-white' : 'text-slate-800'}`}>Fish the {shoreAdvice.bankRecommendation.direction} side</div>
+              <div className={`text-xs ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>{shoreAdvice.bankRecommendation.reason}</div>
+            </div>
+          )}
+          <div className={`rounded-lg p-3 mb-3 ${isDark ? 'bg-slate-700/30' : 'bg-white border border-slate-200'}`}>
+            <div className={`text-xs font-medium uppercase mb-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Recommended Rig</div>
+            <div className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>{shoreAdvice.recommendedRig}</div>
+          </div>
+          <div className="space-y-1.5">
+            {shoreAdvice.tips.map((tip, i) => (
+              <div key={i} className={`flex items-start gap-2 text-xs ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+                <CheckCircle className={`w-3 h-3 mt-0.5 shrink-0 ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`} />
+                {tip}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Key Factors Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {/* Moon Phase */}

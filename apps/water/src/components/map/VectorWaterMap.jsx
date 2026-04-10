@@ -6,6 +6,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import { Compass, Maximize2, X, Droplets, Fish, Waves, Search } from 'lucide-react';
 import { generateFisheryProfile, LAKE_CONFIGS } from '@utahwind/weather';
 import { trackPinDrop, trackBioApiCall } from '@utahwind/ui';
+import { FISHING_LOCATIONS } from '../FishingMode';
 import SyntheticFishingCard from './SyntheticFishingCard';
 import WaterSearch from './WaterSearch';
 
@@ -135,12 +136,13 @@ export function VectorWaterMap({ currentWeatherData = {}, selectedLocation }) {
   useEffect(() => {
     if (!selectedLocation || selectedLocation.startsWith('geo:')) return;
     const cfg = LAKE_CONFIGS?.[selectedLocation];
-    if (cfg?.coordinates) {
+    const coords = cfg?.coordinates || FISHING_LOCATIONS[selectedLocation]?.coordinates;
+    if (coords) {
       const map = mapRef.current?.getMap?.();
       if (map) {
-        map.flyTo({ center: [cfg.coordinates.lng, cfg.coordinates.lat], zoom: LOCATION_ZOOM, duration: 1200 });
+        map.flyTo({ center: [coords.lng, coords.lat], zoom: LOCATION_ZOOM, duration: 1200 });
       } else {
-        setViewState({ longitude: cfg.coordinates.lng, latitude: cfg.coordinates.lat, zoom: LOCATION_ZOOM });
+        setViewState({ longitude: coords.lng, latitude: coords.lat, zoom: LOCATION_ZOOM });
       }
     }
   }, [selectedLocation]);

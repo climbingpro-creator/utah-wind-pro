@@ -22,6 +22,24 @@ export const WATER_TEMP_SOURCES = {
     name: 'Provo River nr Charleston',
     note: 'Direct gauge on river',
   },
+  'provo-lower': {
+    type: 'usgs',
+    siteId: '10159500',
+    name: 'Provo River bl Deer Creek Dam',
+    note: 'Lower Provo — below Deer Creek to Utah Lake',
+  },
+  'provo-middle': {
+    type: 'usgs',
+    siteId: '10155500',
+    name: 'Provo River nr Charleston',
+    note: 'Middle Provo — Jordanelle to Deer Creek',
+  },
+  'provo-upper': {
+    type: 'usgs',
+    siteId: '10155000',
+    name: 'Provo River nr Woodland',
+    note: 'Upper Provo — above Jordanelle',
+  },
   'middle-provo': {
     type: 'usgs',
     siteId: '10155500',
@@ -39,6 +57,24 @@ export const WATER_TEMP_SOURCES = {
     siteId: '09234500',
     name: 'Green River nr Greendale (below Flaming Gorge Dam)',
     note: 'Tailwater gauge — directly below dam, serving A/B/C fishing sections',
+  },
+  'green-a': {
+    type: 'usgs',
+    siteId: '09234500',
+    name: 'Green River nr Greendale (A Section)',
+    note: 'Dam to Little Hole — coldest water, closest to dam release',
+  },
+  'green-b': {
+    type: 'usgs',
+    siteId: '09234500',
+    name: 'Green River nr Greendale (B Section)',
+    note: 'Little Hole to Indian Crossing — same tailwater gauge',
+  },
+  'green-c': {
+    type: 'usgs',
+    siteId: '09234500',
+    name: 'Green River nr Greendale (C Section)',
+    note: 'Indian Crossing to Colorado border — remote section',
   },
   'flaming-gorge': {
     type: 'usgs',
@@ -81,10 +117,16 @@ export const WATER_TEMP_SOURCES = {
 // USGS river gauges that provide discharge (cfs) — parameterCd=00060
 export const RIVER_FLOW_SOURCES = {
   'provo-river':  { siteId: '10155500', name: 'Provo River nr Charleston' },
+  'provo-lower':  { siteId: '10159500', name: 'Provo River bl Deer Creek Dam' },
+  'provo-middle': { siteId: '10155500', name: 'Provo River nr Charleston' },
+  'provo-upper':  { siteId: '10155000', name: 'Provo River nr Woodland' },
   'middle-provo': { siteId: '10155500', name: 'Provo River nr Charleston' },
   'lower-provo':  { siteId: '10159500', name: 'Provo River bl Deer Creek Dam' },
   'weber-river':  { siteId: '10130500', name: 'Weber River nr Coalville' },
   'green-river':  { siteId: '09234500', name: 'Green River nr Greendale (below dam)' },
+  'green-a':      { siteId: '09234500', name: 'Green River — A Section (below dam)' },
+  'green-b':      { siteId: '09234500', name: 'Green River — B Section' },
+  'green-c':      { siteId: '09234500', name: 'Green River — C Section' },
   'flaming-gorge': { siteId: '09234500', name: 'Green River bl Flaming Gorge Dam' },
 };
 
@@ -102,6 +144,42 @@ export const RIVER_FLOW_THRESHOLDS = {
       [700,  'Elevated — Strong Current', 'caution'],
       [1200, 'High — Difficult Wading', 'warning'],
       [Infinity, 'Dangerous — Stay Out', 'danger'],
+    ],
+  },
+  'provo-lower': {
+    name: 'Lower Provo (Deer Creek to Utah Lake)',
+    unit: 'cfs',
+    levels: [
+      [80,   'Very Low',              'ok'],
+      [200,  'Low — Easy Wading',     'good'],
+      [500,  'Optimal — Prime Water',  'great'],
+      [700,  'Elevated — Strong Current', 'caution'],
+      [1200, 'High — Difficult Wading', 'warning'],
+      [Infinity, 'Dangerous — Stay Out', 'danger'],
+    ],
+  },
+  'provo-middle': {
+    name: 'Middle Provo (Jordanelle–Deer Creek)',
+    unit: 'cfs',
+    levels: [
+      [80,   'Very Low',                'ok'],
+      [200,  'Low — Easy Wading',       'good'],
+      [500,  'Optimal — Prime Tailwater', 'great'],
+      [700,  'Elevated — Fishable but Strong', 'caution'],
+      [1200, 'High — Runoff, Tough Wading', 'warning'],
+      [Infinity, 'Dangerous — Spring Flood', 'danger'],
+    ],
+  },
+  'provo-upper': {
+    name: 'Upper Provo (above Jordanelle)',
+    unit: 'cfs',
+    levels: [
+      [30,   'Very Low — Trickle',        'ok'],
+      [80,   'Low — Fishable',            'good'],
+      [200,  'Optimal — Prime Small Water', 'great'],
+      [400,  'Elevated — Rising',          'caution'],
+      [700,  'High — Runoff',             'warning'],
+      [Infinity, 'Dangerous — Flash Flood Risk', 'danger'],
     ],
   },
   'middle-provo': {
@@ -140,6 +218,42 @@ export const RIVER_FLOW_THRESHOLDS = {
       [Infinity, 'Dangerous — Extreme Flows', 'danger'],
     ],
   },
+  'green-a': {
+    name: 'Green River — A Section (Dam to Little Hole)',
+    unit: 'cfs',
+    levels: [
+      [400,  'Very Low',                     'ok'],
+      [800,  'Low — Excellent Wading',       'good'],
+      [2000, 'Optimal — Perfect for Wading & Float', 'great'],
+      [4000, 'Elevated — Float Recommended',  'caution'],
+      [8000, 'High — Drift Boat Only',       'warning'],
+      [Infinity, 'Dangerous — Extreme Flows', 'danger'],
+    ],
+  },
+  'green-b': {
+    name: 'Green River — B Section (Little Hole to Indian Crossing)',
+    unit: 'cfs',
+    levels: [
+      [400,  'Very Low',                     'ok'],
+      [800,  'Low — Excellent Wading',       'good'],
+      [1800, 'Optimal — Prime Technical Water', 'great'],
+      [3500, 'Elevated — Float Only',        'caution'],
+      [7000, 'High — Drift Boat Only',       'warning'],
+      [Infinity, 'Dangerous — Extreme Flows', 'danger'],
+    ],
+  },
+  'green-c': {
+    name: 'Green River — C Section (Browns Park)',
+    unit: 'cfs',
+    levels: [
+      [500,  'Very Low',                     'ok'],
+      [1000, 'Low — Fishable',              'good'],
+      [3000, 'Optimal — Good Float',         'great'],
+      [5000, 'Elevated — Strong Current',    'caution'],
+      [10000, 'High — Expert Only',          'warning'],
+      [Infinity, 'Dangerous — Stay Off',     'danger'],
+    ],
+  },
   'flaming-gorge': {
     name: 'Green River below Dam',
     unit: 'cfs',
@@ -156,8 +270,14 @@ export const RIVER_FLOW_THRESHOLDS = {
 
 const MINIMUM_EXPECTED_CFS = {
   'green-river':    50,
+  'green-a':        50,
+  'green-b':        50,
+  'green-c':        50,
   'flaming-gorge':  50,
   'provo-river':    15,
+  'provo-lower':    15,
+  'provo-middle':   15,
+  'provo-upper':    5,
   'middle-provo':   15,
   'lower-provo':    15,
   'weber-river':    10,

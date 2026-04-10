@@ -18,13 +18,14 @@ const THERMAL_LAKES = new Set([
 const WASATCH_FRONT_LOCATIONS = new Set([
   'utah-lake', 'utah-lake-lincoln', 'utah-lake-zigzag', 'utah-lake-vineyard',
   'utah-lake-sandy', 'utah-lake-mm19',
-  'deer-creek', 'jordanelle', 'provo-river', 'middle-provo', 'lower-provo',
+  'deer-creek', 'jordanelle',
+  'provo-river', 'provo-lower', 'provo-middle', 'provo-upper', 'middle-provo', 'lower-provo',
   'willard-bay', 'pineview',
   'east-canyon', 'echo', 'rockport',
 ]);
 
 const CANYON_MOUTH_LOCATIONS = new Set([
-  'deer-creek', 'provo-river', 'middle-provo', 'lower-provo',
+  'deer-creek', 'provo-river', 'provo-lower', 'provo-middle', 'provo-upper', 'middle-provo', 'lower-provo',
   'utah-lake', 'utah-lake-lincoln', 'utah-lake-zigzag', 'utah-lake-vineyard',
   'utah-lake-sandy', 'utah-lake-mm19',
   'jordanelle', 'east-canyon',

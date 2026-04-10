@@ -9,8 +9,15 @@ const LIVE_LAKES = [
 ];
 
 const UTAH_WATERS = [
-  { id: 'provo-river', name: 'Provo River', type: 'river', region: 'Utah' },
-  { id: 'green-river', name: 'Green River', type: 'river', region: 'Utah' },
+  // Provo River — segmented
+  { id: 'provo-lower', name: 'Lower Provo River', type: 'river', region: 'Utah' },
+  { id: 'provo-middle', name: 'Middle Provo River', type: 'river', region: 'Wasatch' },
+  { id: 'provo-upper', name: 'Upper Provo River', type: 'river', region: 'Wasatch' },
+  // Green River — segmented
+  { id: 'green-a', name: 'Green River — A Section', type: 'river', region: 'Daggett' },
+  { id: 'green-b', name: 'Green River — B Section', type: 'river', region: 'Daggett' },
+  { id: 'green-c', name: 'Green River — C Section', type: 'river', region: 'Daggett' },
+  // Reservoirs & other rivers
   { id: 'jordanelle', name: 'Jordanelle', type: 'reservoir', region: 'Utah' },
   { id: 'lake-powell', name: 'Lake Powell', type: 'reservoir', region: 'Utah' },
   { id: 'bear-lake', name: 'Bear Lake', type: 'lake', region: 'Utah/Idaho' },

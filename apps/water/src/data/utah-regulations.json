@@ -34,7 +34,7 @@
 
     "provo-river-lower": {
       "waterbody": "Provo River — Olmstead Diversion to Utah Lake",
-      "aliases": ["provo-river", "lower-provo"],
+      "aliases": ["provo-river", "lower-provo", "provo-lower"],
       "region": "Utah / Wasatch",
       "rules": [
         { "type": "gear", "text": "Artificial flies and lures only — no bait" },
@@ -46,7 +46,7 @@
 
     "provo-river-middle": {
       "waterbody": "Provo River — Jordanelle Dam to Deer Creek Reservoir",
-      "aliases": ["middle-provo"],
+      "aliases": ["middle-provo", "provo-middle"],
       "region": "Wasatch",
       "rules": [
         { "type": "gear", "text": "Artificial flies and lures only — no bait" },
@@ -58,7 +58,7 @@
 
     "provo-river-upper": {
       "waterbody": "Provo River — Woodland to Jordanelle Reservoir",
-      "aliases": [],
+      "aliases": ["provo-upper"],
       "region": "Wasatch",
       "rules": [
         { "type": "gear", "text": "Artificial flies and lures only — no bait" },
@@ -80,7 +80,7 @@
 
     "green-river-a": {
       "waterbody": "Green River — A Section (Flaming Gorge Dam to Little Hole)",
-      "aliases": ["green-river"],
+      "aliases": ["green-river", "green-a"],
       "region": "Daggett",
       "rules": [
         { "type": "gear", "text": "Artificial flies and lures only — no bait" },
@@ -91,7 +91,7 @@
 
     "green-river-b": {
       "waterbody": "Green River — B Section (Little Hole to Indian Crossing)",
-      "aliases": [],
+      "aliases": ["green-b"],
       "region": "Daggett",
       "rules": [
         { "type": "gear", "text": "Artificial flies and lures only — no bait" },
@@ -102,7 +102,7 @@
 
     "green-river-c": {
       "waterbody": "Green River — C Section (Indian Crossing to Colorado Border)",
-      "aliases": [],
+      "aliases": ["green-c"],
       "region": "Daggett / Uintah",
       "rules": [
         { "type": "limit", "text": "Trout limit: 8 fish" },

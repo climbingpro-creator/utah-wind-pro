@@ -106,6 +106,14 @@ export const ECOSYSTEMS = {
   'sand-hollow': { forage: { primary: [{ name: 'Bluegill (juvenile)', size: '1-3"', peakMonths: [5,6,7,8,9,10], habitat: 'Sandy flats and red-rock ledges', matchLure: ['Bluegill', 'Green/Orange'], matchFly: [] }], secondary: [{ name: 'Crayfish', size: '1-2"', peakMonths: [3,4,5,6,7,8,9,10,11], habitat: 'Red rock ledges and sandy areas', matchLure: ['Crawfish', 'Brown/Red'], matchFly: [] }] }, hatches: {}, waterClarity: { typical: 'clear', visibilityFt: { spring: 10, summer: 15, fall: 12, winter: 10 }, factors: 'Desert reservoir with red sandstone substrate — very clear water year-round. Light line and natural colors essential.' }, substrate: { primary: 'sandstone', secondary: 'sand flats', notes: 'Unique red sandstone ledges create bass habitat unlike any other Utah water — sight fishing possible year-round' }, thermocline: { spring: { depth: [8, 15], tempRange: [55, 65] }, summer: { depth: [15, 25], tempRange: [72, 82] }, fall: { depth: [10, 18], tempRange: [62, 72] }, winter: null }, dissolvedOxygen: { summer: { epilimnion: 'Moderate (6-8 mg/L)', metalimnion: 'Low (3-5 mg/L)', hypolimnion: 'Low (2-4 mg/L)' }, notes: 'Warm desert reservoir — bass move to 15-25 ft in summer heat' }, vegetation: { types: [], coverage: 'sparse' }, invertebrates: { scuds: 'none', crayfish: 'moderate', leeches: 'low', snails: 'low', sowbugs: 'none' }, predatorPrey: { topPredator: 'Largemouth Bass', preyChain: 'Bluegill/Crayfish → Largemouth Bass', keyRelationship: 'Classic warm-water bass ecosystem — bluegill are primary forage. Bluegill-colored jigs and swimbaits around red rock ledges are money.' } },
 };
 
+// Segment aliases — new segment IDs resolve to the same ecosystem data
+ECOSYSTEMS['provo-lower']  = ECOSYSTEMS['provo-river'];
+ECOSYSTEMS['provo-middle'] = ECOSYSTEMS['middle-provo'];
+ECOSYSTEMS['provo-upper']  = ECOSYSTEMS['provo-river'];
+ECOSYSTEMS['green-a']      = ECOSYSTEMS['green-river'];
+ECOSYSTEMS['green-b']      = ECOSYSTEMS['green-river'];
+ECOSYSTEMS['green-c']      = ECOSYSTEMS['green-river'];
+
 export function getEcosystem(locationId) {
   return ECOSYSTEMS[locationId] || null;
 }

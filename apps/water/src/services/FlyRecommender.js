@@ -103,7 +103,7 @@ function buildCandidates({ month, waterTemp, windSpeed, sky, pressureTrend, hour
   const isPrime = waterTemp != null && waterTemp >= 50 && waterTemp <= 65;
   const isWarm = waterTemp != null && waterTemp > 65;
   const isFalling = pressureTrend === 'falling';
-  const isGreenRiver = locationId === 'green-river' || locationId === 'flaming-gorge';
+  const isGreenRiver = locationId === 'green-river' || locationId === 'flaming-gorge' || locationId?.startsWith('green-');
   const isStillwater = locationType === 'reservoir' || locationType === 'lake';
 
   const eco = ecosystem || null;
