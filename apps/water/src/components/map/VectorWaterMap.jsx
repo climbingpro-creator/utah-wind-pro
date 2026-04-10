@@ -4,7 +4,7 @@ import maplibregl from 'maplibre-gl';
 import { Protocol } from 'pmtiles';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { Compass, Maximize2, X, Droplets, Fish, Waves, Search } from 'lucide-react';
-import { generateFisheryProfile } from '@utahwind/weather';
+import { generateFisheryProfile, LAKE_CONFIGS } from '@utahwind/weather';
 import { trackPinDrop, trackBioApiCall } from '@utahwind/ui';
 import SyntheticFishingCard from './SyntheticFishingCard';
 import WaterSearch from './WaterSearch';
@@ -12,9 +12,9 @@ import WaterSearch from './WaterSearch';
 const PMTILES_URL = import.meta.env.VITE_PMTILES_WATER_URL || null;
 const BASEMAP_STYLE = 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json';
 
-// Global default: North America continental view (user can geolocate)
-const GLOBAL_DEFAULT = { longitude: -98.5, latitude: 39.8 };
-const GLOBAL_DEFAULT_ZOOM = 3;
+const UTAH_CENTER = { longitude: -111.0937, latitude: 39.3200 };
+const UTAH_ZOOM = 7;
+const LOCATION_ZOOM = 12;
 const GEOLOCATED_ZOOM = 10;
 const DEFAULT_ELEVATION = 4500;
 
@@ -107,7 +107,7 @@ function PinDropMarker({ coords }) {
   );
 }
 
-export function VectorWaterMap({ currentWeatherData = {} }) {
+export function VectorWaterMap({ currentWeatherData = {}, selectedLocation }) {
   const mapRef = useRef(null);
   const [droppedPin, setDroppedPin] = useState(null);
   const [fishProfile, setFishProfile] = useState(null);
@@ -119,8 +119,8 @@ export function VectorWaterMap({ currentWeatherData = {} }) {
   const [hoveredFeature, setHoveredFeature] = useState(null);
   const [cursorStyle, setCursorStyle] = useState('crosshair');
   const [viewState, setViewState] = useState({
-    ...GLOBAL_DEFAULT,
-    zoom: GLOBAL_DEFAULT_ZOOM,
+    ...UTAH_CENTER,
+    zoom: UTAH_ZOOM,
   });
   const [geolocateAttempted, setGeolocateAttempted] = useState(false);
   const [searchExpanded, setSearchExpanded] = useState(false);
@@ -131,7 +131,21 @@ export function VectorWaterMap({ currentWeatherData = {} }) {
   // This persists across hovers so once we learn a lake's name, we remember it
   const waterNameCacheRef = useRef({});
 
-  // Geolocation: Ask user for location on first load, snap map to them
+  // Auto-pan to selected location when it changes
+  useEffect(() => {
+    if (!selectedLocation || selectedLocation.startsWith('geo:')) return;
+    const cfg = LAKE_CONFIGS?.[selectedLocation];
+    if (cfg?.coordinates) {
+      const map = mapRef.current?.getMap?.();
+      if (map) {
+        map.flyTo({ center: [cfg.coordinates.lng, cfg.coordinates.lat], zoom: LOCATION_ZOOM, duration: 1200 });
+      } else {
+        setViewState({ longitude: cfg.coordinates.lng, latitude: cfg.coordinates.lat, zoom: LOCATION_ZOOM });
+      }
+    }
+  }, [selectedLocation]);
+
+  // Geolocation: Ask user for location on first load
   useEffect(() => {
     if (geolocateAttempted) return;
     setGeolocateAttempted(true);
@@ -139,17 +153,13 @@ export function VectorWaterMap({ currentWeatherData = {} }) {
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          console.log('[Geolocation] User location:', position.coords.latitude, position.coords.longitude);
           setViewState({
             longitude: position.coords.longitude,
             latitude: position.coords.latitude,
             zoom: GEOLOCATED_ZOOM,
           });
         },
-        (error) => {
-          console.log('[Geolocation] User declined or error:', error.message);
-          // Keep global default view - already set
-        },
+        () => {},
         { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
       );
     }

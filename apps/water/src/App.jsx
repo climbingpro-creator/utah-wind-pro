@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, Suspense, lazy, useCallback } from 'react';
 import { Analytics } from '@vercel/analytics/react';
 import { Fish, Ship, Waves, RefreshCw, Wifi, WifiOff, Sun, Moon, CheckCircle,
-  Shield, Clock, Lightbulb, TrendingUp, TrendingDown, Minus, LogIn, LogOut, Crown, CreditCard, Sparkles, Brain } from 'lucide-react';
+  Shield, Clock, Lightbulb, TrendingUp, TrendingDown, Minus, LogIn, LogOut, Crown, CreditCard, Sparkles, Brain, Star } from 'lucide-react';
 import { ErrorBoundary, FeedbackWidget, initAnalytics, trackPageView } from '@utahwind/ui';
 import { supabase } from '@utahwind/database';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
@@ -11,7 +11,14 @@ import { IntelligentRecommendations } from '@utahwind/ui';
 import { predictGlass } from './services/BoatingPredictor';
 import { safeToFixed } from './utils/safeToFixed';
 import { getUtahVernacular, getVernacularWindLabel } from './services/UtahVernacular';
-import LocationSelector from './components/LocationSelector';
+import LocationSelector, { useFavorites, LIVE_LAKES, UTAH_WATERS } from './components/LocationSelector';
+
+const ALL_LOCATIONS = [...LIVE_LAKES, ...UTAH_WATERS];
+function getLocationName(id) {
+  const loc = ALL_LOCATIONS.find(l => l.id === id);
+  if (loc) return loc.name;
+  return id.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
 
 const FishingMode = lazy(() => import('./components/FishingMode'));
 const FlatwaterTemplate = lazy(() => import('./components/FlatwaterTemplate'));
@@ -147,9 +154,10 @@ function getSkillRec(activity, speed) {
   return null;
 }
 
-function generateWaterBriefing(activity, speed, gust, pressureData, boatingPred, vernacularLabels) {
+function generateWaterBriefing(activity, speed, gust, pressureData, boatingPred, vernacularLabels, locationName) {
+  const loc = locationName || 'the water';
   if (speed == null) {
-    return { headline: 'Connecting to stations', body: 'Waiting for real-time weather data from nearby stations.', bestAction: 'Data should arrive momentarily', bullets: [], excitement: 0 };
+    return { headline: `Connecting to stations at ${loc}`, body: `Waiting for real-time weather data from nearby stations at ${loc}.`, bestAction: 'Data should arrive momentarily', bullets: [], excitement: 0 };
   }
   const s = speed;
   const hour = new Date().getHours();
@@ -164,23 +172,23 @@ function generateWaterBriefing(activity, speed, gust, pressureData, boatingPred,
   const preFrontLabel = vernacularLabels?.find(v => v.fishingBoost);
 
   if (s <= 3) {
-    headline = activity === 'fishing' ? 'Prime fishing conditions' : 'Glass conditions — get out now';
-    body = `Current wind is just ${Math.round(s)} mph. ${hour < 10 ? 'Morning calm should hold for a few hours before thermals build.' : hour > 17 ? 'Evening calm settling in nicely.' : 'Calm pocket — thermals may build by midday.'}`;
-    bestAction = activity === 'fishing' ? 'Hit the water now — topwater lures will be effective' : `Best window is now${glassEnd ? ` until ~${glassEnd > 12 ? glassEnd - 12 + ' PM' : glassEnd + ' AM'}` : ''}`;
+    headline = activity === 'fishing' ? `Prime fishing conditions at ${loc}` : `Glass conditions at ${loc} — get out now`;
+    body = `Current wind is just ${Math.round(s)} mph at ${loc}. ${hour < 10 ? 'Morning calm should hold for a few hours before thermals build.' : hour > 17 ? 'Evening calm settling in nicely.' : 'Calm pocket — thermals may build by midday.'}`;
+    bestAction = activity === 'fishing' ? `Hit the water at ${loc} now — topwater lures will be effective` : `Best window at ${loc} is now${glassEnd ? ` until ~${glassEnd > 12 ? glassEnd - 12 + ' PM' : glassEnd + ' AM'}` : ''}`;
   } else if (s <= 8) {
-    headline = thermalLabel ? 'Afternoon Thermal Pull building' : 'Light conditions — still good';
+    headline = thermalLabel ? `Afternoon Thermal Pull building at ${loc}` : `Light conditions at ${loc} — still good`;
     body = thermalLabel
       ? `${thermalLabel.description}`
-      : `${Math.round(s)} mph with ${gust && gust > s * 1.2 ? `gusts to ${Math.round(gust)}` : 'steady winds'}. Manageable for most activities.`;
-    bestAction = activity === 'fishing' ? 'Try subsurface lures — surface bite may be off' : 'Good conditions but watch for afternoon thermals';
+      : `${Math.round(s)} mph with ${gust && gust > s * 1.2 ? `gusts to ${Math.round(gust)}` : 'steady winds'} at ${loc}. Manageable for most activities.`;
+    bestAction = activity === 'fishing' ? `Try subsurface lures at ${loc} — surface bite may be off` : `Good conditions at ${loc} but watch for afternoon thermals`;
   } else {
-    headline = canyonLabel ? 'Canyon Winds Expected' : thermalLabel ? 'Strong Thermal Pull' : 'Wind advisory — plan accordingly';
+    headline = canyonLabel ? `Canyon Winds Expected at ${loc}` : thermalLabel ? `Strong Thermal Pull at ${loc}` : `Wind advisory at ${loc} — plan accordingly`;
     body = canyonLabel
       ? canyonLabel.description
       : thermalLabel
         ? thermalLabel.description
-        : `${Math.round(s)} mph winds making conditions challenging. ${hour < 17 ? 'May calm by evening.' : 'Conditions unlikely to improve tonight.'}`;
-    bestAction = activity === 'fishing' ? 'Fish sheltered coves or switch to shore' : 'Wait for calmer conditions or stick to sheltered areas';
+        : `${Math.round(s)} mph winds at ${loc} making conditions challenging. ${hour < 17 ? 'May calm by evening.' : 'Conditions unlikely to improve tonight.'}`;
+    bestAction = activity === 'fishing' ? `Fish sheltered coves at ${loc} or switch to shore` : `Wait for calmer conditions at ${loc} or stick to sheltered areas`;
   }
 
   if (preFrontLabel) {
@@ -255,6 +263,7 @@ function WaterApp() {
     localStorage.getItem('uwg_default_location') || 'strawberry'
   );
   const isFishing = selectedActivity === 'fishing';
+  const { favorites, toggle: toggleFavorite, isFavorite } = useFavorites();
 
   const handleSelectLocation = useCallback((locId) => {
     setSelectedLocation(locId);
@@ -321,7 +330,8 @@ function WaterApp() {
 
   const selectedVerdict = verdicts.find(v => v.id === selectedActivity)?.verdict;
   const skillRec = useMemo(() => getSkillRec(selectedActivity, currentWindSpeed), [selectedActivity, currentWindSpeed]);
-  const briefing = useMemo(() => generateWaterBriefing(selectedActivity, currentWindSpeed, currentWindGust, pressureData, boatingPrediction, vernacularLabels), [selectedActivity, currentWindSpeed, currentWindGust, pressureData, boatingPrediction, vernacularLabels]);
+  const locationDisplayName = useMemo(() => getLocationName(selectedLocation), [selectedLocation]);
+  const briefing = useMemo(() => generateWaterBriefing(selectedActivity, currentWindSpeed, currentWindGust, pressureData, boatingPrediction, vernacularLabels, locationDisplayName), [selectedActivity, currentWindSpeed, currentWindGust, pressureData, boatingPrediction, vernacularLabels, locationDisplayName]);
 
   const heroImage = useMemo(() => {
     const day = new Date().getDate();
@@ -465,6 +475,8 @@ function WaterApp() {
         <LocationSelector
           selectedLocation={selectedLocation}
           onSelectLocation={handleSelectLocation}
+          favorites={favorites}
+          onToggleFavorite={toggleFavorite}
         />
 
         {/* ═══════ HERO BANNER ═══════ */}
@@ -475,10 +487,19 @@ function WaterApp() {
           <div className="relative z-10 p-5 sm:p-6 lg:p-8">
             <div className="flex items-start justify-between gap-4 mb-5">
               <div className="flex-1 min-w-0">
-                <p className="text-[11px] font-semibold uppercase tracking-widest mb-2 text-white/50 flex items-center gap-2">
-                  <span className={`w-1.5 h-1.5 rounded-full ${selectedVerdict?.status === 'go' ? 'bg-emerald-500' : selectedVerdict?.status === 'caution' ? 'bg-amber-500' : 'bg-slate-400'}`} />
-                  {getGreeting()} — Today's Outlook
-                </p>
+                <div className="flex items-center gap-2 mb-2">
+                  <p className="text-[11px] font-semibold uppercase tracking-widest text-white/50 flex items-center gap-2">
+                    <span className={`w-1.5 h-1.5 rounded-full ${selectedVerdict?.status === 'go' ? 'bg-emerald-500' : selectedVerdict?.status === 'caution' ? 'bg-amber-500' : 'bg-slate-400'}`} />
+                    {getGreeting()} — {getLocationName(selectedLocation)}
+                  </p>
+                  <button
+                    onClick={() => toggleFavorite(selectedLocation)}
+                    className="p-1 rounded-full hover:bg-white/10 transition-colors"
+                    title={isFavorite(selectedLocation) ? 'Remove from favorites' : 'Add to favorites'}
+                  >
+                    <Star className={`w-4 h-4 transition-colors ${isFavorite(selectedLocation) ? 'fill-amber-400 text-amber-400' : 'text-white/30 hover:text-amber-400/60'}`} />
+                  </button>
+                </div>
                 <h2 className="text-xl sm:text-2xl lg:text-3xl font-extrabold leading-snug tracking-tight text-white">
                   {selectedVerdict?.reason || 'Loading conditions...'}
                 </h2>
@@ -650,11 +671,14 @@ function WaterApp() {
 
         {/* ═══════ THE PLAYGROUND — Interactive Water Map ═══════ */}
         <Suspense fallback={<div className="card animate-pulse h-80 flex items-center justify-center text-slate-500 text-sm">Loading map...</div>}>
-          <VectorWaterMap currentWeatherData={{
-            ambientTemp: lakeState?.pws?.temperature ?? null,
-            windSpeed: currentWindSpeed ?? null,
-            windDirection: currentWindDirection ?? null,
-          }} />
+          <VectorWaterMap
+            currentWeatherData={{
+              ambientTemp: lakeState?.pws?.temperature ?? null,
+              windSpeed: currentWindSpeed ?? null,
+              windDirection: currentWindDirection ?? null,
+            }}
+            selectedLocation={selectedLocation}
+          />
         </Suspense>
 
         {/* ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ SPORT INTELLIGENCE — Optimal Time Windows ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ */}

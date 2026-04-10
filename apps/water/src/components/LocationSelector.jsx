@@ -1,4 +1,4 @@
-import { MapPin, Map, Navigation, ChevronLeft, ChevronRight, Radio } from 'lucide-react';
+import { MapPin, Map, Navigation, ChevronLeft, ChevronRight, Radio, Star } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 
 const LIVE_LAKES = [
@@ -8,22 +8,46 @@ const LIVE_LAKES = [
   { id: 'sulfur-creek', name: 'Sulphur Creek', type: 'reservoir', region: 'Wyoming', live: true },
 ];
 
-const FEATURED_LOCATIONS = [
-  { id: 'lake-tahoe', name: 'Lake Tahoe', type: 'lake', region: 'California' },
-  { id: 'lake-michigan', name: 'Lake Michigan', type: 'lake', region: 'Great Lakes' },
-  { id: 'lake-powell', name: 'Lake Powell', type: 'reservoir', region: 'Arizona/Utah' },
-  { id: 'florida-keys', name: 'Florida Keys', type: 'ocean', region: 'Florida' },
-  { id: 'chesapeake-bay', name: 'Chesapeake Bay', type: 'bay', region: 'Maryland' },
-  { id: 'columbia-river', name: 'Columbia River', type: 'river', region: 'Oregon' },
-  { id: 'lake-como', name: 'Lake Como', type: 'lake', region: 'Italy' },
-  { id: 'lake-geneva', name: 'Lake Geneva', type: 'lake', region: 'Switzerland' },
-  { id: 'great-barrier', name: 'Great Barrier Reef', type: 'ocean', region: 'Australia' },
+const UTAH_WATERS = [
+  { id: 'provo-river', name: 'Provo River', type: 'river', region: 'Utah' },
+  { id: 'green-river', name: 'Green River', type: 'river', region: 'Utah' },
+  { id: 'jordanelle', name: 'Jordanelle', type: 'reservoir', region: 'Utah' },
+  { id: 'lake-powell', name: 'Lake Powell', type: 'reservoir', region: 'Utah' },
+  { id: 'bear-lake', name: 'Bear Lake', type: 'lake', region: 'Utah/Idaho' },
+  { id: 'flaming-gorge', name: 'Flaming Gorge', type: 'reservoir', region: 'Utah' },
+  { id: 'pineview', name: 'Pineview', type: 'reservoir', region: 'Utah' },
+  { id: 'weber-river', name: 'Weber River', type: 'river', region: 'Utah' },
+  { id: 'yuba', name: 'Yuba', type: 'reservoir', region: 'Utah' },
+  { id: 'starvation', name: 'Starvation', type: 'reservoir', region: 'Utah' },
+  { id: 'scofield', name: 'Scofield', type: 'reservoir', region: 'Utah' },
+  { id: 'sand-hollow', name: 'Sand Hollow', type: 'reservoir', region: 'Utah' },
+  { id: 'fish-lake', name: 'Fish Lake', type: 'lake', region: 'Utah' },
 ];
 
 const TYPE_ICON = { river: '🏞️', lake: '💧', reservoir: '💧', ocean: '🌊', bay: '🌊' };
 
-export default function LocationSelector({ selectedLocation, onSelectLocation, onOpenMap }) {
-  const [recentLocations, setRecentLocations] = useState([]);
+const FAVORITES_KEY = 'notwindy_favorites';
+
+function useFavorites() {
+  const [favorites, setFavorites] = useState(() => {
+    try {
+      const stored = localStorage.getItem(FAVORITES_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch { return []; }
+  });
+  const toggle = useCallback((id) => {
+    setFavorites(prev => {
+      const next = prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id];
+      localStorage.setItem(FAVORITES_KEY, JSON.stringify(next));
+      return next;
+    });
+  }, []);
+  return { favorites, toggle, isFavorite: (id) => favorites.includes(id) };
+}
+
+export { useFavorites, LIVE_LAKES, UTAH_WATERS };
+
+export default function LocationSelector({ selectedLocation, onSelectLocation, onOpenMap, favorites = [], onToggleFavorite }) {
   const scrollRef = useRef(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
@@ -33,13 +57,6 @@ export default function LocationSelector({ selectedLocation, onSelectLocation, o
     if (!el) return;
     setCanScrollLeft(el.scrollLeft > 4);
     setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
-  }, []);
-
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem('notwindy_recent_locations');
-      if (stored) setRecentLocations(JSON.parse(stored));
-    } catch (_e) { /* ignore */ }
   }, []);
 
   useEffect(() => {
@@ -65,10 +82,13 @@ export default function LocationSelector({ selectedLocation, onSelectLocation, o
   }, []);
 
   const liveIds = new Set(LIVE_LAKES.map(l => l.id));
-  const extraLocations = [
-    ...recentLocations.filter(r => !liveIds.has(r.id)).slice(0, 3),
-    ...FEATURED_LOCATIONS.filter(f => !recentLocations.find(r => r.id === f.id)),
-  ];
+  const utahIds = new Set(UTAH_WATERS.map(l => l.id));
+  const favSet = new Set(favorites);
+
+  const favoritePills = [...LIVE_LAKES, ...UTAH_WATERS].filter(l => favSet.has(l.id));
+  const nonFavLive = LIVE_LAKES.filter(l => !favSet.has(l.id));
+  const nonFavUtah = UTAH_WATERS.filter(l => !favSet.has(l.id));
+  const orderedPills = [...favoritePills, ...nonFavLive, ...nonFavUtah];
 
   return (
     <div className="space-y-1.5">
@@ -78,6 +98,11 @@ export default function LocationSelector({ selectedLocation, onSelectLocation, o
           <span className="text-[11px] font-semibold uppercase tracking-widest text-[var(--text-tertiary)]">
             Quick Access
           </span>
+          {favorites.length > 0 && (
+            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400">
+              {favorites.length} ★
+            </span>
+          )}
         </div>
         {onOpenMap && (
           <button
@@ -125,9 +150,10 @@ export default function LocationSelector({ selectedLocation, onSelectLocation, o
           <span>My Location</span>
         </button>
 
-        {/* Configured lakes with real station networks */}
-        {LIVE_LAKES.map((loc) => {
+        {orderedPills.map((loc) => {
           const isSelected = selectedLocation === loc.id;
+          const isLive = liveIds.has(loc.id);
+          const isFav = favSet.has(loc.id);
           return (
             <button
               key={loc.id}
@@ -135,37 +161,27 @@ export default function LocationSelector({ selectedLocation, onSelectLocation, o
               className={`
                 flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full
                 text-xs font-semibold border transition-all whitespace-nowrap cursor-pointer
-                ${isSelected
-                  ? 'bg-emerald-900/50 text-emerald-300 border-emerald-400 shadow-lg shadow-emerald-500/20'
-                  : 'bg-emerald-950/40 text-emerald-400 border-emerald-600/50 hover:border-emerald-400 hover:text-emerald-300'
+                ${isFav && isSelected
+                  ? 'bg-amber-900/40 text-amber-300 border-amber-400 shadow-lg shadow-amber-500/20'
+                  : isFav
+                    ? 'bg-amber-950/30 text-amber-400 border-amber-600/50 hover:border-amber-400 hover:text-amber-300'
+                    : isSelected && isLive
+                      ? 'bg-emerald-900/50 text-emerald-300 border-emerald-400 shadow-lg shadow-emerald-500/20'
+                      : isLive
+                        ? 'bg-emerald-950/40 text-emerald-400 border-emerald-600/50 hover:border-emerald-400 hover:text-emerald-300'
+                        : isSelected
+                          ? 'bg-slate-700/60 text-white border-slate-400 shadow-lg'
+                          : 'bg-slate-800/60 text-slate-400 border-slate-700 hover:border-slate-500 hover:text-slate-300'
                 }
               `}
             >
-              <Radio className="w-3 h-3" />
+              {isFav && <Star className="w-3 h-3 fill-amber-400 text-amber-400" />}
+              {isLive && !isFav && <Radio className="w-3 h-3" />}
+              {!isLive && !isFav && <span className="text-sm leading-none">{TYPE_ICON[loc.type] || '💧'}</span>}
               <span>{loc.name}</span>
-              <span className="text-[8px] font-black uppercase tracking-wider px-1 py-px rounded bg-emerald-500/20 text-emerald-400 leading-none">LIVE</span>
-            </button>
-          );
-        })}
-
-        {/* Worldwide destinations */}
-        {extraLocations.map((loc) => {
-          const isSelected = selectedLocation === loc.id;
-          return (
-            <button
-              key={loc.id}
-              onClick={() => onSelectLocation(loc.id)}
-              className={`
-                flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full
-                text-xs font-semibold border transition-all whitespace-nowrap cursor-pointer
-                ${isSelected
-                  ? 'bg-emerald-900/50 text-emerald-400 border-emerald-500 shadow-lg shadow-emerald-500/10'
-                  : 'bg-slate-800 text-gray-400 border-slate-700 hover:border-slate-500 hover:text-gray-300'
-                }
-              `}
-            >
-              <span className="text-sm leading-none">{TYPE_ICON[loc.type] || '💧'}</span>
-              <span>{loc.name}</span>
+              {isLive && (
+                <span className="text-[8px] font-black uppercase tracking-wider px-1 py-px rounded bg-emerald-500/20 text-emerald-400 leading-none">LIVE</span>
+              )}
             </button>
           );
         })}
@@ -175,4 +191,4 @@ export default function LocationSelector({ selectedLocation, onSelectLocation, o
   );
 }
 
-export const LOCATION_LIST = [...LIVE_LAKES, ...FEATURED_LOCATIONS];
+export const LOCATION_LIST = [...LIVE_LAKES, ...UTAH_WATERS];
