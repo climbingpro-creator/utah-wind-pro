@@ -108,6 +108,18 @@ function PinDropMarker({ coords }) {
   );
 }
 
+function resolveSegmentName(geoJsonName, activeLocationId) {
+  if (!activeLocationId || !geoJsonName) return geoJsonName;
+  const seg = FISHING_LOCATIONS[activeLocationId];
+  if (!seg || seg.type !== 'river') return geoJsonName;
+  const generic = geoJsonName.toLowerCase().replace(/\s+river$/i, '').trim();
+  const segLower = seg.name.toLowerCase();
+  if (segLower.includes(generic) || generic.includes('provo') || generic.includes('green')) {
+    return seg.name;
+  }
+  return geoJsonName;
+}
+
 export function VectorWaterMap({ currentWeatherData = {}, selectedLocation }) {
   const mapRef = useRef(null);
   const [droppedPin, setDroppedPin] = useState(null);
@@ -544,7 +556,7 @@ export function VectorWaterMap({ currentWeatherData = {}, selectedLocation }) {
         }
         
         setHoveredFeature({
-          name: displayName,
+          name: resolveSegmentName(displayName, selectedLocation),
           type: waterClass || type,
           lngLat: [e.lngLat.lng, e.lngLat.lat],
           layerId: feature.layer?.id,
@@ -791,7 +803,7 @@ export function VectorWaterMap({ currentWeatherData = {}, selectedLocation }) {
         
         if (clickedFeatureName) {
           setSelectedWaterFeature({
-            name: clickedFeatureName,
+            name: resolveSegmentName(clickedFeatureName, selectedLocation),
             type: clickedFeatureType,
             permanence: feature.properties?.intermittent ? 'Intermittent' : null,
             lngLat: [e.lngLat.lng, e.lngLat.lat],
