@@ -168,7 +168,7 @@ export default function AdminDashboard() {
     setAnalyticsError(null);
     try {
       const headers = await getAuthHeader();
-      const resp = await fetch(`${API_ORIGIN}/api/admin/analytics`, { headers });
+      const resp = await fetch(`${API_ORIGIN}/api/admin/analytics`, { headers, cache: 'no-store' });
       const ct = resp.headers.get('content-type') || '';
       if (!ct.includes('application/json')) {
         throw new Error(`API returned non-JSON (${resp.status}). Check SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY env vars.`);
@@ -203,7 +203,7 @@ export default function AdminDashboard() {
     setUsersLoading(true);
     try {
       const headers = await getAuthHeader();
-      const resp = await fetch(`${API_ORIGIN}/api/admin/users`, { headers });
+      const resp = await fetch(`${API_ORIGIN}/api/admin/users`, { headers, cache: 'no-store' });
       if (resp.ok) {
         const data = await resp.json();
         setUsersData(data);
