@@ -99,6 +99,11 @@ const SPORT_PROFILES = {
     scorer: (h) => {
       const s = h.windSpeed ?? 0;
       if (s > 8) return 0;
+      // Safety: no boating in the dark (before 6 AM or after 9 PM)
+      try {
+        const hr = new Date(h.startTime).getHours();
+        if (hr < 6 || hr >= 21) return 0;
+      } catch { /* if time parse fails, allow it */ }
       if (s <= 2) return 100;
       if (s <= 3) return 90;
       if (s <= 5) return 70 - (s - 3) * 10;
@@ -117,6 +122,11 @@ const SPORT_PROFILES = {
     scorer: (h) => {
       const s = h.windSpeed ?? 0;
       if (s > 10) return 0;
+      // Safety: no paddleboarding in the dark (before 6 AM or after 9 PM)
+      try {
+        const hr = new Date(h.startTime).getHours();
+        if (hr < 6 || hr >= 21) return 0;
+      } catch { /* if time parse fails, allow it */ }
       if (s <= 2) return 100;
       if (s <= 4) return 85 - (s - 2) * 5;
       if (s <= 6) return 70 - (s - 4) * 10;
