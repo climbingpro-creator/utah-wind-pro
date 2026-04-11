@@ -1,4 +1,5 @@
-import { X, Thermometer, Droplets, Activity, Waves, Fish, Gauge, Anchor, MapPin, Shield, Navigation, Zap, Eye, Crosshair, Satellite, Palette, Calendar, Ship, Target, FishingRod, Bug, Layers, Flame, Wind, CloudSun, Cloud, Sun, CloudRain, Snowflake, AlertTriangle, TrendingUp, TrendingDown, Minus, Clock, Sunrise, Sunset, Moon, Youtube } from 'lucide-react';
+import { useState } from 'react';
+import { X, Thermometer, Droplets, Activity, Waves, Fish, Gauge, Anchor, MapPin, Shield, Navigation, Zap, Eye, Crosshair, Satellite, Palette, Calendar, Ship, Target, FishingRod, Bug, Layers, Flame, Wind, CloudSun, Cloud, Sun, CloudRain, Snowflake, AlertTriangle, TrendingUp, TrendingDown, Minus, Clock, Sunrise, Sunset, Moon, Youtube, ChevronDown, ChevronUp } from 'lucide-react';
 import shopReportsData from '../../data/shop-reports.json';
 import synthesizedData from '../../data/synthesized-reports.json';
 import tackleImageMap from '../../data/image-map.json';
@@ -334,20 +335,35 @@ function getTackleThumb(name) {
 }
 
 function ShopReportSnippet({ locationId, waterName }) {
+  const [isExpanded, setIsExpanded] = useState(false);
   const synth = locationId ? synthesizedData?.[locationId] : null;
+
   if (synth?.summary) {
     return (
       <div className="px-3 pb-1.5">
-        <div className="rounded-lg bg-red-500/5 border border-red-500/15 px-2.5 py-2">
-          <div className="flex items-center gap-1.5 mb-1">
-            <Youtube className="w-3 h-3 text-red-400" />
-            <span className="text-[8px] font-bold uppercase tracking-wider text-red-400/70">Shop Report — AI Summary</span>
+        <div className="rounded-xl bg-gradient-to-b from-red-500/8 to-red-500/3 border border-red-500/20 px-3 py-2.5">
+          <div className="flex items-center gap-1.5 mb-2">
+            <div className="flex items-center justify-center w-5 h-5 rounded-md bg-red-500/15">
+              <Youtube className="w-3 h-3 text-red-400" />
+            </div>
+            <span className="text-[9px] font-bold uppercase tracking-wider text-red-400/80">Intel Brief — AI Summary</span>
             <span className="ml-auto text-[8px] text-slate-500">{synth.date}</span>
           </div>
-          <p className="text-[10px] text-white/90 leading-relaxed mb-0.5">{synth.summary}</p>
-          <div className="flex items-center gap-1 mt-1">
-            <span className="text-[8px] text-red-400/60">{synth.sourceChannel}</span>
-            {synth.sourceTitle && <span className="text-[8px] text-slate-500 truncate ml-1">— {synth.sourceTitle}</span>}
+          <p className={`text-[11px] text-white/90 leading-relaxed ${!isExpanded ? 'line-clamp-3' : ''}`}>
+            {synth.summary}
+          </p>
+          {synth.summary.length > 150 && (
+            <button
+              onClick={() => setIsExpanded(prev => !prev)}
+              className="flex items-center gap-1 mt-1.5 text-[9px] font-semibold text-red-400/80 hover:text-red-300 transition-colors"
+            >
+              {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+              {isExpanded ? 'Show Less' : 'Read Full Report'}
+            </button>
+          )}
+          <div className="flex items-center gap-1.5 mt-2 pt-1.5 border-t border-red-500/10">
+            <span className="text-[8px] font-medium text-red-400/60">{synth.sourceChannel}</span>
+            {synth.sourceTitle && <span className="text-[8px] text-slate-500 truncate">— {synth.sourceTitle}</span>}
           </div>
         </div>
       </div>
@@ -373,16 +389,29 @@ function ShopReportSnippet({ locationId, waterName }) {
 
   return (
     <div className="px-3 pb-1.5">
-      <div className="rounded-lg bg-red-500/5 border border-red-500/15 px-2.5 py-2">
-        <div className="flex items-center gap-1.5 mb-1">
-          <Youtube className="w-3 h-3 text-red-400" />
-          <span className="text-[8px] font-bold uppercase tracking-wider text-red-400/70">Shop Report</span>
+      <div className="rounded-xl bg-gradient-to-b from-red-500/8 to-red-500/3 border border-red-500/20 px-3 py-2.5">
+        <div className="flex items-center gap-1.5 mb-2">
+          <div className="flex items-center justify-center w-5 h-5 rounded-md bg-red-500/15">
+            <Youtube className="w-3 h-3 text-red-400" />
+          </div>
+          <span className="text-[9px] font-bold uppercase tracking-wider text-red-400/80">Shop Report</span>
           <span className="ml-auto text-[8px] text-slate-500">{report.date}</span>
         </div>
-        <p className="text-[10px] font-semibold text-white/90 leading-tight mb-0.5 truncate">{report.title}</p>
-        <p className="text-[10px] text-slate-300/80 leading-relaxed line-clamp-3">{report.excerpt}</p>
-        <div className="flex items-center gap-1 mt-1">
-          <span className="text-[8px] text-red-400/60">{report.channel}</span>
+        {report.title && <p className="text-[10px] font-bold text-white/90 leading-snug mb-1">{report.title}</p>}
+        <p className={`text-[11px] text-slate-300/90 leading-relaxed ${!isExpanded ? 'line-clamp-3' : ''}`}>
+          {report.excerpt}
+        </p>
+        {report.excerpt?.length > 150 && (
+          <button
+            onClick={() => setIsExpanded(prev => !prev)}
+            className="flex items-center gap-1 mt-1.5 text-[9px] font-semibold text-red-400/80 hover:text-red-300 transition-colors"
+          >
+            {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+            {isExpanded ? 'Show Less' : 'Read Full Report'}
+          </button>
+        )}
+        <div className="flex items-center gap-1.5 mt-2 pt-1.5 border-t border-red-500/10">
+          <span className="text-[8px] font-medium text-red-400/60">{report.channel}</span>
         </div>
       </div>
     </div>

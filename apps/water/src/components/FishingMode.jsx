@@ -2847,7 +2847,6 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
           <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
             {extendedForecast.slice(0, 14).map((day, i) => {
               const score = scoreForecastDay(day);
-              const info = getForecastDayLabel(score);
               const d = new Date(day.date + 'T12:00:00');
               const isToday = i === 0;
               const dayName = isToday ? 'Today' : d.toLocaleDateString('en-US', { weekday: 'short' });
