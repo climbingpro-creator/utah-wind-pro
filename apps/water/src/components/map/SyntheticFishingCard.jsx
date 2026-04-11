@@ -1,4 +1,6 @@
-import { X, Thermometer, Droplets, Activity, Waves, Fish, Gauge, Anchor, MapPin, Shield, Navigation, Zap, Eye, Crosshair, Satellite, Palette, Calendar, Ship, Target, FishingRod, Bug, Layers, Flame, Wind, CloudSun, Cloud, Sun, CloudRain, Snowflake, AlertTriangle, TrendingUp, TrendingDown, Minus, Clock, Sunrise, Sunset, Moon } from 'lucide-react';
+import { X, Thermometer, Droplets, Activity, Waves, Fish, Gauge, Anchor, MapPin, Shield, Navigation, Zap, Eye, Crosshair, Satellite, Palette, Calendar, Ship, Target, FishingRod, Bug, Layers, Flame, Wind, CloudSun, Cloud, Sun, CloudRain, Snowflake, AlertTriangle, TrendingUp, TrendingDown, Minus, Clock, Sunrise, Sunset, Moon, Youtube } from 'lucide-react';
+import shopReportsData from '../../data/shop-reports.json';
+import tackleImageMap from '../../data/image-map.json';
 
 const CLARITY_STYLE = {
   'blown out':       { color: 'text-red-400',     bg: 'bg-red-500/10',     border: 'border-red-500/20',     dot: 'bg-red-500' },
@@ -312,6 +314,62 @@ function VisualIntelSection({ visual }) {
   );
 }
 
+function getTackleThumb(name) {
+  if (!name || !tackleImageMap) return null;
+  const direct = tackleImageMap[name];
+  if (direct) return direct;
+  const lower = name.toLowerCase();
+  for (const [key, path] of Object.entries(tackleImageMap)) {
+    if (key === '_meta') continue;
+    if (lower.includes(key.toLowerCase()) || key.toLowerCase().includes(lower)) return path;
+  }
+  return null;
+}
+
+function ShopReportSnippet({ locationId, waterName }) {
+  const allReports = shopReportsData?.reports || {};
+  let reports = locationId ? allReports[locationId] : null;
+
+  if (!reports && waterName) {
+    const lower = waterName.toLowerCase();
+    for (const [key, arr] of Object.entries(allReports)) {
+      const keyWords = key.replace(/-/g, ' ');
+      if (lower.includes(keyWords) || keyWords.includes(lower.split(' ')[0])) {
+        reports = arr;
+        break;
+      }
+    }
+  }
+
+  if (!reports || reports.length === 0) return null;
+  const report = reports[0];
+
+  return (
+    <div className="px-3 pb-1.5">
+      <div className="rounded-lg bg-red-500/5 border border-red-500/15 px-2.5 py-2">
+        <div className="flex items-center gap-1.5 mb-1">
+          <Youtube className="w-3 h-3 text-red-400" />
+          <span className="text-[8px] font-bold uppercase tracking-wider text-red-400/70">Shop Report</span>
+          <span className="ml-auto text-[8px] text-slate-500">{report.date}</span>
+        </div>
+        <p className="text-[10px] font-semibold text-white/90 leading-tight mb-0.5 truncate">{report.title}</p>
+        <p className="text-[10px] text-slate-300/80 leading-relaxed line-clamp-3">{report.excerpt}</p>
+        <div className="flex items-center gap-1 mt-1">
+          <span className="text-[8px] text-red-400/60">{report.channel}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TruncatedText({ text, maxLength = 120 }) {
+  if (!text) return null;
+  if (text.length <= maxLength) {
+    return <p className="text-[10px] text-slate-200 leading-relaxed">{text}</p>;
+  }
+  return <p className="text-[10px] text-slate-200 leading-relaxed">{text.slice(0, maxLength).trimEnd()}…</p>;
+}
+
 function TacticalGearSection({ intel, isOcean }) {
   if (!intel) return null;
   const hasContent = intel.lureRecommendations || intel.flySelections || intel.tackleGuide || intel.seasonalDepthPattern || intel.activeSpeciesNow;
@@ -334,7 +392,7 @@ function TacticalGearSection({ intel, isOcean }) {
             <Flame className={`w-2.5 h-2.5 ${accent}`} />
             <span className="text-[8px] font-bold uppercase tracking-wider text-slate-500">Active Species Now</span>
           </div>
-          <p className="text-[10px] text-slate-200 leading-relaxed">{intel.activeSpeciesNow}</p>
+          <TruncatedText text={intel.activeSpeciesNow} maxLength={120} />
         </div>
       )}
 
@@ -344,29 +402,43 @@ function TacticalGearSection({ intel, isOcean }) {
             <Layers className={`w-2.5 h-2.5 ${accent}`} />
             <span className="text-[8px] font-bold uppercase tracking-wider text-slate-500">Depth Pattern</span>
           </div>
-          <p className="text-[10px] text-slate-200 leading-relaxed">{intel.seasonalDepthPattern}</p>
+          <TruncatedText text={intel.seasonalDepthPattern} maxLength={120} />
         </div>
       )}
 
-      {intel.lureRecommendations && (
-        <div className={`rounded-lg bg-white/[0.03] border ${borderAccent} px-2.5 py-1.5`}>
-          <div className="flex items-center gap-1 mb-0.5">
-            <Target className={`w-2.5 h-2.5 ${accent}`} />
-            <span className="text-[8px] font-bold uppercase tracking-wider text-slate-500">Lure Selection</span>
+      {intel.lureRecommendations && (() => {
+        const lureName = intel.lureRecommendations.split(/[,.\-—]/)[0]?.trim();
+        const lureImg = getTackleThumb(lureName);
+        return (
+          <div className={`rounded-lg bg-white/[0.03] border ${borderAccent} px-2.5 py-1.5`}>
+            <div className="flex items-center gap-1 mb-0.5">
+              <Target className={`w-2.5 h-2.5 ${accent}`} />
+              <span className="text-[8px] font-bold uppercase tracking-wider text-slate-500">Lure Selection</span>
+            </div>
+            <div className="flex items-start gap-2">
+              {lureImg && <img src={lureImg} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0 mt-0.5 border border-white/10" loading="lazy" onError={e => { e.target.style.display = 'none'; }} />}
+              <TruncatedText text={intel.lureRecommendations} maxLength={150} />
+            </div>
           </div>
-          <p className="text-[10px] text-slate-200 leading-relaxed">{intel.lureRecommendations}</p>
-        </div>
-      )}
+        );
+      })()}
 
-      {intel.flySelections && (
-        <div className={`rounded-lg bg-white/[0.03] border ${borderAccent} px-2.5 py-1.5`}>
-          <div className="flex items-center gap-1 mb-0.5">
-            <Bug className={`w-2.5 h-2.5 ${accent}`} />
-            <span className="text-[8px] font-bold uppercase tracking-wider text-slate-500">Fly Box</span>
+      {intel.flySelections && (() => {
+        const flyName = intel.flySelections.split(/[,.\-—]/)[0]?.trim();
+        const flyImg = getTackleThumb(flyName);
+        return (
+          <div className={`rounded-lg bg-white/[0.03] border ${borderAccent} px-2.5 py-1.5`}>
+            <div className="flex items-center gap-1 mb-0.5">
+              <Bug className={`w-2.5 h-2.5 ${accent}`} />
+              <span className="text-[8px] font-bold uppercase tracking-wider text-slate-500">Fly Box</span>
+            </div>
+            <div className="flex items-start gap-2">
+              {flyImg && <img src={flyImg} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0 mt-0.5 border border-white/10" loading="lazy" onError={e => { e.target.style.display = 'none'; }} />}
+              <TruncatedText text={intel.flySelections} maxLength={150} />
+            </div>
           </div>
-          <p className="text-[10px] text-slate-200 leading-relaxed">{intel.flySelections}</p>
-        </div>
-      )}
+        );
+      })()}
 
       {intel.tackleGuide && (
         <div className={`rounded-lg bg-white/[0.03] border ${borderAccent} px-2.5 py-1.5`}>
@@ -374,7 +446,7 @@ function TacticalGearSection({ intel, isOcean }) {
             <FishingRod className={`w-2.5 h-2.5 ${accent}`} />
             <span className="text-[8px] font-bold uppercase tracking-wider text-slate-500">Tackle Setup</span>
           </div>
-          <p className="text-[10px] text-slate-200 leading-relaxed">{intel.tackleGuide}</p>
+          <TruncatedText text={intel.tackleGuide} maxLength={150} />
         </div>
       )}
     </div>
@@ -397,7 +469,7 @@ function AnglerIntelSection({ intel, isOcean }) {
             <Palette className={`w-2.5 h-2.5 ${accent}`} />
             <span className="text-[8px] font-bold uppercase tracking-wider text-slate-500">Match the Hatch — Size & Color</span>
           </div>
-          <p className="text-[10px] text-slate-200 leading-relaxed">{intel.forageProfile}</p>
+          <p className="text-[10px] text-slate-200 leading-relaxed line-clamp-3">{intel.forageProfile}</p>
         </div>
       )}
 
@@ -407,7 +479,7 @@ function AnglerIntelSection({ intel, isOcean }) {
             <Calendar className={`w-2.5 h-2.5 ${accent}`} />
             <span className="text-[8px] font-bold uppercase tracking-wider text-slate-500">Seasonal Forage</span>
           </div>
-          <p className="text-[10px] text-slate-200 leading-relaxed">{intel.seasonalForage}</p>
+          <p className="text-[10px] text-slate-200 leading-relaxed line-clamp-3">{intel.seasonalForage}</p>
         </div>
       )}
 
@@ -417,7 +489,7 @@ function AnglerIntelSection({ intel, isOcean }) {
             <Ship className={`w-2.5 h-2.5 ${accent}`} />
             <span className="text-[8px] font-bold uppercase tracking-wider text-slate-500">Migration Calendar</span>
           </div>
-          <p className="text-[10px] text-slate-200 leading-relaxed">{intel.pelagicCalendar}</p>
+          <p className="text-[10px] text-slate-200 leading-relaxed line-clamp-3">{intel.pelagicCalendar}</p>
         </div>
       )}
     </div>
@@ -824,18 +896,7 @@ export default function SyntheticFishingCard({ data, isLoading, onClose }) {
         <div className="text-[9px] text-slate-500 mt-1 leading-tight">{data.dataSource}</div>
       </div>
 
-      {/* Daylight Status Banner — Critical for fishing tactics */}
-      <DaylightBanner daylight={data.daylight} />
-
-      {/* Tactical Headline — Weather-to-Tactic Intelligence */}
-      {data.tacticalSummary && (
-        <TacticalHeadlineSection tactical={data.tacticalSummary} />
-      )}
-
-      {/* Weather Correlation Badges — Shows WHY the recommendation */}
-      {data.tacticalSummary?.conditions && (
-        <WeatherCorrelationBadges conditions={data.tacticalSummary.conditions} />
-      )}
+      {/* ═══════ CORE METRICS ═══════ */}
 
       {/* Fishing Quality Score */}
       {data.fishingQuality != null && (
@@ -937,16 +998,7 @@ export default function SyntheticFishingCard({ data, isLoading, onClose }) {
         </>
       )}
 
-      {/* Angler Intel — forage sizes/colors, seasonal patterns, pelagic migrations */}
-      <AnglerIntelSection intel={data.anglerIntel} isOcean={isOcean} />
-
-      {/* Tactical Guide — lures, flies, tackle, depth patterns, active species */}
-      <TacticalGearSection intel={data.anglerIntel} isOcean={isOcean} />
-
-      {/* Visual Intelligence (satellite multimodal analysis) */}
-      <VisualIntelSection visual={data.visualIntel} />
-
-      {/* Clarity / Flow Safety */}
+      {/* Clarity / Flow Safety — Core metric, stays near top */}
       <div className="px-3 pb-1.5">
         <div className={`rounded-lg px-2.5 py-2 ${clarityStyle.bg} border ${clarityStyle.border}`}>
           <div className="flex items-center gap-2 mb-0.5">
@@ -962,9 +1014,34 @@ export default function SyntheticFishingCard({ data, isLoading, onClose }) {
               <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 ml-auto">NO WADING</span>
             )}
           </div>
-          <p className="text-[10px] text-slate-400 mt-1 leading-relaxed">{data.reason}</p>
+          {data.reason && <p className="text-[10px] text-slate-400 mt-1 leading-relaxed line-clamp-2">{data.reason}</p>}
         </div>
       </div>
+
+      {/* ═══════ ACTIONABLE GEAR ═══════ */}
+
+      {/* Tactical Headline — Weather-to-Tactic Intelligence */}
+      {data.tacticalSummary && (
+        <TacticalHeadlineSection tactical={data.tacticalSummary} />
+      )}
+
+      {/* Weather Correlation Badges */}
+      {data.tacticalSummary?.conditions && (
+        <WeatherCorrelationBadges conditions={data.tacticalSummary.conditions} />
+      )}
+
+      {/* Tactical Guide — lures, flies, tackle, depth patterns, active species */}
+      <TacticalGearSection intel={data.anglerIntel} isOcean={isOcean} />
+
+      {/* ═══════ DYNAMIC INTELLIGENCE ═══════ */}
+
+      {/* Shop Report — YouTube transcript excerpt if available for this water */}
+      <ShopReportSnippet locationId={data.matchedLocationId} waterName={data.vectorFeatureName || data.waterBodyName} />
+
+      {/* ═══════ CONTEXT ("THE WHY") ═══════ */}
+
+      {/* Daylight Status Banner */}
+      <DaylightBanner daylight={data.daylight} />
 
       {/* Biology Block */}
       <div className="px-3 pb-1.5">
@@ -975,10 +1052,16 @@ export default function SyntheticFishingCard({ data, isLoading, onClose }) {
               {isRiver ? 'Bug Report' : 'Forage Report'}
             </span>
           </div>
-          <p className="text-[11px] font-semibold text-emerald-300/90 leading-relaxed">{data.hatch}</p>
-          <p className="text-[10px] text-slate-400 mt-1">{data.feedingActivity}</p>
+          <p className="text-[11px] font-semibold text-emerald-300/90 leading-relaxed line-clamp-2">{data.hatch}</p>
+          {data.feedingActivity && <p className="text-[10px] text-slate-400 mt-1 line-clamp-2">{data.feedingActivity}</p>}
         </div>
       </div>
+
+      {/* Angler Intel — forage sizes/colors, seasonal patterns, pelagic migrations */}
+      <AnglerIntelSection intel={data.anglerIntel} isOcean={isOcean} />
+
+      {/* Visual Intelligence (satellite multimodal analysis) */}
+      <VisualIntelSection visual={data.visualIntel} />
 
       {/* Thermal Stress Warning */}
       {data.thermalAdvice && (
@@ -988,7 +1071,7 @@ export default function SyntheticFishingCard({ data, isLoading, onClose }) {
               ? 'bg-red-500/10 border-red-500/20'
               : 'bg-amber-500/10 border-amber-500/20'
           }`}>
-            <p className={`text-[10px] font-medium leading-relaxed ${
+            <p className={`text-[10px] font-medium leading-relaxed line-clamp-3 ${
               data.thermalStress === 'critical' ? 'text-red-300/80' : 'text-amber-300/80'
             }`}>
               {data.thermalAdvice}

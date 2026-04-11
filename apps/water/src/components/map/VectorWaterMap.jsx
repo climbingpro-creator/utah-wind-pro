@@ -120,7 +120,29 @@ function resolveSegmentName(geoJsonName, activeLocationId) {
   return geoJsonName;
 }
 
-export function VectorWaterMap({ currentWeatherData = {}, selectedLocation }) {
+function resolveLocationId(featureName) {
+  if (!featureName) return null;
+  const lower = featureName.toLowerCase().trim();
+
+  for (const [id, loc] of Object.entries(FISHING_LOCATIONS)) {
+    if (!loc || !loc.name) continue;
+    const locName = loc.name.toLowerCase();
+    if (locName === lower) return id;
+  }
+
+  for (const [id, loc] of Object.entries(FISHING_LOCATIONS)) {
+    if (!loc || !loc.name) continue;
+    const locName = loc.name.toLowerCase();
+    if (lower.includes(locName) || locName.includes(lower)) return id;
+  }
+
+  const slugified = lower.replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+  if (FISHING_LOCATIONS[slugified]) return slugified;
+
+  return null;
+}
+
+export function VectorWaterMap({ currentWeatherData = {}, selectedLocation, onLocationSelect }) {
   const mapRef = useRef(null);
   const [droppedPin, setDroppedPin] = useState(null);
   const [fishProfile, setFishProfile] = useState(null);
@@ -854,7 +876,15 @@ export function VectorWaterMap({ currentWeatherData = {}, selectedLocation }) {
           if (clickedFeatureType) {
             profile.vectorFeatureType = clickedFeatureType;
           }
+
+          const matchedId = resolveLocationId(clickedFeatureName);
+          if (matchedId) {
+            profile.matchedLocationId = matchedId;
+            if (onLocationSelect && matchedId !== selectedLocation) {
+              onLocationSelect(matchedId);
+            }
           }
+        }
         setFishProfile(profile);
         if (profile?.waterBodyName) {
           trackBioApiCall(profile.waterBodyName, profile.waterType);
@@ -870,7 +900,7 @@ export function VectorWaterMap({ currentWeatherData = {}, selectedLocation }) {
         setIsLoading(false);
       }
     }
-  }, [currentWeatherData]);
+  }, [currentWeatherData, onLocationSelect, selectedLocation]);
 
   const handleClear = useCallback(() => {
     setDroppedPin(null);

@@ -678,6 +678,7 @@ function WaterApp() {
               windDirection: currentWindDirection ?? null,
             }}
             selectedLocation={selectedLocation}
+            onLocationSelect={handleSelectLocation}
           />
         </Suspense>
 
