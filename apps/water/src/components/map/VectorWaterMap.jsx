@@ -114,7 +114,7 @@ function resolveSegmentName(geoJsonName, activeLocationId) {
   if (!seg || seg.type !== 'river') return geoJsonName;
   const generic = geoJsonName.toLowerCase().replace(/\s+river$/i, '').trim();
   const segLower = seg.name.toLowerCase();
-  if (segLower.includes(generic) || generic.includes('provo') || generic.includes('green')) {
+  if (segLower.includes(generic) && generic.length > 1) {
     return seg.name;
   }
   return geoJsonName;
@@ -578,7 +578,7 @@ export function VectorWaterMap({ currentWeatherData = {}, selectedLocation, onLo
         }
         
         setHoveredFeature({
-          name: resolveSegmentName(displayName, selectedLocation),
+          name: displayName,
           type: waterClass || type,
           lngLat: [e.lngLat.lng, e.lngLat.lat],
           layerId: feature.layer?.id,
