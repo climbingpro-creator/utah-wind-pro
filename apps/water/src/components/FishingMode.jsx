@@ -1121,6 +1121,11 @@ function analyzePressure(pressure, trend) {
   return { rating, message, color };
 }
 
+function degreesToCompass(deg) {
+  const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+  return dirs[Math.round(((deg % 360) + 360) % 360 / 22.5) % 16];
+}
+
 // Calculate overall fishing score
 function calculateFishingScore(location, conditions) {
   const { pressure, pressureTrend, windSpeed, waterTemp, moonPhase, hour } = conditions;
@@ -1154,7 +1159,8 @@ function calculateFishingScore(location, conditions) {
   else if (windSpeed < 20) windScore = 5;
   else windScore = 2;
   score += windScore - 10;
-  factors.push({ name: 'Wind', value: `${safeToFixed(windSpeed, 0)} mph`, impact: windScore >= 12 ? 'positive' : windScore <= 5 ? 'negative' : 'neutral' });
+  const windDirLabel = conditions.windDirection ? (typeof conditions.windDirection === 'number' ? degreesToCompass(conditions.windDirection) : conditions.windDirection) : '';
+  factors.push({ name: 'Wind', value: windDirLabel ? `${windDirLabel} ${safeToFixed(windSpeed, 0)} mph` : `${safeToFixed(windSpeed, 0)} mph`, impact: windScore >= 12 ? 'positive' : windScore <= 5 ? 'negative' : 'neutral' });
   
   // Water temperature (species dependent, 0-15 points)
   const locationData = FISHING_LOCATIONS[location];
@@ -1252,6 +1258,7 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
     pressure,
     pressureTrend,
     windSpeed,
+    windDirection,
     waterTemp,
     moonPhase,
     hour: currentHour,
@@ -2296,6 +2303,34 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
 
       {/* Key Factors Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {/* Wind Speed & Direction */}
+        <div className={`rounded-xl p-4 border ${isDark ? 'bg-slate-800/30 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`}>
+          <div className="flex items-center gap-2 mb-2">
+            <Wind className={`w-4 h-4 ${isDark ? 'text-slate-400' : 'text-slate-500'}`} />
+            <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Wind</span>
+            {windData?.stations?.[0]?.speed != null && (
+              <span className="text-[9px] bg-cyan-500/20 text-cyan-400 px-1.5 py-0.5 rounded">LIVE</span>
+            )}
+          </div>
+          <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>
+            {safeToFixed(windSpeed, 0)} <span className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>mph</span>
+          </div>
+          {windDirection && (
+            <div className="flex items-center gap-1.5 mt-1">
+              <Navigation className={`w-3.5 h-3.5 ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`} style={{ transform: `rotate(${(typeof windDirection === 'number' ? windDirection : 0) + 180}deg)` }} />
+              <span className={`text-sm font-medium ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>
+                {typeof windDirection === 'number' ? degreesToCompass(windDirection) : windDirection}
+              </span>
+              {typeof windDirection === 'number' && (
+                <span className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{windDirection}°</span>
+              )}
+            </div>
+          )}
+          <div className={`text-xs mt-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+            {windSpeed < 5 ? 'Glass — ideal for dry flies' : windSpeed < 10 ? 'Light breeze — good fishing' : windSpeed < 15 ? 'Moderate — adjust presentations' : windSpeed < 20 ? 'Strong — switch to streamers' : 'Very windy — tough conditions'}
+          </div>
+        </div>
+
         {/* Moon Phase */}
         <div className={`rounded-xl p-4 border ${isDark ? 'bg-slate-800/30 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`}>
           <div className="flex items-center gap-2 mb-2">

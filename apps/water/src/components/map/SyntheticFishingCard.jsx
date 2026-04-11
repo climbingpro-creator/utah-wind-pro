@@ -4,6 +4,11 @@ import synthesizedData from '../../data/synthesized-reports.json';
 import tackleImageMap from '../../data/image-map.json';
 import { isArtificialOnly, sanitizeLLMText } from '../../services/RegulationFilter';
 
+function degToCompass(deg) {
+  const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+  return dirs[Math.round(((deg % 360) + 360) % 360 / 22.5) % 16];
+}
+
 const CLARITY_STYLE = {
   'blown out':       { color: 'text-red-400',     bg: 'bg-red-500/10',     border: 'border-red-500/20',     dot: 'bg-red-500' },
   'stained/blown out': { color: 'text-red-400',   bg: 'bg-red-500/10',     border: 'border-red-500/20',     dot: 'bg-red-500' },
@@ -1003,12 +1008,12 @@ export default function SyntheticFishingCard({ data, isLoading, onClose }) {
               {data.ambientWeather.windDirection != null && (
                 <div className="text-center">
                   <Navigation className={`w-3.5 h-3.5 mx-auto mb-0.5 ${
-                    data.ambientWeather.source === 'nws' ? 'text-sky-400/70' 
-                    : data.ambientWeather.source === 'udot' ? 'text-orange-400/70' 
+                    data.ambientWeather.source === 'nws' ? 'text-sky-400/70'
+                    : data.ambientWeather.source === 'udot' ? 'text-orange-400/70'
                     : 'text-teal-400/70'
-                  }`} style={{ transform: `rotate(${data.ambientWeather.windDirection}deg)` }} />
-                  <div className="text-xs font-bold text-white">{Math.round(data.ambientWeather.windDirection)}°</div>
-                  <div className="text-[8px] text-slate-500">dir</div>
+                  }`} style={{ transform: `rotate(${(data.ambientWeather.windDirection + 180) % 360}deg)` }} />
+                  <div className="text-xs font-bold text-white">{degToCompass(data.ambientWeather.windDirection)}</div>
+                  <div className="text-[8px] text-slate-500">{Math.round(data.ambientWeather.windDirection)}°</div>
                 </div>
               )}
               {data.ambientWeather.temperature != null && (
