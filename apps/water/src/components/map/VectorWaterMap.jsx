@@ -143,7 +143,7 @@ function resolveLocationId(featureName) {
   return null;
 }
 
-export function VectorWaterMap({ currentWeatherData = {}, selectedLocation, onLocationSelect }) {
+export function VectorWaterMap({ currentWeatherData = {}, selectedLocation, onLocationSelect, isPro = false, onUnlockPro }) {
   const mapRef = useRef(null);
   const [droppedPin, setDroppedPin] = useState(null);
   const [fishProfile, setFishProfile] = useState(null);
@@ -1308,6 +1308,8 @@ export function VectorWaterMap({ currentWeatherData = {}, selectedLocation, onLo
             data={fishProfile}
             isLoading={false}
             onClose={handleClear}
+            isPro={isPro}
+            onUnlockPro={onUnlockPro}
           />
         </div>
       )}

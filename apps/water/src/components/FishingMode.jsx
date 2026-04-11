@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Fish, Moon, Thermometer, Gauge, Clock, MapPin, TrendingUp, TrendingDown, Minus, Sun, Sunset, CloudRain, Wind, Waves, Calendar, Target, AlertTriangle, CheckCircle, Anchor, Navigation, Egg, Mountain, Brain, Zap, Droplets, CloudSun, Bug, Crosshair, Ship, ChevronRight } from 'lucide-react';
+import { Fish, Moon, Thermometer, Gauge, Clock, MapPin, TrendingUp, TrendingDown, Minus, Sun, Sunset, CloudRain, Wind, Waves, Calendar, Target, AlertTriangle, CheckCircle, Anchor, Navigation, Egg, Mountain, Brain, Zap, Droplets, CloudSun, Bug, Crosshair, Ship, ChevronRight, Lock } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { predictFishing } from '../services/FishingPredictor';
 import { getAllWaterTemps, getAllRiverFlows, getRiverFlowStatus } from '../services/USGSWaterService';
@@ -2830,7 +2830,7 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
             <span className="ml-auto text-[10px] text-slate-500">Powered by Open-Meteo</span>
           </div>
 
-          {(() => {
+          {isPro && (() => {
             const bestDay = extendedForecast.slice(1).reduce((best, d) => {
               const s = scoreForecastDay(d);
               return s > best.score ? { day: d, score: s } : best;
@@ -2847,73 +2847,121 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
             ) : null;
           })()}
 
-          <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
-            {extendedForecast.slice(0, 14).map((day, i) => {
-              const score = scoreForecastDay(day);
-              const d = new Date(day.date + 'T12:00:00');
-              const isToday = i === 0;
-              const dayName = isToday ? 'Today' : d.toLocaleDateString('en-US', { weekday: 'short' });
-              const dateStr = d.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' });
+          <div className="relative">
+            <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
+              {extendedForecast.slice(0, isPro ? 14 : 3).map((day, i) => {
+                const score = scoreForecastDay(day);
+                const d = new Date(day.date + 'T12:00:00');
+                const isToday = i === 0;
+                const dayName = isToday ? 'Today' : d.toLocaleDateString('en-US', { weekday: 'short' });
+                const dateStr = d.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' });
 
-              const bgBar = score >= 80 ? (isDark ? 'bg-emerald-500' : 'bg-emerald-500')
-                : score >= 65 ? (isDark ? 'bg-green-500' : 'bg-green-500')
-                : score >= 50 ? (isDark ? 'bg-yellow-500' : 'bg-yellow-500')
-                : score >= 35 ? (isDark ? 'bg-orange-500' : 'bg-orange-500')
-                : (isDark ? 'bg-red-500' : 'bg-red-500');
+                const bgBar = score >= 80 ? 'bg-emerald-500'
+                  : score >= 65 ? 'bg-green-500'
+                  : score >= 50 ? 'bg-yellow-500'
+                  : score >= 35 ? 'bg-orange-500'
+                  : 'bg-red-500';
 
-              return (
-                <div
-                  key={day.date}
-                  className={`flex flex-col items-center rounded-xl p-1.5 transition-all ${
-                    isToday
-                      ? (isDark ? 'bg-blue-900/40 border border-blue-500/50 ring-1 ring-blue-500/30' : 'bg-blue-50 border border-blue-300 ring-1 ring-blue-200')
-                      : (isDark ? 'bg-slate-700/40 border border-slate-600/30' : 'bg-slate-50 border border-slate-200')
-                  }`}
-                >
-                  <span className={`text-[10px] font-bold ${isToday ? 'text-blue-400' : (isDark ? 'text-slate-400' : 'text-slate-500')}`}>
-                    {dayName}
+                return (
+                  <div
+                    key={day.date}
+                    className={`flex flex-col items-center rounded-xl p-1.5 transition-all ${
+                      isToday
+                        ? (isDark ? 'bg-blue-900/40 border border-blue-500/50 ring-1 ring-blue-500/30' : 'bg-blue-50 border border-blue-300 ring-1 ring-blue-200')
+                        : (isDark ? 'bg-slate-700/40 border border-slate-600/30' : 'bg-slate-50 border border-slate-200')
+                    }`}
+                  >
+                    <span className={`text-[10px] font-bold ${isToday ? 'text-blue-400' : (isDark ? 'text-slate-400' : 'text-slate-500')}`}>
+                      {dayName}
+                    </span>
+                    <span className={`text-[9px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{dateStr}</span>
+
+                    {/* Score bar */}
+                    <div className={`w-full h-1 rounded-full mt-1.5 mb-1 ${isDark ? 'bg-slate-600' : 'bg-slate-200'}`}>
+                      <div className={`h-full rounded-full ${bgBar}`} style={{ width: `${score}%` }} />
+                    </div>
+                    <span className={`text-xs font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{score}</span>
+
+                    {/* Weather icon / sky text */}
+                    <span className="text-[10px] mt-0.5">
+                      {day.sky === 'clear' ? '☀️' : day.sky === 'partly' ? '⛅' : day.sky === 'cloudy' ? '☁️' : day.sky === 'rain' || day.sky === 'drizzle' ? '🌧️' : day.sky === 'storm' ? '⛈️' : '🌤️'}
+                    </span>
+
+                    {/* Temp range */}
+                    <div className="flex gap-0.5 items-baseline mt-0.5">
+                      <span className={`text-[9px] font-medium ${isDark ? 'text-orange-300' : 'text-orange-600'}`}>
+                        {day.tempHigh != null ? Math.round(day.tempHigh) : '--'}°
+                      </span>
+                      <span className={`text-[8px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>/</span>
+                      <span className={`text-[9px] ${isDark ? 'text-blue-300' : 'text-blue-500'}`}>
+                        {day.tempLow != null ? Math.round(day.tempLow) : '--'}°
+                      </span>
+                    </div>
+
+                    {/* Wind */}
+                    <div className="flex items-center gap-0.5 mt-0.5">
+                      <Wind className={`w-2.5 h-2.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`} />
+                      <span className={`text-[8px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                        {day.windMax != null ? Math.round(day.windMax) : '?'}
+                      </span>
+                    </div>
+
+                    {/* Precip chance */}
+                    {day.precipChance > 10 && (
+                      <span className={`text-[8px] mt-0.5 ${isDark ? 'text-blue-300' : 'text-blue-500'}`}>
+                        💧{day.precipChance}%
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+
+              {/* Blurred Pro teaser for days 4-14 */}
+              {!isPro && extendedForecast.length > 3 && extendedForecast.slice(3, 14).map((day) => {
+                const score = scoreForecastDay(day);
+                const d = new Date(day.date + 'T12:00:00');
+                const bgBar = score >= 65 ? 'bg-green-500' : score >= 50 ? 'bg-yellow-500' : 'bg-orange-500';
+                return (
+                  <div
+                    key={day.date}
+                    className={`flex flex-col items-center rounded-xl p-1.5 blur-[3px] pointer-events-none select-none ${isDark ? 'bg-slate-700/40 border border-slate-600/30' : 'bg-slate-50 border border-slate-200'}`}
+                  >
+                    <span className={`text-[10px] font-bold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                      {d.toLocaleDateString('en-US', { weekday: 'short' })}
+                    </span>
+                    <span className={`text-[9px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                      {d.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' })}
+                    </span>
+                    <div className={`w-full h-1 rounded-full mt-1.5 mb-1 ${isDark ? 'bg-slate-600' : 'bg-slate-200'}`}>
+                      <div className={`h-full rounded-full ${bgBar}`} style={{ width: `${score}%` }} />
+                    </div>
+                    <span className={`text-xs font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{score}</span>
+                    <span className="text-[10px] mt-0.5">⛅</span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Pro unlock overlay for blurred days */}
+            {!isPro && extendedForecast.length > 3 && (
+              <div className="mt-3 rounded-xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 p-2.5">
+                <div className="flex items-center justify-center gap-2">
+                  <Lock className={`w-4 h-4 ${isDark ? 'text-amber-400' : 'text-amber-600'}`} />
+                  <span className={`text-[10px] font-semibold ${isDark ? 'text-white/90' : 'text-slate-800'}`}>
+                    Unlock the 14-Day Predictive Fishing Forecast.
                   </span>
-                  <span className={`text-[9px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{dateStr}</span>
-
-                  {/* Score bar */}
-                  <div className={`w-full h-1 rounded-full mt-1.5 mb-1 ${isDark ? 'bg-slate-600' : 'bg-slate-200'}`}>
-                    <div className={`h-full rounded-full ${bgBar}`} style={{ width: `${score}%` }} />
-                  </div>
-                  <span className={`text-xs font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{score}</span>
-
-                  {/* Weather icon / sky text */}
-                  <span className="text-[10px] mt-0.5">
-                    {day.sky === 'clear' ? '☀️' : day.sky === 'partly' ? '⛅' : day.sky === 'cloudy' ? '☁️' : day.sky === 'rain' || day.sky === 'drizzle' ? '🌧️' : day.sky === 'storm' ? '⛈️' : '🌤️'}
-                  </span>
-
-                  {/* Temp range */}
-                  <div className="flex gap-0.5 items-baseline mt-0.5">
-                    <span className={`text-[9px] font-medium ${isDark ? 'text-orange-300' : 'text-orange-600'}`}>
-                      {day.tempHigh != null ? Math.round(day.tempHigh) : '--'}°
-                    </span>
-                    <span className={`text-[8px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>/</span>
-                    <span className={`text-[9px] ${isDark ? 'text-blue-300' : 'text-blue-500'}`}>
-                      {day.tempLow != null ? Math.round(day.tempLow) : '--'}°
-                    </span>
-                  </div>
-
-                  {/* Wind */}
-                  <div className="flex items-center gap-0.5 mt-0.5">
-                    <Wind className={`w-2.5 h-2.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`} />
-                    <span className={`text-[8px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                      {day.windMax != null ? Math.round(day.windMax) : '?'}
-                    </span>
-                  </div>
-
-                  {/* Precip chance */}
-                  {day.precipChance > 10 && (
-                    <span className={`text-[8px] mt-0.5 ${isDark ? 'text-blue-300' : 'text-blue-500'}`}>
-                      💧{day.precipChance}%
-                    </span>
-                  )}
+                  <button
+                    onClick={onUnlockPro}
+                    className="ml-auto px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg hover:from-amber-400 hover:to-orange-400 transition-all shrink-0"
+                  >
+                    Start Free Trial
+                  </button>
                 </div>
-              );
-            })}
+                <p className={`text-[8px] text-center mt-1 ${isDark ? 'text-white/40' : 'text-slate-500'}`}>
+                  Try Pro free for 14 days, then $5.99/mo.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Legend */}

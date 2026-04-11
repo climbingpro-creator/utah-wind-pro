@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Thermometer, Droplets, Activity, Waves, Fish, Gauge, Anchor, MapPin, Shield, Navigation, Zap, Eye, Crosshair, Satellite, Palette, Calendar, Ship, Target, FishingRod, Bug, Layers, Flame, Wind, CloudSun, Cloud, Sun, CloudRain, Snowflake, AlertTriangle, TrendingUp, TrendingDown, Minus, Clock, Sunrise, Sunset, Moon, Youtube, ChevronDown, ChevronUp } from 'lucide-react';
+import { X, Thermometer, Droplets, Activity, Waves, Fish, Gauge, Anchor, MapPin, Shield, Navigation, Zap, Eye, Crosshair, Satellite, Palette, Calendar, Ship, Target, FishingRod, Bug, Layers, Flame, Wind, CloudSun, Cloud, Sun, CloudRain, Snowflake, AlertTriangle, TrendingUp, TrendingDown, Minus, Clock, Sunrise, Sunset, Moon, Youtube, ChevronDown, ChevronUp, Lock } from 'lucide-react';
 import shopReportsData from '../../data/shop-reports.json';
 import synthesizedData from '../../data/synthesized-reports.json';
 import tackleImageMap from '../../data/image-map.json';
@@ -334,14 +334,32 @@ function getTackleThumb(name) {
   return null;
 }
 
-function ShopReportSnippet({ locationId, waterName }) {
+function ProBlurOverlay({ text, subtitle, onUnlock }) {
+  return (
+    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-lg bg-black/50 backdrop-blur-[2px]">
+      <Lock className="w-4 h-4 text-amber-400 mb-1.5" />
+      <span className="text-[10px] text-white/90 font-semibold text-center px-3 leading-snug">{text}</span>
+      {subtitle && <span className="text-[8px] text-white/50 text-center px-3 mt-0.5 mb-2">{subtitle}</span>}
+      {onUnlock && (
+        <button
+          onClick={onUnlock}
+          className={`px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg hover:from-amber-400 hover:to-orange-400 transition-all ${subtitle ? '' : 'mt-2'}`}
+        >
+          Start 14-Day Free Trial
+        </button>
+      )}
+    </div>
+  );
+}
+
+function ShopReportSnippet({ locationId, waterName, isPro, onUnlockPro }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const synth = locationId ? synthesizedData?.[locationId] : null;
 
   if (synth?.summary) {
     return (
       <div className="px-3 pb-1.5">
-        <div className="rounded-xl bg-gradient-to-b from-red-500/8 to-red-500/3 border border-red-500/20 px-3 py-2.5">
+        <div className="relative rounded-xl bg-gradient-to-b from-red-500/8 to-red-500/3 border border-red-500/20 px-3 py-2.5 overflow-hidden">
           <div className="flex items-center gap-1.5 mb-2">
             <div className="flex items-center justify-center w-5 h-5 rounded-md bg-red-500/15">
               <Youtube className="w-3 h-3 text-red-400" />
@@ -349,22 +367,31 @@ function ShopReportSnippet({ locationId, waterName }) {
             <span className="text-[9px] font-bold uppercase tracking-wider text-red-400/80">Intel Brief — AI Summary</span>
             <span className="ml-auto text-[8px] text-slate-500">{synth.date}</span>
           </div>
-          <p className={`text-[11px] text-white/90 leading-relaxed ${!isExpanded ? 'line-clamp-3' : ''}`}>
-            {synth.summary}
-          </p>
-          {synth.summary.length > 150 && (
-            <button
-              onClick={() => setIsExpanded(prev => !prev)}
-              className="flex items-center gap-1 mt-1.5 text-[9px] font-semibold text-red-400/80 hover:text-red-300 transition-colors"
-            >
-              {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-              {isExpanded ? 'Show Less' : 'Read Full Report'}
-            </button>
-          )}
-          <div className="flex items-center gap-1.5 mt-2 pt-1.5 border-t border-red-500/10">
-            <span className="text-[8px] font-medium text-red-400/60">{synth.sourceChannel}</span>
-            {synth.sourceTitle && <span className="text-[8px] text-slate-500 truncate">— {synth.sourceTitle}</span>}
+          <div className={!isPro ? 'blur-sm pointer-events-none select-none' : ''}>
+            <p className={`text-[11px] text-white/90 leading-relaxed ${!isExpanded ? 'line-clamp-3' : ''}`}>
+              {synth.summary}
+            </p>
+            {isPro && synth.summary.length > 150 && (
+              <button
+                onClick={() => setIsExpanded(prev => !prev)}
+                className="flex items-center gap-1 mt-1.5 text-[9px] font-semibold text-red-400/80 hover:text-red-300 transition-colors"
+              >
+                {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                {isExpanded ? 'Show Less' : 'Read Full Report'}
+              </button>
+            )}
+            <div className="flex items-center gap-1.5 mt-2 pt-1.5 border-t border-red-500/10">
+              <span className="text-[8px] font-medium text-red-400/60">{synth.sourceChannel}</span>
+              {synth.sourceTitle && <span className="text-[8px] text-slate-500 truncate">— {synth.sourceTitle}</span>}
+            </div>
           </div>
+          {!isPro && (
+            <ProBlurOverlay
+              text="Unlock this week's local shop intel."
+              subtitle="Try Pro free for 14 days, then $5.99/mo."
+              onUnlock={onUnlockPro}
+            />
+          )}
         </div>
       </div>
     );
@@ -389,7 +416,7 @@ function ShopReportSnippet({ locationId, waterName }) {
 
   return (
     <div className="px-3 pb-1.5">
-      <div className="rounded-xl bg-gradient-to-b from-red-500/8 to-red-500/3 border border-red-500/20 px-3 py-2.5">
+      <div className="relative rounded-xl bg-gradient-to-b from-red-500/8 to-red-500/3 border border-red-500/20 px-3 py-2.5 overflow-hidden">
         <div className="flex items-center gap-1.5 mb-2">
           <div className="flex items-center justify-center w-5 h-5 rounded-md bg-red-500/15">
             <Youtube className="w-3 h-3 text-red-400" />
@@ -397,22 +424,31 @@ function ShopReportSnippet({ locationId, waterName }) {
           <span className="text-[9px] font-bold uppercase tracking-wider text-red-400/80">Shop Report</span>
           <span className="ml-auto text-[8px] text-slate-500">{report.date}</span>
         </div>
-        {report.title && <p className="text-[10px] font-bold text-white/90 leading-snug mb-1">{report.title}</p>}
-        <p className={`text-[11px] text-slate-300/90 leading-relaxed ${!isExpanded ? 'line-clamp-3' : ''}`}>
-          {report.excerpt}
-        </p>
-        {report.excerpt?.length > 150 && (
-          <button
-            onClick={() => setIsExpanded(prev => !prev)}
-            className="flex items-center gap-1 mt-1.5 text-[9px] font-semibold text-red-400/80 hover:text-red-300 transition-colors"
-          >
-            {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-            {isExpanded ? 'Show Less' : 'Read Full Report'}
-          </button>
-        )}
-        <div className="flex items-center gap-1.5 mt-2 pt-1.5 border-t border-red-500/10">
-          <span className="text-[8px] font-medium text-red-400/60">{report.channel}</span>
+        <div className={!isPro ? 'blur-sm pointer-events-none select-none' : ''}>
+          {report.title && <p className="text-[10px] font-bold text-white/90 leading-snug mb-1">{report.title}</p>}
+          <p className={`text-[11px] text-slate-300/90 leading-relaxed ${!isExpanded ? 'line-clamp-3' : ''}`}>
+            {report.excerpt}
+          </p>
+          {isPro && report.excerpt?.length > 150 && (
+            <button
+              onClick={() => setIsExpanded(prev => !prev)}
+              className="flex items-center gap-1 mt-1.5 text-[9px] font-semibold text-red-400/80 hover:text-red-300 transition-colors"
+            >
+              {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+              {isExpanded ? 'Show Less' : 'Read Full Report'}
+            </button>
+          )}
+          <div className="flex items-center gap-1.5 mt-2 pt-1.5 border-t border-red-500/10">
+            <span className="text-[8px] font-medium text-red-400/60">{report.channel}</span>
+          </div>
         </div>
+        {!isPro && (
+          <ProBlurOverlay
+            text="Unlock this week's local shop intel."
+            subtitle="Try Pro free for 14 days, then $5.99/mo."
+            onUnlock={onUnlockPro}
+          />
+        )}
       </div>
     </div>
   );
@@ -426,7 +462,7 @@ function TruncatedText({ text, maxLength = 120 }) {
   return <p className="text-[10px] text-slate-200 leading-relaxed">{text.slice(0, maxLength).trimEnd()}…</p>;
 }
 
-function GearCardsSection({ intel, isOcean, locationId }) {
+function GearCardsSection({ intel, isOcean, locationId, isPro, onUnlockPro }) {
   if (!intel) return null;
   const hasGear = intel.flySelections || intel.lureRecommendations || intel.tackleGuide;
   if (!hasGear) return null;
@@ -452,6 +488,29 @@ function GearCardsSection({ intel, isOcean, locationId }) {
       {intel.flySelections && (() => {
         const flyName = intel.flySelections.split(/[,.\-—]/)[0]?.trim();
         const flyImg = getTackleThumb(flyName);
+
+        if (!isPro) {
+          return (
+            <div className={`rounded-lg bg-white/[0.03] border ${borderAccent} px-2.5 py-1.5`}>
+              <div className="flex items-center gap-1 mb-0.5">
+                <Bug className={`w-2.5 h-2.5 ${accent}`} />
+                <span className="text-[8px] font-bold uppercase tracking-wider text-slate-500">Fly Box</span>
+              </div>
+              <p className="text-[10px] text-slate-200 leading-relaxed">Spring Baseline: Midges #18-22, BWOs #16-20.</p>
+              <div className="relative mt-1.5 rounded-lg overflow-hidden">
+                <div className="blur-sm pointer-events-none select-none p-2 bg-white/[0.02]">
+                  <p className="text-[10px] text-slate-300">Live weather-matched fly recommendations with confidence scores and hatch correlation data...</p>
+                </div>
+                <ProBlurOverlay
+                  text="Unlock Live-Weather Fly Recommendations."
+                  subtitle="Try Pro free for 14 days, then $5.99/mo."
+                  onUnlock={onUnlockPro}
+                />
+              </div>
+            </div>
+          );
+        }
+
         return (
           <div className={`rounded-lg bg-white/[0.03] border ${borderAccent} px-2.5 py-1.5`}>
             <div className="flex items-center gap-1 mb-0.5">
@@ -752,7 +811,7 @@ function FishingQualityMeter({ score }) {
   );
 }
 
-export default function SyntheticFishingCard({ data, isLoading, onClose }) {
+export default function SyntheticFishingCard({ data, isLoading, onClose, isPro = false, onUnlockPro }) {
   if (isLoading) {
     return (
       <div className="relative">
@@ -982,7 +1041,7 @@ export default function SyntheticFishingCard({ data, isLoading, onClose }) {
       {/* ═══════ 2. ACTIONABLE GEAR (absolute top priority) ═══════ */}
 
       {/* Gear Cards — Fly Box → Lure Selection → Tackle Setup */}
-      <GearCardsSection intel={data.anglerIntel} isOcean={isOcean} locationId={data.matchedLocationId} />
+      <GearCardsSection intel={data.anglerIntel} isOcean={isOcean} locationId={data.matchedLocationId} isPro={isPro} onUnlockPro={onUnlockPro} />
 
       {/* ═══════ 3. WATER METRICS ═══════ */}
 
@@ -1114,7 +1173,7 @@ export default function SyntheticFishingCard({ data, isLoading, onClose }) {
       {/* ═══════ 4. DYNAMIC INTELLIGENCE ═══════ */}
 
       {/* Shop Report — YouTube transcript excerpt if available for this water */}
-      <ShopReportSnippet locationId={data.matchedLocationId} waterName={data.vectorFeatureName || data.waterBodyName} />
+      <ShopReportSnippet locationId={data.matchedLocationId} waterName={data.vectorFeatureName || data.waterBodyName} isPro={isPro} onUnlockPro={onUnlockPro} />
 
       {/* ═══════ 5. CONTEXT ("THE WHY") ═══════ */}
 

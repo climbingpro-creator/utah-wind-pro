@@ -378,8 +378,24 @@ function WaterApp() {
 
   return (
     <div className="min-h-screen">
-      {/* ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ HEADER ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ */}
-      <header className="border-b border-slate-800 bg-slate-950/95 backdrop-blur-md sticky top-0 z-40 pt-[env(safe-area-inset-top)]">
+      {/* Beta Launch Promo Banner */}
+      {!isPro && (
+        <div className="sticky top-0 z-50 bg-gradient-to-r from-amber-500 to-orange-500 text-white">
+          <div className="max-w-2xl mx-auto px-4 py-1.5 flex items-center justify-center gap-3">
+            <span className="text-[11px] sm:text-xs font-semibold tracking-tight">
+              Beta Launch: Claim your 14-Day Free Trial of NotWindy Pro!
+            </span>
+            <button
+              onClick={openPaywall}
+              className="shrink-0 px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white/20 hover:bg-white/30 border border-white/30 transition-all"
+            >
+              Claim Trial
+            </button>
+          </div>
+        </div>
+      )}
+      {/* HEADER */}
+      <header className={`border-b border-slate-800 bg-slate-950/95 backdrop-blur-md sticky ${!isPro ? 'top-[34px]' : 'top-0'} z-40 pt-[env(safe-area-inset-top)]`}>
         <div className="max-w-2xl mx-auto px-4">
           <div className="flex items-center justify-between h-12">
             <div className="flex items-center gap-2">
@@ -415,7 +431,7 @@ function WaterApp() {
                   onClick={openPaywall}
                   className="ml-1 px-3 py-1.5 rounded-lg text-[11px] font-bold bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-sm hover:shadow-lg hover:shadow-cyan-500/25 transition-all hover:scale-105 active:scale-95"
                 >
-                  Upgrade
+                  Free Trial
                 </button>
               )}
               {/* Pro badge + Manage Subscription for Pro users */}
@@ -749,7 +765,7 @@ function WaterApp() {
                 className="mb-4 w-full max-w-sm mx-auto flex items-center justify-center gap-2 min-h-[48px] px-5 py-3 rounded-xl text-sm font-bold bg-gradient-to-r from-cyan-500 to-blue-500 text-white active:opacity-90 transition-opacity shadow-lg shadow-cyan-500/20"
               >
                 <Sparkles className="w-4 h-4" />
-                Unlock All Features — Try Pro Free
+                Start 14-Day Free Trial
               </button>
             )}
             {isPro && rawTier === 'pro' && (
