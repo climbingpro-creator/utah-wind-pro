@@ -48,9 +48,13 @@ async function flush() {
   if (!_supabase || _queue.length === 0) return;
   const batch = _queue.splice(0, MAX_BATCH);
   try {
-    await _supabase.from('analytics_events').insert(batch);
+    const { error } = await _supabase.from('analytics_events').insert(batch);
+    if (error) {
+      console.warn('[analytics] flush insert error:', error.message, error.code);
+      _queue.unshift(...batch);
+    }
   } catch (err) {
-    console.warn('[analytics] flush failed:', err?.message);
+    console.warn('[analytics] flush network error:', err?.message);
     _queue.unshift(...batch);
   }
 }
