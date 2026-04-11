@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, Suspense, lazy, useCallback } from 'react';
 import { Analytics } from '@vercel/analytics/react';
 import { Fish, Ship, Waves, RefreshCw, Wifi, WifiOff, Sun, Moon, CheckCircle,
-  Shield, Clock, Lightbulb, TrendingUp, TrendingDown, Minus, LogIn, LogOut, Crown, CreditCard, Sparkles, Brain, Star } from 'lucide-react';
+  Shield, Clock, Lightbulb, TrendingUp, TrendingDown, Minus, LogIn, LogOut, Crown, CreditCard, Sparkles, Brain, Star, Camera } from 'lucide-react';
 import { ErrorBoundary, FeedbackWidget, initAnalytics, trackPageView } from '@utahwind/ui';
 import { supabase } from '@utahwind/database';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
@@ -28,6 +28,7 @@ const Login = lazy(() => import('./pages/Login'));
 const EngineTest = lazy(() => import('./pages/EngineTest'));
 const ProUpgrade = lazy(() => import('./components/ProUpgrade'));
 const LearnView = lazy(() => import('./components/LearnView'));
+const CommunityFeed = lazy(() => import('./pages/CommunityFeed'));
 
 const ADMIN_EMAILS = ['tyler@aspenearth.com', 'climbingpro@gmail.com'];
 
@@ -246,6 +247,7 @@ function WaterApp() {
   const isAdmin = user && ADMIN_EMAILS.includes(user.email?.toLowerCase());
   const [managingSubscription, setManagingSubscription] = useState(false);
   const [showLearnView, setShowLearnView] = useState(false);
+  const [showCommunity, setShowCommunity] = useState(false);
 
   const handleManageSubscription = async () => {
     setManagingSubscription(true);
@@ -416,6 +418,15 @@ function WaterApp() {
                 {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                 <span className="text-[8px] font-medium">{isDark ? 'Light' : 'Dark'}</span>
               </button>
+              {/* Community catch gallery */}
+              <button
+                onClick={() => setShowCommunity(true)}
+                className={`flex flex-col items-center gap-0.5 p-1.5 rounded-lg transition-colors ${showCommunity ? 'bg-cyan-500/15 text-cyan-400' : 'hover:bg-cyan-500/10 text-cyan-400/70 hover:text-cyan-400'}`}
+                title="Community Catches"
+              >
+                <Camera className="w-4 h-4" />
+                <span className="text-[8px] font-medium">Catches</span>
+              </button>
               {/* Learn button - accessible to all users */}
               <button
                 onClick={() => setShowLearnView(true)}
@@ -487,6 +498,14 @@ function WaterApp() {
       </header>
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-4">
+
+        {/* ═══════ COMMUNITY FEED ═══════ */}
+        {showCommunity ? (
+          <Suspense fallback={<div className="flex items-center justify-center py-16"><div className="w-6 h-6 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" /></div>}>
+            <CommunityFeed onBack={() => setShowCommunity(false)} />
+          </Suspense>
+        ) : (<>
+
         {/* ═══════ LOCATION SELECTOR ═══════ */}
         <LocationSelector
           selectedLocation={selectedLocation}
@@ -755,6 +774,8 @@ function WaterApp() {
             />
           )}
         </Suspense>
+
+        </>)}
 
         {/* ═══════ FOOTER ═══════ */}
         <footer className="border-t border-[var(--border-color)] mt-8">

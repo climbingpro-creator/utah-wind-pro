@@ -505,3 +505,37 @@ CREATE POLICY "Users can delete own session alerts"
 
 CREATE INDEX IF NOT EXISTS idx_session_alerts_enabled
   ON session_alerts(enabled) WHERE enabled = true;
+
+-- ══════════════════════════════════════════════════════════════
+-- Community Posts — user-submitted catch photos and reports
+-- ══════════════════════════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS community_posts (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id         UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_email      TEXT,
+  display_name    TEXT,
+  photo_url       TEXT NOT NULL,
+  caption         TEXT,
+  location_id     TEXT,
+  location_name   TEXT,
+  species         TEXT,
+  likes           INTEGER NOT NULL DEFAULT 0,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE community_posts ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone can read community posts"
+  ON community_posts FOR SELECT
+  USING (true);
+
+CREATE POLICY "Authenticated users can insert own posts"
+  ON community_posts FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own posts"
+  ON community_posts FOR DELETE
+  USING (auth.uid() = user_id);
+
+CREATE INDEX IF NOT EXISTS idx_community_posts_created
+  ON community_posts(created_at DESC);
