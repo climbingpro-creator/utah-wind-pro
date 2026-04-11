@@ -1037,7 +1037,7 @@ function formatETA(currentHour, etaMinutes) {
 //  NWS HOURLY INTEGRATION
 // ═══════════════════════════════════════════════════════════════════
 
-function buildHourlyForecast(lakeId, context, calibrationResult) {
+function buildHourlyForecast(lakeId, context, calibrationResult, regime, propagation) {
   const gridKey = LAKE_TO_GRID[lakeId];
   if (!gridKey || !context?.nwsHourly) return [];
 
@@ -1047,11 +1047,40 @@ function buildHourlyForecast(lakeId, context, calibrationResult) {
   const periods = gridData.periods || gridData;
   if (!Array.isArray(periods)) return [];
 
+  const isSEThermal = regime?.regime === 'se_thermal' && regime?.confidence >= 0.5;
+  const expectedSpeed = propagation?.expectedSpeed;
+  const etaMin = propagation?.eta;
+
   return periods.slice(0, 24).map(p => {
     let speed = p.windSpeed;
     if (typeof speed === 'string') speed = parseFloat(speed) || 0;
 
     let adjustedSpeed = speed * (calibrationResult?.speedMultiplier ?? 1.0);
+
+    if (isSEThermal && expectedSpeed > adjustedSpeed) {
+      const periodTime = new Date(p.startTime || p.time);
+      const periodHour = periodTime.getHours();
+
+      const thermalWindow = periodHour >= 10 && periodHour <= 18;
+
+      if (thermalWindow) {
+        const now = new Date();
+        const hoursFromNow = (periodTime - now) / 3600000;
+        const etaHours = (etaMin || 90) / 60;
+
+        if (hoursFromNow >= etaHours - 0.5) {
+          const thermalPeak = expectedSpeed * (calibrationResult?.speedMultiplier ?? 1.0);
+          const peakHour = 14;
+          const distFromPeak = Math.abs(periodHour - peakHour);
+          const thermalShape = Math.max(0.6, 1.0 - distFromPeak * 0.08);
+          const thermalSpeed = thermalPeak * thermalShape;
+
+          if (thermalSpeed > adjustedSpeed) {
+            adjustedSpeed = Math.round(thermalSpeed * 10) / 10;
+          }
+        }
+      }
+    }
 
     return {
       time: p.startTime || p.time,
@@ -1060,6 +1089,7 @@ function buildHourlyForecast(lakeId, context, calibrationResult) {
       dir: p.windDirection,
       temperature: p.temperature,
       shortForecast: p.shortForecast || '',
+      thermalBoosted: adjustedSpeed > speed,
     };
   });
 }
@@ -1363,8 +1393,8 @@ export function predict(lakeId, activity, liveStations, modelContext, config, op
   // 9. BRIEF
   const briefing = brief(regime, decision, prop, pressure, activities, activity, adjustedSpeed, hour);
 
-  // NWS hourly forecast
-  const hourly = buildHourlyForecast(lakeId, ctx, cal);
+  // NWS hourly forecast — enhanced with thermal propagation when QSF signal detected
+  const hourly = buildHourlyForecast(lakeId, ctx, cal, regime, prop);
 
   // Backward compatibility
   const compat = backwardCompat(cal, regime, prop, pressure, adjustedSpeed, windGust, hour);

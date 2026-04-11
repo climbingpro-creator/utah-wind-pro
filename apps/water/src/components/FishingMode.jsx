@@ -1568,6 +1568,68 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
         </div>
       )}
 
+      {/* Hatch Calendar — What's Hatching Now (Rivers) */}
+      {(location.type === 'river' || ['deer-creek', 'strawberry', 'scofield'].includes(selectedLocation)) && (() => {
+        const currentMonth = new Date().getMonth() + 1;
+        const hatch = HATCH_CALENDAR[currentMonth];
+        const prevMonth = currentMonth === 1 ? 12 : currentMonth - 1;
+        const nextMonth = currentMonth === 12 ? 1 : currentMonth + 1;
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const isRelevant = (waterField) => {
+          if (!waterField) return false;
+          const lower = waterField.toLowerCase();
+          return lower.includes('all') || lower.includes(location.name.toLowerCase().split(' ')[0]);
+        };
+        return hatch ? (
+          <div className={`rounded-xl p-4 border ${isDark ? 'bg-emerald-900/20 border-emerald-500/30' : 'bg-emerald-50 border-emerald-200 shadow-sm'}`}>
+            <h3 className={`text-sm font-medium mb-3 flex items-center gap-2 ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>
+              🪰 Hatch Calendar — {monthNames[currentMonth - 1]} at {location.name}
+            </h3>
+            {hatch.primary && (
+              <div className={`p-3 rounded-lg mb-2 ${isRelevant(hatch.primary.water) ? (isDark ? 'bg-emerald-500/15 border border-emerald-400/40' : 'bg-emerald-50 border border-emerald-300') : (isDark ? 'bg-emerald-500/10 border border-emerald-500/30' : 'bg-white border border-emerald-200')}`}>
+                <div className="flex items-center justify-between mb-1">
+                  <span className={`font-semibold text-sm ${isDark ? 'text-emerald-300' : 'text-emerald-800'}`}>
+                    {hatch.primary.name}
+                    {isRelevant(hatch.primary.water) && <span className={`ml-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full ${isDark ? 'bg-emerald-500/30 text-emerald-300' : 'bg-emerald-200 text-emerald-800'}`}>AT YOUR WATER</span>}
+                  </span>
+                  <span className={`text-xs px-2 py-0.5 rounded ${isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-700'}`}>
+                    {hatch.primary.size}
+                  </span>
+                </div>
+                <div className={`text-xs mb-1 ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+                  <span className="font-medium">Patterns:</span> {hatch.primary.pattern}
+                </div>
+                <div className={`text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{hatch.primary.water}</div>
+              </div>
+            )}
+            {hatch.secondary && (
+              <div className={`p-2.5 rounded-lg mb-2 ${isDark ? 'bg-slate-700/30' : 'bg-slate-50'}`}>
+                <div className="flex items-center justify-between mb-1">
+                  <span className={`font-medium text-xs ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>{hatch.secondary.name}</span>
+                  <span className={`text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{hatch.secondary.size}</span>
+                </div>
+                <div className={`text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{hatch.secondary.pattern}</div>
+              </div>
+            )}
+            {hatch.tertiary && (
+              <div className={`p-2.5 rounded-lg mb-2 ${isDark ? 'bg-slate-700/30' : 'bg-slate-50'}`}>
+                <div className="flex items-center justify-between mb-1">
+                  <span className={`font-medium text-xs ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>{hatch.tertiary.name}</span>
+                  <span className={`text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{hatch.tertiary.size}</span>
+                </div>
+                <div className={`text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{hatch.tertiary.pattern}</div>
+              </div>
+            )}
+            <div className={`text-xs mt-2 italic ${isDark ? 'text-emerald-300/70' : 'text-emerald-700/80'}`}>{hatch.note}</div>
+            <div className={`flex gap-2 mt-3 text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+              <span>← {monthNames[prevMonth - 1]}: {HATCH_CALENDAR[prevMonth]?.primary?.name || 'Midges'}</span>
+              <span className="flex-1" />
+              <span>{monthNames[nextMonth - 1]}: {HATCH_CALENDAR[nextMonth]?.primary?.name || 'Midges'} →</span>
+            </div>
+          </div>
+        ) : null;
+      })()}
+
       {/* AI Prediction Panel */}
       {aiPrediction && (
         <div className={`rounded-xl p-4 border ${isDark ? 'bg-slate-800/50 border-blue-500/30' : 'bg-blue-50 border-blue-200 shadow-sm'}`}>
@@ -2411,68 +2473,6 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
           })}
         </div>
       </div>
-
-      {/* Hatch Calendar — What's Hatching Now (Rivers) */}
-      {(location.type === 'river' || ['deer-creek', 'strawberry', 'scofield'].includes(selectedLocation)) && (() => {
-        const currentMonth = new Date().getMonth() + 1;
-        const hatch = HATCH_CALENDAR[currentMonth];
-        const prevMonth = currentMonth === 1 ? 12 : currentMonth - 1;
-        const nextMonth = currentMonth === 12 ? 1 : currentMonth + 1;
-        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        const isRelevant = (waterField) => {
-          if (!waterField) return false;
-          const lower = waterField.toLowerCase();
-          return lower.includes('all') || lower.includes(location.name.toLowerCase().split(' ')[0]);
-        };
-        return hatch ? (
-          <div className={`rounded-xl p-4 border ${isDark ? 'bg-emerald-900/20 border-emerald-500/30' : 'bg-emerald-50 border-emerald-200 shadow-sm'}`}>
-            <h3 className={`text-sm font-medium mb-3 flex items-center gap-2 ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>
-              🪰 Hatch Calendar — {monthNames[currentMonth - 1]} at {location.name}
-            </h3>
-            {hatch.primary && (
-              <div className={`p-3 rounded-lg mb-2 ${isRelevant(hatch.primary.water) ? (isDark ? 'bg-emerald-500/15 border border-emerald-400/40' : 'bg-emerald-50 border border-emerald-300') : (isDark ? 'bg-emerald-500/10 border border-emerald-500/30' : 'bg-white border border-emerald-200')}`}>
-                <div className="flex items-center justify-between mb-1">
-                  <span className={`font-semibold text-sm ${isDark ? 'text-emerald-300' : 'text-emerald-800'}`}>
-                    {hatch.primary.name}
-                    {isRelevant(hatch.primary.water) && <span className={`ml-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full ${isDark ? 'bg-emerald-500/30 text-emerald-300' : 'bg-emerald-200 text-emerald-800'}`}>AT YOUR WATER</span>}
-                  </span>
-                  <span className={`text-xs px-2 py-0.5 rounded ${isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-700'}`}>
-                    {hatch.primary.size}
-                  </span>
-                </div>
-                <div className={`text-xs mb-1 ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
-                  <span className="font-medium">Patterns:</span> {hatch.primary.pattern}
-                </div>
-                <div className={`text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{hatch.primary.water}</div>
-              </div>
-            )}
-            {hatch.secondary && (
-              <div className={`p-2.5 rounded-lg mb-2 ${isDark ? 'bg-slate-700/30' : 'bg-slate-50'}`}>
-                <div className="flex items-center justify-between mb-1">
-                  <span className={`font-medium text-xs ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>{hatch.secondary.name}</span>
-                  <span className={`text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{hatch.secondary.size}</span>
-                </div>
-                <div className={`text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{hatch.secondary.pattern}</div>
-              </div>
-            )}
-            {hatch.tertiary && (
-              <div className={`p-2.5 rounded-lg mb-2 ${isDark ? 'bg-slate-700/30' : 'bg-slate-50'}`}>
-                <div className="flex items-center justify-between mb-1">
-                  <span className={`font-medium text-xs ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>{hatch.tertiary.name}</span>
-                  <span className={`text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{hatch.tertiary.size}</span>
-                </div>
-                <div className={`text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{hatch.tertiary.pattern}</div>
-              </div>
-            )}
-            <div className={`text-xs mt-2 italic ${isDark ? 'text-emerald-300/70' : 'text-emerald-700/80'}`}>{hatch.note}</div>
-            <div className={`flex gap-2 mt-3 text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-              <span>← {monthNames[prevMonth - 1]}: {HATCH_CALENDAR[prevMonth]?.primary?.name || 'Midges'}</span>
-              <span className="flex-1" />
-              <span>{monthNames[nextMonth - 1]}: {HATCH_CALENDAR[nextMonth]?.primary?.name || 'Midges'} →</span>
-            </div>
-          </div>
-        ) : null;
-      })()}
 
       {/* Regulations & Tips */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
