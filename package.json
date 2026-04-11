@@ -18,7 +18,8 @@
     "backtest:compare-models": "node scripts/compare-models-365-backtest.mjs",
     "generate:icons": "node scripts/generate-icons.js",
     "update-stocking": "npm run update-stocking --workspace=apps/water",
-    "scrape-youtube": "npm run scrape-youtube --workspace=apps/water"
+    "scrape-youtube": "npm run scrape-youtube --workspace=apps/water",
+    "update-intelligence": "npm run update-intelligence --workspace=apps/water"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

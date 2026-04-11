@@ -5,6 +5,7 @@ import { predictFishing } from '../services/FishingPredictor';
 import { getAllWaterTemps, getAllRiverFlows, getRiverFlowStatus } from '../services/USGSWaterService';
 import { getDailyFlyPick, parseSkyCondition, TIME_WINDOW_LABELS } from '../services/FlyRecommender';
 import { getDailyLurePick, LURES, getShoreStrategy, TIME_WINDOW_LABELS as LURE_TIME_LABELS } from '../services/LureRecommender';
+import { isArtificialOnly } from '../services/RegulationFilter';
 import WaterForecast from './WaterForecast';
 import { safeToFixed } from '../utils/safeToFixed';
 import { getUtahVernacular } from '../services/UtahVernacular';
@@ -1901,6 +1902,11 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
                     Color: {lurePick.colorRecommendation.primary}
                   </span>
                 )}
+                {lurePick.artificialOnly && (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/30">
+                    ARTIFICIAL ONLY
+                  </span>
+                )}
               </div>
             </div>
 
@@ -2428,7 +2434,13 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
           {location.species.map(species => {
             const speciesData = FISH_SPECIES[species];
             const isPrimary = species === location.primarySpecies;
-            const tactics = speciesData?.tactics?.[season];
+            const rawTactics = speciesData?.tactics?.[season];
+            const artOnly = isArtificialOnly(selectedLocation);
+            const tactics = rawTactics && artOnly ? {
+              ...rawTactics,
+              lures: rawTactics.lures?.replace(/\b(?:PowerBait|nightcrawler|worm\s*(?:tip)?|wax\s*worm|chicken\s*liver|stink\s*bait|cut\s*(?:bait|carp|shad)|corn|minnow|live\s*bait)[^,]*/gi, '').replace(/,\s*,/g, ',').replace(/^[,\s]+|[,\s]+$/g, '') || null,
+              tip: rawTactics.tip?.replace(/\b(?:PowerBait|nightcrawler|worm)[^.;]*/gi, '').trim() || rawTactics.tip,
+            } : rawTactics;
             return (
               <div
                 key={species}
@@ -2466,7 +2478,7 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
                     <div className={`text-xs italic mt-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{tactics.tip}</div>
                   </div>
                 ) : (
-                  <div className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>General approach — try worms, PowerBait, or small spinners</div>
+                  <div className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{artOnly ? 'General approach — try small spinners, spoons, or fly patterns' : 'General approach — try worms, PowerBait, or small spinners'}</div>
                 )}
               </div>
             );

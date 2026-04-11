@@ -1,6 +1,8 @@
 import { X, Thermometer, Droplets, Activity, Waves, Fish, Gauge, Anchor, MapPin, Shield, Navigation, Zap, Eye, Crosshair, Satellite, Palette, Calendar, Ship, Target, FishingRod, Bug, Layers, Flame, Wind, CloudSun, Cloud, Sun, CloudRain, Snowflake, AlertTriangle, TrendingUp, TrendingDown, Minus, Clock, Sunrise, Sunset, Moon, Youtube } from 'lucide-react';
 import shopReportsData from '../../data/shop-reports.json';
+import synthesizedData from '../../data/synthesized-reports.json';
 import tackleImageMap from '../../data/image-map.json';
+import { isArtificialOnly, sanitizeLLMText } from '../../services/RegulationFilter';
 
 const CLARITY_STYLE = {
   'blown out':       { color: 'text-red-400',     bg: 'bg-red-500/10',     border: 'border-red-500/20',     dot: 'bg-red-500' },
@@ -327,6 +329,26 @@ function getTackleThumb(name) {
 }
 
 function ShopReportSnippet({ locationId, waterName }) {
+  const synth = locationId ? synthesizedData?.[locationId] : null;
+  if (synth?.summary) {
+    return (
+      <div className="px-3 pb-1.5">
+        <div className="rounded-lg bg-red-500/5 border border-red-500/15 px-2.5 py-2">
+          <div className="flex items-center gap-1.5 mb-1">
+            <Youtube className="w-3 h-3 text-red-400" />
+            <span className="text-[8px] font-bold uppercase tracking-wider text-red-400/70">Shop Report — AI Summary</span>
+            <span className="ml-auto text-[8px] text-slate-500">{synth.date}</span>
+          </div>
+          <p className="text-[10px] text-white/90 leading-relaxed mb-0.5">{synth.summary}</p>
+          <div className="flex items-center gap-1 mt-1">
+            <span className="text-[8px] text-red-400/60">{synth.sourceChannel}</span>
+            {synth.sourceTitle && <span className="text-[8px] text-slate-500 truncate ml-1">— {synth.sourceTitle}</span>}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const allReports = shopReportsData?.reports || {};
   let reports = locationId ? allReports[locationId] : null;
 
@@ -370,10 +392,14 @@ function TruncatedText({ text, maxLength = 120 }) {
   return <p className="text-[10px] text-slate-200 leading-relaxed">{text.slice(0, maxLength).trimEnd()}…</p>;
 }
 
-function GearCardsSection({ intel, isOcean }) {
+function GearCardsSection({ intel, isOcean, locationId }) {
   if (!intel) return null;
   const hasGear = intel.flySelections || intel.lureRecommendations || intel.tackleGuide;
   if (!hasGear) return null;
+
+  const artOnly = locationId ? isArtificialOnly(locationId) : false;
+  const cleanLures = artOnly ? sanitizeLLMText(intel.lureRecommendations, locationId) : intel.lureRecommendations;
+  const cleanTackle = artOnly ? sanitizeLLMText(intel.tackleGuide, locationId) : intel.tackleGuide;
 
   const accent = isOcean ? 'text-blue-400' : 'text-emerald-400';
   const borderAccent = isOcean ? 'border-blue-500/15' : 'border-emerald-500/15';
@@ -384,6 +410,9 @@ function GearCardsSection({ intel, isOcean }) {
       <div className="flex items-center gap-1.5 pt-1">
         <FishingRod className={`w-3 h-3 ${headerAccent}`} />
         <span className={`text-[9px] font-bold uppercase tracking-wider ${headerAccent}`}>Gear Recommendations</span>
+        {artOnly && (
+          <span className="text-[7px] font-bold px-1.5 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/30 ml-auto">ARTIFICIAL ONLY</span>
+        )}
       </div>
 
       {intel.flySelections && (() => {
@@ -403,8 +432,8 @@ function GearCardsSection({ intel, isOcean }) {
         );
       })()}
 
-      {intel.lureRecommendations && (() => {
-        const lureName = intel.lureRecommendations.split(/[,.\-—]/)[0]?.trim();
+      {cleanLures && (() => {
+        const lureName = cleanLures.split(/[,.\-—]/)[0]?.trim();
         const lureImg = getTackleThumb(lureName);
         return (
           <div className={`rounded-lg bg-white/[0.03] border ${borderAccent} px-2.5 py-1.5`}>
@@ -414,19 +443,19 @@ function GearCardsSection({ intel, isOcean }) {
             </div>
             <div className="flex items-start gap-2">
               {lureImg && <img src={lureImg} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0 mt-0.5 border border-white/10" loading="lazy" onError={e => { e.target.style.display = 'none'; }} />}
-              <TruncatedText text={intel.lureRecommendations} maxLength={150} />
+              <TruncatedText text={cleanLures} maxLength={150} />
             </div>
           </div>
         );
       })()}
 
-      {intel.tackleGuide && (
+      {cleanTackle && (
         <div className={`rounded-lg bg-white/[0.03] border ${borderAccent} px-2.5 py-1.5`}>
           <div className="flex items-center gap-1 mb-0.5">
             <FishingRod className={`w-2.5 h-2.5 ${accent}`} />
             <span className="text-[8px] font-bold uppercase tracking-wider text-slate-500">Tackle Setup</span>
           </div>
-          <TruncatedText text={intel.tackleGuide} maxLength={150} />
+          <TruncatedText text={cleanTackle} maxLength={150} />
         </div>
       )}
     </div>
@@ -919,7 +948,7 @@ export default function SyntheticFishingCard({ data, isLoading, onClose }) {
       {/* ═══════ 2. ACTIONABLE GEAR (absolute top priority) ═══════ */}
 
       {/* Gear Cards — Fly Box → Lure Selection → Tackle Setup */}
-      <GearCardsSection intel={data.anglerIntel} isOcean={isOcean} />
+      <GearCardsSection intel={data.anglerIntel} isOcean={isOcean} locationId={data.matchedLocationId} />
 
       {/* ═══════ 3. WATER METRICS ═══════ */}
 

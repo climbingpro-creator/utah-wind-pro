@@ -135,8 +135,22 @@ For the forage profile: describe each major baitfish/forage species with its typ
 For the seasonal forage: describe which forage species are most available during each season or month, with emphasis on what is happening RIGHT NOW in ${currentMonth}.
 For the pelagic calendar: ${isFreshwater ? 'describe seasonal fish movement patterns — spawning runs, stocking schedules, and species migrations within this water body by season' : 'describe which migratory or pelagic game fish species pass through this area during each season'}, highlighting what is happening RIGHT NOW in ${currentMonth}.`;
 
+    const artificialOnlyWaters = [
+      'provo river', 'lower provo', 'middle provo', 'upper provo',
+      'green river', 'logan river', 'blacksmith fork', 'weber river',
+      'ogden river', 'whitewater', 'huntington creek', 'fish creek',
+      'currant creek', 'right fork', 'left fork', 'red butte creek',
+      'city creek', 'emigration creek', 'mill creek', 'parleys creek',
+      'strawberry river',
+    ];
+    const nameLower = name.toLowerCase();
+    const isArtificialOnly = artificialOnlyWaters.some(w => nameLower.includes(w));
+    const gearConstraint = isArtificialOnly
+      ? `\n\nCRITICAL REGULATION: "${name}" is ARTIFICIAL FLIES AND LURES ONLY — NO BAIT. Do NOT recommend PowerBait, worms, nightcrawlers, corn, live bait, or any natural bait. Only recommend artificial lures (spoons, spinners, crankbaits, soft plastics) and fly patterns.`
+      : '';
+
     const anglerInstructions = `
-For lure recommendations: give 3-5 SPECIFIC conventional lure/bait selections for RIGHT NOW (${currentMonth}). Include type, size, and color that matches the current forage and water conditions.
+For lure recommendations: give 3-5 SPECIFIC conventional lure/bait selections for RIGHT NOW (${currentMonth}). Include type, size, and color that matches the current forage and water conditions.${gearConstraint}
 For fly selections: give 3-5 SPECIFIC fly patterns for fly fishing RIGHT NOW. ${isFreshwater ? 'For rivers match the active insect hatches (dries, nymphs, emergers). For lakes match the forage base (streamers, chironomids, leeches, scuds).' : 'Include saltwater fly patterns like Clousers, Deceivers, crab patterns.'} Include pattern name, hook size, and reasoning.
 For tackle guide: recommend specific rod/reel/line setup for both conventional and fly fishing at this location. Include line weight, leader size, and terminal tackle.
 For seasonal depth pattern: describe EXACTLY where fish are positioned in the water column RIGHT NOW in ${currentMonth}. Include depth ranges, structure types, and time-of-day movement patterns.

@@ -1,0 +1,10 @@
+{
+  "_meta": {
+    "source": "LLM synthesis of YouTube fishing transcripts",
+    "model": "gpt-4o-mini",
+    "lastUpdated": null,
+    "locationsProcessed": 0,
+    "successCount": 0,
+    "failCount": 0
+  }
+}

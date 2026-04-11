@@ -624,10 +624,14 @@ export function getBestMethod({ species, locationType, waterTemp, windSpeed, hou
 
 // ─── MAIN PUBLIC API ────────────────────────────────────────────────
 
+import { filterBaitLures, isArtificialOnly, getGearRestrictionLabel } from './RegulationFilter';
+
 export function getDailyLurePick({ month, waterTemp, windSpeed, sky, pressureTrend, hour, locationId: _locationId, species, locationType, ecosystem }) {
   const season = getSeason(month);
   _currentSeason = season;
-  const candidates = buildLureCandidates({ month, waterTemp, windSpeed, sky, pressureTrend, hour, species, locationType, ecosystem });
+  let candidates = buildLureCandidates({ month, waterTemp, windSpeed, sky, pressureTrend, hour, species, locationType, ecosystem });
+
+  candidates = filterBaitLures(candidates, LURES, _locationId);
 
   // Deduplicate and keep highest confidence per lure key
   const best = {};
@@ -666,6 +670,8 @@ export function getDailyLurePick({ month, waterTemp, windSpeed, sky, pressureTre
   // Time plan
   const timePlan = buildTimePlan(ranked, hour);
 
+  const artificialOnly = isArtificialOnly(_locationId);
+
   return {
     topPick: ranked[0] ? { ...ranked[0], lure: LURES[ranked[0].lureKey] } : null,
     alternatives: ranked.slice(1, 5).map(r => ({ ...r, lure: LURES[r.lureKey] })),
@@ -678,6 +684,8 @@ export function getDailyLurePick({ month, waterTemp, windSpeed, sky, pressureTre
     trollingSpecies: trollSpecies,
     timePlan,
     season,
+    artificialOnly,
+    gearRestriction: getGearRestrictionLabel(_locationId),
     allPicks: ranked.slice(0, 12).map(r => ({ ...r, lure: LURES[r.lureKey] })),
     ecosystemInfo: eco ? {
       clarity: eco.waterClarity?.typical,
