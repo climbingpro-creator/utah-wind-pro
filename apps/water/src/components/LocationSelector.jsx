@@ -93,8 +93,44 @@ export default function LocationSelector({ selectedLocation, onSelectLocation, o
 
   const favoritePills = [...LIVE_LAKES, ...UTAH_WATERS].filter(l => favSet.has(l.id));
   const nonFavLive = LIVE_LAKES.filter(l => !favSet.has(l.id));
-  const nonFavUtah = UTAH_WATERS.filter(l => !favSet.has(l.id));
-  const orderedPills = [...favoritePills, ...nonFavLive, ...nonFavUtah];
+  const row1 = [...favoritePills, ...nonFavLive];
+  const row2 = UTAH_WATERS.filter(l => !favSet.has(l.id));
+
+  const renderPill = (loc) => {
+    const isSelected = selectedLocation === loc.id;
+    const isLive = liveIds.has(loc.id);
+    const isFav = favSet.has(loc.id);
+    return (
+      <button
+        key={loc.id}
+        onClick={() => onSelectLocation(loc.id)}
+        className={`
+          flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full
+          text-xs font-semibold border transition-all whitespace-nowrap cursor-pointer
+          ${isFav && isSelected
+            ? 'bg-amber-900/40 text-amber-300 border-amber-400 shadow-lg shadow-amber-500/20'
+            : isFav
+              ? 'bg-amber-950/30 text-amber-400 border-amber-600/50 hover:border-amber-400 hover:text-amber-300'
+              : isSelected && isLive
+                ? 'bg-emerald-900/50 text-emerald-300 border-emerald-400 shadow-lg shadow-emerald-500/20'
+                : isLive
+                  ? 'bg-emerald-950/40 text-emerald-400 border-emerald-600/50 hover:border-emerald-400 hover:text-emerald-300'
+                  : isSelected
+                    ? 'bg-slate-700/60 text-white border-slate-400 shadow-lg'
+                    : 'bg-slate-800/60 text-slate-400 border-slate-700 hover:border-slate-500 hover:text-slate-300'
+          }
+        `}
+      >
+        {isFav && <Star className="w-3 h-3 fill-amber-400 text-amber-400" />}
+        {isLive && !isFav && <Radio className="w-3 h-3" />}
+        {!isLive && !isFav && <span className="text-sm leading-none">{TYPE_ICON[loc.type] || '💧'}</span>}
+        <span>{loc.name}</span>
+        {isLive && (
+          <span className="text-[8px] font-black uppercase tracking-wider px-1 py-px rounded bg-emerald-500/20 text-emerald-400 leading-none">LIVE</span>
+        )}
+      </button>
+    );
+  };
 
   return (
     <div className="space-y-1.5">
@@ -120,6 +156,8 @@ export default function LocationSelector({ selectedLocation, onSelectLocation, o
           </button>
         )}
       </div>
+
+      {/* Row 1: My Location + Favorites + Live Lakes */}
       <div className="relative group">
         {canScrollLeft && (
           <button
@@ -139,60 +177,31 @@ export default function LocationSelector({ selectedLocation, onSelectLocation, o
             <ChevronRight className="w-4 h-4 text-slate-400" />
           </button>
         )}
-      <div ref={scrollRef} onWheel={onWheel} className="flex overflow-x-auto gap-2 pb-2 hide-scrollbar">
-        {/* My Location */}
-        <button
-          onClick={() => {
-            if ('geolocation' in navigator) {
-              navigator.geolocation.getCurrentPosition(
-                (pos) => onSelectLocation(`geo:${pos.coords.latitude},${pos.coords.longitude}`),
-                () => alert('Location access denied. Use the map to select a location.')
-              );
-            }
-          }}
-          className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all whitespace-nowrap cursor-pointer bg-cyan-900/30 text-cyan-400 border-cyan-500/50 hover:border-cyan-400"
-        >
-          <Navigation className="w-3 h-3" />
-          <span>My Location</span>
-        </button>
+        <div ref={scrollRef} onWheel={onWheel} className="flex overflow-x-auto gap-2 pb-1.5 hide-scrollbar">
+          <button
+            onClick={() => {
+              if ('geolocation' in navigator) {
+                navigator.geolocation.getCurrentPosition(
+                  (pos) => onSelectLocation(`geo:${pos.coords.latitude},${pos.coords.longitude}`),
+                  () => alert('Location access denied. Use the map to select a location.')
+                );
+              }
+            }}
+            className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all whitespace-nowrap cursor-pointer bg-cyan-900/30 text-cyan-400 border-cyan-500/50 hover:border-cyan-400"
+          >
+            <Navigation className="w-3 h-3" />
+            <span>My Location</span>
+          </button>
+          {row1.map(renderPill)}
+        </div>
+      </div>
 
-        {orderedPills.map((loc) => {
-          const isSelected = selectedLocation === loc.id;
-          const isLive = liveIds.has(loc.id);
-          const isFav = favSet.has(loc.id);
-          return (
-            <button
-              key={loc.id}
-              onClick={() => onSelectLocation(loc.id)}
-              className={`
-                flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full
-                text-xs font-semibold border transition-all whitespace-nowrap cursor-pointer
-                ${isFav && isSelected
-                  ? 'bg-amber-900/40 text-amber-300 border-amber-400 shadow-lg shadow-amber-500/20'
-                  : isFav
-                    ? 'bg-amber-950/30 text-amber-400 border-amber-600/50 hover:border-amber-400 hover:text-amber-300'
-                    : isSelected && isLive
-                      ? 'bg-emerald-900/50 text-emerald-300 border-emerald-400 shadow-lg shadow-emerald-500/20'
-                      : isLive
-                        ? 'bg-emerald-950/40 text-emerald-400 border-emerald-600/50 hover:border-emerald-400 hover:text-emerald-300'
-                        : isSelected
-                          ? 'bg-slate-700/60 text-white border-slate-400 shadow-lg'
-                          : 'bg-slate-800/60 text-slate-400 border-slate-700 hover:border-slate-500 hover:text-slate-300'
-                }
-              `}
-            >
-              {isFav && <Star className="w-3 h-3 fill-amber-400 text-amber-400" />}
-              {isLive && !isFav && <Radio className="w-3 h-3" />}
-              {!isLive && !isFav && <span className="text-sm leading-none">{TYPE_ICON[loc.type] || '💧'}</span>}
-              <span>{loc.name}</span>
-              {isLive && (
-                <span className="text-[8px] font-black uppercase tracking-wider px-1 py-px rounded bg-emerald-500/20 text-emerald-400 leading-none">LIVE</span>
-              )}
-            </button>
-          );
-        })}
-      </div>
-      </div>
+      {/* Row 2: Rivers & Reservoirs */}
+      {row2.length > 0 && (
+        <div className="flex overflow-x-auto gap-2 pb-1 hide-scrollbar">
+          {row2.map(renderPill)}
+        </div>
+      )}
     </div>
   );
 }
