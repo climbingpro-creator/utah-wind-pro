@@ -112,6 +112,60 @@ export const WATER_TEMP_SOURCES = {
     note: 'Satellite-calibrated seasonal model',
     monthlyAvg: [34, 36, 42, 48, 56, 66, 74, 74, 66, 54, 44, 36],
   },
+  'sulfur-creek': {
+    type: 'seasonal',
+    name: 'Sulphur Creek Reservoir',
+    note: 'High-elevation Wyoming reservoir (7,100 ft) — very cold water',
+    monthlyAvg: [32, 33, 35, 40, 48, 56, 64, 63, 56, 45, 36, 33],
+  },
+  'lake-powell': {
+    type: 'usgs',
+    siteId: '09380000',
+    name: 'Colorado River at Lees Ferry',
+    note: 'Tailwater below Glen Canyon Dam — closest USGS temp gauge',
+  },
+  'bear-lake': {
+    type: 'seasonal',
+    name: 'Bear Lake',
+    note: 'Deep natural lake — slow to warm, slow to cool',
+    monthlyAvg: [33, 33, 36, 42, 50, 58, 66, 68, 62, 52, 42, 35],
+  },
+  'pineview': {
+    type: 'seasonal',
+    name: 'Pineview Reservoir',
+    note: 'Ogden Valley reservoir — moderate elevation (4,900 ft)',
+    monthlyAvg: [33, 35, 40, 46, 54, 64, 72, 72, 64, 52, 42, 35],
+  },
+  'yuba': {
+    type: 'seasonal',
+    name: 'Yuba Reservoir',
+    note: 'Central Utah reservoir — warm summers, ice by December',
+    monthlyAvg: [33, 35, 40, 47, 55, 65, 74, 73, 65, 53, 42, 34],
+  },
+  'starvation': {
+    type: 'usgs',
+    siteId: '09291000',
+    name: 'Duchesne River at Duchesne',
+    note: 'Nearest USGS temp gauge to Starvation Reservoir inflow',
+  },
+  'scofield': {
+    type: 'seasonal',
+    name: 'Scofield Reservoir',
+    note: 'High-elevation reservoir (7,600 ft) — cold water fishery',
+    monthlyAvg: [32, 33, 36, 41, 48, 56, 64, 64, 57, 46, 37, 33],
+  },
+  'sand-hollow': {
+    type: 'seasonal',
+    name: 'Sand Hollow Reservoir',
+    note: 'Warm-water desert reservoir near St. George (3,000 ft)',
+    monthlyAvg: [48, 50, 55, 62, 70, 80, 86, 85, 78, 66, 55, 48],
+  },
+  'fish-lake': {
+    type: 'seasonal',
+    name: 'Fish Lake',
+    note: 'High-elevation natural lake (8,843 ft) — cold clear water',
+    monthlyAvg: [32, 32, 34, 39, 46, 54, 62, 62, 55, 44, 36, 33],
+  },
 };
 
 // USGS river gauges that provide discharge (cfs) — parameterCd=00060

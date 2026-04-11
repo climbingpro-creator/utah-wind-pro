@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import Map, { Source, Layer, Marker, Popup, NavigationControl, GeolocateControl } from 'react-map-gl/maplibre';
 import maplibregl from 'maplibre-gl';
 import { Protocol } from 'pmtiles';
@@ -7,6 +7,7 @@ import { Compass, Maximize2, X, Droplets, Fish, Waves, Search } from 'lucide-rea
 import { generateFisheryProfile, LAKE_CONFIGS } from '@utahwind/weather';
 import { trackPinDrop, trackBioApiCall } from '@utahwind/ui';
 import { FISHING_LOCATIONS } from '../FishingMode';
+import { LOCATION_LIST } from '../LocationSelector';
 import SyntheticFishingCard from './SyntheticFishingCard';
 import WaterSearch from './WaterSearch';
 
@@ -165,6 +166,17 @@ export function VectorWaterMap({ currentWeatherData = {}, selectedLocation, onLo
   // Cache for water body names - maps polygon ID to name
   // This persists across hovers so once we learn a lake's name, we remember it
   const waterNameCacheRef = useRef({});
+
+  const accessMarkers = useMemo(() => {
+    return LOCATION_LIST
+      .map((loc) => {
+        const fl = FISHING_LOCATIONS[loc.id];
+        const coords = fl?.coordinates || LAKE_CONFIGS?.[loc.id]?.coordinates;
+        if (!coords) return null;
+        return { id: loc.id, name: fl?.name || loc.name, lat: coords.lat, lng: coords.lng, type: loc.type };
+      })
+      .filter(Boolean);
+  }, []);
 
   // Auto-pan to selected location when it changes
   useEffect(() => {
@@ -1177,6 +1189,26 @@ export function VectorWaterMap({ currentWeatherData = {}, selectedLocation, onLo
               />
             </Source>
           )}
+
+          {/* Launch / access point markers for all pill locations */}
+          {accessMarkers.map((m) => (
+            <Marker key={m.id} longitude={m.lng} latitude={m.lat} anchor="center"
+              onClick={(e) => { e.originalEvent?.stopPropagation(); if (onLocationSelect) onLocationSelect(m.id); }}
+            >
+              <div
+                className={`flex items-center justify-center rounded-full border-2 shadow-md cursor-pointer transition-all ${
+                  m.id === selectedLocation
+                    ? 'w-6 h-6 bg-emerald-500 border-white scale-110'
+                    : 'w-4 h-4 bg-cyan-500/80 border-white/70 hover:scale-125 hover:bg-emerald-400'
+                }`}
+                title={`${m.name} — ${m.type === 'river' ? 'Access Point' : 'Boat Ramp'}`}
+              >
+                {m.id === selectedLocation && (
+                  <span className="text-[7px] font-black text-white">⚓</span>
+                )}
+              </div>
+            </Marker>
+          ))}
 
           {/* Dropped pin marker */}
           {droppedPin && <PinDropMarker coords={droppedPin} />}

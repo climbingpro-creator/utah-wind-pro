@@ -109,6 +109,160 @@ export const WU_PWS_STATIONS = {
     ],
   },
 
+  // ─── STRAWBERRY RESERVOIR ─────────────────────────────────────
+  'strawberry': {
+    corridor: 'mountain_basin',
+    stations: [
+      { id: 'KUTSTRAW1', name: 'Strawberry Bay', lat: 40.170, lon: -111.150, role: 'close', priority: 1 },
+      { id: 'KUTSTRAW2', name: 'Strawberry Valley', lat: 40.180, lon: -111.190, role: 'close', priority: 2 },
+      { id: 'KUTHEBER105', name: 'Heber City E', lat: 40.485, lon: -111.444, role: 'early', priority: 3 },
+    ],
+  },
+
+  // ─── PROVO RIVER SEGMENTS ───────────────────────────────────
+  'provo-lower': {
+    corridor: 'canyon_outflow',
+    stations: [
+      { id: 'KUTPROVO83', name: 'Provo NE', lat: 40.260, lon: -111.630, role: 'close', priority: 1 },
+      { id: 'KUTOREM47', name: 'Orem N', lat: 40.310, lon: -111.700, role: 'mid', priority: 2 },
+      { id: 'KUTPLEAS11', name: 'Pleasant Grove', lat: 40.400, lon: -111.742, role: 'early', priority: 3 },
+    ],
+  },
+  'provo-middle': {
+    corridor: 'canyon_thermal',
+    stations: [
+      { id: 'KUTMIDWA37', name: 'Midway', lat: 40.505, lon: -111.465, role: 'close', priority: 1 },
+      { id: 'KUTHEBER105', name: 'Heber City E', lat: 40.485, lon: -111.444, role: 'close', priority: 2 },
+      { id: 'KUTHEBER26', name: 'Heber City S', lat: 40.477, lon: -111.450, role: 'mid', priority: 3 },
+    ],
+  },
+  'provo-upper': {
+    corridor: 'mountain_valley',
+    stations: [
+      { id: 'KUTHEBER99', name: 'Heber City', lat: 40.510, lon: -111.410, role: 'close', priority: 1 },
+      { id: 'KUTHEBER105', name: 'Heber City E', lat: 40.485, lon: -111.444, role: 'mid', priority: 2 },
+    ],
+  },
+
+  // ─── GREEN RIVER SEGMENTS ──────────────────────────────────
+  'green-a': {
+    corridor: 'gorge_outflow',
+    stations: [
+      { id: 'KUTVERNA22', name: 'Vernal NW', lat: 40.470, lon: -109.560, role: 'mid', priority: 1 },
+      { id: 'KUTVERNA51', name: 'Vernal S', lat: 40.440, lon: -109.530, role: 'mid', priority: 2 },
+      { id: 'KUTVERNA15', name: 'Vernal', lat: 40.455, lon: -109.520, role: 'early', priority: 3 },
+    ],
+  },
+  'green-b': {
+    corridor: 'gorge_outflow',
+    stations: [
+      { id: 'KUTVERNA22', name: 'Vernal NW', lat: 40.470, lon: -109.560, role: 'mid', priority: 1 },
+      { id: 'KUTVERNA51', name: 'Vernal S', lat: 40.440, lon: -109.530, role: 'mid', priority: 2 },
+    ],
+  },
+  'green-c': {
+    corridor: 'gorge_outflow',
+    stations: [
+      { id: 'KUTVERNA22', name: 'Vernal NW', lat: 40.470, lon: -109.560, role: 'mid', priority: 1 },
+    ],
+  },
+
+  // ─── LAKE POWELL ────────────────────────────────────────────
+  'lake-powell': {
+    corridor: 'desert_canyon',
+    stations: [
+      { id: 'KUTPAGED2', name: 'Page AZ (Wahweap)', lat: 36.920, lon: -111.460, role: 'close', priority: 1 },
+      { id: 'KAZPAGE27', name: 'Page AZ S', lat: 36.900, lon: -111.450, role: 'close', priority: 2 },
+      { id: 'KAZPAGE11', name: 'Page AZ N', lat: 36.940, lon: -111.470, role: 'mid', priority: 3 },
+    ],
+  },
+
+  // ─── BEAR LAKE ──────────────────────────────────────────────
+  'bear-lake': {
+    corridor: 'high_valley',
+    stations: [
+      { id: 'KUTGARDE9', name: 'Garden City', lat: 41.940, lon: -111.400, role: 'close', priority: 1 },
+      { id: 'KUTLOGAN12', name: 'Logan', lat: 41.735, lon: -111.835, role: 'early', priority: 2 },
+      { id: 'KIDMONTPE6', name: 'Montpelier ID', lat: 42.320, lon: -111.300, role: 'mid', priority: 3 },
+    ],
+  },
+
+  // ─── FLAMING GORGE ─────────────────────────────────────────
+  'flaming-gorge': {
+    corridor: 'gorge_outflow',
+    stations: [
+      { id: 'KUTVERNA22', name: 'Vernal NW', lat: 40.470, lon: -109.560, role: 'close', priority: 1 },
+      { id: 'KUTVERNA51', name: 'Vernal S', lat: 40.440, lon: -109.530, role: 'mid', priority: 2 },
+      { id: 'KWYGREEN3', name: 'Green River WY', lat: 41.530, lon: -109.460, role: 'early', priority: 3 },
+    ],
+  },
+
+  // ─── PINEVIEW RESERVOIR ────────────────────────────────────
+  'pineview': {
+    corridor: 'ogden_valley',
+    stations: [
+      { id: 'KUTEDEN14', name: 'Eden', lat: 41.310, lon: -111.770, role: 'close', priority: 1 },
+      { id: 'KUTOGDEN65', name: 'Ogden Valley', lat: 41.280, lon: -111.790, role: 'close', priority: 2 },
+      { id: 'KUTOGDEN32', name: 'Ogden', lat: 41.230, lon: -111.970, role: 'early', priority: 3 },
+    ],
+  },
+
+  // ─── WEBER RIVER ───────────────────────────────────────────
+  'weber-river': {
+    corridor: 'canyon_corridor',
+    stations: [
+      { id: 'KUTHEBER105', name: 'Heber City E', lat: 40.485, lon: -111.444, role: 'close', priority: 1 },
+      { id: 'KUTPARKCITY4', name: 'Park City W', lat: 40.660, lon: -111.520, role: 'mid', priority: 2 },
+      { id: 'KUTCOALV2', name: 'Coalville', lat: 40.920, lon: -111.400, role: 'early', priority: 3 },
+    ],
+  },
+
+  // ─── YUBA RESERVOIR ────────────────────────────────────────
+  'yuba': {
+    corridor: 'central_valley',
+    stations: [
+      { id: 'KUTNEPHI14', name: 'Nephi', lat: 39.710, lon: -111.830, role: 'close', priority: 1 },
+      { id: 'KUTLEVAN3', name: 'Levan', lat: 39.550, lon: -111.860, role: 'mid', priority: 2 },
+    ],
+  },
+
+  // ─── STARVATION RESERVOIR ──────────────────────────────────
+  'starvation': {
+    corridor: 'duchesne_basin',
+    stations: [
+      { id: 'KUTDUCHE5', name: 'Duchesne', lat: 40.160, lon: -110.400, role: 'close', priority: 1 },
+      { id: 'KUTROOS11', name: 'Roosevelt', lat: 40.300, lon: -110.010, role: 'mid', priority: 2 },
+    ],
+  },
+
+  // ─── SCOFIELD RESERVOIR ────────────────────────────────────
+  'scofield': {
+    corridor: 'high_plateau',
+    stations: [
+      { id: 'KUTPRICE18', name: 'Price', lat: 39.600, lon: -110.810, role: 'close', priority: 1 },
+      { id: 'KUTHELPE4', name: 'Helper', lat: 39.680, lon: -110.850, role: 'mid', priority: 2 },
+    ],
+  },
+
+  // ─── SAND HOLLOW RESERVOIR ─────────────────────────────────
+  'sand-hollow': {
+    corridor: 'desert_basin',
+    stations: [
+      { id: 'KUTSTGEO128', name: 'St. George SE', lat: 37.080, lon: -113.540, role: 'close', priority: 1 },
+      { id: 'KUTSTGEO44', name: 'St. George', lat: 37.100, lon: -113.570, role: 'mid', priority: 2 },
+      { id: 'KUTSTGEO91', name: 'St. George NE', lat: 37.120, lon: -113.530, role: 'mid', priority: 3 },
+    ],
+  },
+
+  // ─── FISH LAKE ─────────────────────────────────────────────
+  'fish-lake': {
+    corridor: 'high_mountain',
+    stations: [
+      { id: 'KUTRICHF9', name: 'Richfield', lat: 38.770, lon: -112.080, role: 'close', priority: 1 },
+      { id: 'KUTLOA2', name: 'Loa', lat: 38.400, lon: -111.640, role: 'mid', priority: 2 },
+    ],
+  },
+
   // ─── SANDY BEACH ───────────────────────────────────────────────
   'utah-lake-sandy': {
     corridor: 'se_thermal',
@@ -145,10 +299,28 @@ export const WU_PRIORITY_STATIONS = [
   'KUTSANDY188',
   // Alpine (PotM east bench)
   'KUTALPIN3', 'KUTALPIN25',
-  // Heber Valley (Deer Creek / Jordanelle)
+  // Heber Valley (Deer Creek / Jordanelle / Provo River)
   'KUTMIDWA37', 'KUTHEBER105', 'KUTHEBER26', 'KUTHEBER99',
-  // Pleasant Grove / Cedar Hills (Vineyard / Deer Creek approach)
-  'KUTPLEAS11', 'KUTCEDAR10',
+  // Pleasant Grove / Cedar Hills / Lower Provo
+  'KUTPLEAS11', 'KUTCEDAR10', 'KUTPROVO83', 'KUTOREM47',
+  // Strawberry
+  'KUTSTRAW1', 'KUTSTRAW2',
+  // Vernal / Green River / Flaming Gorge
+  'KUTVERNA22', 'KUTVERNA51', 'KUTVERNA15',
+  // Bear Lake
+  'KUTGARDE9',
+  // Pineview / Ogden Valley
+  'KUTEDEN14', 'KUTOGDEN65',
+  // Yuba / central Utah
+  'KUTNEPHI14',
+  // Scofield / Price
+  'KUTPRICE18',
+  // Sand Hollow / St. George
+  'KUTSTGEO128', 'KUTSTGEO44',
+  // Fish Lake / Richfield
+  'KUTRICHF9',
+  // Starvation / Duchesne
+  'KUTDUCHE5',
 ];
 
 /**
