@@ -52,6 +52,24 @@ export const WATER_TEMP_SOURCES = {
     name: 'Weber River nr Oakley',
     note: 'Upper Weber fishing corridor',
   },
+  'weber-upper': {
+    type: 'usgs',
+    siteId: '10128500',
+    name: 'Weber River nr Oakley',
+    note: 'Upper Weber — Rockport to Oakley/Peoa',
+  },
+  'weber-middle': {
+    type: 'usgs',
+    siteId: '10130500',
+    name: 'Weber River nr Coalville',
+    note: 'Middle Weber — Echo to Rockport corridor',
+  },
+  'weber-lower': {
+    type: 'usgs',
+    siteId: '10133550',
+    name: 'Weber River at Morgan',
+    note: 'Lower Weber — I-84/I-89 canyon to Echo',
+  },
   'green-river': {
     type: 'usgs',
     siteId: '09234500',
@@ -177,6 +195,9 @@ export const RIVER_FLOW_SOURCES = {
   'middle-provo': { siteId: '10155500', name: 'Provo River nr Charleston' },
   'lower-provo':  { siteId: '10159500', name: 'Provo River bl Deer Creek Dam' },
   'weber-river':  { siteId: '10130500', name: 'Weber River nr Coalville' },
+  'weber-upper':  { siteId: '10128500', name: 'Weber River nr Oakley' },
+  'weber-middle': { siteId: '10130500', name: 'Weber River nr Coalville' },
+  'weber-lower':  { siteId: '10133550', name: 'Weber River at Morgan' },
   'green-river':  { siteId: '09234500', name: 'Green River nr Greendale (below dam)' },
   'green-a':      { siteId: '09234500', name: 'Green River — A Section (below dam)' },
   'green-b':      { siteId: '09234500', name: 'Green River — B Section' },
@@ -260,6 +281,42 @@ export const RIVER_FLOW_THRESHOLDS = {
       [Infinity, 'Dangerous — Stay Off', 'danger'],
     ],
   },
+  'weber-upper': {
+    name: 'Weber River — Upper',
+    unit: 'cfs',
+    levels: [
+      [15,   'Very Low',                  'ok'],
+      [40,   'Low — Fishable',            'good'],
+      [120,  'Optimal — Prime Wading',    'great'],
+      [200,  'Borderline — Rising Water', 'caution'],
+      [350,  'High — Unfishable',         'warning'],
+      [Infinity, 'Dangerous — Stay Off',  'danger'],
+    ],
+  },
+  'weber-middle': {
+    name: 'Weber River — Middle',
+    unit: 'cfs',
+    levels: [
+      [40,   'Very Low',                 'ok'],
+      [120,  'Low — Fishable',           'good'],
+      [350,  'Optimal — Prime Wading',   'great'],
+      [500,  'Borderline — Rising Water', 'caution'],
+      [800,  'High — Float Only',        'warning'],
+      [Infinity, 'Dangerous — Stay Off', 'danger'],
+    ],
+  },
+  'weber-lower': {
+    name: 'Weber River — Lower',
+    unit: 'cfs',
+    levels: [
+      [80,   'Very Low',                  'ok'],
+      [200,  'Low — Fishable',            'good'],
+      [600,  'Optimal — Wading/Floating', 'great'],
+      [1000, 'High — Float Only',         'caution'],
+      [1500, 'Very High — Caution',       'warning'],
+      [Infinity, 'Dangerous — Stay Off',  'danger'],
+    ],
+  },
   'green-river': {
     name: 'Green River (A/B/C Sections)',
     unit: 'cfs',
@@ -335,6 +392,9 @@ const MINIMUM_EXPECTED_CFS = {
   'middle-provo':   15,
   'lower-provo':    15,
   'weber-river':    10,
+  'weber-upper':    5,
+  'weber-middle':   10,
+  'weber-lower':    20,
 };
 
 export function getRiverFlowStatus(locationId, cfs) {

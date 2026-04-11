@@ -113,6 +113,9 @@ ECOSYSTEMS['provo-upper']  = ECOSYSTEMS['provo-river'];
 ECOSYSTEMS['green-a']      = ECOSYSTEMS['green-river'];
 ECOSYSTEMS['green-b']      = ECOSYSTEMS['green-river'];
 ECOSYSTEMS['green-c']      = ECOSYSTEMS['green-river'];
+ECOSYSTEMS['weber-upper']  = ECOSYSTEMS['weber-river'];
+ECOSYSTEMS['weber-middle'] = ECOSYSTEMS['weber-river'];
+ECOSYSTEMS['weber-lower']  = ECOSYSTEMS['weber-river'];
 
 export function getEcosystem(locationId) {
   return ECOSYSTEMS[locationId] || null;

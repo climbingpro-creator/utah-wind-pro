@@ -23,7 +23,10 @@ const UTAH_WATERS = [
   { id: 'bear-lake', name: 'Bear Lake', type: 'lake', region: 'Utah/Idaho' },
   { id: 'flaming-gorge', name: 'Flaming Gorge', type: 'reservoir', region: 'Utah' },
   { id: 'pineview', name: 'Pineview', type: 'reservoir', region: 'Utah' },
-  { id: 'weber-river', name: 'Weber River', type: 'river', region: 'Utah' },
+  // Weber River — segmented
+  { id: 'weber-upper', name: 'Upper Weber River', type: 'river', region: 'Summit' },
+  { id: 'weber-middle', name: 'Middle Weber River', type: 'river', region: 'Summit' },
+  { id: 'weber-lower', name: 'Lower Weber River', type: 'river', region: 'Morgan' },
   { id: 'yuba', name: 'Yuba', type: 'reservoir', region: 'Utah' },
   { id: 'starvation', name: 'Starvation', type: 'reservoir', region: 'Utah' },
   { id: 'scofield', name: 'Scofield', type: 'reservoir', region: 'Utah' },

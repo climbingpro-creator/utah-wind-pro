@@ -341,8 +341,8 @@
     },
 
     "weber-river-upper": {
-      "waterbody": "Weber River — Oakley to Echo Reservoir",
-      "aliases": ["weber-river"],
+      "waterbody": "Weber River — Upper (Rockport to Oakley/Peoa)",
+      "aliases": ["weber-river", "weber-upper"],
       "region": "Summit",
       "rules": [
         { "type": "gear", "text": "Artificial flies and lures only — no bait" },
@@ -351,13 +351,24 @@
       "special": "ARTIFICIAL ONLY — Blue Ribbon upper Weber. Bait prohibited, reduced limits."
     },
 
+    "weber-river-middle": {
+      "waterbody": "Weber River — Middle (Echo to Rockport)",
+      "aliases": ["weber-middle"],
+      "region": "Summit",
+      "rules": [
+        { "type": "gear", "text": "Artificial flies and lures only — no bait" },
+        { "type": "limit", "text": "Trout: 2 fish under 15\"" }
+      ],
+      "special": "ARTIFICIAL ONLY — The Wanship-Coalville corridor below Rockport Dam. Bait prohibited, reduced limits."
+    },
+
     "weber-river-lower": {
-      "waterbody": "Weber River — Morgan to Ogden",
-      "aliases": [],
+      "waterbody": "Weber River — Lower (I-84/I-89 to Echo)",
+      "aliases": ["weber-lower"],
       "region": "Morgan / Weber",
       "rules": [
         { "type": "limit", "text": "Trout: 4 fish" },
-        { "type": "gear", "text": "All methods allowed" }
+        { "type": "gear", "text": "All methods allowed including bait" }
       ]
     },
 

@@ -137,14 +137,17 @@ For the pelagic calendar: ${isFreshwater ? 'describe seasonal fish movement patt
 
     const artificialOnlyWaters = [
       'provo river', 'lower provo', 'middle provo', 'upper provo',
-      'green river', 'logan river', 'blacksmith fork', 'weber river',
+      'green river', 'logan river', 'blacksmith fork',
+      'upper weber', 'middle weber', 'weber river — upper', 'weber river — middle',
       'ogden river', 'whitewater', 'huntington creek', 'fish creek',
       'currant creek', 'right fork', 'left fork', 'red butte creek',
       'city creek', 'emigration creek', 'mill creek', 'parleys creek',
       'strawberry river',
     ];
+    const baitAllowedWaters = ['lower weber', 'weber river — lower'];
     const nameLower = name.toLowerCase();
-    const isArtificialOnly = artificialOnlyWaters.some(w => nameLower.includes(w));
+    const isArtificialOnly = artificialOnlyWaters.some(w => nameLower.includes(w))
+      && !baitAllowedWaters.some(w => nameLower.includes(w));
     const gearConstraint = isArtificialOnly
       ? `\n\nCRITICAL REGULATION: "${name}" is ARTIFICIAL FLIES AND LURES ONLY — NO BAIT. Do NOT recommend PowerBait, worms, nightcrawlers, corn, live bait, or any natural bait. Only recommend artificial lures (spoons, spinners, crankbaits, soft plastics) and fly patterns.`
       : '';

@@ -75,25 +75,24 @@ const KNOWN_TAILWATERS = [
     tailwaterDescription: 'Green River (below Flaming Gorge Dam)',
   },
   {
-    name: 'Weber River',
-    namePatterns: ['weber river', 'weber'],
-    dam: 'Echo Dam',
-    damLat: 40.9667,
-    damLng: -111.4333,
+    name: 'Weber River — Middle',
+    namePatterns: ['weber river', 'weber', 'weber-middle', 'weber-lower'],
+    dam: 'Rockport Dam',
+    damLat: 40.7840,
+    damLng: -111.3870,
     belowDamBounds: {
       maxLat: 40.97,
-      minLat: 40.85,
-      minLng: -111.55,
-      maxLng: -111.40,
+      minLat: 40.78,
+      minLng: -111.50,
+      maxLng: -111.35,
     },
-    // USGS 10128500 - Weber River near Oakley, UT
     downstreamGauge: {
-      siteId: '10128500',
-      siteName: 'Weber River near Oakley, UT',
-      lat: 40.7319,
-      lng: -111.2728,
+      siteId: '10130500',
+      siteName: 'Weber River near Coalville, UT',
+      lat: 40.8952,
+      lng: -111.4019,
     },
-    tailwaterDescription: 'Weber River (below Echo Dam)',
+    tailwaterDescription: 'Weber River (below Rockport Dam — Wanship/Coalville corridor)',
   },
 ];
 

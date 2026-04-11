@@ -78,7 +78,9 @@ const LOCATION_KEYWORDS = [
   { keywords: ['panguitch lake', 'panguitch'], id: 'panguitch' },
 
   // Other rivers
-  { keywords: ['weber river', 'weber'], id: 'weber-river' },
+  { keywords: ['weber river', 'weber'], id: 'weber-middle' },
+  { keywords: ['upper weber', 'peoa', 'oakley weber'], id: 'weber-upper' },
+  { keywords: ['lower weber', 'morgan weber', 'henefer'], id: 'weber-lower' },
   { keywords: ['logan river'], id: 'logan-river' },
   { keywords: ['blacksmith fork'], id: 'blacksmith-fork' },
   { keywords: ['sevier river'], id: 'sevier-river' },

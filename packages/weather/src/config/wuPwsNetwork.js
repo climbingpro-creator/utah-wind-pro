@@ -207,12 +207,36 @@ export const WU_PWS_STATIONS = {
     ],
   },
 
-  // ─── WEBER RIVER ───────────────────────────────────────────
+  // ─── WEBER RIVER — SEGMENTED ────────────────────────────────
   'weber-river': {
     corridor: 'canyon_corridor',
     stations: [
-      { id: 'KUTHEBER105', name: 'Heber City E', lat: 40.485, lon: -111.444, role: 'close', priority: 1 },
+      { id: 'KUTCOALV2', name: 'Coalville', lat: 40.920, lon: -111.400, role: 'close', priority: 1 },
       { id: 'KUTPARKCITY4', name: 'Park City W', lat: 40.660, lon: -111.520, role: 'mid', priority: 2 },
+      { id: 'KUTHEBER105', name: 'Heber City E', lat: 40.485, lon: -111.444, role: 'early', priority: 3 },
+    ],
+  },
+  'weber-upper': {
+    corridor: 'mountain_valley',
+    stations: [
+      { id: 'KUTPARKCITY4', name: 'Park City W', lat: 40.660, lon: -111.520, role: 'close', priority: 1 },
+      { id: 'KUTKAMAS2', name: 'Kamas', lat: 40.643, lon: -111.281, role: 'close', priority: 2 },
+      { id: 'KUTCOALV2', name: 'Coalville', lat: 40.920, lon: -111.400, role: 'mid', priority: 3 },
+    ],
+  },
+  'weber-middle': {
+    corridor: 'canyon_corridor',
+    stations: [
+      { id: 'KUTCOALV2', name: 'Coalville', lat: 40.920, lon: -111.400, role: 'close', priority: 1 },
+      { id: 'KUTPARKCITY4', name: 'Park City W', lat: 40.660, lon: -111.520, role: 'mid', priority: 2 },
+      { id: 'KUTWANSH1', name: 'Wanship', lat: 40.810, lon: -111.406, role: 'close', priority: 3 },
+    ],
+  },
+  'weber-lower': {
+    corridor: 'canyon_corridor',
+    stations: [
+      { id: 'KUTMORGA4', name: 'Morgan', lat: 41.040, lon: -111.665, role: 'close', priority: 1 },
+      { id: 'KUTHENEF1', name: 'Henefer', lat: 40.975, lon: -111.500, role: 'close', priority: 2 },
       { id: 'KUTCOALV2', name: 'Coalville', lat: 40.920, lon: -111.400, role: 'early', priority: 3 },
     ],
   },
