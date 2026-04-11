@@ -162,6 +162,7 @@ export { default as TacticalRecommendationEngine } from './services/TacticalReco
 export {
   fetchOpenMeteoWeather,
   fetchOpenMeteoCurrent,
+  fetchExtendedForecast,
   isOutsideUS,
 } from './services/OpenMeteoAdapter.js';
 

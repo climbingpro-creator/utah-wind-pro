@@ -280,9 +280,53 @@ export function isOutsideUS(lat, lng) {
   return true;
 }
 
+/**
+ * Fetch 16-day daily forecast from Open-Meteo.
+ * Returns one entry per day with highs, lows, wind, precip, and sky.
+ */
+export async function fetchExtendedForecast(lat, lng) {
+  const url = `${OPEN_METEO_BASE}?latitude=${lat}&longitude=${lng}` +
+    '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,' +
+    'precipitation_probability_max,wind_speed_10m_max,wind_gusts_10m_max,' +
+    'wind_direction_10m_dominant,sunrise,sunset' +
+    '&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=auto' +
+    '&forecast_days=16';
+
+  try {
+    const response = await fetch(url, { signal: AbortSignal.timeout(10000) });
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    if (!data.daily?.time) return null;
+
+    const days = data.daily.time.map((date, i) => ({
+      date,
+      tempHigh: data.daily.temperature_2m_max?.[i],
+      tempLow: data.daily.temperature_2m_min?.[i],
+      windMax: data.daily.wind_speed_10m_max?.[i],
+      gustMax: data.daily.wind_gusts_10m_max?.[i],
+      windDirDominant: data.daily.wind_direction_10m_dominant?.[i],
+      windDirCardinal: degreesToCardinal(data.daily.wind_direction_10m_dominant?.[i]),
+      precipSum: data.daily.precipitation_sum?.[i],
+      precipChance: data.daily.precipitation_probability_max?.[i],
+      weatherCode: data.daily.weather_code?.[i],
+      sky: WEATHER_CODE_MAP[data.daily.weather_code?.[i]] || 'partly',
+      shortForecast: weatherCodeToForecast(data.daily.weather_code?.[i]),
+      sunrise: data.daily.sunrise?.[i],
+      sunset: data.daily.sunset?.[i],
+    }));
+
+    return { days, timezone: data.timezone, elevation: data.elevation, source: 'open-meteo' };
+  } catch (err) {
+    console.error('[OpenMeteo] Extended forecast error:', err.message);
+    return null;
+  }
+}
+
 export default {
   fetchOpenMeteoWeather,
   fetchOpenMeteoCurrent,
+  fetchExtendedForecast,
   isOutsideUS,
   WEATHER_CODE_MAP,
 };

@@ -6,6 +6,7 @@ import { getAllWaterTemps, getAllRiverFlows, getRiverFlowStatus } from '../servi
 import { getDailyFlyPick, parseSkyCondition, TIME_WINDOW_LABELS } from '../services/FlyRecommender';
 import { getDailyLurePick, LURES, getShoreStrategy, TIME_WINDOW_LABELS as LURE_TIME_LABELS } from '../services/LureRecommender';
 import { isArtificialOnly } from '../services/RegulationFilter';
+import { fetchExtendedForecast } from '@utahwind/weather';
 import WaterForecast from './WaterForecast';
 import { safeToFixed } from '../utils/safeToFixed';
 import { getUtahVernacular } from '../services/UtahVernacular';
@@ -1241,6 +1242,47 @@ function getCurrentSeason() {
   return 'winter';
 }
 
+/**
+ * Score a single forecast day for fishing quality (0–100).
+ * Factors: wind, precipitation probability, cloud cover (inferred from sky),
+ * temperature swing, and weather severity.
+ */
+function scoreForecastDay(day) {
+  let score = 70;
+
+  const wind = day.windMax ?? 5;
+  if (wind <= 5) score += 15;
+  else if (wind <= 10) score += 10;
+  else if (wind <= 15) score += 0;
+  else if (wind <= 20) score -= 10;
+  else score -= 25;
+
+  const precip = day.precipChance ?? 0;
+  if (precip <= 10) score += 10;
+  else if (precip <= 30) score += 5;
+  else if (precip <= 50) score -= 5;
+  else if (precip <= 70) score -= 15;
+  else score -= 25;
+
+  const sky = day.sky || 'partly';
+  if (sky === 'cloudy') score += 5;
+  else if (sky === 'partly') score += 3;
+
+  if (sky === 'storm') score -= 15;
+  if (sky === 'drizzle') score -= 3;
+  if (sky === 'rain') score -= 8;
+
+  return Math.max(0, Math.min(100, Math.round(score)));
+}
+
+function getForecastDayLabel(score) {
+  if (score >= 80) return { label: 'Excellent', color: 'emerald', emoji: '🔥' };
+  if (score >= 65) return { label: 'Good', color: 'green', emoji: '👍' };
+  if (score >= 50) return { label: 'Fair', color: 'yellow', emoji: '👌' };
+  if (score >= 35) return { label: 'Poor', color: 'orange', emoji: '⚠️' };
+  return { label: 'Skip It', color: 'red', emoji: '❌' };
+}
+
 // Main Fishing Mode Component
 const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamData = {}, hourlyForecast, selectedLocation = 'strawberry', isPro = false, onUnlockPro }) => {
   const { theme } = useTheme();
@@ -1282,6 +1324,18 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
     getAllWaterTemps().then(setAllWaterTemps).catch(() => {});
     getAllRiverFlows().then(setAllRiverFlows).catch(() => {});
   }, []);
+
+  // ── 14-day extended forecast ──
+  const [extendedForecast, setExtendedForecast] = useState(null);
+  useEffect(() => {
+    let cancelled = false;
+    const coords = location?.coordinates;
+    if (!coords?.lat || !coords?.lng) return;
+    fetchExtendedForecast(coords.lat, coords.lng).then(result => {
+      if (!cancelled && result?.days) setExtendedForecast(result.days);
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [selectedLocation, location?.coordinates?.lat, location?.coordinates?.lng]);
 
   const waterTempData = allWaterTemps[selectedLocation] || null;
 
@@ -2761,6 +2815,122 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
         activity="fishing"
         upstreamData={upstreamData}
       />
+
+      {/* ── 14-Day Extended Fishing Forecast ── */}
+      {extendedForecast && extendedForecast.length > 1 && (
+        <div className={`rounded-2xl border p-4 ${isDark ? 'bg-slate-800/60 border-slate-700' : 'bg-white border-slate-200'}`}>
+          <div className="flex items-center gap-2 mb-4">
+            <Calendar className="w-5 h-5 text-blue-400" />
+            <h3 className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>
+              14-Day Fishing Forecast
+            </h3>
+            <span className="ml-auto text-[10px] text-slate-500">Powered by Open-Meteo</span>
+          </div>
+
+          {(() => {
+            const bestDay = extendedForecast.slice(1).reduce((best, d) => {
+              const s = scoreForecastDay(d);
+              return s > best.score ? { day: d, score: s } : best;
+            }, { day: null, score: -1 });
+            const bestLabel = bestDay.day ? getForecastDayLabel(bestDay.score) : null;
+            const bestDate = bestDay.day ? new Date(bestDay.day.date + 'T12:00:00') : null;
+            return bestDay.day && bestDay.score >= 65 ? (
+              <div className={`flex items-center gap-2 mb-4 p-2.5 rounded-xl ${isDark ? 'bg-emerald-900/30 border border-emerald-700/40' : 'bg-emerald-50 border border-emerald-200'}`}>
+                <span className="text-lg">{bestLabel.emoji}</span>
+                <span className={`text-xs font-medium ${isDark ? 'text-emerald-300' : 'text-emerald-700'}`}>
+                  Best window: {bestDate.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })} — {bestLabel.label} ({bestDay.score}/100)
+                </span>
+              </div>
+            ) : null;
+          })()}
+
+          <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
+            {extendedForecast.slice(0, 14).map((day, i) => {
+              const score = scoreForecastDay(day);
+              const info = getForecastDayLabel(score);
+              const d = new Date(day.date + 'T12:00:00');
+              const isToday = i === 0;
+              const dayName = isToday ? 'Today' : d.toLocaleDateString('en-US', { weekday: 'short' });
+              const dateStr = d.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' });
+
+              const bgBar = score >= 80 ? (isDark ? 'bg-emerald-500' : 'bg-emerald-500')
+                : score >= 65 ? (isDark ? 'bg-green-500' : 'bg-green-500')
+                : score >= 50 ? (isDark ? 'bg-yellow-500' : 'bg-yellow-500')
+                : score >= 35 ? (isDark ? 'bg-orange-500' : 'bg-orange-500')
+                : (isDark ? 'bg-red-500' : 'bg-red-500');
+
+              return (
+                <div
+                  key={day.date}
+                  className={`flex flex-col items-center rounded-xl p-1.5 transition-all ${
+                    isToday
+                      ? (isDark ? 'bg-blue-900/40 border border-blue-500/50 ring-1 ring-blue-500/30' : 'bg-blue-50 border border-blue-300 ring-1 ring-blue-200')
+                      : (isDark ? 'bg-slate-700/40 border border-slate-600/30' : 'bg-slate-50 border border-slate-200')
+                  }`}
+                >
+                  <span className={`text-[10px] font-bold ${isToday ? 'text-blue-400' : (isDark ? 'text-slate-400' : 'text-slate-500')}`}>
+                    {dayName}
+                  </span>
+                  <span className={`text-[9px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{dateStr}</span>
+
+                  {/* Score bar */}
+                  <div className={`w-full h-1 rounded-full mt-1.5 mb-1 ${isDark ? 'bg-slate-600' : 'bg-slate-200'}`}>
+                    <div className={`h-full rounded-full ${bgBar}`} style={{ width: `${score}%` }} />
+                  </div>
+                  <span className={`text-xs font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{score}</span>
+
+                  {/* Weather icon / sky text */}
+                  <span className="text-[10px] mt-0.5">
+                    {day.sky === 'clear' ? '☀️' : day.sky === 'partly' ? '⛅' : day.sky === 'cloudy' ? '☁️' : day.sky === 'rain' || day.sky === 'drizzle' ? '🌧️' : day.sky === 'storm' ? '⛈️' : '🌤️'}
+                  </span>
+
+                  {/* Temp range */}
+                  <div className="flex gap-0.5 items-baseline mt-0.5">
+                    <span className={`text-[9px] font-medium ${isDark ? 'text-orange-300' : 'text-orange-600'}`}>
+                      {day.tempHigh != null ? Math.round(day.tempHigh) : '--'}°
+                    </span>
+                    <span className={`text-[8px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>/</span>
+                    <span className={`text-[9px] ${isDark ? 'text-blue-300' : 'text-blue-500'}`}>
+                      {day.tempLow != null ? Math.round(day.tempLow) : '--'}°
+                    </span>
+                  </div>
+
+                  {/* Wind */}
+                  <div className="flex items-center gap-0.5 mt-0.5">
+                    <Wind className={`w-2.5 h-2.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`} />
+                    <span className={`text-[8px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                      {day.windMax != null ? Math.round(day.windMax) : '?'}
+                    </span>
+                  </div>
+
+                  {/* Precip chance */}
+                  {day.precipChance > 10 && (
+                    <span className={`text-[8px] mt-0.5 ${isDark ? 'text-blue-300' : 'text-blue-500'}`}>
+                      💧{day.precipChance}%
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Legend */}
+          <div className="flex flex-wrap items-center gap-3 mt-3 pt-2 border-t border-slate-700/30">
+            {[
+              { min: 80, label: 'Excellent', color: 'bg-emerald-500' },
+              { min: 65, label: 'Good', color: 'bg-green-500' },
+              { min: 50, label: 'Fair', color: 'bg-yellow-500' },
+              { min: 35, label: 'Poor', color: 'bg-orange-500' },
+              { min: 0, label: 'Skip', color: 'bg-red-500' },
+            ].map(tier => (
+              <div key={tier.label} className="flex items-center gap-1">
+                <div className={`w-2 h-2 rounded-full ${tier.color}`} />
+                <span className={`text-[9px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{tier.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
