@@ -909,12 +909,19 @@ export default function SyntheticFishingCard({ data, isLoading, onClose }) {
         <div className="text-[9px] text-slate-500 mt-1 leading-tight">{data.dataSource}</div>
       </div>
 
-      {/* ═══════ CORE METRICS ═══════ */}
+      {/* ═══════ 1. TOP HEADER METRICS ═══════ */}
 
       {/* Fishing Quality Score */}
       {data.fishingQuality != null && (
         <FishingQualityMeter score={data.fishingQuality} />
       )}
+
+      {/* ═══════ 2. ACTIONABLE GEAR (absolute top priority) ═══════ */}
+
+      {/* Gear Cards — Fly Box → Lure Selection → Tackle Setup */}
+      <GearCardsSection intel={data.anglerIntel} isOcean={isOcean} />
+
+      {/* ═══════ 3. WATER METRICS ═══════ */}
 
       {/* Live Weather Station (NWS / UDOT / Ambient — when available) */}
       {data.ambientWeather && (
@@ -1011,7 +1018,7 @@ export default function SyntheticFishingCard({ data, isLoading, onClose }) {
         </>
       )}
 
-      {/* Clarity / Flow Safety — Core metric, stays near top */}
+      {/* Clarity / Flow Safety */}
       <div className="px-3 pb-1.5">
         <div className={`rounded-lg px-2.5 py-2 ${clarityStyle.bg} border ${clarityStyle.border}`}>
           <div className="flex items-center gap-2 mb-0.5">
@@ -1031,11 +1038,6 @@ export default function SyntheticFishingCard({ data, isLoading, onClose }) {
         </div>
       </div>
 
-      {/* ═══════ ACTIONABLE GEAR (above the fold) ═══════ */}
-
-      {/* Gear Cards — Fly Box → Lure Selection → Tackle Setup */}
-      <GearCardsSection intel={data.anglerIntel} isOcean={isOcean} />
-
       {/* Tactical Headline — Weather-to-Tactic Intelligence */}
       {data.tacticalSummary && (
         <TacticalHeadlineSection tactical={data.tacticalSummary} />
@@ -1046,12 +1048,12 @@ export default function SyntheticFishingCard({ data, isLoading, onClose }) {
         <WeatherCorrelationBadges conditions={data.tacticalSummary.conditions} />
       )}
 
-      {/* ═══════ DYNAMIC INTELLIGENCE ═══════ */}
+      {/* ═══════ 4. DYNAMIC INTELLIGENCE ═══════ */}
 
       {/* Shop Report — YouTube transcript excerpt if available for this water */}
       <ShopReportSnippet locationId={data.matchedLocationId} waterName={data.vectorFeatureName || data.waterBodyName} />
 
-      {/* ═══════ CONTEXT ("THE WHY") ═══════ */}
+      {/* ═══════ 5. CONTEXT ("THE WHY") ═══════ */}
 
       {/* Tactical Context — Active Species, Depth Pattern (text-heavy, below gear) */}
       <TacticalContextSection intel={data.anglerIntel} isOcean={isOcean} />
