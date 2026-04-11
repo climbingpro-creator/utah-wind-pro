@@ -766,21 +766,24 @@ export function VectorWaterMap({ currentWeatherData = {}, selectedLocation, onLo
         const namedWaterNameFeature = waterNameFeatures.find(f => getFeatureName(f));
         const namedLakeFeature = lakeFeatures.find(f => getFeatureName(f));
         
-        // PRIORITY ORDER - ALWAYS prefer rivers/streams over lakes when both are present
-        // 1. Named river/stream features (LineString with name) - BEST match
-        // 2. Unnamed river/stream features (user clicked on visible river line)
-        // 3. Named water_name feature (lake/reservoir names from water_name layer)
-        // 4. Named polygon features (lakes, reservoirs)
+        // PRIORITY ORDER - Prefer the larger water body (lake/reservoir) when
+        // both lake polygons AND river lines are present at the click point.
+        // Rivers that flow through reservoirs should not hijack the click.
+        // 1. Named lake/reservoir polygon (user clicked on a lake body)
+        // 2. Named water_name label feature (lake name from label layer)
+        // 3. Named river/stream (user clicked on a distinct river, no lake present)
+        // 4. Unnamed river/stream
         // 5. Any feature
         let feature;
-        if (riverFeatures.length > 0) {
-          // If there are ANY river features, prefer them
+        if (lakeFeatures.length > 0 && (namedLakeFeature || namedWaterNameFeature)) {
+          feature = namedLakeFeature || lakeFeatures[0];
+          console.log('[VectorWaterMap] Prioritizing lake/reservoir feature:', getFeatureName(feature) || '(unnamed)');
+        } else if (riverFeatures.length > 0) {
           feature = namedRiverFeature || unnamedRiverFeature;
           if (feature) {
             console.log('[VectorWaterMap] Prioritizing river feature:', getFeatureName(feature) || '(unnamed)');
           }
         } else {
-          // No rivers, use lake - prefer water_name for the name
           feature = namedLakeFeature || features[0];
         }
         
