@@ -4,7 +4,7 @@ import {
   Shield, ArrowLeft, CheckCircle, Clock, AlertTriangle, Bug, Lightbulb,
   MessageSquare, ExternalLink, RefreshCw, Trash2, BarChart3, CreditCard,
   Users, TrendingUp, TrendingDown, Zap, Map, Eye, DollarSign, Activity,
-  Globe, Layers, Wind, Fish, Minus, Bell, Phone,
+  Globe, Layers, Wind, Fish, Minus, Bell, Phone, Mail, Send, Loader,
 } from 'lucide-react';
 
 const ALLOWED_ADMINS = ['tyler@aspenearth.com', 'climbingpro@gmail.com'];
@@ -121,6 +121,85 @@ function EngagementTimeline({ eventsByDay }) {
       <div className="flex justify-between mt-2">
         <span className="text-[9px] text-slate-600">{days[0]?.label}</span>
         <span className="text-[9px] text-slate-600">{days[days.length - 1]?.label}</span>
+      </div>
+    </div>
+  );
+}
+
+const API_ORIGIN = import.meta.env.VITE_API_ORIGIN || '';
+
+const EMAIL_TEMPLATES = [
+  { id: 'morning', label: 'Morning Briefing', desc: 'Top 3 spots scored for the day', icon: '🌅' },
+  { id: 'weekend', label: 'Weekend Report', desc: 'Best waters ranked for Sat & Sun', icon: '🗓️' },
+  { id: 'hatch', label: 'Hatch Alert', desc: 'BWO emergence at Lower Provo', icon: '🪰' },
+];
+
+function TestEmailCard({ getAuthHeader }) {
+  const [sending, setSending] = useState(false);
+  const [result, setResult] = useState(null);
+  const [selectedTemplate, setSelectedTemplate] = useState('morning');
+
+  async function sendTestEmail() {
+    setSending(true);
+    setResult(null);
+    try {
+      const headers = await getAuthHeader();
+      const resp = await fetch(`${API_ORIGIN}/api/test-email`, {
+        method: 'POST',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ template: selectedTemplate }),
+      });
+      const data = await resp.json();
+      if (resp.ok) {
+        setResult({ ok: true, to: data.to, template: data.template });
+      } else {
+        setResult({ ok: false, error: data.error || `HTTP ${resp.status}` });
+      }
+    } catch (err) {
+      setResult({ ok: false, error: err.message });
+    }
+    setSending(false);
+  }
+
+  return (
+    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
+      <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
+        <Mail className="w-4 h-4 text-violet-400" />
+        Test Email Delivery (Resend)
+      </h3>
+      <div className="grid sm:grid-cols-3 gap-2 mb-4">
+        {EMAIL_TEMPLATES.map((t) => (
+          <button
+            key={t.id}
+            onClick={() => setSelectedTemplate(t.id)}
+            className={`p-3 rounded-lg border text-left transition-all cursor-pointer ${
+              selectedTemplate === t.id
+                ? 'border-violet-500/40 bg-violet-500/10'
+                : 'border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04]'
+            }`}
+          >
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-lg">{t.icon}</span>
+              <span className={`text-xs font-bold ${selectedTemplate === t.id ? 'text-violet-300' : 'text-slate-300'}`}>{t.label}</span>
+            </div>
+            <p className="text-[10px] text-slate-500">{t.desc}</p>
+          </button>
+        ))}
+      </div>
+      <div className="flex items-center gap-3">
+        <button
+          onClick={sendTestEmail}
+          disabled={sending}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold transition-colors cursor-pointer disabled:opacity-50"
+        >
+          {sending ? <Loader className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+          {sending ? 'Sending...' : 'Send Test Email'}
+        </button>
+        {result && (
+          <span className={`text-xs font-medium ${result.ok ? 'text-emerald-400' : 'text-red-400'}`}>
+            {result.ok ? `✓ Sent "${result.template}" to ${result.to}` : `✗ ${result.error}`}
+          </span>
+        )}
       </div>
     </div>
   );
@@ -401,6 +480,8 @@ export default function AdminDashboard() {
                 </div>
               </div>
             </div>
+
+            <TestEmailCard getAuthHeader={getAuthHeader} />
 
             <div>
               <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3">Quick Links</h2>
