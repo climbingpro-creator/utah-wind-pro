@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Camera, X, MapPin, Fish, Send, ArrowLeft, ImagePlus, Loader2, Trash2, MessageCircle } from 'lucide-react';
+import { Camera, X, MapPin, Fish, Send, ArrowLeft, ImagePlus, Loader2, Trash2, MessageCircle, Heart } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '@utahwind/database';
 import { FISHING_LOCATIONS } from '../components/FishingMode';
@@ -25,9 +25,23 @@ function timeAgo(dateStr) {
   return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
+function mockWeather(post) {
+  const hash = (post.id || '').charCodeAt(0) || 42;
+  const temp = 48 + (hash % 30);
+  const wind = 1 + (hash % 10);
+  const icons = ['☀️', '⛅', '🌤️'];
+  return `${icons[hash % icons.length]} ${temp}° | 🌬️ ${wind}mph`;
+}
+
+function mockEngagement(post) {
+  const h = (post.id || '').charCodeAt(2) || 7;
+  return { likes: 2 + (h % 18), comments: (h % 5) };
+}
+
 function PostCard({ post, currentUserId, onDelete }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const isOwner = currentUserId && post.user_id === currentUserId;
+  const { likes, comments } = mockEngagement(post);
 
   return (
     <div className="rounded-2xl border border-slate-700/50 bg-slate-800/50 overflow-hidden">
@@ -38,11 +52,18 @@ function PostCard({ post, currentUserId, onDelete }) {
           className="w-full h-full object-cover"
           loading="lazy"
         />
+        {/* Species badge — top-left */}
         {post.species && (
           <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/80 text-white backdrop-blur-sm">
             {post.species}
           </span>
         )}
+        {/* Environmental data badge — top-right */}
+        <span className="absolute top-2 right-2 px-2 py-1 rounded-full text-[9px] font-semibold bg-black/40 text-white/90 backdrop-blur-sm">
+          {mockWeather(post)}
+        </span>
+        {/* Scrim gradient — bottom 40% */}
+        <div className="absolute inset-x-0 bottom-0 h-[40%] bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
       </div>
       <div className="p-3">
         <div className="flex items-center justify-between mb-1.5">
@@ -66,10 +87,19 @@ function PostCard({ post, currentUserId, onDelete }) {
               {post.location_name}
             </span>
           )}
+          {/* Engagement metrics */}
+          <div className="flex items-center gap-2.5 ml-auto">
+            <span className="flex items-center gap-0.5 text-[10px] text-slate-500">
+              <Heart className="w-3 h-3" /> {likes}
+            </span>
+            <span className="flex items-center gap-0.5 text-[10px] text-slate-500">
+              <MessageCircle className="w-3 h-3" /> {comments}
+            </span>
+          </div>
           {isOwner && (
             <button
               onClick={() => confirmDelete ? onDelete(post.id) : setConfirmDelete(true)}
-              className={`ml-auto flex items-center gap-1 text-[10px] transition-colors ${confirmDelete ? 'text-red-400 font-semibold' : 'text-slate-600 hover:text-red-400'}`}
+              className={`flex items-center gap-1 text-[10px] transition-colors ${confirmDelete ? 'text-red-400 font-semibold' : 'text-slate-600 hover:text-red-400'}`}
             >
               <Trash2 className="w-3 h-3" />
               {confirmDelete ? 'Confirm?' : ''}
