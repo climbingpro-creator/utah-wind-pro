@@ -539,3 +539,27 @@ CREATE POLICY "Users can delete own posts"
 
 CREATE INDEX IF NOT EXISTS idx_community_posts_created
   ON community_posts(created_at DESC);
+
+-- ══════════════════════════════════════════════════════════════
+-- Condition Reports — crowd-sourced weather accuracy votes
+-- ══════════════════════════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS condition_reports (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  location_id     TEXT NOT NULL,
+  vote            TEXT NOT NULL CHECK (vote IN ('lighter', 'spot-on', 'stronger')),
+  user_id         UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE condition_reports ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone can insert condition reports"
+  ON condition_reports FOR INSERT
+  WITH CHECK (true);
+
+CREATE POLICY "Anyone can read condition reports"
+  ON condition_reports FOR SELECT
+  USING (true);
+
+CREATE INDEX IF NOT EXISTS idx_condition_reports_location_time
+  ON condition_reports(location_id, created_at DESC);
