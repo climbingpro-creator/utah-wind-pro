@@ -17,7 +17,7 @@ const ALLOWED_ORIGINS = [
   'https://utah-water-glass.vercel.app',
 ];
 
-export const config = { api: { bodyParser: { sizeLimit: '10mb' } } };
+export const config = { api: { bodyParser: { sizeLimit: '4.5mb' } } };
 
 function cors(req, res) {
   const origin = req.headers.origin || '';
@@ -90,8 +90,8 @@ async function handleCreate(req, res) {
     }
 
     const buf = Buffer.from(base64, 'base64');
-    if (buf.length > 8 * 1024 * 1024) {
-      return res.status(400).json({ error: 'Image too large (max 8MB)' });
+    if (buf.length > 4 * 1024 * 1024) {
+      return res.status(400).json({ error: 'Image too large (max 4MB)' });
     }
 
     const fileId = crypto.randomUUID();

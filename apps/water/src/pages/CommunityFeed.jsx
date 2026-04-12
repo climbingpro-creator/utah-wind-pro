@@ -96,18 +96,33 @@ function UploadModal({ onClose, onSuccess }) {
     name: loc.name,
   }));
 
-  function handleFile(e) {
+  function compressImage(file, maxDim = 2048, quality = 0.82) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxDim || height > maxDim) {
+          const ratio = Math.min(maxDim / width, maxDim / height);
+          width = Math.round(width * ratio);
+          height = Math.round(height * ratio);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.src = URL.createObjectURL(file);
+    });
+  }
+
+  async function handleFile(e) {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 8 * 1024 * 1024) {
-      setError('Image must be under 8MB');
-      return;
-    }
     setError(null);
     setPreview(URL.createObjectURL(file));
-    const reader = new FileReader();
-    reader.onload = () => setImage(reader.result);
-    reader.readAsDataURL(file);
+    const compressed = await compressImage(file);
+    setImage(compressed);
   }
 
   async function handleSubmit(e) {
