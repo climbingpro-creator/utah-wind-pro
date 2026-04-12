@@ -136,6 +136,7 @@ function TestEmailCard({ getAuthHeader }) {
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState(null);
   const [selectedTemplate, setSelectedTemplate] = useState('morning');
+  const [toEmail, setToEmail] = useState('climbingpro@gmail.com');
 
   async function sendTestEmail() {
     setSending(true);
@@ -145,7 +146,7 @@ function TestEmailCard({ getAuthHeader }) {
       const resp = await fetch('/api/test-email', {
         method: 'POST',
         headers: { ...headers, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ template: selectedTemplate }),
+        body: JSON.stringify({ template: selectedTemplate, to: toEmail }),
       });
       const data = await resp.json();
       if (resp.ok) {
@@ -184,10 +185,19 @@ function TestEmailCard({ getAuthHeader }) {
           </button>
         ))}
       </div>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-2">
+          <label className="text-[10px] text-slate-500 uppercase tracking-wider">To:</label>
+          <input
+            type="email"
+            value={toEmail}
+            onChange={e => setToEmail(e.target.value)}
+            className="px-3 py-1.5 rounded-lg text-xs bg-slate-800 border border-slate-700 text-white placeholder:text-slate-500 outline-none focus:border-violet-500 w-56"
+          />
+        </div>
         <button
           onClick={sendTestEmail}
-          disabled={sending}
+          disabled={sending || !toEmail}
           className="flex items-center gap-2 px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold transition-colors cursor-pointer disabled:opacity-50"
         >
           {sending ? <Loader className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
@@ -199,6 +209,7 @@ function TestEmailCard({ getAuthHeader }) {
           </span>
         )}
       </div>
+      <p className="text-[10px] text-slate-600 mt-2">Until notwindy.com is verified on Resend, test emails can only be sent to your Resend account email.</p>
     </div>
   );
 }

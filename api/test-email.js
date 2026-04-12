@@ -44,7 +44,10 @@ export default async function handler(req, res) {
   }
 
   const template = req.query?.template || req.body?.template || 'morning';
+  // Resend test domain can only send to the account owner's email.
+  // Once notwindy.com is verified, this restriction is lifted.
   const to = req.body?.to || auth.user.email;
+  console.log(`[test-email] Sending "${template}" to ${to} from ${auth.user.email}`);
 
   let emailPayload;
   switch (template) {
