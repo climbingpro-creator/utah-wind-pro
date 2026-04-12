@@ -157,19 +157,19 @@ export default function AlertSettings({ isOpen, onClose }) {
           {/* Alert type toggles */}
           <div className="space-y-2">
             <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-500 px-1">Alert Types</h3>
-            {ALERT_TOGGLES.map(({ key, label, desc, icon: AlertIcon, color }) => (
+            {ALERT_TOGGLES.map((toggle_item) => (
               <button
-                key={key}
-                onClick={() => toggle(key)}
+                key={toggle_item.key}
+                onClick={() => toggle(toggle_item.key)}
                 className="w-full flex items-center gap-3 p-3 rounded-xl bg-slate-800/40 hover:bg-slate-800/70 transition cursor-pointer text-left"
               >
-                <AlertIcon className={`w-5 h-5 flex-shrink-0 ${prefs[key] ? color : 'text-slate-600'}`} />
+                <toggle_item.icon className={`w-5 h-5 flex-shrink-0 ${prefs[toggle_item.key] ? toggle_item.color : 'text-slate-600'}`} />
                 <div className="flex-1 min-w-0">
-                  <p className={`text-sm font-medium ${prefs[key] ? 'text-white' : 'text-slate-500'}`}>{label}</p>
-                  <p className="text-xs text-slate-500 truncate">{desc}</p>
+                  <p className={`text-sm font-medium ${prefs[toggle_item.key] ? 'text-white' : 'text-slate-500'}`}>{toggle_item.label}</p>
+                  <p className="text-xs text-slate-500 truncate">{toggle_item.desc}</p>
                 </div>
-                <div className={`w-10 h-5 rounded-full flex-shrink-0 transition-colors ${prefs[key] ? 'bg-emerald-600' : 'bg-slate-700'}`}>
-                  <div className={`w-5 h-5 rounded-full bg-white shadow transition-transform ${prefs[key] ? 'translate-x-5' : 'translate-x-0'}`} />
+                <div className={`w-10 h-5 rounded-full flex-shrink-0 transition-colors ${prefs[toggle_item.key] ? 'bg-emerald-600' : 'bg-slate-700'}`}>
+                  <div className={`w-5 h-5 rounded-full bg-white shadow transition-transform ${prefs[toggle_item.key] ? 'translate-x-5' : 'translate-x-0'}`} />
                 </div>
               </button>
             ))}
