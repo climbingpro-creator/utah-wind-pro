@@ -947,7 +947,6 @@ export function VectorWaterMap({ currentWeatherData = {}, selectedLocation, onLo
         { padding: 50, maxZoom: 14, duration: 1500 }
       );
     } else {
-      // Otherwise fly to the point
       map.flyTo({
         center: [result.lng, result.lat],
         zoom: 12,
@@ -955,17 +954,22 @@ export function VectorWaterMap({ currentWeatherData = {}, selectedLocation, onLo
       });
     }
     
-    // Optionally drop a pin at the location
     setDroppedPin([result.lat, result.lng]);
     setSelectedWaterFeature({ name: result.name, type: result.type });
     setHasDroppedPin(true);
+
+    // Sync global location state so the entire dashboard updates
+    const matchedId = resolveLocationId(result.name);
+    if (matchedId && onLocationSelect) {
+      onLocationSelect(matchedId);
+    }
     
     // Trigger profile generation for this location
     handleMapClick({
       lngLat: { lat: result.lat, lng: result.lng },
       point: { x: 0, y: 0 },
     });
-  }, [handleMapClick]);
+  }, [handleMapClick, onLocationSelect]);
 
   const mapHeight = isFullscreen ? 'h-[85vh]' : 'h-[28rem] sm:h-[36rem]';
 
