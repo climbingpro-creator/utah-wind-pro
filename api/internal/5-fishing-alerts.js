@@ -30,7 +30,7 @@ import {
   SKY_LABELS,
 } from '@utahwind/weather';
 import { fetchUsgsData } from '../lib/weather-backfill.js';
-import { getWaterType, isRiver, isLake, getSeasonalDepth } from '../lib/waterTypes.js';
+import { getWaterType, isRiver, isLake, getSeasonalDepth, getAllowedMethods, getRegulations } from '../lib/waterTypes.js';
 import {
   sendEmail,
   buildMorningBriefingEmail,
@@ -260,10 +260,11 @@ export default async function handler(req, res) {
               pressureGradient: c.pressureGradient,
               flowCfs: c.flowCfs ? Math.round(c.flowCfs) : null,
               topHatch: wantsFly && topHatch ? `${topHatch.insect} — ${topHatch.peakTime}` : null,
-              bestAction: buildBestAction(c, topHatch, waterType, styles),
+              bestAction: buildBestAction(c, topHatch, waterType, styles, getAllowedMethods(s.locId)),
               waterType,
               depthZone,
-              recommendations: buildRecommendations(topHatch, waterType, styles, locInfo?.primarySpecies),
+              regulations: getRegulations(s.locId),
+              recommendations: buildRecommendations(topHatch, waterType, styles, locInfo?.primarySpecies, getAllowedMethods(s.locId)),
             };
           });
 
@@ -321,7 +322,8 @@ export default async function handler(req, res) {
               flowCfs: isRiver(s.locId) ? (s.cond.flowCfs ? Math.round(s.cond.flowCfs) : null) : null,
               waterType: wt,
               depthZone: isLake(s.locId) ? getSeasonalDepth(s.locId) : null,
-              tip: buildWeekendTip(wt, styles, locInfo?.primarySpecies),
+              regulations: getRegulations(s.locId),
+              tip: buildWeekendTip(wt, styles, locInfo?.primarySpecies, getAllowedMethods(s.locId)),
             };
           };
 
@@ -376,6 +378,7 @@ export default async function handler(req, res) {
                 secondaryHatches,
                 flyPatterns: getFlyPatterns(topHatch.insect),
                 waterType: locInfo?.type || 'reservoir',
+                regulations: getRegulations(locId),
               }),
             });
           }
@@ -513,12 +516,12 @@ function scoreConditions(cond) {
   return Math.max(0, Math.min(100, score));
 }
 
-function buildBestAction(cond, topHatch, waterType, styles) {
+function buildBestAction(cond, topHatch, waterType, styles, allowedMethods = ['fly', 'spin', 'bait']) {
   if (!cond) return '';
   const isStillwater = waterType !== 'river';
-  const wantsFly = styles.includes('all') || styles.includes('fly');
-  const wantsSpin = styles.includes('all') || styles.includes('spin');
-  const wantsBait = styles.includes('all') || styles.includes('bait');
+  const wantsFly = (styles.includes('all') || styles.includes('fly')) && allowedMethods.includes('fly');
+  const wantsSpin = (styles.includes('all') || styles.includes('spin')) && allowedMethods.includes('spin');
+  const wantsBait = (styles.includes('all') || styles.includes('bait')) && allowedMethods.includes('bait');
 
   if (cond.speed > 15) {
     if (isStillwater) return wantsSpin ? 'Wind blowing bait — troll downwind shoreline with spoons' : 'Fish downwind banks where wind concentrates baitfish';
@@ -550,11 +553,11 @@ function buildBestAction(cond, topHatch, waterType, styles) {
   return 'Match the conditions and fish the transitions';
 }
 
-function buildRecommendations(topHatch, waterType, styles, primarySpecies) {
+function buildRecommendations(topHatch, waterType, styles, primarySpecies, allowedMethods = ['fly', 'spin', 'bait']) {
   const recs = { fly: null, spin: null, bait: null };
-  const wantsFly = styles.includes('all') || styles.includes('fly');
-  const wantsSpin = styles.includes('all') || styles.includes('spin');
-  const wantsBait = styles.includes('all') || styles.includes('bait');
+  const wantsFly = (styles.includes('all') || styles.includes('fly')) && allowedMethods.includes('fly');
+  const wantsSpin = (styles.includes('all') || styles.includes('spin')) && allowedMethods.includes('spin');
+  const wantsBait = (styles.includes('all') || styles.includes('bait')) && allowedMethods.includes('bait');
   const isStillwater = waterType !== 'river';
 
   if (wantsFly) {
@@ -589,9 +592,9 @@ function buildRecommendations(topHatch, waterType, styles, primarySpecies) {
   return recs;
 }
 
-function buildWeekendTip(waterType, styles, primarySpecies) {
-  const wantsSpin = styles.includes('all') || styles.includes('spin');
-  const wantsBait = styles.includes('all') || styles.includes('bait');
+function buildWeekendTip(waterType, styles, primarySpecies, allowedMethods = ['fly', 'spin', 'bait']) {
+  const wantsSpin = (styles.includes('all') || styles.includes('spin')) && allowedMethods.includes('spin');
+  const wantsBait = (styles.includes('all') || styles.includes('bait')) && allowedMethods.includes('bait');
   if (waterType === 'river') return null;
   if (wantsSpin) {
     const sp = (primarySpecies || '').toLowerCase();

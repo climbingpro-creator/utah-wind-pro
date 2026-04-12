@@ -19,6 +19,7 @@ const ALLOWED_ADMINS = ['tyler@aspenearth.com', 'climbingpro@gmail.com'];
 function getSampleMorningSpots(style) {
   const styles = style === 'all' ? ['all'] : [style];
   const wantsFly = styles.includes('all') || styles.includes('fly');
+  const wantsSpin = styles.includes('all') || styles.includes('spin');
 
   return [
     {
@@ -31,15 +32,16 @@ function getSampleMorningSpots(style) {
       pressureTrend: 'falling', pressureGradient: -0.8,
       flowCfs: 320,
       topHatch: wantsFly ? 'BWO — 1-4 PM' : null,
-      bestAction: style === 'spin' ? 'Cast small Rapalas through pools, swing spinners in current seams'
-        : style === 'bait' ? 'Drift nightcrawlers through deeper runs and pool tailouts'
+      bestAction: style === 'bait' ? 'Artificial flies and lures only — try small Rapalas through pools'
+        : style === 'spin' ? 'Cast small Rapalas through pools, swing spinners in current seams'
         : 'Nymph deep runs early, switch to emergers at peak hatch',
       waterType: 'river',
       depthZone: null,
+      regulations: 'Artificial flies and lures only. Closed to cutthroat harvest.',
       recommendations: {
-        fly: styles.includes('all') || styles.includes('fly') ? ['Parachute Adams #18-20', 'RS2 #20-22', 'Sparkle Dun #18'] : null,
-        spin: styles.includes('all') || styles.includes('spin') ? ['Panther Martin #4 (gold)', 'Blue Fox spinner #2', 'Small Rapala (rainbow trout)'] : null,
-        bait: styles.includes('all') || styles.includes('bait') ? ['Nightcrawler (drift rig)', 'Salmon eggs (single hook)', 'PowerBait dough (below dam)'] : null,
+        fly: wantsFly ? ['Parachute Adams #18-20', 'RS2 #20-22', 'Sparkle Dun #18'] : null,
+        spin: wantsSpin ? ['Panther Martin #4 (gold)', 'Blue Fox spinner #2', 'Small Rapala (rainbow trout)'] : null,
+        bait: null,
       },
     },
     {
@@ -57,10 +59,11 @@ function getSampleMorningSpots(style) {
         : 'Glass conditions — sight-fish with long leaders and small flies',
       waterType: 'reservoir',
       depthZone: '20-50 ft',
+      regulations: 'Limit 4 trout. NO KEEPING Cutthroat between 15-22 inches.',
       recommendations: {
-        fly: styles.includes('all') || styles.includes('fly') ? ["Griffith's Gnat #20-24", 'Zebra Midge #20-22', 'Chironomid #18'] : null,
-        spin: styles.includes('all') || styles.includes('spin') ? ['Kastmaster (gold)', 'Tube jig (white)', 'Rapala Countdown #7'] : null,
-        bait: styles.includes('all') || styles.includes('bait') ? ['PowerBait (rainbow)', 'Nightcrawler (under float)', 'Salmon eggs'] : null,
+        fly: wantsFly ? ["Griffith's Gnat #20-24", 'Zebra Midge #20-22', 'Chironomid #18'] : null,
+        spin: wantsSpin ? ['Kastmaster (gold)', 'Tube jig (white)', 'Rapala Countdown #7'] : null,
+        bait: (styles.includes('all') || styles.includes('bait')) ? ['PowerBait (rainbow)', 'Nightcrawler (under float)', 'Salmon eggs'] : null,
       },
     },
     {
@@ -78,10 +81,11 @@ function getSampleMorningSpots(style) {
         : 'Strip streamers along weed edges and drop-offs',
       waterType: 'lake',
       depthZone: '6-14 ft',
+      regulations: 'Catfish: No limit. Carp bow fishing allowed.',
       recommendations: {
         fly: null,
-        spin: styles.includes('all') || styles.includes('spin') ? ['Crankbait (shad pattern)', 'Ned Rig (green pumpkin)', 'Spinnerbait (white/chartreuse)'] : null,
-        bait: styles.includes('all') || styles.includes('bait') ? ['Cut bait (shad)', 'Nightcrawler (on bottom)', 'Chicken liver'] : null,
+        spin: wantsSpin ? ['Crankbait (shad pattern)', 'Ned Rig (green pumpkin)', 'Spinnerbait (white/chartreuse)'] : null,
+        bait: (styles.includes('all') || styles.includes('bait')) ? ['Cut bait (shad)', 'Nightcrawler (on bottom)', 'Chicken liver'] : null,
       },
     },
   ];
@@ -104,15 +108,15 @@ function getSampleWeekendSpots(style) {
   const wantsFly = style === 'all' || style === 'fly';
 
   const satSpots = [
-    { name: 'Lower Provo River', score: 85, wind: 'SW 5 mph', temp: '62°F', forecast: 'Partly Sunny, high near 64', precipChance: 10, hatchOutlook: wantsFly ? 'BWO (85%)' : null, flowCfs: 310, waterType: 'river', depthZone: null, tip: null },
-    { name: 'Strawberry Reservoir', score: 70, wind: 'NW 4 mph', temp: '56°F', forecast: 'Mostly Sunny', precipChance: null, hatchOutlook: wantsFly ? 'Midges (80%)' : null, flowCfs: null, waterType: 'reservoir', depthZone: '20-50 ft', tip: style === 'spin' ? 'Troll spoons near inlets at dawn' : style === 'bait' ? 'Shore fish near inlets and structure' : null },
-    { name: 'Utah Lake', score: 62, wind: 'W 8 mph', temp: '66°F', forecast: 'Sunny, breezy', precipChance: null, hatchOutlook: null, flowCfs: null, waterType: 'lake', depthZone: '6-14 ft', tip: style === 'spin' ? 'Cast crankbaits to windblown rip-rap' : style === 'bait' ? 'Shore fish river mouths for white bass' : null },
+    { name: 'Lower Provo River', score: 85, wind: 'SW 5 mph', temp: '62°F', forecast: 'Partly Sunny, high near 64', precipChance: 10, hatchOutlook: wantsFly ? 'BWO (85%)' : null, flowCfs: 310, waterType: 'river', depthZone: null, regulations: 'Artificial flies and lures only. Closed to cutthroat harvest.', tip: null },
+    { name: 'Strawberry Reservoir', score: 70, wind: 'NW 4 mph', temp: '56°F', forecast: 'Mostly Sunny', precipChance: null, hatchOutlook: wantsFly ? 'Midges (80%)' : null, flowCfs: null, waterType: 'reservoir', depthZone: '20-50 ft', regulations: 'Limit 4 trout. NO KEEPING Cutthroat between 15-22 inches.', tip: style === 'spin' ? 'Troll spoons near inlets at dawn' : style === 'bait' ? 'Shore fish near inlets and structure' : null },
+    { name: 'Utah Lake', score: 62, wind: 'W 8 mph', temp: '66°F', forecast: 'Sunny, breezy', precipChance: null, hatchOutlook: null, flowCfs: null, waterType: 'lake', depthZone: '6-14 ft', regulations: 'Catfish: No limit. Carp bow fishing allowed.', tip: style === 'spin' ? 'Cast crankbaits to windblown rip-rap' : style === 'bait' ? 'Shore fish river mouths for white bass' : null },
   ];
 
   const sunSpots = [
-    { name: 'Lower Provo River', score: 78, wind: 'S 8 mph', temp: '58°F', forecast: 'Mostly Cloudy, chance of afternoon showers', precipChance: 40, hatchOutlook: wantsFly ? 'BWO (90%)' : null, flowCfs: 320, waterType: 'river', depthZone: null, tip: null },
-    { name: 'Jordanelle Reservoir', score: 66, wind: 'SE 3 mph', temp: '55°F', forecast: 'Partly Sunny', precipChance: 15, hatchOutlook: null, flowCfs: null, waterType: 'reservoir', depthZone: '15-35 ft', tip: style === 'spin' ? 'Work rocky points with jigs early' : style === 'bait' ? 'Fish near dam structure with worms' : null },
-    { name: 'Deer Creek Reservoir', score: 60, wind: 'W 10 mph', temp: '54°F', forecast: 'Partly Sunny, breezy', precipChance: 20, hatchOutlook: null, flowCfs: null, waterType: 'reservoir', depthZone: '20-45 ft', tip: style === 'spin' ? 'Night bite — jig rocky flats after dark' : style === 'bait' ? 'Fish the inlet channel with nightcrawlers' : null },
+    { name: 'Lower Provo River', score: 78, wind: 'S 8 mph', temp: '58°F', forecast: 'Mostly Cloudy, chance of afternoon showers', precipChance: 40, hatchOutlook: wantsFly ? 'BWO (90%)' : null, flowCfs: 320, waterType: 'river', depthZone: null, regulations: 'Artificial flies and lures only. Closed to cutthroat harvest.', tip: null },
+    { name: 'Jordanelle Reservoir', score: 66, wind: 'SE 3 mph', temp: '55°F', forecast: 'Partly Sunny', precipChance: 15, hatchOutlook: null, flowCfs: null, waterType: 'reservoir', depthZone: '15-35 ft', regulations: 'Bass: 6 fish limit.', tip: style === 'spin' ? 'Work rocky points with jigs early' : style === 'bait' ? 'Fish near dam structure with worms' : null },
+    { name: 'Deer Creek Reservoir', score: 60, wind: 'W 10 mph', temp: '54°F', forecast: 'Partly Sunny, breezy', precipChance: 20, hatchOutlook: null, flowCfs: null, waterType: 'reservoir', depthZone: '20-45 ft', regulations: 'Walleye: 6 fish limit, only 1 over 24".', tip: style === 'spin' ? 'Night bite — jig rocky flats after dark' : style === 'bait' ? 'Fish the inlet channel with nightcrawlers' : null },
   ];
 
   return { satSpots, sunSpots };
@@ -143,6 +147,7 @@ const SAMPLE_HATCH_EXTRA = {
     'Sparkle Dun #18',
   ],
   waterType: 'river',
+  regulations: 'Artificial flies and lures only. Closed to cutthroat harvest.',
 };
 
 export default async function handler(req, res) {

@@ -100,6 +100,11 @@ function pressureArrow(trend) {
   return `<span style="color:${COLORS.dim};">&#8594; Stable</span>`;
 }
 
+function regulationBadge(regulations) {
+  if (!regulations) return '';
+  return `<div style="margin-top:6px;padding:5px 8px;background:rgba(245,158,11,0.10);border-left:3px solid ${COLORS.amber};border-radius:4px;font-size:11px;color:${COLORS.amber};">&#9888;&#65039; ${regulations}</div>`;
+}
+
 function scoreBar(score) {
   const color = score > 70 ? COLORS.green : score > 40 ? COLORS.amber : COLORS.red;
   return `<div style="margin-top:8px;background:#0f172a;border-radius:4px;height:6px;overflow:hidden;">
@@ -170,6 +175,7 @@ export function buildMorningBriefingEmail(spots, meta = {}) {
       ${s.topHatch ? `<div style="font-size:13px;color:${COLORS.green};margin-bottom:4px;">&#129712; ${s.topHatch}</div>` : ''}
       ${s.bestAction ? `<div style="font-size:12px;color:${COLORS.accent};font-style:italic;">&#10148; ${s.bestAction}</div>` : ''}
       ${recsSection}
+      ${regulationBadge(s.regulations)}
       ${scoreBar(s.score)}
     </div>`;
   }).join('');
@@ -216,6 +222,7 @@ export function buildWeekendReportEmail(satSpots, sunSpots, meta = {}) {
         ${s.forecast ? `<div style="font-size:12px;color:${COLORS.muted};margin-bottom:4px;">${s.forecast}</div>` : ''}
         ${s.hatchOutlook ? `<div style="font-size:12px;color:${COLORS.green};">&#129712; ${s.hatchOutlook}</div>` : ''}
         ${s.tip ? `<div style="font-size:12px;color:${COLORS.accent};font-style:italic;">&#10148; ${s.tip}</div>` : ''}
+        ${regulationBadge(s.regulations)}
         ${scoreBar(s.score)}
       </div>`;
     }).join('');
@@ -313,6 +320,7 @@ export function buildHatchAlertEmail(locationName, hatch, extra = {}) {
       </div>
       ${condSection}
       ${flySection}
+      ${regulationBadge(extra.regulations)}
       ${secondarySection}
     </div>
     ${ctaButton('Open NotWindy', 'https://notwindy.com')}
