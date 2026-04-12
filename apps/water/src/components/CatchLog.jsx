@@ -25,11 +25,12 @@ function formatTime(iso) {
   return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 }
 
-function ConditionBadge({ icon: Icon, label, value, color = 'text-slate-400' }) {
+function ConditionBadge({ icon, label, value, color = 'text-slate-400' }) {
   if (value == null) return null;
+  const BadgeIcon = icon;
   return (
     <div className="flex items-center gap-1 text-xs">
-      <Icon className={`w-3 h-3 ${color}`} />
+      <BadgeIcon className={`w-3 h-3 ${color}`} />
       <span className="text-slate-500">{label}</span>
       <span className="text-slate-300 font-medium">{value}</span>
     </div>
