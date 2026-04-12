@@ -10,7 +10,7 @@
  */
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const EMAIL_FROM = process.env.EMAIL_FROM || 'NotWindy <alerts@notwindy.com>';
+const EMAIL_FROM = process.env.EMAIL_FROM || 'NotWindy <onboarding@resend.dev>';
 
 async function sendEmail({ to, subject, html }) {
   if (!RESEND_API_KEY || !to) return { success: false, error: 'not configured' };
