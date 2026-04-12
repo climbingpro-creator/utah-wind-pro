@@ -57,39 +57,75 @@ function useFavorites() {
 
 export { useFavorites, LIVE_LAKES, UTAH_WATERS };
 
-export default function LocationSelector({ selectedLocation, onSelectLocation, onOpenMap, favorites = [], onToggleFavorite: _onToggleFavorite }) {
-  const scrollRef = useRef(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(false);
+function useScrollRow() {
+  const ref = useRef(null);
+  const [canLeft, setCanLeft] = useState(false);
+  const [canRight, setCanRight] = useState(false);
 
-  const checkScroll = useCallback(() => {
-    const el = scrollRef.current;
+  const check = useCallback(() => {
+    const el = ref.current;
     if (!el) return;
-    setCanScrollLeft(el.scrollLeft > 4);
-    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+    setCanLeft(el.scrollLeft > 4);
+    setCanRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
   }, []);
 
   useEffect(() => {
-    checkScroll();
-    const el = scrollRef.current;
+    check();
+    const el = ref.current;
     if (!el) return;
-    el.addEventListener('scroll', checkScroll, { passive: true });
-    const ro = new ResizeObserver(checkScroll);
+    el.addEventListener('scroll', check, { passive: true });
+    const ro = new ResizeObserver(check);
     ro.observe(el);
-    return () => { el.removeEventListener('scroll', checkScroll); ro.disconnect(); };
-  }, [checkScroll]);
+    return () => { el.removeEventListener('scroll', check); ro.disconnect(); };
+  }, [check]);
 
   const scroll = useCallback((dir) => {
-    scrollRef.current?.scrollBy({ left: dir * 200, behavior: 'smooth' });
+    ref.current?.scrollBy({ left: dir * 200, behavior: 'smooth' });
   }, []);
 
   const onWheel = useCallback((e) => {
-    const el = scrollRef.current;
+    const el = ref.current;
     if (!el || !e.deltaY) return;
     if (el.scrollWidth <= el.clientWidth) return;
     e.preventDefault();
     el.scrollLeft += e.deltaY;
   }, []);
+
+  return { ref, canLeft, canRight, scroll, onWheel };
+}
+
+function ScrollRow({ scrollState, children, className = '' }) {
+  const { ref, canLeft, canRight, scroll, onWheel } = scrollState;
+  return (
+    <div className="relative group">
+      {canLeft && (
+        <button
+          onClick={() => scroll(-1)}
+          className="absolute left-0 top-0 bottom-2 z-10 w-8 flex items-center justify-start bg-gradient-to-r from-[var(--bg-primary,#0f172a)] via-[var(--bg-primary,#0f172a)] to-transparent cursor-pointer"
+          aria-label="Scroll left"
+        >
+          <ChevronLeft className="w-4 h-4 text-slate-400" />
+        </button>
+      )}
+      {canRight && (
+        <button
+          onClick={() => scroll(1)}
+          className="absolute right-0 top-0 bottom-2 z-10 w-8 flex items-center justify-end bg-gradient-to-l from-[var(--bg-primary,#0f172a)] via-[var(--bg-primary,#0f172a)] to-transparent cursor-pointer"
+          aria-label="Scroll right"
+        >
+          <ChevronRight className="w-4 h-4 text-slate-400" />
+        </button>
+      )}
+      <div ref={ref} onWheel={onWheel} className={`flex overflow-x-auto gap-2 hide-scrollbar ${className}`}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+export default function LocationSelector({ selectedLocation, onSelectLocation, onOpenMap, favorites = [], onToggleFavorite: _onToggleFavorite }) {
+  const row1Scroll = useScrollRow();
+  const row2Scroll = useScrollRow();
 
   const liveIds = new Set(LIVE_LAKES.map(l => l.id));
   const favSet = new Set(favorites);
@@ -161,49 +197,29 @@ export default function LocationSelector({ selectedLocation, onSelectLocation, o
       </div>
 
       {/* Row 1: My Location + Favorites + Live Lakes */}
-      <div className="relative group">
-        {canScrollLeft && (
-          <button
-            onClick={() => scroll(-1)}
-            className="absolute left-0 top-0 bottom-2 z-10 w-8 flex items-center justify-start bg-gradient-to-r from-[var(--bg-primary,#0f172a)] via-[var(--bg-primary,#0f172a)] to-transparent cursor-pointer"
-            aria-label="Scroll left"
-          >
-            <ChevronLeft className="w-4 h-4 text-slate-400" />
-          </button>
-        )}
-        {canScrollRight && (
-          <button
-            onClick={() => scroll(1)}
-            className="absolute right-0 top-0 bottom-2 z-10 w-8 flex items-center justify-end bg-gradient-to-l from-[var(--bg-primary,#0f172a)] via-[var(--bg-primary,#0f172a)] to-transparent cursor-pointer"
-            aria-label="Scroll right"
-          >
-            <ChevronRight className="w-4 h-4 text-slate-400" />
-          </button>
-        )}
-        <div ref={scrollRef} onWheel={onWheel} className="flex overflow-x-auto gap-2 pb-1.5 hide-scrollbar">
-          <button
-            onClick={() => {
-              if ('geolocation' in navigator) {
-                navigator.geolocation.getCurrentPosition(
-                  (pos) => onSelectLocation(`geo:${pos.coords.latitude},${pos.coords.longitude}`),
-                  () => alert('Location access denied. Use the map to select a location.')
-                );
-              }
-            }}
-            className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all whitespace-nowrap cursor-pointer bg-cyan-900/30 text-cyan-400 border-cyan-500/50 hover:border-cyan-400"
-          >
-            <Navigation className="w-3 h-3" />
-            <span>My Location</span>
-          </button>
-          {row1.map(renderPill)}
-        </div>
-      </div>
+      <ScrollRow scrollState={row1Scroll} className="pb-1.5">
+        <button
+          onClick={() => {
+            if ('geolocation' in navigator) {
+              navigator.geolocation.getCurrentPosition(
+                (pos) => onSelectLocation(`geo:${pos.coords.latitude},${pos.coords.longitude}`),
+                () => alert('Location access denied. Use the map to select a location.')
+              );
+            }
+          }}
+          className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all whitespace-nowrap cursor-pointer bg-cyan-900/30 text-cyan-400 border-cyan-500/50 hover:border-cyan-400"
+        >
+          <Navigation className="w-3 h-3" />
+          <span>My Location</span>
+        </button>
+        {row1.map(renderPill)}
+      </ScrollRow>
 
       {/* Row 2: Rivers & Reservoirs */}
       {row2.length > 0 && (
-        <div className="flex overflow-x-auto gap-2 pb-1 hide-scrollbar">
+        <ScrollRow scrollState={row2Scroll} className="pb-1">
           {row2.map(renderPill)}
-        </div>
+        </ScrollRow>
       )}
     </div>
   );

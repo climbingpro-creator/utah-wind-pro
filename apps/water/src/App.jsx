@@ -12,6 +12,7 @@ import { predictGlass } from './services/BoatingPredictor';
 import { safeToFixed } from './utils/safeToFixed';
 import { getUtahVernacular, getVernacularWindLabel } from './services/UtahVernacular';
 import LocationSelector, { useFavorites, LIVE_LAKES, UTAH_WATERS } from './components/LocationSelector';
+import CommunityCatchesCard from './components/CommunityCatchesCard';
 
 const ALL_LOCATIONS = [...LIVE_LAKES, ...UTAH_WATERS];
 function getLocationName(id) {
@@ -716,6 +717,9 @@ function WaterApp() {
             onLocationSelect={handleSelectLocation}
           />
         </Suspense>
+
+        {/* ═══════ COMMUNITY CATCHES CARD ═══════ */}
+        <CommunityCatchesCard onViewAll={() => setShowCommunity(true)} />
 
         {/* ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ SPORT INTELLIGENCE — Optimal Time Windows ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ */}
         {sportWindows && Object.keys(sportWindows).length > 0 && (
