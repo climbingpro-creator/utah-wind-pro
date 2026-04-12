@@ -22,7 +22,7 @@ import { verifyQStashSignature } from '../lib/qstash.js';
 import { getLakeConfig } from '../lib/stations.js';
 import { splitStations, fetchNwsLatest } from '../lib/nwsAdapter.js';
 import { isUdotStation, fetchUdotLatest } from '../lib/udotAdapter.js';
-import { getNWSForLake, LAKE_TO_GRID } from '../lib/nwsForecast.js';
+import { getNWSForLake } from '../lib/nwsForecast.js';
 import {
   predictHatch,
   parseSkyCondition,
@@ -30,6 +30,7 @@ import {
   SKY_LABELS,
 } from '@utahwind/weather';
 import { fetchUsgsData } from '../lib/weather-backfill.js';
+import { getWaterType, isRiver, isLake, getSeasonalDepth } from '../lib/waterTypes.js';
 import {
   sendEmail,
   buildMorningBriefingEmail,
@@ -209,6 +210,11 @@ export default async function handler(req, res) {
     for (const userPref of eligibleUsers) {
       const userId = userPref.user_id;
       const prefs = userPref.alerts?.fishingAlerts || {};
+      const styles = Array.isArray(prefs.fishingStyle) && prefs.fishingStyle.length
+        ? prefs.fishingStyle : ['all'];
+      const wantsFly = styles.includes('all') || styles.includes('fly');
+      const wantsSpin = styles.includes('all') || styles.includes('spin');
+      const wantsBait = styles.includes('all') || styles.includes('bait');
       const userFavs = favsByUser[userId] || [];
       const userPush = pushByUser[userId] || [];
       const quietStart = userPref.alerts?.quietStart;
@@ -234,8 +240,11 @@ export default async function handler(req, res) {
 
           const emailSpots = scored.map(s => {
             const c = s.cond || {};
+            const locInfo = getWaterType(s.locId);
+            const waterType = locInfo?.type || 'reservoir';
             const hatches = predictHatch(c.sky || 'partly', month, c.temp, c.waterTemp);
             const topHatch = hatches[0];
+            const depthZone = isLake(s.locId) ? getSeasonalDepth(s.locId) : null;
             return {
               name: humanName(s.locId),
               score: s.score,
@@ -250,8 +259,11 @@ export default async function handler(req, res) {
               pressureTrend: c.pressureTrend || null,
               pressureGradient: c.pressureGradient,
               flowCfs: c.flowCfs ? Math.round(c.flowCfs) : null,
-              topHatch: topHatch ? `${topHatch.insect} — ${topHatch.peakTime}` : null,
-              bestAction: buildBestAction(c, topHatch),
+              topHatch: wantsFly && topHatch ? `${topHatch.insect} — ${topHatch.peakTime}` : null,
+              bestAction: buildBestAction(c, topHatch, waterType, styles),
+              waterType,
+              depthZone,
+              recommendations: buildRecommendations(topHatch, waterType, styles, locInfo?.primarySpecies),
             };
           });
 
@@ -265,6 +277,7 @@ export default async function handler(req, res) {
               sunrise: daylight.sunriseFormatted,
               sunset: daylight.sunsetFormatted,
               warnings,
+              fishingStyle: styles,
             }),
           });
         }
@@ -294,26 +307,28 @@ export default async function handler(req, res) {
             };
           }).filter(Boolean).sort((a, b) => b.score - a.score);
 
-          const satSpots = allScored.slice(0, 3).map(s => ({
-            name: s.name,
-            score: s.score,
-            wind: `${compassDir(s.cond.dir)} ${Math.round(s.cond.speed)} mph`,
-            temp: s.cond.temp ? `${Math.round(s.cond.temp)}°F` : null,
-            forecast: s.satForecast,
-            precipChance: extractPrecipChance(s.satDetail || s.satForecast),
-            hatchOutlook: s.hatches[0] ? `${s.hatches[0].insect} (${s.hatches[0].likelihood}%)` : null,
-            flowCfs: s.cond.flowCfs ? Math.round(s.cond.flowCfs) : null,
-          }));
+          const buildWeekendSpot = (s, forecast, detail) => {
+            const locInfo = getWaterType(s.locId);
+            const wt = locInfo?.type || 'reservoir';
+            return {
+              name: s.name,
+              score: s.score,
+              wind: `${compassDir(s.cond.dir)} ${Math.round(s.cond.speed)} mph`,
+              temp: s.cond.temp ? `${Math.round(s.cond.temp)}°F` : null,
+              forecast,
+              precipChance: extractPrecipChance(detail || forecast),
+              hatchOutlook: wantsFly && s.hatches[0] ? `${s.hatches[0].insect} (${s.hatches[0].likelihood}%)` : null,
+              flowCfs: isRiver(s.locId) ? (s.cond.flowCfs ? Math.round(s.cond.flowCfs) : null) : null,
+              waterType: wt,
+              depthZone: isLake(s.locId) ? getSeasonalDepth(s.locId) : null,
+              tip: buildWeekendTip(wt, styles, locInfo?.primarySpecies),
+            };
+          };
 
+          const satSpots = allScored.slice(0, 3).map(s => buildWeekendSpot(s, s.satForecast, s.satDetail));
           const sunSpots = allScored.slice(0, 3).map(s => ({
-            name: s.name,
+            ...buildWeekendSpot(s, s.sunForecast, s.sunDetail),
             score: Math.max(0, s.score + (Math.random() > 0.5 ? 3 : -3)),
-            wind: `${compassDir(s.cond.dir)} ${Math.round(s.cond.speed)} mph`,
-            temp: s.cond.temp ? `${Math.round(s.cond.temp)}°F` : null,
-            forecast: s.sunForecast,
-            precipChance: extractPrecipChance(s.sunDetail || s.sunForecast),
-            hatchOutlook: s.hatches[0] ? `${s.hatches[0].insect} (${s.hatches[0].likelihood}%)` : null,
-            flowCfs: s.cond.flowCfs ? Math.round(s.cond.flowCfs) : null,
           }));
 
           const satAvg = satSpots.reduce((a, s) => a + s.score, 0) / (satSpots.length || 1);
@@ -337,12 +352,13 @@ export default async function handler(req, res) {
         const cond = conditionsMap[locId];
         if (!cond) continue;
 
-        if (prefs.hatchAlerts) {
+        if (prefs.hatchAlerts && wantsFly) {
           const sky = cond.sky || 'partly';
           const hatches = predictHatch(sky, month, cond.temp, cond.waterTemp);
           const topHatch = hatches.find(h => h.likelihood >= 70);
           if (topHatch && !wasSentRecently(alertIndex, userId, 'hatch', locId, COOLDOWNS.hatch)) {
             const secondaryHatches = hatches.filter(h => h !== topHatch && h.likelihood >= 40).slice(0, 2);
+            const locInfo = getWaterType(locId);
             notifications.push({
               type: 'hatch',
               locationId: locId,
@@ -358,17 +374,8 @@ export default async function handler(req, res) {
                   pressure: cond.pressureTrend || null,
                 },
                 secondaryHatches,
-                flyPatterns: topHatch.insect.toLowerCase().includes('bwo')
-                  ? ['Parachute Adams #18-20', 'RS2 #20-22', 'Sparkle Dun #18']
-                  : topHatch.insect.toLowerCase().includes('caddis')
-                    ? ['Elk Hair Caddis #14-16', 'X-Caddis #16', 'Beadhead Pupa #14']
-                    : topHatch.insect.toLowerCase().includes('pmd')
-                      ? ['Sparkle Dun #16-18', 'Pheasant Tail #16-18', 'Comparadun #16']
-                      : topHatch.insect.toLowerCase().includes('midge')
-                        ? ['Griffith\'s Gnat #20-24', 'Zebra Midge #20-22', 'Top Secret Midge #22']
-                        : topHatch.insect.toLowerCase().includes('terrestrial')
-                          ? ['Chernobyl Ant #10-12', 'Parachute Hopper #10', 'Foam Beetle #14']
-                          : [],
+                flyPatterns: getFlyPatterns(topHatch.insect),
+                waterType: locInfo?.type || 'reservoir',
               }),
             });
           }
@@ -506,15 +513,95 @@ function scoreConditions(cond) {
   return Math.max(0, Math.min(100, score));
 }
 
-function buildBestAction(cond, topHatch) {
+function buildBestAction(cond, topHatch, waterType, styles) {
   if (!cond) return '';
-  if (cond.speed > 15) return 'Streamer fishing — wind pushes bait to downwind banks';
-  if (cond.pressureGradient && cond.pressureGradient < -1) return 'Active feeders — try attractor patterns and cover water fast';
-  if (topHatch?.insect?.includes('BWO')) return 'Nymph deep runs early, switch to emergers at peak hatch';
-  if (topHatch?.insect?.includes('Caddis')) return 'Swing soft hackles through riffles, switch to dry at dusk';
-  if (cond.speed < 3) return 'Glass conditions — sight-fish with long leaders and small flies';
-  if (cond.temp && cond.temp < 45) return 'Cold water — slow nymph presentations, deep pools';
+  const isStillwater = waterType !== 'river';
+  const wantsFly = styles.includes('all') || styles.includes('fly');
+  const wantsSpin = styles.includes('all') || styles.includes('spin');
+  const wantsBait = styles.includes('all') || styles.includes('bait');
+
+  if (cond.speed > 15) {
+    if (isStillwater) return wantsSpin ? 'Wind blowing bait — troll downwind shoreline with spoons' : 'Fish downwind banks where wind concentrates baitfish';
+    return wantsFly ? 'Streamer fishing — wind pushes bait to downwind banks' : 'Cast spinners to downwind banks where bait concentrates';
+  }
+  if (cond.pressureGradient && cond.pressureGradient < -1) {
+    if (isStillwater && wantsBait) return 'Pressure dropping — fish are feeding aggressively, try PowerBait near structure';
+    return 'Active feeders — cover water fast, aggressive presentations';
+  }
+  if (isStillwater) {
+    if (cond.speed < 3) {
+      if (wantsSpin) return 'Glass conditions — slow-troll points or cast jigs to structure';
+      if (wantsBait) return 'Glass conditions — still-fish near drop-offs with bait on bottom';
+      return 'Glass conditions — sight-fish with long leaders and small flies';
+    }
+    if (wantsSpin) return 'Troll main lake points or cast to rocky structure';
+    if (wantsBait) return 'Fish inlets and drop-offs, work bait near structure';
+    return 'Strip streamers along weed edges and drop-offs';
+  }
+  if (wantsFly) {
+    if (topHatch?.insect?.includes('BWO')) return 'Nymph deep runs early, switch to emergers at peak hatch';
+    if (topHatch?.insect?.includes('Caddis')) return 'Swing soft hackles through riffles, switch to dry at dusk';
+    if (cond.speed < 3) return 'Glass conditions — sight-fish with long leaders and small flies';
+    if (cond.temp && cond.temp < 45) return 'Cold water — slow nymph presentations, deep pools';
+    return 'Match the hatch and fish the transitions';
+  }
+  if (wantsSpin) return 'Cast small Rapalas through pools, swing spinners in current seams';
+  if (wantsBait) return 'Drift nightcrawlers through deeper runs and pool tailouts';
   return 'Match the conditions and fish the transitions';
+}
+
+function buildRecommendations(topHatch, waterType, styles, primarySpecies) {
+  const recs = { fly: null, spin: null, bait: null };
+  const wantsFly = styles.includes('all') || styles.includes('fly');
+  const wantsSpin = styles.includes('all') || styles.includes('spin');
+  const wantsBait = styles.includes('all') || styles.includes('bait');
+  const isStillwater = waterType !== 'river';
+
+  if (wantsFly) {
+    recs.fly = topHatch ? getFlyPatterns(topHatch.insect) : [];
+  }
+
+  if (wantsSpin) {
+    if (isStillwater) {
+      const species = (primarySpecies || '').toLowerCase();
+      if (species.includes('bass')) recs.spin = ['Ned Rig (green pumpkin)', 'Senko 5" (watermelon)', 'Spinnerbait (white/chartreuse)'];
+      else if (species.includes('walleye')) recs.spin = ['Jigging Rap #7', 'Blade bait (silver)', 'Crawler harness (bottom bouncer)'];
+      else if (species.includes('muskie') || species.includes('pike')) recs.spin = ['Large swimbait (6-8")', 'Jerkbait (perch pattern)', 'Bucktail spinner'];
+      else if (species.includes('trout')) recs.spin = ['Kastmaster (gold)', 'Panther Martin #4', 'Rapala Countdown #7 (rainbow)'];
+      else recs.spin = ['Kastmaster (silver)', 'Tube jig (white/olive)', 'Rapala Countdown (rainbow)'];
+    } else {
+      recs.spin = ['Panther Martin #4 (gold)', 'Blue Fox spinner #2', 'Small Rapala (rainbow trout)'];
+    }
+  }
+
+  if (wantsBait) {
+    if (isStillwater) {
+      const species = (primarySpecies || '').toLowerCase();
+      if (species.includes('catfish')) recs.bait = ['Cut bait (shad)', 'Nightcrawler (on bottom)', 'Chicken liver'];
+      else if (species.includes('trout')) recs.bait = ['PowerBait (rainbow)', 'Nightcrawler (under a float)', 'Salmon eggs'];
+      else if (species.includes('bass')) recs.bait = ['Live minnow (under float)', 'Nightcrawler (Texas rig)', 'Crawdad (free-lined)'];
+      else recs.bait = ['PowerBait (rainbow)', 'Nightcrawler', 'Worm under a float'];
+    } else {
+      recs.bait = ['Nightcrawler (drift rig)', 'Salmon eggs (single hook)', 'PowerBait dough (below dam)'];
+    }
+  }
+
+  return recs;
+}
+
+function buildWeekendTip(waterType, styles, primarySpecies) {
+  const wantsSpin = styles.includes('all') || styles.includes('spin');
+  const wantsBait = styles.includes('all') || styles.includes('bait');
+  if (waterType === 'river') return null;
+  if (wantsSpin) {
+    const sp = (primarySpecies || '').toLowerCase();
+    if (sp.includes('trout')) return 'Troll spoons near inlets at dawn';
+    if (sp.includes('bass')) return 'Work rocky points with jigs early';
+    if (sp.includes('walleye')) return 'Night bite — jig rocky flats after dark';
+    return 'Troll main lake structure early and late';
+  }
+  if (wantsBait) return 'Shore fish near inlets and structure';
+  return null;
 }
 
 function extractPrecipChance(text) {
@@ -525,6 +612,17 @@ function extractPrecipChance(text) {
   if (lower.includes('rain') || lower.includes('shower') || lower.includes('storm')) return 60;
   if (lower.includes('drizzle')) return 40;
   return null;
+}
+
+function getFlyPatterns(insectName) {
+  const name = (insectName || '').toLowerCase();
+  if (name.includes('bwo') || name.includes('baetis') || name.includes('blue winged')) return ['Parachute Adams #18-20', 'RS2 #20-22', 'Sparkle Dun #18'];
+  if (name.includes('caddis')) return ['Elk Hair Caddis #14-16', 'X-Caddis #16', 'Beadhead Pupa #14'];
+  if (name.includes('pmd') || name.includes('pale morning')) return ['Sparkle Dun #16-18', 'Pheasant Tail #16-18', 'Comparadun #16'];
+  if (name.includes('midge')) return ["Griffith's Gnat #20-24", 'Zebra Midge #20-22', 'Top Secret Midge #22'];
+  if (name.includes('terrestrial') || name.includes('hopper')) return ['Chernobyl Ant #10-12', 'Parachute Hopper #10', 'Foam Beetle #14'];
+  if (name.includes('stonefly')) return ['Pat\'s Rubber Legs #8', 'Golden Stone #6-8', 'Stimulator #8-10'];
+  return [];
 }
 
 function humanName(locId) {

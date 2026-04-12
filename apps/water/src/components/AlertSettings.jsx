@@ -16,6 +16,12 @@ const ALERT_TOGGLES = [
   { key: 'stockingAlerts', label: 'Stocking Alerts', desc: 'When your favorite waters get freshly stocked', icon: Fish, color: 'text-emerald-400' },
 ];
 
+const FISHING_STYLES = [
+  { key: 'fly', label: 'Fly Fishing', emoji: '🪶', desc: 'Hatches, fly patterns, emerger tactics' },
+  { key: 'spin', label: 'Lure / Spin', emoji: '🎣', desc: 'Lure colors, trolling, retrieval tips' },
+  { key: 'bait', label: 'Bait', emoji: '🪱', desc: 'PowerBait, worms, depth & structure tips' },
+];
+
 export default function AlertSettings({ isOpen, onClose }) {
   const { session, isPro, openPaywall } = useAuth();
   const [pushStatus, setPushStatus] = useState('loading');
@@ -30,6 +36,7 @@ export default function AlertSettings({ isOpen, onClose }) {
     weekendReport: true,
     stockingAlerts: true,
   });
+  const [fishingStyle, setFishingStyle] = useState(['all']);
   const [email, setEmail] = useState('');
   const [quietStart, setQuietStart] = useState('22:00');
   const [quietEnd, setQuietEnd] = useState('07:00');
@@ -44,7 +51,11 @@ export default function AlertSettings({ isOpen, onClose }) {
         .then(r => r.json())
         .then(data => {
           const fa = data?.alerts?.fishingAlerts;
-          if (fa) setPrefs(prev => ({ ...prev, ...fa }));
+          if (fa) {
+            const { fishingStyle: fs, ...rest } = fa;
+            setPrefs(prev => ({ ...prev, ...rest }));
+            if (Array.isArray(fs) && fs.length) setFishingStyle(fs);
+          }
           if (data?.alerts?.quietStart) setQuietStart(data.alerts.quietStart);
           if (data?.alerts?.quietEnd) setQuietEnd(data.alerts.quietEnd);
           if (data?.email) setEmail(data.email);
@@ -81,7 +92,7 @@ export default function AlertSettings({ isOpen, onClose }) {
         headers: { Authorization: `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           alerts: {
-            fishingAlerts: prefs,
+            fishingAlerts: { ...prefs, fishingStyle },
             quietStart,
             quietEnd,
           },
@@ -91,7 +102,7 @@ export default function AlertSettings({ isOpen, onClose }) {
       setTimeout(() => setSaved(false), 2000);
     } catch { /* offline */ }
     setSaving(false);
-  }, [session, prefs, quietStart, quietEnd]);
+  }, [session, prefs, fishingStyle, quietStart, quietEnd]);
 
   if (!isOpen) return null;
 
@@ -173,6 +184,42 @@ export default function AlertSettings({ isOpen, onClose }) {
                 </div>
               </button>
             ))}
+          </div>
+
+          {/* Fishing style */}
+          <div className="space-y-2">
+            <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-500 px-1">Fishing Style</h3>
+            <p className="text-[10px] text-slate-600 px-1">We'll tailor recommendations to your style. Pick all that apply.</p>
+            <div className="flex flex-wrap gap-2 px-1">
+              {FISHING_STYLES.map(s => {
+                const active = fishingStyle.includes(s.key) || fishingStyle.includes('all');
+                return (
+                  <button
+                    key={s.key}
+                    onClick={() => {
+                      setFishingStyle(prev => {
+                        const had = prev.includes(s.key);
+                        const wasAll = prev.includes('all');
+                        if (wasAll) return [s.key];
+                        const next = had ? prev.filter(k => k !== s.key) : [...prev.filter(k => k !== 'all'), s.key];
+                        return next.length === 0 || next.length === 3 ? ['all'] : next;
+                      });
+                    }}
+                    className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition cursor-pointer border ${
+                      active
+                        ? 'bg-cyan-600/20 border-cyan-500/40 text-cyan-300'
+                        : 'bg-slate-800/40 border-slate-700 text-slate-500 hover:bg-slate-800/70'
+                    }`}
+                  >
+                    <span>{s.emoji}</span>
+                    <span>{s.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+            {fishingStyle.includes('all') && (
+              <p className="text-[10px] text-cyan-600 px-1">All styles selected — you'll get fly, lure, and bait tips.</p>
+            )}
           </div>
 
           {/* Quiet hours */}

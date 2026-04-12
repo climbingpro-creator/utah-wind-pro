@@ -118,8 +118,9 @@ function ctaButton(text, url) {
 /**
  * @param {Array} spots — each: { name, score, wind, gust, windDir, temp, waterTemp,
  *   sky, skyLabel, shortForecast, pressureTrend, pressureGradient,
- *   flowCfs, topHatch, bestAction }
- * @param {Object} meta — { sunrise, sunset, warnings[] }
+ *   flowCfs, topHatch, bestAction, waterType, depthZone,
+ *   recommendations: { fly?, spin?, bait? } }
+ * @param {Object} meta — { sunrise, sunset, warnings[], fishingStyle[] }
  */
 export function buildMorningBriefingEmail(spots, meta = {}) {
   const headerRow = [
@@ -133,6 +134,7 @@ export function buildMorningBriefingEmail(spots, meta = {}) {
 
   const cards = spots.map(s => {
     const scoreColor = s.score > 70 ? COLORS.green : s.score > 40 ? COLORS.amber : COLORS.red;
+    const isStillwater = s.waterType && s.waterType !== 'river';
 
     const windLine = s.windDir
       ? `${s.windDir} ${s.wind} mph${s.gust > s.wind + 3 ? `, gusts ${s.gust}` : ''}`
@@ -144,7 +146,20 @@ export function buildMorningBriefingEmail(spots, meta = {}) {
       s.pressureTrend ? badge('', pressureArrow(s.pressureTrend), '#0f172a') : '',
       s.skyLabel ? badge('', s.skyLabel, '#0f172a') : '',
       s.flowCfs ? badge('&#127754;', `${s.flowCfs} cfs`, '#0f172a') : '',
+      isStillwater && s.depthZone ? badge('&#128207;', `Depth: ${s.depthZone}`, '#0f172a') : '',
     ].filter(Boolean).join('');
+
+    const recs = s.recommendations || {};
+    const recLines = [];
+    if (recs.fly?.length) recLines.push(...recs.fly.map(r => `<div style="font-size:12px;color:${COLORS.muted};padding:1px 0;">&#129526; ${r}</div>`));
+    if (recs.spin?.length) recLines.push(...recs.spin.map(r => `<div style="font-size:12px;color:${COLORS.muted};padding:1px 0;">&#127907; ${r}</div>`));
+    if (recs.bait?.length) recLines.push(...recs.bait.map(r => `<div style="font-size:12px;color:${COLORS.muted};padding:1px 0;">&#129683; ${r}</div>`));
+    const recsSection = recLines.length
+      ? `<div style="margin-top:6px;padding:6px 8px;background:#0f172a;border-radius:6px;">
+          <div style="font-size:10px;color:${COLORS.dim};margin-bottom:3px;">RECOMMENDED</div>
+          ${recLines.join('')}
+        </div>`
+      : '';
 
     return `<div style="background:${COLORS.cardBg};border-radius:12px;padding:16px;margin-bottom:10px;border:1px solid ${COLORS.cardBorder};">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
@@ -154,6 +169,7 @@ export function buildMorningBriefingEmail(spots, meta = {}) {
       <div style="margin-bottom:8px;">${badges}</div>
       ${s.topHatch ? `<div style="font-size:13px;color:${COLORS.green};margin-bottom:4px;">&#129712; ${s.topHatch}</div>` : ''}
       ${s.bestAction ? `<div style="font-size:12px;color:${COLORS.accent};font-style:italic;">&#10148; ${s.bestAction}</div>` : ''}
+      ${recsSection}
       ${scoreBar(s.score)}
     </div>`;
   }).join('');
@@ -174,7 +190,7 @@ export function buildMorningBriefingEmail(spots, meta = {}) {
 
 /**
  * @param {Array} satSpots — each: { name, score, wind, temp, forecast,
- *   precipChance, hatchOutlook, flowCfs }
+ *   precipChance, hatchOutlook, flowCfs, waterType, depthZone, tip }
  * @param {Array} sunSpots — same shape
  * @param {Object} meta — { bestDay, warnings[] }
  */
@@ -182,11 +198,13 @@ export function buildWeekendReportEmail(satSpots, sunSpots, meta = {}) {
   function daySection(dayLabel, spots) {
     const cards = spots.map(s => {
       const scoreColor = s.score > 70 ? COLORS.green : s.score > 40 ? COLORS.amber : COLORS.red;
+      const isStillwater = s.waterType && s.waterType !== 'river';
       const badges = [
         badge('&#127744;', s.wind, '#0f172a'),
         s.temp ? badge('&#127777;', s.temp, '#0f172a') : '',
         s.precipChance != null ? badge('&#127783;', `${s.precipChance}%`, s.precipChance > 40 ? 'rgba(239,68,68,0.15)' : '#0f172a') : '',
         s.flowCfs ? badge('&#127754;', `${s.flowCfs} cfs`, '#0f172a') : '',
+        isStillwater && s.depthZone ? badge('&#128207;', s.depthZone, '#0f172a') : '',
       ].filter(Boolean).join('');
 
       return `<div style="background:${COLORS.cardBg};border-radius:10px;padding:14px;margin-bottom:8px;border:1px solid ${COLORS.cardBorder};">
@@ -197,6 +215,7 @@ export function buildWeekendReportEmail(satSpots, sunSpots, meta = {}) {
         <div style="margin-bottom:6px;">${badges}</div>
         ${s.forecast ? `<div style="font-size:12px;color:${COLORS.muted};margin-bottom:4px;">${s.forecast}</div>` : ''}
         ${s.hatchOutlook ? `<div style="font-size:12px;color:${COLORS.green};">&#129712; ${s.hatchOutlook}</div>` : ''}
+        ${s.tip ? `<div style="font-size:12px;color:${COLORS.accent};font-style:italic;">&#10148; ${s.tip}</div>` : ''}
         ${scoreBar(s.score)}
       </div>`;
     }).join('');
@@ -228,7 +247,7 @@ export function buildWeekendReportEmail(satSpots, sunSpots, meta = {}) {
  * @param {string} locationName
  * @param {Object} hatch — { insect, likelihood, peakTime, notes }
  * @param {Object} extra — { conditions: { wind, temp, waterTemp, sky, pressure },
- *   secondaryHatches[], flyPatterns[] }
+ *   secondaryHatches[], flyPatterns[], waterType }
  */
 export function buildHatchAlertEmail(locationName, hatch, extra = {}) {
   const cond = extra.conditions || {};
@@ -248,9 +267,11 @@ export function buildHatchAlertEmail(locationName, hatch, extra = {}) {
       </div>`
     : '';
 
+  const isStillwater = extra.waterType && extra.waterType !== 'river';
+  const flyLabel = isStillwater ? 'RECOMMENDED PATTERNS (STILLWATER)' : 'RECOMMENDED FLIES';
   const flySection = extra.flyPatterns?.length
     ? `<div style="margin:12px 0;padding:10px;background:#0f172a;border-radius:8px;">
-        <div style="font-size:11px;color:${COLORS.dim};margin-bottom:6px;">RECOMMENDED FLIES</div>
+        <div style="font-size:11px;color:${COLORS.dim};margin-bottom:6px;">${flyLabel}</div>
         ${extra.flyPatterns.map(f => `<div style="font-size:13px;color:${COLORS.text};padding:2px 0;">&#127907; ${f}</div>`).join('')}
       </div>`
     : '';
