@@ -13,6 +13,7 @@ import { safeToFixed } from './utils/safeToFixed';
 import { getUtahVernacular, getVernacularWindLabel } from './services/UtahVernacular';
 import LocationSelector, { useFavorites, LIVE_LAKES, UTAH_WATERS } from './components/LocationSelector';
 import CommunityCatchesCard from './components/CommunityCatchesCard';
+import LiveConditionReport from './components/LiveConditionReport';
 
 const ALL_LOCATIONS = [...LIVE_LAKES, ...UTAH_WATERS];
 function getLocationName(id) {
@@ -704,6 +705,9 @@ function WaterApp() {
             </div>
           </div>
         )}
+
+        {/* ═══════ LIVE CONDITION REPORT — crowd-sourced accuracy check ═══════ */}
+        <LiveConditionReport locationId={selectedLocation} />
 
         {/* ═══════ THE PLAYGROUND — Interactive Water Map ═══════ */}
         <Suspense fallback={<div className="card animate-pulse h-80 flex items-center justify-center text-slate-500 text-sm">Loading map...</div>}>
