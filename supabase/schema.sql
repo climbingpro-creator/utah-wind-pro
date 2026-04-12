@@ -563,3 +563,63 @@ CREATE POLICY "Anyone can read condition reports"
 
 CREATE INDEX IF NOT EXISTS idx_condition_reports_location_time
   ON condition_reports(location_id, created_at DESC);
+
+-- Add weather-at-catch columns to community_posts
+ALTER TABLE community_posts ADD COLUMN IF NOT EXISTS weather_temp   INTEGER;
+ALTER TABLE community_posts ADD COLUMN IF NOT EXISTS weather_wind   INTEGER;
+ALTER TABLE community_posts ADD COLUMN IF NOT EXISTS weather_sky    TEXT CHECK (weather_sky IN ('sunny', 'partly-cloudy', 'overcast', 'rain', 'snow'));
+
+-- ══════════════════════════════════════════════════════════════
+-- Community Post Likes — one like per user per post
+-- ══════════════════════════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS community_post_likes (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  post_id    UUID NOT NULL REFERENCES community_posts(id) ON DELETE CASCADE,
+  user_id    UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(post_id, user_id)
+);
+
+ALTER TABLE community_post_likes ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone can read likes"
+  ON community_post_likes FOR SELECT USING (true);
+
+CREATE POLICY "Authenticated users can insert own likes"
+  ON community_post_likes FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own likes"
+  ON community_post_likes FOR DELETE
+  USING (auth.uid() = user_id);
+
+CREATE INDEX IF NOT EXISTS idx_community_likes_post
+  ON community_post_likes(post_id);
+
+-- ══════════════════════════════════════════════════════════════
+-- Community Post Comments
+-- ══════════════════════════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS community_post_comments (
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  post_id      UUID NOT NULL REFERENCES community_posts(id) ON DELETE CASCADE,
+  user_id      UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  display_name TEXT,
+  body         TEXT NOT NULL CHECK (char_length(body) <= 500),
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE community_post_comments ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone can read comments"
+  ON community_post_comments FOR SELECT USING (true);
+
+CREATE POLICY "Authenticated users can insert own comments"
+  ON community_post_comments FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own comments"
+  ON community_post_comments FOR DELETE
+  USING (auth.uid() = user_id);
+
+CREATE INDEX IF NOT EXISTS idx_community_comments_post
+  ON community_post_comments(post_id, created_at ASC);

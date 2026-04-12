@@ -15,21 +15,21 @@ function timeAgo(dateStr) {
   return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-function mockWeather(post) {
-  const hash = (post.id || '').charCodeAt(0) || 42;
-  const temp = 48 + (hash % 30);
-  const wind = 1 + (hash % 10);
-  const icons = ['☀️', '⛅', '🌤️'];
-  return `${icons[hash % icons.length]} ${temp}° | 🌬️ ${wind}mph`;
-}
+const SKY_EMOJI = { sunny: '☀️', 'partly-cloudy': '⛅', overcast: '☁️', rain: '🌧️', snow: '🌨️' };
 
-function mockEngagement(post) {
-  const h = (post.id || '').charCodeAt(2) || 7;
-  return { likes: 2 + (h % 18), comments: (h % 5) };
+function weatherBadge(post) {
+  if (!post.weather_temp && !post.weather_wind && !post.weather_sky) return null;
+  const parts = [];
+  if (post.weather_sky) parts.push(SKY_EMOJI[post.weather_sky] || '');
+  if (post.weather_temp != null) parts.push(`${post.weather_temp}°`);
+  if (post.weather_wind != null) parts.push(`🌬️ ${post.weather_wind}mph`);
+  return parts.join(' ');
 }
 
 function CatchCard({ post, onClick }) {
-  const { likes, comments } = mockEngagement(post);
+  const likes = post.like_count || 0;
+  const comments = post.comment_count || 0;
+  const badge = weatherBadge(post);
 
   return (
     <button
@@ -44,10 +44,12 @@ function CatchCard({ post, onClick }) {
           loading="lazy"
         />
 
-        {/* Environmental data badge — top-right */}
-        <span className="absolute top-2 right-2 px-2 py-1 rounded-full text-[9px] font-semibold bg-black/40 text-white/90 backdrop-blur-sm">
-          {mockWeather(post)}
-        </span>
+        {/* Environmental data badge — top-right (user-reported) */}
+        {badge && (
+          <span className="absolute top-2 right-2 px-2 py-1 rounded-full text-[9px] font-semibold bg-black/40 text-white/90 backdrop-blur-sm">
+            {badge}
+          </span>
+        )}
 
         {/* Species badge — top-left */}
         {post.species && (

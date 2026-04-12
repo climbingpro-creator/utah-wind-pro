@@ -47,7 +47,7 @@ async function handleFeed(_req, res) {
 
     const { data, error, count } = await supabase
       .from('community_posts')
-      .select('*', { count: 'exact' })
+      .select('*, community_post_likes(count), community_post_comments(count)', { count: 'exact' })
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
@@ -56,8 +56,16 @@ async function handleFeed(_req, res) {
       return res.status(500).json({ error: 'Failed to fetch feed' });
     }
 
+    const posts = (data || []).map(p => ({
+      ...p,
+      like_count: p.community_post_likes?.[0]?.count || 0,
+      comment_count: p.community_post_comments?.[0]?.count || 0,
+      community_post_likes: undefined,
+      community_post_comments: undefined,
+    }));
+
     res.setHeader('Cache-Control', 's-maxage=10, stale-while-revalidate=30');
-    return res.status(200).json({ posts: data || [], total: count || 0 });
+    return res.status(200).json({ posts, total: count || 0 });
   } catch (err) {
     console.error('[community] feed:', err.message);
     return res.status(500).json({ error: err.message });
@@ -131,6 +139,9 @@ async function handleCreate(req, res) {
         location_id: body.locationId || null,
         location_name: body.locationName || null,
         species: body.species || null,
+        weather_temp: body.weatherTemp != null ? parseInt(body.weatherTemp) : null,
+        weather_wind: body.weatherWind != null ? parseInt(body.weatherWind) : null,
+        weather_sky: ['sunny', 'partly-cloudy', 'overcast', 'rain', 'snow'].includes(body.weatherSky) ? body.weatherSky : null,
       })
       .select('id, photo_url, created_at')
       .single();

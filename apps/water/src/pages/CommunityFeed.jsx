@@ -1,10 +1,22 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Camera, X, MapPin, Fish, Send, ArrowLeft, ImagePlus, Loader2, Trash2, MessageCircle, Heart } from 'lucide-react';
+import { Camera, X, MapPin, Send, ArrowLeft, ImagePlus, Loader2, Trash2, MessageCircle, Heart, ChevronDown, ChevronUp } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '@utahwind/database';
 import { FISHING_LOCATIONS } from '../components/FishingMode';
 
 const API_BASE = '/api/community/post';
+const LIKE_API = '/api/community/like';
+const COMMENT_API = '/api/community/comment';
+
+const SKY_OPTIONS = [
+  { id: 'sunny', emoji: '☀️', label: 'Sunny' },
+  { id: 'partly-cloudy', emoji: '⛅', label: 'Partly Cloudy' },
+  { id: 'overcast', emoji: '☁️', label: 'Overcast' },
+  { id: 'rain', emoji: '🌧️', label: 'Rain' },
+  { id: 'snow', emoji: '🌨️', label: 'Snow' },
+];
+
+const SKY_EMOJI = { sunny: '☀️', 'partly-cloudy': '⛅', overcast: '☁️', rain: '🌧️', snow: '🌨️' };
 
 async function getAuthHeaders() {
   const { data } = await supabase.auth.getSession();
@@ -25,23 +37,131 @@ function timeAgo(dateStr) {
   return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-function mockWeather(post) {
-  const hash = (post.id || '').charCodeAt(0) || 42;
-  const temp = 48 + (hash % 30);
-  const wind = 1 + (hash % 10);
-  const icons = ['☀️', '⛅', '🌤️'];
-  return `${icons[hash % icons.length]} ${temp}° | 🌬️ ${wind}mph`;
+function weatherBadge(post) {
+  if (!post.weather_temp && !post.weather_wind && !post.weather_sky) return null;
+  const parts = [];
+  if (post.weather_sky) parts.push(SKY_EMOJI[post.weather_sky] || '');
+  if (post.weather_temp != null) parts.push(`${post.weather_temp}°`);
+  if (post.weather_wind != null) parts.push(`🌬️ ${post.weather_wind}mph`);
+  return parts.join(' ');
 }
 
-function mockEngagement(post) {
-  const h = (post.id || '').charCodeAt(2) || 7;
-  return { likes: 2 + (h % 18), comments: (h % 5) };
+function CommentSection({ postId, user }) {
+  const [comments, setComments] = useState([]);
+  const [newComment, setNewComment] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    fetch(`${COMMENT_API}?postId=${postId}`)
+      .then(r => r.ok ? r.json() : { comments: [] })
+      .then(d => setComments(d.comments || []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [postId]);
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    if (!newComment.trim() || submitting) return;
+    setSubmitting(true);
+    try {
+      const headers = await getAuthHeaders();
+      const resp = await fetch(COMMENT_API, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ postId, body: newComment.trim() }),
+      });
+      const data = await resp.json();
+      if (resp.ok && data.comment) {
+        setComments(prev => [...prev, data.comment]);
+        setNewComment('');
+      }
+    } catch { /* ignore */ }
+    setSubmitting(false);
+  }
+
+  async function handleDeleteComment(commentId) {
+    try {
+      const headers = await getAuthHeaders();
+      const resp = await fetch(`${COMMENT_API}?id=${commentId}`, { method: 'DELETE', headers });
+      if (resp.ok) setComments(prev => prev.filter(c => c.id !== commentId));
+    } catch { /* ignore */ }
+  }
+
+  return (
+    <div className="border-t border-slate-700/30 mt-2 pt-2">
+      {loading ? (
+        <div className="flex justify-center py-2"><Loader2 className="w-3.5 h-3.5 text-slate-500 animate-spin" /></div>
+      ) : (
+        <>
+          {comments.length > 0 && (
+            <div className="space-y-1.5 mb-2 max-h-40 overflow-y-auto">
+              {comments.map(c => (
+                <div key={c.id} className="flex items-start gap-1.5 text-[10px]">
+                  <span className="font-semibold text-slate-300 shrink-0">{c.display_name || 'Angler'}</span>
+                  <span className="text-slate-400 flex-1">{c.body}</span>
+                  {user?.id === c.user_id && (
+                    <button onClick={() => handleDeleteComment(c.id)} className="text-slate-600 hover:text-red-400 shrink-0">
+                      <X className="w-2.5 h-2.5" />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+          {user ? (
+            <form onSubmit={handleSubmit} className="flex gap-1.5">
+              <input
+                value={newComment}
+                onChange={e => setNewComment(e.target.value)}
+                placeholder="Add a comment..."
+                maxLength={500}
+                className="flex-1 rounded-lg bg-slate-800/50 border border-slate-700/50 px-2 py-1 text-[10px] text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-500/50"
+              />
+              <button
+                type="submit"
+                disabled={!newComment.trim() || submitting}
+                className="px-2 py-1 rounded-lg text-[10px] font-semibold bg-cyan-500/20 text-cyan-400 disabled:opacity-30 hover:bg-cyan-500/30 transition-colors"
+              >
+                {submitting ? '...' : 'Post'}
+              </button>
+            </form>
+          ) : (
+            <p className="text-[9px] text-slate-600">Sign in to comment</p>
+          )}
+        </>
+      )}
+    </div>
+  );
 }
 
-function PostCard({ post, currentUserId, onDelete }) {
+function PostCard({ post, currentUserId, onDelete, user }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [liked, setLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(post.like_count || 0);
+  const [showComments, setShowComments] = useState(false);
   const isOwner = currentUserId && post.user_id === currentUserId;
-  const { likes, comments } = mockEngagement(post);
+  const badge = weatherBadge(post);
+
+  async function handleLike() {
+    if (!currentUserId) return;
+    const prev = liked;
+    setLiked(!prev);
+    setLikeCount(c => prev ? c - 1 : c + 1);
+    try {
+      const headers = await getAuthHeaders();
+      const resp = await fetch(LIKE_API, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ postId: post.id }),
+      });
+      const data = await resp.json();
+      if (resp.ok) {
+        setLiked(data.liked);
+        setLikeCount(data.count);
+      }
+    } catch { setLiked(prev); setLikeCount(c => prev ? c + 1 : c - 1); }
+  }
 
   return (
     <div className="rounded-2xl border border-slate-700/50 bg-slate-800/50 overflow-hidden">
@@ -52,17 +172,16 @@ function PostCard({ post, currentUserId, onDelete }) {
           className="w-full h-full object-cover"
           loading="lazy"
         />
-        {/* Species badge — top-left */}
         {post.species && (
           <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/80 text-white backdrop-blur-sm">
             {post.species}
           </span>
         )}
-        {/* Environmental data badge — top-right */}
-        <span className="absolute top-2 right-2 px-2 py-1 rounded-full text-[9px] font-semibold bg-black/40 text-white/90 backdrop-blur-sm">
-          {mockWeather(post)}
-        </span>
-        {/* Scrim gradient — bottom 40% */}
+        {badge && (
+          <span className="absolute top-2 right-2 px-2 py-1 rounded-full text-[9px] font-semibold bg-black/40 text-white/90 backdrop-blur-sm">
+            {badge}
+          </span>
+        )}
         <div className="absolute inset-x-0 bottom-0 h-[40%] bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
       </div>
       <div className="p-3">
@@ -87,14 +206,20 @@ function PostCard({ post, currentUserId, onDelete }) {
               {post.location_name}
             </span>
           )}
-          {/* Engagement metrics */}
           <div className="flex items-center gap-2.5 ml-auto">
-            <span className="flex items-center gap-0.5 text-[10px] text-slate-500">
-              <Heart className="w-3 h-3" /> {likes}
-            </span>
-            <span className="flex items-center gap-0.5 text-[10px] text-slate-500">
-              <MessageCircle className="w-3 h-3" /> {comments}
-            </span>
+            <button
+              onClick={handleLike}
+              className={`flex items-center gap-0.5 text-[10px] transition-colors ${liked ? 'text-rose-400' : 'text-slate-500 hover:text-rose-400'}`}
+            >
+              <Heart className={`w-3 h-3 ${liked ? 'fill-rose-400' : ''}`} /> {likeCount}
+            </button>
+            <button
+              onClick={() => setShowComments(!showComments)}
+              className={`flex items-center gap-0.5 text-[10px] transition-colors ${showComments ? 'text-cyan-400' : 'text-slate-500 hover:text-cyan-400'}`}
+            >
+              <MessageCircle className="w-3 h-3" /> {post.comment_count || 0}
+              {showComments ? <ChevronUp className="w-2.5 h-2.5" /> : <ChevronDown className="w-2.5 h-2.5" />}
+            </button>
           </div>
           {isOwner && (
             <button
@@ -106,6 +231,7 @@ function PostCard({ post, currentUserId, onDelete }) {
             </button>
           )}
         </div>
+        {showComments && <CommentSection postId={post.id} user={user} />}
       </div>
     </div>
   );
@@ -117,6 +243,9 @@ function UploadModal({ onClose, onSuccess }) {
   const [caption, setCaption] = useState('');
   const [species, setSpecies] = useState('');
   const [locationId, setLocationId] = useState('');
+  const [weatherTemp, setWeatherTemp] = useState('');
+  const [weatherWind, setWeatherWind] = useState('');
+  const [weatherSky, setWeatherSky] = useState('');
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState(null);
   const fileRef = useRef(null);
@@ -172,6 +301,9 @@ function UploadModal({ onClose, onSuccess }) {
           species: species.trim() || null,
           locationId: locationId || null,
           locationName: loc?.name || null,
+          weatherTemp: weatherTemp ? parseInt(weatherTemp) : null,
+          weatherWind: weatherWind ? parseInt(weatherWind) : null,
+          weatherSky: weatherSky || null,
         }),
       });
       const data = await resp.json();
@@ -251,6 +383,53 @@ function UploadModal({ onClose, onSuccess }) {
                   <option key={l.id} value={l.id}>{l.name}</option>
                 ))}
               </select>
+            </div>
+          </div>
+
+          {/* Weather at catch */}
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2 block">Conditions at Catch</label>
+            <div className="flex gap-2 mb-2 flex-wrap">
+              {SKY_OPTIONS.map(s => (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => setWeatherSky(weatherSky === s.id ? '' : s.id)}
+                  className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium border transition-all ${
+                    weatherSky === s.id
+                      ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-300'
+                      : 'bg-slate-800/50 border-slate-700/50 text-slate-400 hover:border-slate-500'
+                  }`}
+                >
+                  <span>{s.emoji}</span> {s.label}
+                </button>
+              ))}
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-[9px] text-slate-500 mb-0.5 block">Temp (°F)</label>
+                <input
+                  type="number"
+                  value={weatherTemp}
+                  onChange={e => setWeatherTemp(e.target.value)}
+                  placeholder="e.g. 62"
+                  min={-20}
+                  max={120}
+                  className="w-full rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-500/50"
+                />
+              </div>
+              <div>
+                <label className="text-[9px] text-slate-500 mb-0.5 block">Wind (mph)</label>
+                <input
+                  type="number"
+                  value={weatherWind}
+                  onChange={e => setWeatherWind(e.target.value)}
+                  placeholder="e.g. 5"
+                  min={0}
+                  max={100}
+                  className="w-full rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-500/50"
+                />
+              </div>
             </div>
           </div>
 
@@ -361,6 +540,7 @@ export default function CommunityFeed({ onBack }) {
             post={post}
             currentUserId={user?.id}
             onDelete={handleDelete}
+            user={user}
           />
         ))}
       </div>
