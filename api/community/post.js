@@ -97,18 +97,28 @@ async function handleCreate(req, res) {
     const fileId = crypto.randomUUID();
     const filePath = `community/${fileId}.${ext}`;
 
-    const { error: uploadErr } = await supabase.storage
-      .from('session-photos')
-      .upload(filePath, buf, { contentType, upsert: false });
+    // Try session-photos bucket first, fall back to community-photos
+    let photoUrl;
+    const buckets = ['session-photos', 'community-photos'];
+    let uploaded = false;
 
-    if (uploadErr) {
-      console.error('[community] upload error:', uploadErr.message);
-      return res.status(500).json({ error: 'Failed to upload photo' });
+    for (const bucket of buckets) {
+      const { error: uploadErr } = await supabase.storage
+        .from(bucket)
+        .upload(filePath, buf, { contentType, upsert: false });
+
+      if (!uploadErr) {
+        const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(filePath);
+        photoUrl = urlData.publicUrl;
+        uploaded = true;
+        break;
+      }
+      console.warn(`[community] upload to ${bucket} failed:`, uploadErr.message, uploadErr.statusCode);
     }
 
-    const { data: urlData } = supabase.storage
-      .from('session-photos')
-      .getPublicUrl(filePath);
+    if (!uploaded) {
+      return res.status(500).json({ error: 'Failed to upload photo. Storage bucket may not exist — create a "community-photos" public bucket in Supabase.' });
+    }
 
     const { data: post, error: insertErr } = await supabase
       .from('community_posts')
@@ -116,7 +126,7 @@ async function handleCreate(req, res) {
         user_id: auth.user.id,
         user_email: auth.user.email,
         display_name: auth.user.user_metadata?.full_name || auth.user.email?.split('@')[0] || 'Angler',
-        photo_url: urlData.publicUrl,
+        photo_url: photoUrl,
         caption: (body.caption || '').slice(0, 500),
         location_id: body.locationId || null,
         location_name: body.locationName || null,
@@ -126,8 +136,8 @@ async function handleCreate(req, res) {
       .single();
 
     if (insertErr) {
-      console.error('[community] insert error:', insertErr.message);
-      return res.status(500).json({ error: 'Failed to save post' });
+      console.error('[community] insert error:', insertErr.message, insertErr.code, insertErr.details);
+      return res.status(500).json({ error: `Failed to save post: ${insertErr.message}` });
     }
 
     return res.status(200).json({ success: true, post });
