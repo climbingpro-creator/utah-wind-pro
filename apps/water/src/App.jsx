@@ -540,7 +540,7 @@ function WaterApp() {
                   {selectedVerdict?.reason || 'Loading conditions...'}
                 </h2>
                 <p className="text-sm mt-1.5 font-medium text-white/60">
-                  {currentWindSpeed != null ? `${Math.round(currentWindSpeed)} mph` : '--'}{currentWindDirection != null ? ` ${dirLabel(currentWindDirection)}` : ''} — {selectedVerdict?.label?.toLowerCase() || 'checking'} for {WATER_ACTIVITIES.find(a => a.id === selectedActivity)?.name}
+                  {currentWindSpeed != null ? `${Math.round(currentWindSpeed)} mph` : '--'}{currentWindDirection != null ? ` ${dirLabel(currentWindDirection)}` : ''} — {WATER_ACTIVITIES.find(a => a.id === selectedActivity)?.name}
                 </p>
               </div>
               <div className="text-right flex-shrink-0">
