@@ -126,8 +126,6 @@ function EngagementTimeline({ eventsByDay }) {
   );
 }
 
-const API_ORIGIN = import.meta.env.VITE_API_ORIGIN || '';
-
 const EMAIL_TEMPLATES = [
   { id: 'morning', label: 'Morning Briefing', desc: 'Top 3 spots scored for the day', icon: '🌅' },
   { id: 'weekend', label: 'Weekend Report', desc: 'Best waters ranked for Sat & Sun', icon: '🗓️' },
@@ -144,7 +142,7 @@ function TestEmailCard({ getAuthHeader }) {
     setResult(null);
     try {
       const headers = await getAuthHeader();
-      const resp = await fetch(`${API_ORIGIN}/api/test-email`, {
+      const resp = await fetch('/api/test-email', {
         method: 'POST',
         headers: { ...headers, 'Content-Type': 'application/json' },
         body: JSON.stringify({ template: selectedTemplate }),
