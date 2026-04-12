@@ -719,6 +719,8 @@ function WaterApp() {
             }}
             selectedLocation={selectedLocation}
             onLocationSelect={handleSelectLocation}
+            isPro={isPro}
+            onUnlockPro={openPaywall}
           />
         </Suspense>
 
