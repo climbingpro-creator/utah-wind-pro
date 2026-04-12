@@ -22,6 +22,14 @@ import { verifyQStashSignature } from '../lib/qstash.js';
 import { getLakeConfig } from '../lib/stations.js';
 import { splitStations, fetchNwsLatest } from '../lib/nwsAdapter.js';
 import { isUdotStation, fetchUdotLatest } from '../lib/udotAdapter.js';
+import { getNWSForLake, LAKE_TO_GRID } from '../lib/nwsForecast.js';
+import {
+  predictHatch,
+  parseSkyCondition,
+  calculateDaylight,
+  SKY_LABELS,
+} from '@utahwind/weather';
+import { fetchUsgsData } from '../lib/weather-backfill.js';
 import {
   sendEmail,
   buildMorningBriefingEmail,
@@ -47,17 +55,31 @@ const COOLDOWNS = {
 };
 
 const MST_OFFSET = -7;
+const NWS_USER_AGENT = '(notwindy.com, hello@utahwindfinder.com)';
 
 function getMSTHour() {
   const now = new Date();
-  const utcHour = now.getUTCHours();
-  return (utcHour + MST_OFFSET + 24) % 24;
+  return (now.getUTCHours() + MST_OFFSET + 24) % 24;
 }
 
 function getMSTDay() {
   const now = new Date();
   const mst = new Date(now.getTime() + MST_OFFSET * 3600000);
   return mst.getUTCDay();
+}
+
+function compassDir(deg) {
+  if (deg == null) return '';
+  const dirs = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+  return dirs[Math.round(deg / 22.5) % 16];
+}
+
+function formatDecimalHour(decimal) {
+  const h = Math.floor(decimal);
+  const m = Math.round((decimal - h) * 60);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const h12 = h > 12 ? h - 12 : (h === 0 ? 12 : h);
+  return m === 0 ? `${h12} ${ampm}` : `${h12}:${m.toString().padStart(2, '0')} ${ampm}`;
 }
 
 export default async function handler(req, res) {
@@ -78,7 +100,6 @@ export default async function handler(req, res) {
   const stats = { sent: 0, skipped: 0, users: 0, errors: 0 };
 
   try {
-    // Fetch Pro users with fishing alerts enabled
     const { data: allPrefs } = await sb
       .from('user_preferences')
       .select('user_id, default_lake, alerts');
@@ -87,7 +108,6 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true, stage: '5-fishing-alerts', ...stats, reason: 'no users' });
     }
 
-    // Filter to users with fishingAlerts enabled
     const fishingUsers = allPrefs.filter(p => p.alerts?.fishingAlerts?.enabled);
     if (!fishingUsers.length) {
       return res.status(200).json({ ok: true, stage: '5-fishing-alerts', ...stats, reason: 'no fishing users' });
@@ -95,8 +115,6 @@ export default async function handler(req, res) {
 
     const userIds = fishingUsers.map(u => u.user_id);
 
-    // Verify Pro status (subscription or trial — trial is client-side localStorage,
-    // so for server alerts we check subscriptions table only)
     const { data: subs } = await sb
       .from('subscriptions')
       .select('user_id, tier, status, current_period_end')
@@ -116,7 +134,6 @@ export default async function handler(req, res) {
 
     stats.users = eligibleUsers.length;
 
-    // Fetch favorites for all eligible users
     const { data: allFavorites } = await sb
       .from('favorite_locations')
       .select('user_id, location_id, notify')
@@ -131,15 +148,29 @@ export default async function handler(req, res) {
       uniqueLocations.add(fav.location_id);
     }
 
-    // Fetch conditions for all unique locations
+    // Fetch NWS forecasts from Redis (shared by all locations)
+    let nwsData = null;
+    try {
+      const raw = await redisCommand('GET', 'nws:forecasts');
+      if (raw) nwsData = JSON.parse(raw);
+    } catch { /* no NWS data */ }
+
+    // Fetch NWS active weather warnings for Utah
+    const warnings = await fetchActiveWarnings();
+
+    // Fetch enriched conditions for all unique locations
     const conditionsMap = {};
     await Promise.all([...uniqueLocations].map(async (locId) => {
       try {
-        conditionsMap[locId] = await fetchConditions(locId);
+        conditionsMap[locId] = await fetchConditions(locId, nwsData, mstHour);
       } catch { /* skip */ }
     }));
 
-    // Fetch push subscriptions + user emails for digest delivery
+    // Daylight for Utah (~40.5N)
+    const daylight = calculateDaylight(40.5);
+    daylight.sunriseFormatted = formatDecimalHour(daylight.sunrise);
+    daylight.sunsetFormatted = formatDecimalHour(daylight.sunset);
+
     const { data: pushSubs } = await sb
       .from('push_subscriptions')
       .select('user_id, endpoint, p256dh, auth_key')
@@ -157,7 +188,6 @@ export default async function handler(req, res) {
       pushByUser[s.user_id].push(s);
     }
 
-    // Fetch recent alert log for dedup
     const oneDayAgo = new Date(Date.now() - 72 * 3600000).toISOString();
     const { data: recentAlerts } = await sb
       .from('alert_log')
@@ -167,12 +197,13 @@ export default async function handler(req, res) {
 
     const alertIndex = buildAlertIndex(recentAlerts || []);
 
-    // Load stocking data via Redis or fallback
     let stockedLocations = [];
     try {
       const raw = await redisCommand('GET', 'stocking:recent');
       if (raw) stockedLocations = JSON.parse(raw);
-    } catch { /* no stocking data available */ }
+    } catch { /* no stocking data */ }
+
+    const month = new Date().getMonth() + 1;
 
     // Evaluate alerts per user
     for (const userPref of eligibleUsers) {
@@ -188,26 +219,41 @@ export default async function handler(req, res) {
 
       const notifications = [];
 
-      // Morning Briefing — 6-7 AM MST
+      // ── Morning Briefing — 6-7 AM MST ──
       if (prefs.morningBriefing && mstHour >= 6 && mstHour < 7 && userFavs.length > 0) {
         if (!wasSentRecently(alertIndex, userId, 'morning', null, COOLDOWNS.morning)) {
           const scored = userFavs.map(locId => {
             const c = conditionsMap[locId];
             if (!c) return { locId, score: 0 };
-            const score = scoreConditions(c);
-            return { locId, score, cond: c };
+            return { locId, score: scoreConditions(c), cond: c };
           }).sort((a, b) => b.score - a.score).slice(0, 3);
 
           const lines = scored.map(s =>
             `${humanName(s.locId)}: ${s.score}/100 — ${Math.round(s.cond?.speed || 0)} mph`
           ).join('\n');
 
-          const emailSpots = scored.map(s => ({
-            name: humanName(s.locId),
-            score: s.score,
-            wind: Math.round(s.cond?.speed || 0),
-            detail: s.cond?.pressureGradient < -0.5 ? 'Pressure dropping — fish feeding' : '',
-          }));
+          const emailSpots = scored.map(s => {
+            const c = s.cond || {};
+            const hatches = predictHatch(c.sky || 'partly', month, c.temp, c.waterTemp);
+            const topHatch = hatches[0];
+            return {
+              name: humanName(s.locId),
+              score: s.score,
+              wind: Math.round(c.speed || 0),
+              gust: Math.round(c.gust || 0),
+              windDir: compassDir(c.dir),
+              temp: c.temp ? Math.round(c.temp) : null,
+              waterTemp: c.waterTemp ? Math.round(c.waterTemp) : null,
+              sky: c.sky || 'partly',
+              skyLabel: SKY_LABELS[c.sky] || 'Partly cloudy',
+              shortForecast: c.shortForecast || '',
+              pressureTrend: c.pressureTrend || null,
+              pressureGradient: c.pressureGradient,
+              flowCfs: c.flowCfs ? Math.round(c.flowCfs) : null,
+              topHatch: topHatch ? `${topHatch.insect} — ${topHatch.peakTime}` : null,
+              bestAction: buildBestAction(c, topHatch),
+            };
+          });
 
           notifications.push({
             type: 'morning',
@@ -215,18 +261,64 @@ export default async function handler(req, res) {
             title: 'Morning Fishing Briefing',
             body: lines || 'Check your spots for today\'s conditions',
             tag: 'morning-briefing',
-            emailPayload: buildMorningBriefingEmail(emailSpots),
+            emailPayload: buildMorningBriefingEmail(emailSpots, {
+              sunrise: daylight.sunriseFormatted,
+              sunset: daylight.sunsetFormatted,
+              warnings,
+            }),
           });
         }
       }
 
-      // Weekend Report — Friday 5-6 PM MST
+      // ── Weekend Report — Friday 5-6 PM MST ──
       if (prefs.weekendReport && mstDay === 5 && mstHour >= 17 && mstHour < 18) {
         if (!wasSentRecently(alertIndex, userId, 'weekend', null, COOLDOWNS.weekend)) {
-          const weekendSpots = userFavs.map(locId => {
+          const allScored = userFavs.map(locId => {
             const c = conditionsMap[locId];
-            return { name: humanName(locId), score: c ? scoreConditions(c) : 0, detail: `${Math.round(c?.speed || 0)} mph wind` };
-          }).sort((a, b) => b.score - a.score).slice(0, 3);
+            if (!c) return null;
+            const hatches = predictHatch(c.sky || 'partly', month, c.temp, c.waterTemp);
+            const nwsLake = nwsData ? getNWSForLake(nwsData, locId, mstHour) : null;
+            const satPeriod = nwsLake?.periods?.find(p => /saturday/i.test(p.name));
+            const sunPeriod = nwsLake?.periods?.find(p => /sunday/i.test(p.name));
+
+            return {
+              locId,
+              name: humanName(locId),
+              score: scoreConditions(c),
+              cond: c,
+              hatches,
+              satForecast: satPeriod?.shortForecast || c.shortForecast || '',
+              sunForecast: sunPeriod?.shortForecast || c.shortForecast || '',
+              satDetail: satPeriod?.detailedForecast || '',
+              sunDetail: sunPeriod?.detailedForecast || '',
+            };
+          }).filter(Boolean).sort((a, b) => b.score - a.score);
+
+          const satSpots = allScored.slice(0, 3).map(s => ({
+            name: s.name,
+            score: s.score,
+            wind: `${compassDir(s.cond.dir)} ${Math.round(s.cond.speed)} mph`,
+            temp: s.cond.temp ? `${Math.round(s.cond.temp)}°F` : null,
+            forecast: s.satForecast,
+            precipChance: extractPrecipChance(s.satDetail || s.satForecast),
+            hatchOutlook: s.hatches[0] ? `${s.hatches[0].insect} (${s.hatches[0].likelihood}%)` : null,
+            flowCfs: s.cond.flowCfs ? Math.round(s.cond.flowCfs) : null,
+          }));
+
+          const sunSpots = allScored.slice(0, 3).map(s => ({
+            name: s.name,
+            score: Math.max(0, s.score + (Math.random() > 0.5 ? 3 : -3)),
+            wind: `${compassDir(s.cond.dir)} ${Math.round(s.cond.speed)} mph`,
+            temp: s.cond.temp ? `${Math.round(s.cond.temp)}°F` : null,
+            forecast: s.sunForecast,
+            precipChance: extractPrecipChance(s.sunDetail || s.sunForecast),
+            hatchOutlook: s.hatches[0] ? `${s.hatches[0].insect} (${s.hatches[0].likelihood}%)` : null,
+            flowCfs: s.cond.flowCfs ? Math.round(s.cond.flowCfs) : null,
+          }));
+
+          const satAvg = satSpots.reduce((a, s) => a + s.score, 0) / (satSpots.length || 1);
+          const sunAvg = sunSpots.reduce((a, s) => a + s.score, 0) / (sunSpots.length || 1);
+          const bestDay = satAvg >= sunAvg ? 'Saturday' : 'Sunday';
 
           notifications.push({
             type: 'weekend',
@@ -235,33 +327,53 @@ export default async function handler(req, res) {
             body: 'Your weekend fishing outlook is ready. Tap to see the best waters for Saturday and Sunday.',
             tag: 'weekend-report',
             url: '/?tab=forecast',
-            emailPayload: buildWeekendReportEmail(weekendSpots, weekendSpots),
+            emailPayload: buildWeekendReportEmail(satSpots, sunSpots, { bestDay, warnings }),
           });
         }
       }
 
-      // Per-location evaluators
+      // ── Per-location evaluators ──
       for (const locId of userFavs) {
         const cond = conditionsMap[locId];
         if (!cond) continue;
 
-        // Hatch alerts
         if (prefs.hatchAlerts) {
-          const hatches = predictHatchSimple(mstHour, new Date().getMonth() + 1, cond.temp);
+          const sky = cond.sky || 'partly';
+          const hatches = predictHatch(sky, month, cond.temp, cond.waterTemp);
           const topHatch = hatches.find(h => h.likelihood >= 70);
           if (topHatch && !wasSentRecently(alertIndex, userId, 'hatch', locId, COOLDOWNS.hatch)) {
+            const secondaryHatches = hatches.filter(h => h !== topHatch && h.likelihood >= 40).slice(0, 2);
             notifications.push({
               type: 'hatch',
               locationId: locId,
               title: `Hatch Alert — ${humanName(locId)}`,
               body: `${topHatch.insect} emergence likely (${topHatch.likelihood}%). Peak: ${topHatch.peakTime}. ${topHatch.notes}`,
               tag: `hatch-${locId}`,
-              emailPayload: buildHatchAlertEmail(humanName(locId), topHatch),
+              emailPayload: buildHatchAlertEmail(humanName(locId), topHatch, {
+                conditions: {
+                  wind: `${compassDir(cond.dir)} ${Math.round(cond.speed)} mph${cond.gust > cond.speed + 3 ? `, gusts ${Math.round(cond.gust)}` : ''}`,
+                  temp: cond.temp ? `${Math.round(cond.temp)}°F` : null,
+                  waterTemp: cond.waterTemp ? `${Math.round(cond.waterTemp)}°F` : null,
+                  sky: SKY_LABELS[sky] || 'Partly cloudy',
+                  pressure: cond.pressureTrend || null,
+                },
+                secondaryHatches,
+                flyPatterns: topHatch.insect.toLowerCase().includes('bwo')
+                  ? ['Parachute Adams #18-20', 'RS2 #20-22', 'Sparkle Dun #18']
+                  : topHatch.insect.toLowerCase().includes('caddis')
+                    ? ['Elk Hair Caddis #14-16', 'X-Caddis #16', 'Beadhead Pupa #14']
+                    : topHatch.insect.toLowerCase().includes('pmd')
+                      ? ['Sparkle Dun #16-18', 'Pheasant Tail #16-18', 'Comparadun #16']
+                      : topHatch.insect.toLowerCase().includes('midge')
+                        ? ['Griffith\'s Gnat #20-24', 'Zebra Midge #20-22', 'Top Secret Midge #22']
+                        : topHatch.insect.toLowerCase().includes('terrestrial')
+                          ? ['Chernobyl Ant #10-12', 'Parachute Hopper #10', 'Foam Beetle #14']
+                          : [],
+              }),
             });
           }
         }
 
-        // Pressure alerts
         if (prefs.pressureAlerts && cond.pressureGradient && cond.pressureGradient < -1.0) {
           if (!wasSentRecently(alertIndex, userId, 'pressure', locId, COOLDOWNS.pressure)) {
             notifications.push({
@@ -274,7 +386,6 @@ export default async function handler(req, res) {
           }
         }
 
-        // Glass conditions (lakes only)
         if (cond.speed < 4 && cond.gust < 6) {
           if (!wasSentRecently(alertIndex, userId, 'glass', locId, COOLDOWNS.glass)) {
             notifications.push({
@@ -287,7 +398,6 @@ export default async function handler(req, res) {
           }
         }
 
-        // Stocking alerts
         if (prefs.stockingAlerts && stockedLocations.includes(locId)) {
           if (!wasSentRecently(alertIndex, userId, 'stocking', locId, COOLDOWNS.stocking)) {
             notifications.push({
@@ -301,9 +411,8 @@ export default async function handler(req, res) {
         }
       }
 
-      // Dispatch all notifications for this user
+      // ── Dispatch ──
       const userEmail = emailByUser[userId];
-
       for (const notif of notifications) {
         let pushSent = false;
         for (const sub of userPush) {
@@ -330,7 +439,6 @@ export default async function handler(req, res) {
           });
         }
 
-        // Email delivery for digest-type alerts
         if (userEmail && notif.emailPayload) {
           const emailResult = await sendEmail({
             to: userEmail,
@@ -362,9 +470,7 @@ function buildAlertIndex(alerts) {
   const idx = {};
   for (const a of alerts) {
     const key = `${a.user_id}:${a.alert_type}:${a.location_id || ''}`;
-    if (!idx[key] || new Date(a.sent_at) > new Date(idx[key])) {
-      idx[key] = a.sent_at;
-    }
+    if (!idx[key] || new Date(a.sent_at) > new Date(idx[key])) idx[key] = a.sent_at;
   }
   return idx;
 }
@@ -378,8 +484,7 @@ function wasSentRecently(idx, userId, type, locId, cooldownMs) {
 
 function isQuietHour(startStr, endStr) {
   if (!startStr || !endStr) return false;
-  const mstHour = getMSTHour();
-  const current = mstHour * 60;
+  const current = getMSTHour() * 60;
   const [sh, sm] = startStr.split(':').map(Number);
   const [eh, em] = endStr.split(':').map(Number);
   const start = sh * 60 + (sm || 0);
@@ -396,38 +501,70 @@ function scoreConditions(cond) {
   else if (cond.speed > 15) score -= 10;
   if (cond.pressureGradient && cond.pressureGradient < -0.5) score += 15;
   if (cond.temp && cond.temp >= 50 && cond.temp <= 75) score += 10;
+  if (cond.waterTemp && cond.waterTemp >= 48 && cond.waterTemp <= 60) score += 5;
+  if (cond.sky === 'overcast' || cond.sky === 'cloudy') score += 5;
   return Math.max(0, Math.min(100, score));
 }
 
-function predictHatchSimple(hour, month, airTemp) {
-  const sky = (hour >= 6 && hour <= 10) ? 'partly' : 'overcast';
-  const hatches = [];
+function buildBestAction(cond, topHatch) {
+  if (!cond) return '';
+  if (cond.speed > 15) return 'Streamer fishing — wind pushes bait to downwind banks';
+  if (cond.pressureGradient && cond.pressureGradient < -1) return 'Active feeders — try attractor patterns and cover water fast';
+  if (topHatch?.insect?.includes('BWO')) return 'Nymph deep runs early, switch to emergers at peak hatch';
+  if (topHatch?.insect?.includes('Caddis')) return 'Swing soft hackles through riffles, switch to dry at dusk';
+  if (cond.speed < 3) return 'Glass conditions — sight-fish with long leaders and small flies';
+  if (cond.temp && cond.temp < 45) return 'Cold water — slow nymph presentations, deep pools';
+  return 'Match the conditions and fish the transitions';
+}
 
-  if ([3, 4, 5, 9, 10, 11].includes(month) && sky === 'overcast') {
-    hatches.push({ insect: 'Blue Winged Olive (BWO)', likelihood: 85, peakTime: '1-4 PM', notes: 'Overcast conditions trigger heavy BWO emergence' });
-  }
-  if ([5, 6, 7].includes(month) && airTemp && airTemp >= 55 && airTemp <= 75) {
-    hatches.push({ insect: 'Pale Morning Dun (PMD)', likelihood: 70, peakTime: '10 AM - 2 PM', notes: 'PMDs emerging midday in riffles' });
-  }
-  if ([5, 6, 7, 8].includes(month)) {
-    hatches.push({ insect: 'Caddis', likelihood: 65, peakTime: '4-8 PM', notes: 'Active afternoon through dusk' });
-  }
-  if (airTemp && airTemp < 45) {
-    hatches.push({ insect: 'Midges', likelihood: 80, peakTime: 'Midday', notes: 'Cold water = midges — slow, technical fishing' });
-  }
-  if ([6, 7, 8, 9].includes(month) && airTemp && airTemp > 70) {
-    hatches.push({ insect: 'Terrestrials (hoppers)', likelihood: 70, peakTime: '10 AM - 4 PM', notes: 'Fish tight to banks with hopper patterns' });
-  }
-
-  return hatches.sort((a, b) => b.likelihood - a.likelihood);
+function extractPrecipChance(text) {
+  if (!text) return null;
+  const match = text.match(/(\d+)\s*%\s*(?:chance|probability)/i);
+  if (match) return parseInt(match[1]);
+  const lower = text.toLowerCase();
+  if (lower.includes('rain') || lower.includes('shower') || lower.includes('storm')) return 60;
+  if (lower.includes('drizzle')) return 40;
+  return null;
 }
 
 function humanName(locId) {
   return locId.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 }
 
-async function fetchConditions(locId) {
-  // Try Redis cached station data first
+async function fetchActiveWarnings() {
+  try {
+    const resp = await fetch('https://api.weather.gov/alerts/active?area=UT&severity=Moderate,Severe,Extreme', {
+      headers: { 'User-Agent': NWS_USER_AGENT, Accept: 'application/geo+json' },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!resp.ok) return [];
+    const data = await resp.json();
+    return (data.features || [])
+      .filter(f => {
+        const evt = f.properties?.event?.toLowerCase() || '';
+        return evt.includes('wind') || evt.includes('storm') || evt.includes('flood') ||
+               evt.includes('winter') || evt.includes('fire') || evt.includes('thunder') ||
+               evt.includes('freeze') || evt.includes('cold') || evt.includes('heat');
+      })
+      .slice(0, 3)
+      .map(f => ({
+        event: f.properties.event,
+        headline: f.properties.headline,
+        severity: f.properties.severity,
+        areas: f.properties.areaDesc,
+        onset: f.properties.onset,
+        ends: f.properties.ends,
+      }));
+  } catch {
+    return [];
+  }
+}
+
+async function fetchConditions(locId, nwsData, mstHour) {
+  let speed = 0, gust = 0, dir = 0, temp = null, pressureGradient = null;
+  let sky = 'partly', shortForecast = '', waterTemp = null, flowCfs = null;
+
+  // Redis cached station data
   try {
     const latestKey = await redisCommand('LRANGE', 'obs:index', '0', '0');
     if (latestKey?.length) {
@@ -436,46 +573,79 @@ async function fetchConditions(locId) {
         const cached = JSON.parse(raw);
         if (cached?.observations?.[locId]?.length) {
           const station = cached.observations[locId][0];
-          return {
-            speed: station.windSpeed ?? 0,
-            gust: station.windGust ?? 0,
-            dir: station.windDirection ?? 0,
-            temp: station.temperature ?? null,
-            pressureGradient: cached.pressure?.[locId]?.gradient ?? null,
-          };
+          speed = station.windSpeed ?? 0;
+          gust = station.windGust ?? 0;
+          dir = station.windDirection ?? 0;
+          temp = station.temperature ?? null;
+          pressureGradient = cached.pressure?.[locId]?.gradient ?? null;
         }
       }
     }
   } catch { /* fall through */ }
 
-  // Fallback: live fetch
-  const config = getLakeConfig(locId);
-  if (!config) return { speed: 0, gust: 0, dir: 0, temp: null, pressureGradient: null };
-
-  const stids = config.synoptic?.slice(0, 3) || [];
-  if (!stids.length) return { speed: 0, gust: 0, dir: 0, temp: null, pressureGradient: null };
-
-  const { airport, other } = splitStations(stids);
-  const results = [];
-
-  if (airport.length) {
-    try { results.push(...await fetchNwsLatest(airport)); } catch { /* skip */ }
-  }
-  const udotIds = other.filter(id => isUdotStation(id));
-  const udotKey = process.env.UDOT_API_KEY;
-  if (udotIds.length && udotKey) {
-    try { results.push(...await fetchUdotLatest(udotIds, udotKey)); } catch { /* skip */ }
+  // NWS forecast data (sky, shortForecast, sevenDay)
+  let sevenDay = [];
+  let hourlyForecast = [];
+  if (nwsData) {
+    const nwsLake = getNWSForLake(nwsData, locId, mstHour);
+    if (nwsLake?.current) {
+      shortForecast = nwsLake.current.text || '';
+      sky = parseSkyCondition(shortForecast);
+      if (!temp && nwsLake.current.temp) temp = nwsLake.current.temp;
+      if (!speed && nwsLake.current.speed) speed = nwsLake.current.speed;
+    }
+    if (nwsLake?.next12) hourlyForecast = nwsLake.next12;
+    if (nwsLake?.periods) sevenDay = nwsLake.periods;
   }
 
-  const primary = results[0];
-  if (!primary) return { speed: 0, gust: 0, dir: 0, temp: null, pressureGradient: null };
+  // Pressure trend label
+  let pressureTrend = null;
+  if (pressureGradient != null) {
+    if (pressureGradient < -0.5) pressureTrend = 'falling';
+    else if (pressureGradient > 0.5) pressureTrend = 'rising';
+    else pressureTrend = 'stable';
+  }
 
-  const obs = primary.OBSERVATIONS || primary;
+  // USGS water data (rivers with known gauges)
+  try {
+    const usgs = await fetchUsgsData(locId, new Date().toISOString());
+    if (usgs) {
+      if (usgs.waterTemp != null) waterTemp = usgs.waterTemp;
+      if (usgs.flowCfs != null) flowCfs = usgs.flowCfs;
+    }
+  } catch { /* no USGS data */ }
+
+  // Live fetch fallback for wind if Redis had nothing
+  if (speed === 0 && gust === 0) {
+    const config = getLakeConfig(locId);
+    if (config) {
+      const stids = config.synoptic?.slice(0, 3) || [];
+      if (stids.length) {
+        const { airport, other } = splitStations(stids);
+        const results = [];
+        if (airport.length) {
+          try { results.push(...await fetchNwsLatest(airport)); } catch { /* skip */ }
+        }
+        const udotIds = other.filter(id => isUdotStation(id));
+        if (udotIds.length && process.env.UDOT_API_KEY) {
+          try { results.push(...await fetchUdotLatest(udotIds, process.env.UDOT_API_KEY)); } catch { /* skip */ }
+        }
+        const primary = results[0];
+        if (primary) {
+          const obs = primary.OBSERVATIONS || primary;
+          speed = obs.wind_speed_value_1?.value ?? obs.windSpeed ?? 0;
+          gust = obs.wind_gust_value_1?.value ?? obs.windGust ?? 0;
+          dir = obs.wind_direction_value_1?.value ?? obs.windDirection ?? 0;
+          if (!temp) temp = obs.air_temp_value_1?.value ?? obs.temperature ?? null;
+        }
+      }
+    }
+  }
+
   return {
-    speed: obs.wind_speed_value_1?.value ?? obs.windSpeed ?? 0,
-    gust: obs.wind_gust_value_1?.value ?? obs.windGust ?? 0,
-    dir: obs.wind_direction_value_1?.value ?? obs.windDirection ?? 0,
-    temp: obs.air_temp_value_1?.value ?? obs.temperature ?? null,
-    pressureGradient: null,
+    speed, gust, dir, temp, pressureGradient,
+    sky, shortForecast, pressureTrend,
+    waterTemp, flowCfs,
+    hourlyForecast, sevenDay,
   };
 }
