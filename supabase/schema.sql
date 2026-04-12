@@ -533,6 +533,10 @@ CREATE POLICY "Authenticated users can insert own posts"
   ON community_posts FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
+CREATE POLICY "Users can update own posts"
+  ON community_posts FOR UPDATE
+  USING (auth.uid() = user_id);
+
 CREATE POLICY "Users can delete own posts"
   ON community_posts FOR DELETE
   USING (auth.uid() = user_id);

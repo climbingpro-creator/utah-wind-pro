@@ -24,7 +24,7 @@ function cors(req, res) {
   if (ALLOWED_ORIGINS.includes(origin) || origin.startsWith('http://localhost:')) {
     res.setHeader('Access-Control-Allow-Origin', origin);
   }
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
 }
@@ -35,6 +35,7 @@ export default async function handler(req, res) {
 
   if (req.method === 'GET') return handleFeed(req, res);
   if (req.method === 'POST') return handleCreate(req, res);
+  if (req.method === 'PATCH') return handleUpdate(req, res);
   if (req.method === 'DELETE') return handleDelete(req, res);
   return res.status(405).json({ error: 'Method not allowed' });
 }
@@ -154,6 +155,55 @@ async function handleCreate(req, res) {
     return res.status(200).json({ success: true, post });
   } catch (err) {
     console.error('[community] create:', err.message);
+    return res.status(500).json({ error: err.message });
+  }
+}
+
+async function handleUpdate(req, res) {
+  const auth = await verifyAuth(req);
+  if (auth.error) return res.status(auth.status || 401).json({ error: auth.error });
+
+  const postId = req.query.id;
+  if (!postId) return res.status(400).json({ error: 'Post ID required' });
+
+  try {
+    const supabase = getSupabase();
+    const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+
+    const { data: existing } = await supabase
+      .from('community_posts')
+      .select('id, user_id')
+      .eq('id', postId)
+      .maybeSingle();
+
+    if (!existing) return res.status(404).json({ error: 'Post not found' });
+    if (existing.user_id !== auth.user.id) return res.status(403).json({ error: 'Not your post' });
+
+    const updates = {};
+    if (body.caption !== undefined) updates.caption = (body.caption || '').slice(0, 500);
+    if (body.species !== undefined) updates.species = body.species || null;
+    if (body.locationId !== undefined) updates.location_id = body.locationId || null;
+    if (body.locationName !== undefined) updates.location_name = body.locationName || null;
+    if (body.weatherTemp !== undefined) updates.weather_temp = body.weatherTemp != null ? parseInt(body.weatherTemp) : null;
+    if (body.weatherWind !== undefined) updates.weather_wind = body.weatherWind != null ? parseInt(body.weatherWind) : null;
+    if (body.weatherSky !== undefined) {
+      updates.weather_sky = ['sunny', 'partly-cloudy', 'overcast', 'rain', 'snow'].includes(body.weatherSky) ? body.weatherSky : null;
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ error: 'No fields to update' });
+    }
+
+    const { data: updated, error } = await supabase
+      .from('community_posts')
+      .update(updates)
+      .eq('id', postId)
+      .select('*')
+      .single();
+
+    if (error) return res.status(500).json({ error: `Failed to update: ${error.message}` });
+    return res.status(200).json({ success: true, post: updated });
+  } catch (err) {
     return res.status(500).json({ error: err.message });
   }
 }

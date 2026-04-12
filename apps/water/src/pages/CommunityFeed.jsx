@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Camera, X, MapPin, Send, ArrowLeft, ImagePlus, Loader2, Trash2, MessageCircle, Heart, ChevronDown, ChevronUp } from 'lucide-react';
+import { Camera, X, MapPin, Send, ArrowLeft, ImagePlus, Loader2, Trash2, MessageCircle, Heart, ChevronDown, ChevronUp, Pencil, Check } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '@utahwind/database';
 import { FISHING_LOCATIONS } from '../components/FishingMode';
@@ -135,11 +135,15 @@ function CommentSection({ postId, user }) {
   );
 }
 
-function PostCard({ post, currentUserId, onDelete, user }) {
+function PostCard({ post, currentUserId, onDelete, onUpdate, user }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(post.like_count || 0);
   const [showComments, setShowComments] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editCaption, setEditCaption] = useState(post.caption || '');
+  const [editSpecies, setEditSpecies] = useState(post.species || '');
+  const [saving, setSaving] = useState(false);
   const isOwner = currentUserId && post.user_id === currentUserId;
   const badge = weatherBadge(post);
 
@@ -163,6 +167,27 @@ function PostCard({ post, currentUserId, onDelete, user }) {
     } catch { setLiked(prev); setLikeCount(c => prev ? c + 1 : c - 1); }
   }
 
+  async function handleSaveEdit() {
+    setSaving(true);
+    try {
+      const headers = await getAuthHeaders();
+      const resp = await fetch(`${API_BASE}?id=${post.id}`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({
+          caption: editCaption.trim(),
+          species: editSpecies.trim() || null,
+        }),
+      });
+      const data = await resp.json();
+      if (resp.ok && data.post) {
+        onUpdate(data.post);
+        setEditing(false);
+      }
+    } catch { /* ignore */ }
+    setSaving(false);
+  }
+
   return (
     <div className="rounded-2xl border border-slate-700/50 bg-slate-800/50 overflow-hidden">
       <div className="aspect-[4/3] relative overflow-hidden bg-slate-900">
@@ -172,7 +197,7 @@ function PostCard({ post, currentUserId, onDelete, user }) {
           className="w-full h-full object-cover"
           loading="lazy"
         />
-        {post.species && (
+        {post.species && !editing && (
           <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/80 text-white backdrop-blur-sm">
             {post.species}
           </span>
@@ -196,9 +221,46 @@ function PostCard({ post, currentUserId, onDelete, user }) {
           </div>
           <span className="text-[10px] text-slate-500 shrink-0">{timeAgo(post.created_at)}</span>
         </div>
-        {post.caption && (
-          <p className="text-[11px] text-slate-300 leading-relaxed mb-1.5">{post.caption}</p>
+
+        {editing ? (
+          <div className="space-y-2 mb-2">
+            <textarea
+              value={editCaption}
+              onChange={e => setEditCaption(e.target.value)}
+              maxLength={500}
+              rows={2}
+              className="w-full rounded-lg bg-slate-800 border border-slate-600 px-2 py-1.5 text-[11px] text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-500/50 resize-none"
+            />
+            <input
+              value={editSpecies}
+              onChange={e => setEditSpecies(e.target.value)}
+              placeholder="Species"
+              className="w-full rounded-lg bg-slate-800 border border-slate-600 px-2 py-1.5 text-[11px] text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-500/50"
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={handleSaveEdit}
+                disabled={saving}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-semibold bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 transition-colors disabled:opacity-40"
+              >
+                {saving ? <Loader2 className="w-2.5 h-2.5 animate-spin" /> : <Check className="w-2.5 h-2.5" />} Save
+              </button>
+              <button
+                onClick={() => { setEditing(false); setEditCaption(post.caption || ''); setEditSpecies(post.species || ''); }}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-semibold text-slate-400 hover:text-white transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            {post.caption && (
+              <p className="text-[11px] text-slate-300 leading-relaxed mb-1.5">{post.caption}</p>
+            )}
+          </>
         )}
+
         <div className="flex items-center gap-3">
           {post.location_name && (
             <span className="flex items-center gap-1 text-[10px] text-slate-500">
@@ -221,7 +283,16 @@ function PostCard({ post, currentUserId, onDelete, user }) {
               {showComments ? <ChevronUp className="w-2.5 h-2.5" /> : <ChevronDown className="w-2.5 h-2.5" />}
             </button>
           </div>
-          {isOwner && (
+          {isOwner && !editing && (
+            <button
+              onClick={() => setEditing(true)}
+              className="flex items-center gap-1 text-[10px] text-slate-600 hover:text-cyan-400 transition-colors"
+              title="Edit post"
+            >
+              <Pencil className="w-3 h-3" />
+            </button>
+          )}
+          {isOwner && !editing && (
             <button
               onClick={() => confirmDelete ? onDelete(post.id) : setConfirmDelete(true)}
               className={`flex items-center gap-1 text-[10px] transition-colors ${confirmDelete ? 'text-red-400 font-semibold' : 'text-slate-600 hover:text-red-400'}`}
@@ -540,6 +611,7 @@ export default function CommunityFeed({ onBack }) {
             post={post}
             currentUserId={user?.id}
             onDelete={handleDelete}
+            onUpdate={(updated) => setPosts(prev => prev.map(p => p.id === updated.id ? { ...p, ...updated } : p))}
             user={user}
           />
         ))}
