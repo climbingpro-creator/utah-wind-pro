@@ -65,7 +65,7 @@ export default async function handler(req, res) {
       supabase.from('kite_sessions').select('id, created_at, activity_type, user_id').gte('created_at', thirtyDaysAgo),
       supabase.from('user_feedback').select('id, type, status, created_at'),
       supabase.from('analytics_events').select('id', { count: 'exact', head: true }),
-      supabase.from('analytics_events').select('event_type, metadata, created_at').gte('created_at', thirtyDaysAgo),
+      supabase.from('analytics_events').select('event_type, metadata, created_at').gte('created_at', thirtyDaysAgo).limit(10000),
     ]);
 
     // --- Subscriptions ---
@@ -165,6 +165,7 @@ export default async function handler(req, res) {
         waterViews30d: waterViews,
         mapInteractions30d: mapInteractions,
         totalEvents: eventsAllResult.count || 0,
+        rawEvents30dFetched: events30d.length,
         activityBreakdown,
         eventsByDay,
       },
