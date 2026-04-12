@@ -627,3 +627,114 @@ CREATE POLICY "Users can delete own comments"
 
 CREATE INDEX IF NOT EXISTS idx_community_comments_post
   ON community_post_comments(post_id, created_at ASC);
+
+-- ══════════════════════════════════════════════════════════════
+-- Favorite Locations — server-synced favorites for Pro alerts
+-- ══════════════════════════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS favorite_locations (
+  id           BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  user_id      UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  location_id  TEXT NOT NULL,
+  notify       BOOLEAN NOT NULL DEFAULT true,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(user_id, location_id)
+);
+
+ALTER TABLE favorite_locations ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can read own favorites"
+  ON favorite_locations FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own favorites"
+  ON favorite_locations FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own favorites"
+  ON favorite_locations FOR UPDATE
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own favorites"
+  ON favorite_locations FOR DELETE
+  USING (auth.uid() = user_id);
+
+CREATE INDEX IF NOT EXISTS idx_favorite_locations_user
+  ON favorite_locations(user_id);
+
+CREATE INDEX IF NOT EXISTS idx_favorite_locations_notify
+  ON favorite_locations(user_id, notify) WHERE notify = true;
+
+-- ══════════════════════════════════════════════════════════════
+-- Alert Log — dedup/throttle fishing alert dispatch
+-- ══════════════════════════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS alert_log (
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id      UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  alert_type   TEXT NOT NULL CHECK (alert_type IN ('hatch', 'pressure', 'glass', 'stocking', 'morning', 'weekend')),
+  location_id  TEXT,
+  channel      TEXT NOT NULL DEFAULT 'push' CHECK (channel IN ('push', 'email')),
+  sent_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE alert_log ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can read own alert log"
+  ON alert_log FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE INDEX IF NOT EXISTS idx_alert_log_dedup
+  ON alert_log(user_id, alert_type, location_id, sent_at DESC);
+
+-- ══════════════════════════════════════════════════════════════
+-- Catch Log — Pro Smart Catch Journal (Phase 2)
+-- ══════════════════════════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS catch_log (
+  id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id             UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  location_id         TEXT NOT NULL,
+  species             TEXT,
+  photo_url           TEXT,
+  caught_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  lat                 DOUBLE PRECISION,
+  lng                 DOUBLE PRECISION,
+  notes               TEXT,
+  wind_speed          DOUBLE PRECISION,
+  wind_direction      DOUBLE PRECISION,
+  wind_gust           DOUBLE PRECISION,
+  air_temp            DOUBLE PRECISION,
+  water_temp          DOUBLE PRECISION,
+  barometric_pressure DOUBLE PRECISION,
+  pressure_trend      TEXT CHECK (pressure_trend IN ('rising', 'falling', 'stable')),
+  cloud_cover         INTEGER,
+  flow_cfs            DOUBLE PRECISION,
+  moon_phase          TEXT,
+  hatch_prediction    TEXT,
+  created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE catch_log ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can read own catch log"
+  ON catch_log FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own catches"
+  ON catch_log FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own catches"
+  ON catch_log FOR UPDATE
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own catches"
+  ON catch_log FOR DELETE
+  USING (auth.uid() = user_id);
+
+CREATE INDEX IF NOT EXISTS idx_catch_log_user
+  ON catch_log(user_id, caught_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_catch_log_location
+  ON catch_log(location_id, caught_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_catch_log_species
+  ON catch_log(user_id, species);

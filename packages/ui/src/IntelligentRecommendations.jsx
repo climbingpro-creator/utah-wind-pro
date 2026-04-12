@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock, Zap, Wind, Target, TrendingUp, Waves, Anchor, Ship, Fish, Mountain, ArrowUpRight } from 'lucide-react';
+import { Clock, Zap, Wind, Target, TrendingUp, Waves, Anchor, Ship, Fish, Mountain, ArrowUpRight, Lock } from 'lucide-react';
 
 const SPORT_ICONS = {
   'foil-kite': Wind,
@@ -68,7 +68,7 @@ function TimelineBar({ hours, wantsWind }) {
   );
 }
 
-function WindowCard({ window: w, currentApp, crossAppUrls, onLocalClick }) {
+function WindowCard({ window: w, currentApp, crossAppUrls, onLocalClick, isPro, onUnlockPro }) {
   if (!w) return null;
 
   const colors = SPORT_COLORS[w.sportType] || DEFAULT_COLORS;
@@ -85,7 +85,7 @@ function WindowCard({ window: w, currentApp, crossAppUrls, onLocalClick }) {
     <div className={`rounded-xl border p-4 space-y-3 transition-all ${colors.bg} ${colors.border} ${
       targetUrl ? 'hover:ring-1 hover:ring-white/20 cursor-pointer' : ''
     } ${!targetUrl && onLocalClick ? 'cursor-pointer' : ''}`}>
-      {/* Header */}
+      {/* Header — always visible */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className={`w-8 h-8 rounded-lg ${colors.badge} flex items-center justify-center`}>
@@ -112,29 +112,57 @@ function WindowCard({ window: w, currentApp, crossAppUrls, onLocalClick }) {
         </div>
       </div>
 
-      {/* Time Window — the hero element */}
-      <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-black/20 border border-white/5">
-        <Clock className={`w-5 h-5 flex-shrink-0 ${colors.text}`} />
-        <div className="flex-1">
-          <div className="text-lg font-extrabold text-[var(--text-primary,#f1f5f9)] tracking-tight">
-            {w.windowStartLabel} → {w.windowEndLabel}
+      {isPro ? (
+        <>
+          {/* Time Window — the hero element */}
+          <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-black/20 border border-white/5">
+            <Clock className={`w-5 h-5 flex-shrink-0 ${colors.text}`} />
+            <div className="flex-1">
+              <div className="text-lg font-extrabold text-[var(--text-primary,#f1f5f9)] tracking-tight">
+                {w.windowStartLabel} → {w.windowEndLabel}
+              </div>
+              <div className="text-[11px] text-[var(--text-secondary,#94a3b8)]">
+                Peak at <span className={`font-bold ${colors.text}`}>{w.peakTimeLabel}</span> — {w.peakCondition}
+              </div>
+            </div>
+            {wantsWind ? (
+              <Zap className="w-5 h-5 text-amber-400 flex-shrink-0" />
+            ) : (
+              <Waves className="w-5 h-5 text-cyan-400 flex-shrink-0" />
+            )}
           </div>
-          <div className="text-[11px] text-[var(--text-secondary,#94a3b8)]">
-            Peak at <span className={`font-bold ${colors.text}`}>{w.peakTimeLabel}</span> — {w.peakCondition}
+
+          {/* Timeline Bar */}
+          <TimelineBar hours={w.hours} wantsWind={wantsWind} />
+
+          {/* Reason */}
+          <p className="text-xs text-[var(--text-secondary,#94a3b8)] leading-relaxed">{w.reason}</p>
+        </>
+      ) : (
+        <div className="relative">
+          <div className="blur-[5px] pointer-events-none select-none space-y-3">
+            <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-black/20 border border-white/5">
+              <Clock className="w-5 h-5 flex-shrink-0 text-slate-400" />
+              <div className="flex-1">
+                <div className="text-lg font-extrabold text-slate-300 tracking-tight">8:00 AM → 2:00 PM</div>
+                <div className="text-[11px] text-slate-500">Peak at 11:00 AM — Ideal conditions</div>
+              </div>
+            </div>
+            <div className="h-6 rounded bg-slate-700/50" />
+            <p className="text-xs text-slate-500">Detailed timing and condition analysis for optimal performance...</p>
+          </div>
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 rounded-xl backdrop-blur-[1px] z-10">
+            <Lock className="w-4 h-4 text-amber-400 mb-1" />
+            <span className="text-[11px] font-bold text-white">Unlock Window Details</span>
+            <span className="text-[9px] text-white/60 mb-1.5">Try Pro free for 14 days, then $5.99/mo.</span>
+            {onUnlockPro && (
+              <button onClick={onUnlockPro} className="px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg hover:from-amber-400 hover:to-orange-400 transition-all">
+                Start Free Trial
+              </button>
+            )}
           </div>
         </div>
-        {wantsWind ? (
-          <Zap className="w-5 h-5 text-amber-400 flex-shrink-0" />
-        ) : (
-          <Waves className="w-5 h-5 text-cyan-400 flex-shrink-0" />
-        )}
-      </div>
-
-      {/* Timeline Bar */}
-      <TimelineBar hours={w.hours} wantsWind={wantsWind} />
-
-      {/* Reason */}
-      <p className="text-xs text-[var(--text-secondary,#94a3b8)] leading-relaxed">{w.reason}</p>
+      )}
     </div>
   );
 
@@ -198,6 +226,8 @@ export function IntelligentRecommendations({ windows, sportFilter, title = 'Best
             currentApp={currentApp}
             crossAppUrls={crossAppUrls}
             onLocalClick={onLocalClick}
+            isPro={isPro}
+            onUnlockPro={onUnlockPro}
           />
         ))}
       </div>

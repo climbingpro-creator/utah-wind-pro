@@ -4,16 +4,16 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 
 const FEATURES = [
-  { icon: Fish,       label: 'Basic fishing conditions',            free: true,  pro: true },
-  { icon: Map,        label: 'Interactive water map',               free: true,  pro: true },
-  { icon: Droplets,   label: 'Current wind & wave status',          free: true,  pro: true },
+  { icon: Droplets,   label: 'Real-time wind, temp & conditions',   free: true,  pro: true },
+  { icon: Fish,       label: 'Basic Go / Caution / Rough verdict',  free: true,  pro: true },
+  { icon: Map,        label: 'Interactive map & all Utah waters',    free: true,  pro: true },
   { icon: BarChart3,  label: 'Pressure gradient display',           free: true,  pro: true },
-  { icon: Map,        label: 'All Utah lakes & rivers',             free: false, pro: true },
-  { icon: Thermometer,label: 'Water temperature modeling',          free: false, pro: true },
-  { icon: Fish,       label: 'AI fishing intelligence & species',   free: false, pro: true },
-  { icon: Waves,      label: 'Glass water predictions',             free: false, pro: true },
-  { icon: BarChart3,  label: 'USGS flow & gauge data',              free: false, pro: true },
-  { icon: Anchor,     label: 'Boating safety scores',               free: false, pro: true },
+  { icon: Sparkles,   label: 'AI tactical briefing & best action',  free: false, pro: true },
+  { icon: Fish,       label: 'Lure, fly & tackle recommendations',  free: false, pro: true },
+  { icon: Thermometer,label: 'Depth patterns & forage intel',       free: false, pro: true },
+  { icon: Waves,      label: 'Best time windows with details',      free: false, pro: true },
+  { icon: BarChart3,  label: 'Bite & pressure correlation',         free: false, pro: true },
+  { icon: Map,        label: '14-day predictive forecast',          free: false, pro: true },
   { icon: Crown,      label: 'Priority support & updates',          free: false, pro: true },
 ];
 
@@ -195,7 +195,7 @@ export default function ProUpgrade() {
                   onClick={handleStartTrial}
                   className="w-full py-3 rounded-xl font-bold text-sm bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 transition-all hover:scale-[1.02] active:scale-[0.98]"
                 >
-                  Start 7-Day Free Trial
+                  Start 14-Day Free Trial
                 </button>
               )}
 

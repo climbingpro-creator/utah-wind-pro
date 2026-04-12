@@ -334,7 +334,20 @@ function getTackleThumb(name) {
   return null;
 }
 
-function ProBlurOverlay({ text, subtitle, onUnlock }) {
+function ProBlurOverlay({ text, subtitle, onUnlock, compact = false }) {
+  if (compact) {
+    return (
+      <div className="flex items-center justify-center gap-2 mt-1 py-1.5">
+        <Lock className="w-3 h-3 text-amber-400" />
+        <span className="text-[9px] text-white/70 font-semibold">{text}</span>
+        {onUnlock && (
+          <button onClick={onUnlock} className="px-2 py-0.5 rounded-full text-[8px] font-bold bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-400 hover:to-orange-400 transition-all">
+            Free Trial
+          </button>
+        )}
+      </div>
+    );
+  }
   return (
     <div className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-lg bg-black/50 backdrop-blur-[2px]">
       <Lock className="w-4 h-4 text-amber-400 mb-1.5" />
@@ -529,33 +542,51 @@ function GearCardsSection({ intel, isOcean, locationId, isPro, onUnlockPro }) {
         const lureName = cleanLures.split(/[,.\-—]/)[0]?.trim();
         const lureImg = getTackleThumb(lureName);
         return (
-          <div className={`rounded-lg bg-white/[0.03] border ${borderAccent} px-2.5 py-1.5`}>
+          <div className={`rounded-lg bg-white/[0.03] border ${borderAccent} px-2.5 py-1.5 relative`}>
             <div className="flex items-center gap-1 mb-0.5">
               <Target className={`w-2.5 h-2.5 ${accent}`} />
               <span className="text-[8px] font-bold uppercase tracking-wider text-slate-500">Lure Selection</span>
             </div>
-            <div className="flex items-start gap-2">
-              {lureImg && <img src={lureImg} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0 mt-0.5 border border-white/10" loading="lazy" onError={e => { e.target.style.display = 'none'; }} />}
-              <TruncatedText text={cleanLures} maxLength={150} />
-            </div>
+            {isPro ? (
+              <div className="flex items-start gap-2">
+                {lureImg && <img src={lureImg} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0 mt-0.5 border border-white/10" loading="lazy" onError={e => { e.target.style.display = 'none'; }} />}
+                <TruncatedText text={cleanLures} maxLength={150} />
+              </div>
+            ) : (
+              <>
+                <div className="blur-[4px] pointer-events-none select-none">
+                  <p className="text-[10px] text-white/60">Lure recommendations matched to current conditions...</p>
+                </div>
+                <ProBlurOverlay text="Unlock Lure Recommendations" subtitle="Try Pro free for 14 days, then $5.99/mo." onUnlock={onUnlockPro} compact />
+              </>
+            )}
           </div>
         );
       })()}
 
       {cleanTackle && (
-        <div className={`rounded-lg bg-white/[0.03] border ${borderAccent} px-2.5 py-1.5`}>
+        <div className={`rounded-lg bg-white/[0.03] border ${borderAccent} px-2.5 py-1.5 relative`}>
           <div className="flex items-center gap-1 mb-0.5">
             <FishingRod className={`w-2.5 h-2.5 ${accent}`} />
             <span className="text-[8px] font-bold uppercase tracking-wider text-slate-500">Tackle Setup</span>
           </div>
-          <TruncatedText text={cleanTackle} maxLength={150} />
+          {isPro ? (
+            <TruncatedText text={cleanTackle} maxLength={150} />
+          ) : (
+            <>
+              <div className="blur-[4px] pointer-events-none select-none">
+                <p className="text-[10px] text-white/60">Rod, line, and leader recommendations...</p>
+              </div>
+              <ProBlurOverlay text="Unlock Tackle Setup" subtitle="Try Pro free for 14 days, then $5.99/mo." onUnlock={onUnlockPro} compact />
+            </>
+          )}
         </div>
       )}
     </div>
   );
 }
 
-function TacticalContextSection({ intel, isOcean }) {
+function TacticalContextSection({ intel, isOcean, isPro, onUnlockPro }) {
   if (!intel) return null;
   const hasContext = intel.activeSpeciesNow || intel.seasonalDepthPattern;
   if (!hasContext) return null;
@@ -581,14 +612,23 @@ function TacticalContextSection({ intel, isOcean }) {
             <Layers className={`w-2.5 h-2.5 ${accent}`} />
             <span className="text-[8px] font-bold uppercase tracking-wider text-slate-500">Depth Pattern</span>
           </div>
-          <TruncatedText text={intel.seasonalDepthPattern} maxLength={120} />
+          {isPro ? (
+            <TruncatedText text={intel.seasonalDepthPattern} maxLength={120} />
+          ) : (
+            <>
+              <div className="blur-[4px] pointer-events-none select-none">
+                <p className="text-[10px] text-white/60">Seasonal depth and structure patterns...</p>
+              </div>
+              <ProBlurOverlay text="Unlock Depth Intelligence" onUnlock={onUnlockPro} compact />
+            </>
+          )}
         </div>
       )}
     </div>
   );
 }
 
-function AnglerIntelSection({ intel, isOcean }) {
+function AnglerIntelSection({ intel, isOcean, isPro, onUnlockPro }) {
   if (!intel) return null;
   const hasContent = intel.forageProfile || intel.seasonalForage || intel.pelagicCalendar;
   if (!hasContent) return null;
@@ -604,7 +644,16 @@ function AnglerIntelSection({ intel, isOcean }) {
             <Palette className={`w-2.5 h-2.5 ${accent}`} />
             <span className="text-[8px] font-bold uppercase tracking-wider text-slate-500">Match the Hatch — Size & Color</span>
           </div>
-          <p className="text-[10px] text-slate-200 leading-relaxed line-clamp-3">{intel.forageProfile}</p>
+          {isPro ? (
+            <p className="text-[10px] text-slate-200 leading-relaxed line-clamp-3">{intel.forageProfile}</p>
+          ) : (
+            <>
+              <div className="blur-[4px] pointer-events-none select-none">
+                <p className="text-[10px] text-white/60">Hatch matching details and color profiles...</p>
+              </div>
+              <ProBlurOverlay text="Unlock Hatch Intelligence" onUnlock={onUnlockPro} compact />
+            </>
+          )}
         </div>
       )}
 
@@ -614,7 +663,16 @@ function AnglerIntelSection({ intel, isOcean }) {
             <Calendar className={`w-2.5 h-2.5 ${accent}`} />
             <span className="text-[8px] font-bold uppercase tracking-wider text-slate-500">Seasonal Forage</span>
           </div>
-          <p className="text-[10px] text-slate-200 leading-relaxed line-clamp-3">{intel.seasonalForage}</p>
+          {isPro ? (
+            <p className="text-[10px] text-slate-200 leading-relaxed line-clamp-3">{intel.seasonalForage}</p>
+          ) : (
+            <>
+              <div className="blur-[4px] pointer-events-none select-none">
+                <p className="text-[10px] text-white/60">Seasonal forage patterns and feeding behavior...</p>
+              </div>
+              <ProBlurOverlay text="Unlock Forage Intel" onUnlock={onUnlockPro} compact />
+            </>
+          )}
         </div>
       )}
 
@@ -624,7 +682,16 @@ function AnglerIntelSection({ intel, isOcean }) {
             <Ship className={`w-2.5 h-2.5 ${accent}`} />
             <span className="text-[8px] font-bold uppercase tracking-wider text-slate-500">Migration Calendar</span>
           </div>
-          <p className="text-[10px] text-slate-200 leading-relaxed line-clamp-3">{intel.pelagicCalendar}</p>
+          {isPro ? (
+            <p className="text-[10px] text-slate-200 leading-relaxed line-clamp-3">{intel.pelagicCalendar}</p>
+          ) : (
+            <>
+              <div className="blur-[4px] pointer-events-none select-none">
+                <p className="text-[10px] text-white/60">Pelagic migration timing and patterns...</p>
+              </div>
+              <ProBlurOverlay text="Unlock Migration Intel" onUnlock={onUnlockPro} compact />
+            </>
+          )}
         </div>
       )}
     </div>
@@ -1178,7 +1245,7 @@ export default function SyntheticFishingCard({ data, isLoading, onClose, isPro =
       {/* ═══════ 5. CONTEXT ("THE WHY") ═══════ */}
 
       {/* Tactical Context — Active Species, Depth Pattern (text-heavy, below gear) */}
-      <TacticalContextSection intel={data.anglerIntel} isOcean={isOcean} />
+      <TacticalContextSection intel={data.anglerIntel} isOcean={isOcean} isPro={isPro} onUnlockPro={onUnlockPro} />
 
       {/* Daylight Status Banner */}
       <DaylightBanner daylight={data.daylight} />
@@ -1198,7 +1265,7 @@ export default function SyntheticFishingCard({ data, isLoading, onClose, isPro =
       </div>
 
       {/* Angler Intel — forage sizes/colors, seasonal patterns, pelagic migrations */}
-      <AnglerIntelSection intel={data.anglerIntel} isOcean={isOcean} />
+      <AnglerIntelSection intel={data.anglerIntel} isOcean={isOcean} isPro={isPro} onUnlockPro={onUnlockPro} />
 
       {/* Visual Intelligence (satellite multimodal analysis) */}
       <VisualIntelSection visual={data.visualIntel} />

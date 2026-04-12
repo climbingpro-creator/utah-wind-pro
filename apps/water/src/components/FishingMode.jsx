@@ -1997,19 +1997,9 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
                 Today's Game Plan
               </h3>
               <div className="flex items-center gap-2">
-                {lurePick.bassPattern && (
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isDark ? 'bg-green-500/25 text-green-400' : 'bg-green-100 text-green-700'}`}>
-                    {lurePick.bassPattern.label.toUpperCase()}
-                  </span>
-                )}
-                {lurePick.walleyePattern && (
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isDark ? 'bg-yellow-500/25 text-yellow-400' : 'bg-yellow-100 text-yellow-700'}`}>
-                    {lurePick.walleyePattern.label.toUpperCase()}
-                  </span>
-                )}
-                {lurePick.colorRecommendation && (
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full ${isDark ? 'bg-slate-700/60 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
-                    Color: {lurePick.colorRecommendation.primary}
+                {!isPro && (
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isDark ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-amber-100 text-amber-700 border border-amber-200'}`}>
+                    <Lock className="w-2.5 h-2.5 inline mr-1" />PRO
                   </span>
                 )}
                 {lurePick.artificialOnly && (
@@ -2019,166 +2009,191 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
                 )}
               </div>
             </div>
-
-            {/* Best Method Banner */}
-            {lurePick.methods?.[0] && (
-              <div className={`rounded-lg p-3 mb-3 ${isDark ? 'bg-amber-500/10 border border-amber-500/30' : 'bg-amber-50 border border-amber-200'}`}>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className={`text-xs font-medium uppercase ${isDark ? 'text-amber-400/60' : 'text-amber-500'}`}>Best Method Today</div>
-                    <div className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{lurePick.methods[0].label}</div>
-                    <div className={`text-xs ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>{lurePick.methods[0].reason}</div>
-                  </div>
-                  <div className={`text-2xl font-black ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>
-                    {lurePick.methods[0].confidence}%
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Bass Pattern Insight */}
-            {lurePick.bassPattern && (
-              <div className={`rounded-lg p-3 mb-3 ${isDark ? 'bg-green-500/10 border border-green-500/30' : 'bg-green-50 border border-green-200'}`}>
-                <div className={`text-xs font-medium uppercase mb-1 ${isDark ? 'text-green-400/60' : 'text-green-500'}`}>Bass Seasonal Pattern</div>
-                <div className={`text-sm ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>{lurePick.bassPattern.desc}</div>
-              </div>
-            )}
-            {lurePick.walleyePattern && (
-              <div className={`rounded-lg p-3 mb-3 ${isDark ? 'bg-yellow-500/10 border border-yellow-500/30' : 'bg-yellow-50 border border-yellow-200'}`}>
-                <div className={`text-xs font-medium uppercase mb-1 ${isDark ? 'text-yellow-400/60' : 'text-yellow-500'}`}>Walleye Pattern</div>
-                <div className={`text-sm ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>{lurePick.walleyePattern.desc}</div>
-              </div>
-            )}
-
-            {/* Method Tabs */}
-            {lurePick.methods?.length > 1 && (
-              <div className="flex gap-1 mb-3 overflow-x-auto pb-1">
-                <button onClick={() => setActiveMethodTab('all')} className={`text-[10px] font-medium px-3 py-1.5 rounded-full whitespace-nowrap transition-colors ${activeMethodTab === 'all' ? (isDark ? 'bg-amber-500/30 text-amber-300 border border-amber-500/50' : 'bg-amber-100 text-amber-800 border border-amber-300') : (isDark ? 'bg-slate-700/50 text-slate-400 hover:bg-slate-700' : 'bg-slate-100 text-slate-500 hover:bg-slate-200')}`}>
-                  All
-                </button>
-                {[...new Set(lurePick.methods.map(m => m.method))].slice(0, 5).map(method => (
-                  <button key={method} onClick={() => setActiveMethodTab(method)} className={`text-[10px] font-medium px-3 py-1.5 rounded-full whitespace-nowrap transition-colors capitalize ${activeMethodTab === method ? (isDark ? 'bg-amber-500/30 text-amber-300 border border-amber-500/50' : 'bg-amber-100 text-amber-800 border border-amber-300') : (isDark ? 'bg-slate-700/50 text-slate-400 hover:bg-slate-700' : 'bg-slate-100 text-slate-500 hover:bg-slate-200')}`}>
-                    {method === 'fly' ? 'Fly' : method === 'spin' ? 'Spin' : method === 'bait' ? 'Bait' : method === 'troll' ? 'Troll' : method === 'ice' ? 'Ice' : method === 'topwater' ? 'Topwater' : method}
-                  </button>
-                ))}
-              </div>
-            )}
+            <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+              {lurePick.alternatives.length + 1} lure recommendations matched to current conditions
+            </p>
           </div>
 
-          {/* Top Lure Pick */}
-          <div className={`mx-4 mb-3 p-4 rounded-xl border ${isDark ? 'bg-amber-500/10 border-amber-500/30' : 'bg-amber-50 border-amber-200'}`}>
-            <div className="flex items-start justify-between mb-2">
-              <div className="flex items-start gap-3">
-                <TackleThumb name={lurePick.topPick.lure.name} className="w-14 h-14" />
-                <div>
-                  <div className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>
-                    {lurePick.topPick.lure.name}
-                  </div>
-                  <div className={`text-sm font-medium ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>
-                    {lurePick.topPick.lure.size}
-                  </div>
-                </div>
-              </div>
-              <div className="text-right">
-                <div className={`text-2xl font-black ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>
-                  {lurePick.topPick.confidence}%
-                </div>
-                <div className={`text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>confidence</div>
-              </div>
-            </div>
-            <div className={`text-xs mb-2 ${isDark ? 'text-amber-300' : 'text-amber-700'}`}>
-              {lurePick.topPick.reason}
-            </div>
-            <div className={`text-xs ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
-              <span className="font-medium">Method:</span> {lurePick.topPick.lure.method}
-            </div>
-            {lurePick.topPick.lure.colors && (
-              <div className={`text-xs mt-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                <span className="font-medium">Colors:</span> {lurePick.topPick.lure.colors.join(', ')}
-              </div>
-            )}
-            {lurePick.topPick.lure.rig && (
-              <div className={`text-xs mt-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                <span className="font-medium">Rig:</span> {lurePick.topPick.lure.rig}
-              </div>
-            )}
-            <div className="flex items-center gap-2 mt-2">
-              <span className={`text-[10px] px-2 py-0.5 rounded-full ${isDark ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-700'}`}>
-                {LURE_TIME_LABELS[lurePick.topPick.timeWindow] || lurePick.topPick.timeWindow}
-              </span>
-              <span className={`text-[10px] px-2 py-0.5 rounded-full capitalize ${isDark ? 'bg-slate-600/40 text-slate-300' : 'bg-slate-200 text-slate-600'}`}>
-                {lurePick.topPick.lure.category}
-              </span>
-            </div>
-          </div>
-
-          {/* Alternatives */}
-          {lurePick.alternatives.length > 0 && (
-            <div className="px-4 pb-3">
-              <div className={`text-[10px] font-medium uppercase mb-2 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                Also try
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {lurePick.alternatives
-                  .filter(a => activeMethodTab === 'all' || LURES[a.lureKey]?.category === activeMethodTab || (activeMethodTab === 'spin' && ['soft-plastic', 'hard-bait', 'shore-cast'].includes(LURES[a.lureKey]?.category)) || (activeMethodTab === 'bait' && LURES[a.lureKey]?.category === 'bait') || (activeMethodTab === 'troll' && LURES[a.lureKey]?.category === 'trolling') || (activeMethodTab === 'topwater' && LURES[a.lureKey]?.category === 'topwater') || (activeMethodTab === 'ice' && LURES[a.lureKey]?.category === 'ice'))
-                  .slice(0, 4)
-                  .map((alt, i) => (
-                  <div key={i} className={`p-2.5 rounded-lg border ${isDark ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-200'}`}>
-                    <div className="flex items-start gap-2.5">
-                      <TackleThumb name={alt.lure.name} className="w-10 h-10 mt-0.5" />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className={`text-xs font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>{alt.lure.name}</span>
-                          <span className={`text-[10px] font-bold ${alt.confidence >= 80 ? (isDark ? 'text-amber-400' : 'text-amber-600') : alt.confidence >= 60 ? (isDark ? 'text-yellow-400' : 'text-yellow-600') : (isDark ? 'text-slate-400' : 'text-slate-500')}`}>{alt.confidence}%</span>
-                        </div>
-                        <div className={`text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                          {alt.lure.size} {alt.lure.colors ? `• ${alt.lure.colors[0]}` : ''}
-                        </div>
-                        <div className={`text-[10px] mt-1 italic ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                          {alt.reason.length > 70 ? alt.reason.slice(0, 67) + '...' : alt.reason}
-                        </div>
+          {isPro ? (
+            <>
+              <div className="px-4 pb-3">
+                {lurePick.methods?.[0] && (
+                  <div className={`rounded-lg p-3 mb-3 ${isDark ? 'bg-amber-500/10 border border-amber-500/30' : 'bg-amber-50 border border-amber-200'}`}>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className={`text-xs font-medium uppercase ${isDark ? 'text-amber-400/60' : 'text-amber-500'}`}>Best Method Today</div>
+                        <div className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{lurePick.methods[0].label}</div>
+                        <div className={`text-xs ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>{lurePick.methods[0].reason}</div>
+                      </div>
+                      <div className={`text-2xl font-black ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>
+                        {lurePick.methods[0].confidence}%
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
+                )}
 
-          {/* Time Plan */}
-          {lurePick.timePlan?.some(t => t.pick) && (
-            <div className={`mx-4 mb-4 p-3 rounded-lg ${isDark ? 'bg-slate-800/40' : 'bg-slate-50'}`}>
-              <div className={`text-[10px] font-medium uppercase mb-2 flex items-center gap-1.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                <Clock className="w-3 h-3" />
-                Time-of-Day Plan
-              </div>
-              <div className="space-y-1.5">
-                {lurePick.timePlan.filter(t => t.pick).map((tw, i) => (
-                  <div key={i} className={`flex items-center gap-2 text-[11px] rounded-md px-2 py-1 ${tw.isCurrent ? (isDark ? 'bg-amber-500/15 border border-amber-500/30' : 'bg-amber-50 border border-amber-200') : ''}`}>
-                    {tw.isCurrent && <ChevronRight className="w-3 h-3 text-amber-400 shrink-0" />}
-                    <span className={`font-medium w-32 shrink-0 ${tw.isCurrent ? (isDark ? 'text-amber-400' : 'text-amber-700') : (isDark ? 'text-slate-400' : 'text-slate-500')}`}>
-                      {tw.label}
-                    </span>
-                    <span className={`font-semibold ${isDark ? 'text-white' : 'text-slate-700'}`}>{tw.pick.name}</span>
-                    <span className={`text-[10px] ml-auto ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{tw.pick.confidence}%</span>
+                {lurePick.bassPattern && (
+                  <div className={`rounded-lg p-3 mb-3 ${isDark ? 'bg-green-500/10 border border-green-500/30' : 'bg-green-50 border border-green-200'}`}>
+                    <div className={`text-xs font-medium uppercase mb-1 ${isDark ? 'text-green-400/60' : 'text-green-500'}`}>Bass Seasonal Pattern</div>
+                    <div className={`text-sm ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>{lurePick.bassPattern.desc}</div>
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
+                )}
+                {lurePick.walleyePattern && (
+                  <div className={`rounded-lg p-3 mb-3 ${isDark ? 'bg-yellow-500/10 border border-yellow-500/30' : 'bg-yellow-50 border border-yellow-200'}`}>
+                    <div className={`text-xs font-medium uppercase mb-1 ${isDark ? 'text-yellow-400/60' : 'text-yellow-500'}`}>Walleye Pattern</div>
+                    <div className={`text-sm ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>{lurePick.walleyePattern.desc}</div>
+                  </div>
+                )}
 
-          {/* Color Recommendation */}
-          {lurePick.colorRecommendation && (
-            <div className={`mx-4 mb-4 p-3 rounded-lg flex items-start gap-2 ${isDark ? 'bg-slate-800/30' : 'bg-slate-50'}`}>
-              <Target className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${isDark ? 'text-slate-400' : 'text-slate-500'}`} />
-              <div>
-                <div className={`text-[10px] font-medium uppercase mb-0.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Color Selection</div>
-                <div className={`text-xs ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>
-                  <span className="font-semibold">{lurePick.colorRecommendation.primary}</span>
-                  <span className={`mx-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>or</span>
-                  <span className="font-semibold">{lurePick.colorRecommendation.secondary}</span>
+                {lurePick.methods?.length > 1 && (
+                  <div className="flex gap-1 mb-3 overflow-x-auto pb-1">
+                    <button onClick={() => setActiveMethodTab('all')} className={`text-[10px] font-medium px-3 py-1.5 rounded-full whitespace-nowrap transition-colors ${activeMethodTab === 'all' ? (isDark ? 'bg-amber-500/30 text-amber-300 border border-amber-500/50' : 'bg-amber-100 text-amber-800 border border-amber-300') : (isDark ? 'bg-slate-700/50 text-slate-400 hover:bg-slate-700' : 'bg-slate-100 text-slate-500 hover:bg-slate-200')}`}>
+                      All
+                    </button>
+                    {[...new Set(lurePick.methods.map(m => m.method))].slice(0, 5).map(method => (
+                      <button key={method} onClick={() => setActiveMethodTab(method)} className={`text-[10px] font-medium px-3 py-1.5 rounded-full whitespace-nowrap transition-colors capitalize ${activeMethodTab === method ? (isDark ? 'bg-amber-500/30 text-amber-300 border border-amber-500/50' : 'bg-amber-100 text-amber-800 border border-amber-300') : (isDark ? 'bg-slate-700/50 text-slate-400 hover:bg-slate-700' : 'bg-slate-100 text-slate-500 hover:bg-slate-200')}`}>
+                        {method === 'fly' ? 'Fly' : method === 'spin' ? 'Spin' : method === 'bait' ? 'Bait' : method === 'troll' ? 'Troll' : method === 'ice' ? 'Ice' : method === 'topwater' ? 'Topwater' : method}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Top Lure Pick */}
+              <div className={`mx-4 mb-3 p-4 rounded-xl border ${isDark ? 'bg-amber-500/10 border-amber-500/30' : 'bg-amber-50 border-amber-200'}`}>
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-start gap-3">
+                    <TackleThumb name={lurePick.topPick.lure.name} className="w-14 h-14" />
+                    <div>
+                      <div className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                        {lurePick.topPick.lure.name}
+                      </div>
+                      <div className={`text-sm font-medium ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>
+                        {lurePick.topPick.lure.size}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className={`text-2xl font-black ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>
+                      {lurePick.topPick.confidence}%
+                    </div>
+                    <div className={`text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>confidence</div>
+                  </div>
                 </div>
-                <div className={`text-[10px] mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{lurePick.colorRecommendation.reason}</div>
+                <div className={`text-xs mb-2 ${isDark ? 'text-amber-300' : 'text-amber-700'}`}>
+                  {lurePick.topPick.reason}
+                </div>
+                <div className={`text-xs ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+                  <span className="font-medium">Method:</span> {lurePick.topPick.lure.method}
+                </div>
+                {lurePick.topPick.lure.colors && (
+                  <div className={`text-xs mt-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                    <span className="font-medium">Colors:</span> {lurePick.topPick.lure.colors.join(', ')}
+                  </div>
+                )}
+                {lurePick.topPick.lure.rig && (
+                  <div className={`text-xs mt-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                    <span className="font-medium">Rig:</span> {lurePick.topPick.lure.rig}
+                  </div>
+                )}
+                <div className="flex items-center gap-2 mt-2">
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full ${isDark ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-700'}`}>
+                    {LURE_TIME_LABELS[lurePick.topPick.timeWindow] || lurePick.topPick.timeWindow}
+                  </span>
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full capitalize ${isDark ? 'bg-slate-600/40 text-slate-300' : 'bg-slate-200 text-slate-600'}`}>
+                    {lurePick.topPick.lure.category}
+                  </span>
+                </div>
+              </div>
+
+              {lurePick.alternatives.length > 0 && (
+                <div className="px-4 pb-3">
+                  <div className={`text-[10px] font-medium uppercase mb-2 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                    Also try
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {lurePick.alternatives
+                      .filter(a => activeMethodTab === 'all' || LURES[a.lureKey]?.category === activeMethodTab || (activeMethodTab === 'spin' && ['soft-plastic', 'hard-bait', 'shore-cast'].includes(LURES[a.lureKey]?.category)) || (activeMethodTab === 'bait' && LURES[a.lureKey]?.category === 'bait') || (activeMethodTab === 'troll' && LURES[a.lureKey]?.category === 'trolling') || (activeMethodTab === 'topwater' && LURES[a.lureKey]?.category === 'topwater') || (activeMethodTab === 'ice' && LURES[a.lureKey]?.category === 'ice'))
+                      .slice(0, 4)
+                      .map((alt, i) => (
+                      <div key={i} className={`p-2.5 rounded-lg border ${isDark ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-200'}`}>
+                        <div className="flex items-start gap-2.5">
+                          <TackleThumb name={alt.lure.name} className="w-10 h-10 mt-0.5" />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className={`text-xs font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>{alt.lure.name}</span>
+                              <span className={`text-[10px] font-bold ${alt.confidence >= 80 ? (isDark ? 'text-amber-400' : 'text-amber-600') : alt.confidence >= 60 ? (isDark ? 'text-yellow-400' : 'text-yellow-600') : (isDark ? 'text-slate-400' : 'text-slate-500')}`}>{alt.confidence}%</span>
+                            </div>
+                            <div className={`text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                              {alt.lure.size} {alt.lure.colors ? `• ${alt.lure.colors[0]}` : ''}
+                            </div>
+                            <div className={`text-[10px] mt-1 italic ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                              {alt.reason.length > 70 ? alt.reason.slice(0, 67) + '...' : alt.reason}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {lurePick.timePlan?.some(t => t.pick) && (
+                <div className={`mx-4 mb-4 p-3 rounded-lg ${isDark ? 'bg-slate-800/40' : 'bg-slate-50'}`}>
+                  <div className={`text-[10px] font-medium uppercase mb-2 flex items-center gap-1.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                    <Clock className="w-3 h-3" />
+                    Time-of-Day Plan
+                  </div>
+                  <div className="space-y-1.5">
+                    {lurePick.timePlan.filter(t => t.pick).map((tw, i) => (
+                      <div key={i} className={`flex items-center gap-2 text-[11px] rounded-md px-2 py-1 ${tw.isCurrent ? (isDark ? 'bg-amber-500/15 border border-amber-500/30' : 'bg-amber-50 border border-amber-200') : ''}`}>
+                        {tw.isCurrent && <ChevronRight className="w-3 h-3 text-amber-400 shrink-0" />}
+                        <span className={`font-medium w-32 shrink-0 ${tw.isCurrent ? (isDark ? 'text-amber-400' : 'text-amber-700') : (isDark ? 'text-slate-400' : 'text-slate-500')}`}>
+                          {tw.label}
+                        </span>
+                        <span className={`font-semibold ${isDark ? 'text-white' : 'text-slate-700'}`}>{tw.pick.name}</span>
+                        <span className={`text-[10px] ml-auto ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{tw.pick.confidence}%</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {lurePick.colorRecommendation && (
+                <div className={`mx-4 mb-4 p-3 rounded-lg flex items-start gap-2 ${isDark ? 'bg-slate-800/30' : 'bg-slate-50'}`}>
+                  <Target className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${isDark ? 'text-slate-400' : 'text-slate-500'}`} />
+                  <div>
+                    <div className={`text-[10px] font-medium uppercase mb-0.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Color Selection</div>
+                    <div className={`text-xs ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>
+                      <span className="font-semibold">{lurePick.colorRecommendation.primary}</span>
+                      <span className={`mx-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>or</span>
+                      <span className="font-semibold">{lurePick.colorRecommendation.secondary}</span>
+                    </div>
+                    <div className={`text-[10px] mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{lurePick.colorRecommendation.reason}</div>
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="relative px-4 pb-4">
+              <div className="blur-[5px] pointer-events-none select-none space-y-3">
+                <div className={`rounded-lg p-3 ${isDark ? 'bg-amber-500/10 border border-amber-500/30' : 'bg-amber-50 border border-amber-200'}`}>
+                  <div className={`text-xs font-medium uppercase ${isDark ? 'text-amber-400/60' : 'text-amber-500'}`}>Best Method Today</div>
+                  <div className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>Spinner — Slow retrieve</div>
+                  <div className={`text-xs ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>Wind direction favors this technique today</div>
+                </div>
+                <div className={`p-3 rounded-xl border ${isDark ? 'bg-amber-500/10 border-amber-500/30' : 'bg-amber-50 border-amber-200'}`}>
+                  <div className={`text-sm font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>Top Pick: Kastmaster 1/4 oz</div>
+                  <div className={`text-xs ${isDark ? 'text-amber-300' : 'text-amber-700'}`}>Best match for current water temp and clarity</div>
+                </div>
+              </div>
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 rounded-xl backdrop-blur-[1px] z-10">
+                <Lock className="w-5 h-5 text-amber-400 mb-1.5" />
+                <span className="text-xs font-bold text-white">Unlock Lure Recommendations</span>
+                <span className="text-[9px] text-white/60 mb-2">Try Pro free for 14 days, then $5.99/mo.</span>
+                <button onClick={onUnlockPro} className="px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg hover:from-amber-400 hover:to-orange-400 transition-all">
+                  Start Free Trial
+                </button>
               </div>
             </div>
           )}
@@ -2188,7 +2203,7 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
       {/* ═══════ TODAY'S FLY PICK ═══════ */}
       {flyPick?.topPick && (
         <div className={`rounded-xl border overflow-hidden ${isDark ? 'bg-gradient-to-br from-emerald-900/30 to-slate-800/50 border-emerald-500/30' : 'bg-gradient-to-br from-emerald-50 to-white border-emerald-200 shadow-sm'}`}>
-          {/* Header */}
+          {/* Header — always visible */}
           <div className="p-4 pb-3">
             <div className="flex items-center justify-between mb-1">
               <h3 className={`text-sm font-bold flex items-center gap-2 ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>
@@ -2196,11 +2211,15 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
                 Today's Fly Pick
               </h3>
               <div className="flex items-center gap-2">
+                {!isPro && (
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isDark ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-emerald-100 text-emerald-700 border border-emerald-200'}`}>
+                    <Lock className="w-2.5 h-2.5 inline mr-1" />PRO
+                  </span>
+                )}
                 <span className={`text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1 ${isDark ? 'bg-slate-700/60 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
                   <CloudSun className="w-3 h-3" />
                   {flyPick.skyLabel}
                 </span>
-                {/* Nymph vs Dry badge */}
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                   flyPick.nymphVsDry.pick === 'dry' ? (isDark ? 'bg-amber-500/25 text-amber-400' : 'bg-amber-100 text-amber-700')
                   : flyPick.nymphVsDry.pick === 'nymph' ? (isDark ? 'bg-cyan-500/25 text-cyan-400' : 'bg-cyan-100 text-cyan-700')
@@ -2215,130 +2234,141 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
             </p>
           </div>
 
-          {/* Top Pick */}
-          <div className={`mx-4 mb-3 p-4 rounded-xl border ${isDark ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-emerald-50 border-emerald-200'}`}>
-            <div className="flex items-start justify-between mb-2">
-              <div className="flex items-start gap-3">
-                <TackleThumb name={flyPick.topPick.name} className="w-14 h-14" />
-                <div>
-                  <div className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>
-                    {flyPick.topPick.name}
-                  </div>
-                  <div className={`text-sm font-medium ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>
-                    {flyPick.topPick.size}
-                  </div>
-                </div>
-              </div>
-              <div className="text-right">
-                <div className={`text-2xl font-black ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>
-                  {flyPick.topPick.confidence}%
-                </div>
-                <div className={`text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>confidence</div>
-              </div>
-            </div>
-            <div className={`text-xs mb-2 ${isDark ? 'text-emerald-300' : 'text-emerald-700'}`}>
-              {flyPick.topPick.reason}
-            </div>
-            <div className={`text-xs ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
-              <span className="font-medium">Patterns:</span> {flyPick.topPick.patterns.join(', ')}
-            </div>
-            <div className={`text-xs mt-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-              <span className="font-medium">Method:</span> {flyPick.topPick.method}
-            </div>
-            <div className="flex items-center gap-2 mt-2 flex-wrap">
-              <span className={`text-[10px] px-2 py-0.5 rounded-full ${isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-700'}`}>
-                {TIME_WINDOW_LABELS[flyPick.topPick.timeWindow] || flyPick.topPick.timeWindow}
-              </span>
-              <span className={`text-[10px] px-2 py-0.5 rounded-full capitalize ${isDark ? 'bg-slate-600/40 text-slate-300' : 'bg-slate-200 text-slate-600'}`}>
-                {flyPick.topPick.category}
-              </span>
-              {weatherHatchTriggers.some(t => t.flyKey === flyPick.topPick.flyKey) && (
-                <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full ${isDark ? 'bg-cyan-500/25 text-cyan-300 border border-cyan-500/50' : 'bg-cyan-100 text-cyan-700 border border-cyan-300'}`}>
-                  ⚡ LIVE WEATHER MATCH
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* Alternatives */}
-          {flyPick.alternatives.length > 0 && (
-            <div className="px-4 pb-3">
-              <div className={`text-[10px] font-medium uppercase mb-2 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                Also try
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                {flyPick.alternatives.map((alt, i) => (
-                  <div
-                    key={i}
-                    className={`p-2.5 rounded-lg border ${isDark ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-200'}`}
-                  >
-                    <div className="flex items-start gap-2.5">
-                      <TackleThumb name={alt.name} className="w-10 h-10 mt-0.5" />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className={`text-xs font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>
-                            {alt.name}
-                          </span>
-                          <span className={`text-[10px] font-bold ${
-                            alt.confidence >= 70 ? (isDark ? 'text-emerald-400' : 'text-emerald-600')
-                            : alt.confidence >= 50 ? (isDark ? 'text-yellow-400' : 'text-yellow-600')
-                            : (isDark ? 'text-slate-400' : 'text-slate-500')
-                          }`}>
-                            {alt.confidence}%
-                          </span>
-                        </div>
-                        <div className={`text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                          {alt.size} • {alt.patterns[0]}
-                        </div>
-                        <div className={`text-[10px] mt-1 italic ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                          {alt.reason.length > 60 ? alt.reason.slice(0, 57) + '...' : alt.reason}
-                        </div>
-                        {weatherHatchTriggers.some(t => t.flyKey === alt.flyKey) && (
-                          <span className={`inline-block mt-1 text-[8px] font-extrabold px-1.5 py-0.5 rounded-full ${isDark ? 'bg-cyan-500/25 text-cyan-300' : 'bg-cyan-100 text-cyan-700'}`}>
-                            ⚡ WEATHER MATCH
-                          </span>
-                        )}
+          {isPro ? (
+            <>
+              {/* Top Pick */}
+              <div className={`mx-4 mb-3 p-4 rounded-xl border ${isDark ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-emerald-50 border-emerald-200'}`}>
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-start gap-3">
+                    <TackleThumb name={flyPick.topPick.name} className="w-14 h-14" />
+                    <div>
+                      <div className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                        {flyPick.topPick.name}
+                      </div>
+                      <div className={`text-sm font-medium ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>
+                        {flyPick.topPick.size}
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Time-of-Day Guide */}
-          {flyPick.timeGuide.length > 1 && (
-            <div className={`mx-4 mb-4 p-3 rounded-lg ${isDark ? 'bg-slate-800/40' : 'bg-slate-50'}`}>
-              <div className={`text-[10px] font-medium uppercase mb-2 flex items-center gap-1.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                <Clock className="w-3 h-3" />
-                Pattern schedule
-              </div>
-              <div className="flex flex-wrap gap-x-4 gap-y-1">
-                {flyPick.timeGuide.map((tw, i) => (
-                  <div key={i} className="flex items-center gap-1.5">
-                    <span className={`text-[10px] font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                      {tw.label}:
-                    </span>
-                    <span className={`text-[10px] font-semibold ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>
-                      {tw.fly} {tw.size}
-                    </span>
-                    {i < flyPick.timeGuide.length - 1 && (
-                      <span className={`text-[10px] ${isDark ? 'text-slate-600' : 'text-slate-300'}`}>→</span>
-                    )}
+                  <div className="text-right">
+                    <div className={`text-2xl font-black ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>
+                      {flyPick.topPick.confidence}%
+                    </div>
+                    <div className={`text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>confidence</div>
                   </div>
-                ))}
+                </div>
+                <div className={`text-xs mb-2 ${isDark ? 'text-emerald-300' : 'text-emerald-700'}`}>
+                  {flyPick.topPick.reason}
+                </div>
+                <div className={`text-xs ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+                  <span className="font-medium">Patterns:</span> {flyPick.topPick.patterns.join(', ')}
+                </div>
+                <div className={`text-xs mt-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                  <span className="font-medium">Method:</span> {flyPick.topPick.method}
+                </div>
+                <div className="flex items-center gap-2 mt-2 flex-wrap">
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full ${isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-700'}`}>
+                    {TIME_WINDOW_LABELS[flyPick.topPick.timeWindow] || flyPick.topPick.timeWindow}
+                  </span>
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full capitalize ${isDark ? 'bg-slate-600/40 text-slate-300' : 'bg-slate-200 text-slate-600'}`}>
+                    {flyPick.topPick.category}
+                  </span>
+                  {weatherHatchTriggers.some(t => t.flyKey === flyPick.topPick.flyKey) && (
+                    <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full ${isDark ? 'bg-cyan-500/25 text-cyan-300 border border-cyan-500/50' : 'bg-cyan-100 text-cyan-700 border border-cyan-300'}`}>
+                      ⚡ LIVE WEATHER MATCH
+                    </span>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
 
-          {/* Pro Teaser — Fly Intelligence */}
-          {!isPro && (
-            <div className="px-4 pb-4">
-              <ProTeaser
-                variant="fly"
-                compact
-                onUnlock={onUnlockPro}
-              />
+              {flyPick.alternatives.length > 0 && (
+                <div className="px-4 pb-3">
+                  <div className={`text-[10px] font-medium uppercase mb-2 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                    Also try
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    {flyPick.alternatives.map((alt, i) => (
+                      <div
+                        key={i}
+                        className={`p-2.5 rounded-lg border ${isDark ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-200'}`}
+                      >
+                        <div className="flex items-start gap-2.5">
+                          <TackleThumb name={alt.name} className="w-10 h-10 mt-0.5" />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className={`text-xs font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                                {alt.name}
+                              </span>
+                              <span className={`text-[10px] font-bold ${
+                                alt.confidence >= 70 ? (isDark ? 'text-emerald-400' : 'text-emerald-600')
+                                : alt.confidence >= 50 ? (isDark ? 'text-yellow-400' : 'text-yellow-600')
+                                : (isDark ? 'text-slate-400' : 'text-slate-500')
+                              }`}>
+                                {alt.confidence}%
+                              </span>
+                            </div>
+                            <div className={`text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                              {alt.size} • {alt.patterns[0]}
+                            </div>
+                            <div className={`text-[10px] mt-1 italic ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                              {alt.reason.length > 60 ? alt.reason.slice(0, 57) + '...' : alt.reason}
+                            </div>
+                            {weatherHatchTriggers.some(t => t.flyKey === alt.flyKey) && (
+                              <span className={`inline-block mt-1 text-[8px] font-extrabold px-1.5 py-0.5 rounded-full ${isDark ? 'bg-cyan-500/25 text-cyan-300' : 'bg-cyan-100 text-cyan-700'}`}>
+                                ⚡ WEATHER MATCH
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {flyPick.timeGuide.length > 1 && (
+                <div className={`mx-4 mb-4 p-3 rounded-lg ${isDark ? 'bg-slate-800/40' : 'bg-slate-50'}`}>
+                  <div className={`text-[10px] font-medium uppercase mb-2 flex items-center gap-1.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                    <Clock className="w-3 h-3" />
+                    Pattern schedule
+                  </div>
+                  <div className="flex flex-wrap gap-x-4 gap-y-1">
+                    {flyPick.timeGuide.map((tw, i) => (
+                      <div key={i} className="flex items-center gap-1.5">
+                        <span className={`text-[10px] font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                          {tw.label}:
+                        </span>
+                        <span className={`text-[10px] font-semibold ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>
+                          {tw.fly} {tw.size}
+                        </span>
+                        {i < flyPick.timeGuide.length - 1 && (
+                          <span className={`text-[10px] ${isDark ? 'text-slate-600' : 'text-slate-300'}`}>→</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="relative px-4 pb-4">
+              <div className="blur-[5px] pointer-events-none select-none space-y-3">
+                <div className={`p-4 rounded-xl border ${isDark ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-emerald-50 border-emerald-200'}`}>
+                  <div className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>BWO Emerger #18</div>
+                  <div className={`text-xs ${isDark ? 'text-emerald-300' : 'text-emerald-700'}`}>Weather-matched fly selection with hatch correlation data</div>
+                </div>
+                <div className={`p-3 rounded-lg ${isDark ? 'bg-slate-800/40' : 'bg-slate-50'}`}>
+                  <div className={`text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Pattern schedule: Morning → Afternoon → Evening</div>
+                </div>
+              </div>
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 rounded-xl backdrop-blur-[1px] z-10">
+                <Lock className="w-5 h-5 text-emerald-400 mb-1.5" />
+                <span className="text-xs font-bold text-white">Unlock Fly Recommendations</span>
+                <span className="text-[9px] text-white/60 mb-2">Try Pro free for 14 days, then $5.99/mo.</span>
+                <button onClick={onUnlockPro} className="px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg hover:from-emerald-400 hover:to-teal-400 transition-all">
+                  Start Free Trial
+                </button>
+              </div>
             </div>
           )}
         </div>

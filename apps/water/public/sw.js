@@ -60,6 +60,37 @@ self.addEventListener('fetch', (event) => {
   return;
 });
 
+// ── Push notifications ──
+self.addEventListener('push', (event) => {
+  const data = event.data?.json() || {};
+  const title = data.title || 'NotWindy';
+  const options = {
+    body: data.body || 'Fishing conditions update',
+    icon: '/icon-192.png',
+    badge: '/badge-72.png',
+    tag: data.tag || 'notwindy',
+    data: { url: data.url || '/' },
+  };
+  event.waitUntil(
+    self.registration.showNotification(title, options)
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = event.notification.data?.url || '/';
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window' }).then((windowClients) => {
+      for (const client of windowClients) {
+        if (client.url.includes(self.location.origin) && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      return self.clients.openWindow(url);
+    })
+  );
+});
+
 // Listen for messages from the app
 self.addEventListener('message', (event) => {
   if (event.data === 'SKIP_WAITING') {

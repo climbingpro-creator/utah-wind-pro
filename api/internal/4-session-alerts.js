@@ -15,7 +15,7 @@
 
 import { getSupabase } from '../lib/supabase.js';
 import { redisCommand } from '../lib/redis.js';
-import { verifyQStashSignature } from '../lib/qstash.js';
+import { verifyQStashSignature, triggerNextStage } from '../lib/qstash.js';
 import { sendSessionAlert, formatAlertMessage } from '../lib/sendSessionAlert.js';
 import { LAKE_TO_GRID } from '../lib/nwsForecast.js';
 
@@ -168,6 +168,9 @@ export default async function handler(req, res) {
     }
 
     console.log(`[4-session-alerts] Complete — sent=${sent}, skipped=${skipped}, total=${proAlerts.length}`);
+
+    // Chain to Stage 5 — Fishing Alerts
+    await triggerNextStage('/api/internal/5-fishing-alerts', req, { from: '4-session-alerts' });
 
     return res.status(200).json({
       ok: true,

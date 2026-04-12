@@ -1,5 +1,6 @@
 import { MapPin, Map, Navigation, ChevronLeft, ChevronRight, Radio, Star } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useAuth } from '../context/AuthContext';
 
 const LIVE_LAKES = [
   { id: 'utah-lake', name: 'Utah Lake', type: 'reservoir', region: 'Utah', live: true },
@@ -37,21 +38,64 @@ const UTAH_WATERS = [
 const TYPE_ICON = { river: '🏞️', lake: '💧', reservoir: '💧', ocean: '🌊', bay: '🌊' };
 
 const FAVORITES_KEY = 'notwindy_favorites';
+const API_ORIGIN = import.meta.env.VITE_API_ORIGIN || '';
 
 function useFavorites() {
+  const { user, session } = useAuth();
   const [favorites, setFavorites] = useState(() => {
     try {
       const stored = localStorage.getItem(FAVORITES_KEY);
       return stored ? JSON.parse(stored) : [];
     } catch { return []; }
   });
+  const [synced, setSynced] = useState(false);
+
+  useEffect(() => {
+    if (!user || !session?.access_token || synced) return;
+    (async () => {
+      try {
+        const resp = await fetch(`${API_ORIGIN}/api/favorite-locations`, {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        if (!resp.ok) return;
+        const { favorites: serverFavs } = await resp.json();
+        const serverIds = (serverFavs || []).map(f => f.location_id);
+        const localIds = JSON.parse(localStorage.getItem(FAVORITES_KEY) || '[]');
+        const merged = [...new Set([...serverIds, ...localIds])];
+        setFavorites(merged);
+        localStorage.setItem(FAVORITES_KEY, JSON.stringify(merged));
+
+        const toSync = localIds.filter(id => !serverIds.includes(id));
+        for (const id of toSync) {
+          fetch(`${API_ORIGIN}/api/favorite-locations`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ locationId: id }),
+          }).catch(() => {});
+        }
+        setSynced(true);
+      } catch { /* offline — keep localStorage */ }
+    })();
+  }, [user, session, synced]);
+
   const toggle = useCallback((id) => {
     setFavorites(prev => {
-      const next = prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id];
+      const removing = prev.includes(id);
+      const next = removing ? prev.filter(f => f !== id) : [...prev, id];
       localStorage.setItem(FAVORITES_KEY, JSON.stringify(next));
+
+      if (session?.access_token) {
+        fetch(`${API_ORIGIN}/api/favorite-locations`, {
+          method: removing ? 'DELETE' : 'POST',
+          headers: { Authorization: `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ locationId: id }),
+        }).catch(() => {});
+      }
+
       return next;
     });
-  }, []);
+  }, [session]);
+
   return { favorites, toggle, isFavorite: (id) => favorites.includes(id) };
 }
 

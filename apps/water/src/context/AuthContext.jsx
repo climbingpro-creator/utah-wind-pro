@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { supabase } from '@utahwind/database';
 
 const TRIAL_KEY = 'uwg_trial_start';
-const TRIAL_DAYS = 7;
+const TRIAL_DAYS = 14;
 const ADMIN_EMAILS = ['tyler@aspenearth.com', 'climbingpro@gmail.com'];
 const API_ORIGIN = import.meta.env.VITE_API_ORIGIN || '';
 

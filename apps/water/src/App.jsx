@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, Suspense, lazy, useCallback } from 'react';
 import { Analytics } from '@vercel/analytics/react';
 import { Fish, Ship, Waves, RefreshCw, Wifi, WifiOff, Sun, Moon, CheckCircle,
-  Shield, Clock, Lightbulb, TrendingUp, TrendingDown, Minus, LogIn, LogOut, Crown, CreditCard, Sparkles, Brain, Star, Camera } from 'lucide-react';
+  Shield, Clock, Lightbulb, TrendingUp, TrendingDown, Minus, LogIn, LogOut, Crown, CreditCard, Sparkles, Brain, Star, Camera, Lock, Bell } from 'lucide-react';
 import { ErrorBoundary, FeedbackWidget, initAnalytics, trackPageView } from '@utahwind/ui';
 import { supabase } from '@utahwind/database';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
@@ -30,6 +30,8 @@ const Login = lazy(() => import('./pages/Login'));
 const EngineTest = lazy(() => import('./pages/EngineTest'));
 const ProUpgrade = lazy(() => import('./components/ProUpgrade'));
 const LearnView = lazy(() => import('./components/LearnView'));
+const AlertSettings = lazy(() => import('./components/AlertSettings'));
+const CatchLog = lazy(() => import('./components/CatchLog'));
 const CommunityFeed = lazy(() => import('./pages/CommunityFeed'));
 
 const ADMIN_EMAILS = ['tyler@aspenearth.com', 'climbingpro@gmail.com'];
@@ -249,6 +251,8 @@ function WaterApp() {
   const isAdmin = user && ADMIN_EMAILS.includes(user.email?.toLowerCase());
   const [managingSubscription, setManagingSubscription] = useState(false);
   const [showLearnView, setShowLearnView] = useState(false);
+  const [showAlertSettings, setShowAlertSettings] = useState(false);
+  const [showCatchLog, setShowCatchLog] = useState(false);
   const [showCommunity, setShowCommunity] = useState(false);
 
   const handleManageSubscription = async () => {
@@ -428,6 +432,24 @@ function WaterApp() {
               >
                 <Camera className="w-4 h-4" />
                 <span className="text-[8px] font-medium">Catches</span>
+              </button>
+              {/* Smart Catch Log */}
+              <button
+                onClick={() => setShowCatchLog(true)}
+                className={`flex flex-col items-center gap-0.5 p-1.5 rounded-lg transition-colors ${showCatchLog ? 'bg-emerald-500/15 text-emerald-400' : 'hover:bg-emerald-500/10 text-emerald-400/70 hover:text-emerald-400'}`}
+                title="Catch Log"
+              >
+                <Fish className="w-4 h-4" />
+                <span className="text-[8px] font-medium">Log</span>
+              </button>
+              {/* Fishing Alerts */}
+              <button
+                onClick={() => setShowAlertSettings(true)}
+                className={`flex flex-col items-center gap-0.5 p-1.5 rounded-lg transition-colors ${showAlertSettings ? 'bg-cyan-500/15 text-cyan-400' : 'hover:bg-cyan-500/10 text-cyan-400/70 hover:text-cyan-400'}`}
+                title="Fishing Alerts"
+              >
+                <Bell className="w-4 h-4" />
+                <span className="text-[8px] font-medium">Alerts</span>
               </button>
               {/* Learn button - accessible to all users */}
               <button
@@ -653,7 +675,7 @@ function WaterApp() {
 
         {/* ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ AI BRIEFING ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ */}
         {briefing && (
-          <div className="card space-y-3">
+          <div className="card space-y-3 relative">
             <div className="flex items-center gap-2">
               <Lightbulb className="w-4 h-4 text-cyan-500" />
               <span className="text-sm font-semibold text-[var(--text-primary)]">{briefing.headline}</span>
@@ -663,22 +685,41 @@ function WaterApp() {
                 </span>
               )}
             </div>
-            {briefing.body && (
-              <p className="text-sm text-[var(--text-secondary)] leading-relaxed">{briefing.body}</p>
-            )}
-            {briefing.bullets?.length > 0 && (
-              <div className="space-y-1.5">
-                {briefing.bullets.map((b, i) => (
-                  <div key={i} className="flex items-start gap-2 text-xs text-[var(--text-tertiary)]">
-                    <span className="flex-shrink-0">{b.icon || '┬╖'}</span>
-                    <span>{b.text}</span>
+            {isPro ? (
+              <>
+                {briefing.body && (
+                  <p className="text-sm text-[var(--text-secondary)] leading-relaxed">{briefing.body}</p>
+                )}
+                {briefing.bullets?.length > 0 && (
+                  <div className="space-y-1.5">
+                    {briefing.bullets.map((b, i) => (
+                      <div key={i} className="flex items-start gap-2 text-xs text-[var(--text-tertiary)]">
+                        <span className="flex-shrink-0">{b.icon || '┬╖'}</span>
+                        <span>{b.text}</span>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            )}
-            {briefing.bestAction && (
-              <div className="px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 bg-cyan-500/[0.06] text-cyan-500 border border-cyan-500/20">
-                <Lightbulb className="w-4 h-4 shrink-0" /> {briefing.bestAction}
+                )}
+                {briefing.bestAction && (
+                  <div className="px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 bg-cyan-500/[0.06] text-cyan-500 border border-cyan-500/20">
+                    <Lightbulb className="w-4 h-4 shrink-0" /> {briefing.bestAction}
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="relative">
+                <div className="blur-[4px] pointer-events-none select-none space-y-2">
+                  <p className="text-sm text-[var(--text-secondary)]">AI-generated tactical briefing with specific recommendations for current conditions...</p>
+                  <div className="px-3 py-2 rounded-lg text-xs bg-cyan-500/[0.06] text-cyan-500 border border-cyan-500/20">Best action recommendation loading...</div>
+                </div>
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 rounded-xl backdrop-blur-[1px]">
+                  <Lock className="w-4 h-4 text-white/70 mb-1" />
+                  <span className="text-[11px] font-bold text-white">Unlock AI Tactical Briefing</span>
+                  <span className="text-[9px] text-white/60 mb-2">Try Pro free for 14 days, then $5.99/mo.</span>
+                  <button onClick={openPaywall} className="px-3 py-1 rounded-lg text-[10px] font-bold bg-gradient-to-r from-cyan-500 to-blue-600 text-white hover:shadow-lg transition-all">
+                    Start Free Trial
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -698,9 +739,13 @@ function WaterApp() {
               </div>
               <span className="text-[10px] text-[var(--text-tertiary)]">{safeToFixed(Math.abs(pressureData.gradient), 1)} mb gradient</span>
               {selectedActivity === 'fishing' && Math.abs(pressureData.gradient) > 0.5 && (
-                <span className="ml-auto text-[10px] font-medium text-emerald-500">
-                  {pressureData.gradient < 0 ? 'Feeding activity increasing' : 'Bite may slow'}
-                </span>
+                isPro ? (
+                  <span className="ml-auto text-[10px] font-medium text-emerald-500">
+                    {pressureData.gradient < 0 ? 'Feeding activity increasing' : 'Bite may slow'}
+                  </span>
+                ) : (
+                  <span className="ml-auto text-[10px] font-medium text-slate-500 blur-[3px] select-none">Bite insight</span>
+                )
               )}
             </div>
           </div>
@@ -828,6 +873,20 @@ function WaterApp() {
       {showLearnView && (
         <Suspense fallback={null}>
           <LearnView onClose={() => setShowLearnView(false)} />
+        </Suspense>
+      )}
+
+      {/* Fishing Alert Settings Modal */}
+      {showAlertSettings && (
+        <Suspense fallback={null}>
+          <AlertSettings isOpen={showAlertSettings} onClose={() => setShowAlertSettings(false)} />
+        </Suspense>
+      )}
+
+      {/* Smart Catch Log Modal */}
+      {showCatchLog && (
+        <Suspense fallback={null}>
+          <CatchLog isOpen={showCatchLog} onClose={() => setShowCatchLog(false)} />
         </Suspense>
       )}
 
