@@ -792,7 +792,7 @@ export const FISHING_LOCATIONS = {
   'fish-lake': {
     id: 'fish-lake', name: 'Fish Lake', region: 'Sevier', elevation: 8848,
     coordinates: { lat: 38.54, lng: -111.72 }, type: 'natural_lake',
-    species: ['Lake Trout', 'Splake', 'Rainbow Trout', 'Yellow Perch'],
+    species: ['Lake Trout', 'Kokanee', 'Splake', 'Rainbow Trout', 'Yellow Perch'],
     primarySpecies: 'Lake Trout',
     bestMonths: [6, 7, 8, 9],
     depths: { spring: { min: 10, max: 30, description: 'Post ice-off' }, summer: { min: 30, max: 80, description: 'Deep lake trout water' }, fall: { min: 20, max: 50, description: 'Fall turnover' } },

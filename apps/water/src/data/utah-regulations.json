@@ -189,12 +189,10 @@
       "aliases": ["fish-lake"],
       "region": "Sevier",
       "rules": [
-        { "type": "limit", "text": "Lake trout: No limit — remove all caught" },
-        { "type": "limit", "text": "Splake: 4 fish" },
-        { "type": "limit", "text": "Rainbow trout: 4 fish" },
-        { "type": "limit", "text": "Yellow perch: 20 fish" }
+        { "type": "limit", "text": "Trout (all species incl. Lake Trout & Kokanee): 4 fish total, only 1 over 24\"" },
+        { "type": "limit", "text": "Yellow perch: No limit" }
       ],
-      "special": "REMOVE ALL LAKE TROUT — UDWR encourages 100% harvest. Lake trout are invasive and outcompete native splake. Keep every laker."
+      "special": "Combined trout limit of 4 regardless of species (Lake Trout, Kokanee, Splake, Rainbow). Only 1 trout may exceed 24 inches. Perch have no limit."
     },
 
     "lake-powell": {
