@@ -123,8 +123,10 @@ function ctaButton(text, url) {
 /**
  * @param {Array} spots — each: { name, score, wind, gust, windDir, temp, waterTemp,
  *   sky, skyLabel, shortForecast, pressureTrend, pressureGradient,
- *   flowCfs, topHatch, bestAction, waterType, depthZone,
- *   recommendations: { fly?, spin?, bait? } }
+ *   flowCfs, topHatch, bestAction, waterType, depthZone, regulations,
+ *   recommendations: { fly?, spin?, bait? },
+ *   glassWindow?: { start, end, hours, avgSpeed },
+ *   windTrend?: string, windSource?: 'physics'|'observation' }
  * @param {Object} meta — { sunrise, sunset, warnings[], fishingStyle[] }
  */
 export function buildMorningBriefingEmail(spots, meta = {}) {
@@ -152,7 +154,12 @@ export function buildMorningBriefingEmail(spots, meta = {}) {
       s.skyLabel ? badge('', s.skyLabel, '#0f172a') : '',
       s.flowCfs ? badge('&#127754;', `${s.flowCfs} cfs`, '#0f172a') : '',
       isStillwater && s.depthZone ? badge('&#128207;', `Depth: ${s.depthZone}`, '#0f172a') : '',
+      s.glassWindow ? badge('&#129695;', `Glass ${s.glassWindow.start}–${s.glassWindow.end}`, 'rgba(16,185,129,0.15)') : '',
     ].filter(Boolean).join('');
+
+    const windTrendLine = s.windTrend
+      ? `<div style="font-size:11px;color:${COLORS.dim};margin-top:4px;">&#128200; Wind trend: ${s.windTrend}${s.windSource === 'physics' ? ' <span style="color:${COLORS.accent};">(physics model)</span>' : ''}</div>`
+      : '';
 
     const recs = s.recommendations || {};
     const recLines = [];
@@ -172,6 +179,7 @@ export function buildMorningBriefingEmail(spots, meta = {}) {
         <span style="font-weight:800;color:${scoreColor};font-size:20px;">${s.score}<span style="font-size:11px;color:${COLORS.dim};">/100</span></span>
       </div>
       <div style="margin-bottom:8px;">${badges}</div>
+      ${windTrendLine}
       ${s.topHatch ? `<div style="font-size:13px;color:${COLORS.green};margin-bottom:4px;">&#129712; ${s.topHatch}</div>` : ''}
       ${s.bestAction ? `<div style="font-size:12px;color:${COLORS.accent};font-style:italic;">&#10148; ${s.bestAction}</div>` : ''}
       ${recsSection}

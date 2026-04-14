@@ -28,6 +28,7 @@ import {
   parseSkyCondition,
   calculateDaylight,
   SKY_LABELS,
+  applyLiveCorrections,
 } from '@utahwind/weather';
 import { fetchUsgsData } from '../lib/weather-backfill.js';
 import { getWaterType, isRiver, isLake, getSeasonalDepth, getAllowedMethods, getRegulations } from '../lib/waterTypes.js';
@@ -265,6 +266,9 @@ export default async function handler(req, res) {
               depthZone,
               regulations: getRegulations(s.locId),
               recommendations: buildRecommendations(topHatch, waterType, styles, locInfo?.primarySpecies, getAllowedMethods(s.locId)),
+              glassWindow: detectGlassWindow(c.windFieldData),
+              windTrend: buildWindTrend(c.windFieldData),
+              windSource: c.windFieldData ? 'physics' : 'observation',
             };
           });
 
@@ -505,14 +509,35 @@ function isQuietHour(startStr, endStr) {
 
 function scoreConditions(cond) {
   let score = 50;
+
+  // Wind speed — glass conditions are ideal for fishing
   if (cond.speed < 5) score += 20;
   else if (cond.speed < 10) score += 10;
   else if (cond.speed > 20) score -= 20;
   else if (cond.speed > 15) score -= 10;
-  if (cond.pressureGradient && cond.pressureGradient < -0.5) score += 15;
+
+  // Pressure gradient — falling pressure activates feeding
+  if (cond.pressureGradient != null) {
+    if (cond.pressureGradient < -1.0) score += 15;
+    else if (cond.pressureGradient < -0.5) score += 10;
+    else if (cond.pressureGradient > 1.5) score -= 5;
+  }
+
+  // Temperature comfort band
   if (cond.temp && cond.temp >= 50 && cond.temp <= 75) score += 10;
   if (cond.waterTemp && cond.waterTemp >= 48 && cond.waterTemp <= 60) score += 5;
+
+  // Cloud cover benefits fishing (less spooky fish, hatch triggers)
   if (cond.sky === 'overcast' || cond.sky === 'cloudy') score += 5;
+
+  // Physics engine confidence bonus — higher confidence = more reliable score
+  if (cond.windConfidence === 'observed') score += 5;
+  else if (cond.windConfidence === 'high') score += 3;
+
+  // Thermal phase adjustments (stillwater: pre-thermal mornings are prime)
+  if (cond.thermalPhase === 'pre' || cond.thermalPhase === 'building') score += 3;
+  else if (cond.thermalPhase === 'peak') score -= 3;
+
   return Math.max(0, Math.min(100, score));
 }
 
@@ -632,6 +657,65 @@ function humanName(locId) {
   return locId.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 }
 
+/**
+ * Detect glass (calm) windows from the 24-hour wind field.
+ * Returns e.g. { start: '6 AM', end: '9 AM', avgSpeed: 2.3 } or null.
+ */
+function detectGlassWindow(windFieldData) {
+  if (!windFieldData?.hours?.length) return null;
+  const GLASS_THRESHOLD = 6;
+  let bestStart = null, bestEnd = null, bestLen = 0;
+  let curStart = null, curLen = 0, curSum = 0;
+
+  for (const h of windFieldData.hours) {
+    if (h.speed <= GLASS_THRESHOLD && h.offset < 18) {
+      if (!curStart) { curStart = h; curSum = 0; curLen = 0; }
+      curLen++;
+      curSum += h.speed;
+    } else {
+      if (curLen >= 2 && curLen > bestLen) {
+        bestStart = curStart;
+        bestEnd = windFieldData.hours[curStart.offset + curLen - 1] || curStart;
+        bestLen = curLen;
+      }
+      curStart = null; curLen = 0; curSum = 0;
+    }
+  }
+  if (curLen >= 2 && curLen > bestLen) {
+    bestStart = curStart;
+    bestEnd = windFieldData.hours[curStart.offset + curLen - 1] || curStart;
+    bestLen = curLen;
+    curSum = windFieldData.hours.slice(curStart.offset, curStart.offset + curLen).reduce((a, h) => a + h.speed, 0);
+  }
+
+  if (!bestStart) return null;
+  return {
+    start: bestStart.time || formatHour(bestStart.hour),
+    end: bestEnd.time || formatHour((bestEnd.hour + 1) % 24),
+    hours: bestLen,
+    avgSpeed: Math.round((windFieldData.hours.slice(bestStart.offset, bestStart.offset + bestLen).reduce((a, h) => a + h.speed, 0) / bestLen) * 10) / 10,
+  };
+}
+
+/**
+ * Build a compact wind trend string from the hourly field.
+ * E.g. "2→5→12→8 mph" showing wind evolution through the day.
+ */
+function buildWindTrend(windFieldData) {
+  if (!windFieldData?.hours?.length) return null;
+  const keyHours = [0, 3, 6, 9, 12].map(offset =>
+    windFieldData.hours.find(h => h.offset === offset)
+  ).filter(Boolean);
+  if (keyHours.length < 3) return null;
+  return keyHours.map(h => `${Math.round(h.speed)}`).join('→') + ' mph';
+}
+
+function formatHour(h) {
+  if (h === 0) return '12 AM';
+  if (h === 12) return '12 PM';
+  return h > 12 ? `${h - 12} PM` : `${h} AM`;
+}
+
 async function fetchActiveWarnings() {
   try {
     const resp = await fetch('https://api.weather.gov/alerts/active?area=UT&severity=Moderate,Severe,Extreme', {
@@ -664,8 +748,30 @@ async function fetchActiveWarnings() {
 async function fetchConditions(locId, nwsData, mstHour) {
   let speed = 0, gust = 0, dir = 0, temp = null, pressureGradient = null;
   let sky = 'partly', shortForecast = '', waterTemp = null, flowCfs = null;
+  let windFieldData = null, windConfidence = null, thermalPhase = null;
 
-  // Redis cached station data
+  // ── Physics wind field from Redis (computed by Stage 2) ──
+  try {
+    const fieldRaw = await redisCommand('GET', `wind:field:${locId}`);
+    if (fieldRaw) {
+      const field = JSON.parse(fieldRaw);
+      const age = Date.now() - new Date(field.generatedAt).getTime();
+      if (age < 25 * 60 * 1000) {
+        windFieldData = field;
+        const h0 = field.currentHour || field.hours?.[0];
+        if (h0) {
+          speed = h0.speed ?? 0;
+          gust = h0.gust ?? 0;
+          dir = h0.direction ?? dir;
+          windConfidence = h0.confidence ?? null;
+          thermalPhase = h0.phase ?? null;
+        }
+      }
+    }
+  } catch { /* fall through to raw obs */ }
+
+  // ── Raw station obs (used as fallback AND for nowcast live sensor) ──
+  let liveSensors = [];
   try {
     const latestKey = await redisCommand('LRANGE', 'obs:index', '0', '0');
     if (latestKey?.length) {
@@ -673,16 +779,54 @@ async function fetchConditions(locId, nwsData, mstHour) {
       if (raw) {
         const cached = JSON.parse(raw);
         if (cached?.observations?.[locId]?.length) {
-          const station = cached.observations[locId][0];
-          speed = station.windSpeed ?? 0;
-          gust = station.windGust ?? 0;
-          dir = station.windDirection ?? 0;
-          temp = station.temperature ?? null;
-          pressureGradient = cached.pressure?.[locId]?.gradient ?? null;
+          liveSensors = cached.observations[locId].map(s => ({
+            id: s.stationId,
+            speed: s.windSpeed ?? 0,
+            direction: s.windDirection ?? 0,
+          }));
+          if (speed === 0 && gust === 0) {
+            const station = cached.observations[locId][0];
+            speed = station.windSpeed ?? 0;
+            gust = station.windGust ?? 0;
+            dir = station.windDirection ?? 0;
+            temp = station.temperature ?? null;
+          }
         }
       }
     }
   } catch { /* fall through */ }
+
+  // ── Nowcast: correct wind field with live sensor data ──
+  if (windFieldData?.hours?.length && liveSensors.length > 0) {
+    try {
+      const targetId = liveSensors[0]?.id || 'PRIMARY';
+      const { correctedForecast, isNowcastActive, reason } = applyLiveCorrections(
+        windFieldData.hours, liveSensors, targetId
+      );
+      if (isNowcastActive && correctedForecast?.length) {
+        windFieldData = { ...windFieldData, hours: correctedForecast, nowcastActive: true, nowcastReason: reason };
+        const h0 = correctedForecast[0];
+        if (h0) {
+          speed = h0.speed ?? speed;
+          gust = h0.gust ?? gust;
+        }
+      }
+    } catch { /* nowcast failure is non-fatal */ }
+  }
+
+  // ── Pressure gradient (from Stage 2 enrichment or ingest) ──
+  if (pressureGradient == null) {
+    try {
+      const gradRaw = await redisCommand('GET', 'wind:pressure:gradient');
+      if (gradRaw) pressureGradient = JSON.parse(gradRaw);
+    } catch { /* non-fatal */ }
+  }
+  if (pressureGradient == null) {
+    try {
+      const gradRaw = await redisCommand('GET', 'ingest:gradient');
+      if (gradRaw) pressureGradient = JSON.parse(gradRaw);
+    } catch { /* non-fatal */ }
+  }
 
   // NWS forecast data (sky, shortForecast, sevenDay)
   let sevenDay = [];
@@ -716,7 +860,7 @@ async function fetchConditions(locId, nwsData, mstHour) {
     }
   } catch { /* no USGS data */ }
 
-  // Live fetch fallback for wind if Redis had nothing
+  // Live fetch fallback for wind if still nothing
   if (speed === 0 && gust === 0) {
     const config = getLakeConfig(locId);
     if (config) {
@@ -748,5 +892,6 @@ async function fetchConditions(locId, nwsData, mstHour) {
     sky, shortForecast, pressureTrend,
     waterTemp, flowCfs,
     hourlyForecast, sevenDay,
+    windFieldData, windConfidence, thermalPhase,
   };
 }

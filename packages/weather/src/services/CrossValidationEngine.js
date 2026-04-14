@@ -17,12 +17,30 @@ const AGREEMENT_DIR_THRESHOLD   = 30;  // degrees
 const MIN_RECORDS_FOR_CONFIDENCE = 6;
 
 export const CROSS_VALIDATION_PAIRS = [
+  // Kite/PG corridor
   { synopticId: 'FPS',   wuId: 'KUTLEHI111',  name: 'Flight Park / Lehi' },
   { synopticId: 'UTALP', wuId: 'KUTDRAPE132', name: 'PotM / Draper' },
   { synopticId: 'QLN',   wuId: 'KUTPLEAS11',  name: 'Lindon / Pleasant Grove' },
   { synopticId: 'UTOLY', wuId: 'KUTSARAT50',  name: 'Zigzag / Saratoga' },
   { synopticId: 'UID28', wuId: 'KUTSARAT88',  name: 'Saratoga Springs S' },
   { synopticId: 'UT7',   wuId: 'KUTALPIN3',   name: 'Alpine / AF Canyon' },
+  // Fishing waters — Heber Valley / Provo / Deer Creek / Jordanelle
+  { synopticId: 'KHCR',  wuId: 'KUTHEBER105', name: 'Heber City / Deer Creek' },
+  { synopticId: 'UTDCD', wuId: 'KUTMIDWA37',  name: 'Deer Creek Dam / Midway' },
+  // Green River / Starvation / Flaming Gorge
+  { synopticId: 'KVEL',  wuId: 'KUTVERNA22',  name: 'Vernal / Green River' },
+  // Bear Lake
+  { synopticId: 'KLGU',  wuId: 'KUTGARDE9',   name: 'Logan / Bear Lake' },
+  // Fish Lake / Otter Creek / Central Utah
+  { synopticId: 'KCDC',  wuId: 'KUTRICHF9',   name: 'Cedar City / Fish Lake' },
+  // Sand Hollow / Quail Creek / St. George
+  { synopticId: 'KSGU',  wuId: 'KUTSTGEO128', name: 'St. George / Sand Hollow' },
+  // Lake Powell
+  { synopticId: 'KPGA',  wuId: 'KUTPAGED2',   name: 'Page / Lake Powell' },
+  // Pineview / Ogden Valley
+  { synopticId: 'KOGD',  wuId: 'KUTEDEN14',   name: 'Ogden / Pineview' },
+  // Strawberry
+  { synopticId: 'UTCOP', wuId: 'KUTSTRAW1',   name: 'Current Creek / Strawberry' },
 ];
 
 function directionDelta(a, b) {

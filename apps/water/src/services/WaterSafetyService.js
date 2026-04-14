@@ -65,12 +65,22 @@ function formatHour(h) {
 
 /**
  * Build an hourly glass forecast from the current wind state + upstream indicators.
- * Produces a 24-hour hour-by-hour timeline with glass windows and wind events.
+ * Uses the physics-based WindFieldEngine when lakeState/mesoData are available,
+ * falls back to heuristic factors for locations without station coverage.
  */
-export async function getHourlyGlassForecast(locationId, currentWind, upstreamData, _lakeState, _mesoData) {
+export async function getHourlyGlassForecast(locationId, currentWind, upstreamData, lakeState, mesoData) {
   const now = new Date();
   const currentHour = now.getHours();
   const speed = currentWind?.speed ?? null;
+
+  // Try physics-based wind field first
+  let physicsHours = null;
+  try {
+    const field = await generateWindField(locationId, currentWind || {}, upstreamData || {}, lakeState || {}, mesoData || {});
+    if (field?.hours?.length) {
+      physicsHours = field.hours;
+    }
+  } catch { /* fall back to heuristics */ }
 
   const hours = [];
   const glassWindows = [];
@@ -80,9 +90,14 @@ export async function getHourlyGlassForecast(locationId, currentWind, upstreamDa
   for (let offset = 0; offset < 24; offset++) {
     const h = (currentHour + offset) % 24;
     let predictedSpeed;
+    let source = 'heuristic';
 
-    if (offset === 0) {
+    if (physicsHours?.[offset]) {
+      predictedSpeed = physicsHours[offset].speed;
+      source = physicsHours[offset].source || 'windfield';
+    } else if (offset === 0) {
       predictedSpeed = speed;
+      source = 'live';
     } else if (speed != null) {
       const hourFactor = getHourlyWindFactor(h, locationId);
       const baseDrift = speed * hourFactor;
@@ -104,7 +119,8 @@ export async function getHourlyGlassForecast(locationId, currentWind, upstreamDa
       waveLabel: wave.label,
       waveEmoji: wave.emoji,
       waveColor: wave.color,
-      cloudCover: null,
+      cloudCover: physicsHours?.[offset]?.cloudCover ?? null,
+      source,
     });
 
     if (predictedSpeed != null && predictedSpeed <= 5) {
@@ -146,7 +162,7 @@ export async function getHourlyGlassForecast(locationId, currentWind, upstreamDa
 
   const flowBlocked = (upstreamData?.kslcSpeed ?? 0) > 10 && speed <= 5;
 
-  return { hours, glassWindows, windEvents, flowBlocked };
+  return { hours, glassWindows, windEvents, flowBlocked, source: physicsHours ? 'windfield' : 'heuristic' };
 }
 
 const VALLEY_FACTORS = [

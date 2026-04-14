@@ -287,6 +287,86 @@ export const WU_PWS_STATIONS = {
     ],
   },
 
+  // ─── WILLARD BAY ─────────────────────────────────────────────
+  'willard-bay': {
+    corridor: 'south_flow',
+    stations: [
+      { id: 'KUTWILLA3', name: 'Willard', lat: 41.400, lon: -112.040, role: 'close', priority: 1 },
+      { id: 'KUTBRIGHA6', name: 'Brigham City', lat: 41.510, lon: -111.980, role: 'mid', priority: 2 },
+      { id: 'KUTOGDEN32', name: 'Ogden', lat: 41.230, lon: -111.970, role: 'early', priority: 3 },
+    ],
+  },
+
+  // ─── ECHO / ROCKPORT (Coalville area) ──────────────────────
+  'echo': {
+    corridor: 'canyon_corridor',
+    stations: [
+      { id: 'KUTCOALV2', name: 'Coalville', lat: 40.920, lon: -111.400, role: 'close', priority: 1 },
+      { id: 'KUTWANSH1', name: 'Wanship', lat: 40.810, lon: -111.406, role: 'close', priority: 2 },
+      { id: 'KUTPARKCITY4', name: 'Park City W', lat: 40.660, lon: -111.520, role: 'early', priority: 3 },
+    ],
+  },
+  'rockport': {
+    corridor: 'canyon_corridor',
+    stations: [
+      { id: 'KUTCOALV2', name: 'Coalville', lat: 40.920, lon: -111.400, role: 'close', priority: 1 },
+      { id: 'KUTWANSH1', name: 'Wanship', lat: 40.810, lon: -111.406, role: 'close', priority: 2 },
+      { id: 'KUTPARKCITY4', name: 'Park City W', lat: 40.660, lon: -111.520, role: 'early', priority: 3 },
+    ],
+  },
+
+  // ─── EAST CANYON RESERVOIR ──────────────────────────────────
+  'east-canyon': {
+    corridor: 'canyon_corridor',
+    stations: [
+      { id: 'KUTMORGA4', name: 'Morgan', lat: 41.040, lon: -111.665, role: 'close', priority: 1 },
+      { id: 'KUTHENEF1', name: 'Henefer', lat: 40.975, lon: -111.500, role: 'mid', priority: 2 },
+      { id: 'KUTPARKCITY4', name: 'Park City W', lat: 40.660, lon: -111.520, role: 'early', priority: 3 },
+    ],
+  },
+
+  // ─── HYRUM RESERVOIR ────────────────────────────────────────
+  'hyrum': {
+    corridor: 'cache_valley',
+    stations: [
+      { id: 'KUTLOGAN12', name: 'Logan', lat: 41.735, lon: -111.835, role: 'close', priority: 1 },
+      { id: 'KUTHYRUM1', name: 'Hyrum', lat: 41.630, lon: -111.850, role: 'close', priority: 2 },
+    ],
+  },
+
+  // ─── OTTER CREEK / PIUTE / MINERSVILLE (Richfield area) ────
+  'otter-creek': {
+    corridor: 'central_highland',
+    stations: [
+      { id: 'KUTRICHF9', name: 'Richfield', lat: 38.770, lon: -112.080, role: 'close', priority: 1 },
+      { id: 'KUTLOA2', name: 'Loa', lat: 38.400, lon: -111.640, role: 'mid', priority: 2 },
+    ],
+  },
+  'piute': {
+    corridor: 'central_highland',
+    stations: [
+      { id: 'KUTRICHF9', name: 'Richfield', lat: 38.770, lon: -112.080, role: 'close', priority: 1 },
+      { id: 'KUTLOA2', name: 'Loa', lat: 38.400, lon: -111.640, role: 'mid', priority: 2 },
+    ],
+  },
+  'minersville': {
+    corridor: 'central_highland',
+    stations: [
+      { id: 'KUTBEAVE3', name: 'Beaver', lat: 38.280, lon: -112.640, role: 'close', priority: 1 },
+      { id: 'KUTRICHF9', name: 'Richfield', lat: 38.770, lon: -112.080, role: 'mid', priority: 2 },
+    ],
+  },
+
+  // ─── QUAIL CREEK (St. George area) ─────────────────────────
+  'quail-creek': {
+    corridor: 'desert_basin',
+    stations: [
+      { id: 'KUTSTGEO128', name: 'St. George SE', lat: 37.080, lon: -113.540, role: 'close', priority: 1 },
+      { id: 'KUTSTGEO44', name: 'St. George', lat: 37.100, lon: -113.570, role: 'mid', priority: 2 },
+      { id: 'KUTSTGEO91', name: 'St. George NE', lat: 37.120, lon: -113.530, role: 'mid', priority: 3 },
+    ],
+  },
+
   // ─── SANDY BEACH ───────────────────────────────────────────────
   'utah-lake-sandy': {
     corridor: 'se_thermal',
@@ -339,12 +419,20 @@ export const WU_PRIORITY_STATIONS = [
   'KUTNEPHI14',
   // Scofield / Price
   'KUTPRICE18',
-  // Sand Hollow / St. George
+  // Sand Hollow / St. George / Quail Creek
   'KUTSTGEO128', 'KUTSTGEO44',
-  // Fish Lake / Richfield
+  // Fish Lake / Richfield / Otter Creek / Piute
   'KUTRICHF9',
   // Starvation / Duchesne
   'KUTDUCHE5',
+  // Willard Bay / Brigham City
+  'KUTWILLA3', 'KUTBRIGHA6',
+  // Echo / Rockport / East Canyon (Coalville corridor)
+  'KUTCOALV2', 'KUTWANSH1', 'KUTMORGA4', 'KUTHENEF1',
+  // Hyrum / Cache Valley
+  'KUTLOGAN12', 'KUTHYRUM1',
+  // Minersville / Beaver
+  'KUTBEAVE3',
 ];
 
 /**

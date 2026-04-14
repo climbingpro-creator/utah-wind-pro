@@ -205,6 +205,44 @@ const CHAIN_DEFS = {
       { id: 'SKY',   lag: 0,    dir: [220, 300], speed: 10 },
     ],
   },
+  // ── FISHING: Provo River ──
+  'provo-lower:canyon_outflow': {
+    label: 'Canyon Outflow → Lower Provo', target: 'KPVU',
+    nodes: [
+      { id: 'QSF',         lag: -90,  dir: [100, 200], speed: 5 },
+      { id: 'KUTOREM47',   lag: -45,  dir: [100, 220], speed: 3, optional: true },
+      { id: 'KPVU',        lag: -30,  dir: [100, 220], speed: 4 },
+      { id: 'KUTPROVO83',  lag: -10,  dir: [100, 220], speed: 3, optional: true },
+    ],
+    pressure: { type: 'below', threshold: 2.5 },
+  },
+  'provo-middle:canyon_thermal': {
+    label: 'Canyon Thermal → Middle Provo', target: 'KHCR',
+    nodes: [
+      { id: 'UTLPC',       lag: -60, dir: [170, 230], speed: 4 },
+      { id: 'KUTMIDWA37',  lag: -30, dir: [150, 230], speed: 3, optional: true },
+      { id: 'KHCR',        lag: 0,   dir: [170, 230], speed: 4 },
+    ],
+  },
+  // ── FISHING: Green River ──
+  'green-a:gorge_outflow': {
+    label: 'Gorge Outflow → Green River A', target: 'KVEL',
+    nodes: [
+      { id: 'KUTVERNA22', lag: -30, dir: [200, 340], speed: 3, optional: true },
+      { id: 'KUTVERNA51', lag: -15, dir: [200, 340], speed: 3, optional: true },
+      { id: 'KVEL',       lag: 0,   dir: [200, 340], speed: 4 },
+    ],
+  },
+  // ── FISHING: Willard Bay south push ──
+  'willard-bay:north_thermal': {
+    label: 'North Thermal → Willard Bay', target: 'UR328',
+    nodes: [
+      { id: 'KUTOGDEN32',  lag: -60, dir: [150, 230], speed: 3, optional: true },
+      { id: 'KOGD',        lag: -45, dir: [150, 230], speed: 4 },
+      { id: 'KUTWILLA3',   lag: -15, dir: [150, 230], speed: 3, optional: true },
+      { id: 'UR328',       lag: 0,   dir: [150, 230], speed: 4 },
+    ],
+  },
 };
 
 const LAKE_CHAINS = {
@@ -213,9 +251,10 @@ const LAKE_CHAINS = {
   'utah-lake-sandy':    ['lincoln:se_thermal', 'lincoln:north_flow'],
   'utah-lake-vineyard': ['vineyard:sw_thermal'],
   'utah-lake-mm19':     ['mm19:canyon_drainage'],
+  'utah-lake':          ['zigzag:se_thermal', 'zigzag:north_flow'],
   'deer-creek':         ['deer-creek:canyon_thermal', 'deer-creek:north_flow'],
   'jordanelle':         ['jordanelle:canyon_thermal'],
-  'willard-bay':        ['willard-bay:south_flow'],
+  'willard-bay':        ['willard-bay:south_flow', 'willard-bay:north_thermal'],
   'potm-south':         ['potm-south:se_thermal'],
   'potm-north':         ['potm-north:north_flow'],
   'strawberry-ladders': ['strawberry:ridge_flow'],
@@ -223,6 +262,16 @@ const LAKE_CHAINS = {
   'strawberry-soldier': ['strawberry:ridge_flow'],
   'strawberry-view':    ['strawberry:ridge_flow'],
   'strawberry-river':   ['strawberry:ridge_flow'],
+  'strawberry':         ['strawberry:ridge_flow'],
+  'provo-lower':        ['provo-lower:canyon_outflow'],
+  'provo-middle':       ['provo-middle:canyon_thermal'],
+  'provo-upper':        ['provo-middle:canyon_thermal'],
+  'green-a':            ['green-a:gorge_outflow'],
+  'green-b':            ['green-a:gorge_outflow'],
+  'green-c':            ['green-a:gorge_outflow'],
+  'weber-upper':        ['deer-creek:canyon_thermal'],
+  'weber-middle':       ['deer-creek:canyon_thermal'],
+  'weber-lower':        ['willard-bay:south_flow'],
   'yuba':               ['yuba:valley_flow'],
   'bear-lake':          ['bear-lake:west_flow'],
   'skyline-drive':      ['skyline:ridge_flow'],
@@ -625,6 +674,7 @@ function analyzeDaySessions(readings) {
     windsurfing: { minSpeed: 8,  label: 'Windsurf 8+' },
     paragliding: { minSpeed: 5,  label: 'PG 5+' },
     light_wind:  { minSpeed: 6,  label: 'Light 6+' },
+    fishing:     { maxSpeed: 12, label: 'Fishing <12' },
     boating:     { maxSpeed: 8,  label: 'Glass <8' },
     paddling:    { maxSpeed: 6,  label: 'Calm <6' },
   };

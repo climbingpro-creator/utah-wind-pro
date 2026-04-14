@@ -23,10 +23,12 @@ import { isUdotStation, fetchUdotLatest } from '../lib/udotAdapter.js';
 import { getEnv, redisCommand, normalizeToMb, hasRedis } from '../lib/redis.js';
 import { triggerNextStage } from '../lib/qstash.js';
 import { WindPredictor, getModelPath } from '@utahwind/ml';
+import { WU_PRIORITY_STATIONS } from '@utahwind/weather';
 
 const ALL_STATIONS = ALL_STATION_IDS;
 
-const WU_PRIORITY_IDS = [
+// Tier 1: kite/PG corridor stations — fetched every run (critical for learning validation)
+const WU_TIER1 = [
   'KUTSARAT50', 'KUTSARAT88', 'KUTSARAT81', 'KUTSARAT74', 'KUTSARAT62',
   'KUTLEHI73', 'KUTLEHI160', 'KUTLEHI111',
   'KUTDRAPE132', 'KUTDRAPE59', 'KUTRIVER67', 'KUTBLUFF18',
@@ -35,6 +37,9 @@ const WU_PRIORITY_IDS = [
   'KUTMIDWA37', 'KUTHEBER105', 'KUTHEBER26',
   'KUTPLEAS11', 'KUTCEDAR10',
 ];
+
+// Tier 2: fishing-specific stations — fetched on alternating runs to stay within rate limits
+const WU_TIER2 = WU_PRIORITY_STATIONS.filter(id => !WU_TIER1.includes(id));
 
 function stationObjFromSynopticFormat(s) {
   const o = s.OBSERVATIONS || {};
@@ -115,9 +120,31 @@ async function fetchWuPwsLatest() {
   const apiKey = process.env.WU_API_KEY;
   if (!apiKey) return [];
 
-  const results = [];
-  for (let i = 0; i < WU_PRIORITY_IDS.length; i += 5) {
-    const batch = WU_PRIORITY_IDS.slice(i, i + 5);
+  // Tiered approach: always fetch Tier 1; fetch Tier 2 on alternating runs (even minutes)
+  const minute = new Date().getMinutes();
+  const isTier2Run = minute % 30 < 15;
+  const idsToFetch = isTier2Run ? [...WU_TIER1, ...WU_TIER2] : [...WU_TIER1];
+
+  // Deduplicate (some IDs may overlap)
+  const uniqueIds = [...new Set(idsToFetch)];
+
+  // Check Redis cache — skip stations with fresh data (<20 min old)
+  const idsNeedingFetch = [];
+  const cachedResults = [];
+  for (const id of uniqueIds) {
+    try {
+      const cached = await redisCommand('GET', `wu:cache:${id}`);
+      if (cached) {
+        cachedResults.push(JSON.parse(cached));
+        continue;
+      }
+    } catch { /* cache miss */ }
+    idsNeedingFetch.push(id);
+  }
+
+  const results = [...cachedResults];
+  for (let i = 0; i < idsNeedingFetch.length; i += 5) {
+    const batch = idsNeedingFetch.slice(i, i + 5);
     const batchResults = await Promise.allSettled(
       batch.map(async (id) => {
         const url = `https://api.weather.com/v2/pws/observations/current?stationId=${id}&format=json&units=e&numericPrecision=decimal&apiKey=${apiKey}`;
@@ -141,10 +168,16 @@ async function fetchWuPwsLatest() {
       })
     );
     for (const r of batchResults) {
-      if (r.status === 'fulfilled' && r.value) results.push(r.value);
+      if (r.status === 'fulfilled' && r.value) {
+        results.push(r.value);
+        // Cache each successful WU reading for 20 minutes
+        try {
+          await redisCommand('SET', `wu:cache:${r.value.stationId}`, JSON.stringify(r.value), 'EX', '1200');
+        } catch { /* non-fatal */ }
+      }
     }
   }
-  console.log(`[1-ingest] WU PWS: ${results.length}/${WU_PRIORITY_IDS.length} stations`);
+  console.log(`[1-ingest] WU PWS: ${results.length}/${uniqueIds.length} stations (${cachedResults.length} cached, tier2=${isTier2Run})`);
   return results;
 }
 

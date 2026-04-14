@@ -1287,7 +1287,7 @@ function getForecastDayLabel(score) {
 }
 
 // Main Fishing Mode Component
-const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamData = {}, hourlyForecast, selectedLocation = 'strawberry', isPro = false, onUnlockPro }) => {
+const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamData = {}, hourlyForecast, selectedLocation = 'strawberry', isPro = false, onUnlockPro, lakeState = {} }) => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   
@@ -2847,6 +2847,10 @@ const FishingMode = ({ windData, pressureData, isLoading: _isLoading, upstreamDa
         pressureData={pressureData}
         activity="fishing"
         upstreamData={upstreamData}
+        lakeState={lakeState}
+        mesoData={lakeState?.wind?.stations ? Object.fromEntries(
+          (lakeState.wind.stations || []).filter(s => s.id).map(s => [s.id, s])
+        ) : {}}
       />
 
       {/* ── 14-Day Extended Fishing Forecast ── */}

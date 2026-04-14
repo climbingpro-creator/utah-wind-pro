@@ -59,6 +59,21 @@ const LAKE_THERMAL = {
   'piute':                { dir: [150, 240], peak: [10, 16], station: 'KCDC' },
   'panguitch':            { dir: [150, 240], peak: [10, 16], station: 'KCDC' },
   'quail-creek':          { dir: [150, 240], peak: [10, 16], station: 'KSGU' },
+  // ── Parent keys ──
+  'utah-lake':            { dir: [135, 165], peak: [10, 16], station: 'KPVU' },
+  'strawberry':           { dir: [260, 340], peak: [10, 16], station: 'UTCOP' },
+  // ── Provo River ──
+  'provo-lower':          { dir: [120, 200], peak: [10, 16], station: 'KPVU' },
+  'provo-middle':         { dir: [170, 230], peak: [11, 17], station: 'KHCR' },
+  'provo-upper':          { dir: [170, 230], peak: [11, 17], station: 'KHCR' },
+  // ── Weber River ──
+  'weber-upper':          { dir: [180, 270], peak: [11, 17], station: 'KHCR' },
+  'weber-middle':         { dir: [180, 270], peak: [11, 17], station: 'KSLC' },
+  'weber-lower':          { dir: [180, 270], peak: [11, 17], station: 'KSLC' },
+  // ── Green River ──
+  'green-a':              { dir: [200, 340], peak: [11, 17], station: 'KVEL' },
+  'green-b':              { dir: [200, 340], peak: [11, 17], station: 'KVEL' },
+  'green-c':              { dir: [200, 340], peak: [11, 17], station: 'KVEL' },
   // ── Kite / Paragliding spots (missing) ──
   'grantsville':          { dir: [170, 210], peak: [10, 18], station: 'KSLC' },
   'inspo':                { dir: [110, 250], peak: [7, 15],  station: 'KPVU' },
@@ -1383,6 +1398,38 @@ function updateWeights(currentWeights, newAccuracy) {
           nwsCount: nwsEvent?.count || 0,
         }
       : null;
+  }
+
+  // Fishing-specific weight learning from activityScores
+  if (!weights.fishingWeights) weights.fishingWeights = {};
+  for (const record of newAccuracy) {
+    if (record.activityScores?.fishing == null) continue;
+    const fk = `fishing:${record.lakeId}`;
+    if (!weights.fishingWeights[fk]) {
+      weights.fishingWeights[fk] = { avgScore: 0, speedBias: 0, count: 0, totalScore: 0 };
+    }
+    const fw = weights.fishingWeights[fk];
+    fw.count++;
+    fw.totalScore += record.activityScores.fishing;
+    fw.avgScore = Math.round((fw.totalScore / fw.count) * 100) / 100;
+
+    // Learn fishing-specific speed bias: if wind is consistently under/over
+    // predictions at this water, nudge future predictions
+    if (record.actualSpeed != null && record.expectedSpeedMid != null) {
+      const speedErr = record.actualSpeed - record.expectedSpeedMid;
+      fw.speedBias = fw.speedBias * 0.92 + speedErr * 0.08;
+    }
+  }
+
+  // Fishing accuracy summary
+  const fishingEntries = Object.entries(weights.fishingWeights);
+  if (fishingEntries.length > 0) {
+    const totalFishCount = fishingEntries.reduce((s, [, v]) => s + v.count, 0);
+    const totalFishScore = fishingEntries.reduce((s, [, v]) => s + v.totalScore, 0);
+    weights.meta.fishingAccuracy = totalFishCount > 0
+      ? Math.round((totalFishScore / totalFishCount) * 100) / 100
+      : 0;
+    weights.meta.fishingLocations = fishingEntries.length;
   }
 
   return weights;

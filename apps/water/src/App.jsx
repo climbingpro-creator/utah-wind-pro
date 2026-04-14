@@ -804,6 +804,7 @@ function WaterApp() {
               selectedLocation={selectedLocation}
               isPro={isPro}
               onUnlockPro={openPaywall}
+              lakeState={lakeState}
             />
           ) : (
             <FlatwaterTemplate
