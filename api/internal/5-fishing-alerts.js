@@ -28,8 +28,8 @@ import {
   parseSkyCondition,
   calculateDaylight,
   SKY_LABELS,
-  applyLiveCorrections,
-} from '@utahwind/weather';
+} from '../../packages/weather/src/services/TacticalRecommendationEngine.js';
+import { applyLiveCorrections } from '../../packages/weather/src/services/NowcastEngine.js';
 import { fetchUsgsData } from '../lib/weather-backfill.js';
 import { getWaterType, isRiver, isLake, getSeasonalDepth, getAllowedMethods, getRegulations } from '../lib/waterTypes.js';
 import {

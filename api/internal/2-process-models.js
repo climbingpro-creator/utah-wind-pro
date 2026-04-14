@@ -15,7 +15,9 @@
  */
 
 import { runServerLearningCycle, evaluateAndAdjustWindows, storeWindowPredictions, loadWeights, saveWeights } from '../lib/serverLearning.js';
-import { findAllSportWindows, generateWindField, CrossValidationEngine } from '@utahwind/weather';
+import { findAllSportWindows } from '../../packages/weather/src/SportIntelligenceEngine.js';
+import { generateWindField } from '../../packages/weather/src/services/WindFieldEngine.js';
+import CrossValidationEngine from '../../packages/weather/src/services/CrossValidationEngine.js';
 import { analyzeFromStations, analyzeAllSpots, storePropagationSnapshot, learnFromPropagation } from '../lib/serverPropagation.js';
 import { buildStatisticalModels } from '../lib/historicalAnalysis.js';
 import { LAKE_STATION_MAP, ALL_STATION_IDS } from '../lib/stations.js';

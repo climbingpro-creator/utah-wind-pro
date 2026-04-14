@@ -23,7 +23,7 @@ import { isUdotStation, fetchUdotLatest } from '../lib/udotAdapter.js';
 import { getEnv, redisCommand, normalizeToMb, hasRedis } from '../lib/redis.js';
 import { triggerNextStage } from '../lib/qstash.js';
 import { WindPredictor, getModelPath } from '@utahwind/ml';
-import { WU_PRIORITY_STATIONS } from '@utahwind/weather';
+import { WU_PRIORITY_STATIONS } from '../../packages/weather/src/config/wuPwsNetwork.js';
 
 const ALL_STATIONS = ALL_STATION_IDS;
 
