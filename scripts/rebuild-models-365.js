@@ -48,12 +48,13 @@ function loadEnv() {
 
 // ── Parse CLI args ──
 function parseArgs() {
-  const args = { days: 365, dryRun: false, redisUrl: null, redisToken: null };
+  const args = { days: 365, dryRun: false, redisUrl: null, redisToken: null, synopticToken: null };
   for (const arg of process.argv.slice(2)) {
     if (arg.startsWith('--days=')) args.days = parseInt(arg.split('=')[1], 10);
     if (arg === '--dry-run') args.dryRun = true;
     if (arg.startsWith('--redis-url=')) args.redisUrl = arg.split('=').slice(1).join('=');
     if (arg.startsWith('--redis-token=')) args.redisToken = arg.split('=').slice(1).join('=');
+    if (arg.startsWith('--synoptic-token=')) args.synopticToken = arg.split('=').slice(1).join('=');
   }
   return args;
 }
@@ -88,7 +89,7 @@ async function main() {
   loadEnv();
   const args = parseArgs();
 
-  const synopticToken = process.env.SYNOPTIC_TOKEN || process.env.VITE_SYNOPTIC_TOKEN;
+  const synopticToken = args.synopticToken || process.env.SYNOPTIC_TOKEN || process.env.VITE_SYNOPTIC_TOKEN;
   const redisUrl = args.redisUrl || process.env.UPSTASH_REDIS_REST_URL;
   const redisToken = args.redisToken || process.env.UPSTASH_REDIS_REST_TOKEN;
 

@@ -955,6 +955,15 @@ export async function buildStatisticalModels(redisCmd, synopticToken, options = 
     calibrationCurves,
   };
 
+  // Guard: refuse to overwrite good models with an empty build
+  if (stationCount === 0 || totalReadings === 0) {
+    log.push(`WARNING: Build produced 0 stations / 0 readings — NOT saving to Redis (would destroy existing models)`);
+    log.push(`Check that SYNOPTIC_TOKEN is valid and the API is reachable`);
+    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+    log.push(`Aborted after ${elapsed}s`);
+    return { models, log };
+  }
+
   // Store in Redis
   const modelsJson = JSON.stringify(models);
   await redisCmd('SET', 'models:statistical', modelsJson, 'EX', '2592000'); // 30-day TTL
