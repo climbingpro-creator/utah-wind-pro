@@ -21,7 +21,7 @@ const LAKE_THERMAL = {
   'utah-lake-vineyard':   { dir: [180, 270], peak: [10, 16], station: 'KPVU' },
   'utah-lake-zigzag':     { dir: [135, 165], peak: [10, 16], station: 'FPS' },
   'utah-lake-mm19':       { dir: [120, 160], peak: [10, 16], station: 'UID28' },
-  'deer-creek':           { dir: [170, 210], peak: [11, 17], station: 'TEMPEST_DC' },
+  'deer-creek':           { dir: [170, 260], peak: [11, 17], station: 'TEMPEST_DC' },
   'jordanelle':           { dir: [180, 230], peak: [11, 17], station: 'KHCR' },
   'willard-bay':          { dir: [170, 220], peak: [11, 17], station: 'KHIF' },
   'bear-lake':            { dir: [250, 320], peak: [12, 18], station: 'BERU1' },
@@ -871,13 +871,68 @@ let _modelsCacheTime = 0;
 async function loadStatisticalModels(redisCmd) {
   if (_cachedModels && Date.now() - _modelsCacheTime < 15 * 60 * 1000) return _cachedModels;
   try {
-    const raw = await redisCmd('GET', 'models:statistical');
-    if (raw) {
-      _cachedModels = JSON.parse(raw);
+    const [raw, tempestRaw] = await Promise.all([
+      redisCmd('GET', 'models:statistical').catch(() => null),
+      redisCmd('GET', 'tempest:dc:history').catch(() => null),
+    ]);
+    const models = raw ? JSON.parse(raw) : {};
+
+    // Merge Tempest Deer Creek historical climatology into models
+    if (tempestRaw) {
+      const tempest = JSON.parse(tempestRaw);
+      if (tempest.climatology) {
+        if (!models.climatology) models.climatology = {};
+        if (!models.climatology.TEMPEST_DC) models.climatology.TEMPEST_DC = {};
+        // Tempest climatology is keyed "MM-HH"; reshape to [month][hour]
+        for (const [key, data] of Object.entries(tempest.climatology)) {
+          const [mm, hh] = key.split('-').map(Number);
+          if (!models.climatology.TEMPEST_DC[mm]) models.climatology.TEMPEST_DC[mm] = {};
+          models.climatology.TEMPEST_DC[mm][hh] = data;
+        }
+      }
+      // Build a thermalProfile for deer-creek from Tempest event counts
+      if (tempest.eventCounts && tempest.totalObservations > 0) {
+        if (!models.thermalProfiles) models.thermalProfiles = {};
+        models.thermalProfiles['deer-creek'] = {
+          source: 'tempest:dc:history',
+          totalObs: tempest.totalObservations,
+          goodDayRate: tempest.goodDayRate,
+          goodDays: tempest.goodDays,
+          totalDays: tempest.totalDays,
+          byHour: buildTempestHourlyProfile(tempest.climatology),
+        };
+      }
+    }
+
+    if (Object.keys(models).length > 0) {
+      _cachedModels = models;
       _modelsCacheTime = Date.now();
     }
   } catch { /* models are optional */ }
   return _cachedModels;
+}
+
+function buildTempestHourlyProfile(climatology) {
+  if (!climatology) return {};
+  const byHour = {};
+  for (let h = 0; h < 24; h++) {
+    let totalObs = 0, thermalObs = 0;
+    for (const [key, data] of Object.entries(climatology)) {
+      const hh = parseInt(key.split('-')[1], 10);
+      if (hh !== h) continue;
+      totalObs += data.n || 0;
+      // Thermal: SSW-WSW (170-260°) at 4+ mph — matches beach wind rose
+      if (data.speedMean >= 4 && data.dirMode >= 170 && data.dirMode <= 260) {
+        thermalObs += data.n;
+      }
+    }
+    byHour[h] = {
+      totalObs,
+      thermalObs,
+      rate: totalObs > 0 ? thermalObs / totalObs : 0,
+    };
+  }
+  return byHour;
 }
 
 function getModelExpSpeed(models, lakeId, eventType) {
@@ -2346,6 +2401,70 @@ async function storeWindowPredictions(redisCmd, windowsByLake) {
   return flat.length;
 }
 
+// ── Synoptic Migration: Station Translation ──────────────────────────────
+
+let _translationModels = null;
+
+async function loadTranslationModels(redisCmd) {
+  if (_translationModels) return _translationModels;
+  try {
+    const raw = await redisCmd('GET', 'models:translations');
+    if (!raw) return [];
+    const models = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    _translationModels = models;
+    console.log(`[learning] Loaded ${models.length} translation models`);
+    return models;
+  } catch (e) {
+    console.warn('[learning] Failed to load translation models:', e.message);
+    return [];
+  }
+}
+
+function translateObservation(obs, model) {
+  if (!obs || !model) return obs;
+  return {
+    ...obs,
+    stationId: model.synopticId,
+    windSpeed: obs.windSpeed != null && model.speedRatio
+      ? Math.round(obs.windSpeed * model.speedRatio * 10) / 10
+      : obs.windSpeed,
+    windDirection: obs.windDirection != null && model.dirOffset != null
+      ? (obs.windDirection + model.dirOffset + 360) % 360
+      : obs.windDirection,
+    windGust: obs.windGust != null && model.gustRatio
+      ? Math.round(obs.windGust * model.gustRatio * 10) / 10
+      : obs.windGust,
+    _translatedFrom: obs.stationId,
+    _confidence: model.confidence,
+    _originalSource: obs.source,
+    source: 'translated',
+  };
+}
+
+function applyTranslations(stations, models) {
+  if (!models || models.length === 0) return stations;
+
+  const modelMap = new Map();
+  for (const m of models) {
+    if (!modelMap.has(m.replacementId)) {
+      modelMap.set(m.replacementId, m);
+    }
+  }
+
+  const result = [...stations];
+  const existingIds = new Set(stations.map(s => s.stationId));
+
+  for (const station of stations) {
+    const model = modelMap.get(station.stationId);
+    if (model && !existingIds.has(model.synopticId)) {
+      result.push(translateObservation(station, model));
+      existingIds.add(model.synopticId);
+    }
+  }
+
+  return result;
+}
+
 export {
   runServerLearningCycle,
   backfillHistorical,
@@ -2357,6 +2476,9 @@ export {
   toMountainHour,
   normalizeToMb,
   computeGradientSignals,
+  loadTranslationModels,
+  translateObservation,
+  applyTranslations,
   LAKE_THERMAL,
   GRADIENT_INDICATORS,
 };

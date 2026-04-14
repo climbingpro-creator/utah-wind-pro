@@ -33,6 +33,7 @@ const AIRPORT_META = {
   KFGR: { name: 'Flaming Gorge (Dutch John)',         lat: '40.9159', lon: '-109.3928', elev: '5590' },
   KBMC: { name: 'Brigham City Airport',               lat: '41.5524', lon: '-112.0622', elev: '4229' },
   KEVW: { name: 'Evanston-Uinta County Airport',     lat: '41.2750', lon: '-111.0350', elev: '7143' },
+  KFIR: { name: 'I-80/US-189 First Divide',            lat: '41.2765', lon: '-110.8007', elev: '7468' },
 };
 
 const AIRPORT_IDS = new Set(Object.keys(AIRPORT_META));

@@ -31,10 +31,10 @@ export const LAKE_STATIONS = {
   },
   'utah-lake-vineyard': {
     name: 'Vineyard / Utah Lake SP',
-    synoptic: ['KSLC', 'KPVU', 'QSF', 'FPS', 'UTALP', 'CSC', 'TIMU1', 'QLN', 'UTORM', 'UTPCR', 'UT7'],
+    synoptic: ['KSLC', 'KPVU', 'QSF', 'FPS', 'UTALP', 'AMFKM', 'CSC', 'TIMU1', 'QLN', 'UTORM', 'UTPCR', 'UT7'],
     wuPws: ['KUTPLEAS11', 'KUTPLEAS84', 'KUTCEDAR10'],
     tempest: ['TEMPEST_141420', 'TEMPEST_134280'],
-    primary: 'KPVU',
+    primary: 'AMFKM',
     hasAmbient: false,
   },
   'utah-lake-mm19': {
@@ -46,7 +46,7 @@ export const LAKE_STATIONS = {
   // ── Utah Lake (parent key — superset for fishing alerts) ──
   'utah-lake': {
     name: 'Utah Lake',
-    synoptic: ['KSLC', 'KPVU', 'QSF', 'FPS', 'UTALP', 'UID28', 'CSC', 'UTORM', 'UTPCR', 'UT7', 'UTLAK'],
+    synoptic: ['KSLC', 'KPVU', 'QSF', 'FPS', 'UTALP', 'AMFKM', 'UID28', 'CSC', 'UTORM', 'UTPCR', 'UT7', 'UTLAK'],
     wuPws: ['KUTSARAT50', 'KUTSARAT88', 'KUTLEHI111', 'KUTDRAPE132', 'KUTRIVER67', 'KUTBLUFF18', 'KUTLEHI73'],
     primary: 'KPVU',
     hasAmbient: false,
@@ -321,15 +321,15 @@ export const LAKE_STATIONS = {
   // ── Dixie / Washington County ──
   'sand-hollow': {
     name: 'Sand Hollow Reservoir',
-    synoptic: ['KSGU'],
+    synoptic: ['KSGU', 'UTSHR'],
     wuPws: ['KUTSTGEO128', 'KUTSTGEO44'],
     tempest: ['TEMPEST_103270'],
-    primary: 'KSGU',
+    primary: 'UTSHR',
     hasAmbient: false,
   },
   'quail-creek': {
     name: 'Quail Creek Reservoir',
-    synoptic: ['KSGU'],
+    synoptic: ['KSGU', 'UTSHR'],
     wuPws: ['KUTSTGEO128', 'KUTSTGEO44'],
     primary: 'KSGU',
     hasAmbient: false,
@@ -345,9 +345,9 @@ export const LAKE_STATIONS = {
   // ── SW Wyoming ──
   'sulfur-creek': {
     name: 'Sulphur Creek Reservoir',
-    synoptic: ['KSLC', 'KEVW', 'KFIR', 'UT1'],
+    synoptic: ['KSLC', 'KEVW', 'KFIR', 'UT1', 'UP218'],
     wuPws: ['KWYEVANS10', 'KWYEVANS60', 'KWYEVANS63'],
-    primary: 'KFIR',
+    primary: 'UP218',
     hasAmbient: false,
   },
   // ── Kite spots ──

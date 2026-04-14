@@ -434,6 +434,22 @@ export const WU_PRIORITY_STATIONS = [
   'KUTLOGAN12', 'KUTHYRUM1',
   // Minersville / Beaver
   'KUTBEAVE3',
+  // Sulphur Creek / Evanston WY (validation replacements for UT1)
+  'KWYEVANS10', 'KWYEVANS60', 'KWYEVANS63',
+  // Lincoln Beach (validation replacements)
+  'KUTSARAT65', 'KUTSARAT52', 'KUTSARAT80',
+  // Vineyard
+  'KUTPLEAS84',
+  // Lake Powell
+  'KUTPAGED2',
+  // Ogden (Willard Bay)
+  'KUTOGDEN32',
+  // Roosevelt (Starvation)
+  'KUTROOS11',
+  // Logan (Bear Lake / Hyrum)
+  'KUTLOGAN12',
+  // Park City (Weber / Echo / Rockport)
+  'KUTPARKCITY4',
 ];
 
 /**

@@ -10,9 +10,9 @@ export const deerCreekConfigs = {
     coordinates: { lat: 40.45830163741306, lng: -111.47407868398149 },
     elevation: 5400,
     
-    primaryWindType: 'SW Thermal / Canyon',
-    thermalDirection: 'South (170-210°)',
-    description: 'Canyon thermal from the south - Arrowhead is key trigger',
+    primaryWindType: 'SSW-WSW Thermal / Canyon',
+    thermalDirection: 'SSW-WSW (170-260°)',
+    description: 'Canyon thermal fans SSW-WSW at the beach - Arrowhead is key trigger',
     
     // Deer Creek main. S to SW flow only (160-240°).
     safeWindArc: [160, 240],
@@ -114,15 +114,15 @@ export const deerCreekConfigs = {
     },
     
     thermal: {
-      optimalDirection: { min: 170, max: 210, ideal: 185 },
-      optimalSpeed: { min: 4, max: 12, average: 5.5 },
-      peakHours: { start: 13, end: 16, peak: 14 },
-      buildTime: { start: 10, usable: 12 },
+      optimalDirection: { min: 170, max: 260, ideal: 230 },
+      optimalSpeed: { min: 4, max: 15, average: 8.0 },
+      peakHours: { start: 14, end: 16, peak: 15 },
+      buildTime: { start: 10, usable: 11 },
       fadeTime: { start: 17, end: 19 },
     },
     
     // Critical requirement
-    requirement: 'MUST have South wind (170-210°) - canyon only works with S flow',
+    requirement: 'SSW-WSW wind (170-260°) — canyon thermal fans out at the beach',
     
     waterTempEstimate: 52,
     fishSpecies: {

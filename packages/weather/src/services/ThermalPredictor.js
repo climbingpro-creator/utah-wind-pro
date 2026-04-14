@@ -150,26 +150,28 @@ const MONTHLY_PEAK_SPEED = {
   7: 9.5, 8: 10.2, 9: 9.4, 10: 10.7, 11: 10.0, 12: 12.4
 };
 
-// DEER CREEK hourly thermal probability (Summer 2025 data)
-// Based on 13,248 observations, 1,216 thermal events
+// DEER CREEK hourly thermal probability (Barbed Wire Beach Tempest — July 2025)
+// 42,610 observations at actual kite beach. Direction range 170-260° captures
+// the full thermal fan: canyon funnels S wind but it spreads SSW-WSW at the beach.
+// Wind rose peak: 230° (37%), 240° (22%), 220° (12%).
 const DEER_CREEK_HOURLY_PROBABILITY = {
-  0: 0.02, 1: 0.02, 2: 0.02, 3: 0.02, 4: 0.02, 5: 0.02,
-  6: 0.02,  // 2.0%
-  7: 0.027, // 2.7%
-  8: 0.027, // 2.7%
-  9: 0.025, // 2.5%
-  10: 0.076, // 7.6% - building
-  11: 0.187, // 18.7% - good
-  12: 0.266, // 26.6% - PEAK
-  13: 0.284, // 28.4% - PEAK (best hour)
-  14: 0.217, // 21.7% - good
-  15: 0.163, // 16.3% - good
-  16: 0.161, // 16.1% - fading
-  17: 0.076, // 7.6% - fading
-  18: 0.087, // 8.7%
-  19: 0.094, // 9.4%
-  20: 0.109, // 10.9%
-  21: 0.05, 22: 0.03, 23: 0.02
+  0: 0.02,  1: 0.02,  2: 0.02,  3: 0.02,  4: 0.02,  5: 0.02,
+  6: 0.02,    // overnight: non-thermal SW drainage, not a thermal signal
+  7: 0.02,    // 2.0% baseline
+  8: 0.013,   // 1.3%
+  9: 0.087,   // 8.7% — stirring
+  10: 0.134,  // 13.4% — building
+  11: 0.399,  // 39.9% — ONSET (this is when riders say "it turned on")
+  12: 0.579,  // 57.9% — strong
+  13: 0.707,  // 70.7% — strong
+  14: 0.768,  // 76.8% — PEAK
+  15: 0.819,  // 81.9% — PEAK (best hour)
+  16: 0.712,  // 71.2% — holding
+  17: 0.679,  // 67.9% — fading
+  18: 0.602,  // 60.2% — fading, direction shifting WSW
+  19: 0.442,  // 44.2% — late session
+  20: 0.115,  // 11.5% — dying
+  21: 0.02, 22: 0.02, 23: 0.02
 };
 
 // Deer Creek temperature correlation
@@ -704,55 +706,54 @@ export const THERMAL_PROFILES = {
   'deer-creek': {
     name: 'Deer Creek',
     
-    // DATA-DRIVEN from Summer 2025 analysis (1,216 thermal events)
+    // DATA-DRIVEN from Barbed Wire Beach Tempest (Jul 2025, 42,610 obs)
+    // Wind rose at beach: 230° (37%), 240° (22%), 220° (12%) — SSW/WSW dominant
     direction: {
-      optimal: { min: 170, max: 200, ideal: 185 },
-      acceptable: { min: 160, max: 220 },
-      label: 'South',
-      description: 'True South wind required (160-220°) - canyon orientation',
+      optimal: { min: 210, max: 250, ideal: 230 },
+      acceptable: { min: 170, max: 260 },
+      label: 'SSW-WSW',
+      description: 'Canyon thermal fans SSW-WSW at the beach (170-260°)',
     },
     
-    // Historical data shows 4.9 mph average, peaks around 5-6 mph
     speed: {
-      typical: { min: 4, max: 12 },
-      average: 5.0,
-      peak: 8,
+      typical: { min: 4, max: 15 },
+      average: 8.0,
+      peak: 14,
       unit: 'mph',
     },
     
-    // Peak hours from data: 13:00 (28.4%), 12:00 (26.6%), 14:00 (21.7%)
+    // Verified from Tempest minute-by-minute + rider experience:
+    // Thermal onset ~11am, usable by 11:30, peak 2-3pm, fades by 7pm
     timing: {
       buildStart: { hour: 10, minute: 0, label: '10:00 AM' },
       usableStart: { hour: 11, minute: 0, label: '11:00 AM' },
-      peakWindow: { start: 12, end: 15, label: '12:00 PM - 3:00 PM' },
-      peakHour: 13, // 28.4% success rate at 1 PM
-      fadeStart: { hour: 16, minute: 0, label: '4:00 PM' },
+      peakWindow: { start: 14, end: 16, label: '2:00 PM - 4:00 PM' },
+      peakHour: 15, // 82% thermal rate at 3 PM
+      fadeStart: { hour: 17, minute: 0, label: '5:00 PM' },
       fadeEnd: { hour: 20, minute: 0, label: '8:00 PM' },
     },
     
     statistics: {
-      goodDaysPercent: 9.2,
-      sampleSize: 13248,
-      dataSource: 'UTDCD Jun-Aug 2025 (1,216 thermal events)',
-      peakHourRate: 28.4, // % at 1 PM
-      avgTempDelta: 9.6,  // UTDCD warmer than ridge during thermals
+      goodDaysPercent: 57.5,
+      sampleSize: 519638,
+      dataSource: 'Barbed Wire Beach Tempest Apr 2025 - Apr 2026 (519,638 obs, 170-260°)',
+      peakHourRate: 81.9, // % at 3 PM in July
+      avgTempDelta: 9.6,
     },
     
-    // Arrowhead correlation - KEY TRIGGER from data analysis
     arrowheadTrigger: {
-      tempDelta: 9.6, // UTDCD should be ~10°F warmer than ridge
-      triggerThreshold: 8, // When delta exceeds this, thermal likely
-      // Wind trigger: When Arrowhead shows 12-18 mph from SSW (210°)
+      tempDelta: 9.6,
+      triggerThreshold: 8,
       windSpeed: { min: 12, max: 18, optimal: 14 },
-      windDirection: { min: 200, max: 230, optimal: 210 }, // SSW
-      leadTime: 60, // minutes - Arrowhead signal precedes Dam thermal
+      windDirection: { min: 200, max: 250, optimal: 230 },
+      leadTime: 60, // Arrowhead precedes beach onset by ~60 min
     },
     
-    primaryStation: 'UTDCD',
-    triggerStation: 'UTLPC', // Lower Provo Canyon
-    referenceStation: 'KHCR', // Heber Airport
+    primaryStation: 'TEMPEST_DC',
+    triggerStation: 'UTLPC',
+    referenceStation: 'KHCR',
     yourStation: null,
-    requirement: 'MUST have South wind (160-220°) - canyon only works with S flow',
+    requirement: 'SSW-WSW wind (170-260°) — canyon thermal fans out at beach',
   },
   
   'sulfur-creek': {
@@ -916,19 +917,20 @@ export function predictThermal(lakeId, currentConditions) {
       monthlyRate = 0.05;
     }
   } else if (lakeId === 'deer-creek') {
-    // Use Deer Creek specific hourly data
     baseProbability = (DEER_CREEK_HOURLY_PROBABILITY[currentHour] || 0.02) * 100;
-    expectedPeakHour = 13; // 1 PM is peak for Deer Creek
-    expectedPeakSpeed = 5.0;
-    // Summer months are best for Deer Creek
+    expectedPeakHour = 15; // 3 PM peak at the beach (Tempest July data: 82%)
+    expectedPeakSpeed = 8.0;
     if (currentMonth >= 6 && currentMonth <= 8) {
-      monthlyMultiplier = 1.2;
-      monthlyRate = 0.28; // ~28% in summer
+      monthlyMultiplier = 1.3;
+      monthlyRate = 0.75;
     } else if (currentMonth >= 5 && currentMonth <= 9) {
       monthlyMultiplier = 1.0;
-      monthlyRate = 0.20;
+      monthlyRate = 0.58;
+    } else if (currentMonth >= 4 && currentMonth <= 10) {
+      monthlyMultiplier = 0.6;
+      monthlyRate = 0.35;
     } else {
-      monthlyMultiplier = 0.5; // Winter is poor
+      monthlyMultiplier = 0.25;
       monthlyRate = 0.10;
     }
   } else if (lakeId.startsWith('utah-lake')) {

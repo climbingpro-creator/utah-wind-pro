@@ -105,11 +105,12 @@ function analyzeObservations(allObs) {
     if (speedMph > db.maxSpeed) db.maxSpeed = speedMph;
     db.observations.push({ speed: speedMph, dir: windDir, hour: date.getUTCHours() });
 
-    // Thermal detection: S wind (170-210°) with 4+ mph during 10am-6pm local (16-00 UTC for MDT)
+    // Thermal detection: SSW-WSW (170-260°) with 4+ mph during 10am-8pm local
+    // Direction range based on Tempest wind rose: 230° (37%), 240° (22%), 220° (12%)
     const localHour = (date.getUTCHours() - 6 + 24) % 24;
-    const isSouthDir = windDir >= 160 && windDir <= 220;
-    const isThermalHour = localHour >= 10 && localHour <= 18;
-    if (isSouthDir && speedMph >= 4 && isThermalHour) {
+    const isThermalDir = windDir >= 170 && windDir <= 260;
+    const isThermalHour = localHour >= 10 && localHour <= 20;
+    if (isThermalDir && speedMph >= 4 && isThermalHour) {
       db.thermalMinutes++;
       eventCounts.thermal_cycle++;
     }

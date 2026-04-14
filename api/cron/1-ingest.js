@@ -24,8 +24,60 @@ import { getEnv, redisCommand, normalizeToMb, hasRedis } from '../lib/redis.js';
 import { triggerNextStage } from '../lib/qstash.js';
 import { WindPredictor, getModelPath } from '@utahwind/ml';
 import { WU_PRIORITY_STATIONS } from '../../packages/weather/src/config/wuPwsNetwork.js';
+import { loadTranslationModels, applyTranslations } from '../lib/serverLearning.js';
 
 const ALL_STATIONS = ALL_STATION_IDS;
+
+// ── Validation: Synoptic stations being dropped → candidate replacement IDs ──
+// Used during the migration overlap period to store paired readings for correlation analysis.
+// Paid 10: FPS, UTALP, AMFKM, UTLAK, UTSHR, SND, UTDCD, QSF, UP218, UTCOP
+const VALIDATION_PAIRS = {
+  'UID28':  ['KUTSARAT50', 'KUTSARAT88', 'KUTSARAT81'],
+  'CSC':   ['KUTCEDAR10', 'KUTPLEAS11'],
+  'UTOLY': ['KUTSARAT50'],
+  'UTORM': ['KUTPLEAS11', 'TEMPEST_134280'],
+  'UTPCR': ['KUTSARAT74', 'TEMPEST_124015'],
+  'UT7':   ['KUTDRAPE132', 'KUTDRAPE59'],
+  'UTPRB': ['KUTSARAT62'],
+  'UTRVT': ['KUTRIVER67'],
+  'DSTU1': ['KUTHEBER105', 'KUTMIDWA37'],
+  'TIMU1': ['SND'],
+  'UTDAN': ['KUTHEBER105', 'KUTSTRAW1'],
+  'CCPUT': ['KUTSTRAW1', 'KUTSTRAW2'],
+  'UTHEB': ['KUTHEBER105', 'KUTHEBER26'],
+  'UWCU1': ['KUTSTRAW1', 'KUTSTRAW2'],
+  'RVZU1': ['KUTSTRAW2'],
+  'UTSLD': ['KUTSTRAW2'],
+  'BERU1': ['KUTGARDE9', 'TEMPEST_106250'],
+  'UTGRC': ['KUTGARDE9', 'TEMPEST_106250'],
+  'UTLTS': ['KUTLOGAN12'],
+  'SKY':   [],
+  'UTESU': [],
+  'UTMPK': [],
+  'EPMU1': [],
+  'UTHTP': [],
+  'UT1':   ['KWYEVANS10', 'KWYEVANS60'],
+  'QLN':   ['KUTPLEAS11', 'TEMPEST_141420'],
+  'MDAU1': ['KUTMIDWA37', 'KUTHEBER26'],
+  'UTPCY': ['KUTMIDWA37'],
+  'UTLPC': ['KUTPLEAS11', 'KUTPROVO83'],
+  'UTCHL': ['KUTHEBER26'],
+  'UR328': ['KUTWILLA3', 'TEMPEST_148360'],
+  'BLPU1': ['KUTWILLA3', 'KUTBRIGHA6'],
+  'OGP':   ['KUTOGDEN32'],
+  'GSLM':  [],
+  'UTANT': ['KUTWILLA3'],
+  'UTFRW': ['KUTWILLA3'],
+  'COOPOGNU1': ['KUTEDEN14'],
+  'PC496': ['KUTEDEN14'],
+  'UTPVD': ['TEMPEST_159080', 'KUTEDEN14'],
+  'UTHUN': ['KUTOGDEN65'],
+  'UTLMP': ['KUTNEPHI14'],
+  'UTRKY': ['KUTNEPHI14'],
+  'UTSCI': [],
+  'UTPOW': [],
+  'UTMON': [],
+};
 
 // Tier 1: kite/PG corridor stations — fetched every run (critical for learning validation)
 const WU_TIER1 = [
@@ -56,6 +108,7 @@ function stationObjFromSynopticFormat(s) {
     temperature: o.air_temp_value_1?.value ?? null,
     pressure: normalizeToMb(rawP),
     observedAt: o.wind_speed_value_1?.date_time || o.date_time || new Date().toISOString(),
+    source: s._source || 'synoptic',
   };
 }
 
@@ -263,6 +316,50 @@ async function fetchAmbientPWS() {
   }
 }
 
+async function storeValidationPairs(stations, now) {
+  try {
+    const stationMap = new Map(stations.map(s => [s.stationId, s]));
+    const pairs = {};
+    let pairCount = 0;
+
+    for (const [synId, replacementIds] of Object.entries(VALIDATION_PAIRS)) {
+      const synObs = stationMap.get(synId);
+      if (!synObs) continue;
+
+      const replacements = {};
+      for (const repId of replacementIds) {
+        const repObs = stationMap.get(repId);
+        if (repObs && repObs.windSpeed != null) {
+          replacements[repId] = {
+            speed: repObs.windSpeed,
+            dir: repObs.windDirection,
+            gust: repObs.windGust,
+            source: repObs.source || 'unknown',
+          };
+        }
+      }
+
+      if (synObs.windSpeed != null || Object.keys(replacements).length > 0) {
+        pairs[synId] = {
+          synoptic: { speed: synObs.windSpeed, dir: synObs.windDirection, gust: synObs.windGust },
+          replacements,
+        };
+        pairCount++;
+      }
+    }
+
+    if (pairCount > 0) {
+      const dateKey = `validation:pairs:${now.toISOString().split('T')[0]}`;
+      const record = { timestamp: now.toISOString(), pairs };
+      await redisCommand('RPUSH', dateKey, JSON.stringify(record));
+      await redisCommand('EXPIRE', dateKey, '1209600'); // 14-day TTL
+      console.log(`[1-ingest] Validation: ${pairCount} Synoptic→replacement pairs stored`);
+    }
+  } catch (e) {
+    console.warn('[1-ingest] Validation storage failed (non-fatal):', e.message);
+  }
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   if (req.method === 'OPTIONS') return res.status(204).end();
@@ -295,11 +392,25 @@ export default async function handler(req, res) {
       fetchNWSForecasts(redisCommand),
     ]);
 
-    const stations = [
+    let stations = [
       ...(synopticResult.status === 'fulfilled' ? synopticResult.value : []),
       ...(wuResult.status === 'fulfilled' ? wuResult.value : []),
       ...(tempestResult.status === 'fulfilled' ? tempestResult.value : []),
     ];
+
+    // Apply learned translation models (no-op until models:translations exists in Redis)
+    try {
+      const models = await loadTranslationModels(redisCommand);
+      if (models.length > 0) {
+        const before = stations.length;
+        stations = applyTranslations(stations, models);
+        if (stations.length > before) {
+          console.log(`[1-ingest] Translations: added ${stations.length - before} translated stations`);
+        }
+      }
+    } catch (e) {
+      console.warn('[1-ingest] Translation pass failed (non-fatal):', e.message);
+    }
 
     const ambientPWS = ambientResult.status === 'fulfilled' ? ambientResult.value : null;
     const nwsData = nwsResult.status === 'fulfilled' ? nwsResult.value : null;
@@ -321,6 +432,9 @@ export default async function handler(req, res) {
         : Promise.resolve(),
     ]);
     await redisCommand('LTRIM', 'obs:index', '0', '672');
+
+    // ── Validation: store paired readings for Synoptic migration correlation ──
+    await storeValidationPairs(stations, now);
 
     // Pressure gradient diagnostic
     const slc = stations.find(s => s.stationId === 'KSLC');
