@@ -33,7 +33,6 @@ export default async function handler(req, res) {
       return res.status(200).json({ meta, hasWeights, predKeys: predIndex, latestPred });
     }
 
-    // Mode=run: actually execute the learning cycle and report
     const obsKeys = await redisCommand('LRANGE', 'obs:index', '0', '0');
     if (!obsKeys?.length) return res.status(200).json({ error: 'no obs in redis' });
 
