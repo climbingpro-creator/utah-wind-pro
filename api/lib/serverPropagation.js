@@ -129,7 +129,7 @@ const CHAIN_DEFS = {
   },
   // ── OTHER SPOTS ──
   'deer-creek:canyon_thermal': {
-    label: 'Canyon Thermal → Deer Creek', target: 'UTDCD',
+    label: 'Canyon Thermal → Deer Creek', target: 'TEMPEST_DC',
     nodes: [
       { id: 'KUTPLEAS11',  lag: -75, dir: [150, 230], speed: 3, optional: true },
       { id: 'UTLPC',       lag: -60, dir: [170, 220], speed: 4 },
@@ -137,18 +137,20 @@ const CHAIN_DEFS = {
       { id: 'KUTCEDAR10',  lag: -35, dir: [150, 230], speed: 3, optional: true },
       { id: 'UTCHL',       lag: -20, dir: [170, 210], speed: 4 },
       { id: 'KUTMIDWA37',  lag: -10, dir: [160, 220], speed: 3, optional: true },
-      { id: 'UTDCD',       lag: 0,   dir: [170, 210], speed: 4 },
+      { id: 'UTDCD',       lag: -5,  dir: [170, 210], speed: 4 },
+      { id: 'TEMPEST_DC',  lag: 0,   dir: [170, 220], speed: 3 },
     ],
-    speedRatios: { UTLPC: 1.2, UTPCY: 1.1, UTCHL: 0.9, KUTMIDWA37: 0.85 },
+    speedRatios: { UTLPC: 1.2, UTPCY: 1.1, UTCHL: 0.9, KUTMIDWA37: 0.85, UTDCD: 1.0 },
     pressure: { type: 'below', threshold: 2.0 },
   },
   'deer-creek:north_flow': {
-    label: 'North Flow → Deer Creek', target: 'UTDCD',
+    label: 'North Flow → Deer Creek', target: 'TEMPEST_DC',
     nodes: [
       { id: 'KSLC',        lag: -90, dir: [315, 45], speed: 8, wrap: true },
       { id: 'KUTHEBER105', lag: -45, dir: [315, 60], speed: 4, wrap: true, optional: true },
       { id: 'KHCR',        lag: -30, dir: [315, 60], speed: 5, wrap: true },
-      { id: 'UTDCD',       lag: 0,   dir: [315, 60], speed: 4, wrap: true },
+      { id: 'UTDCD',       lag: -5,  dir: [315, 60], speed: 4, wrap: true },
+      { id: 'TEMPEST_DC',  lag: 0,   dir: [315, 60], speed: 3, wrap: true },
     ],
     pressure: { type: 'above', threshold: -1.0 },
   },

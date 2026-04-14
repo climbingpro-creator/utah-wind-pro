@@ -79,6 +79,7 @@ export const WU_PWS_STATIONS = {
   'deer-creek': {
     corridor: 'canyon_thermal',
     stations: [
+      { id: 'TEMPEST_DC', name: 'Barbed Wire Beach (Tempest)', lat: 40.4588, lon: -111.4727, role: 'ground-truth', priority: 0, source: 'tempest' },
       { id: 'KUTMIDWA37', name: 'Midway', lat: 40.505, lon: -111.465, role: 'close', priority: 1 },
       { id: 'KUTHEBER105', name: 'Heber City E', lat: 40.485, lon: -111.444, role: 'mid', priority: 2 },
       { id: 'KUTHEBER26', name: 'Heber City S', lat: 40.477, lon: -111.450, role: 'mid', priority: 3 },

@@ -670,6 +670,14 @@ export const STATION_REGISTRY = {
     type: 'pws', network: 'WU', roles: ['vineyard-mid-wu', 'deer-creek-early-wu'],
   },
 
+  // ── Tempest WeatherFlow Stations ──
+  TEMPEST_DC: {
+    id: 'TEMPEST_DC', name: 'Barbed Wire Beach (Tempest)', shortName: 'DC Beach',
+    lat: 40.4588, lng: -111.4727, elevation: 5420,
+    type: 'pws', network: 'Tempest', roles: ['deer-creek-ground-truth'],
+    tempest: { stationId: 114523, deviceId: 287462 },
+  },
+
   // ── Sulphur Creek Reservoir (Wyoming I-80 corridor) ──
   KEVW: {
     id: 'KEVW',

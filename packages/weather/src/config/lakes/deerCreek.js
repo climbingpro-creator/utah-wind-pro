@@ -52,9 +52,9 @@ export const deerCreekConfigs = {
       ],
       
       groundTruth: {
-        id: 'UTDCD',
-        name: 'US-189 Deer Creek Dam (UDOT)',
-        role: 'Ground Truth - Dam/Chute thermal indicator (replaced dead DCC)',
+        id: 'TEMPEST_DC',
+        name: 'Barbed Wire Beach (Tempest)',
+        role: 'Ground Truth - on-beach Tempest station (north shore kite launch)',
       },
       
       earlyIndicator: {
@@ -70,33 +70,40 @@ export const deerCreekConfigs = {
       },
       
       lakeshore: [
+        {
+          id: 'TEMPEST_DC',
+          name: 'Barbed Wire Beach (Tempest)',
+          elevation: 5420,
+          role: 'Primary - on-beach Tempest station (1-min resolution)',
+          priority: 1
+        },
         { 
           id: 'UTDCD', 
           name: 'US-189 Deer Creek Dam (UDOT)',
           elevation: 5400,
-          role: 'Primary - at reservoir (replaced dead DCC)',
-          priority: 1
+          role: 'Secondary - dam/canyon mouth reference',
+          priority: 2
         },
         { 
           id: 'UTCHL', 
           name: 'Charleston (UDOT)',
           elevation: 5500,
           role: 'Mid-chain - Heber Valley near reservoir',
-          priority: 2
+          priority: 3
         },
         { 
           id: 'KHCR', 
           name: 'Heber Valley Airport',
           elevation: 5597,
           role: 'Charleston area reference',
-          priority: 3
+          priority: 4
         },
         {
           id: 'UTPCY',
           name: 'Provo Canyon MP10',
           elevation: 5119,
           role: 'Canyon mouth - thermal draw indicator',
-          priority: 4
+          priority: 5
         }
       ],
       

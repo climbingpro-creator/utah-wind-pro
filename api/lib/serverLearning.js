@@ -21,7 +21,7 @@ const LAKE_THERMAL = {
   'utah-lake-vineyard':   { dir: [180, 270], peak: [10, 16], station: 'KPVU' },
   'utah-lake-zigzag':     { dir: [135, 165], peak: [10, 16], station: 'FPS' },
   'utah-lake-mm19':       { dir: [120, 160], peak: [10, 16], station: 'UID28' },
-  'deer-creek':           { dir: [170, 210], peak: [11, 17], station: 'UTDCD' },
+  'deer-creek':           { dir: [170, 210], peak: [11, 17], station: 'TEMPEST_DC' },
   'jordanelle':           { dir: [180, 230], peak: [11, 17], station: 'KHCR' },
   'willard-bay':          { dir: [170, 220], peak: [11, 17], station: 'KHIF' },
   'bear-lake':            { dir: [250, 320], peak: [12, 18], station: 'BERU1' },
@@ -88,11 +88,11 @@ const LAKE_THERMAL = {
 const GRADIENT_INDICATORS = {
   'deer-creek': [
     {
-      id: 'KHCR-UTDCD',
-      upstreamId: 'KHCR',     // Heber Airport (valley)
-      downstreamId: 'UTDCD',  // Deer Creek Dam (canyon mouth)
+      id: 'KHCR-TEMPEST_DC',
+      upstreamId: 'KHCR',        // Heber Airport (valley)
+      downstreamId: 'TEMPEST_DC', // Barbed Wire Beach (on-water)
       type: 'canyon_gradient',
-      tempThreshold: 5,       // °F delta to trigger canyon flow signal
+      tempThreshold: 5,
       speedMultiplier: 1.20,
     },
     {
@@ -1771,15 +1771,20 @@ async function findAnalogDays(redisCmd, currentFingerprint, lakeId, maxResults =
 async function runServerLearningCycle(redisCmd, currentStations, recentSnapshots, lakeStationMap, nwsData = null) {
   const now = new Date();
   const hour = toMountainHour(now);
+  let _step = 'analyzePressure';
+  try {
   const pressure = analyzePressure(currentStations, recentSnapshots);
 
   // 1. Load current weights
+  _step = 'loadWeights';
   const weights = await loadWeights(redisCmd) || { eventWeights: {}, lakeWeights: {}, meta: {} };
 
   // 1.5 Detect upstream signals for frontal early warning
+  _step = 'detectUpstreamSignals';
   const upstreamSignals = detectUpstreamSignals(currentStations, recentSnapshots);
 
   // 1.5. Load statistical models (built from historical analysis)
+  _step = 'loadStatisticalModels';
   const statisticalModels = await loadStatisticalModels(redisCmd);
 
   // Enrich upstream signals with data-driven lag times when models available
@@ -1818,6 +1823,7 @@ async function runServerLearningCycle(redisCmd, currentStations, recentSnapshots
     }
   }
 
+  _step = 'upstreamEnrichment';
   // 1.6 "Ahead of Forecast" detection: compare upstream vs NWS
   let aheadOfForecast = null;
   if (nwsData) {
@@ -1831,6 +1837,7 @@ async function runServerLearningCycle(redisCmd, currentStations, recentSnapshots
   // 1.7. Compute canyon/lake gradient signals for Deer Creek + Willard Bay
   const gradientSignals = computeGradientSignals(currentStations);
 
+  _step = 'predictForLakes';
   // 2. Make predictions for every lake (with upstream intelligence + gradient indicators)
   const allPredictions = [];
   for (const [lakeId, stationIds] of Object.entries(lakeStationMap)) {
@@ -1847,6 +1854,7 @@ async function runServerLearningCycle(redisCmd, currentStations, recentSnapshots
     }
   }
 
+  _step = 'storePredictions';
   // 3. Store predictions
   if (allPredictions.length > 0) {
     await savePredictions(redisCmd, allPredictions, now);
@@ -1868,6 +1876,7 @@ async function runServerLearningCycle(redisCmd, currentStations, recentSnapshots
     console.error('Pattern match error:', e.message);
   }
 
+  _step = 'verifyPredictions';
   // 4. Verify old predictions against current actuals using per-event-type windows
   const VERIFIED_SET_KEY = 'verified:predictions';
   const oldPredictions = await loadRecentPredictions(redisCmd, 370);
@@ -1912,6 +1921,7 @@ async function runServerLearningCycle(redisCmd, currentStations, recentSnapshots
     await redisCmd('EXPIRE', VERIFIED_SET_KEY, 86400);
   }
 
+  _step = 'updateWeights';
   // 5. Update weights from accuracy
   let updatedWeights = weights;
   if (accuracyRecords.length > 0) {
@@ -1920,6 +1930,7 @@ async function runServerLearningCycle(redisCmd, currentStations, recentSnapshots
     await saveWeights(redisCmd, updatedWeights);
   }
 
+  _step = 'saveMeta';
   // 6. Update metadata
   const meta = await loadMeta(redisCmd);
   meta.totalCycles++;

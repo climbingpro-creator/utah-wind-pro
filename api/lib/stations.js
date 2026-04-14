@@ -54,7 +54,8 @@ export const LAKE_STATIONS = {
     name: 'Deer Creek Reservoir',
     synoptic: ['KSLC', 'UTDCD', 'KHCR', 'TIMU1', 'SND', 'MDAU1', 'UTPCY', 'UTLPC', 'UTCHL'],
     wuPws: ['KUTMIDWA37', 'KUTHEBER105', 'KUTHEBER26', 'KUTPLEAS11', 'KUTCEDAR10'],
-    primary: 'UTDCD',
+    tempest: ['TEMPEST_DC'],
+    primary: 'TEMPEST_DC',
     hasAmbient: false,
   },
   'jordanelle': {
@@ -404,7 +405,7 @@ export const LAKE_STATIONS = {
 // Simple lake→stationIds map derived from LAKE_STATIONS (used by collect.js)
 // Includes both Synoptic and WU PWS station IDs for unified observation mapping
 export const LAKE_STATION_MAP = Object.fromEntries(
-  Object.entries(LAKE_STATIONS).map(([id, cfg]) => [id, [...cfg.synoptic, ...(cfg.wuPws || [])]])
+  Object.entries(LAKE_STATIONS).map(([id, cfg]) => [id, [...cfg.synoptic, ...(cfg.wuPws || []), ...(cfg.tempest || [])]])
 );
 
 // Upstream detection stations (not tied to any specific lake)

@@ -181,6 +181,51 @@ async function fetchWuPwsLatest() {
   return results;
 }
 
+// ── Tempest WeatherFlow Stations ──
+// Public API token for shared stations — no owner auth required
+const TEMPEST_API_TOKEN = '146e4f2c-adec-4244-b711-1aeca8f46a48';
+const TEMPEST_STATIONS = [
+  { stationId: 114523, id: 'TEMPEST_DC', name: 'Barbed Wire Beach' },
+];
+
+async function fetchTempestStations() {
+  const results = [];
+  for (const station of TEMPEST_STATIONS) {
+    try {
+      const resp = await fetch(
+        `https://swd.weatherflow.com/swd/rest/observations/station/${station.stationId}?token=${TEMPEST_API_TOKEN}`
+      );
+      if (!resp.ok) continue;
+      const data = await resp.json();
+      const obs = data.obs?.[0];
+      if (!obs) continue;
+
+      // Tempest returns metric — convert to imperial for consistency
+      const windMph = obs.wind_avg != null ? obs.wind_avg * 2.237 : null;
+      const gustMph = obs.wind_gust != null ? obs.wind_gust * 2.237 : null;
+      const tempF = obs.air_temperature != null ? obs.air_temperature * 9 / 5 + 32 : null;
+      const pressureMb = obs.station_pressure ?? obs.barometric_pressure ?? null;
+
+      results.push({
+        stationId: station.id,
+        windSpeed: windMph != null ? Math.round(windMph * 10) / 10 : null,
+        windDirection: obs.wind_direction ?? null,
+        windGust: gustMph != null ? Math.round(gustMph * 10) / 10 : null,
+        temperature: tempF != null ? Math.round(tempF * 10) / 10 : null,
+        humidity: obs.relative_humidity ?? null,
+        pressure: pressureMb,
+        solarRadiation: obs.solar_radiation ?? null,
+        observedAt: obs.timestamp ? new Date(obs.timestamp * 1000).toISOString() : new Date().toISOString(),
+        source: 'tempest',
+      });
+    } catch (e) {
+      console.warn(`[1-ingest] Tempest ${station.id} failed:`, e.message);
+    }
+  }
+  console.log(`[1-ingest] Tempest: ${results.length}/${TEMPEST_STATIONS.length} stations`);
+  return results;
+}
+
 async function fetchAmbientPWS() {
   const ambientApiKey = process.env.AMBIENT_API_KEY;
   const ambientAppKey = process.env.AMBIENT_APP_KEY;
@@ -228,17 +273,19 @@ export default async function handler(req, res) {
     const now = new Date();
     const key = `obs:${now.toISOString().split('T')[0]}:${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
-    // ── Parallel data fetch: Synoptic + WU PWS + Ambient + NWS forecasts ──
-    const [synopticResult, wuResult, ambientResult, nwsResult] = await Promise.allSettled([
+    // ── Parallel data fetch: Synoptic + WU PWS + Ambient + Tempest + NWS forecasts ──
+    const [synopticResult, wuResult, ambientResult, tempestResult, nwsResult] = await Promise.allSettled([
       fetchSynopticLatest(),
       fetchWuPwsLatest(),
       fetchAmbientPWS(),
+      fetchTempestStations(),
       fetchNWSForecasts(redisCommand),
     ]);
 
     const stations = [
       ...(synopticResult.status === 'fulfilled' ? synopticResult.value : []),
       ...(wuResult.status === 'fulfilled' ? wuResult.value : []),
+      ...(tempestResult.status === 'fulfilled' ? tempestResult.value : []),
     ];
 
     const ambientPWS = ambientResult.status === 'fulfilled' ? ambientResult.value : null;
