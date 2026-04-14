@@ -415,6 +415,20 @@ export default async function handler(req, res) {
     const ambientPWS = ambientResult.status === 'fulfilled' ? ambientResult.value : null;
     const nwsData = nwsResult.status === 'fulfilled' ? nwsResult.value : null;
 
+    // Merge Ambient PWS into stations so it appears in lake observations
+    if (ambientPWS) {
+      stations.push({
+        stationId: 'PWS',
+        windSpeed: ambientPWS.windSpeed ?? null,
+        windDirection: ambientPWS.windDirection ?? null,
+        windGust: ambientPWS.windGust ?? null,
+        temperature: ambientPWS.temperature ?? null,
+        pressure: null,
+        observedAt: new Date().toISOString(),
+        source: 'ambient',
+      });
+    }
+
     // Build per-lake observation map
     const observations = {};
     for (const [lakeId, stationIds] of Object.entries(LAKE_STATION_MAP)) {
@@ -477,8 +491,10 @@ export default async function handler(req, res) {
           nwsData.mlApplied = true;
           mlApplied = true;
 
-          // Overwrite the Redis cache with ML-enriched version
-          await redisCommand('SET', 'nws:forecasts', JSON.stringify(nwsData), 'EX', '86400');
+          // Update cached forecast with ML corrections but preserve original TTL
+          const ttl = await redisCommand('TTL', 'nws:forecasts');
+          const remainingTtl = ttl && ttl > 0 ? String(ttl) : '5400'; // fallback 90min
+          await redisCommand('SET', 'nws:forecasts', JSON.stringify(nwsData), 'EX', remainingTtl);
           console.log(`[1-ingest] ML correction applied to ${Object.keys(nwsData.grids).length} grids`);
         }
       } catch (mlErr) {

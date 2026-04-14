@@ -415,7 +415,10 @@ export const LAKE_STATIONS = {
 // Simple lake→stationIds map derived from LAKE_STATIONS (used by collect.js)
 // Includes both Synoptic and WU PWS station IDs for unified observation mapping
 export const LAKE_STATION_MAP = Object.fromEntries(
-  Object.entries(LAKE_STATIONS).map(([id, cfg]) => [id, [...cfg.synoptic, ...(cfg.wuPws || []), ...(cfg.tempest || [])]])
+  Object.entries(LAKE_STATIONS).map(([id, cfg]) => [
+    id,
+    [...cfg.synoptic, ...(cfg.wuPws || []), ...(cfg.tempest || []), ...(cfg.hasAmbient ? ['PWS'] : [])],
+  ])
 );
 
 // Upstream detection stations (not tied to any specific lake)

@@ -149,9 +149,14 @@ async function fetchNWSForecasts(redisCmd) {
   const cached = await redisCmd('GET', 'nws:forecasts');
   if (cached) {
     try {
-      return JSON.parse(cached);
+      const parsed = JSON.parse(cached);
+      const ageMs = Date.now() - new Date(parsed.fetchedAt).getTime();
+      if (ageMs < 90 * 60 * 1000) {
+        return parsed;
+      }
+      console.log(`[nws] Cache stale (${Math.round(ageMs / 60000)}min old), refetching`);
     } catch {
-      // intentionally empty: fall through to refetch on bad cache JSON
+      // fall through to refetch on bad cache JSON
     }
   }
 
