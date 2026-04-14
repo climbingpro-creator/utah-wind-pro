@@ -186,6 +186,19 @@ async function fetchWuPwsLatest() {
 const TEMPEST_API_TOKEN = '146e4f2c-adec-4244-b711-1aeca8f46a48';
 const TEMPEST_STATIONS = [
   { stationId: 114523, id: 'TEMPEST_DC', name: 'Barbed Wire Beach' },
+  { stationId: 141420, id: 'TEMPEST_141420', name: 'Lindon 550 N' },
+  { stationId: 134280, id: 'TEMPEST_134280', name: 'Orem N 625 W' },
+  { stationId: 124015, id: 'TEMPEST_124015', name: 'Seasons View Dr' },
+  { stationId: 194125, id: 'TEMPEST_194125', name: 'Lehi N 1090 W' },
+  { stationId: 111255, id: 'TEMPEST_111255', name: 'Little Kate Rd' },
+  { stationId: 148360, id: 'TEMPEST_148360', name: 'Perry' },
+  { stationId: 93590,  id: 'TEMPEST_93590', name: 'Harrisville' },
+  { stationId: 159080, id: 'TEMPEST_159080', name: 'N 4000 E' },
+  { stationId: 81860,  id: 'TEMPEST_81860', name: 'Pine Loop Rd' },
+  { stationId: 106250, id: 'TEMPEST_106250', name: 'Foxridge Rd' },
+  { stationId: 103270, id: 'TEMPEST_103270', name: 'Dixie Springs' },
+  { stationId: 63500,  id: 'TEMPEST_63500', name: 'Ashley Canyon' },
+  { stationId: 107055, id: 'TEMPEST_107055', name: 'S 1800 W' },
 ];
 
 async function fetchTempestStations() {

@@ -678,6 +678,95 @@ export const STATION_REGISTRY = {
     tempest: { stationId: 114523, deviceId: 287462 },
   },
 
+  // ── Tempest WeatherFlow — Vineyard / Lindon ──
+  TEMPEST_141420: {
+    id: 'TEMPEST_141420', name: 'Lindon 550 N (Tempest)', shortName: 'Lindon Tempest',
+    lat: 40.34755, lng: -111.75677, elevation: 4516,
+    type: 'pws', network: 'Tempest', roles: ['vineyard-ground-truth'],
+    tempest: { stationId: 141420 },
+  },
+  TEMPEST_134280: {
+    id: 'TEMPEST_134280', name: 'Orem N 625 W (Tempest)', shortName: 'Orem Tempest',
+    lat: 40.31992, lng: -111.71121, elevation: 4750,
+    type: 'pws', network: 'Tempest', roles: ['vineyard-close'],
+    tempest: { stationId: 134280 },
+  },
+  // ── Tempest WeatherFlow — PotM / Lehi ──
+  TEMPEST_124015: {
+    id: 'TEMPEST_124015', name: 'Seasons View Dr (Tempest)', shortName: 'PotM Tempest',
+    lat: 40.44115, lng: -111.86794, elevation: 5207,
+    type: 'pws', network: 'Tempest', roles: ['potm-south-close'],
+    tempest: { stationId: 124015 },
+  },
+  TEMPEST_194125: {
+    id: 'TEMPEST_194125', name: 'Lehi N 1090 W (Tempest)', shortName: 'Lehi Tempest',
+    lat: 40.42929, lng: -111.86728, elevation: 4742,
+    type: 'pws', network: 'Tempest', roles: ['potm-south-close'],
+    tempest: { stationId: 194125 },
+  },
+  // ── Tempest WeatherFlow — Jordanelle ──
+  TEMPEST_111255: {
+    id: 'TEMPEST_111255', name: 'Little Kate Rd (Tempest)', shortName: 'Jordanelle Tmp',
+    lat: 40.66936, lng: -111.51009, elevation: 6753,
+    type: 'pws', network: 'Tempest', roles: ['jordanelle-close'],
+    tempest: { stationId: 111255 },
+  },
+  // ── Tempest WeatherFlow — Willard Bay ──
+  TEMPEST_148360: {
+    id: 'TEMPEST_148360', name: 'Perry (Tempest)', shortName: 'Perry Tempest',
+    lat: 41.44492, lng: -112.04522, elevation: 4302,
+    type: 'pws', network: 'Tempest', roles: ['willard-bay-close'],
+    tempest: { stationId: 148360 },
+  },
+  TEMPEST_93590: {
+    id: 'TEMPEST_93590', name: 'Harrisville (Tempest)', shortName: 'Harrisville Tmp',
+    lat: 41.29923, lng: -111.9826, elevation: 4330,
+    type: 'pws', network: 'Tempest', roles: ['willard-bay-close'],
+    tempest: { stationId: 93590 },
+  },
+  // ── Tempest WeatherFlow — Pineview ──
+  TEMPEST_159080: {
+    id: 'TEMPEST_159080', name: 'N 4000 E (Tempest)', shortName: 'Pineview Tmp',
+    lat: 41.33583, lng: -111.85213, elevation: 5089,
+    type: 'pws', network: 'Tempest', roles: ['pineview-close'],
+    tempest: { stationId: 159080 },
+  },
+  // ── Tempest WeatherFlow — Rockport ──
+  TEMPEST_81860: {
+    id: 'TEMPEST_81860', name: 'Pine Loop Rd (Tempest)', shortName: 'Rockport Tmp',
+    lat: 40.81097, lng: -111.50287, elevation: 7901,
+    type: 'pws', network: 'Tempest', roles: ['rockport-close'],
+    tempest: { stationId: 81860 },
+  },
+  // ── Tempest WeatherFlow — Bear Lake ──
+  TEMPEST_106250: {
+    id: 'TEMPEST_106250', name: 'Foxridge Rd (Tempest)', shortName: 'Bear Lake Tmp',
+    lat: 41.90184, lng: -111.39208, elevation: 5997,
+    type: 'pws', network: 'Tempest', roles: ['bear-lake-close'],
+    tempest: { stationId: 106250 },
+  },
+  // ── Tempest WeatherFlow — Sand Hollow ──
+  TEMPEST_103270: {
+    id: 'TEMPEST_103270', name: 'Dixie Springs (Tempest)', shortName: 'Sand Hollow Tmp',
+    lat: 37.13546, lng: -113.38606, elevation: 2965,
+    type: 'pws', network: 'Tempest', roles: ['sand-hollow-ground-truth'],
+    tempest: { stationId: 103270 },
+  },
+  // ── Tempest WeatherFlow — Steinaker / Vernal ──
+  TEMPEST_63500: {
+    id: 'TEMPEST_63500', name: 'Ashley Canyon (Tempest)', shortName: 'Steinaker Tmp',
+    lat: 40.56324, lng: -109.61635, elevation: 6170,
+    type: 'pws', network: 'Tempest', roles: ['steinaker-close'],
+    tempest: { stationId: 63500 },
+  },
+  // ── Tempest WeatherFlow — Lincoln Beach area ──
+  TEMPEST_107055: {
+    id: 'TEMPEST_107055', name: 'S 1800 W (Tempest)', shortName: 'Lincoln Tempest',
+    lat: 40.09423, lng: -111.69801, elevation: 4545,
+    type: 'pws', network: 'Tempest', roles: ['utah-lake-lincoln-close'],
+    tempest: { stationId: 107055 },
+  },
+
   // ── Sulphur Creek Reservoir (Wyoming I-80 corridor) ──
   KEVW: {
     id: 'KEVW',
