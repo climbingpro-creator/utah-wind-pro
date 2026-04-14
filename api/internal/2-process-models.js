@@ -400,27 +400,29 @@ export default async function handler(req, res) {
     }
 
     // ── AUTO-REBUILD STATISTICAL MODELS ──
+    // Heavy operation (fetches 365 days from Synoptic API) — only run on weekly
+    // schedule, never on station-count mismatch (use /api/internal/admin?action=build-models)
     try {
       const modelsRaw = await redisCommand('GET', 'models:statistical');
       const models = modelsRaw ? JSON.parse(modelsRaw) : null;
       const modelAge = models?.builtAt ? Date.now() - new Date(models.builtAt).getTime() : Infinity;
-      const currentStationCount = ALL_STATIONS.length;
-      const modelStationCount = models?.stationCount || 0;
-      const stationsChanged = currentStationCount !== modelStationCount;
 
       const utcHour = now.getUTCHours();
       const utcDay = now.getUTCDay();
       const weeklyRebuild = utcDay === 0 && utcHour === 10 && modelAge > 6 * 24 * 3600 * 1000;
 
-      if (stationsChanged || !models || weeklyRebuild) {
-        const reason = stationsChanged
-          ? `Station config changed (${modelStationCount} → ${currentStationCount})`
-          : !models ? 'No models exist yet' : 'Weekly schedule';
+      if (!models || weeklyRebuild) {
+        const reason = !models ? 'No models exist yet' : 'Weekly schedule';
         console.log(`[2-process] Auto-rebuilding statistical models: ${reason}`);
 
         const { synopticToken } = getEnv();
-        await buildStatisticalModels(redisCommand, synopticToken, { days: 365 });
-        diagnostics.modelRebuild = reason;
+        if (synopticToken) {
+          await buildStatisticalModels(redisCommand, synopticToken, { days: 365 });
+          diagnostics.modelRebuild = reason;
+        } else {
+          console.warn('[2-process] Skipping model rebuild: SYNOPTIC_TOKEN not set');
+          diagnostics.modelRebuild = 'skipped:no-token';
+        }
       }
     } catch (err) {
       console.error('[2-process] Model rebuild error (non-fatal):', err.message);

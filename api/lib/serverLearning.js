@@ -1877,15 +1877,21 @@ async function runServerLearningCycle(redisCmd, currentStations, recentSnapshots
     return age > w.min * 60000 && age < w.max * 60000;
   });
 
-  // Deduplicate: batch-check which predictions were already verified (1 Redis call instead of N)
+  // Deduplicate: batch-check which predictions were already verified
   const dedupKeys = verificationsNeeded.map(p => `${p.lakeId}:${p.eventType}:${p.timestamp}`);
   let alreadyVerifiedFlags = [];
   if (dedupKeys.length > 0) {
-    try {
-      alreadyVerifiedFlags = await redisCmd('SMISMEMBER', VERIFIED_SET_KEY, ...dedupKeys);
-    } catch {
-      // Fallback for Redis versions without SMISMEMBER
-      alreadyVerifiedFlags = await Promise.all(dedupKeys.map(k => redisCmd('SISMEMBER', VERIFIED_SET_KEY, k)));
+    const result = await redisCmd('SMISMEMBER', VERIFIED_SET_KEY, ...dedupKeys);
+    if (Array.isArray(result)) {
+      alreadyVerifiedFlags = result;
+    } else {
+      // SMISMEMBER returned null/non-array — fall back to individual checks
+      alreadyVerifiedFlags = await Promise.all(
+        dedupKeys.map(async k => {
+          const v = await redisCmd('SISMEMBER', VERIFIED_SET_KEY, k);
+          return v ? 1 : 0;
+        })
+      );
     }
   }
   const deduped = verificationsNeeded.filter((_, i) => !alreadyVerifiedFlags[i]);
@@ -1895,10 +1901,14 @@ async function runServerLearningCycle(redisCmd, currentStations, recentSnapshots
     accuracyRecords = verifyPredictions(deduped, currentStations, lakeStationMap);
   }
 
-  // Mark verified predictions in a single SADD call (1 Redis call instead of N)
+  // Mark verified predictions so they aren't re-checked
   if (deduped.length > 0) {
     const newKeys = deduped.map(p => `${p.lakeId}:${p.eventType}:${p.timestamp}`);
-    await redisCmd('SADD', VERIFIED_SET_KEY, ...newKeys);
+    // Batch in chunks of 100 to avoid exceeding Upstash REST body limits
+    for (let i = 0; i < newKeys.length; i += 100) {
+      const chunk = newKeys.slice(i, i + 100);
+      await redisCmd('SADD', VERIFIED_SET_KEY, ...chunk);
+    }
     await redisCmd('EXPIRE', VERIFIED_SET_KEY, 86400);
   }
 
