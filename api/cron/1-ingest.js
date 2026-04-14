@@ -24,7 +24,7 @@ import { getEnv, redisCommand, normalizeToMb, hasRedis } from '../lib/redis.js';
 import { triggerNextStage } from '../lib/qstash.js';
 import { WindPredictor, getModelPath } from '@utahwind/ml';
 import { WU_PRIORITY_STATIONS } from '../../packages/weather/src/config/wuPwsNetwork.js';
-import { loadTranslationModels, applyTranslations } from '../lib/serverLearning.js';
+import { loadTranslationModels, applyTranslations } from '../lib/translationModels.js';
 
 const ALL_STATIONS = ALL_STATION_IDS;
 
