@@ -35,7 +35,7 @@ export default async function handler(req, res) {
   // Public read-only actions that the frontend needs - no auth required
   const PUBLIC_ACTIONS = new Set([
     'context', 'sync', 'weights', 'nws', 'ahead', 'analogs', 
-    'models', 'propagation', 'pws-history', 'upstream',
+    'models', 'propagation', 'pws-history', 'upstream', 'learning-diag',
   ]);
   
   // Protected actions require internal API key
@@ -87,6 +87,7 @@ export default async function handler(req, res) {
     case 'models':       return handleModels(res);
     case 'propagation':  return handlePropagation(res);
     case 'pws-history':  return handlePWSHistory(res);
+    case 'learning-diag': return handleLearningDiag(res);
     default:
       return res.status(400).json({ error: `Unknown action: ${action}` });
   }
@@ -406,6 +407,50 @@ async function handlePWSHistory(res) {
     return res.status(200).json({
       backfill,
       sessionThresholds: { kiting: 10, foil_kiting: 8, paragliding: 5, light_wind: 6 },
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+}
+
+async function handleLearningDiag(res) {
+  try {
+    const keys = [
+      'weights:server', 'learning:meta', 'pred:index', 'accuracy:log', 'verified:predictions',
+    ];
+    const [weightsRaw, metaRaw, predIndexRaw, accLogRaw, verifiedRaw] = await Promise.all(
+      keys.map(k => redisCommand(k === 'pred:index' ? 'LRANGE' : k === 'accuracy:log' ? 'LLEN' : k === 'verified:predictions' ? 'SCARD' : 'GET', k, ...(k === 'pred:index' ? ['0', '5'] : [])))
+    );
+
+    const weights = weightsRaw ? JSON.parse(weightsRaw) : null;
+    const meta = metaRaw ? JSON.parse(metaRaw) : null;
+    const predKeys = Array.isArray(predIndexRaw) ? predIndexRaw : [];
+    const accLogLen = typeof accLogRaw === 'number' ? accLogRaw : 0;
+    const verifiedCount = typeof verifiedRaw === 'number' ? verifiedRaw : 0;
+
+    let latestPred = null;
+    if (predKeys.length > 0) {
+      const raw = await redisCommand('GET', predKeys[0]);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        latestPred = {
+          key: predKeys[0],
+          timestamp: parsed.timestamp,
+          count: parsed.predictions?.length || 0,
+          sample: parsed.predictions?.slice(0, 3),
+        };
+      }
+    }
+
+    res.setHeader('Cache-Control', 'no-cache');
+    return res.status(200).json({
+      weightsExist: !!weights,
+      weightKeys: weights ? Object.keys(weights) : null,
+      meta,
+      predictionKeys: predKeys,
+      latestPrediction: latestPred,
+      accuracyLogLength: accLogLen,
+      verifiedSetSize: verifiedCount,
     });
   } catch (error) {
     return res.status(500).json({ error: error.message });
