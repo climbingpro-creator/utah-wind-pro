@@ -16,7 +16,6 @@
 
 import { runServerLearningCycle, evaluateAndAdjustWindows, storeWindowPredictions, loadWeights, saveWeights } from '../lib/serverLearning.js';
 import { findAllSportWindows } from '../../packages/weather/src/SportIntelligenceEngine.js';
-import { generateWindField } from '../../packages/weather/src/services/WindFieldEngine.js';
 import CrossValidationEngine from '../../packages/weather/src/services/CrossValidationEngine.js';
 import { analyzeFromStations, analyzeAllSpots, storePropagationSnapshot, learnFromPropagation } from '../lib/serverPropagation.js';
 import { buildStatisticalModels } from '../lib/historicalAnalysis.js';
@@ -166,37 +165,57 @@ export default async function handler(req, res) {
       let fieldCount = 0;
       const fieldErrors = [];
 
+      // Build server-side wind fields from NWS hourly forecast + live observations
+      let nwsForecasts = null;
+      try {
+        const nwsRaw = await redisCommand('GET', 'nws:forecasts');
+        if (nwsRaw) nwsForecasts = JSON.parse(nwsRaw);
+      } catch { /* non-fatal */ }
+
       for (const locId of WIND_FIELD_LOCATIONS) {
         try {
           const obsForLoc = latest.observations?.[locId];
           const primaryObs = obsForLoc?.[0];
-          const currentWind = primaryObs
-            ? { speed: primaryObs.windSpeed ?? 0, direction: primaryObs.windDirection ?? 0 }
-            : {};
+          const now = new Date();
+          const currentHour = now.getUTCHours() - 6; // Approx MST
 
-          const kslc = mesoData['KSLC'] || {};
-          const kpvu = mesoData['KPVU'] || {};
-          const upstreamData = {
-            kslcSpeed: kslc.speed, kslcDirection: kslc.direction,
-            kpvuSpeed: kpvu.speed, kpvuDirection: kpvu.direction,
-          };
+          // Use NWS hourly forecast as the backbone
+          const nwsGrid = nwsForecasts?.grids?.[locId] || nwsForecasts?.grids?.['utah-lake'];
+          const nwsHourly = (nwsGrid?.mlHourly || nwsGrid?.hourly || []);
 
-          const field = await generateWindField(locId, currentWind, upstreamData, {}, mesoData);
-          if (field?.hours?.length) {
+          const hours = [];
+          for (let offset = 0; offset < 24; offset++) {
+            const h = (currentHour + offset + 24) % 24;
+            const nwsH = nwsHourly.find(fh => fh.localHour === h);
+            if (offset === 0 && primaryObs) {
+              hours.push({
+                hour: h, offset,
+                speed: primaryObs.windSpeed ?? nwsH?.speed ?? 0,
+                gust: primaryObs.windGust ?? null,
+                direction: primaryObs.windDirection ?? nwsH?.dirDeg ?? 0,
+                confidence: 'observed', source: 'station',
+                phase: h >= 10 && h <= 16 ? 'thermal' : h >= 6 && h < 10 ? 'building' : 'calm',
+              });
+            } else if (nwsH) {
+              hours.push({
+                hour: h, offset,
+                speed: nwsH.speed ?? 0, gust: null,
+                direction: nwsH.dirDeg ?? 0,
+                confidence: offset < 6 ? 'high' : 'moderate', source: 'nws',
+                phase: h >= 10 && h <= 16 ? 'thermal' : h >= 6 && h < 10 ? 'building' : 'calm',
+              });
+            }
+          }
+
+          if (hours.length > 0) {
             const compact = {
               locationId: locId,
-              generatedAt: field.generatedAt,
-              translation: field.translation?.factor ?? null,
-              frontalActive: field.frontalActive ?? false,
-              thermalPrediction: field.thermalPrediction ?? null,
-              currentHour: field.hours[0],
-              hours: field.hours.map(h => ({
-                hour: h.hour, offset: h.offset,
-                speed: h.speed, gust: h.gust,
-                direction: h.direction,
-                confidence: h.confidence, source: h.source,
-                phase: h.phase,
-              })),
+              generatedAt: now.toISOString(),
+              translation: null,
+              frontalActive: false,
+              thermalPrediction: null,
+              currentHour: hours[0],
+              hours,
             };
 
             await redisCommand('SET', `wind:field:${locId}`, JSON.stringify(compact));
