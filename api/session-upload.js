@@ -90,7 +90,6 @@ export default async function handler(req, res) {
       user_id:           userId,
       device_id:         deviceId,
       spot_id:           spotId,
-      activity_type:     activityType,
       rider_name:        body.rider_name || null,
       gear_setup:        body.gear_setup || null,
       duration_s:        body.duration_s || 0,
