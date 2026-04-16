@@ -118,8 +118,8 @@ export default async function handler(req, res) {
       .single();
 
     if (error) {
-      console.error('[session-upload] insert error:', error.message);
-      return res.status(500).json({ error: 'Failed to store session' });
+      console.error('[session-upload] insert error:', error.message, error.details, error.hint);
+      return res.status(500).json({ error: 'Failed to store session', detail: error.message });
     }
 
     const sessionId = data.id;
