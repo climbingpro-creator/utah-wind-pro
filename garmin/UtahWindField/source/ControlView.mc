@@ -84,8 +84,19 @@ class ControlView extends WatchUi.View {
             // Clock
             var timeStr = _getClock();
             dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(cx, H * 80 / 100, Graphics.FONT_XTINY,
+            dc.drawText(cx, H * 78 / 100, Graphics.FONT_XTINY,
                 timeStr, Graphics.TEXT_JUSTIFY_CENTER);
+
+            // Device ID (truncated for display, needed for account linking)
+            var devId = System.getDeviceSettings().uniqueIdentifier;
+            if (devId != null) {
+                var idStr = devId.toString();
+                if (idStr.length() > 8) {
+                    idStr = idStr.substring(0, 8);
+                }
+                dc.drawText(cx, H * 90 / 100, Graphics.FONT_XTINY,
+                    "ID: " + idStr, Graphics.TEXT_JUSTIFY_CENTER);
+            }
 
         } else {
             // ── IN SESSION: Timer + pause/resume ─────────────────

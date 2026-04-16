@@ -3,6 +3,7 @@ using Toybox.Graphics;
 using Toybox.Application;
 using Toybox.System;
 using Toybox.Math;
+using Toybox.Timer;
 
 //! Post-Session Review — pushed after STOP
 //!
@@ -33,15 +34,37 @@ class ReviewView extends WatchUi.View {
     var hangBest    = 0.0;
     var crashesFiltered = 0;
     var tempC       = null;
-    var uploadStatus = "...";
+    var uploadStatus = "Uploading...";
 
     // GPS track data (copied from MapView)
     var trackLats;
     var trackLons;
     var trackCount = 0;
 
+    // Upload polling
+    hidden var _uploader = null;
+    hidden var _pollTimer = null;
+
     function initialize() {
         View.initialize();
+    }
+
+    function setUploader(uploader) {
+        _uploader = uploader;
+        _pollTimer = new Timer.Timer();
+        _pollTimer.start(method(:onUploadPoll), 1500, true);
+    }
+
+    function onUploadPoll() as Void {
+        if (_uploader == null) { return; }
+        if (_uploader.uploadStatus.equals("SUCCESS")) {
+            uploadStatus = _uploader.uploadMsg;
+            _pollTimer.stop();
+        } else if (_uploader.uploadStatus.equals("FAILED")) {
+            uploadStatus = "FAIL " + _uploader.uploadMsg;
+            _pollTimer.stop();
+        }
+        WatchUi.requestUpdate();
     }
 
     function onLayout(dc) {

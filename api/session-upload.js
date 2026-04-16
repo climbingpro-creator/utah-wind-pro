@@ -20,14 +20,18 @@ const ALLOWED_ORIGINS = [
 ];
 
 const TYPE_TO_ACTIVITY = {
-  kite_session:      'kiting',
-  snowkite_session:  'snowkiting',
-  windsurf_session:  'windsurfing',
-  sail_session:      'sailing',
-  boat_session:      'boating',
-  paddle_session:    'paddling',
-  paraglide_session: 'paragliding',
-  fish_session:      'fishing',
+  kite_session:        'kiting',
+  kiting_session:      'kiting',
+  snowkite_session:    'snowkiting',
+  snowkiting_session:  'snowkiting',
+  windsurf_session:    'windsurfing',
+  windsurfing_session: 'windsurfing',
+  wingfoil_session:    'wingfoil',
+  sail_session:        'sailing',
+  boat_session:        'boating',
+  paddle_session:      'paddling',
+  paraglide_session:   'paragliding',
+  fish_session:        'fishing',
 };
 
 export default async function handler(req, res) {
@@ -64,7 +68,7 @@ export default async function handler(req, res) {
     const activityType = body && TYPE_TO_ACTIVITY[body.type];
     if (!activityType) {
       return res.status(400).json({
-        error: `Invalid payload: type must be one of ${Object.keys(TYPE_TO_ACTIVITY).join(', ')}`,
+        error: `Invalid payload: type="${body?.type}" not recognized`,
       });
     }
 

@@ -382,7 +382,7 @@ class KiteSessionApp extends Application.AppBase {
             payload.put("gear_setup", gearSetup);
         }
         uploader.upload(payload);
-        review.uploadStatus = "Uploading...";
+        review.setUploader(uploader);
 
         // Push the review screen (replaces the ViewLoop)
         WatchUi.switchToView(review, new ReviewDelegate(review), WatchUi.SLIDE_UP);

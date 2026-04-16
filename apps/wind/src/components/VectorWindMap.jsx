@@ -401,7 +401,8 @@ function WindArrowOverlay({ center, direction, speed }) {
       />
       <Layer id="wind-arrow-shaft" type="line"
         filter={['==', ['get', 'kind'], 'shaft']}
-        paint={{ 'line-color': '#22d3ee', 'line-width': 3.5, 'line-opacity': 0.85, 'line-cap': 'round' }}
+        layout={{ 'line-cap': 'round' }}
+        paint={{ 'line-color': '#22d3ee', 'line-width': 3.5, 'line-opacity': 0.85 }}
       />
       <Layer id="wind-arrow-head-fill" type="fill"
         filter={['==', ['get', 'kind'], 'head']}
