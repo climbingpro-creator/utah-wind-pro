@@ -1,6 +1,6 @@
 import { precacheAndRoute, cleanupOutdatedCaches } from 'workbox-precaching';
 import { registerRoute } from 'workbox-routing';
-import { NetworkFirst } from 'workbox-strategies';
+import { NetworkFirst, NetworkOnly } from 'workbox-strategies';
 import { ExpirationPlugin } from 'workbox-expiration';
 
 self.addEventListener('install', () => self.skipWaiting());
@@ -14,6 +14,16 @@ self.addEventListener('message', (event) => {
 
 precacheAndRoute(self.__WB_MANIFEST);
 cleanupOutdatedCaches();
+
+// Server-rendered pages must bypass the SW so Vercel rewrites reach the API
+registerRoute(
+  ({ request, url }) =>
+    request.mode === 'navigate' &&
+    (/^\/day\//.test(url.pathname) ||
+     /^\/session\//.test(url.pathname) ||
+     /^\/year\//.test(url.pathname)),
+  new NetworkOnly()
+);
 
 // ── API caching: network-first with 3s timeout, cached fallback ──
 const API_TIMEOUT_MS = 3000;
