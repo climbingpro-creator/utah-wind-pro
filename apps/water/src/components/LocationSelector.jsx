@@ -33,6 +33,23 @@ const UTAH_WATERS = [
   { id: 'scofield', name: 'Scofield', type: 'reservoir', region: 'Utah' },
   { id: 'sand-hollow', name: 'Sand Hollow', type: 'reservoir', region: 'Utah' },
   { id: 'fish-lake', name: 'Fish Lake', type: 'lake', region: 'Utah' },
+  { id: 'kolob', name: 'Kolob Reservoir', type: 'reservoir', region: 'Iron' },
+  { id: 'navajo-lake', name: 'Navajo Lake', type: 'lake', region: 'Kane' },
+  { id: 'panguitch-lake', name: 'Panguitch Lake', type: 'lake', region: 'Garfield' },
+  { id: 'wide-hollow', name: 'Wide Hollow Reservoir', type: 'reservoir', region: 'Garfield' },
+  { id: 'gunlock', name: 'Gunlock Reservoir', type: 'reservoir', region: 'Washington' },
+  { id: 'enterprise', name: 'Enterprise Reservoir', type: 'reservoir', region: 'Washington' },
+  { id: 'willard-bay', name: 'Willard Bay', type: 'reservoir', region: 'Box Elder' },
+  { id: 'echo', name: 'Echo Reservoir', type: 'reservoir', region: 'Summit' },
+  { id: 'rockport', name: 'Rockport Reservoir', type: 'reservoir', region: 'Summit' },
+  { id: 'east-canyon', name: 'East Canyon Reservoir', type: 'reservoir', region: 'Morgan' },
+  { id: 'hyrum', name: 'Hyrum Reservoir', type: 'reservoir', region: 'Cache' },
+  { id: 'otter-creek', name: 'Otter Creek Reservoir', type: 'reservoir', region: 'Piute' },
+  { id: 'piute', name: 'Piute Reservoir', type: 'reservoir', region: 'Piute' },
+  { id: 'minersville', name: 'Minersville Reservoir', type: 'reservoir', region: 'Beaver' },
+  { id: 'steinaker', name: 'Steinaker Reservoir', type: 'reservoir', region: 'Uintah' },
+  { id: 'red-fleet', name: 'Red Fleet Reservoir', type: 'reservoir', region: 'Uintah' },
+  { id: 'quail-creek', name: 'Quail Creek Reservoir', type: 'reservoir', region: 'Washington' },
 ];
 
 const TYPE_ICON = { river: '🏞️', lake: '💧', reservoir: '💧', ocean: '🌊', bay: '🌊' };

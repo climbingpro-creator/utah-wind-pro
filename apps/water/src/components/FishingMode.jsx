@@ -893,6 +893,118 @@ export const FISHING_LOCATIONS = {
     regulations: 'Standard Utah warm-water regs',
     tips: 'Dixie warm-water fishery. Year-round bass fishing in southern Utah.',
   },
+  'kolob': {
+    id: 'kolob', name: 'Kolob Reservoir', region: 'Iron', elevation: 8100,
+    coordinates: { lat: 37.4488, lng: -113.0488 }, type: 'reservoir',
+    species: ['Brook Trout', 'Cutthroat Trout', 'Rainbow Trout'],
+    primarySpecies: 'Brook Trout',
+    bestMonths: [6, 7, 8, 9],
+    iceOff: 'Late May',
+    depths: {
+      spring: { min: 3, max: 12, description: 'Shallow shoreline after ice-off' },
+      summer: { min: 5, max: 20, description: 'Cool inlets and shade' },
+      fall: { min: 5, max: 15, description: 'Pre-ice staging' },
+      winter: { min: 8, max: 20, description: 'Ice fishing mid-depth' },
+    },
+    spawning: { 'Brook Trout': { months: [9, 10], location: 'Inlet streams', behavior: 'Fall spawner — moves to tributaries' } },
+    structure: [
+      { type: 'Inlet Streams', description: 'Brook trout staging areas', bestFor: ['Brook Trout'] },
+      { type: 'Submerged Timber', description: 'Fallen trees along shoreline', bestFor: ['Cutthroat Trout', 'Rainbow Trout'] },
+    ],
+    hotspots: [
+      { name: 'North Inlet', description: 'Cold tributary inflow — holds fish all season', species: ['Brook Trout', 'Cutthroat Trout'], coordinates: { lat: 37.455, lng: -113.045 } },
+      { name: 'Dam Face', description: 'Deepest water — best in summer', species: ['Rainbow Trout'], coordinates: { lat: 37.443, lng: -113.055 } },
+    ],
+    regulations: 'Artificial flies and lures only. Trout limit 4 (only 2 may be cutthroat).',
+    tips: 'High-elevation backcountry reservoir near Kolob Canyon. Dirt road access — check conditions. Best June through September.',
+  },
+  'wide-hollow': {
+    id: 'wide-hollow', name: 'Wide Hollow Reservoir', region: 'Garfield', elevation: 6600,
+    coordinates: { lat: 37.76, lng: -111.61 }, type: 'reservoir',
+    species: ['Rainbow Trout', 'Bluegill', 'Largemouth Bass'],
+    primarySpecies: 'Rainbow Trout',
+    bestMonths: [4, 5, 6, 9, 10],
+    depths: { spring: { min: 3, max: 10, description: 'Post ice-off shallows' }, summer: { min: 8, max: 20, description: 'Deeper shade' }, fall: { min: 5, max: 12, description: 'Cooling bays' } },
+    spawning: {},
+    structure: [
+      { type: 'Dam Structure', description: 'Deepest section', bestFor: ['Rainbow Trout'] },
+    ],
+    hotspots: [
+      { name: 'Escalante End', description: 'Town side access', species: ['Rainbow Trout', 'Bluegill'], coordinates: { lat: 37.76, lng: -111.60 } },
+    ],
+    regulations: 'Standard Utah regs',
+    tips: 'Small community reservoir near Escalante. Great family fishing spot.',
+  },
+  'gunlock': {
+    id: 'gunlock', name: 'Gunlock Reservoir', region: 'Washington', elevation: 3600,
+    coordinates: { lat: 37.28, lng: -113.74 }, type: 'reservoir',
+    species: ['Largemouth Bass', 'Bluegill', 'Channel Catfish'],
+    primarySpecies: 'Largemouth Bass',
+    bestMonths: [3, 4, 5, 10, 11],
+    depths: { spring: { min: 3, max: 10, description: 'Warm shallows' }, summer: { min: 8, max: 20, description: 'Deep shade' }, fall: { min: 5, max: 12, description: 'Cooling transition' } },
+    spawning: { 'Largemouth Bass': { months: [4, 5], location: 'Coves', behavior: 'Spring beds in warm Dixie water' } },
+    structure: [
+      { type: 'Rocky Coves', description: 'Bass ambush points', bestFor: ['Largemouth Bass'] },
+    ],
+    hotspots: [
+      { name: 'Main Arm', description: 'Deepest bass water', species: ['Largemouth Bass', 'Channel Catfish'], coordinates: { lat: 37.28, lng: -113.74 } },
+    ],
+    regulations: 'Standard Utah warm-water regs',
+    tips: 'Low-elevation Dixie reservoir. Warms early — great early spring bass.',
+  },
+  'enterprise': {
+    id: 'enterprise', name: 'Enterprise Reservoir', region: 'Washington', elevation: 5500,
+    coordinates: { lat: 37.53, lng: -113.73 }, type: 'reservoir',
+    species: ['Rainbow Trout', 'Brown Trout'],
+    primarySpecies: 'Rainbow Trout',
+    bestMonths: [4, 5, 6, 9, 10],
+    depths: { spring: { min: 3, max: 12, description: 'Post ice-off' }, summer: { min: 10, max: 25, description: 'Deep cool water' }, fall: { min: 5, max: 15, description: 'Cooling shallows' } },
+    spawning: {},
+    structure: [
+      { type: 'Dam Face', description: 'Deepest section', bestFor: ['Rainbow Trout'] },
+    ],
+    hotspots: [
+      { name: 'Inlet', description: 'Stream inflow area', species: ['Rainbow Trout', 'Brown Trout'], coordinates: { lat: 37.535, lng: -113.725 } },
+    ],
+    regulations: 'Standard Utah regs',
+    tips: 'Mid-elevation reservoir between Cedar City and St. George. Good trout stocking.',
+  },
+  'navajo-lake': {
+    id: 'navajo-lake', name: 'Navajo Lake', region: 'Kane', elevation: 9100,
+    coordinates: { lat: 37.52, lng: -112.80 }, type: 'lake',
+    species: ['Rainbow Trout', 'Brook Trout', 'Splake'],
+    primarySpecies: 'Rainbow Trout',
+    bestMonths: [6, 7, 8, 9],
+    iceOff: 'Late May',
+    depths: { spring: { min: 5, max: 15, description: 'Post ice-off flats' }, summer: { min: 8, max: 25, description: 'Mid-depth cool zones' }, fall: { min: 5, max: 15, description: 'Pre-freeze staging' } },
+    spawning: { 'Brook Trout': { months: [9, 10], location: 'Springs and seeps', behavior: 'Fall spawner in cold inflows' } },
+    structure: [
+      { type: 'Sinkhole Structure', description: 'Unique lava-tube geology', bestFor: ['Rainbow Trout', 'Splake'] },
+    ],
+    hotspots: [
+      { name: 'East End', description: 'Sinkhole area with unique structure', species: ['Rainbow Trout', 'Splake'], coordinates: { lat: 37.52, lng: -112.78 } },
+    ],
+    regulations: 'Standard Utah trout regs. Check for special restrictions.',
+    tips: 'High-altitude sinkhole lake on Cedar Mountain. Short season June–October. Beautiful setting.',
+  },
+  'panguitch-lake': {
+    id: 'panguitch-lake', name: 'Panguitch Lake', region: 'Garfield', elevation: 8200,
+    coordinates: { lat: 37.72, lng: -112.64 }, type: 'lake',
+    species: ['Rainbow Trout', 'Cutthroat Trout', 'Brown Trout'],
+    primarySpecies: 'Rainbow Trout',
+    bestMonths: [5, 6, 9, 10],
+    iceOff: 'Mid-May',
+    depths: { spring: { min: 3, max: 12, description: 'Shallow bays after ice-off' }, summer: { min: 10, max: 25, description: 'Weed edges and thermocline' }, fall: { min: 5, max: 15, description: 'Cooling migration' } },
+    spawning: { 'Brown Trout': { months: [10, 11], location: 'Creek inlets', behavior: 'Fall run up tributaries' } },
+    structure: [
+      { type: 'Weed Beds', description: 'Extensive vegetation', bestFor: ['Rainbow Trout', 'Cutthroat Trout'] },
+    ],
+    hotspots: [
+      { name: 'Blue Springs Creek Inlet', description: 'Major tributary inflow', species: ['Rainbow Trout', 'Brown Trout'], coordinates: { lat: 37.725, lng: -112.65 } },
+    ],
+    regulations: 'Standard Utah trout regs',
+    tips: 'Premier southern Utah trout lake. Great trolling and fly fishing. Ice fishing popular in winter.',
+  },
 };
 
 // Legacy aliases — old IDs resolve to the correct segment

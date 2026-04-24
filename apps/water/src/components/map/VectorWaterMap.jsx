@@ -908,6 +908,13 @@ export function VectorWaterMap({ currentWeatherData = {}, selectedLocation, onLo
             if (onLocationSelect && matchedId !== selectedLocation) {
               onLocationSelect(matchedId);
             }
+          } else if (clickedFeatureName && onLocationSelect) {
+            const dynamicId = clickedFeatureName.toLowerCase().trim()
+              .replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+            if (dynamicId && dynamicId !== selectedLocation) {
+              profile.matchedLocationId = dynamicId;
+              onLocationSelect(dynamicId);
+            }
           }
         }
         setFishProfile(profile);
