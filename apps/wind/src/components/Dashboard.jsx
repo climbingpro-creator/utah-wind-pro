@@ -103,10 +103,19 @@ function ManageSubscriptionFooter({ isPro, rawTier }) {
  * ExtendedOutlook - Consolidated Weekly Forecasts
  * Combines: WeekPlanner, WeeklyBestDays, FiveDayForecast
  */
-function ExtendedOutlook({ selectedActivity, selectedLake }) {
+function ExtendedOutlook({ selectedActivity, selectedLake, lakeState, isLoading }) {
   const [activeTab, setActiveTab] = useState('planner');
   const { theme } = useTheme();
   const isDark = theme === 'dark';
+
+  const fiveDayConditions = useMemo(() => {
+    if (!lakeState) return null;
+    return {
+      pressure: lakeState.pws?.pressure || lakeState.pressure?.high?.value,
+      temperature: lakeState.pws?.temperature,
+      pressureGradient: lakeState.pressure?.gradient,
+    };
+  }, [lakeState]);
 
   const tabs = [
     { id: 'planner', label: 'Week Planner', icon: Calendar },
@@ -150,12 +159,12 @@ function ExtendedOutlook({ selectedActivity, selectedLake }) {
         )}
         {activeTab === 'bestdays' && (
           <SafeComponent name="Weekly Best Days">
-            <WeeklyBestDays selectedActivity={selectedActivity} />
+            <WeeklyBestDays selectedActivity={selectedActivity} locationId={selectedLake} />
           </SafeComponent>
         )}
         {activeTab === 'forecast' && (
           <SafeComponent name="5-Day Forecast">
-            <FiveDayForecast locationId={selectedLake} />
+            <FiveDayForecast conditions={fiveDayConditions} isLoading={isLoading} />
           </SafeComponent>
         )}
       </Suspense>
@@ -756,7 +765,7 @@ export function Dashboard() {
         </Suspense>
 
         {/* Extended Outlook - Consolidated Weekly Forecasts */}
-        <ExtendedOutlook selectedActivity={selectedActivity} selectedLake={selectedLake} />
+        <ExtendedOutlook selectedActivity={selectedActivity} selectedLake={selectedLake} lakeState={lakeState} isLoading={isLoading} />
 
         {error && (
           <div className="card !border-red-500/30 p-4">

@@ -1,12 +1,103 @@
-import React from 'react';
-import { Calendar, Wind, Waves, Sun, Cloud, CloudRain, AlertTriangle } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Calendar, Wind, Waves, Sun, Cloud, CloudRain, AlertTriangle, Loader2 } from 'lucide-react';
 import { ACTIVITY_CONFIGS } from './ActivityMode';
+import { get7DayForecast } from '@utahwind/weather';
+import { analyzeDailyTrends, findPreFrontalDays } from '../services/PatternLogic';
 
-const WeeklyBestDays = ({ weeklyForecast, selectedActivity = 'kiting' }) => {
+const WIND_SEEKING = new Set(['kiting', 'sailing', 'windsurfing', 'snowkiting']);
+
+function parseAvgWind(windSpeedStr) {
+  if (!windSpeedStr) return 0;
+  const nums = windSpeedStr.match(/\d+/g);
+  if (!nums || nums.length === 0) return 0;
+  return nums.reduce((s, n) => s + Number(n), 0) / nums.length;
+}
+
+function classifyWeather(shortForecast) {
+  if (!shortForecast) return 'sunny';
+  const f = shortForecast.toLowerCase();
+  if (f.includes('rain') || f.includes('shower') || f.includes('storm')) return 'rainy';
+  if (f.includes('wind')) return 'windy';
+  if (f.includes('mostly cloudy') || f.includes('overcast')) return 'cloudy';
+  if (f.includes('partly') || f.includes('cloud')) return 'partly_cloudy';
+  return 'sunny';
+}
+
+function scoreDayForAllActivities(day, preFrontalSet) {
+  const activities = Object.keys(ACTIVITY_CONFIGS);
+  const scores = {};
+  const wind = parseAvgWind(day.windSpeed);
+  const isPF = preFrontalSet.has(day.name);
+  const pattern = day.trendPattern?.type || 'CALM';
+
+  for (const act of activities) {
+    let score = 30;
+    const wantWind = WIND_SEEKING.has(act);
+    if (isPF) {
+      score = wantWind ? 90 : 25;
+    } else if (pattern === 'THERMAL_SETUP') {
+      score = wantWind ? 75 : 35;
+    } else if (pattern === 'POST_FRONTAL') {
+      score = wantWind ? 55 : 40;
+    } else if (pattern === 'SUSTAINED_WIND') {
+      score = wantWind ? 70 : 20;
+    } else {
+      score = wantWind ? (wind >= 12 ? 60 : wind >= 8 ? 40 : 20) : (wind <= 8 ? 70 : wind <= 15 ? 45 : 15);
+    }
+    if (act === 'fishing') score = wind <= 10 ? 75 : wind <= 18 ? 50 : 25;
+    scores[act] = { score };
+  }
+  return scores;
+}
+
+const WeeklyBestDays = ({ selectedActivity = 'kiting', locationId = 'utah-lake' }) => {
   const config = ACTIVITY_CONFIGS[selectedActivity];
-  const days = weeklyForecast;
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [rawForecast, setRawForecast] = useState(null);
 
-  if (!days || days.length === 0) {
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      setLoading(true);
+      try {
+        const data = await get7DayForecast(locationId);
+        if (!cancelled) setRawForecast(data);
+      } catch (e) {
+        if (!cancelled) setError(e.message);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    load();
+    return () => { cancelled = true; };
+  }, [locationId]);
+
+  const days = useMemo(() => {
+    if (!rawForecast) return null;
+    const annotated = analyzeDailyTrends(rawForecast);
+    const preFrontalDays = findPreFrontalDays(annotated);
+    const preFrontalSet = new Set(preFrontalDays.map(pf => pf.day.name));
+    const daytime = annotated.filter(p => p.isDaytime);
+    const today = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+
+    return daytime.slice(0, 7).map(d => {
+      const activityScores = scoreDayForAllActivities(d, preFrontalSet);
+      const bestAct = Object.entries(activityScores).reduce((b, [k, v]) => v.score > (b.score || 0) ? { act: k, score: v.score } : b, { act: 'kiting', score: 0 });
+      return {
+        dayName: d.name?.split?.(' ')?.[0] || d.name,
+        dateStr: '',
+        weather: classifyWeather(d.shortForecast),
+        avgWind: Math.round(parseAvgWind(d.windSpeed)),
+        windType: d.trendPattern?.type?.toLowerCase()?.replace(/_/g, ' ') || 'calm',
+        isToday: d.name === today || d.name?.startsWith?.('This'),
+        bestActivity: bestAct.act,
+        activityScores,
+      };
+    });
+  }, [rawForecast]);
+
+  if (loading || !days || days.length === 0) {
     return (
       <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
         <div className="flex items-center gap-2 mb-3">
@@ -15,8 +106,8 @@ const WeeklyBestDays = ({ weeklyForecast, selectedActivity = 'kiting' }) => {
           <span className="text-lg">{config.icon}</span>
         </div>
         <div className="text-center py-6 text-slate-400 text-sm">
-          <Wind className="w-6 h-6 mx-auto mb-2 opacity-40" />
-          Weekly forecast data is loading or not yet available.
+          {loading ? <Loader2 className="w-6 h-6 mx-auto mb-2 animate-spin opacity-40" /> : <Wind className="w-6 h-6 mx-auto mb-2 opacity-40" />}
+          {loading ? 'Loading weekly forecast...' : 'Weekly forecast data not available.'}
         </div>
       </div>
     );
