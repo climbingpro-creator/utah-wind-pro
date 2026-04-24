@@ -347,10 +347,9 @@ function WaterApp() {
   }, []);
 
   useEffect(() => {
-    if (supabase) {
-      initAnalytics(supabase);
-      trackPageView('water');
-    }
+    const apiOrigin = import.meta.env.VITE_API_ORIGIN || '';
+    initAnalytics(supabase, { apiOrigin });
+    trackPageView('water');
   }, []);
 
   const [sportWindows, setSportWindows] = useState(null);

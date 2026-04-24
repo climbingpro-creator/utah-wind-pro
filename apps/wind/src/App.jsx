@@ -89,10 +89,9 @@ function AppShell() {
 
   useEffect(() => {
     dataCollector.start();
-    if (supabase) {
-      initAnalytics(supabase);
-      trackPageView('wind');
-    }
+    const apiOrigin = import.meta.env.VITE_API_ORIGIN || '';
+    initAnalytics(supabase, { apiOrigin });
+    trackPageView('wind');
     return () => { dataCollector.stop(); };
   }, []);
 

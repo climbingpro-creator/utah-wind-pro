@@ -1,21 +1,18 @@
 /**
  * Lightweight analytics event tracker.
- * Every event is flushed to Supabase immediately — no batching delays.
- * Uses fetch with keepalive on page unload as a safety net.
+ * POSTs events to /api/track which inserts server-side with the
+ * service-role key, bypassing RLS. Every event fires immediately.
  */
 
-let _supabase = null;
-let _supabaseUrl = null;
-let _supabaseKey = null;
+let _apiOrigin = '';
 let _pending = [];
 
-export function initAnalytics(supabaseClient) {
-  _supabase = supabaseClient;
+export function initAnalytics(_supabaseClient, opts = {}) {
+  if (opts.apiOrigin) _apiOrigin = opts.apiOrigin;
 
-  try {
-    _supabaseUrl = supabaseClient.supabaseUrl;
-    _supabaseKey = supabaseClient.supabaseKey;
-  } catch (_) { /* older client versions */ }
+  if (_pending.length > 0) {
+    sendBatch(_pending.splice(0));
+  }
 
   if (typeof window !== 'undefined') {
     window.addEventListener('visibilitychange', () => {
@@ -23,23 +20,18 @@ export function initAnalytics(supabaseClient) {
     });
     window.addEventListener('beforeunload', beaconFlush);
   }
-
-  if (_pending.length > 0) flushAll();
 }
 
-function sendToSupabase(rows) {
-  if (!_supabase || rows.length === 0) return;
-  _supabase.from('analytics_events').insert(rows).then(({ error }) => {
-    if (error) console.warn('[analytics] insert error:', error.message);
+function sendBatch(rows) {
+  const url = `${_apiOrigin}/api/track`;
+  fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(rows),
+    keepalive: true,
   }).catch((err) => {
-    console.warn('[analytics] network error:', err?.message);
+    console.warn('[analytics] send error:', err?.message);
   });
-}
-
-function flushAll() {
-  if (_pending.length === 0) return;
-  const batch = _pending.splice(0);
-  sendToSupabase(batch);
 }
 
 export function trackEvent(eventType, metadata = {}) {
@@ -49,8 +41,8 @@ export function trackEvent(eventType, metadata = {}) {
     created_at: new Date().toISOString(),
   };
 
-  if (_supabase) {
-    sendToSupabase([row]);
+  if (_apiOrigin !== undefined) {
+    sendBatch([row]);
   } else {
     _pending.push(row);
   }
@@ -75,23 +67,14 @@ export function trackMapInteraction(action) {
 function beaconFlush() {
   if (_pending.length === 0) return;
   const batch = _pending.splice(0);
+  const url = `${_apiOrigin}/api/track`;
 
-  if (_supabaseUrl && _supabaseKey) {
-    try {
-      fetch(`${_supabaseUrl}/rest/v1/analytics_events`, {
-        method: 'POST',
-        headers: {
-          apikey: _supabaseKey,
-          Authorization: `Bearer ${_supabaseKey}`,
-          'Content-Type': 'application/json',
-          Prefer: 'return=minimal',
-        },
-        body: JSON.stringify(batch),
-        keepalive: true,
-      });
-    } catch (_) {}
-    return;
-  }
-
-  sendToSupabase(batch);
+  try {
+    fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(batch),
+      keepalive: true,
+    });
+  } catch (_) {}
 }
