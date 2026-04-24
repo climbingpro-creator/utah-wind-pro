@@ -471,7 +471,7 @@ export default function AdminDashboard() {
                     { label: 'Total Sessions (all time)', value: e?.totalSessions ?? '—', icon: Activity },
                     { label: 'Sessions (30d)', value: e?.sessions30d ?? '—', icon: Fish },
                     { label: 'Total Events Tracked', value: e?.totalEvents ?? '—', icon: Zap },
-                    { label: 'Map Interactions', value: e?.mapInteractions30d ?? '—', icon: Map },
+                    { label: 'Map Clicks (Pin Drops)', value: e?.mapClicks30d ?? '—', icon: Map },
                     { label: 'Feedback Items', value: fb?.total ?? '—', icon: MessageSquare },
                     { label: 'Unresolved Feedback', value: (fb?.new ?? 0) + (fb?.reviewed ?? 0), icon: AlertTriangle },
                   ].map((item) => {
