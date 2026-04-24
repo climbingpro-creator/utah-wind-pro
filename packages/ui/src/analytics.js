@@ -1,18 +1,13 @@
 /**
  * Lightweight analytics event tracker.
- * Batches events and flushes to the analytics_events Supabase table.
- *
- * Uses sendBeacon on page unload so events survive tab close.
- * Page views flush immediately to avoid loss from short visits.
+ * Every event is flushed to Supabase immediately — no batching delays.
+ * Uses fetch with keepalive on page unload as a safety net.
  */
 
 let _supabase = null;
 let _supabaseUrl = null;
 let _supabaseKey = null;
-let _queue = [];
-let _flushTimer = null;
-const FLUSH_INTERVAL = 5000;
-const MAX_BATCH = 20;
+let _pending = [];
 
 export function initAnalytics(supabaseClient) {
   _supabase = supabaseClient;
@@ -22,31 +17,47 @@ export function initAnalytics(supabaseClient) {
     _supabaseKey = supabaseClient.supabaseKey;
   } catch (_) { /* older client versions */ }
 
-  if (!_flushTimer) {
-    _flushTimer = setInterval(flush, FLUSH_INTERVAL);
-  }
   if (typeof window !== 'undefined') {
-    window.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') beaconFlush();
+    });
     window.addEventListener('beforeunload', beaconFlush);
   }
+
+  if (_pending.length > 0) flushAll();
 }
 
-function onVisibilityChange() {
-  if (document.visibilityState === 'hidden') beaconFlush();
+function sendToSupabase(rows) {
+  if (!_supabase || rows.length === 0) return;
+  _supabase.from('analytics_events').insert(rows).then(({ error }) => {
+    if (error) console.warn('[analytics] insert error:', error.message);
+  }).catch((err) => {
+    console.warn('[analytics] network error:', err?.message);
+  });
+}
+
+function flushAll() {
+  if (_pending.length === 0) return;
+  const batch = _pending.splice(0);
+  sendToSupabase(batch);
 }
 
 export function trackEvent(eventType, metadata = {}) {
-  _queue.push({
+  const row = {
     event_type: eventType,
     metadata,
     created_at: new Date().toISOString(),
-  });
-  if (_queue.length >= MAX_BATCH) flush();
+  };
+
+  if (_supabase) {
+    sendToSupabase([row]);
+  } else {
+    _pending.push(row);
+  }
 }
 
 export function trackPageView(page) {
   trackEvent('page_view', { page, referrer: document.referrer || null });
-  flush();
 }
 
 export function trackPinDrop(lat, lng, waterType) {
@@ -61,52 +72,26 @@ export function trackMapInteraction(action) {
   trackEvent('map_interaction', { action });
 }
 
-async function flush() {
-  if (!_supabase || _queue.length === 0) return;
-  const batch = _queue.splice(0, MAX_BATCH);
-  try {
-    const { error } = await _supabase.from('analytics_events').insert(batch);
-    if (error) {
-      console.warn('[analytics] flush insert error:', error.message, error.code);
-      _queue.unshift(...batch);
-    }
-  } catch (err) {
-    console.warn('[analytics] flush network error:', err?.message);
-    _queue.unshift(...batch);
-  }
-}
-
-/**
- * Fire-and-forget flush using sendBeacon — survives tab close / navigation.
- * Falls back to sync XHR if sendBeacon or Supabase URL isn't available.
- */
 function beaconFlush() {
-  if (_queue.length === 0) return;
-  const batch = _queue.splice(0, MAX_BATCH);
+  if (_pending.length === 0) return;
+  const batch = _pending.splice(0);
 
   if (_supabaseUrl && _supabaseKey) {
-    const url = `${_supabaseUrl}/rest/v1/analytics_events`;
-    const headers = {
-      apikey: _supabaseKey,
-      Authorization: `Bearer ${_supabaseKey}`,
-      'Content-Type': 'application/json',
-      Prefer: 'return=minimal',
-    };
-
     try {
-      fetch(url, {
+      fetch(`${_supabaseUrl}/rest/v1/analytics_events`, {
         method: 'POST',
-        headers,
+        headers: {
+          apikey: _supabaseKey,
+          Authorization: `Bearer ${_supabaseKey}`,
+          'Content-Type': 'application/json',
+          Prefer: 'return=minimal',
+        },
         body: JSON.stringify(batch),
         keepalive: true,
       });
-    } catch (_) {
-      _queue.unshift(...batch);
-    }
+    } catch (_) {}
     return;
   }
 
-  // Fallback: re-queue and hope the regular flush picks it up
-  _queue.unshift(...batch);
-  flush();
+  sendToSupabase(batch);
 }
