@@ -53,7 +53,7 @@ function scoreDayForAllActivities(day, preFrontalSet) {
 const WeeklyBestDays = ({ selectedActivity = 'kiting', locationId = 'utah-lake' }) => {
   const config = ACTIVITY_CONFIGS[selectedActivity];
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [_Error, setError] = useState(null);
   const [rawForecast, setRawForecast] = useState(null);
 
   useEffect(() => {
