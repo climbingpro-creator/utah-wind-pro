@@ -235,8 +235,7 @@ async function fetchWuPwsLatest() {
 }
 
 // ── Tempest WeatherFlow Stations ──
-// Public API token for shared stations — no owner auth required
-const TEMPEST_API_TOKEN = '146e4f2c-adec-4244-b711-1aeca8f46a48';
+const TEMPEST_API_TOKEN = process.env.TEMPEST_API_TOKEN || '';
 const TEMPEST_STATIONS = [
   { stationId: 114523, id: 'TEMPEST_DC', name: 'Barbed Wire Beach' },
   { stationId: 141420, id: 'TEMPEST_141420', name: 'Lindon 550 N' },

@@ -1,6 +1,22 @@
 {
   "rewrites": [
     {
+      "source": "/day/:spot/:date",
+      "destination": "https://liftforecast.com/day/:spot/:date"
+    },
+    {
+      "source": "/session/:id/edit",
+      "destination": "https://liftforecast.com/session/:id/edit"
+    },
+    {
+      "source": "/session/:id",
+      "destination": "https://liftforecast.com/session/:id"
+    },
+    {
+      "source": "/year/:spot/:year",
+      "destination": "https://liftforecast.com/year/:spot/:year"
+    },
+    {
       "source": "/api/:path*",
       "destination": "https://liftforecast.com/api/:path*"
     },

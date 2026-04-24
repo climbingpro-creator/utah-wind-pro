@@ -85,11 +85,20 @@ export default async function handler(req, res) {
         if (spot) spotId = spot.id;
       }
     }
+    if (!spotId && body.spot_slug) {
+      const { data: spot } = await supabase
+        .from('spots')
+        .select('id')
+        .eq('slug', body.spot_slug)
+        .maybeSingle();
+      if (spot) spotId = spot.id;
+    }
 
     const row = {
       user_id:           userId,
       device_id:         deviceId,
       spot_id:           spotId,
+      activity_type:     activityType,
       rider_name:        body.rider_name || null,
       gear_setup:        body.gear_setup || null,
       duration_s:        body.duration_s || 0,

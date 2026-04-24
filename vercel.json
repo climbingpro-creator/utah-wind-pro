@@ -41,11 +41,18 @@
     }
   ],
   "rewrites": [
+    { "source": "/api/day/:spot/:date", "destination": "/api/day-page?spot=:spot&date=:date" },
+    { "source": "/api/year/:spot/:year", "destination": "/api/year-page?spot=:spot&year=:year" },
+    { "source": "/api/session/:id/form", "destination": "/api/session-form?id=:id" },
+    { "source": "/api/session/:id/edit", "destination": "/api/session-edit?id=:id" },
+    { "source": "/api/session/:id/photo", "destination": "/api/session-photo?id=:id" },
+    { "source": "/api/session/:id/catch", "destination": "/api/session-catch?id=:id" },
+    { "source": "/api/session/:id", "destination": "/api/session-page?id=:id" },
     { "source": "/api/:path*", "destination": "/api/:path*" },
-    { "source": "/session/:id/edit", "destination": "/api/session/:id/form" },
-    { "source": "/session/:id", "destination": "/api/session/:id" },
-    { "source": "/day/:spot/:date", "destination": "/api/day/:spot/:date" },
-    { "source": "/year/:spot/:year", "destination": "/api/year/:spot/:year" },
+    { "source": "/session/:id/edit", "destination": "/api/session-form?id=:id" },
+    { "source": "/session/:id", "destination": "/api/session-page?id=:id" },
+    { "source": "/day/:spot/:date", "destination": "/api/day-page?spot=:spot&date=:date" },
+    { "source": "/year/:spot/:year", "destination": "/api/year-page?spot=:spot&year=:year" },
     { "source": "/privacy", "destination": "/privacy.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],

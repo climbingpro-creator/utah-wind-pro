@@ -1,6 +1,22 @@
 {
   "rewrites": [
     {
+      "source": "/day/:spot/:date",
+      "destination": "https://utah-wind-pro.vercel.app/api/day-page?spot=:spot&date=:date"
+    },
+    {
+      "source": "/year/:spot/:year",
+      "destination": "https://utah-wind-pro.vercel.app/api/year-page?spot=:spot&year=:year"
+    },
+    {
+      "source": "/session/:id/edit",
+      "destination": "https://utah-wind-pro.vercel.app/api/session-form?id=:id"
+    },
+    {
+      "source": "/session/:id",
+      "destination": "https://utah-wind-pro.vercel.app/api/session-page?id=:id"
+    },
+    {
       "source": "/api/:path*",
       "destination": "https://utah-wind-pro.vercel.app/api/:path*"
     },
