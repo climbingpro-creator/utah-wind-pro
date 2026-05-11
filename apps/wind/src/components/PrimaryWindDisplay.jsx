@@ -44,7 +44,7 @@ export default function PrimaryWindDisplay({ station, optimalDirection, isLoadin
         <span className={`text-xs ${isYourStation ? 'text-sky-500 font-medium' : 'text-[var(--text-tertiary)]'}`}>
           {stationName}
         </span>
-        {!isYourStation && !pwsUnavailable && <span className="text-[var(--text-tertiary)] text-[10px]">(MesoWest)</span>}
+        {!isYourStation && !pwsUnavailable && <span className="text-[var(--text-tertiary)] text-[10px]">(NWS)</span>}
       </div>
       
       <div className="flex items-center justify-center gap-6">

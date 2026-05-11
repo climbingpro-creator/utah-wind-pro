@@ -3,7 +3,7 @@
  * 
  * Cross-location forecast intelligence using REAL predictions from UnifiedPredictor.
  * This is NOT raw NWS data - it uses the full prediction pipeline:
- * - Live sensor data from PWS, MesoWest, UDOT networks
+ * - Live sensor data from PWS, NWS, WU, UDOT networks
  * - Trained weights from years of historical data
  * - Pattern recognition and regime classification
  * - Calibration curves and learned biases

@@ -702,7 +702,7 @@ export default function AdminDashboard() {
               <>
                 {/* Station Health KPIs */}
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                  <KPICard icon={Radio} label="Synoptic Stations" value={systemHealth.totalStations} color="sky"
+                  <KPICard icon={Radio} label="NWS + Free Stations" value={systemHealth.totalStations} color="sky"
                     sub={systemHealth.udotCount ? `+${systemHealth.udotCount} UDOT (separate API)` : undefined} />
                   <KPICard icon={Wifi} label="Responding" value={systemHealth.respondingCount} color="emerald"
                     sub={`${Math.round((systemHealth.respondingCount / systemHealth.totalStations) * 100)}% of stations`} />
@@ -730,7 +730,7 @@ export default function AdminDashboard() {
                     {[
                       { name: 'NWS (Airport ASOS)', status: systemHealth.nwsOnline, desc: 'Free — api.weather.gov' },
                       { name: 'UDOT RWIS', status: systemHealth.udotOnline, desc: 'UDOT_API_KEY' },
-                      { name: 'Synoptic / MesoWest', status: systemHealth.synopticOnline, desc: 'SYNOPTIC_TOKEN' },
+                      { name: 'NWS Multi-Station', status: true, desc: 'Free — api.weather.gov' },
                       { name: 'Weather Underground PWS', status: true, desc: 'WU_API_KEY — Parallel cross-validation' },
                       { name: 'Ambient Weather', status: systemHealth.ambientOnline, desc: 'AMBIENT_API_KEY' },
                     ].map(src => (

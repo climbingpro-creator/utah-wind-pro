@@ -33,6 +33,7 @@
 import { splitStations, fetchNwsLatest, fetchNwsHistory } from './lib/nwsAdapter.js';
 import { isUdotStation, fetchUdotLatest } from './lib/udotAdapter.js';
 import { checkRateLimit } from './lib/redis.js';
+import { discoverAndFetchMulti } from './lib/nwsDiscovery.js';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -58,6 +59,8 @@ export default async function handler(req, res) {
       return await handleAmbient(res);
     } else if (source === 'ambient-history') {
       return await handleAmbientHistory(res, req.query);
+    } else if (source === 'radial-multi') {
+      return await handleRadialMulti(res, req.query);
     } else if (source === 'radial') {
       return await handleRadialFree(res, req.query);
     } else if (source === 'synoptic-radial') {
@@ -77,7 +80,7 @@ export default async function handler(req, res) {
     } else if (source === 'wu-pws-dense') {
       return await handleWuPwsDense(res, req.query);
     } else {
-      return res.status(400).json({ error: 'Invalid source. Use: ambient, ambient-history, radial, synoptic, synoptic-radial, synoptic-history, wu-nearby, wu-pws, wu-pws-history, wu-pws-dense' });
+      return res.status(400).json({ error: 'Invalid source. Use: ambient, ambient-history, radial, radial-multi, synoptic, synoptic-radial, synoptic-history, wu-nearby, wu-pws, wu-pws-history, wu-pws-dense' });
     }
   } catch (error) {
     console.error(`[API Proxy] ${source} error:`, error.message);
@@ -466,6 +469,283 @@ async function handleRadialFree(res, query) {
     message: `No weather stations found within ${maxRadius} miles`,
     searchedCoords: { lat: targetLat, lng: targetLng },
   });
+}
+
+/**
+ * MULTI-STATION Radial Weather Search (replaces Synoptic/MesoWest)
+ *
+ * Returns ALL nearby stations from multiple free sources with IDW interpolation.
+ * Designed to be the drop-in replacement for synoptic-radial.
+ *
+ * Response:
+ *   { stations: [...], interpolated: {...}, model, confidence, stationCount, radiusMiles }
+ */
+async function handleRadialMulti(res, query) {
+  const { lat, lng, radius } = query;
+  if (!lat || !lng) {
+    return res.status(400).json({ error: 'lat and lng parameters required' });
+  }
+
+  const targetLat = parseFloat(lat);
+  const targetLng = parseFloat(lng);
+  const radiusMiles = Math.min(parseFloat(radius) || 30, 100);
+
+  const outsideUS = isOutsideUS(targetLat, targetLng);
+
+  if (outsideUS) {
+    const openMeteoData = await fetchOpenMeteoGlobal(targetLat, targetLng);
+    if (openMeteoData) {
+      res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=120');
+      return res.status(200).json({
+        stations: [{
+          id: 'open-meteo',
+          name: openMeteoData.stationName,
+          lat: targetLat,
+          lng: targetLng,
+          distanceMiles: 0,
+          source: 'open-meteo',
+          windSpeed: openMeteoData.windSpeed,
+          windDirection: openMeteoData.windDirection,
+          windGust: openMeteoData.windGust,
+          temperature: openMeteoData.temperature,
+          humidity: openMeteoData.humidity,
+          pressure: openMeteoData.pressure,
+          timestamp: openMeteoData.timestamp,
+        }],
+        interpolated: {
+          windSpeed: openMeteoData.windSpeed,
+          windDirection: openMeteoData.windDirection,
+          windGust: openMeteoData.windGust,
+        },
+        model: 'open-meteo-global',
+        confidence: 0.7,
+        searchedCoords: { lat: targetLat, lng: targetLng },
+        stationCount: 1,
+        radiusMiles,
+        isInternational: true,
+      });
+    }
+    return res.status(200).json({
+      stations: [],
+      interpolated: null,
+      model: 'none',
+      confidence: 0,
+      searchedCoords: { lat: targetLat, lng: targetLng },
+      stationCount: 0,
+      radiusMiles,
+    });
+  }
+
+  const fetchPromises = [];
+
+  // 1. NWS multi-station discovery (15-25 stations, free)
+  fetchPromises.push(
+    discoverAndFetchMulti(targetLat, targetLng, radiusMiles, 20)
+      .catch(err => { console.warn('[RadialMulti] NWS discovery error:', err.message); return { stations: [] }; })
+  );
+
+  // 2. WU nearby PWS (up to 10 additional stations)
+  const wuApiKey = process.env.WU_API_KEY;
+  if (wuApiKey) {
+    fetchPromises.push(
+      fetchWuMultiStations(targetLat, targetLng, wuApiKey, radiusMiles)
+        .catch(err => { console.warn('[RadialMulti] WU error:', err.message); return []; })
+    );
+  } else {
+    fetchPromises.push(Promise.resolve([]));
+  }
+
+  // 3. UDOT stations within radius
+  const udotKey = process.env.UDOT_API_KEY;
+  const udotInRange = RADIAL_STATIONS.filter(s => s.source === 'udot')
+    .map(s => ({ ...s, distanceMiles: haversineDistance(targetLat, targetLng, s.lat, s.lng) }))
+    .filter(s => s.distanceMiles <= radiusMiles);
+
+  if (udotInRange.length > 0 && udotKey) {
+    fetchPromises.push(
+      fetchUdotMultiStations(udotInRange, udotKey)
+        .catch(err => { console.warn('[RadialMulti] UDOT error:', err.message); return []; })
+    );
+  } else {
+    fetchPromises.push(Promise.resolve([]));
+  }
+
+  const [nwsResult, wuStations, udotStations] = await Promise.all(fetchPromises);
+
+  // Merge all stations, deduplicate by proximity (within 0.3 mi)
+  const allStations = [...(nwsResult.stations || [])];
+  const seenLocations = new Set(allStations.map(s => `${s.lat?.toFixed(3)},${s.lng?.toFixed(3)}`));
+
+  for (const s of wuStations) {
+    const key = `${s.lat?.toFixed(3)},${s.lng?.toFixed(3)}`;
+    if (!seenLocations.has(key)) {
+      seenLocations.add(key);
+      allStations.push(s);
+    }
+  }
+
+  for (const s of udotStations) {
+    const key = `${s.lat?.toFixed(3)},${s.lng?.toFixed(3)}`;
+    if (!seenLocations.has(key)) {
+      seenLocations.add(key);
+      allStations.push(s);
+    }
+  }
+
+  // Sort by distance
+  allStations.sort((a, b) => (a.distanceMiles || 999) - (b.distanceMiles || 999));
+
+  // IDW interpolation across all valid stations
+  const interpolated = allStations.length > 0 ? idwInterpolateMulti(targetLat, targetLng, allStations) : null;
+  const confidence = nwsResult.confidence || calculateMultiConfidence(allStations, radiusMiles);
+
+  res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
+  return res.status(200).json({
+    stations: allStations,
+    interpolated,
+    model: 'idw_interpolation',
+    confidence,
+    searchedCoords: { lat: targetLat, lng: targetLng },
+    stationCount: allStations.length,
+    radiusMiles,
+  });
+}
+
+/**
+ * IDW interpolation across multi-source station array
+ */
+function idwInterpolateMulti(targetLat, targetLng, stations) {
+  const valid = stations.filter(s => s.windSpeed != null && s.distanceMiles != null && s.distanceMiles > 0);
+  if (valid.length === 0) {
+    const exact = stations.find(s => s.windSpeed != null && (s.distanceMiles || 0) === 0);
+    if (exact) return { windSpeed: exact.windSpeed, windDirection: exact.windDirection, windGust: exact.windGust };
+    return null;
+  }
+
+  let wSum = 0, speedSum = 0, gustSum = 0, sinSum = 0, cosSum = 0, gustCount = 0;
+
+  for (const s of valid) {
+    const w = 1 / (s.distanceMiles ** 2);
+    wSum += w;
+    speedSum += w * s.windSpeed;
+    if (s.windGust != null) { gustSum += w * s.windGust; gustCount++; }
+    if (s.windDirection != null) {
+      const rad = s.windDirection * Math.PI / 180;
+      sinSum += w * Math.sin(rad);
+      cosSum += w * Math.cos(rad);
+    }
+  }
+
+  if (wSum === 0) return null;
+  const direction = Math.round((Math.atan2(sinSum / wSum, cosSum / wSum) * 180 / Math.PI + 360) % 360);
+
+  return {
+    windSpeed: +(speedSum / wSum).toFixed(1),
+    windDirection: direction,
+    windGust: gustCount > 0 ? +(gustSum / wSum).toFixed(1) : null,
+  };
+}
+
+function calculateMultiConfidence(stations, radiusMiles) {
+  if (stations.length === 0) return 0;
+  const countScore = Math.min(stations.length / 15, 1.0);
+  const avgDist = stations.reduce((sum, s) => sum + (s.distanceMiles || 0), 0) / stations.length;
+  const distScore = Math.max(0, 1 - avgDist / radiusMiles);
+  const freshCount = stations.filter(s => {
+    if (!s.timestamp) return false;
+    const age = Date.now() - new Date(s.timestamp).getTime();
+    return age < 30 * 60 * 1000;
+  }).length;
+  const freshScore = freshCount / stations.length;
+  return +((countScore * 0.4 + distScore * 0.3 + freshScore * 0.3) * 100).toFixed(0) / 100;
+}
+
+/**
+ * Fetch multiple WU PWS stations near a location for multi-station mode
+ */
+async function fetchWuMultiStations(lat, lng, apiKey, radiusMiles) {
+  try {
+    const url = `https://api.weather.com/v3/location/near?geocode=${lat},${lng}&product=pws&format=json&apiKey=${apiKey}`;
+    const response = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    if (!response.ok) return [];
+
+    const data = await response.json();
+    const ids = data.location?.stationId || [];
+    const distances = data.location?.distanceKm || [];
+    const lats = data.location?.latitude || [];
+    const lngs = data.location?.longitude || [];
+
+    const candidates = ids.map((id, i) => ({
+      id, lat: lats[i], lng: lngs[i], distanceMiles: (distances[i] || 0) * 0.621371,
+    })).filter(s => s.distanceMiles <= radiusMiles).slice(0, 10);
+
+    if (candidates.length === 0) return [];
+
+    const obsResults = await Promise.allSettled(
+      candidates.map(async (s) => {
+        const obsUrl = `https://api.weather.com/v2/pws/observations/current?stationId=${s.id}&format=json&units=e&numericPrecision=decimal&apiKey=${apiKey}`;
+        const resp = await fetch(obsUrl, { signal: AbortSignal.timeout(6000) });
+        if (!resp.ok) return null;
+        const d = await resp.json();
+        const obs = d.observations?.[0];
+        if (!obs || (obs.imperial?.windSpeed == null && obs.imperial?.temp == null)) return null;
+        return {
+          id: s.id,
+          name: obs.stationID || s.id,
+          lat: obs.lat ?? s.lat,
+          lng: obs.lon ?? s.lng,
+          distanceMiles: +s.distanceMiles.toFixed(1),
+          source: 'wu-pws',
+          windSpeed: obs.imperial?.windSpeed ?? null,
+          windDirection: obs.winddir ?? null,
+          windGust: obs.imperial?.windGust ?? null,
+          temperature: obs.imperial?.temp ?? null,
+          humidity: obs.humidity ?? null,
+          pressure: obs.imperial?.pressure ?? null,
+          timestamp: obs.obsTimeUtc || obs.obsTimeLocal,
+        };
+      })
+    );
+
+    return obsResults
+      .filter(r => r.status === 'fulfilled' && r.value)
+      .map(r => r.value);
+  } catch (err) {
+    console.warn('[WU Multi] Error:', err.message);
+    return [];
+  }
+}
+
+/**
+ * Fetch UDOT stations for multi-station mode
+ */
+async function fetchUdotMultiStations(stations, udotKey) {
+  try {
+    const ids = stations.map(s => s.id);
+    const udotResults = await fetchUdotLatest(ids, udotKey);
+    return udotResults.map(raw => {
+      const obs = raw.OBSERVATIONS || {};
+      const meta = stations.find(s => s.id === raw.STID) || {};
+      return {
+        id: raw.STID,
+        name: raw.NAME || meta.name || raw.STID,
+        lat: parseFloat(raw.LATITUDE) || meta.lat,
+        lng: parseFloat(raw.LONGITUDE) || meta.lng,
+        distanceMiles: meta.distanceMiles != null ? +meta.distanceMiles.toFixed(1) : null,
+        source: 'udot',
+        windSpeed: obs.wind_speed_value_1?.value ?? null,
+        windDirection: obs.wind_direction_value_1?.value ?? null,
+        windGust: obs.wind_gust_value_1?.value ?? null,
+        temperature: obs.air_temp_value_1?.value ?? null,
+        humidity: null,
+        pressure: null,
+        timestamp: obs.date_time || obs.wind_speed_value_1?.date_time,
+      };
+    }).filter(s => s.windSpeed != null || s.temperature != null);
+  } catch (err) {
+    console.warn('[UDOT Multi] Error:', err.message);
+    return [];
+  }
 }
 
 /**

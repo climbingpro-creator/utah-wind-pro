@@ -34,7 +34,6 @@ jobs:
         env:
           VITE_AMBIENT_API_KEY: ${{ secrets.VITE_AMBIENT_API_KEY }}
           VITE_AMBIENT_APP_KEY: ${{ secrets.VITE_AMBIENT_APP_KEY }}
-          VITE_SYNOPTIC_TOKEN: ${{ secrets.VITE_SYNOPTIC_TOKEN }}
 
       - name: Check build output
         run: ls -la apps/wind/dist/

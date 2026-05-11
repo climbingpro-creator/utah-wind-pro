@@ -20,15 +20,15 @@ const MAP_AREAS = {
     zoom: 10,
     launches: ['utah-lake-lincoln', 'utah-lake-sandy', 'utah-lake-vineyard', 'utah-lake-zigzag', 'utah-lake-mm19'],
     stations: [
-      { id: 'FPS', name: 'Flight Park South', lat: 40.4555, lng: -111.9208, type: 'mesowest', elevation: 5202 },
-      { id: 'KPVU', name: 'Provo Airport', lat: 40.2192, lng: -111.7236, type: 'mesowest', elevation: 4495, isNorthFlowIndicator: true, isSouthernIndicator: true },
-      { id: 'KSLC', name: 'Salt Lake City', lat: 40.7884, lng: -111.9778, type: 'mesowest', elevation: 4226, isNorthFlowIndicator: true },
-      { id: 'QLN', name: 'Lindon', lat: 40.3431, lng: -111.7136, type: 'mesowest', elevation: 4738 },
-      { id: 'UTALP', name: 'Point of Mountain', lat: 40.4456, lng: -111.8983, type: 'mesowest', elevation: 4796, isNorthFlowIndicator: true, isGapIndicator: true },
-      { id: 'CSC', name: 'Cascade Peak', lat: 40.2667, lng: -111.6167, type: 'mesowest', elevation: 10875, isRidge: true },
-      { id: 'TIMU1', name: 'Timpanogos', lat: 40.3833, lng: -111.6333, type: 'mesowest', elevation: 8170, isRidge: true },
-      { id: 'SND', name: 'Arrowhead Summit', lat: 40.4389, lng: -111.5875, type: 'mesowest', elevation: 8252, isRidge: true },
-      { id: 'QSF', name: 'Spanish Fork', lat: 40.115, lng: -111.655, type: 'mesowest', elevation: 4550, isEarlyIndicator: true },
+      { id: 'FPS', name: 'Flight Park South', lat: 40.4555, lng: -111.9208, type: 'nws', elevation: 5202 },
+      { id: 'KPVU', name: 'Provo Airport', lat: 40.2192, lng: -111.7236, type: 'nws', elevation: 4495, isNorthFlowIndicator: true, isSouthernIndicator: true },
+      { id: 'KSLC', name: 'Salt Lake City', lat: 40.7884, lng: -111.9778, type: 'nws', elevation: 4226, isNorthFlowIndicator: true },
+      { id: 'QLN', name: 'Lindon', lat: 40.3431, lng: -111.7136, type: 'nws', elevation: 4738 },
+      { id: 'UTALP', name: 'Point of Mountain', lat: 40.4456, lng: -111.8983, type: 'nws', elevation: 4796, isNorthFlowIndicator: true, isGapIndicator: true },
+      { id: 'CSC', name: 'Cascade Peak', lat: 40.2667, lng: -111.6167, type: 'nws', elevation: 10875, isRidge: true },
+      { id: 'TIMU1', name: 'Timpanogos', lat: 40.3833, lng: -111.6333, type: 'nws', elevation: 8170, isRidge: true },
+      { id: 'SND', name: 'Arrowhead Summit', lat: 40.4389, lng: -111.5875, type: 'nws', elevation: 8252, isRidge: true },
+      { id: 'QSF', name: 'Spanish Fork', lat: 40.115, lng: -111.655, type: 'nws', elevation: 4550, isEarlyIndicator: true },
       { id: 'PWS', name: 'Zig Zag PWS', lat: 40.30268164473557, lng: -111.8799503518146, type: 'pws', elevation: 4489 },
     ],
   },
@@ -42,8 +42,8 @@ const MAP_AREAS = {
       { id: 'UTLPC', name: 'Lower Provo Canyon', lat: 40.3800, lng: -111.5800, type: 'udot', elevation: 5100, isEarlyIndicator: true },
       { id: 'UTPCY', name: 'Provo Canyon MP10', lat: 40.3600, lng: -111.6100, type: 'udot', elevation: 5200 },
       { id: 'UTCHL', name: 'Charleston (UDOT)', lat: 40.4800, lng: -111.4600, type: 'udot', elevation: 5500 },
-      { id: 'KHCR', name: 'Heber Airport', lat: 40.4822, lng: -111.4286, type: 'mesowest', elevation: 5597 },
-      { id: 'TIMU1', name: 'Timpanogos Divide', lat: 40.3833, lng: -111.6333, type: 'mesowest', elevation: 8170, isRidge: true },
+      { id: 'KHCR', name: 'Heber Airport', lat: 40.4822, lng: -111.4286, type: 'nws', elevation: 5597 },
+      { id: 'TIMU1', name: 'Timpanogos Divide', lat: 40.3833, lng: -111.6333, type: 'nws', elevation: 8170, isRidge: true },
       { id: 'KUTMIDWA37', name: 'Midway (WU)', lat: 40.505, lng: -111.465, type: 'pws', elevation: 5600 },
       { id: 'KUTHEBER105', name: 'Heber City E (WU)', lat: 40.485, lng: -111.444, type: 'pws', elevation: 5600 },
       { id: 'KUTHEBER26', name: 'Heber City S (WU)', lat: 40.477, lng: -111.450, type: 'pws', elevation: 5600 },
@@ -58,10 +58,10 @@ const MAP_AREAS = {
     zoom: 10,
     launches: ['willard-bay'],
     stations: [
-      { id: 'KOGD', name: 'Ogden Airport', lat: 41.1961, lng: -112.0122, type: 'mesowest', elevation: 4440 },
-      { id: 'KSLC', name: 'Salt Lake City', lat: 40.7884, lng: -111.9778, type: 'mesowest', elevation: 4226 },
-      { id: 'KHIF', name: 'Hill AFB', lat: 41.1239, lng: -111.9731, type: 'mesowest', elevation: 4789 },
-      { id: 'BLM', name: 'Ben Lomond', lat: 41.3667, lng: -111.9500, type: 'mesowest', elevation: 9712, isRidge: true },
+      { id: 'KOGD', name: 'Ogden Airport', lat: 41.1961, lng: -112.0122, type: 'nws', elevation: 4440 },
+      { id: 'KSLC', name: 'Salt Lake City', lat: 40.7884, lng: -111.9778, type: 'nws', elevation: 4226 },
+      { id: 'KHIF', name: 'Hill AFB', lat: 41.1239, lng: -111.9731, type: 'nws', elevation: 4789 },
+      { id: 'BLM', name: 'Ben Lomond', lat: 41.3667, lng: -111.9500, type: 'nws', elevation: 9712, isRidge: true },
     ],
   },
   'sulfur-creek': {
@@ -70,8 +70,8 @@ const MAP_AREAS = {
     zoom: 11,
     launches: ['sulfur-creek'],
     stations: [
-      { id: 'KFIR', name: 'First Divide (WYDOT)', lat: 41.2765, lng: -110.8007, type: 'mesowest', elevation: 7579 },
-      { id: 'KEVW', name: 'Evanston Airport', lat: 41.2750, lng: -111.0350, type: 'mesowest', elevation: 7143 },
+      { id: 'KFIR', name: 'First Divide (WYDOT)', lat: 41.2765, lng: -110.8007, type: 'nws', elevation: 7579 },
+      { id: 'KEVW', name: 'Evanston Airport', lat: 41.2750, lng: -111.0350, type: 'nws', elevation: 7143 },
       { id: 'UT1', name: 'Wahsatch EB (UDOT)', lat: 41.1952, lng: -111.114, type: 'udot', elevation: 6814 },
     ],
   },
@@ -919,7 +919,7 @@ export function VectorWindMap({
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-3 h-3 rounded-sm bg-amber-400 border border-amber-300" />
-              <span>MesoWest</span>
+              <span>NWS</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-3 h-3 rounded-sm bg-purple-500 border border-purple-400" style={{ transform: 'rotate(45deg)' }} />

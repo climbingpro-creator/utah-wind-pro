@@ -83,7 +83,7 @@ export const STATION_REGISTRY = {
     lng: -111.9027,
     elevation: 5148,
     type: 'mesonet',
-    network: 'MesoWest',
+    network: 'NWS',
     roles: ['paragliding-south', 'utah-lake-indicator'],
   },
   UTALP: {
@@ -107,7 +107,7 @@ export const STATION_REGISTRY = {
     lng: -111.7200,
     elevation: 10908,
     type: 'mountaintop',
-    network: 'MesoWest',
+    network: 'NWS',
     roles: ['ridge-indicator'],
   },
   TIMU1: {
@@ -173,7 +173,7 @@ export const STATION_REGISTRY = {
     lng: -111.8600,
     elevation: 9570,
     type: 'ski',
-    network: 'MesoWest',
+    network: 'NWS',
     roles: ['willard-bay-ridge'],
   },
 
@@ -186,7 +186,7 @@ export const STATION_REGISTRY = {
     lng: -111.6602,
     elevation: 4537,
     type: 'mesonet',
-    network: 'MesoWest',
+    network: 'NWS',
     roles: ['early-indicator-se-thermal'],
   },
   QLN: {
@@ -197,7 +197,7 @@ export const STATION_REGISTRY = {
     lng: -111.7200,
     elevation: 4600,
     type: 'mesonet',
-    network: 'MesoWest',
+    network: 'NWS',
     roles: ['utah-lake-reference'],
   },
   UTHEB: {
@@ -219,7 +219,7 @@ export const STATION_REGISTRY = {
     lng: -112.0400,
     elevation: 4200,
     type: 'mesonet',
-    network: 'MesoWest',
+    network: 'NWS',
     roles: ['willard-bay-primary'],
   },
   GSLM: {
@@ -230,7 +230,7 @@ export const STATION_REGISTRY = {
     lng: -112.2100,
     elevation: 4200,
     type: 'industrial',
-    network: 'MesoWest',
+    network: 'NWS',
     roles: ['willard-bay-reference'],
   },
 
@@ -267,7 +267,7 @@ export const STATION_REGISTRY = {
     lng: -111.7973,
     elevation: 4972,
     type: 'mesonet',
-    network: 'MesoWest',
+    network: 'NWS',
     roles: ['north-flow-valley-confirmation'],
   },
 
@@ -280,7 +280,7 @@ export const STATION_REGISTRY = {
     lng: -111.90,
     elevation: 4500,
     type: 'mesonet',
-    network: 'MesoWest',
+    network: 'NWS',
     roles: ['utah-lake-north-shore', 'zigzag-proximity'],
   },
 
@@ -304,7 +304,7 @@ export const STATION_REGISTRY = {
     lng: -111.8200,
     elevation: 4900,
     type: 'mesonet',
-    network: 'MesoWest',
+    network: 'NWS',
     roles: ['pineview-reference'],
   },
   UTHUN: {
@@ -453,7 +453,7 @@ export const STATION_REGISTRY = {
     lng: -112.0013,
     elevation: 4230,
     type: 'aviation',
-    network: 'MesoWest',
+    network: 'NWS',
     roles: ['north-flow-indicator'],
   },
 

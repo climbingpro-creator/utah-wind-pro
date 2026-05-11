@@ -23,6 +23,7 @@ import { getLakeConfig } from './lib/stations.js';
 import { verifyAuth } from './lib/supabase.js';
 import { splitStations, fetchNwsLatest, fetchNwsHistory } from './lib/nwsAdapter.js';
 import { isUdotStation, fetchUdotLatest } from './lib/udotAdapter.js';
+import { fetchMultipleNwsStations } from './lib/nwsDiscovery.js';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -97,12 +98,22 @@ async function fetchSynopticLatest(stids) {
   if (udotIds.length > 0 && udotKey) fetches.push(fetchUdotLatest(udotIds, udotKey).catch(() => []));
 
   const synFallback = udotKey ? synopticOnlyIds : [...synopticOnlyIds, ...udotIds];
+
+  // NWS for K-prefix stations
+  const nwsCompatible = synFallback.filter(id => /^K[A-Z]{3}/.test(id));
+  const nonNwsIds = synFallback.filter(id => !/^K[A-Z]{3}/.test(id));
+
+  if (nwsCompatible.length > 0) {
+    fetches.push(fetchMultipleNwsStations(nwsCompatible).catch(() => []));
+  }
+
+  // Synoptic fallback for non-NWS mesonet IDs (only if token exists)
   const token = process.env.SYNOPTIC_TOKEN;
-  if (token && synFallback.length > 0) {
+  if (token && nonNwsIds.length > 0) {
     fetches.push((async () => {
       try {
         const params = new URLSearchParams({
-          token, stid: synFallback.join(','),
+          token, stid: nonNwsIds.join(','),
           vars: 'wind_speed,wind_direction,wind_gust,air_temp,altimeter,sea_level_pressure',
           units: 'english',
         });
@@ -125,15 +136,23 @@ async function fetchSynopticHistory(stids, hours) {
 
   if (airport.length > 0) fetches.push(fetchNwsHistory(airport, hours).catch(() => []));
 
+  // For non-airport stations: try NWS for K-prefix, Synoptic for the rest
+  const nwsCompatible = other.filter(id => /^K[A-Z]{3}/.test(id));
+  const nonNwsIds = other.filter(id => !/^K[A-Z]{3}/.test(id));
+
+  if (nwsCompatible.length > 0) {
+    fetches.push(fetchNwsHistory(nwsCompatible, hours).catch(() => []));
+  }
+
   const token = process.env.SYNOPTIC_TOKEN;
-  if (token && other.length > 0) {
+  if (token && nonNwsIds.length > 0) {
     fetches.push((async () => {
       try {
         const end = new Date();
         const start = new Date(end.getTime() - hours * 3600000);
         const fmt = d => d.toISOString().replace(/[-:]/g, '').split('.')[0];
         const params = new URLSearchParams({
-          token, stid: other.join(','),
+          token, stid: nonNwsIds.join(','),
           start: fmt(start), end: fmt(end),
           vars: 'wind_speed,wind_direction,wind_gust,air_temp', units: 'english',
         });

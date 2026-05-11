@@ -16,7 +16,7 @@ export { triggerNextStage, verifyQStashSignature } from './qstash.js';
 
 export function getEnv() {
   return {
-    synopticToken: process.env.SYNOPTIC_TOKEN,
+    synopticToken: process.env.SYNOPTIC_TOKEN || null, // Optional: only used during transition
     upstashUrl: process.env.UPSTASH_REDIS_REST_URL,
     upstashToken: process.env.UPSTASH_REDIS_REST_TOKEN,
   };

@@ -23,24 +23,24 @@ const MAP_AREAS = {
     zoom: 11,
     launches: ['utah-lake-lincoln', 'utah-lake-sandy', 'utah-lake-vineyard', 'utah-lake-zigzag', 'utah-lake-mm19'],
     stations: [
-      // MesoWest Stations
-      { id: 'FPS', name: 'Flight Park South', lat: 40.4555, lng: -111.9208, type: 'mesowest', elevation: 5202 },
+      // NWS / Free Network Stations
+      { id: 'FPS', name: 'Flight Park South', lat: 40.4555, lng: -111.9208, type: 'nws', elevation: 5202 },
       // KPVU - SOUTHERN LAUNCH INDICATOR (Best for Lincoln Beach & Sandy Beach)
       // 78% foil kiteable at 8-10 mph N - better than KSLC for southern launches
-      { id: 'KPVU', name: 'Provo Airport', lat: 40.2192, lng: -111.7236, type: 'mesowest', elevation: 4495, isNorthFlowIndicator: true, isSouthernIndicator: true },
+      { id: 'KPVU', name: 'Provo Airport', lat: 40.2192, lng: -111.7236, type: 'nws', elevation: 4495, isNorthFlowIndicator: true, isSouthernIndicator: true },
       // KSLC - NORTH FLOW EARLY INDICATOR (1-hour lead time)
       // 74% of good north days show N/NW/NE at KSLC 1-2 hours before Utah Lake
-      { id: 'KSLC', name: 'Salt Lake City', lat: 40.7884, lng: -111.9778, type: 'mesowest', elevation: 4226, isNorthFlowIndicator: true },
-      { id: 'QLN', name: 'Lindon', lat: 40.3431, lng: -111.7136, type: 'mesowest', elevation: 4738 },
+      { id: 'KSLC', name: 'Salt Lake City', lat: 40.7884, lng: -111.9778, type: 'nws', elevation: 4226, isNorthFlowIndicator: true },
+      { id: 'QLN', name: 'Lindon', lat: 40.3431, lng: -111.7136, type: 'nws', elevation: 4738 },
       // UTALP - POINT OF MOUNTAIN GAP WIND INDICATOR
       // Shows wind funneling through the gap - good confirmation for north flow
-      { id: 'UTALP', name: 'Point of Mountain', lat: 40.4456, lng: -111.8983, type: 'mesowest', elevation: 4796, isNorthFlowIndicator: true, isGapIndicator: true },
+      { id: 'UTALP', name: 'Point of Mountain', lat: 40.4456, lng: -111.8983, type: 'nws', elevation: 4796, isNorthFlowIndicator: true, isGapIndicator: true },
       // Ridge stations for thermal delta
-      { id: 'CSC', name: 'Cascade Peak', lat: 40.2667, lng: -111.6167, type: 'mesowest', elevation: 10875, isRidge: true },
-      { id: 'TIMU1', name: 'Timpanogos', lat: 40.3833, lng: -111.6333, type: 'mesowest', elevation: 8170, isRidge: true },
-      { id: 'SND', name: 'Arrowhead Summit', lat: 40.4389, lng: -111.5875, type: 'mesowest', elevation: 8252, isRidge: true },
+      { id: 'CSC', name: 'Cascade Peak', lat: 40.2667, lng: -111.6167, type: 'nws', elevation: 10875, isRidge: true },
+      { id: 'TIMU1', name: 'Timpanogos', lat: 40.3833, lng: -111.6333, type: 'nws', elevation: 8170, isRidge: true },
+      { id: 'SND', name: 'Arrowhead Summit', lat: 40.4389, lng: -111.5875, type: 'nws', elevation: 8252, isRidge: true },
       // Spanish Fork Canyon - SE THERMAL EARLY INDICATOR (2-hour lead time)
-      { id: 'QSF', name: 'Spanish Fork', lat: 40.115, lng: -111.655, type: 'mesowest', elevation: 4550, isEarlyIndicator: true },
+      { id: 'QSF', name: 'Spanish Fork', lat: 40.115, lng: -111.655, type: 'nws', elevation: 4550, isEarlyIndicator: true },
       // Your PWS
       { id: 'PWS', name: 'Zig Zag PWS', lat: 40.30268164473557, lng: -111.8799503518146, type: 'pws', elevation: 4489 },
     ],
@@ -52,12 +52,12 @@ const MAP_AREAS = {
     launches: ['deer-creek'],
     stations: [
       // Key stations for Deer Creek
-      { id: 'DCC', name: 'Deer Creek Dam', lat: 40.4028, lng: -111.5097, type: 'mesowest', elevation: 5417 },
-      { id: 'SND', name: 'Arrowhead Summit', lat: 40.4389, lng: -111.5875, type: 'mesowest', elevation: 8252, isRidge: true },
-      { id: 'KHCR', name: 'Heber Airport', lat: 40.4822, lng: -111.4286, type: 'mesowest', elevation: 5597 },
-      { id: 'TIMU1', name: 'Timpanogos', lat: 40.3833, lng: -111.6333, type: 'mesowest', elevation: 8170, isRidge: true },
+      { id: 'DCC', name: 'Deer Creek Dam', lat: 40.4028, lng: -111.5097, type: 'nws', elevation: 5417 },
+      { id: 'SND', name: 'Arrowhead Summit', lat: 40.4389, lng: -111.5875, type: 'nws', elevation: 8252, isRidge: true },
+      { id: 'KHCR', name: 'Heber Airport', lat: 40.4822, lng: -111.4286, type: 'nws', elevation: 5597 },
+      { id: 'TIMU1', name: 'Timpanogos', lat: 40.3833, lng: -111.6333, type: 'nws', elevation: 8170, isRidge: true },
       // Charleston area
-      { id: 'CHL', name: 'Charleston', lat: 40.4750, lng: -111.4750, type: 'mesowest', elevation: 5600 },
+      { id: 'CHL', name: 'Charleston', lat: 40.4750, lng: -111.4750, type: 'nws', elevation: 5600 },
     ],
   },
   'willard-bay': {
@@ -66,10 +66,10 @@ const MAP_AREAS = {
     zoom: 11,
     launches: ['willard-bay'],
     stations: [
-      { id: 'KOGD', name: 'Ogden Airport', lat: 41.1961, lng: -112.0122, type: 'mesowest', elevation: 4440 },
-      { id: 'KSLC', name: 'Salt Lake City', lat: 40.7884, lng: -111.9778, type: 'mesowest', elevation: 4226 },
-      { id: 'KHIF', name: 'Hill AFB', lat: 41.1239, lng: -111.9731, type: 'mesowest', elevation: 4789 },
-      { id: 'BLM', name: 'Ben Lomond', lat: 41.3667, lng: -111.9500, type: 'mesowest', elevation: 9712, isRidge: true },
+      { id: 'KOGD', name: 'Ogden Airport', lat: 41.1961, lng: -112.0122, type: 'nws', elevation: 4440 },
+      { id: 'KSLC', name: 'Salt Lake City', lat: 40.7884, lng: -111.9778, type: 'nws', elevation: 4226 },
+      { id: 'KHIF', name: 'Hill AFB', lat: 41.1239, lng: -111.9731, type: 'nws', elevation: 4789 },
+      { id: 'BLM', name: 'Ben Lomond', lat: 41.3667, lng: -111.9500, type: 'nws', elevation: 9712, isRidge: true },
     ],
   },
 };
@@ -110,7 +110,7 @@ const createStationIcon = (type, isRidge, hasData, isEarlyIndicator, isNorthFlow
     borderColor = '#9333ea';
     shape = 'border-radius: 2px; transform: rotate(45deg);'; // Diamond
   } else {
-    color = '#f59e0b'; // Amber for regular MesoWest
+    color = '#f59e0b'; // Amber for NWS/free network stations
     borderColor = '#fbbf24';
     shape = 'border-radius: 2px;'; // Square
   }
@@ -616,8 +616,8 @@ export function WindMap({
                     )}
                     
                     <div className="text-xs text-gray-400 mt-2">
-                      {station.type === 'pws' ? 'Personal Weather Station' 
-                        : station.type === 'mesowest' ? 'MesoWest Station' 
+                      {station.type === 'pws' ? 'Personal Weather Station'
+                        : station.type === 'nws' ? 'NWS Station'
                         : 'Weather Station'}
                     </div>
                   </div>
@@ -658,7 +658,7 @@ export function WindMap({
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-3 h-3 rounded-sm bg-amber-400 border border-amber-300" />
-              <span>MesoWest</span>
+              <span>NWS</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-3 h-3 rounded-sm bg-purple-500 border border-purple-400" style={{ transform: 'rotate(45deg)' }} />

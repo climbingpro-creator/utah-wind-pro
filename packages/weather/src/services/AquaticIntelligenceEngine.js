@@ -126,62 +126,64 @@ function getTailwaterGauge(lat, lng, riverName) {
   return null;
 }
 
-// ─── FREE Radial Weather Fetch (NWS + UDOT + Ambient via Server API) ──────
+// ─── FREE Multi-Station Weather Fetch (NWS + WU + UDOT via Server API) ──────
 /**
- * Fetches live weather data from our FREE government/custom station network.
- * Pipeline: Map Click → /api/weather?source=radial → NWS/UDOT/Ambient → UI
+ * Fetches live weather from ALL nearby free stations with IDW interpolation.
+ * Pipeline: Map Click → /api/weather?source=radial-multi → NWS/WU/UDOT → IDW → UI
  * 
- * NO SYNOPTIC/MESOWEST - uses only FREE sources:
- *   - NWS (National Weather Service) for airport ASOS/AWOS stations
- *   - UDOT RWIS (Road Weather Information System) for highway stations
- *   - Ambient Weather for our personal weather stations
+ * Uses radial-multi endpoint which discovers 15-25+ stations and returns
+ * an IDW-interpolated blend plus the full station array.
  * 
  * @param {number} lat - Latitude
  * @param {number} lng - Longitude
- * @param {number} [radiusMiles=100] - Search radius in miles
- * @returns {Promise<{windSpeed: number, windDirection: number, temperature: number, pressure: number, stationName: string} | null>}
+ * @param {number} [radiusMiles=50] - Search radius in miles
+ * @returns {Promise<{windSpeed: number, windDirection: number, temperature: number, pressure: number, stationName: string, stations: Array} | null>}
  */
-export async function fetchNearbyWeather(lat, lng, radiusMiles = 100) {
+export async function fetchNearbyWeather(lat, lng, radiusMiles = 50) {
   try {
-    // Call our server-side radial endpoint that uses FREE sources only
     const apiBase = import.meta.env.VITE_API_URL || 'https://liftforecast.com';
-    const url = `${apiBase}/api/weather?source=radial&lat=${lat}&lng=${lng}&radius=${radiusMiles}`;
+    const url = `${apiBase}/api/weather?source=radial-multi&lat=${lat}&lng=${lng}&radius=${radiusMiles}`;
     
-    console.log(`[Radial] Fetching nearest FREE station to ${lat.toFixed(3)}, ${lng.toFixed(3)}`);
+    console.log(`[RadialMulti] Fetching multi-station IDW blend near ${lat.toFixed(3)}, ${lng.toFixed(3)}`);
     
     const response = await fetch(url, { signal: AbortSignal.timeout(12000) });
     
     if (!response.ok) {
-      console.warn(`[Radial] API returned ${response.status}`);
+      console.warn(`[RadialMulti] API returned ${response.status}`);
       return null;
     }
     
     const data = await response.json();
     
-    if (!data.station) {
-      console.log(`[Radial] No stations found: ${data.message || 'unknown reason'}`);
+    if (!data.stations || data.stations.length === 0) {
+      console.log(`[RadialMulti] No stations found within ${radiusMiles} mi`);
       return null;
     }
     
-    const station = data.station;
-    console.log(`[Radial] Found: ${station.stationName} (${station.source}) at ${station.distanceMiles} mi`);
+    const interpolated = data.interpolated || {};
+    const nearest = data.stations[0];
+    
+    console.log(`[RadialMulti] ${data.stationCount} stations, nearest: ${nearest.name} (${nearest.source}) at ${nearest.distanceMiles?.toFixed(1)} mi, confidence: ${data.confidence?.toFixed(2)}`);
     
     return {
-      windSpeed: station.windSpeed,
-      windDirection: station.windDirection,
-      windGust: station.windGust,
-      temperature: station.temperature,
-      humidity: station.humidity,
-      pressure: station.pressure,
-      stationName: station.stationName,
-      stationId: station.stationId,
-      distanceMiles: station.distanceMiles,
-      source: station.source,
-      dataSource: station.dataSource,
-      timestamp: station.timestamp,
+      windSpeed: interpolated.windSpeed ?? nearest.windSpeed,
+      windDirection: interpolated.windDirection ?? nearest.windDirection,
+      windGust: interpolated.windGust ?? nearest.windGust,
+      temperature: nearest.temperature,
+      humidity: nearest.humidity,
+      pressure: nearest.pressure,
+      stationName: nearest.name,
+      stationId: nearest.id,
+      distanceMiles: nearest.distanceMiles,
+      source: nearest.source,
+      dataSource: `Multi-Station IDW (${data.stationCount} stations)`,
+      timestamp: nearest.timestamp,
+      stations: data.stations,
+      confidence: data.confidence,
+      stationCount: data.stationCount,
     };
   } catch (err) {
-    console.warn('[Radial] Weather fetch error:', err.message);
+    console.warn('[RadialMulti] Weather fetch error:', err.message);
     return null;
   }
 }

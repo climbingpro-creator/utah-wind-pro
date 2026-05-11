@@ -18,7 +18,7 @@ Professional wind forecasting for Utah's best water sports locations.
 - **Willard Bay** - North "gap" wind forecasting
 
 ### Key Features
-- Real-time wind data from MesoWest and personal weather stations
+- Real-time wind data from NWS, Weather Underground, UDOT, and personal weather stations
 - 3-step thermal prediction model
 - Multi-day forecasting with historical pattern analysis
 - NWS severe weather alerts
@@ -26,11 +26,14 @@ Professional wind forecasting for Utah's best water sports locations.
 - Self-learning prediction system
 - PWA support - install on mobile
 
-## Data Sources
+## Data Sources (100% Free)
 
-- **MesoWest (Synoptic)** - Regional weather stations
+- **NWS (api.weather.gov)** - Airport observations, forecasts, severe weather alerts (free, unlimited)
+- **Weather Underground PWS** - 250K+ personal weather stations nationwide (WU_API_KEY)
+- **UDOT RWIS** - Utah road weather sensors (free with registration)
 - **Ambient Weather** - Personal weather station integration
-- **NWS** - Forecasts and severe weather alerts
+- **Open-Meteo** - Global weather fallback (free, no key required)
+- **Tempest WeatherFlow** - Additional personal weather stations
 
 ## Tech Stack
 
@@ -61,10 +64,12 @@ npm run preview
 Copy `.env.example` to `.env` and add your API keys:
 
 ```env
-VITE_SYNOPTIC_TOKEN=your_token
 VITE_AMBIENT_API_KEY=your_key
 VITE_AMBIENT_APP_KEY=your_app_key
+WU_API_KEY=your_wu_key
 ```
+
+> **Note:** No Synoptic/MesoWest API key required. The system uses 100% free data sources (NWS + WU + UDOT + Open-Meteo).
 
 ## Deployment
 

@@ -124,7 +124,7 @@ const DataFreshness = ({
           <div className="text-slate-400">Real-time</div>
         </div>
         <div className="text-center">
-          <div className="text-slate-500">MesoWest</div>
+          <div className="text-slate-500">NWS</div>
           <div className="text-slate-400">5-15 min</div>
         </div>
         <div className="text-center">

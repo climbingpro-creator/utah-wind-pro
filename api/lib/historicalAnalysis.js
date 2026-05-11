@@ -17,30 +17,145 @@
  */
 
 import { LAKE_STATIONS, ALL_STATION_IDS, UPSTREAM_STATIONS } from './stations.js';
+import { fetchStationHistory } from './nwsDiscovery.js';
 
-// ── Synoptic API chunking (7 days max per call for timeseries) ──
+// ── Multi-source historical fetch (NWS → Open-Meteo → Synoptic fallback) ──
 
-const CHUNK_DAYS = 30;
 const SYNOPTIC_BASE = 'https://api.synopticdata.com/v2';
 const VARS = 'wind_speed,wind_direction,wind_gust,air_temp,altimeter,sea_level_pressure';
+const CONCURRENT_STATIONS = 4;
+
+// Station coordinates for Open-Meteo historical fallback
+const STATION_COORDS = {
+  FPS:   { lat: 40.452, lng: -111.890 },
+  CSC:   { lat: 40.400, lng: -111.620 },
+  TIMU1: { lat: 40.390, lng: -111.640 },
+  QLN:   { lat: 40.338, lng: -111.696 },
+  UTOLY: { lat: 40.330, lng: -111.890 },
+  UID28: { lat: 40.350, lng: -111.900 },
+  QSF:   { lat: 40.050, lng: -111.550 },
+  UTALP: { lat: 40.453, lng: -111.758 },
+  SND:   { lat: 40.576, lng: -111.652 },
+  SKY:   { lat: 40.607, lng: -111.657 },
+  BERU1: { lat: 41.920, lng: -111.420 },
+  MDAU1: { lat: 40.475, lng: -111.498 },
+  EPMU1: { lat: 41.382, lng: -111.930 },
+  GSLM:  { lat: 40.770, lng: -112.180 },
+  DSTU1: { lat: 40.470, lng: -111.510 },
+  RVZU1: { lat: 40.480, lng: -111.470 },
+  CCPUT: { lat: 40.470, lng: -111.450 },
+  UWCU1: { lat: 40.460, lng: -111.440 },
+  UR328: { lat: 41.700, lng: -112.050 },
+  BLPU1: { lat: 41.680, lng: -112.060 },
+  OGP:   { lat: 41.196, lng: -111.970 },
+  AMFKM: { lat: 40.305, lng: -111.720 },
+  UP218: { lat: 40.080, lng: -111.640 },
+  UTSHR: { lat: 40.520, lng: -111.480 },
+  UTMPK: { lat: 40.540, lng: -111.510 },
+  UTESU: { lat: 40.250, lng: -111.660 },
+  UTHTP: { lat: 40.280, lng: -111.690 },
+  UTORM: { lat: 40.293, lng: -111.693 },
+  UTPCR: { lat: 40.270, lng: -111.700 },
+  UT7:   { lat: 40.240, lng: -111.740 },
+  UTPRB: { lat: 40.200, lng: -111.750 },
+  UTRVT: { lat: 40.260, lng: -111.710 },
+  UTLAK: { lat: 40.330, lng: -111.880 },
+  UTDCD: { lat: 40.405, lng: -111.500 },
+  UTPCY: { lat: 40.430, lng: -111.520 },
+  UTLPC: { lat: 40.380, lng: -111.550 },
+  UTCHL: { lat: 40.460, lng: -111.480 },
+  UTDAN: { lat: 40.530, lng: -111.500 },
+  UTHEB: { lat: 40.510, lng: -111.410 },
+  UTSLD: { lat: 40.490, lng: -111.460 },
+  UTPOW: { lat: 37.780, lng: -112.460 },
+  UTMON: { lat: 37.650, lng: -113.180 },
+  UTGRC: { lat: 41.920, lng: -111.400 },
+  UTLTS: { lat: 41.740, lng: -111.830 },
+  UTPVD: { lat: 41.300, lng: -111.900 },
+  UTHUN: { lat: 41.220, lng: -111.870 },
+  UTLMP: { lat: 39.700, lng: -111.850 },
+  UTRKY: { lat: 39.650, lng: -111.800 },
+  UTSCI: { lat: 39.200, lng: -111.600 },
+};
+
+function isAirportId(stationId) {
+  return /^K[A-Z]{2,3}$/.test(stationId);
+}
 
 function formatSynopticDate(date) {
   return date.toISOString().replace(/[-:T]/g, '').slice(0, 12);
 }
 
-async function fetchTimeseries(token, stationIds, startDate, endDate) {
+/**
+ * Fetch history from NWS for a K-prefix airport station.
+ * Returns readings in internal format: { t, speed, dir, gust, temp, altim, slp }
+ */
+async function fetchNwsHistory(stationId, startDate, endDate) {
+  const obs = await fetchStationHistory(stationId, startDate, endDate, { chunkDays: 7, delayMs: 150 });
+  return obs.map(o => ({
+    t: new Date(o.timestamp).getTime(),
+    speed: o.windSpeed,
+    dir: o.windDirection,
+    gust: o.windGust,
+    temp: o.temperature,
+    altim: o.pressure,
+    slp: null,
+  }));
+}
+
+/**
+ * Fetch historical hourly data from Open-Meteo Archive API for a coordinate.
+ * Free, no key, supports any date range.
+ */
+async function fetchOpenMeteoHistory(lat, lng, startDate, endDate) {
+  const startStr = startDate.toISOString().split('T')[0];
+  const endStr = endDate.toISOString().split('T')[0];
+  const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lng}`
+    + `&start_date=${startStr}&end_date=${endStr}`
+    + `&hourly=temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,surface_pressure`
+    + `&wind_speed_unit=mph&temperature_unit=fahrenheit`;
+
+  const resp = await fetch(url, { signal: AbortSignal.timeout(30000) });
+  if (!resp.ok) throw new Error(`Open-Meteo archive ${resp.status}`);
+  const data = await resp.json();
+
+  const hourly = data.hourly || {};
+  const times = hourly.time || [];
+  const readings = [];
+
+  for (let i = 0; i < times.length; i++) {
+    readings.push({
+      t: new Date(times[i]).getTime(),
+      speed: hourly.wind_speed_10m?.[i] ?? null,
+      dir: hourly.wind_direction_10m?.[i] ?? null,
+      gust: hourly.wind_gusts_10m?.[i] ?? null,
+      temp: hourly.temperature_2m?.[i] ?? null,
+      altim: hourly.surface_pressure?.[i] != null
+        ? +(hourly.surface_pressure[i] / 33.8639).toFixed(2)
+        : null,
+      slp: null,
+    });
+  }
+
+  return readings;
+}
+
+/**
+ * Legacy Synoptic fetch (optional fallback if token exists).
+ */
+async function fetchSynopticTimeseries(token, stationIds, startDate, endDate) {
   const stids = stationIds.join(',');
   const url = `${SYNOPTIC_BASE}/stations/timeseries?token=${token}`
     + `&stids=${stids}&start=${formatSynopticDate(startDate)}&end=${formatSynopticDate(endDate)}`
     + `&vars=${VARS}&units=english&obtimezone=utc`;
 
-  const resp = await fetch(url);
-  if (!resp.ok) throw new Error(`Synoptic API ${resp.status}: ${resp.statusText}`);
+  const resp = await fetch(url, { signal: AbortSignal.timeout(20000) });
+  if (!resp.ok) return [];
   const data = await resp.json();
   return data.STATION || [];
 }
 
-function mergeStationData(allStations, stations) {
+function mergeSynopticStationData(allStations, stations) {
   for (const s of stations) {
     if (!allStations[s.STID]) {
       allStations[s.STID] = { stid: s.STID, name: s.NAME, readings: [] };
@@ -68,37 +183,94 @@ function mergeStationData(allStations, stations) {
   }
 }
 
-const CONCURRENT_CHUNKS = 8;
-
-async function fetchFullHistory(token, stationIds, days = 365) {
+/**
+ * Fetch full history for all stations using free sources.
+ * Routes: K-prefix airports → NWS, others → Open-Meteo, Synoptic as optional fallback.
+ */
+async function fetchFullHistory(synopticToken, stationIds, days = 365) {
   const end = new Date();
   const start = new Date(end.getTime() - days * 24 * 3600000);
   const allStations = {};
 
-  const chunks = [];
-  for (let chunkStart = new Date(start); chunkStart < end;) {
-    const chunkEnd = new Date(Math.min(chunkStart.getTime() + CHUNK_DAYS * 24 * 3600000, end.getTime()));
-    chunks.push({ start: new Date(chunkStart), end: chunkEnd });
-    chunkStart = chunkEnd;
-  }
+  const airportIds = stationIds.filter(id => isAirportId(id));
+  const mesonetIds = stationIds.filter(id => !isAirportId(id));
 
-  for (let i = 0; i < chunks.length; i += CONCURRENT_CHUNKS) {
-    const batch = chunks.slice(i, i + CONCURRENT_CHUNKS);
+  // 1. Fetch airport stations from NWS (free, reliable, 365-day history)
+  console.log(`[HistoricalAnalysis] Fetching ${airportIds.length} airport stations from NWS...`);
+  for (let i = 0; i < airportIds.length; i += CONCURRENT_STATIONS) {
+    const batch = airportIds.slice(i, i + CONCURRENT_STATIONS);
     const results = await Promise.allSettled(
-      batch.map(c => fetchTimeseries(token, stationIds, c.start, c.end))
+      batch.map(id => fetchNwsHistory(id, start, end))
     );
-    for (let j = 0; j < results.length; j++) {
-      if (results[j].status === 'fulfilled') {
-        mergeStationData(allStations, results[j].value);
+    for (let j = 0; j < batch.length; j++) {
+      if (results[j].status === 'fulfilled' && results[j].value.length > 0) {
+        allStations[batch[j]] = { stid: batch[j], name: batch[j], readings: results[j].value };
+        console.log(`[HistoricalAnalysis]   ${batch[j]}: ${results[j].value.length} obs`);
       } else {
-        console.warn(`[HistoricalAnalysis] Chunk fetch error ${batch[j].start.toISOString()}: ${results[j].reason?.message}`);
+        console.warn(`[HistoricalAnalysis]   ${batch[j]}: failed — ${results[j].reason?.message || 'no data'}`);
       }
     }
+    if (i + CONCURRENT_STATIONS < airportIds.length) {
+      await new Promise(r => setTimeout(r, 500));
+    }
+  }
+
+  // 2. Fetch mesonet stations from Open-Meteo historical (free, coordinate-based)
+  const mesonetWithCoords = mesonetIds.filter(id => STATION_COORDS[id]);
+  const mesonetNoCoords = mesonetIds.filter(id => !STATION_COORDS[id]);
+
+  console.log(`[HistoricalAnalysis] Fetching ${mesonetWithCoords.length} mesonet stations from Open-Meteo Archive...`);
+  for (let i = 0; i < mesonetWithCoords.length; i += CONCURRENT_STATIONS) {
+    const batch = mesonetWithCoords.slice(i, i + CONCURRENT_STATIONS);
+    const results = await Promise.allSettled(
+      batch.map(id => {
+        const coords = STATION_COORDS[id];
+        return fetchOpenMeteoHistory(coords.lat, coords.lng, start, end);
+      })
+    );
+    for (let j = 0; j < batch.length; j++) {
+      if (results[j].status === 'fulfilled' && results[j].value.length > 0) {
+        allStations[batch[j]] = { stid: batch[j], name: batch[j], readings: results[j].value };
+        console.log(`[HistoricalAnalysis]   ${batch[j]}: ${results[j].value.length} obs (Open-Meteo)`);
+      } else {
+        console.warn(`[HistoricalAnalysis]   ${batch[j]}: Open-Meteo failed — ${results[j].reason?.message || 'no data'}`);
+      }
+    }
+    if (i + CONCURRENT_STATIONS < mesonetWithCoords.length) {
+      await new Promise(r => setTimeout(r, 300));
+    }
+  }
+
+  // 3. Synoptic fallback for stations with no coords and no NWS coverage
+  if (synopticToken && mesonetNoCoords.length > 0) {
+    console.log(`[HistoricalAnalysis] Fetching ${mesonetNoCoords.length} remaining stations from Synoptic (fallback)...`);
+    const CHUNK_DAYS = 30;
+    const chunks = [];
+    for (let chunkStart = new Date(start); chunkStart < end;) {
+      const chunkEnd = new Date(Math.min(chunkStart.getTime() + CHUNK_DAYS * 24 * 3600000, end.getTime()));
+      chunks.push({ start: new Date(chunkStart), end: chunkEnd });
+      chunkStart = chunkEnd;
+    }
+    for (let i = 0; i < chunks.length; i += 4) {
+      const batch = chunks.slice(i, i + 4);
+      const results = await Promise.allSettled(
+        batch.map(c => fetchSynopticTimeseries(synopticToken, mesonetNoCoords, c.start, c.end))
+      );
+      for (let j = 0; j < results.length; j++) {
+        if (results[j].status === 'fulfilled') {
+          mergeSynopticStationData(allStations, results[j].value);
+        }
+      }
+    }
+  } else if (mesonetNoCoords.length > 0) {
+    console.warn(`[HistoricalAnalysis] ${mesonetNoCoords.length} stations skipped (no coords, no Synoptic token): ${mesonetNoCoords.join(', ')}`);
   }
 
   for (const s of Object.values(allStations)) {
     s.readings.sort((a, b) => a.t - b.t);
   }
+
+  console.log(`[HistoricalAnalysis] Total: ${Object.keys(allStations).length} stations with data`);
   return allStations;
 }
 
@@ -874,9 +1046,9 @@ export async function buildStatisticalModels(redisCmd, synopticToken, options = 
 
   log.push(`Starting historical analysis: ${days} days of data for ${ALL_STATION_IDS.length} stations`);
 
-  // 1. Fetch historical data
-  log.push('Fetching historical timeseries from Synoptic API...');
-  const allStations = await fetchFullHistory(synopticToken, ALL_STATION_IDS, days);
+  // 1. Fetch historical data from free sources (NWS + Open-Meteo) with Synoptic as optional fallback
+  log.push('Fetching historical timeseries (NWS airports + Open-Meteo mesonet + Synoptic fallback)...');
+  const allStations = await fetchFullHistory(synopticToken || null, ALL_STATION_IDS, days);
   const stationCount = Object.keys(allStations).length;
   const totalReadings = Object.values(allStations).reduce((s, st) => s + st.readings.length, 0);
   log.push(`Fetched ${stationCount} stations, ${totalReadings.toLocaleString()} total readings`);
@@ -958,7 +1130,7 @@ export async function buildStatisticalModels(redisCmd, synopticToken, options = 
   // Guard: refuse to overwrite good models with an empty build
   if (stationCount === 0 || totalReadings === 0) {
     log.push(`WARNING: Build produced 0 stations / 0 readings — NOT saving to Redis (would destroy existing models)`);
-    log.push(`Check that SYNOPTIC_TOKEN is valid and the API is reachable`);
+    log.push(`Check NWS API reachability and Open-Meteo archive access`);
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
     log.push(`Aborted after ${elapsed}s`);
     return { models, log };
@@ -976,4 +1148,5 @@ export async function buildStatisticalModels(redisCmd, synopticToken, options = 
 }
 
 // Export individual builders for targeted updates
-export { fetchFullHistory, buildStationClimatology, detectHistoricalEvents, buildLagCorrelations };
+const mergeStationData = mergeSynopticStationData;
+export { fetchFullHistory, buildStationClimatology, detectHistoricalEvents, buildLagCorrelations, mergeStationData };

@@ -179,7 +179,7 @@ function Page1() {
           <div className="grid grid-cols-3 gap-2">
             <div className="rounded-lg border border-slate-200 px-3 py-2 text-center">
               <Radio className="w-4 h-4 text-sky-500 mx-auto mb-1" />
-              <div className="text-[10px] font-bold text-slate-700">Synoptic/MesoWest</div>
+              <div className="text-[10px] font-bold text-slate-700">NWS / Free Network</div>
               <div className="text-[9px] text-slate-400">ASOS, RWIS, RAWS</div>
             </div>
             <div className="rounded-lg border border-slate-200 px-3 py-2 text-center">

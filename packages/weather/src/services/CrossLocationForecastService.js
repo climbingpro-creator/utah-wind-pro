@@ -28,7 +28,7 @@ const PRIORITY_SPOTS = new Set([
 
 // ─── Spots with Validated Sensor Networks ───────────────────────
 // ONLY include spots where we have:
-// 1. Ground-truth sensors (PWS, MesoWest stations)
+// 1. Ground-truth sensors (PWS, NWS, WU stations)
 // 2. Validated correlation models (KPVU, QSF, FPS indicators)
 // 3. Historical accuracy data to back predictions
 //

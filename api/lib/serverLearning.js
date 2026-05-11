@@ -81,6 +81,47 @@ const LAKE_THERMAL = {
   'stockton-bar':         { dir: [170, 210], peak: [10, 18], station: 'KSLC' },
 };
 
+// WU/Tempest aliases for mesonet stations that may lose Synoptic data
+const STATION_ALIASES = {
+  'FPS':     ['KUTLEHI111', 'KUTLEHI73', 'KUTSARAT50'],
+  'UTALP':   ['KUTDRAPE132', 'KUTDRAPE59'],
+  'CSC':     ['KUTCEDAR10', 'KUTPLEAS11'],
+  'TIMU1':   ['SND', 'KUTHEBER105'],
+  'UID28':   ['KUTSARAT50', 'KUTSARAT88', 'KUTSARAT81'],
+  'AMFKM':   ['KUTPLEAS11', 'KUTPLEAS84'],
+  'QSF':     ['KUTSPANI5'],
+  'QLN':     ['KUTPLEAS11', 'TEMPEST_141420'],
+  'BERU1':   ['KUTGARDE9', 'TEMPEST_106250'],
+  'UTCOP':   ['KUTSTRAW1', 'KUTSTRAW2'],
+  'SND':     ['KUTHEBER105', 'KUTHEBER26'],
+  'DSTU1':   ['KUTHEBER105', 'KUTMIDWA37'],
+  'MDAU1':   ['KUTMIDWA37', 'KUTHEBER26'],
+  'RVZU1':   ['KUTSTRAW2'],
+  'SKY':     ['KUTBRIGH3'],
+  'UTOLY':   ['KUTSARAT50'],
+};
+
+/**
+ * Resolve a primary station to an available station in the current observation set.
+ * Falls back through WU/Tempest aliases if the primary station has no data.
+ */
+function resolveStation(primaryId, stations) {
+  const primary = stations.find(s => s.stationId === primaryId);
+  if (primary && primary.windSpeed != null) return primary;
+
+  const aliases = STATION_ALIASES[primaryId];
+  if (aliases) {
+    for (const alt of aliases) {
+      const match = stations.find(s => s.stationId === alt);
+      if (match && match.windSpeed != null) return match;
+    }
+  }
+
+  // Last resort: if primary exists but has no wind data, still use it
+  if (primary) return primary;
+  return null;
+}
+
 // ── Gradient Indicator Pairs ──
 // Station pairs whose temperature/pressure differential drives local wind.
 // upstreamId is typically the higher-elevation or inland station,
@@ -1900,7 +1941,7 @@ async function runServerLearningCycle(redisCmd, currentStations, recentSnapshots
     if (lakeStations.length === 0) continue;
 
     const primaryId = LAKE_THERMAL[lakeId]?.station || stationIds[0];
-    const primary = lakeStations.find(s => s.stationId === primaryId) || lakeStations[0];
+    const primary = resolveStation(primaryId, lakeStations) || lakeStations[0];
     const history = buildStationHistory(primary.stationId, recentSnapshots);
 
     const events = predictForLake(lakeId, primary, pressure, history, hour, weights, upstreamSignals, nwsData, statisticalModels, gradientSignals);
@@ -2021,6 +2062,10 @@ async function runServerLearningCycle(redisCmd, currentStations, recentSnapshots
       gradientIndicatorsActive: Object.keys(gradientSignals),
     },
   };
+  } catch (err) {
+    console.error(`[ServerLearning] CRASH at step "${_step}":`, err.message);
+    return { error: err.message, step: _step, predictionsMade: 0 };
+  }
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -2107,7 +2152,7 @@ async function backfillHistorical(redisCmd, synopticToken, allStations, lakeStat
       if (lakeStations.length === 0) continue;
 
       const primaryId = LAKE_THERMAL[lakeId]?.station || stationIds[0];
-      const primary = lakeStations.find(s => s.stationId === primaryId) || lakeStations[0];
+      const primary = resolveStation(primaryId, lakeStations) || lakeStations[0];
       const history = buildStationHistory(primary.stationId, recentHistory);
       const upSig = detectUpstreamSignals ? detectUpstreamSignals(stations, recentHistory) : [];
       const events = predictForLake(lakeId, primary, pressure, history, hour, weights, upSig, null);
@@ -2238,13 +2283,22 @@ async function evaluateAndAdjustWindows(redisCmd, currentWeights, nwsData) {
     const lakeId = win.locationId;
     const sportType = win.sportType;
 
-    // Get the primary station for this lake
+    // Get the primary station for this lake (with WU/Tempest alias fallback)
     const thermalCfg = LAKE_THERMAL[lakeId];
     const primaryStationId = thermalCfg?.station || null;
     if (!primaryStationId) continue;
 
-    // Filter observations to this station
-    const stationObs = allObs.filter(o => o.stationId === primaryStationId);
+    // Filter observations to this station or its aliases
+    let stationObs = allObs.filter(o => o.stationId === primaryStationId);
+    if (stationObs.length === 0) {
+      const aliases = STATION_ALIASES[primaryStationId];
+      if (aliases) {
+        for (const alt of aliases) {
+          stationObs = allObs.filter(o => o.stationId === alt);
+          if (stationObs.length > 0) break;
+        }
+      }
+    }
     if (stationObs.length === 0) continue;
 
     const predStart = new Date(win.windowStart);
@@ -2414,6 +2468,8 @@ export {
   toMountainHour,
   normalizeToMb,
   computeGradientSignals,
+  resolveStation,
   LAKE_THERMAL,
+  STATION_ALIASES,
   GRADIENT_INDICATORS,
 };

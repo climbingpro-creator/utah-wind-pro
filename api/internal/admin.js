@@ -51,7 +51,6 @@ export default async function handler(req, res) {
 
 async function handleBackfill(req, res) {
   const env = getEnv();
-  if (!env.synopticToken) return res.status(500).json({ error: 'SYNOPTIC_TOKEN not set' });
   if (!env.upstashUrl || !env.upstashToken) return res.status(500).json({ error: 'Redis not configured' });
 
   const days = Math.min(parseInt(req.query?.days || '3', 10), 7);

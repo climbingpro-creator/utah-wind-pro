@@ -33,10 +33,10 @@ async function axiosWithRetry(config, retries = 2, baseDelay = 1000) {
 // In development, use VITE_ env vars directly for local testing.
 const AMBIENT_API_KEY = import.meta.env.VITE_AMBIENT_API_KEY;
 const AMBIENT_APP_KEY = import.meta.env.VITE_AMBIENT_APP_KEY;
-const SYNOPTIC_TOKEN  = import.meta.env.VITE_SYNOPTIC_TOKEN;
+const SYNOPTIC_TOKEN  = import.meta.env.VITE_SYNOPTIC_TOKEN; // Legacy: only used during transition
 
 const AMBIENT_BASE_URL  = 'https://rt.ambientweather.net/v1';
-const SYNOPTIC_BASE_URL = 'https://api.synopticdata.com/v2';
+const SYNOPTIC_BASE_URL = 'https://api.synopticdata.com/v2'; // Legacy: kept for getSynopticHistory dev mode
 
 let lastAmbientCall = 0;
 let cachedAmbientData = null;
@@ -241,22 +241,65 @@ class WeatherService {
   }
 
   /**
-   * Fetch nearby stations using FREE sources first (NWS + UDOT + Ambient + Open-Meteo)
-   * Falls back to Synoptic (paid) only if free sources fail or return no data
+   * Fetch ALL nearby stations using free multi-source discovery
+   * (NWS + WU + UDOT + Ambient + Open-Meteo). Returns full station array
+   * with IDW interpolation result for map visualization.
+   *
+   * Returns: { stations: [...], interpolated: {...}, confidence, stationCount }
    */
-  async fetchNearbyStations(lat, lng, radiusMiles = 50) {
-    // Try FREE radial endpoint first (NWS + UDOT + Ambient + Open-Meteo global fallback)
+  async fetchNearbyStations(lat, lng, radiusMiles = 30) {
     try {
-      const freeResponse = await axiosWithRetry({
+      const response = await axiosWithRetry({
+        method: 'get',
+        url: apiUrl('/api/weather'),
+        params: { source: 'radial-multi', lat, lng, radius: radiusMiles },
+        timeout: 12000,
+      });
+
+      const data = response.data;
+
+      if (data?.stations && data.stations.length > 0) {
+        const stations = data.stations.map(s => ({
+          id: s.id || s.stationId || 'UNKNOWN',
+          name: s.name || s.stationName || 'Weather Station',
+          lat: s.lat || s.latitude || lat,
+          lng: s.lng || s.longitude || lng,
+          elevation: s.elevation || null,
+          speed: s.windSpeed ?? null,
+          direction: s.windDirection ?? null,
+          gust: s.windGust ?? null,
+          temperature: s.temperature ?? null,
+          humidity: s.humidity ?? null,
+          pressure: s.pressure ?? null,
+          windSpeed: s.windSpeed ?? null,
+          windDirection: s.windDirection ?? null,
+          windGust: s.windGust ?? null,
+          distanceMiles: s.distanceMiles ?? null,
+          timestamp: s.timestamp || null,
+          _source: s.source || 'nws',
+        }));
+
+        stations._interpolated = data.interpolated || null;
+        stations._confidence = data.confidence || 0;
+        stations._stationCount = data.stationCount || stations.length;
+        stations._model = data.model || 'idw_interpolation';
+
+        return stations;
+      }
+    } catch (err) {
+      console.warn('[WeatherService] radial-multi failed, trying legacy radial:', err.message);
+    }
+
+    // Fallback: legacy single-station radial endpoint
+    try {
+      const response = await axiosWithRetry({
         method: 'get',
         url: apiUrl('/api/weather'),
         params: { source: 'radial', lat, lng, radius: radiusMiles },
         timeout: 8000,
       });
-      
-      const freeData = freeResponse.data;
-      
-      // If we got a station from free sources, return it
+
+      const freeData = response.data;
       if (freeData?.station && (freeData.station.windSpeed != null || freeData.station.temperature != null)) {
         const s = freeData.station;
         return [{
@@ -276,58 +319,11 @@ class WeatherService {
           _source: freeData.source || s.source || 'free-radial',
         }];
       }
-    } catch (freeErr) {
-      console.warn('[WeatherService] Free radial failed, trying Synoptic:', freeErr.message);
+    } catch (fallbackErr) {
+      console.error('[WeatherService] All radial sources failed:', fallbackErr.message);
     }
 
-    // Fall back to Synoptic (paid) if free sources didn't work
-    try {
-      let responseData;
-
-      if (IS_PRODUCTION) {
-        const response = await axiosWithRetry({
-          method: 'get', url: apiUrl('/api/weather'),
-          params: { source: 'synoptic-radial', lat, lng, radius: radiusMiles },
-        });
-        responseData = response.data;
-      } else {
-        const token = SYNOPTIC_TOKEN;
-        if (!token) return [];
-        const response = await axios.get(`${SYNOPTIC_BASE_URL}/stations/latest`, {
-          params: {
-            token,
-            radius: `${lat},${lng},${radiusMiles}`,
-            vars: 'air_temp,wind_speed,wind_direction,wind_gust,altimeter,sea_level_pressure',
-            units: 'english',
-            limit: '15',
-          },
-        });
-        responseData = response.data;
-      }
-
-      if (responseData?.STATION) {
-        return responseData.STATION.map((station) => ({
-          id: station.STID,
-          name: station.NAME,
-          lat: parseFloat(station.LATITUDE),
-          lng: parseFloat(station.LONGITUDE),
-          elevation: parseFloat(station.ELEVATION) || null,
-          speed: station.OBSERVATIONS?.wind_speed_value_1?.value ?? null,
-          direction: station.OBSERVATIONS?.wind_direction_value_1?.value ?? null,
-          gust: station.OBSERVATIONS?.wind_gust_value_1?.value ?? null,
-          temperature: station.OBSERVATIONS?.air_temp_value_1?.value ?? null,
-          pressure: station.OBSERVATIONS?.altimeter_value_1?.value
-            ?? station.OBSERVATIONS?.sea_level_pressure_value_1?.value ?? null,
-          windSpeed: station.OBSERVATIONS?.wind_speed_value_1?.value ?? null,
-          windDirection: station.OBSERVATIONS?.wind_direction_value_1?.value ?? null,
-          _source: 'synoptic-radial',
-        })).filter(s => s.lat && s.lng);
-      }
-      return [];
-    } catch (error) {
-      console.error('Synoptic radial fetch error:', error.message);
-      return [];
-    }
+    return [];
   }
 
   async getWuPwsCurrent(stationIds) {

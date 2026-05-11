@@ -179,14 +179,34 @@ export function VectorWaterMap({ currentWeatherData = {}, selectedLocation, onLo
   }, []);
 
   const stationMarkers = useMemo(() => {
-    if (!selectedLocation) return [];
-    const cfg = WU_PWS_STATIONS[selectedLocation];
-    if (!cfg?.stations) return [];
+    const markers = [];
     const seen = new Set();
-    return cfg.stations
-      .filter(s => s.lat && s.lon && !seen.has(s.id) && seen.add(s.id))
-      .map(s => ({ id: s.id, name: s.name, lat: s.lat, lng: s.lon, role: s.role, priority: s.priority }));
-  }, [selectedLocation]);
+
+    // Static per-location WU/PWS stations from config
+    if (selectedLocation) {
+      const cfg = WU_PWS_STATIONS[selectedLocation];
+      if (cfg?.stations) {
+        for (const s of cfg.stations) {
+          if (s.lat && s.lon && !seen.has(s.id)) {
+            seen.add(s.id);
+            markers.push({ id: s.id, name: s.name, lat: s.lat, lng: s.lon, role: s.role, priority: s.priority, source: 'config' });
+          }
+        }
+      }
+    }
+
+    // Dynamic stations from the latest fishery profile (NWS + WU + UDOT discovered)
+    if (fishProfile?.ambientWeather?.stations) {
+      for (const s of fishProfile.ambientWeather.stations) {
+        if (s.lat && s.lng && !seen.has(s.id)) {
+          seen.add(s.id);
+          markers.push({ id: s.id, name: s.name, lat: s.lat, lng: s.lng, role: s.source || 'nws', priority: 0, source: s.source });
+        }
+      }
+    }
+
+    return markers;
+  }, [selectedLocation, fishProfile]);
 
   // Auto-pan to selected location when it changes
   useEffect(() => {
@@ -1219,18 +1239,24 @@ export function VectorWaterMap({ currentWeatherData = {}, selectedLocation, onLo
             <Marker key={`wx-${s.id}`} longitude={s.lng} latitude={s.lat} anchor="center">
               <div
                 className="relative group cursor-default"
-                title={`${s.name} — ${s.role || 'weather station'}`}
+                title={`${s.name} — ${s.role || 'weather station'} (${s.source || 'nws'})`}
               >
                 <div className={`flex items-center justify-center rounded-full border shadow-sm ${
                   s.role === 'ground-truth'
                     ? 'w-5 h-5 bg-amber-500 border-amber-300 animate-pulse'
+                    : s.source === 'nws'
+                    ? 'w-3.5 h-3.5 bg-red-500/80 border-red-300/70'
+                    : s.source === 'wu'
+                    ? 'w-3.5 h-3.5 bg-green-500/80 border-green-300/70'
+                    : s.source === 'udot'
+                    ? 'w-3.5 h-3.5 bg-orange-500/80 border-orange-300/70'
                     : 'w-4 h-4 bg-violet-500/80 border-violet-300/70'
                 }`}>
-                  <span className="text-[7px] font-black text-white">📡</span>
+                  <span className="text-[7px] font-black text-white">{s.source === 'config' ? '📡' : '●'}</span>
                 </div>
                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 rounded-lg bg-slate-900/95 border border-slate-600/50 text-[9px] font-semibold text-white whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
                   <div>{s.name}</div>
-                  <div className="text-[8px] text-slate-400 font-normal">{s.role === 'ground-truth' ? 'Primary Station' : s.role || 'Weather Station'}</div>
+                  <div className="text-[8px] text-slate-400 font-normal">{s.source === 'nws' ? 'NWS Station' : s.source === 'wu' ? 'WU PWS' : s.source === 'udot' ? 'UDOT RWIS' : s.role || 'Weather Station'}</div>
                 </div>
               </div>
             </Marker>

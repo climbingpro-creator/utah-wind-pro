@@ -13,6 +13,7 @@ import { getSupabase } from '../lib/supabase.js';
 import { getLakeConfig } from '../lib/stations.js';
 import { splitStations, fetchNwsLatest } from '../lib/nwsAdapter.js';
 import { isUdotStation, fetchUdotLatest } from '../lib/udotAdapter.js';
+import { fetchMultipleNwsStations } from '../lib/nwsDiscovery.js';
 
 const VAPID_PUBLIC  = process.env.VAPID_PUBLIC_KEY;
 const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY;
@@ -138,12 +139,22 @@ async function fetchConditions(lakeId) {
   const udotKey = process.env.UDOT_API_KEY;
   if (udotIds.length > 0 && udotKey) fetches.push(fetchUdotLatest(udotIds, udotKey).catch(() => []));
   const synFallback = udotKey ? synOnly : [...synOnly, ...udotIds];
+
+  // NWS for K-prefix stations
+  const nwsCompatible = synFallback.filter(id => /^K[A-Z]{3}/.test(id));
+  const nonNwsIds = synFallback.filter(id => !/^K[A-Z]{3}/.test(id));
+
+  if (nwsCompatible.length > 0) {
+    fetches.push(fetchMultipleNwsStations(nwsCompatible).catch(() => []));
+  }
+
+  // Synoptic fallback only during transition
   const token = process.env.SYNOPTIC_TOKEN;
-  if (token && synFallback.length > 0) {
+  if (token && nonNwsIds.length > 0) {
     fetches.push((async () => {
       try {
         const params = new URLSearchParams({
-          token, stid: synFallback.join(','),
+          token, stid: nonNwsIds.join(','),
           vars: 'wind_speed,wind_direction,wind_gust,air_temp', units: 'english',
         });
         const resp = await fetch(`https://api.synopticdata.com/v2/stations/latest?${params}`,

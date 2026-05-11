@@ -25,6 +25,7 @@ import { triggerNextStage } from '../lib/qstash.js';
 import { WindPredictor, getModelPath } from '@utahwind/ml';
 import { WU_PRIORITY_STATIONS } from '../../packages/weather/src/config/wuPwsNetwork.js';
 import { loadTranslationModels, applyTranslations } from '../lib/translationModels.js';
+import { fetchMultipleNwsStations } from '../lib/nwsDiscovery.js';
 
 const ALL_STATIONS = ALL_STATION_IDS;
 
@@ -136,14 +137,28 @@ async function fetchSynopticLatest() {
   }
 
   const synopticFallbackIds = udotKey ? synopticOnlyIds : [...synopticOnlyIds, ...udotIds];
+
+  // Primary: Try NWS multi-station for K-prefix stations in the synoptic list
+  const nwsCompatibleIds = synopticFallbackIds.filter(id => /^K[A-Z]{3}/.test(id));
+  const nonNwsIds = synopticFallbackIds.filter(id => !/^K[A-Z]{3}/.test(id));
+
+  if (nwsCompatibleIds.length > 0) {
+    fetches.push(fetchMultipleNwsStations(nwsCompatibleIds).catch(err => {
+      console.warn('[1-ingest] NWS multi-station error:', err.message);
+      return [];
+    }));
+  }
+
+  // For non-airport/non-UDOT mesonet IDs: use Synoptic if available (transition),
+  // otherwise use Open-Meteo model data as fallback
   const { synopticToken } = getEnv();
-  if (synopticToken && synopticFallbackIds.length > 0) {
+  if (synopticToken && nonNwsIds.length > 0) {
     fetches.push((async () => {
       try {
-        const url = `https://api.synopticdata.com/v2/stations/latest?token=${synopticToken}&stids=${synopticFallbackIds.join(',')}&vars=wind_speed,wind_direction,wind_gust,air_temp,altimeter,sea_level_pressure&units=english&obtimezone=local`;
+        const url = `https://api.synopticdata.com/v2/stations/latest?token=${synopticToken}&stids=${nonNwsIds.join(',')}&vars=wind_speed,wind_direction,wind_gust,air_temp,altimeter,sea_level_pressure&units=english&obtimezone=local`;
         const resp = await fetch(url, { signal: AbortSignal.timeout(10000) });
         if (!resp.ok) {
-          console.warn(`[1-ingest] Synoptic returned ${resp.status}`);
+          console.warn(`[1-ingest] Synoptic returned ${resp.status} — will use Open-Meteo`);
           return [];
         }
         const json = await resp.json();
@@ -153,20 +168,129 @@ async function fetchSynopticLatest() {
         return [];
       }
     })());
+  } else if (nonNwsIds.length > 0) {
+    // No Synoptic token — fetch Open-Meteo model data for these stations
+    fetches.push(fetchOpenMeteoForMesonetIds(nonNwsIds).catch(err => {
+      console.warn('[1-ingest] Open-Meteo fallback error:', err.message);
+      return [];
+    }));
   }
 
   const results = await Promise.all(fetches);
   const allStationData = results.flat();
 
-  const sources = { nws: 0, udot: 0, synoptic: 0 };
+  const sources = { nws: 0, udot: 0, synoptic: 0, 'open-meteo': 0 };
   for (const s of allStationData) {
-    if (s._source === 'nws') sources.nws++;
-    else if (s._source === 'udot') sources.udot++;
-    else sources.synoptic++;
+    const src = s._source || 'synoptic';
+    sources[src] = (sources[src] || 0) + 1;
   }
-  console.log(`[1-ingest] Multi-source: NWS=${sources.nws}, UDOT=${sources.udot}, Synoptic=${sources.synoptic}`);
+  console.log(`[1-ingest] Multi-source: NWS=${sources.nws}, UDOT=${sources.udot}, Synoptic=${sources.synoptic}, Open-Meteo=${sources['open-meteo'] || 0}`);
 
   return allStationData.map(stationObjFromSynopticFormat);
+}
+
+// Coordinates for mesonet stations (used by Open-Meteo fallback when Synoptic is unavailable)
+const MESONET_COORDS = {
+  FPS:   { lat: 40.452, lng: -111.890, name: 'Flight Park South' },
+  CSC:   { lat: 40.400, lng: -111.620, name: 'Cascade Peak' },
+  TIMU1: { lat: 40.390, lng: -111.640, name: 'Timpanogos Divide' },
+  QLN:   { lat: 40.338, lng: -111.696, name: 'Lindon' },
+  UTOLY: { lat: 40.330, lng: -111.890, name: 'Lake Shore / Zig Zag' },
+  UID28: { lat: 40.350, lng: -111.900, name: 'Saratoga Springs' },
+  QSF:   { lat: 40.050, lng: -111.550, name: 'Spanish Fork Canyon' },
+  UTALP: { lat: 40.453, lng: -111.758, name: 'Point of the Mountain' },
+  SND:   { lat: 40.576, lng: -111.652, name: 'Snowbird' },
+  SKY:   { lat: 40.607, lng: -111.657, name: 'Solitude / Brighton' },
+  BERU1: { lat: 41.920, lng: -111.420, name: 'Bear Lake' },
+  MDAU1: { lat: 40.475, lng: -111.498, name: 'Midway' },
+  EPMU1: { lat: 41.382, lng: -111.930, name: 'East Promontory' },
+  GSLM:  { lat: 40.770, lng: -112.180, name: 'Great Salt Lake Marina' },
+  DSTU1: { lat: 40.470, lng: -111.510, name: 'Deer Creek Stn' },
+  RVZU1: { lat: 40.480, lng: -111.470, name: 'Riverview' },
+  CCPUT: { lat: 40.470, lng: -111.450, name: 'Charlston' },
+  UWCU1: { lat: 40.460, lng: -111.440, name: 'Wasatch County' },
+  UR328: { lat: 41.700, lng: -112.050, name: 'Willard' },
+  BLPU1: { lat: 41.680, lng: -112.060, name: 'Brigham Local' },
+  OGP:   { lat: 41.196, lng: -111.970, name: 'Ogden Peak' },
+  COOPOGNU1: { lat: 41.400, lng: -111.950, name: 'COOP Ogden' },
+  PC496: { lat: 41.350, lng: -111.920, name: 'PC496' },
+  UTPVD: { lat: 41.300, lng: -111.900, name: 'Powder Valley' },
+  UTHUN: { lat: 41.220, lng: -111.870, name: 'Huntsville' },
+  UTLMP: { lat: 39.700, lng: -111.850, name: 'Leamington Pass' },
+  UTRKY: { lat: 39.650, lng: -111.800, name: 'Rocky Ridge' },
+  UTSCI: { lat: 39.200, lng: -111.600, name: 'Scipio' },
+  UTPOW: { lat: 37.780, lng: -112.460, name: 'Panguitch Lake' },
+  UTMON: { lat: 37.650, lng: -113.180, name: 'Monticello' },
+  AMFKM: { lat: 40.305, lng: -111.720, name: 'American Fork Marina' },
+  UP218: { lat: 40.080, lng: -111.640, name: 'UP218 Spanish Fork' },
+  UTSHR: { lat: 40.520, lng: -111.480, name: 'Silver Creek / Heber' },
+  UTMPK: { lat: 40.540, lng: -111.510, name: 'Midway Park' },
+  UTESU: { lat: 40.250, lng: -111.660, name: 'East Spanish Fork' },
+  UTHTP: { lat: 40.280, lng: -111.690, name: 'Highland / Timpanogos' },
+  UTORM: { lat: 40.293, lng: -111.693, name: 'Orem' },
+  UTPCR: { lat: 40.270, lng: -111.700, name: 'Provo Canyon Road' },
+  UT7:   { lat: 40.240, lng: -111.740, name: 'UT7 Provo' },
+  UTPRB: { lat: 40.200, lng: -111.750, name: 'Provo Bay' },
+  UTRVT: { lat: 40.260, lng: -111.710, name: 'River Trail' },
+  UTLAK: { lat: 40.330, lng: -111.880, name: 'Lakeshore' },
+  UTDCD: { lat: 40.405, lng: -111.500, name: 'Deer Creek Dam' },
+  UTPCY: { lat: 40.430, lng: -111.520, name: 'Provo Canyon' },
+  UTLPC: { lat: 40.380, lng: -111.550, name: 'Lower Provo Canyon' },
+  UTCHL: { lat: 40.460, lng: -111.480, name: 'Charleston' },
+  UTDAN: { lat: 40.530, lng: -111.500, name: 'Daniels' },
+  UTHEB: { lat: 40.510, lng: -111.410, name: 'Heber Valley' },
+  UTSLD: { lat: 40.490, lng: -111.460, name: 'Soldier Hollow' },
+  UTGRC: { lat: 41.920, lng: -111.400, name: 'Garden City' },
+  UTLTS: { lat: 41.740, lng: -111.830, name: 'Logan / Three Sisters' },
+  UTCOP: { lat: 40.170, lng: -111.150, name: 'Strawberry Copter' },
+};
+
+async function fetchOpenMeteoForMesonetIds(stationIds) {
+  const results = [];
+  const toFetch = stationIds.filter(id => MESONET_COORDS[id]);
+  if (toFetch.length === 0) return results;
+
+  const fetches = toFetch.map(async (stid) => {
+    const { lat, lng, name } = MESONET_COORDS[stid];
+    try {
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}` +
+        '&current=temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,relative_humidity_2m,surface_pressure' +
+        '&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto';
+      const resp = await fetch(url, { signal: AbortSignal.timeout(6000) });
+      if (!resp.ok) return null;
+      const data = await resp.json();
+      const c = data.current;
+      if (!c) return null;
+      return {
+        STID: stid,
+        NAME: `${name} (Open-Meteo)`,
+        LATITUDE: String(lat),
+        LONGITUDE: String(lng),
+        ELEVATION: '',
+        STATUS: 'ACTIVE',
+        OBSERVATIONS: {
+          date_time: c.time,
+          wind_speed_value_1: { value: c.wind_speed_10m ?? null, date_time: c.time },
+          wind_direction_value_1: { value: c.wind_direction_10m ?? null, date_time: c.time },
+          wind_gust_value_1: { value: c.wind_gusts_10m ?? null, date_time: c.time },
+          air_temp_value_1: { value: c.temperature_2m ?? null, date_time: c.time },
+          relative_humidity_value_1: { value: c.relative_humidity_2m ?? null, date_time: c.time },
+          altimeter_value_1: { value: c.surface_pressure ? +(c.surface_pressure / 33.8639).toFixed(2) : null, date_time: c.time },
+          sea_level_pressure_value_1: { value: null, date_time: c.time },
+        },
+        _source: 'open-meteo',
+      };
+    } catch (err) {
+      console.warn(`[1-ingest] Open-Meteo fallback ${stid}:`, err.message);
+      return null;
+    }
+  });
+
+  const settled = await Promise.allSettled(fetches);
+  for (const r of settled) {
+    if (r.status === 'fulfilled' && r.value) results.push(r.value);
+  }
+  return results;
 }
 
 async function fetchWuPwsLatest() {
@@ -371,11 +495,11 @@ export default async function handler(req, res) {
   }
 
   const env = getEnv();
-  if (!env.synopticToken) {
-    return res.status(500).json({ error: 'SYNOPTIC_TOKEN not set' });
-  }
   if (!hasRedis()) {
     return res.status(500).json({ error: 'Redis not configured' });
+  }
+  if (!env.synopticToken) {
+    console.log('[1-ingest] SYNOPTIC_TOKEN not set — using NWS + WU + Open-Meteo free sources');
   }
 
   try {
@@ -396,6 +520,25 @@ export default async function handler(req, res) {
       ...(wuResult.status === 'fulfilled' ? wuResult.value : []),
       ...(tempestResult.status === 'fulfilled' ? tempestResult.value : []),
     ];
+
+    // Prefer WU/Tempest real observations over Open-Meteo model data for prediction-critical stations.
+    // If a mesonet station (e.g. FPS) was filled by Open-Meteo but its WU replacement has real data, use WU.
+    const stationMap = new Map(stations.map(s => [s.stationId, s]));
+    for (const [mesoId, wuIds] of Object.entries(VALIDATION_PAIRS)) {
+      const mesoStation = stationMap.get(mesoId);
+      if (!mesoStation || mesoStation.source !== 'open-meteo') continue;
+      for (const wuId of wuIds) {
+        const wuStation = stationMap.get(wuId);
+        if (wuStation && wuStation.windSpeed != null) {
+          mesoStation.windSpeed = wuStation.windSpeed;
+          mesoStation.windDirection = wuStation.windDirection ?? mesoStation.windDirection;
+          mesoStation.windGust = wuStation.windGust ?? mesoStation.windGust;
+          mesoStation.temperature = wuStation.temperature ?? mesoStation.temperature;
+          mesoStation.source = `wu-alias:${wuId}`;
+          break;
+        }
+      }
+    }
 
     // Apply learned translation models (no-op until models:translations exists in Redis)
     try {

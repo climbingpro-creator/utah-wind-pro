@@ -158,13 +158,8 @@ export default async function handler(req, res) {
         console.log(`[2-process] Auto-rebuilding statistical models: ${reason}`);
 
         const { synopticToken } = getEnv();
-        if (synopticToken) {
-          await buildStatisticalModels(redisCommand, synopticToken, { days: 365 });
-          diagnostics.modelRebuild = reason;
-        } else {
-          console.warn('[2-process] Skipping model rebuild: SYNOPTIC_TOKEN not set');
-          diagnostics.modelRebuild = 'skipped:no-token';
-        }
+        await buildStatisticalModels(redisCommand, synopticToken || null, { days: 365 });
+        diagnostics.modelRebuild = reason;
       }
     } catch (err) {
       console.error('[2-process] Model rebuild error (non-fatal):', err.message);
