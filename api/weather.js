@@ -1172,10 +1172,10 @@ async function handleSynopticLatest(res, stids) {
   const results = await Promise.all(fetches);
   const allStations = results.flat();
 
-  // Open-Meteo fallback for stations that have no data from NWS/UDOT/Synoptic
-  if (!token && synopticFallbackIds.length > 0) {
+  // Open-Meteo fallback for ANY station missing data (regardless of Synoptic token)
+  {
     const returnedIds = new Set(allStations.map(s => s.STID));
-    const missingIds = synopticFallbackIds.filter(id => !returnedIds.has(id));
+    const missingIds = filtered.filter(id => !returnedIds.has(id) && !id.startsWith('K'));
     if (missingIds.length > 0) {
       const omResults = await fetchOpenMeteoForStations(missingIds);
       if (omResults.length > 0) {

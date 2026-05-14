@@ -126,6 +126,11 @@ function dirLabel(deg) {
   return dirs[Math.round(deg / 22.5) % 16];
 }
 
+const SHADOW_IDS = {
+  FPS: 'KUTLEHI111', UTOLY: 'KUTSARAT50', QLN: 'KUTPLEAS11',
+  UID28: 'KUTSARAT88', UT7: 'KUTALPIN3',
+};
+
 function resolveStation(nodeId, lakeState) {
   if (!lakeState) return null;
   switch (nodeId) {
@@ -134,8 +139,16 @@ function resolveStation(nodeId, lakeState) {
     case 'UTALP': return lakeState.utalpStation ?? lakeState.wind?.stations?.find(s => s.id === 'UTALP') ?? null;
     case 'TARGET': return lakeState.pws ?? lakeState.wind?.stations?.[0] ?? null;
     case 'RIDGE': return null;
-    default:
-      return lakeState.wind?.stations?.find(s => s.id === nodeId) ?? null;
+    default: {
+      if (nodeId === 'QSF' && lakeState.earlyIndicator) return lakeState.earlyIndicator;
+      const stations = lakeState.wind?.stations;
+      if (!stations) return null;
+      const primary = stations.find(s => s.id === nodeId);
+      if (primary) return primary;
+      const shadowId = SHADOW_IDS[nodeId];
+      if (shadowId) return stations.find(s => s.id === shadowId) ?? null;
+      return null;
+    }
   }
 }
 
