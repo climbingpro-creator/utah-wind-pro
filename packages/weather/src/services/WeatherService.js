@@ -350,6 +350,173 @@ class WeatherService {
     }
   }
 
+  /**
+   * Fetch FREE station data for ridge/airport stations using NWS + Open-Meteo
+   * Replaces Synoptic/MesoWest dependency with free government sources.
+   */
+  async getFreeStationData(lakeId) {
+    const { LAKE_CONFIGS } = await import('../config/lakeStations.js');
+    const config = LAKE_CONFIGS[lakeId];
+    if (!config) return [];
+
+    const stations = [];
+    const fetchPromises = [];
+
+    // ── Fetch NWS data for airport stations (KSLC, KPVU, etc.) ──
+    const airportIds = [];
+    if (config.stations.pressure?.high?.id?.startsWith('K')) {
+      airportIds.push(config.stations.pressure.high);
+    }
+    if (config.stations.pressure?.low?.id?.startsWith('K')) {
+      airportIds.push(config.stations.pressure.low);
+    }
+    // Add any reference stations that are airports
+    (config.stations.reference || []).forEach(s => {
+      if (s.id?.startsWith('K')) airportIds.push(s);
+    });
+
+    if (airportIds.length > 0) {
+      fetchPromises.push(
+        this.fetchNwsAirportData(airportIds).then(data => {
+          stations.push(...data);
+        }).catch(err => {
+          console.warn('[WeatherService] NWS airport fetch failed:', err.message);
+        })
+      );
+    }
+
+    // ── Fetch Open-Meteo data for ridge stations (high elevation) ──
+    const ridgeStations = config.stations.ridge || [];
+    for (const ridge of ridgeStations) {
+      // Get coordinates from config or use known coordinates
+      const coords = this.getRidgeCoordinates(ridge.id, config);
+      if (coords) {
+        fetchPromises.push(
+          this.fetchOpenMeteoForStation(ridge, coords).then(data => {
+            if (data) stations.push(data);
+          }).catch(err => {
+            console.warn(`[WeatherService] Open-Meteo ridge fetch failed for ${ridge.id}:`, err.message);
+          })
+        );
+      }
+    }
+
+    // ── Fetch Open-Meteo for lakeshore stations without WU coverage ──
+    const lakeshoreStations = config.stations.lakeshore || [];
+    for (const ls of lakeshoreStations) {
+      const coords = ls.coordinates || config.coordinates;
+      if (coords) {
+        fetchPromises.push(
+          this.fetchOpenMeteoForStation(ls, coords).then(data => {
+            if (data) stations.push(data);
+          }).catch(err => {
+            console.warn(`[WeatherService] Open-Meteo lakeshore fetch failed for ${ls.id}:`, err.message);
+          })
+        );
+      }
+    }
+
+    await Promise.allSettled(fetchPromises);
+    return stations;
+  }
+
+  /**
+   * Known ridge station coordinates (MesoWest stations)
+   */
+  getRidgeCoordinates(stationId, config) {
+    const RIDGE_COORDS = {
+      'CSC':    { lat: 40.44, lng: -111.61 },   // Cascade Peak
+      'TIMU1':  { lat: 40.39, lng: -111.63 },   // Timpanogos Divide
+      'UTALP':  { lat: 40.59, lng: -111.64 },   // Alta Peak
+      'UT7':    { lat: 40.76, lng: -111.82 },   // Ben Lomond
+      'UTPCR':  { lat: 40.87, lng: -111.51 },   // Powder Mountain
+      'UTORM':  { lat: 40.65, lng: -111.83 },   // Olympus
+      'ARWUT':  { lat: 40.41, lng: -111.52 },   // Arrowhead (Deer Creek)
+      'QSF':    { lat: 40.115, lng: -111.655 }, // Spanish Fork
+      'FPS':    { lat: 40.45, lng: -111.90 },   // Flight Park South
+    };
+    return RIDGE_COORDS[stationId] || null;
+  }
+
+  /**
+   * Fetch NWS data for airport stations
+   */
+  async fetchNwsAirportData(airportConfigs) {
+    const results = [];
+    for (const airport of airportConfigs) {
+      try {
+        const response = await axiosWithRetry({
+          method: 'get',
+          url: `https://api.weather.gov/stations/${airport.id}/observations/latest`,
+          headers: { 'Accept': 'application/geo+json' },
+          timeout: 8000,
+        });
+        const obs = response.data?.properties;
+        if (obs) {
+          results.push({
+            stationId: airport.id,
+            name: airport.name,
+            elevation: airport.elevation,
+            temperature: obs.temperature?.value != null 
+              ? (obs.temperature.value * 9/5) + 32 // C to F
+              : null,
+            windSpeed: obs.windSpeed?.value != null
+              ? obs.windSpeed.value * 2.237 // m/s to mph
+              : null,
+            windDirection: obs.windDirection?.value,
+            windGust: obs.windGust?.value != null
+              ? obs.windGust.value * 2.237
+              : null,
+            pressure: obs.barometricPressure?.value != null
+              ? obs.barometricPressure.value / 100 // Pa to mb
+              : null,
+            humidity: obs.relativeHumidity?.value,
+            timestamp: obs.timestamp,
+            _source: 'nws',
+          });
+        }
+      } catch (err) {
+        console.warn(`[NWS] Failed to fetch ${airport.id}:`, err.message);
+      }
+    }
+    return results;
+  }
+
+  /**
+   * Fetch Open-Meteo data for a station at given coordinates
+   */
+  async fetchOpenMeteoForStation(stationConfig, coords) {
+    try {
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${coords.lat}&longitude=${coords.lng}` +
+        '&current=temperature_2m,relative_humidity_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,surface_pressure' +
+        '&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto';
+      
+      const response = await axiosWithRetry({ method: 'get', url, timeout: 8000 });
+      const current = response.data?.current;
+      
+      if (current) {
+        return {
+          stationId: stationConfig.id,
+          name: stationConfig.name,
+          elevation: stationConfig.elevation,
+          latitude: coords.lat,
+          longitude: coords.lng,
+          temperature: current.temperature_2m,
+          windSpeed: current.wind_speed_10m,
+          windDirection: current.wind_direction_10m,
+          windGust: current.wind_gusts_10m,
+          pressure: current.surface_pressure,
+          humidity: current.relative_humidity_2m,
+          timestamp: current.time,
+          _source: 'open-meteo',
+        };
+      }
+    } catch (err) {
+      console.warn(`[Open-Meteo] Failed for ${stationConfig.id}:`, err.message);
+    }
+    return null;
+  }
+
   async getDataForLake(lakeId) {
     const stationIds = getAllStationIds(lakeId);
     
@@ -359,19 +526,47 @@ class WeatherService {
     for (const id of (WU_PRIORITY_STATIONS || [])) wuIdSet.add(id);
     const wuIds = [...wuIdSet];
 
-    const [ambientData, synopticData, wuData] = await Promise.allSettled([
+    // ═══════════════════════════════════════════════════════════════
+    // CRITICAL FIX: Use FREE sources instead of Synoptic/MesoWest
+    // ═══════════════════════════════════════════════════════════════
+    // 1. Ambient Weather (our PWS)
+    // 2. Weather Underground PWS network
+    // 3. NWS for airports + Open-Meteo for ridge stations (NEW!)
+    // 4. Legacy Synoptic only as last resort (if token exists)
+    
+    const [ambientData, freeStationData, wuData, synopticData] = await Promise.allSettled([
       this.getAmbientWeatherData(),
-      this.getSynopticStationData(stationIds),
+      this.getFreeStationData(lakeId),
       wuIds.length > 0 ? this.getWuPwsCurrent(wuIds) : Promise.resolve([]),
+      // Only try Synoptic if we have a token (legacy fallback)
+      IS_PRODUCTION ? this.getSynopticStationData(stationIds) : Promise.resolve([]),
     ]);
     
     const normalizedWu = (wuData.status === 'fulfilled' ? wuData.value : [])
       .map(normalizeWuObservation)
       .filter(Boolean);
 
+    // Merge free station data with any synoptic data (free sources take priority)
+    const freeStations = freeStationData.status === 'fulfilled' ? freeStationData.value : [];
+    const synopticStations = synopticData.status === 'fulfilled' ? synopticData.value : [];
+    
+    // Create a map of station IDs we already have from free sources
+    const freeStationIds = new Set(freeStations.map(s => s.stationId));
+    
+    // Only use Synoptic stations for IDs we don't have from free sources
+    const mergedStations = [
+      ...freeStations,
+      ...synopticStations.filter(s => !freeStationIds.has(s.stationId)),
+    ];
+
+    const hasData = ambientData.status === 'fulfilled' || mergedStations.length > 0 || normalizedWu.length > 0;
+    if (!hasData) {
+      console.warn(`[WeatherService] No weather data available for ${lakeId}`);
+    }
+
     return {
       ambient: ambientData.status === 'fulfilled' ? ambientData.value : null,
-      synoptic: synopticData.status === 'fulfilled' ? synopticData.value : [],
+      synoptic: mergedStations, // Now includes NWS + Open-Meteo data
       wuPws: normalizedWu,
       fetchedAt: new Date().toISOString(),
     };
@@ -398,6 +593,34 @@ class WeatherService {
   }
 
   async getHistoryForLake(lakeId, hours = 3) {
+    // Try to get history from WU PWS first (free), fall back to Synoptic
+    const { getWuStationsForSpot } = await import('../config/wuPwsNetwork.js');
+    const spotWu = getWuStationsForSpot(lakeId);
+    
+    if (spotWu.length > 0) {
+      // Get history from primary WU station
+      const primaryWu = spotWu.find(s => s.priority === 1) || spotWu[0];
+      try {
+        const history = await this.getWuPwsHistory(primaryWu.id);
+        if (history.length > 0) {
+          return [{
+            stationId: primaryWu.id,
+            name: primaryWu.name,
+            history: history.map(h => ({
+              timestamp: h.timestamp,
+              windSpeed: h.windSpeed,
+              windDirection: h.windDirection,
+              windGust: h.windGust,
+              temperature: h.temperature,
+            })),
+          }];
+        }
+      } catch (err) {
+        console.warn('[WeatherService] WU history failed, trying Synoptic:', err.message);
+      }
+    }
+    
+    // Fallback to Synoptic if available
     const stationIds = getAllStationIds(lakeId);
     return this.getSynopticHistory(stationIds, hours);
   }
