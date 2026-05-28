@@ -6,7 +6,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import { Compass, Maximize2, X, Wind, Droplets, Layers } from 'lucide-react';
 
 const PMTILES_URL = import.meta.env.VITE_PMTILES_WATER_URL || null;
-import { LAKE_CONFIGS, SpatialInterpolator, applySurfacePhysics, calculateFetchMultiplier, calculateVenturiMultiplier, weatherService, isIOS } from '@utahwind/weather';
+import { LAKE_CONFIGS, STATION_REGISTRY, SpatialInterpolator, applySurfacePhysics, calculateFetchMultiplier, calculateVenturiMultiplier, weatherService, isIOS } from '@utahwind/weather';
 import { trackPinDrop } from '@utahwind/ui';
 import { impactMedium, impactLight } from '../services/HapticService';
 import { safeToFixed } from '../utils/safeToFixed';
@@ -79,6 +79,84 @@ const MAP_AREAS = {
 
 const BASEMAP_STYLE = 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json';
 
+/**
+ * Dynamically build a MAP_AREAS-shaped object for ANY lake in LAKE_CONFIGS.
+ * Used as fallback when the lake isn't in the hardcoded MAP_AREAS above.
+ *
+ * Pulls coordinates from STATION_REGISTRY when available, falls back to the
+ * lake's own coordinates for lakeshore stations that lack a registry entry.
+ * This is how the map now shows wind meters for every kiting/fishing location
+ * in the system — onX-style coverage, not just the 4 hardcoded areas.
+ */
+function buildMapAreaFromLakeConfig(lakeId) {
+  const cfg = LAKE_CONFIGS?.[lakeId];
+  if (!cfg) return null;
+  const center = cfg.coordinates ? [cfg.coordinates.lng, cfg.coordinates.lat] : null;
+  if (!center) return null;
+
+  const stations = [];
+  const seen = new Set();
+
+  function add(entry, defaults = {}) {
+    if (!entry?.id || seen.has(entry.id)) return;
+    const reg = STATION_REGISTRY?.[entry.id];
+    const lat = reg?.lat ?? entry.lat ?? cfg.coordinates?.lat;
+    const lng = reg?.lng ?? entry.lng ?? cfg.coordinates?.lng;
+    if (lat == null || lng == null) return;
+
+    const isAirport = entry.id.startsWith('K') && entry.id.length === 4;
+    const isUdot = entry.id.startsWith('UT') || entry.id.startsWith('WY');
+    const isPws = entry.id.startsWith('KUT') || entry.id.startsWith('KWY');
+    const type = defaults.type || (isPws ? 'pws' : isUdot ? 'udot' : 'nws');
+
+    seen.add(entry.id);
+    stations.push({
+      id: entry.id,
+      name: entry.name || reg?.shortName || reg?.name || entry.id,
+      lat,
+      lng,
+      type,
+      elevation: entry.elevation || reg?.elevation,
+      ...defaults,
+    });
+  }
+
+  // Pressure stations
+  if (cfg.stations?.pressure?.high) add(cfg.stations.pressure.high, { isNorthFlowIndicator: true });
+  if (cfg.stations?.pressure?.low)  add(cfg.stations.pressure.low,  { isSouthernIndicator: true });
+
+  // Ridge stations
+  if (Array.isArray(cfg.stations?.ridge)) {
+    for (const s of cfg.stations.ridge) add(s, { isRidge: true });
+  }
+
+  // Lakeshore stations
+  if (Array.isArray(cfg.stations?.lakeshore)) {
+    for (const s of cfg.stations.lakeshore) add(s);
+  }
+
+  // Reference stations
+  if (Array.isArray(cfg.stations?.reference)) {
+    for (const s of cfg.stations.reference) add(s);
+  }
+
+  // Predictor stations (early indicators)
+  if (Array.isArray(cfg.stations?.predictor)) {
+    for (const s of cfg.stations.predictor) add(s, { isEarlyIndicator: true });
+  }
+
+  // Ground truth
+  if (cfg.stations?.groundTruth) add(cfg.stations.groundTruth);
+
+  return {
+    name: cfg.name || lakeId,
+    center,
+    zoom: 11,
+    launches: [lakeId],
+    stations,
+  };
+}
+
 function getStationColor(station) {
   if (station.type === 'pws') return '#22d3ee';
   if (station.isNorthFlowIndicator) return '#3b82f6';
@@ -101,7 +179,20 @@ function StationMarker({ station, stationData, onClick }) {
 
   const isRidge = station.isRidge;
   const isIndicator = station.isEarlyIndicator || station.isNorthFlowIndicator;
-  const size = isIndicator ? 18 : 16;
+  // Slightly larger when reporting live so users can spot active meters at a glance
+  const size = hasData ? (isIndicator ? 20 : 18) : (isIndicator ? 16 : 14);
+
+  // Speed-coded badge color for live meters (matches dense PWS field palette)
+  const speed = live?.speed;
+  let badgeColor = color;
+  if (hasData) {
+    if (speed < 3) badgeColor = '#64748b';
+    else if (speed < 6) badgeColor = '#38bdf8';
+    else if (speed < 10) badgeColor = '#22d3ee';
+    else if (speed < 15) badgeColor = '#4ade80';
+    else if (speed < 20) badgeColor = '#facc15';
+    else badgeColor = '#f87171';
+  }
 
   return (
     <Marker
@@ -115,15 +206,16 @@ function StationMarker({ station, stationData, onClick }) {
     >
       <div
         className="cursor-pointer transition-transform active:scale-110"
+        title={hasData ? `${station.name}: ${Math.round(speed)} mph` : station.name}
         style={{
           width: size,
           height: size,
-          background: color,
-          border: `2px solid ${color}`,
+          background: hasData ? badgeColor : color,
+          border: `2px solid ${hasData ? badgeColor : color}`,
           borderRadius: isRidge ? '2px' : '50%',
           transform: isRidge ? 'rotate(45deg)' : 'none',
-          opacity: hasData ? 1 : 0.5,
-          boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+          opacity: hasData ? 1 : 0.45,
+          boxShadow: hasData ? '0 0 6px rgba(34,211,238,0.4), 0 2px 4px rgba(0,0,0,0.3)' : '0 2px 4px rgba(0,0,0,0.3)',
         }}
       />
     </Marker>
@@ -472,7 +564,8 @@ export function VectorWindMap({
   }, []);
 
   useEffect(() => {
-    let area = MAP_AREAS['utah-lake'];
+    // First check the hardcoded MAP_AREAS for hyper-tuned coverage areas
+    let area = null;
     if (selectedLake?.startsWith('utah-lake')) {
       area = MAP_AREAS['utah-lake'];
     } else if (selectedLake === 'deer-creek') {
@@ -481,6 +574,14 @@ export function VectorWindMap({
       area = MAP_AREAS['willard-bay'];
     } else if (selectedLake === 'sulfur-creek') {
       area = MAP_AREAS['sulfur-creek'];
+    }
+    // For ANY other lake in the system, dynamically build the map area
+    // from LAKE_CONFIGS so meters render for every kiting/fishing location.
+    if (!area && selectedLake) {
+      area = buildMapAreaFromLakeConfig(selectedLake);
+    }
+    if (!area) {
+      area = MAP_AREAS['utah-lake'];
     }
     setMapArea(area);
     if (area) {

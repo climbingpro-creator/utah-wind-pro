@@ -1,0 +1,3483 @@
+{
+  "summary": {
+    "timestamp": "2026-05-28T20:55:54.456Z",
+    "total": 46,
+    "byGrade": {
+      "A": 32,
+      "B": 14,
+      "B-": 0,
+      "C": 0,
+      "D": 0,
+      "F": 0
+    },
+    "issueCount": {
+      "critical": 0,
+      "high": 0,
+      "medium": 14,
+      "low": 2,
+      "info": 17
+    },
+    "issuesByCode": {
+      "INSUFFICIENT_THERMAL_DAYS": 17,
+      "PEAK_HOUR_DRIFT": 14,
+      "DIRECTION_DRIFT": 2
+    }
+  },
+  "results": [
+    {
+      "lakeId": "utah-lake-lincoln",
+      "name": "Lincoln Beach",
+      "coords": {
+        "lat": 40.14371515780893,
+        "lng": -111.80194831196697
+      },
+      "loops": {
+        "read": {
+          "coords": {
+            "lat": 40.14371515780893,
+            "lng": -111.80194831196697
+          },
+          "openMeteoOK": true,
+          "hoursObserved": 360
+        },
+        "analyze": {
+          "pressureHigh": true,
+          "pressureLow": true,
+          "ridgeCount": 2,
+          "lakeshoreCount": 2,
+          "referenceCount": 2,
+          "thermalProfile": true,
+          "optimalDirection": {
+            "min": 135,
+            "max": 165,
+            "ideal": 150
+          },
+          "optimalSpeed": {
+            "min": 8,
+            "max": 18,
+            "average": 10.3
+          },
+          "peakHours": {
+            "start": 10,
+            "end": 13,
+            "peak": 11
+          }
+        },
+        "log": {
+          "observedPeakHour": null,
+          "observedPeakSpeed": null,
+          "observedDirectionAtPeak": null,
+          "candidateDayCount": 1,
+          "observationWindowDays": 16,
+          "sufficient": false
+        },
+        "predict": {
+          "predictedPeakHour": 11,
+          "predictedOptimalDir": 150,
+          "probability": 12,
+          "direction": "unknown",
+          "speed": "unknown",
+          "pressure": "marginal",
+          "elevation": "unknown",
+          "phase": "fading"
+        },
+        "hone": {
+          "peakHourDrift": null,
+          "directionDrift": null,
+          "peakHourOk": null,
+          "directionOk": null,
+          "sufficient": false
+        },
+        "verify": null
+      },
+      "issues": [
+        {
+          "severity": "info",
+          "code": "INSUFFICIENT_THERMAL_DAYS",
+          "detail": "Only 1/16 days in 14-day window matched thermal direction window. Off-season or wrong synoptic regime. Drift alerts suppressed."
+        }
+      ],
+      "grade": "A"
+    },
+    {
+      "lakeId": "utah-lake-sandy",
+      "name": "Sandy Beach",
+      "coords": {
+        "lat": 40.17049661378955,
+        "lng": -111.74571902175627
+      },
+      "loops": {
+        "read": {
+          "coords": {
+            "lat": 40.17049661378955,
+            "lng": -111.74571902175627
+          },
+          "openMeteoOK": true,
+          "hoursObserved": 360
+        },
+        "analyze": {
+          "pressureHigh": true,
+          "pressureLow": true,
+          "ridgeCount": 1,
+          "lakeshoreCount": 2,
+          "referenceCount": 2,
+          "thermalProfile": true,
+          "optimalDirection": {
+            "min": 130,
+            "max": 160,
+            "ideal": 145
+          },
+          "optimalSpeed": {
+            "min": 8,
+            "max": 18,
+            "average": 10
+          },
+          "peakHours": {
+            "start": 10,
+            "end": 13,
+            "peak": 11
+          }
+        },
+        "log": {
+          "observedPeakHour": null,
+          "observedPeakSpeed": null,
+          "observedDirectionAtPeak": null,
+          "candidateDayCount": 1,
+          "observationWindowDays": 16,
+          "sufficient": false
+        },
+        "predict": {
+          "predictedPeakHour": 11,
+          "predictedOptimalDir": 145,
+          "probability": 12,
+          "direction": "unknown",
+          "speed": "unknown",
+          "pressure": "marginal",
+          "elevation": "unknown",
+          "phase": "fading"
+        },
+        "hone": {
+          "peakHourDrift": null,
+          "directionDrift": null,
+          "peakHourOk": null,
+          "directionOk": null,
+          "sufficient": false
+        },
+        "verify": null
+      },
+      "issues": [
+        {
+          "severity": "info",
+          "code": "INSUFFICIENT_THERMAL_DAYS",
+          "detail": "Only 1/16 days in 14-day window matched thermal direction window. Off-season or wrong synoptic regime. Drift alerts suppressed."
+        }
+      ],
+      "grade": "A"
+    },
+    {
+      "lakeId": "utah-lake-vineyard",
+      "name": "Vineyard",
+      "coords": {
+        "lat": 40.31765814163484,
+        "lng": -111.76473863107265
+      },
+      "loops": {
+        "read": {
+          "coords": {
+            "lat": 40.31765814163484,
+            "lng": -111.76473863107265
+          },
+          "openMeteoOK": true,
+          "hoursObserved": 360
+        },
+        "analyze": {
+          "pressureHigh": true,
+          "pressureLow": true,
+          "ridgeCount": 1,
+          "lakeshoreCount": 2,
+          "referenceCount": 1,
+          "thermalProfile": true,
+          "optimalDirection": {
+            "min": 180,
+            "max": 270,
+            "ideal": 225
+          },
+          "optimalSpeed": {
+            "min": 6,
+            "max": 16,
+            "average": 9
+          },
+          "peakHours": {
+            "start": 10,
+            "end": 14,
+            "peak": 12
+          }
+        },
+        "log": {
+          "observedPeakHour": null,
+          "observedPeakSpeed": null,
+          "observedDirectionAtPeak": null,
+          "candidateDayCount": 0,
+          "observationWindowDays": 16,
+          "sufficient": false
+        },
+        "predict": {
+          "predictedPeakHour": 12,
+          "predictedOptimalDir": 225,
+          "probability": 12,
+          "direction": "unknown",
+          "speed": "unknown",
+          "pressure": "marginal",
+          "elevation": "unknown",
+          "phase": "fading"
+        },
+        "hone": {
+          "peakHourDrift": null,
+          "directionDrift": null,
+          "peakHourOk": null,
+          "directionOk": null,
+          "sufficient": false
+        },
+        "verify": null
+      },
+      "issues": [
+        {
+          "severity": "info",
+          "code": "INSUFFICIENT_THERMAL_DAYS",
+          "detail": "Only 0/16 days in 14-day window matched thermal direction window. Off-season or wrong synoptic regime. Drift alerts suppressed."
+        }
+      ],
+      "grade": "A"
+    },
+    {
+      "lakeId": "utah-lake-zigzag",
+      "name": "Zig Zag",
+      "coords": {
+        "lat": 40.30268164473557,
+        "lng": -111.8799503518146
+      },
+      "loops": {
+        "read": {
+          "coords": {
+            "lat": 40.30268164473557,
+            "lng": -111.8799503518146
+          },
+          "openMeteoOK": true,
+          "hoursObserved": 360
+        },
+        "analyze": {
+          "pressureHigh": true,
+          "pressureLow": true,
+          "ridgeCount": 2,
+          "lakeshoreCount": 3,
+          "referenceCount": 8,
+          "thermalProfile": true,
+          "optimalDirection": {
+            "min": 135,
+            "max": 165,
+            "ideal": 150
+          },
+          "optimalSpeed": {
+            "min": 8,
+            "max": 18,
+            "average": 10.3
+          },
+          "peakHours": {
+            "start": 10,
+            "end": 13,
+            "peak": 11
+          }
+        },
+        "log": {
+          "observedPeakHour": null,
+          "observedPeakSpeed": null,
+          "observedDirectionAtPeak": null,
+          "candidateDayCount": 2,
+          "observationWindowDays": 16,
+          "sufficient": false
+        },
+        "predict": {
+          "predictedPeakHour": 11,
+          "predictedOptimalDir": 150,
+          "probability": 12,
+          "direction": "unknown",
+          "speed": "unknown",
+          "pressure": "marginal",
+          "elevation": "unknown",
+          "phase": "fading"
+        },
+        "hone": {
+          "peakHourDrift": null,
+          "directionDrift": null,
+          "peakHourOk": null,
+          "directionOk": null,
+          "sufficient": false
+        },
+        "verify": null
+      },
+      "issues": [
+        {
+          "severity": "info",
+          "code": "INSUFFICIENT_THERMAL_DAYS",
+          "detail": "Only 2/16 days in 14-day window matched thermal direction window. Off-season or wrong synoptic regime. Drift alerts suppressed."
+        }
+      ],
+      "grade": "A"
+    },
+    {
+      "lakeId": "utah-lake-mm19",
+      "name": "Mile Marker 19",
+      "coords": {
+        "lat": 40.19869601578235,
+        "lng": -111.88652790796455
+      },
+      "loops": {
+        "read": {
+          "coords": {
+            "lat": 40.19869601578235,
+            "lng": -111.88652790796455
+          },
+          "openMeteoOK": true,
+          "hoursObserved": 360
+        },
+        "analyze": {
+          "pressureHigh": true,
+          "pressureLow": true,
+          "ridgeCount": 1,
+          "lakeshoreCount": 2,
+          "referenceCount": 1,
+          "thermalProfile": true,
+          "optimalDirection": {
+            "min": 120,
+            "max": 160,
+            "ideal": 140
+          },
+          "optimalSpeed": {
+            "min": 8,
+            "max": 18,
+            "average": 10
+          },
+          "peakHours": {
+            "start": 10,
+            "end": 13,
+            "peak": 11
+          }
+        },
+        "log": {
+          "observedPeakHour": 16,
+          "observedPeakSpeed": 15.5,
+          "observedDirectionAtPeak": 140,
+          "candidateDayCount": 4,
+          "observationWindowDays": 16,
+          "sufficient": true
+        },
+        "predict": {
+          "predictedPeakHour": 11,
+          "predictedOptimalDir": 140,
+          "probability": 19,
+          "direction": "optimal",
+          "speed": "good",
+          "pressure": "marginal",
+          "elevation": "unknown",
+          "phase": "fading"
+        },
+        "hone": {
+          "peakHourDrift": 5,
+          "directionDrift": 0.07311815947190325,
+          "peakHourOk": false,
+          "directionOk": true,
+          "sufficient": true
+        },
+        "verify": {
+          "proposed": {
+            "peakHour": 16,
+            "currentPeakHour": 11
+          },
+          "note": "Adjust config.thermal.peakHours.peak to align with observed maximum."
+        }
+      },
+      "issues": [
+        {
+          "severity": "medium",
+          "code": "PEAK_HOUR_DRIFT",
+          "detail": "Predicted peak 11:00, observed 16:00 across 4 qualifying days (drift 5h)"
+        }
+      ],
+      "grade": "B"
+    },
+    {
+      "lakeId": "utah-lake",
+      "name": "Utah Lake (All)",
+      "coords": {
+        "lat": 40.2369,
+        "lng": -111.7388
+      },
+      "loops": {
+        "read": {
+          "coords": {
+            "lat": 40.2369,
+            "lng": -111.7388
+          },
+          "openMeteoOK": true,
+          "hoursObserved": 360
+        },
+        "analyze": {
+          "pressureHigh": true,
+          "pressureLow": true,
+          "ridgeCount": 2,
+          "lakeshoreCount": 6,
+          "referenceCount": 7,
+          "thermalProfile": true,
+          "optimalDirection": {
+            "min": 135,
+            "max": 165,
+            "ideal": 150
+          },
+          "optimalSpeed": {
+            "min": 8,
+            "max": 18,
+            "average": 10.3
+          },
+          "peakHours": {
+            "start": 10,
+            "end": 13,
+            "peak": 11
+          }
+        },
+        "log": {
+          "observedPeakHour": null,
+          "observedPeakSpeed": null,
+          "observedDirectionAtPeak": null,
+          "candidateDayCount": 2,
+          "observationWindowDays": 16,
+          "sufficient": false
+        },
+        "predict": {
+          "predictedPeakHour": 11,
+          "predictedOptimalDir": 150,
+          "probability": 12,
+          "direction": "unknown",
+          "speed": "unknown",
+          "pressure": "marginal",
+          "elevation": "unknown",
+          "phase": "fading"
+        },
+        "hone": {
+          "peakHourDrift": null,
+          "directionDrift": null,
+          "peakHourOk": null,
+          "directionOk": null,
+          "sufficient": false
+        },
+        "verify": null
+      },
+      "issues": [
+        {
+          "severity": "info",
+          "code": "INSUFFICIENT_THERMAL_DAYS",
+          "detail": "Only 2/16 days in 14-day window matched thermal direction window. Off-season or wrong synoptic regime. Drift alerts suppressed."
+        }
+      ],
+      "grade": "A"
+    },
+    {
+      "lakeId": "potm-south",
+      "name": "Point of the Mountain — South",
+      "coords": {
+        "lat": 40.445,
+        "lng": -111.915
+      },
+      "loops": {
+        "read": {
+          "coords": {
+            "lat": 40.445,
+            "lng": -111.915
+          },
+          "openMeteoOK": true,
+          "hoursObserved": 360
+        },
+        "analyze": {
+          "pressureHigh": true,
+          "pressureLow": true,
+          "ridgeCount": 2,
+          "lakeshoreCount": 3,
+          "referenceCount": 3,
+          "thermalProfile": true,
+          "optimalDirection": {
+            "min": 110,
+            "max": 250,
+            "ideal": 170
+          },
+          "optimalSpeed": {
+            "min": 5,
+            "max": 20,
+            "average": 10
+          },
+          "peakHours": {
+            "start": 7,
+            "end": 15,
+            "peak": 10
+          }
+        },
+        "log": {
+          "observedPeakHour": 16,
+          "observedPeakSpeed": 16,
+          "observedDirectionAtPeak": 138,
+          "candidateDayCount": 6,
+          "observationWindowDays": 16,
+          "sufficient": true
+        },
+        "predict": {
+          "predictedPeakHour": 10,
+          "predictedOptimalDir": 180,
+          "probability": null,
+          "direction": null,
+          "speed": null,
+          "pressure": null,
+          "elevation": null,
+          "phase": null
+        },
+        "hone": {
+          "peakHourDrift": 6,
+          "directionDrift": 42.00107361703232,
+          "peakHourOk": false,
+          "directionOk": false,
+          "sufficient": true
+        },
+        "verify": {
+          "proposed": {
+            "peakHour": 16,
+            "currentPeakHour": 10
+          },
+          "note": "Adjust config.thermal.peakHours.peak to align with observed maximum."
+        }
+      },
+      "issues": [
+        {
+          "severity": "medium",
+          "code": "PEAK_HOUR_DRIFT",
+          "detail": "Predicted peak 10:00, observed 16:00 across 6 qualifying days (drift 6h)"
+        },
+        {
+          "severity": "low",
+          "code": "DIRECTION_DRIFT",
+          "detail": "Predicted optimal 180°, observed 138° (drift 42° across 6 qualifying days)"
+        }
+      ],
+      "grade": "B"
+    },
+    {
+      "lakeId": "inspo",
+      "name": "Inspiration Point",
+      "coords": {
+        "lat": 40.3,
+        "lng": -111.64
+      },
+      "loops": {
+        "read": {
+          "coords": {
+            "lat": 40.3,
+            "lng": -111.64
+          },
+          "openMeteoOK": true,
+          "hoursObserved": 360
+        },
+        "analyze": {
+          "pressureHigh": true,
+          "pressureLow": true,
+          "ridgeCount": 1,
+          "lakeshoreCount": 1,
+          "referenceCount": 1,
+          "thermalProfile": true,
+          "optimalDirection": {
+            "min": 220,
+            "max": 280,
+            "ideal": 250
+          },
+          "optimalSpeed": {
+            "min": 5,
+            "max": 15,
+            "average": 8
+          },
+          "peakHours": {
+            "start": 11,
+            "end": 16,
+            "peak": 13
+          }
+        },
+        "log": {
+          "observedPeakHour": null,
+          "observedPeakSpeed": null,
+          "observedDirectionAtPeak": null,
+          "candidateDayCount": 1,
+          "observationWindowDays": 16,
+          "sufficient": false
+        },
+        "predict": {
+          "predictedPeakHour": 13,
+          "predictedOptimalDir": 250,
+          "probability": null,
+          "direction": null,
+          "speed": null,
+          "pressure": null,
+          "elevation": null,
+          "phase": null
+        },
+        "hone": {
+          "peakHourDrift": null,
+          "directionDrift": null,
+          "peakHourOk": null,
+          "directionOk": null,
+          "sufficient": false
+        },
+        "verify": null
+      },
+      "issues": [
+        {
+          "severity": "info",
+          "code": "INSUFFICIENT_THERMAL_DAYS",
+          "detail": "Only 1/16 days in 14-day window matched thermal direction window. Off-season or wrong synoptic regime. Drift alerts suppressed."
+        }
+      ],
+      "grade": "A"
+    },
+    {
+      "lakeId": "west-mountain",
+      "name": "West Mountain",
+      "coords": {
+        "lat": 40.1,
+        "lng": -111.8
+      },
+      "loops": {
+        "read": {
+          "coords": {
+            "lat": 40.1,
+            "lng": -111.8
+          },
+          "openMeteoOK": true,
+          "hoursObserved": 360
+        },
+        "analyze": {
+          "pressureHigh": true,
+          "pressureLow": true,
+          "ridgeCount": 1,
+          "lakeshoreCount": 1,
+          "referenceCount": 1,
+          "thermalProfile": true,
+          "optimalDirection": {
+            "min": 260,
+            "max": 330,
+            "ideal": 290
+          },
+          "optimalSpeed": {
+            "min": 5,
+            "max": 15,
+            "average": 8
+          },
+          "peakHours": {
+            "start": 11,
+            "end": 16,
+            "peak": 14
+          }
+        },
+        "log": {
+          "observedPeakHour": null,
+          "observedPeakSpeed": null,
+          "observedDirectionAtPeak": null,
+          "candidateDayCount": 0,
+          "observationWindowDays": 16,
+          "sufficient": false
+        },
+        "predict": {
+          "predictedPeakHour": 14,
+          "predictedOptimalDir": 295,
+          "probability": null,
+          "direction": null,
+          "speed": null,
+          "pressure": null,
+          "elevation": null,
+          "phase": null
+        },
+        "hone": {
+          "peakHourDrift": null,
+          "directionDrift": null,
+          "peakHourOk": null,
+          "directionOk": null,
+          "sufficient": false
+        },
+        "verify": null
+      },
+      "issues": [
+        {
+          "severity": "info",
+          "code": "INSUFFICIENT_THERMAL_DAYS",
+          "detail": "Only 0/16 days in 14-day window matched thermal direction window. Off-season or wrong synoptic regime. Drift alerts suppressed."
+        }
+      ],
+      "grade": "A"
+    },
+    {
+      "lakeId": "deer-creek",
+      "name": "Deer Creek",
+      "coords": {
+        "lat": 40.45830163741306,
+        "lng": -111.47407868398149
+      },
+      "loops": {
+        "read": {
+          "coords": {
+            "lat": 40.45830163741306,
+            "lng": -111.47407868398149
+          },
+          "openMeteoOK": true,
+          "hoursObserved": 360
+        },
+        "analyze": {
+          "pressureHigh": true,
+          "pressureLow": true,
+          "ridgeCount": 1,
+          "lakeshoreCount": 5,
+          "referenceCount": 2,
+          "thermalProfile": true,
+          "optimalDirection": {
+            "min": 170,
+            "max": 260,
+            "ideal": 230
+          },
+          "optimalSpeed": {
+            "min": 4,
+            "max": 15,
+            "average": 8
+          },
+          "peakHours": {
+            "start": 14,
+            "end": 16,
+            "peak": 15
+          }
+        },
+        "log": {
+          "observedPeakHour": 15,
+          "observedPeakSpeed": 8.7,
+          "observedDirectionAtPeak": 210,
+          "candidateDayCount": 5,
+          "observationWindowDays": 16,
+          "sufficient": true
+        },
+        "predict": {
+          "predictedPeakHour": 15,
+          "predictedOptimalDir": 215,
+          "probability": 92,
+          "direction": "acceptable",
+          "speed": "good",
+          "pressure": "marginal",
+          "elevation": "unknown",
+          "phase": "peak"
+        },
+        "hone": {
+          "peakHourDrift": 0,
+          "directionDrift": 5.382900186683486,
+          "peakHourOk": true,
+          "directionOk": true,
+          "sufficient": true
+        },
+        "verify": null
+      },
+      "issues": [],
+      "grade": "A"
+    },
+    {
+      "lakeId": "willard-bay",
+      "name": "Willard Bay",
+      "coords": {
+        "lat": 41.3686,
+        "lng": -112.0772
+      },
+      "loops": {
+        "read": {
+          "coords": {
+            "lat": 41.3686,
+            "lng": -112.0772
+          },
+          "openMeteoOK": true,
+          "hoursObserved": 360
+        },
+        "analyze": {
+          "pressureHigh": true,
+          "pressureLow": true,
+          "ridgeCount": 3,
+          "lakeshoreCount": 3,
+          "referenceCount": 3,
+          "thermalProfile": true,
+          "optimalDirection": {
+            "min": 170,
+            "max": 220,
+            "ideal": 195
+          },
+          "optimalSpeed": {
+            "min": 6,
+            "max": 15,
+            "average": 8
+          },
+          "peakHours": {
+            "start": 12,
+            "end": 15,
+            "peak": 13
+          }
+        },
+        "log": {
+          "observedPeakHour": null,
+          "observedPeakSpeed": null,
+          "observedDirectionAtPeak": null,
+          "candidateDayCount": 2,
+          "observationWindowDays": 16,
+          "sufficient": false
+        },
+        "predict": {
+          "predictedPeakHour": 13,
+          "predictedOptimalDir": 195,
+          "probability": 22,
+          "direction": "unknown",
+          "speed": "unknown",
+          "pressure": "marginal",
+          "elevation": "unknown",
+          "phase": "peak"
+        },
+        "hone": {
+          "peakHourDrift": null,
+          "directionDrift": null,
+          "peakHourOk": null,
+          "directionOk": null,
+          "sufficient": false
+        },
+        "verify": null
+      },
+      "issues": [
+        {
+          "severity": "info",
+          "code": "INSUFFICIENT_THERMAL_DAYS",
+          "detail": "Only 2/16 days in 14-day window matched thermal direction window. Off-season or wrong synoptic regime. Drift alerts suppressed."
+        }
+      ],
+      "grade": "A"
+    },
+    {
+      "lakeId": "strawberry",
+      "name": "Strawberry Reservoir",
+      "coords": {
+        "lat": 40.1783,
+        "lng": -111.1952
+      },
+      "loops": {
+        "read": {
+          "coords": {
+            "lat": 40.1783,
+            "lng": -111.1952
+          },
+          "openMeteoOK": true,
+          "hoursObserved": 360
+        },
+        "analyze": {
+          "pressureHigh": true,
+          "pressureLow": true,
+          "ridgeCount": 2,
+          "lakeshoreCount": 2,
+          "referenceCount": 2,
+          "thermalProfile": true,
+          "optimalDirection": {
+            "min": 260,
+            "max": 340,
+            "ideal": 300
+          },
+          "optimalSpeed": {
+            "min": 8,
+            "max": 25,
+            "average": 14
+          },
+          "peakHours": {
+            "start": 10,
+            "end": 16,
+            "peak": 13
+          }
+        },
+        "log": {
+          "observedPeakHour": 18,
+          "observedPeakSpeed": 12.3,
+          "observedDirectionAtPeak": 287,
+          "candidateDayCount": 6,
+          "observationWindowDays": 16,
+          "sufficient": true
+        },
+        "predict": {
+          "predictedPeakHour": 13,
+          "predictedOptimalDir": 300,
+          "probability": null,
+          "direction": null,
+          "speed": null,
+          "pressure": null,
+          "elevation": null,
+          "phase": null
+        },
+        "hone": {
+          "peakHourDrift": 5,
+          "directionDrift": 13.159858845682152,
+          "peakHourOk": false,
+          "directionOk": true,
+          "sufficient": true
+        },
+        "verify": {
+          "proposed": {
+            "peakHour": 18,
+            "currentPeakHour": 13
+          },
+          "note": "Adjust config.thermal.peakHours.peak to align with observed maximum."
+        }
+      },
+      "issues": [
+        {
+          "severity": "medium",
+          "code": "PEAK_HOUR_DRIFT",
+          "detail": "Predicted peak 13:00, observed 18:00 across 6 qualifying days (drift 5h)"
+        }
+      ],
+      "grade": "B"
+    },
+    {
+      "lakeId": "strawberry-ladders",
+      "name": "Ladders (NW)",
+      "coords": {
+        "lat": 40.185,
+        "lng": -111.16
+      },
+      "loops": {
+        "read": {
+          "coords": {
+            "lat": 40.185,
+            "lng": -111.16
+          },
+          "openMeteoOK": true,
+          "hoursObserved": 360
+        },
+        "analyze": {
+          "pressureHigh": true,
+          "pressureLow": true,
+          "ridgeCount": 3,
+          "lakeshoreCount": 3,
+          "referenceCount": 2,
+          "thermalProfile": true,
+          "optimalDirection": {
+            "min": 260,
+            "max": 340,
+            "ideal": 300
+          },
+          "optimalSpeed": {
+            "min": 8,
+            "max": 25,
+            "average": 14
+          },
+          "peakHours": {
+            "start": 10,
+            "end": 16,
+            "peak": 13
+          }
+        },
+        "log": {
+          "observedPeakHour": 18,
+          "observedPeakSpeed": 12.3,
+          "observedDirectionAtPeak": 287,
+          "candidateDayCount": 6,
+          "observationWindowDays": 16,
+          "sufficient": true
+        },
+        "predict": {
+          "predictedPeakHour": 13,
+          "predictedOptimalDir": 300,
+          "probability": null,
+          "direction": null,
+          "speed": null,
+          "pressure": null,
+          "elevation": null,
+          "phase": null
+        },
+        "hone": {
+          "peakHourDrift": 5,
+          "directionDrift": 13.159858845682152,
+          "peakHourOk": false,
+          "directionOk": true,
+          "sufficient": true
+        },
+        "verify": {
+          "proposed": {
+            "peakHour": 18,
+            "currentPeakHour": 13
+          },
+          "note": "Adjust config.thermal.peakHours.peak to align with observed maximum."
+        }
+      },
+      "issues": [
+        {
+          "severity": "medium",
+          "code": "PEAK_HOUR_DRIFT",
+          "detail": "Predicted peak 13:00, observed 18:00 across 6 qualifying days (drift 5h)"
+        }
+      ],
+      "grade": "B"
+    },
+    {
+      "lakeId": "strawberry-bay",
+      "name": "Strawberry Bay",
+      "coords": {
+        "lat": 40.175,
+        "lng": -111.18
+      },
+      "loops": {
+        "read": {
+          "coords": {
+            "lat": 40.175,
+            "lng": -111.18
+          },
+          "openMeteoOK": true,
+          "hoursObserved": 360
+        },
+        "analyze": {
+          "pressureHigh": true,
+          "pressureLow": true,
+          "ridgeCount": 2,
+          "lakeshoreCount": 2,
+          "referenceCount": 3,
+          "thermalProfile": true,
+          "optimalDirection": {
+            "min": 220,
+            "max": 280,
+            "ideal": 250
+          },
+          "optimalSpeed": {
+            "min": 8,
+            "max": 25,
+            "average": 14
+          },
+          "peakHours": {
+            "start": 10,
+            "end": 16,
+            "peak": 13
+          }
+        },
+        "log": {
+          "observedPeakHour": 15,
+          "observedPeakSpeed": 11.3,
+          "observedDirectionAtPeak": 260,
+          "candidateDayCount": 8,
+          "observationWindowDays": 16,
+          "sufficient": true
+        },
+        "predict": {
+          "predictedPeakHour": 13,
+          "predictedOptimalDir": 250,
+          "probability": null,
+          "direction": null,
+          "speed": null,
+          "pressure": null,
+          "elevation": null,
+          "phase": null
+        },
+        "hone": {
+          "peakHourDrift": 2,
+          "directionDrift": 10.277803329342873,
+          "peakHourOk": true,
+          "directionOk": true,
+          "sufficient": true
+        },
+        "verify": null
+      },
+      "issues": [],
+      "grade": "A"
+    },
+    {
+      "lakeId": "strawberry-soldier",
+      "name": "Soldier Creek",
+      "coords": {
+        "lat": 40.12,
+        "lng": -111.1
+      },
+      "loops": {
+        "read": {
+          "coords": {
+            "lat": 40.12,
+            "lng": -111.1
+          },
+          "openMeteoOK": true,
+          "hoursObserved": 360
+        },
+        "analyze": {
+          "pressureHigh": true,
+          "pressureLow": true,
+          "ridgeCount": 2,
+          "lakeshoreCount": 2,
+          "referenceCount": 4,
+          "thermalProfile": true,
+          "optimalDirection": {
+            "min": 180,
+            "max": 240,
+            "ideal": 210
+          },
+          "optimalSpeed": {
+            "min": 8,
+            "max": 25,
+            "average": 14
+          },
+          "peakHours": {
+            "start": 10,
+            "end": 16,
+            "peak": 13
+          }
+        },
+        "log": {
+          "observedPeakHour": null,
+          "observedPeakSpeed": null,
+          "observedDirectionAtPeak": null,
+          "candidateDayCount": 0,
+          "observationWindowDays": 16,
+          "sufficient": false
+        },
+        "predict": {
+          "predictedPeakHour": 13,
+          "predictedOptimalDir": 210,
+          "probability": null,
+          "direction": null,
+          "speed": null,
+          "pressure": null,
+          "elevation": null,
+          "phase": null
+        },
+        "hone": {
+          "peakHourDrift": null,
+          "directionDrift": null,
+          "peakHourOk": null,
+          "directionOk": null,
+          "sufficient": false
+        },
+        "verify": null
+      },
+      "issues": [
+        {
+          "severity": "info",
+          "code": "INSUFFICIENT_THERMAL_DAYS",
+          "detail": "Only 0/16 days in 14-day window matched thermal direction window. Off-season or wrong synoptic regime. Drift alerts suppressed."
+        }
+      ],
+      "grade": "A"
+    },
+    {
+      "lakeId": "strawberry-view",
+      "name": "The View",
+      "coords": {
+        "lat": 40.165,
+        "lng": -111.11
+      },
+      "loops": {
+        "read": {
+          "coords": {
+            "lat": 40.165,
+            "lng": -111.11
+          },
+          "openMeteoOK": true,
+          "hoursObserved": 360
+        },
+        "analyze": {
+          "pressureHigh": true,
+          "pressureLow": true,
+          "ridgeCount": 2,
+          "lakeshoreCount": 2,
+          "referenceCount": 2,
+          "thermalProfile": true,
+          "optimalDirection": {
+            "min": 260,
+            "max": 330,
+            "ideal": 290
+          },
+          "optimalSpeed": {
+            "min": 8,
+            "max": 25,
+            "average": 14
+          },
+          "peakHours": {
+            "start": 10,
+            "end": 16,
+            "peak": 13
+          }
+        },
+        "log": {
+          "observedPeakHour": 15,
+          "observedPeakSpeed": 14,
+          "observedDirectionAtPeak": 274,
+          "candidateDayCount": 8,
+          "observationWindowDays": 16,
+          "sufficient": true
+        },
+        "predict": {
+          "predictedPeakHour": 13,
+          "predictedOptimalDir": 295,
+          "probability": null,
+          "direction": null,
+          "speed": null,
+          "pressure": null,
+          "elevation": null,
+          "phase": null
+        },
+        "hone": {
+          "peakHourDrift": 2,
+          "directionDrift": 20.550260233251834,
+          "peakHourOk": true,
+          "directionOk": true,
+          "sufficient": true
+        },
+        "verify": null
+      },
+      "issues": [],
+      "grade": "A"
+    },
+    {
+      "lakeId": "strawberry-river",
+      "name": "The River",
+      "coords": {
+        "lat": 40.145,
+        "lng": -111.135
+      },
+      "loops": {
+        "read": {
+          "coords": {
+            "lat": 40.145,
+            "lng": -111.135
+          },
+          "openMeteoOK": true,
+          "hoursObserved": 360
+        },
+        "analyze": {
+          "pressureHigh": true,
+          "pressureLow": true,
+          "ridgeCount": 2,
+          "lakeshoreCount": 2,
+          "referenceCount": 2,
+          "thermalProfile": true,
+          "optimalDirection": {
+            "min": 190,
+            "max": 270,
+            "ideal": 230
+          },
+          "optimalSpeed": {
+            "min": 8,
+            "max": 25,
+            "average": 14
+          },
+          "peakHours": {
+            "start": 10,
+            "end": 16,
+            "peak": 13
+          }
+        },
+        "log": {
+          "observedPeakHour": 15,
+          "observedPeakSpeed": 9.7,
+          "observedDirectionAtPeak": 256,
+          "candidateDayCount": 4,
+          "observationWindowDays": 16,
+          "sufficient": true
+        },
+        "predict": {
+          "predictedPeakHour": 13,
+          "predictedOptimalDir": 230,
+          "probability": null,
+          "direction": null,
+          "speed": null,
+          "pressure": null,
+          "elevation": null,
+          "phase": null
+        },
+        "hone": {
+          "peakHourDrift": 2,
+          "directionDrift": 26.476482220499406,
+          "peakHourOk": true,
+          "directionOk": true,
+          "sufficient": true
+        },
+        "verify": null
+      },
+      "issues": [],
+      "grade": "A"
+    },
+    {
+      "lakeId": "pineview",
+      "name": "Pineview Reservoir",
+      "coords": {
+        "lat": 41.2552,
+        "lng": -111.8484
+      },
+      "loops": {
+        "read": {
+          "coords": {
+            "lat": 41.2552,
+            "lng": -111.8484
+          },
+          "openMeteoOK": true,
+          "hoursObserved": 360
+        },
+        "analyze": {
+          "pressureHigh": true,
+          "pressureLow": true,
+          "ridgeCount": 2,
+          "lakeshoreCount": 3,
+          "referenceCount": 1,
+          "thermalProfile": true,
+          "optimalDirection": {
+            "min": 240,
+            "max": 300,
+            "ideal": 270
+          },
+          "optimalSpeed": {
+            "min": 5,
+            "max": 12,
+            "average": 7
+          },
+          "peakHours": {
+            "start": 12,
+            "end": 16,
+            "peak": 14
+          }
+        },
+        "log": {
+          "observedPeakHour": 15,
+          "observedPeakSpeed": 8.7,
+          "observedDirectionAtPeak": 281,
+          "candidateDayCount": 7,
+          "observationWindowDays": 16,
+          "sufficient": true
+        },
+        "predict": {
+          "predictedPeakHour": 14,
+          "predictedOptimalDir": 270,
+          "probability": 28,
+          "direction": "optimal",
+          "speed": "good",
+          "pressure": "marginal",
+          "elevation": "unknown",
+          "phase": "peak"
+        },
+        "hone": {
+          "peakHourDrift": 1,
+          "directionDrift": 10.766460054055074,
+          "peakHourOk": true,
+          "directionOk": true,
+          "sufficient": true
+        },
+        "verify": null
+      },
+      "issues": [],
+      "grade": "A"
+    },
+    {
+      "lakeId": "bear-lake",
+      "name": "Bear Lake",
+      "coords": {
+        "lat": 41.96,
+        "lng": -111.302
+      },
+      "loops": {
+        "read": {
+          "coords": {
+            "lat": 41.96,
+            "lng": -111.302
+          },
+          "openMeteoOK": true,
+          "hoursObserved": 360
+        },
+        "analyze": {
+          "pressureHigh": true,
+          "pressureLow": true,
+          "ridgeCount": 1,
+          "lakeshoreCount": 3,
+          "referenceCount": 2,
+          "thermalProfile": true,
+          "optimalDirection": {
+            "min": 250,
+            "max": 320,
+            "ideal": 280
+          },
+          "optimalSpeed": {
+            "min": 5,
+            "max": 20,
+            "average": 10
+          },
+          "peakHours": {
+            "start": 11,
+            "end": 16,
+            "peak": 14
+          }
+        },
+        "log": {
+          "observedPeakHour": 15,
+          "observedPeakSpeed": 12.5,
+          "observedDirectionAtPeak": 291,
+          "candidateDayCount": 7,
+          "observationWindowDays": 16,
+          "sufficient": true
+        },
+        "predict": {
+          "predictedPeakHour": 14,
+          "predictedOptimalDir": 285,
+          "probability": null,
+          "direction": null,
+          "speed": null,
+          "pressure": null,
+          "elevation": null,
+          "phase": null
+        },
+        "hone": {
+          "peakHourDrift": 1,
+          "directionDrift": 5.789841915140585,
+          "peakHourOk": true,
+          "directionOk": true,
+          "sufficient": true
+        },
+        "verify": null
+      },
+      "issues": [],
+      "grade": "A"
+    },
+    {
+      "lakeId": "east-canyon",
+      "name": "East Canyon Reservoir",
+      "coords": {
+        "lat": 40.892,
+        "lng": -111.594
+      },
+      "loops": {
+        "read": {
+          "coords": {
+            "lat": 40.892,
+            "lng": -111.594
+          },
+          "openMeteoOK": true,
+          "hoursObserved": 360
+        },
+        "analyze": {
+          "pressureHigh": true,
+          "pressureLow": true,
+          "ridgeCount": 1,
+          "lakeshoreCount": 1,
+          "referenceCount": 1,
+          "thermalProfile": true,
+          "optimalDirection": {
+            "min": 180,
+            "max": 270,
+            "ideal": 225
+          },
+          "optimalSpeed": {
+            "min": 3,
+            "max": 12,
+            "average": 5
+          },
+          "peakHours": {
+            "start": 12,
+            "end": 16,
+            "peak": 14
+          }
+        },
+        "log": {
+          "observedPeakHour": null,
+          "observedPeakSpeed": null,
+          "observedDirectionAtPeak": null,
+          "candidateDayCount": 2,
+          "observationWindowDays": 16,
+          "sufficient": false
+        },
+        "predict": {
+          "predictedPeakHour": 14,
+          "predictedOptimalDir": 225,
+          "probability": null,
+          "direction": null,
+          "speed": null,
+          "pressure": null,
+          "elevation": null,
+          "phase": null
+        },
+        "hone": {
+          "peakHourDrift": null,
+          "directionDrift": null,
+          "peakHourOk": null,
+          "directionOk": null,
+          "sufficient": false
+        },
+        "verify": null
+      },
+      "issues": [
+        {
+          "severity": "info",
+          "code": "INSUFFICIENT_THERMAL_DAYS",
+          "detail": "Only 2/16 days in 14-day window matched thermal direction window. Off-season or wrong synoptic regime. Drift alerts suppressed."
+        }
+      ],
+      "grade": "A"
+    },
+    {
+      "lakeId": "hyrum",
+      "name": "Hyrum Reservoir",
+      "coords": {
+        "lat": 41.6225,
+        "lng": -111.868
+      },
+      "loops": {
+        "read": {
+          "coords": {
+            "lat": 41.6225,
+            "lng": -111.868
+          },
+          "openMeteoOK": true,
+          "hoursObserved": 360
+        },
+        "analyze": {
+          "pressureHigh": true,
+          "pressureLow": true,
+          "ridgeCount": 1,
+          "lakeshoreCount": 1,
+          "referenceCount": 1,
+          "thermalProfile": true,
+          "optimalDirection": {
+            "min": 170,
+            "max": 210,
+            "ideal": 190
+          },
+          "optimalSpeed": {
+            "min": 3,
+            "max": 10,
+            "average": 5
+          },
+          "peakHours": {
+            "start": 12,
+            "end": 16,
+            "peak": 14
+          }
+        },
+        "log": {
+          "observedPeakHour": null,
+          "observedPeakSpeed": null,
+          "observedDirectionAtPeak": null,
+          "candidateDayCount": 1,
+          "observationWindowDays": 16,
+          "sufficient": false
+        },
+        "predict": {
+          "predictedPeakHour": 14,
+          "predictedOptimalDir": 190,
+          "probability": null,
+          "direction": null,
+          "speed": null,
+          "pressure": null,
+          "elevation": null,
+          "phase": null
+        },
+        "hone": {
+          "peakHourDrift": null,
+          "directionDrift": null,
+          "peakHourOk": null,
+          "directionOk": null,
+          "sufficient": false
+        },
+        "verify": null
+      },
+      "issues": [
+        {
+          "severity": "info",
+          "code": "INSUFFICIENT_THERMAL_DAYS",
+          "detail": "Only 1/16 days in 14-day window matched thermal direction window. Off-season or wrong synoptic regime. Drift alerts suppressed."
+        }
+      ],
+      "grade": "A"
+    },
+    {
+      "lakeId": "powder-mountain",
+      "name": "Powder Mountain",
+      "coords": {
+        "lat": 41.38,
+        "lng": -111.78
+      },
+      "loops": {
+        "read": {
+          "coords": {
+            "lat": 41.38,
+            "lng": -111.78
+          },
+          "openMeteoOK": true,
+          "hoursObserved": 360
+        },
+        "analyze": {
+          "pressureHigh": true,
+          "pressureLow": true,
+          "ridgeCount": 1,
+          "lakeshoreCount": 2,
+          "referenceCount": 2,
+          "thermalProfile": true,
+          "optimalDirection": {
+            "min": 180,
+            "max": 270,
+            "ideal": 225
+          },
+          "optimalSpeed": {
+            "min": 5,
+            "max": 20,
+            "average": 10
+          },
+          "peakHours": {
+            "start": 10,
+            "end": 16,
+            "peak": 13
+          }
+        },
+        "log": {
+          "observedPeakHour": 14,
+          "observedPeakSpeed": 9.7,
+          "observedDirectionAtPeak": 241,
+          "candidateDayCount": 7,
+          "observationWindowDays": 16,
+          "sufficient": true
+        },
+        "predict": {
+          "predictedPeakHour": 13,
+          "predictedOptimalDir": 225,
+          "probability": null,
+          "direction": null,
+          "speed": null,
+          "pressure": null,
+          "elevation": null,
+          "phase": null
+        },
+        "hone": {
+          "peakHourDrift": 1,
+          "directionDrift": 16.250749522594788,
+          "peakHourOk": true,
+          "directionOk": true,
+          "sufficient": true
+        },
+        "verify": null
+      },
+      "issues": [],
+      "grade": "A"
+    },
+    {
+      "lakeId": "monte-cristo",
+      "name": "Monte Cristo",
+      "coords": {
+        "lat": 41.45,
+        "lng": -111.5
+      },
+      "loops": {
+        "read": {
+          "coords": {
+            "lat": 41.45,
+            "lng": -111.5
+          },
+          "openMeteoOK": true,
+          "hoursObserved": 360
+        },
+        "analyze": {
+          "pressureHigh": true,
+          "pressureLow": true,
+          "ridgeCount": 1,
+          "lakeshoreCount": 2,
+          "referenceCount": 1,
+          "thermalProfile": true,
+          "optimalDirection": {
+            "min": 250,
+            "max": 320,
+            "ideal": 280
+          },
+          "optimalSpeed": {
+            "min": 8,
+            "max": 25,
+            "average": 14
+          },
+          "peakHours": {
+            "start": 10,
+            "end": 16,
+            "peak": 13
+          }
+        },
+        "log": {
+          "observedPeakHour": 16,
+          "observedPeakSpeed": 12.1,
+          "observedDirectionAtPeak": 271,
+          "candidateDayCount": 8,
+          "observationWindowDays": 16,
+          "sufficient": true
+        },
+        "predict": {
+          "predictedPeakHour": 13,
+          "predictedOptimalDir": 285,
+          "probability": null,
+          "direction": null,
+          "speed": null,
+          "pressure": null,
+          "elevation": null,
+          "phase": null
+        },
+        "hone": {
+          "peakHourDrift": 3,
+          "directionDrift": 13.958009781146018,
+          "peakHourOk": false,
+          "directionOk": true,
+          "sufficient": true
+        },
+        "verify": {
+          "proposed": {
+            "peakHour": 16,
+            "currentPeakHour": 13
+          },
+          "note": "Adjust config.thermal.peakHours.peak to align with observed maximum."
+        }
+      },
+      "issues": [
+        {
+          "severity": "medium",
+          "code": "PEAK_HOUR_DRIFT",
+          "detail": "Predicted peak 13:00, observed 16:00 across 8 qualifying days (drift 3h)"
+        }
+      ],
+      "grade": "B"
+    },
+    {
+      "lakeId": "skyline-drive",
+      "name": "Skyline Drive (Big Drift)",
+      "coords": {
+        "lat": 39.61554,
+        "lng": -111.30271
+      },
+      "loops": {
+        "read": {
+          "coords": {
+            "lat": 39.61554,
+            "lng": -111.30271
+          },
+          "openMeteoOK": true,
+          "hoursObserved": 360
+        },
+        "analyze": {
+          "pressureHigh": true,
+          "pressureLow": true,
+          "ridgeCount": 3,
+          "lakeshoreCount": 2,
+          "referenceCount": 1,
+          "thermalProfile": true,
+          "optimalDirection": {
+            "min": 250,
+            "max": 340,
+            "ideal": 290
+          },
+          "optimalSpeed": {
+            "min": 10,
+            "max": 30,
+            "average": 16
+          },
+          "peakHours": {
+            "start": 10,
+            "end": 16,
+            "peak": 13
+          }
+        },
+        "log": {
+          "observedPeakHour": 17,
+          "observedPeakSpeed": 14.3,
+          "observedDirectionAtPeak": 273,
+          "candidateDayCount": 10,
+          "observationWindowDays": 16,
+          "sufficient": true
+        },
+        "predict": {
+          "predictedPeakHour": 13,
+          "predictedOptimalDir": 295,
+          "probability": null,
+          "direction": null,
+          "speed": null,
+          "pressure": null,
+          "elevation": null,
+          "phase": null
+        },
+        "hone": {
+          "peakHourDrift": 4,
+          "directionDrift": 21.984001173631498,
+          "peakHourOk": false,
+          "directionOk": true,
+          "sufficient": true
+        },
+        "verify": {
+          "proposed": {
+            "peakHour": 17,
+            "currentPeakHour": 13
+          },
+          "note": "Adjust config.thermal.peakHours.peak to align with observed maximum."
+        }
+      },
+      "issues": [
+        {
+          "severity": "medium",
+          "code": "PEAK_HOUR_DRIFT",
+          "detail": "Predicted peak 13:00, observed 17:00 across 10 qualifying days (drift 4h)"
+        }
+      ],
+      "grade": "B"
+    },
+    {
+      "lakeId": "yuba",
+      "name": "Yuba Reservoir",
+      "coords": {
+        "lat": 39.405,
+        "lng": -111.928
+      },
+      "loops": {
+        "read": {
+          "coords": {
+            "lat": 39.405,
+            "lng": -111.928
+          },
+          "openMeteoOK": true,
+          "hoursObserved": 360
+        },
+        "analyze": {
+          "pressureHigh": true,
+          "pressureLow": true,
+          "ridgeCount": 1,
+          "lakeshoreCount": 2,
+          "referenceCount": 2,
+          "thermalProfile": true,
+          "optimalDirection": {
+            "min": 170,
+            "max": 230,
+            "ideal": 200
+          },
+          "optimalSpeed": {
+            "min": 3,
+            "max": 14,
+            "average": 7
+          },
+          "peakHours": {
+            "start": 11,
+            "end": 16,
+            "peak": 13
+          }
+        },
+        "log": {
+          "observedPeakHour": 14,
+          "observedPeakSpeed": 11.2,
+          "observedDirectionAtPeak": 195,
+          "candidateDayCount": 3,
+          "observationWindowDays": 16,
+          "sufficient": true
+        },
+        "predict": {
+          "predictedPeakHour": 13,
+          "predictedOptimalDir": 200,
+          "probability": null,
+          "direction": null,
+          "speed": null,
+          "pressure": null,
+          "elevation": null,
+          "phase": null
+        },
+        "hone": {
+          "peakHourDrift": 1,
+          "directionDrift": 4.942721092146456,
+          "peakHourOk": true,
+          "directionOk": true,
+          "sufficient": true
+        },
+        "verify": null
+      },
+      "issues": [],
+      "grade": "A"
+    },
+    {
+      "lakeId": "scofield",
+      "name": "Scofield Reservoir",
+      "coords": {
+        "lat": 39.7865,
+        "lng": -111.1518
+      },
+      "loops": {
+        "read": {
+          "coords": {
+            "lat": 39.7865,
+            "lng": -111.1518
+          },
+          "openMeteoOK": true,
+          "hoursObserved": 360
+        },
+        "analyze": {
+          "pressureHigh": true,
+          "pressureLow": true,
+          "ridgeCount": 1,
+          "lakeshoreCount": 1,
+          "referenceCount": 1,
+          "thermalProfile": true,
+          "optimalDirection": {
+            "min": 250,
+            "max": 320,
+            "ideal": 280
+          },
+          "optimalSpeed": {
+            "min": 4,
+            "max": 15,
+            "average": 8
+          },
+          "peakHours": {
+            "start": 11,
+            "end": 16,
+            "peak": 13
+          }
+        },
+        "log": {
+          "observedPeakHour": 16,
+          "observedPeakSpeed": 12.9,
+          "observedDirectionAtPeak": 298,
+          "candidateDayCount": 11,
+          "observationWindowDays": 16,
+          "sufficient": true
+        },
+        "predict": {
+          "predictedPeakHour": 13,
+          "predictedOptimalDir": 285,
+          "probability": null,
+          "direction": null,
+          "speed": null,
+          "pressure": null,
+          "elevation": null,
+          "phase": null
+        },
+        "hone": {
+          "peakHourDrift": 3,
+          "directionDrift": 12.840472183561474,
+          "peakHourOk": false,
+          "directionOk": true,
+          "sufficient": true
+        },
+        "verify": {
+          "proposed": {
+            "peakHour": 16,
+            "currentPeakHour": 13
+          },
+          "note": "Adjust config.thermal.peakHours.peak to align with observed maximum."
+        }
+      },
+      "issues": [
+        {
+          "severity": "medium",
+          "code": "PEAK_HOUR_DRIFT",
+          "detail": "Predicted peak 13:00, observed 16:00 across 11 qualifying days (drift 3h)"
+        }
+      ],
+      "grade": "B"
+    },
+    {
+      "lakeId": "otter-creek",
+      "name": "Otter Creek Reservoir",
+      "coords": {
+        "lat": 38.352,
+        "lng": -111.987
+      },
+      "loops": {
+        "read": {
+          "coords": {
+            "lat": 38.352,
+            "lng": -111.987
+          },
+          "openMeteoOK": true,
+          "hoursObserved": 360
+        },
+        "analyze": {
+          "pressureHigh": true,
+          "pressureLow": true,
+          "ridgeCount": 1,
+          "lakeshoreCount": 1,
+          "referenceCount": 1,
+          "thermalProfile": true,
+          "optimalDirection": {
+            "min": 180,
+            "max": 230,
+            "ideal": 205
+          },
+          "optimalSpeed": {
+            "min": 3,
+            "max": 12,
+            "average": 5
+          },
+          "peakHours": {
+            "start": 12,
+            "end": 16,
+            "peak": 14
+          }
+        },
+        "log": {
+          "observedPeakHour": 17,
+          "observedPeakSpeed": 10.8,
+          "observedDirectionAtPeak": 201,
+          "candidateDayCount": 4,
+          "observationWindowDays": 16,
+          "sufficient": true
+        },
+        "predict": {
+          "predictedPeakHour": 14,
+          "predictedOptimalDir": 205,
+          "probability": null,
+          "direction": null,
+          "speed": null,
+          "pressure": null,
+          "elevation": null,
+          "phase": null
+        },
+        "hone": {
+          "peakHourDrift": 3,
+          "directionDrift": 3.8629318892935203,
+          "peakHourOk": false,
+          "directionOk": true,
+          "sufficient": true
+        },
+        "verify": {
+          "proposed": {
+            "peakHour": 17,
+            "currentPeakHour": 14
+          },
+          "note": "Adjust config.thermal.peakHours.peak to align with observed maximum."
+        }
+      },
+      "issues": [
+        {
+          "severity": "medium",
+          "code": "PEAK_HOUR_DRIFT",
+          "detail": "Predicted peak 14:00, observed 17:00 across 4 qualifying days (drift 3h)"
+        }
+      ],
+      "grade": "B"
+    },
+    {
+      "lakeId": "fish-lake",
+      "name": "Fish Lake",
+      "coords": {
+        "lat": 38.5462,
+        "lng": -111.7135
+      },
+      "loops": {
+        "read": {
+          "coords": {
+            "lat": 38.5462,
+            "lng": -111.7135
+          },
+          "openMeteoOK": true,
+          "hoursObserved": 360
+        },
+        "analyze": {
+          "pressureHigh": true,
+          "pressureLow": true,
+          "ridgeCount": 1,
+          "lakeshoreCount": 1,
+          "referenceCount": 1,
+          "thermalProfile": true,
+          "optimalDirection": {
+            "min": 200,
+            "max": 250,
+            "ideal": 225
+          },
+          "optimalSpeed": {
+            "min": 3,
+            "max": 12,
+            "average": 5
+          },
+          "peakHours": {
+            "start": 12,
+            "end": 16,
+            "peak": 14
+          }
+        },
+        "log": {
+          "observedPeakHour": 14,
+          "observedPeakSpeed": 11.6,
+          "observedDirectionAtPeak": 227,
+          "candidateDayCount": 3,
+          "observationWindowDays": 16,
+          "sufficient": true
+        },
+        "predict": {
+          "predictedPeakHour": 14,
+          "predictedOptimalDir": 225,
+          "probability": null,
+          "direction": null,
+          "speed": null,
+          "pressure": null,
+          "elevation": null,
+          "phase": null
+        },
+        "hone": {
+          "peakHourDrift": 0,
+          "directionDrift": 2.332753728081002,
+          "peakHourOk": true,
+          "directionOk": true,
+          "sufficient": true
+        },
+        "verify": null
+      },
+      "issues": [],
+      "grade": "A"
+    },
+    {
+      "lakeId": "piute",
+      "name": "Piute Reservoir",
+      "coords": {
+        "lat": 38.328,
+        "lng": -112.162
+      },
+      "loops": {
+        "read": {
+          "coords": {
+            "lat": 38.328,
+            "lng": -112.162
+          },
+          "openMeteoOK": true,
+          "hoursObserved": 360
+        },
+        "analyze": {
+          "pressureHigh": true,
+          "pressureLow": true,
+          "ridgeCount": 1,
+          "lakeshoreCount": 1,
+          "referenceCount": 1,
+          "thermalProfile": true,
+          "optimalDirection": {
+            "min": 180,
+            "max": 230,
+            "ideal": 200
+          },
+          "optimalSpeed": {
+            "min": 3,
+            "max": 12,
+            "average": 5
+          },
+          "peakHours": {
+            "start": 12,
+            "end": 16,
+            "peak": 14
+          }
+        },
+        "log": {
+          "observedPeakHour": 14,
+          "observedPeakSpeed": 13.4,
+          "observedDirectionAtPeak": 194,
+          "candidateDayCount": 4,
+          "observationWindowDays": 16,
+          "sufficient": true
+        },
+        "predict": {
+          "predictedPeakHour": 14,
+          "predictedOptimalDir": 205,
+          "probability": null,
+          "direction": null,
+          "speed": null,
+          "pressure": null,
+          "elevation": null,
+          "phase": null
+        },
+        "hone": {
+          "peakHourDrift": 0,
+          "directionDrift": 11.380467206004909,
+          "peakHourOk": true,
+          "directionOk": true,
+          "sufficient": true
+        },
+        "verify": null
+      },
+      "issues": [],
+      "grade": "A"
+    },
+    {
+      "lakeId": "lake-powell",
+      "name": "Lake Powell",
+      "coords": {
+        "lat": 37.0173,
+        "lng": -111.4858
+      },
+      "loops": {
+        "read": {
+          "coords": {
+            "lat": 37.0173,
+            "lng": -111.4858
+          },
+          "openMeteoOK": true,
+          "hoursObserved": 360
+        },
+        "analyze": {
+          "pressureHigh": true,
+          "pressureLow": true,
+          "ridgeCount": 1,
+          "lakeshoreCount": 1,
+          "referenceCount": 1,
+          "thermalProfile": true,
+          "optimalDirection": {
+            "min": 150,
+            "max": 250,
+            "ideal": 200
+          },
+          "optimalSpeed": {
+            "min": 3,
+            "max": 15,
+            "average": 7
+          },
+          "peakHours": {
+            "start": 11,
+            "end": 17,
+            "peak": 14
+          }
+        },
+        "log": {
+          "observedPeakHour": 17,
+          "observedPeakSpeed": 16.1,
+          "observedDirectionAtPeak": 201,
+          "candidateDayCount": 7,
+          "observationWindowDays": 16,
+          "sufficient": true
+        },
+        "predict": {
+          "predictedPeakHour": 14,
+          "predictedOptimalDir": 200,
+          "probability": null,
+          "direction": null,
+          "speed": null,
+          "pressure": null,
+          "elevation": null,
+          "phase": null
+        },
+        "hone": {
+          "peakHourDrift": 3,
+          "directionDrift": 1.163727343010578,
+          "peakHourOk": false,
+          "directionOk": true,
+          "sufficient": true
+        },
+        "verify": {
+          "proposed": {
+            "peakHour": 17,
+            "currentPeakHour": 14
+          },
+          "note": "Adjust config.thermal.peakHours.peak to align with observed maximum."
+        }
+      },
+      "issues": [
+        {
+          "severity": "medium",
+          "code": "PEAK_HOUR_DRIFT",
+          "detail": "Predicted peak 14:00, observed 17:00 across 7 qualifying days (drift 3h)"
+        }
+      ],
+      "grade": "B"
+    },
+    {
+      "lakeId": "minersville",
+      "name": "Minersville Reservoir",
+      "coords": {
+        "lat": 38.213,
+        "lng": -112.874
+      },
+      "loops": {
+        "read": {
+          "coords": {
+            "lat": 38.213,
+            "lng": -112.874
+          },
+          "openMeteoOK": true,
+          "hoursObserved": 360
+        },
+        "analyze": {
+          "pressureHigh": true,
+          "pressureLow": true,
+          "ridgeCount": 1,
+          "lakeshoreCount": 1,
+          "referenceCount": 1,
+          "thermalProfile": true,
+          "optimalDirection": {
+            "min": 200,
+            "max": 250,
+            "ideal": 225
+          },
+          "optimalSpeed": {
+            "min": 3,
+            "max": 12,
+            "average": 5
+          },
+          "peakHours": {
+            "start": 12,
+            "end": 16,
+            "peak": 14
+          }
+        },
+        "log": {
+          "observedPeakHour": 17,
+          "observedPeakSpeed": 18.1,
+          "observedDirectionAtPeak": 220,
+          "candidateDayCount": 6,
+          "observationWindowDays": 16,
+          "sufficient": true
+        },
+        "predict": {
+          "predictedPeakHour": 14,
+          "predictedOptimalDir": 225,
+          "probability": null,
+          "direction": null,
+          "speed": null,
+          "pressure": null,
+          "elevation": null,
+          "phase": null
+        },
+        "hone": {
+          "peakHourDrift": 3,
+          "directionDrift": 5.356315048776622,
+          "peakHourOk": false,
+          "directionOk": true,
+          "sufficient": true
+        },
+        "verify": {
+          "proposed": {
+            "peakHour": 17,
+            "currentPeakHour": 14
+          },
+          "note": "Adjust config.thermal.peakHours.peak to align with observed maximum."
+        }
+      },
+      "issues": [
+        {
+          "severity": "medium",
+          "code": "PEAK_HOUR_DRIFT",
+          "detail": "Predicted peak 14:00, observed 17:00 across 6 qualifying days (drift 3h)"
+        }
+      ],
+      "grade": "B"
+    },
+    {
+      "lakeId": "panguitch",
+      "name": "Panguitch Lake",
+      "coords": {
+        "lat": 37.713,
+        "lng": -112.653
+      },
+      "loops": {
+        "read": {
+          "coords": {
+            "lat": 37.713,
+            "lng": -112.653
+          },
+          "openMeteoOK": true,
+          "hoursObserved": 360
+        },
+        "analyze": {
+          "pressureHigh": true,
+          "pressureLow": true,
+          "ridgeCount": 1,
+          "lakeshoreCount": 1,
+          "referenceCount": 1,
+          "thermalProfile": true,
+          "optimalDirection": {
+            "min": 230,
+            "max": 280,
+            "ideal": 255
+          },
+          "optimalSpeed": {
+            "min": 3,
+            "max": 12,
+            "average": 5
+          },
+          "peakHours": {
+            "start": 12,
+            "end": 16,
+            "peak": 14
+          }
+        },
+        "log": {
+          "observedPeakHour": null,
+          "observedPeakSpeed": null,
+          "observedDirectionAtPeak": null,
+          "candidateDayCount": 2,
+          "observationWindowDays": 16,
+          "sufficient": false
+        },
+        "predict": {
+          "predictedPeakHour": 14,
+          "predictedOptimalDir": 255,
+          "probability": null,
+          "direction": null,
+          "speed": null,
+          "pressure": null,
+          "elevation": null,
+          "phase": null
+        },
+        "hone": {
+          "peakHourDrift": null,
+          "directionDrift": null,
+          "peakHourOk": null,
+          "directionOk": null,
+          "sufficient": false
+        },
+        "verify": null
+      },
+      "issues": [
+        {
+          "severity": "info",
+          "code": "INSUFFICIENT_THERMAL_DAYS",
+          "detail": "Only 2/16 days in 14-day window matched thermal direction window. Off-season or wrong synoptic regime. Drift alerts suppressed."
+        }
+      ],
+      "grade": "A"
+    },
+    {
+      "lakeId": "sand-hollow",
+      "name": "Sand Hollow Reservoir",
+      "coords": {
+        "lat": 37.1072,
+        "lng": -113.385
+      },
+      "loops": {
+        "read": {
+          "coords": {
+            "lat": 37.1072,
+            "lng": -113.385
+          },
+          "openMeteoOK": true,
+          "hoursObserved": 360
+        },
+        "analyze": {
+          "pressureHigh": true,
+          "pressureLow": true,
+          "ridgeCount": 1,
+          "lakeshoreCount": 1,
+          "referenceCount": 1,
+          "thermalProfile": true,
+          "optimalDirection": {
+            "min": 200,
+            "max": 250,
+            "ideal": 225
+          },
+          "optimalSpeed": {
+            "min": 3,
+            "max": 12,
+            "average": 5
+          },
+          "peakHours": {
+            "start": 11,
+            "end": 16,
+            "peak": 13
+          }
+        },
+        "log": {
+          "observedPeakHour": 18,
+          "observedPeakSpeed": 16.5,
+          "observedDirectionAtPeak": 232,
+          "candidateDayCount": 8,
+          "observationWindowDays": 16,
+          "sufficient": true
+        },
+        "predict": {
+          "predictedPeakHour": 13,
+          "predictedOptimalDir": 225,
+          "probability": null,
+          "direction": null,
+          "speed": null,
+          "pressure": null,
+          "elevation": null,
+          "phase": null
+        },
+        "hone": {
+          "peakHourDrift": 5,
+          "directionDrift": 6.524856092358675,
+          "peakHourOk": false,
+          "directionOk": true,
+          "sufficient": true
+        },
+        "verify": {
+          "proposed": {
+            "peakHour": 18,
+            "currentPeakHour": 13
+          },
+          "note": "Adjust config.thermal.peakHours.peak to align with observed maximum."
+        }
+      },
+      "issues": [
+        {
+          "severity": "medium",
+          "code": "PEAK_HOUR_DRIFT",
+          "detail": "Predicted peak 13:00, observed 18:00 across 8 qualifying days (drift 5h)"
+        }
+      ],
+      "grade": "B"
+    },
+    {
+      "lakeId": "quail-creek",
+      "name": "Quail Creek Reservoir",
+      "coords": {
+        "lat": 37.192,
+        "lng": -113.378
+      },
+      "loops": {
+        "read": {
+          "coords": {
+            "lat": 37.192,
+            "lng": -113.378
+          },
+          "openMeteoOK": true,
+          "hoursObserved": 360
+        },
+        "analyze": {
+          "pressureHigh": true,
+          "pressureLow": true,
+          "ridgeCount": 1,
+          "lakeshoreCount": 1,
+          "referenceCount": 1,
+          "thermalProfile": true,
+          "optimalDirection": {
+            "min": 200,
+            "max": 250,
+            "ideal": 225
+          },
+          "optimalSpeed": {
+            "min": 3,
+            "max": 12,
+            "average": 5
+          },
+          "peakHours": {
+            "start": 11,
+            "end": 16,
+            "peak": 13
+          }
+        },
+        "log": {
+          "observedPeakHour": 17,
+          "observedPeakSpeed": 15.9,
+          "observedDirectionAtPeak": 230,
+          "candidateDayCount": 13,
+          "observationWindowDays": 16,
+          "sufficient": true
+        },
+        "predict": {
+          "predictedPeakHour": 13,
+          "predictedOptimalDir": 225,
+          "probability": null,
+          "direction": null,
+          "speed": null,
+          "pressure": null,
+          "elevation": null,
+          "phase": null
+        },
+        "hone": {
+          "peakHourDrift": 4,
+          "directionDrift": 5.080167102988298,
+          "peakHourOk": false,
+          "directionOk": true,
+          "sufficient": true
+        },
+        "verify": {
+          "proposed": {
+            "peakHour": 17,
+            "currentPeakHour": 13
+          },
+          "note": "Adjust config.thermal.peakHours.peak to align with observed maximum."
+        }
+      },
+      "issues": [
+        {
+          "severity": "medium",
+          "code": "PEAK_HOUR_DRIFT",
+          "detail": "Predicted peak 13:00, observed 17:00 across 13 qualifying days (drift 4h)"
+        }
+      ],
+      "grade": "B"
+    },
+    {
+      "lakeId": "starvation",
+      "name": "Starvation Reservoir",
+      "coords": {
+        "lat": 40.1855,
+        "lng": -110.4415
+      },
+      "loops": {
+        "read": {
+          "coords": {
+            "lat": 40.1855,
+            "lng": -110.4415
+          },
+          "openMeteoOK": true,
+          "hoursObserved": 360
+        },
+        "analyze": {
+          "pressureHigh": true,
+          "pressureLow": true,
+          "ridgeCount": 1,
+          "lakeshoreCount": 1,
+          "referenceCount": 1,
+          "thermalProfile": true,
+          "optimalDirection": {
+            "min": 180,
+            "max": 230,
+            "ideal": 200
+          },
+          "optimalSpeed": {
+            "min": 3,
+            "max": 12,
+            "average": 6
+          },
+          "peakHours": {
+            "start": 12,
+            "end": 16,
+            "peak": 14
+          }
+        },
+        "log": {
+          "observedPeakHour": null,
+          "observedPeakSpeed": null,
+          "observedDirectionAtPeak": null,
+          "candidateDayCount": 2,
+          "observationWindowDays": 16,
+          "sufficient": false
+        },
+        "predict": {
+          "predictedPeakHour": 14,
+          "predictedOptimalDir": 205,
+          "probability": null,
+          "direction": null,
+          "speed": null,
+          "pressure": null,
+          "elevation": null,
+          "phase": null
+        },
+        "hone": {
+          "peakHourDrift": null,
+          "directionDrift": null,
+          "peakHourOk": null,
+          "directionOk": null,
+          "sufficient": false
+        },
+        "verify": null
+      },
+      "issues": [
+        {
+          "severity": "info",
+          "code": "INSUFFICIENT_THERMAL_DAYS",
+          "detail": "Only 2/16 days in 14-day window matched thermal direction window. Off-season or wrong synoptic regime. Drift alerts suppressed."
+        }
+      ],
+      "grade": "A"
+    },
+    {
+      "lakeId": "flaming-gorge",
+      "name": "Flaming Gorge",
+      "coords": {
+        "lat": 41.0385,
+        "lng": -109.5725
+      },
+      "loops": {
+        "read": {
+          "coords": {
+            "lat": 41.0385,
+            "lng": -109.5725
+          },
+          "openMeteoOK": true,
+          "hoursObserved": 360
+        },
+        "analyze": {
+          "pressureHigh": true,
+          "pressureLow": true,
+          "ridgeCount": 1,
+          "lakeshoreCount": 1,
+          "referenceCount": 1,
+          "thermalProfile": true,
+          "optimalDirection": {
+            "min": 130,
+            "max": 200,
+            "ideal": 160
+          },
+          "optimalSpeed": {
+            "min": 3,
+            "max": 12,
+            "average": 6
+          },
+          "peakHours": {
+            "start": 12,
+            "end": 16,
+            "peak": 14
+          }
+        },
+        "log": {
+          "observedPeakHour": 17,
+          "observedPeakSpeed": 15.1,
+          "observedDirectionAtPeak": 167,
+          "candidateDayCount": 6,
+          "observationWindowDays": 16,
+          "sufficient": true
+        },
+        "predict": {
+          "predictedPeakHour": 14,
+          "predictedOptimalDir": 165,
+          "probability": null,
+          "direction": null,
+          "speed": null,
+          "pressure": null,
+          "elevation": null,
+          "phase": null
+        },
+        "hone": {
+          "peakHourDrift": 3,
+          "directionDrift": 1.514987183800713,
+          "peakHourOk": false,
+          "directionOk": true,
+          "sufficient": true
+        },
+        "verify": {
+          "proposed": {
+            "peakHour": 17,
+            "currentPeakHour": 14
+          },
+          "note": "Adjust config.thermal.peakHours.peak to align with observed maximum."
+        }
+      },
+      "issues": [
+        {
+          "severity": "medium",
+          "code": "PEAK_HOUR_DRIFT",
+          "detail": "Predicted peak 14:00, observed 17:00 across 6 qualifying days (drift 3h)"
+        }
+      ],
+      "grade": "B"
+    },
+    {
+      "lakeId": "echo",
+      "name": "Echo Reservoir",
+      "coords": {
+        "lat": 40.9645,
+        "lng": -111.438
+      },
+      "loops": {
+        "read": {
+          "coords": {
+            "lat": 40.9645,
+            "lng": -111.438
+          },
+          "openMeteoOK": true,
+          "hoursObserved": 360
+        },
+        "analyze": {
+          "pressureHigh": true,
+          "pressureLow": true,
+          "ridgeCount": 1,
+          "lakeshoreCount": 1,
+          "referenceCount": 1,
+          "thermalProfile": true,
+          "optimalDirection": {
+            "min": 240,
+            "max": 270,
+            "ideal": 255
+          },
+          "optimalSpeed": {
+            "min": 3,
+            "max": 12,
+            "average": 6
+          },
+          "peakHours": {
+            "start": 12,
+            "end": 16,
+            "peak": 14
+          }
+        },
+        "log": {
+          "observedPeakHour": null,
+          "observedPeakSpeed": null,
+          "observedDirectionAtPeak": null,
+          "candidateDayCount": 1,
+          "observationWindowDays": 16,
+          "sufficient": false
+        },
+        "predict": {
+          "predictedPeakHour": 14,
+          "predictedOptimalDir": 255,
+          "probability": null,
+          "direction": null,
+          "speed": null,
+          "pressure": null,
+          "elevation": null,
+          "phase": null
+        },
+        "hone": {
+          "peakHourDrift": null,
+          "directionDrift": null,
+          "peakHourOk": null,
+          "directionOk": null,
+          "sufficient": false
+        },
+        "verify": null
+      },
+      "issues": [
+        {
+          "severity": "info",
+          "code": "INSUFFICIENT_THERMAL_DAYS",
+          "detail": "Only 1/16 days in 14-day window matched thermal direction window. Off-season or wrong synoptic regime. Drift alerts suppressed."
+        }
+      ],
+      "grade": "A"
+    },
+    {
+      "lakeId": "rockport",
+      "name": "Rockport Reservoir",
+      "coords": {
+        "lat": 40.783,
+        "lng": -111.3955
+      },
+      "loops": {
+        "read": {
+          "coords": {
+            "lat": 40.783,
+            "lng": -111.3955
+          },
+          "openMeteoOK": true,
+          "hoursObserved": 360
+        },
+        "analyze": {
+          "pressureHigh": true,
+          "pressureLow": true,
+          "ridgeCount": 1,
+          "lakeshoreCount": 1,
+          "referenceCount": 1,
+          "thermalProfile": true,
+          "optimalDirection": {
+            "min": 200,
+            "max": 250,
+            "ideal": 225
+          },
+          "optimalSpeed": {
+            "min": 3,
+            "max": 12,
+            "average": 5
+          },
+          "peakHours": {
+            "start": 12,
+            "end": 16,
+            "peak": 14
+          }
+        },
+        "log": {
+          "observedPeakHour": null,
+          "observedPeakSpeed": null,
+          "observedDirectionAtPeak": null,
+          "candidateDayCount": 0,
+          "observationWindowDays": 16,
+          "sufficient": false
+        },
+        "predict": {
+          "predictedPeakHour": 14,
+          "predictedOptimalDir": 225,
+          "probability": null,
+          "direction": null,
+          "speed": null,
+          "pressure": null,
+          "elevation": null,
+          "phase": null
+        },
+        "hone": {
+          "peakHourDrift": null,
+          "directionDrift": null,
+          "peakHourOk": null,
+          "directionOk": null,
+          "sufficient": false
+        },
+        "verify": null
+      },
+      "issues": [
+        {
+          "severity": "info",
+          "code": "INSUFFICIENT_THERMAL_DAYS",
+          "detail": "Only 0/16 days in 14-day window matched thermal direction window. Off-season or wrong synoptic regime. Drift alerts suppressed."
+        }
+      ],
+      "grade": "A"
+    },
+    {
+      "lakeId": "steinaker",
+      "name": "Steinaker Reservoir",
+      "coords": {
+        "lat": 40.5262,
+        "lng": -109.534
+      },
+      "loops": {
+        "read": {
+          "coords": {
+            "lat": 40.5262,
+            "lng": -109.534
+          },
+          "openMeteoOK": true,
+          "hoursObserved": 360
+        },
+        "analyze": {
+          "pressureHigh": true,
+          "pressureLow": true,
+          "ridgeCount": 1,
+          "lakeshoreCount": 1,
+          "referenceCount": 1,
+          "thermalProfile": true,
+          "optimalDirection": {
+            "min": 180,
+            "max": 230,
+            "ideal": 200
+          },
+          "optimalSpeed": {
+            "min": 3,
+            "max": 12,
+            "average": 5
+          },
+          "peakHours": {
+            "start": 12,
+            "end": 16,
+            "peak": 14
+          }
+        },
+        "log": {
+          "observedPeakHour": 16,
+          "observedPeakSpeed": 12.2,
+          "observedDirectionAtPeak": 202,
+          "candidateDayCount": 5,
+          "observationWindowDays": 16,
+          "sufficient": true
+        },
+        "predict": {
+          "predictedPeakHour": 14,
+          "predictedOptimalDir": 205,
+          "probability": null,
+          "direction": null,
+          "speed": null,
+          "pressure": null,
+          "elevation": null,
+          "phase": null
+        },
+        "hone": {
+          "peakHourDrift": 2,
+          "directionDrift": 2.8774821229261818,
+          "peakHourOk": true,
+          "directionOk": true,
+          "sufficient": true
+        },
+        "verify": null
+      },
+      "issues": [],
+      "grade": "A"
+    },
+    {
+      "lakeId": "red-fleet",
+      "name": "Red Fleet Reservoir",
+      "coords": {
+        "lat": 40.5748,
+        "lng": -109.4635
+      },
+      "loops": {
+        "read": {
+          "coords": {
+            "lat": 40.5748,
+            "lng": -109.4635
+          },
+          "openMeteoOK": true,
+          "hoursObserved": 360
+        },
+        "analyze": {
+          "pressureHigh": true,
+          "pressureLow": true,
+          "ridgeCount": 1,
+          "lakeshoreCount": 1,
+          "referenceCount": 1,
+          "thermalProfile": true,
+          "optimalDirection": {
+            "min": 180,
+            "max": 230,
+            "ideal": 200
+          },
+          "optimalSpeed": {
+            "min": 3,
+            "max": 12,
+            "average": 5
+          },
+          "peakHours": {
+            "start": 12,
+            "end": 16,
+            "peak": 14
+          }
+        },
+        "log": {
+          "observedPeakHour": 17,
+          "observedPeakSpeed": 11.9,
+          "observedDirectionAtPeak": 201,
+          "candidateDayCount": 6,
+          "observationWindowDays": 16,
+          "sufficient": true
+        },
+        "predict": {
+          "predictedPeakHour": 14,
+          "predictedOptimalDir": 205,
+          "probability": null,
+          "direction": null,
+          "speed": null,
+          "pressure": null,
+          "elevation": null,
+          "phase": null
+        },
+        "hone": {
+          "peakHourDrift": 3,
+          "directionDrift": 4.243550764513344,
+          "peakHourOk": false,
+          "directionOk": true,
+          "sufficient": true
+        },
+        "verify": {
+          "proposed": {
+            "peakHour": 17,
+            "currentPeakHour": 14
+          },
+          "note": "Adjust config.thermal.peakHours.peak to align with observed maximum."
+        }
+      },
+      "issues": [
+        {
+          "severity": "medium",
+          "code": "PEAK_HOUR_DRIFT",
+          "detail": "Predicted peak 14:00, observed 17:00 across 6 qualifying days (drift 3h)"
+        }
+      ],
+      "grade": "B"
+    },
+    {
+      "lakeId": "rush-lake",
+      "name": "Rush Lake",
+      "coords": {
+        "lat": 40.5,
+        "lng": -112.37
+      },
+      "loops": {
+        "read": {
+          "coords": {
+            "lat": 40.5,
+            "lng": -112.37
+          },
+          "openMeteoOK": true,
+          "hoursObserved": 360
+        },
+        "analyze": {
+          "pressureHigh": true,
+          "pressureLow": true,
+          "ridgeCount": 1,
+          "lakeshoreCount": 1,
+          "referenceCount": 1,
+          "thermalProfile": true,
+          "optimalDirection": {
+            "min": 170,
+            "max": 210,
+            "ideal": 190
+          },
+          "optimalSpeed": {
+            "min": 12,
+            "max": 30,
+            "average": 18
+          },
+          "peakHours": {
+            "start": 11,
+            "end": 17,
+            "peak": 14
+          }
+        },
+        "log": {
+          "observedPeakHour": 15,
+          "observedPeakSpeed": 13.3,
+          "observedDirectionAtPeak": 178,
+          "candidateDayCount": 4,
+          "observationWindowDays": 16,
+          "sufficient": true
+        },
+        "predict": {
+          "predictedPeakHour": 14,
+          "predictedOptimalDir": 190,
+          "probability": null,
+          "direction": null,
+          "speed": null,
+          "pressure": null,
+          "elevation": null,
+          "phase": null
+        },
+        "hone": {
+          "peakHourDrift": 1,
+          "directionDrift": 12.24927005554082,
+          "peakHourOk": true,
+          "directionOk": true,
+          "sufficient": true
+        },
+        "verify": null
+      },
+      "issues": [],
+      "grade": "A"
+    },
+    {
+      "lakeId": "grantsville",
+      "name": "Grantsville Reservoir",
+      "coords": {
+        "lat": 40.59,
+        "lng": -112.44
+      },
+      "loops": {
+        "read": {
+          "coords": {
+            "lat": 40.59,
+            "lng": -112.44
+          },
+          "openMeteoOK": true,
+          "hoursObserved": 360
+        },
+        "analyze": {
+          "pressureHigh": true,
+          "pressureLow": true,
+          "ridgeCount": 1,
+          "lakeshoreCount": 1,
+          "referenceCount": 1,
+          "thermalProfile": true,
+          "optimalDirection": {
+            "min": 180,
+            "max": 230,
+            "ideal": 200
+          },
+          "optimalSpeed": {
+            "min": 10,
+            "max": 25,
+            "average": 15
+          },
+          "peakHours": {
+            "start": 11,
+            "end": 17,
+            "peak": 14
+          }
+        },
+        "log": {
+          "observedPeakHour": null,
+          "observedPeakSpeed": null,
+          "observedDirectionAtPeak": null,
+          "candidateDayCount": 0,
+          "observationWindowDays": 16,
+          "sufficient": false
+        },
+        "predict": {
+          "predictedPeakHour": 14,
+          "predictedOptimalDir": 205,
+          "probability": null,
+          "direction": null,
+          "speed": null,
+          "pressure": null,
+          "elevation": null,
+          "phase": null
+        },
+        "hone": {
+          "peakHourDrift": null,
+          "directionDrift": null,
+          "peakHourOk": null,
+          "directionOk": null,
+          "sufficient": false
+        },
+        "verify": null
+      },
+      "issues": [
+        {
+          "severity": "info",
+          "code": "INSUFFICIENT_THERMAL_DAYS",
+          "detail": "Only 0/16 days in 14-day window matched thermal direction window. Off-season or wrong synoptic regime. Drift alerts suppressed."
+        }
+      ],
+      "grade": "A"
+    },
+    {
+      "lakeId": "potm-north",
+      "name": "Point of the Mountain — North",
+      "coords": {
+        "lat": 40.46,
+        "lng": -111.9
+      },
+      "loops": {
+        "read": {
+          "coords": {
+            "lat": 40.46,
+            "lng": -111.9
+          },
+          "openMeteoOK": true,
+          "hoursObserved": 360
+        },
+        "analyze": {
+          "pressureHigh": true,
+          "pressureLow": true,
+          "ridgeCount": 2,
+          "lakeshoreCount": 3,
+          "referenceCount": 2,
+          "thermalProfile": true,
+          "optimalDirection": {
+            "min": 320,
+            "max": 360,
+            "ideal": 340
+          },
+          "optimalSpeed": {
+            "min": 8,
+            "max": 20,
+            "average": 12
+          },
+          "peakHours": {
+            "start": 12,
+            "end": 18,
+            "peak": 15
+          }
+        },
+        "log": {
+          "observedPeakHour": 17,
+          "observedPeakSpeed": 12.4,
+          "observedDirectionAtPeak": 343,
+          "candidateDayCount": 9,
+          "observationWindowDays": 16,
+          "sufficient": true
+        },
+        "predict": {
+          "predictedPeakHour": 15,
+          "predictedOptimalDir": 340,
+          "probability": null,
+          "direction": null,
+          "speed": null,
+          "pressure": null,
+          "elevation": null,
+          "phase": null
+        },
+        "hone": {
+          "peakHourDrift": 2,
+          "directionDrift": 2.678466317915138,
+          "peakHourOk": true,
+          "directionOk": true,
+          "sufficient": true
+        },
+        "verify": null
+      },
+      "issues": [],
+      "grade": "A"
+    },
+    {
+      "lakeId": "stockton-bar",
+      "name": "Stockton Bar",
+      "coords": {
+        "lat": 40.44,
+        "lng": -112.37
+      },
+      "loops": {
+        "read": {
+          "coords": {
+            "lat": 40.44,
+            "lng": -112.37
+          },
+          "openMeteoOK": true,
+          "hoursObserved": 360
+        },
+        "analyze": {
+          "pressureHigh": true,
+          "pressureLow": true,
+          "ridgeCount": 1,
+          "lakeshoreCount": 1,
+          "referenceCount": 1,
+          "thermalProfile": true,
+          "optimalDirection": {
+            "min": 340,
+            "max": 20,
+            "ideal": 0
+          },
+          "optimalSpeed": {
+            "min": 8,
+            "max": 18,
+            "average": 12
+          },
+          "peakHours": {
+            "start": 12,
+            "end": 18,
+            "peak": 15
+          }
+        },
+        "log": {
+          "observedPeakHour": 17,
+          "observedPeakSpeed": 11,
+          "observedDirectionAtPeak": 6,
+          "candidateDayCount": 10,
+          "observationWindowDays": 16,
+          "sufficient": true
+        },
+        "predict": {
+          "predictedPeakHour": 15,
+          "predictedOptimalDir": 180,
+          "probability": null,
+          "direction": null,
+          "speed": null,
+          "pressure": null,
+          "elevation": null,
+          "phase": null
+        },
+        "hone": {
+          "peakHourDrift": 2,
+          "directionDrift": 174.40377580604712,
+          "peakHourOk": true,
+          "directionOk": false,
+          "sufficient": true
+        },
+        "verify": null
+      },
+      "issues": [
+        {
+          "severity": "low",
+          "code": "DIRECTION_DRIFT",
+          "detail": "Predicted optimal 180°, observed 6° (drift 174° across 10 qualifying days)"
+        }
+      ],
+      "grade": "A"
+    },
+    {
+      "lakeId": "jordanelle",
+      "name": "Jordanelle Reservoir",
+      "coords": {
+        "lat": 40.599,
+        "lng": -111.4302
+      },
+      "loops": {
+        "read": {
+          "coords": {
+            "lat": 40.599,
+            "lng": -111.4302
+          },
+          "openMeteoOK": true,
+          "hoursObserved": 360
+        },
+        "analyze": {
+          "pressureHigh": true,
+          "pressureLow": true,
+          "ridgeCount": 1,
+          "lakeshoreCount": 3,
+          "referenceCount": 2,
+          "thermalProfile": true,
+          "optimalDirection": {
+            "min": 180,
+            "max": 230,
+            "ideal": 205
+          },
+          "optimalSpeed": {
+            "min": 4,
+            "max": 14,
+            "average": 7
+          },
+          "peakHours": {
+            "start": 12,
+            "end": 16,
+            "peak": 14
+          }
+        },
+        "log": {
+          "observedPeakHour": null,
+          "observedPeakSpeed": null,
+          "observedDirectionAtPeak": null,
+          "candidateDayCount": 0,
+          "observationWindowDays": 16,
+          "sufficient": false
+        },
+        "predict": {
+          "predictedPeakHour": 14,
+          "predictedOptimalDir": 205,
+          "probability": null,
+          "direction": null,
+          "speed": null,
+          "pressure": null,
+          "elevation": null,
+          "phase": null
+        },
+        "hone": {
+          "peakHourDrift": null,
+          "directionDrift": null,
+          "peakHourOk": null,
+          "directionOk": null,
+          "sufficient": false
+        },
+        "verify": null
+      },
+      "issues": [
+        {
+          "severity": "info",
+          "code": "INSUFFICIENT_THERMAL_DAYS",
+          "detail": "Only 0/16 days in 14-day window matched thermal direction window. Off-season or wrong synoptic regime. Drift alerts suppressed."
+        }
+      ],
+      "grade": "A"
+    },
+    {
+      "lakeId": "sulfur-creek",
+      "name": "Sulphur Creek Reservoir",
+      "coords": {
+        "lat": 41.095,
+        "lng": -110.955
+      },
+      "loops": {
+        "read": {
+          "coords": {
+            "lat": 41.095,
+            "lng": -110.955
+          },
+          "openMeteoOK": true,
+          "hoursObserved": 360
+        },
+        "analyze": {
+          "pressureHigh": true,
+          "pressureLow": true,
+          "ridgeCount": 2,
+          "lakeshoreCount": 2,
+          "referenceCount": 2,
+          "thermalProfile": true,
+          "optimalDirection": {
+            "min": 250,
+            "max": 290,
+            "ideal": 270
+          },
+          "optimalSpeed": {
+            "min": 10,
+            "max": 25,
+            "average": 15
+          },
+          "peakHours": {
+            "start": 12,
+            "end": 18,
+            "peak": 14
+          }
+        },
+        "log": {
+          "observedPeakHour": 16,
+          "observedPeakSpeed": 13.6,
+          "observedDirectionAtPeak": 264,
+          "candidateDayCount": 6,
+          "observationWindowDays": 16,
+          "sufficient": true
+        },
+        "predict": {
+          "predictedPeakHour": 14,
+          "predictedOptimalDir": 270,
+          "probability": 31,
+          "direction": "optimal",
+          "speed": "good",
+          "pressure": "marginal",
+          "elevation": "unknown",
+          "phase": "peak"
+        },
+        "hone": {
+          "peakHourDrift": 2,
+          "directionDrift": 6.1565662475286445,
+          "peakHourOk": true,
+          "directionOk": true,
+          "sufficient": true
+        },
+        "verify": null
+      },
+      "issues": [],
+      "grade": "A"
+    }
+  ]
+}

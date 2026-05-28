@@ -42,7 +42,22 @@ export const sulfurCreekConfigs = {
         bustThreshold: 2.5,
       },
 
-      ridge: [],
+      ridge: [
+        {
+          id: 'UT1',
+          name: 'Wahsatch Hill EB (UDOT)',
+          elevation: 6814,
+          role: 'PRIMARY ridge — I-80 summit ~20 mi SW, signals upper-west flow',
+          priority: 1,
+        },
+        {
+          id: 'KFIR',
+          name: 'First Divide (WYDOT)',
+          elevation: 7579,
+          role: 'High-elevation Wyoming station above the reservoir',
+          priority: 2,
+        },
+      ],
 
       groundTruth: {
         id: 'KFIR',
