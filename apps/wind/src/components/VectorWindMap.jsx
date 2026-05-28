@@ -104,7 +104,6 @@ function buildMapAreaFromLakeConfig(lakeId) {
     const lng = reg?.lng ?? entry.lng ?? cfg.coordinates?.lng;
     if (lat == null || lng == null) return;
 
-    const isAirport = entry.id.startsWith('K') && entry.id.length === 4;
     const isUdot = entry.id.startsWith('UT') || entry.id.startsWith('WY');
     const isPws = entry.id.startsWith('KUT') || entry.id.startsWith('KWY');
     const type = defaults.type || (isPws ? 'pws' : isUdot ? 'udot' : 'nws');
