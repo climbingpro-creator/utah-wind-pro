@@ -274,40 +274,94 @@ function PinDropMarker({ coords }) {
 
 // ─── Dense PWS Wind Field ─────────────────────────────────────────────────
 
-function usePwsWindField(center, enabled) {
+// Map zoom level to discovery radius (km). Wider zoom = bigger radius so the
+// whole visible area gets meter coverage. At z>=13 we shrink to keep the API
+// payload reasonable since the user is already zoomed into a specific spot.
+function radiusForZoom(zoom) {
+  if (zoom == null) return 40;
+  if (zoom >= 14) return 15;
+  if (zoom >= 12) return 25;
+  if (zoom >= 11) return 35;
+  if (zoom >= 10) return 50;
+  if (zoom >=  9) return 75;
+  if (zoom >=  8) return 110;
+  if (zoom >=  7) return 160;
+  return 200; // Capped server-side at 200 km anyway
+}
+
+// Haversine in km — for cache-hit decisions
+function kmBetween(lat1, lng1, lat2, lng2) {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a = Math.sin(dLat / 2) ** 2
+    + Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+/**
+ * Dense PWS wind field that AUTO-POPULATES as the user pans/zooms.
+ *
+ * Behavior:
+ *   • Debounces 700 ms after the user stops moving (so panning doesn't spam).
+ *   • Refetches when the new center is > 1/3 of the current radius from the
+ *     last successful fetch (cache hit otherwise).
+ *   • Scales discovery radius based on zoom level.
+ *   • Skips at z < 6 (would discover hundreds of stations — bad UX).
+ *   • Merges new observations into the existing field rather than replacing,
+ *     so meters don't disappear when you pan slightly.
+ */
+function usePwsWindField(viewState, enabled) {
   const [stations, setStations] = useState([]);
   const [loading, setLoading] = useState(false);
-  const lastFetch = useRef(0);
+  const lastFetch = useRef({ lat: null, lng: null, radius: null, ts: 0 });
+  const debounceRef = useRef(null);
+
+  const longitude = viewState?.longitude ?? null;
+  const latitude  = viewState?.latitude  ?? null;
+  const zoom      = viewState?.zoom      ?? null;
 
   useEffect(() => {
-    if (!enabled || !center) return;
-    const now = Date.now();
-    if (now - lastFetch.current < 120_000) return;
-    lastFetch.current = now;
+    if (!enabled) return;
+    if (longitude == null || latitude == null) return;
+    if (zoom != null && zoom < 6) return; // World view — skip
 
-    let cancelled = false;
-    setLoading(true);
+    // Debounce: only fire 700ms after the user stops panning/zooming
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(async () => {
+      const radius = radiusForZoom(zoom);
+      const last = lastFetch.current;
 
-    const apiOrigin = import.meta.env.VITE_API_ORIGIN || '';
-    const url = `${apiOrigin}/api/weather?source=wu-pws-dense&lat=${center[1]}&lon=${center[0]}&radius=40`;
+      // Cache: skip if we already fetched a center within 1/3 radius recently
+      if (last.lat != null && last.lng != null) {
+        const moved = kmBetween(last.lat, last.lng, latitude, longitude);
+        const ageMs = Date.now() - last.ts;
+        if (moved < last.radius / 3 && ageMs < 90_000 && last.radius >= radius) return;
+      }
 
-    fetch(url)
-      .then(r => {
+      lastFetch.current = { lat: latitude, lng: longitude, radius, ts: Date.now() };
+      setLoading(true);
+
+      const apiOrigin = import.meta.env.VITE_API_ORIGIN || '';
+      const url = `${apiOrigin}/api/weather?source=wu-pws-dense&lat=${latitude}&lon=${longitude}&radius=${radius}`;
+
+      try {
+        const r = await fetch(url);
         if (!r.ok) {
           console.warn(`[PWS Dense] HTTP ${r.status} — WU_API_KEY may not be configured`);
-          return null;
-        }
-        return r.json();
-      })
-      .then(data => {
-        if (cancelled) return;
-        if (!data?.observations?.length) {
-          console.info(`[PWS Dense] ${data?.discoveredCount ?? 0} discovered, ${data?.stationCount ?? 0} returned`);
+          setLoading(false);
           return;
         }
+        const data = await r.json();
+        if (!data?.observations?.length) {
+          console.info(`[PWS Dense] ${data?.discoveredCount ?? 0} discovered, ${data?.stationCount ?? 0} returned`);
+          setLoading(false);
+          return;
+        }
+
         const now = Date.now();
         const MAX_AGE = 60 * 60_000;
-        const valid = data.observations.filter(s => {
+        const fresh = data.observations.filter(s => {
           if (s.windSpeed == null && s.windDir == null) return false;
           if (s.obsTime) {
             const age = now - new Date(s.obsTime).getTime();
@@ -315,13 +369,30 @@ function usePwsWindField(center, enabled) {
           }
           return true;
         });
-        setStations(valid);
-      })
-      .catch(err => { console.warn('[PWS Dense] fetch failed:', err.message); })
-      .finally(() => { if (!cancelled) setLoading(false); });
 
-    return () => { cancelled = true; };
-  }, [center?.[0], center?.[1], enabled]);
+        // Merge with existing field by ID so meters from previous fetches
+        // remain visible when the user pans incrementally. Drop stations
+        // outside the new view's reasonable bounding box.
+        setStations(prev => {
+          const map = new Map();
+          for (const s of prev) {
+            const d = kmBetween(latitude, longitude, s.lat, s.lon);
+            if (d <= radius * 1.8) map.set(s.id, s);
+          }
+          for (const s of fresh) map.set(s.id, s);
+          return [...map.values()];
+        });
+      } catch (err) {
+        console.warn('[PWS Dense] fetch failed:', err.message);
+      } finally {
+        setLoading(false);
+      }
+    }, 700);
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [longitude, latitude, zoom, enabled]);
 
   return { stations, loading };
 }
@@ -607,7 +678,7 @@ export function VectorWindMap({
     }
   }, [showSatellite]);
 
-  const { stations: pwsStations, loading: pwsLoading } = usePwsWindField(mapArea?.center, showPwsField);
+  const { stations: pwsStations, loading: pwsLoading } = usePwsWindField(viewState, showPwsField);
 
   const liveStationsWithCoords = useMemo(() => {
     if (!mapArea) return [];
@@ -1047,8 +1118,14 @@ export function VectorWindMap({
               : 'bg-slate-900/90 text-slate-300 hover:bg-slate-800 border border-slate-700'
           }`}
         >
-          <Wind className="w-4 h-4" />
-          <span>{pwsLoading ? 'Loading...' : showPwsField ? 'PWS On' : 'PWS Off'}</span>
+          <Wind className={`w-4 h-4 ${pwsLoading ? 'animate-spin' : ''}`} />
+          <span>
+            {pwsLoading
+              ? 'Scanning...'
+              : showPwsField
+                ? `${pwsStations.length} meters`
+                : 'PWS Off'}
+          </span>
         </button>
 
         {/* Wind info overlay */}
