@@ -476,7 +476,8 @@ function createWindArrowImage(size = 64) {
 function ensureWindArrowImage(map) {
   if (!map || map.hasImage?.('wind-arrow')) return;
   try {
-    const img = createWindArrowImage(64);
+    // 128px canvas + pixelRatio 2 → arrows stay crisp even when icon-size > 1.
+    const img = createWindArrowImage(128);
     map.addImage('wind-arrow', img, { sdf: true, pixelRatio: 2 });
   } catch (err) {
     console.warn('[WindArrow] failed to register icon:', err.message);
@@ -561,11 +562,13 @@ function PwsWindFieldLayer({ stations }) {
           'icon-ignore-placement': true,
           // Scale arrow with both zoom AND wind speed so a 25 mph reading
           // is visually bigger than a 5 mph reading at the same zoom.
+          // Sizes ~70% bigger than first pass — readable at a glance without
+          // crowding the basemap at typical pan/zoom levels.
           'icon-size': [
             'interpolate', ['linear'], ['zoom'],
-            6,  ['interpolate', ['linear'], ['get', 'speed'], 0, 0.22, 10, 0.28, 25, 0.34],
-            10, ['interpolate', ['linear'], ['get', 'speed'], 0, 0.32, 10, 0.42, 25, 0.52],
-            14, ['interpolate', ['linear'], ['get', 'speed'], 0, 0.42, 10, 0.55, 25, 0.70],
+            6,  ['interpolate', ['linear'], ['get', 'speed'], 0, 0.38, 10, 0.50, 25, 0.62],
+            10, ['interpolate', ['linear'], ['get', 'speed'], 0, 0.55, 10, 0.75, 25, 0.95],
+            14, ['interpolate', ['linear'], ['get', 'speed'], 0, 0.75, 10, 1.00, 25, 1.30],
           ],
         }}
         paint={{
