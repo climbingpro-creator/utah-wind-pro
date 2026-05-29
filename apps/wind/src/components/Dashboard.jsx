@@ -29,6 +29,7 @@ import { SafeComponent, IntelligentRecommendations, ModuleLoader } from '@utahwi
 import { CreditCard, Wind, Target, TrendingUp, Calendar, ChevronDown, ChevronUp } from 'lucide-react';
 
 import LiveBriefingCard from './LiveBriefingCard';
+import LaunchBriefingCard from './LaunchBriefingCard';
 import WelcomeCard from './WelcomeCard';
 import AppHeader from './AppHeader';
 import { LakeSelector } from './LakeSelector';
@@ -427,12 +428,14 @@ export function Dashboard() {
   };
 
   const [sportWindows, setSportWindows] = useState(null);
+  const [hourlyForecast, setHourlyForecast] = useState(null);
   useEffect(() => {
     let cancelled = false;
     async function loadWindows() {
       try {
         const hourly = await getHourlyForecast(selectedLake);
         if (!cancelled && hourly) {
+          setHourlyForecast(hourly);
           const cfg = LAKE_CONFIGS[selectedLake];
           const locationInfo = {
             idealAxis: cfg?.thermal?.optimalDirection?.min,
@@ -659,6 +662,21 @@ export function Dashboard() {
             Natural-language analysis of current conditions and what to expect
             ═══════════════════════════════════════════════════════════════════ */}
         <LiveBriefingCard briefing={liveBriefing} lastUpdated={lastUpdated} />
+
+        {/* ═══════════════════════════════════════════════════════════════════
+            LAUNCH-AWARE BRIEFING
+            Uses hardcoded launch coordinates + safe wind arc + indicator
+            stations from LAKE_CONFIGS. Answers: What's it doing right now?
+            Why? When does it stop?
+            ═══════════════════════════════════════════════════════════════════ */}
+        <SafeComponent name="Launch Briefing">
+          <LaunchBriefingCard
+            lakeId={selectedLake}
+            lakeState={lakeState}
+            hourlyForecast={hourlyForecast}
+            isLoading={isLoading}
+          />
+        </SafeComponent>
 
         {/* ═══════════════════════════════════════════════════════════════════
             4. TODAY'S BASIC OVERVIEW
