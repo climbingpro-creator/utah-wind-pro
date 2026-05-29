@@ -343,18 +343,25 @@ function usePwsWindField(viewState, enabled) {
       setLoading(true);
 
       const apiOrigin = import.meta.env.VITE_API_ORIGIN || '';
-      const url = `${apiOrigin}/api/weather?source=wu-pws-dense&lat=${latitude}&lon=${longitude}&radius=${radius}`;
+      // Primary: combined free-source endpoint (NWS + UDOT + WU) — works
+      // without WU_API_KEY since NWS and UDOT are free government feeds.
+      // Falls back to legacy wu-pws-dense if the new endpoint isn't deployed yet.
+      const url = `${apiOrigin}/api/weather?source=stations-dense&lat=${latitude}&lon=${longitude}&radius=${radius}`;
 
       try {
-        const r = await fetch(url);
+        let r = await fetch(url);
         if (!r.ok) {
-          console.warn(`[PWS Dense] HTTP ${r.status} — WU_API_KEY may not be configured`);
-          setLoading(false);
-          return;
+          console.warn(`[Stations Dense] HTTP ${r.status} — falling back to wu-pws-dense`);
+          r = await fetch(`${apiOrigin}/api/weather?source=wu-pws-dense&lat=${latitude}&lon=${longitude}&radius=${radius}`);
+          if (!r.ok) {
+            console.warn(`[Stations Dense] Fallback also failed: HTTP ${r.status}`);
+            setLoading(false);
+            return;
+          }
         }
         const data = await r.json();
         if (!data?.observations?.length) {
-          console.info(`[PWS Dense] ${data?.discoveredCount ?? 0} discovered, ${data?.stationCount ?? 0} returned`);
+          console.info(`[Stations Dense] ${data?.discoveredCount ?? 0} discovered, ${data?.stationCount ?? 0} returned`, data?.bySource || '');
           setLoading(false);
           return;
         }

@@ -79,8 +79,10 @@ export default async function handler(req, res) {
       return await handleWuPwsDate(res, req.query);
     } else if (source === 'wu-pws-dense') {
       return await handleWuPwsDense(res, req.query);
+    } else if (source === 'stations-dense') {
+      return await handleStationsDense(res, req.query);
     } else {
-      return res.status(400).json({ error: 'Invalid source. Use: ambient, ambient-history, radial, radial-multi, synoptic, synoptic-radial, synoptic-history, wu-nearby, wu-pws, wu-pws-history, wu-pws-dense' });
+      return res.status(400).json({ error: 'Invalid source. Use: ambient, ambient-history, radial, radial-multi, synoptic, synoptic-radial, synoptic-history, wu-nearby, wu-pws, wu-pws-history, wu-pws-dense, stations-dense' });
     }
   } catch (error) {
     console.error(`[API Proxy] ${source} error:`, error.message);
@@ -1478,4 +1480,278 @@ async function handleWuPwsDense(res, query) {
     radiusKm,
     observations,
   });
+}
+
+/**
+ * STATIONS DENSE — All free-source meters in viewport (NWS + UDOT + WU PWS).
+ *
+ * Like the competitor map: red dots for every reporting station within
+ * the radius, no API key required for NWS/UDOT, WU PWS supplementary.
+ *
+ * Query: ?source=stations-dense&lat=X&lon=Y&radius=KM&networks=nws,udot,wu
+ *
+ * Returns:
+ *   {
+ *     stationCount, discoveredCount,
+ *     observations: [{ id, lat, lon, source, windSpeed, windDir, windGust,
+ *                      temp, humidity, pressure, obsTime, stationId }]
+ *   }
+ */
+async function handleStationsDense(res, query) {
+  const { lat, lon, radius, networks } = query;
+  if (!lat || !lon) {
+    return res.status(400).json({ error: 'lat and lon parameters required' });
+  }
+
+  const targetLat = parseFloat(lat);
+  const targetLng = parseFloat(lon);
+  const radiusKm = Math.min(parseFloat(radius) || 50, 250);
+  const radiusMiles = radiusKm * 0.621371;
+  const enabledNetworks = new Set(
+    (networks || 'nws,udot,wu').split(',').map(s => s.trim().toLowerCase())
+  );
+
+  const observations = [];
+  let discoveredCount = 0;
+
+  // ── NWS: dynamic station discovery near point ──
+  const nwsPromise = enabledNetworks.has('nws')
+    ? fetchNwsDenseStations(targetLat, targetLng, radiusMiles)
+    : Promise.resolve([]);
+
+  // ── UDOT: filter all-stations feed by distance ──
+  const udotPromise = enabledNetworks.has('udot')
+    ? fetchUdotDenseStations(targetLat, targetLng, radiusMiles)
+    : Promise.resolve([]);
+
+  // ── WU PWS: only if key present and network requested ──
+  const wuApiKey = process.env.WU_API_KEY;
+  const wuPromise = (enabledNetworks.has('wu') && wuApiKey)
+    ? fetchWuDenseStations(targetLat, targetLng, wuApiKey, radiusKm)
+    : Promise.resolve([]);
+
+  const [nws, udot, wu] = await Promise.all([nwsPromise, udotPromise, wuPromise]);
+  observations.push(...nws, ...udot, ...wu);
+  discoveredCount = nws.length + udot.length + wu.length;
+
+  res.setHeader('Cache-Control', 's-maxage=120, stale-while-revalidate=300');
+  return res.status(200).json({
+    stationCount: observations.length,
+    discoveredCount,
+    bySource: {
+      nws: nws.length,
+      udot: udot.length,
+      wu: wu.length,
+    },
+    center: { lat: targetLat, lon: targetLng },
+    radiusKm,
+    observations,
+  });
+}
+
+/**
+ * NWS — Discover stations near point, fetch latest observations in parallel.
+ * Filters by radius and station list size to keep payload reasonable.
+ */
+async function fetchNwsDenseStations(lat, lng, radiusMiles) {
+  try {
+    const { discoverStations } = await import('./lib/nwsDiscovery.js');
+    const stations = await discoverStations(lat, lng);
+    const inRange = stations
+      .map(s => ({ ...s, distanceMiles: haversineDistance(lat, lng, s.lat, s.lng) }))
+      .filter(s => s.distanceMiles <= radiusMiles)
+      .sort((a, b) => a.distanceMiles - b.distanceMiles)
+      .slice(0, 40); // Cap to keep payload manageable
+
+    const results = await Promise.allSettled(
+      inRange.map(async (s) => {
+        const obs = await fetchNwsStationObservation(s.id);
+        if (!obs) return null;
+        return {
+          id: s.id,
+          stationId: s.id,
+          name: s.name,
+          lat: s.lat,
+          lon: s.lng,
+          source: 'nws',
+          windSpeed: obs.windSpeed,
+          windDir: obs.windDirection,
+          windGust: obs.windGust,
+          temp: obs.temperature,
+          humidity: obs.humidity,
+          pressure: obs.pressure,
+          obsTime: obs.timestamp,
+          distanceKm: s.distanceMiles * 1.609344,
+          elevation: s.elevation,
+        };
+      })
+    );
+
+    return results
+      .filter(r => r.status === 'fulfilled' && r.value)
+      .map(r => r.value);
+  } catch (err) {
+    console.warn('[StationsDense] NWS error:', err.message);
+    return [];
+  }
+}
+
+async function fetchNwsStationObservation(stationId) {
+  try {
+    const url = `https://api.weather.gov/stations/${stationId}/observations/latest`;
+    const r = await fetch(url, {
+      headers: {
+        'User-Agent': '(UtahWindApp, support@utahwindapp.com)',
+        Accept: 'application/geo+json',
+      },
+      signal: AbortSignal.timeout(6000),
+    });
+    if (!r.ok) return null;
+    const d = await r.json();
+    const p = d.properties;
+    if (!p) return null;
+
+    const KMH_TO_MPH = 0.621371;
+    const windSpeed = p.windSpeed?.value != null
+      ? +(p.windSpeed.value * KMH_TO_MPH).toFixed(1) : null;
+    const windGust = p.windGust?.value != null
+      ? +(p.windGust.value * KMH_TO_MPH).toFixed(1) : null;
+    const temp = p.temperature?.value != null
+      ? +(p.temperature.value * 9 / 5 + 32).toFixed(1) : null;
+
+    if (windSpeed == null && temp == null) return null;
+
+    return {
+      windSpeed,
+      windDirection: p.windDirection?.value ?? null,
+      windGust,
+      temperature: temp,
+      humidity: p.relativeHumidity?.value != null ? +p.relativeHumidity.value.toFixed(1) : null,
+      pressure: p.barometricPressure?.value != null
+        ? +(p.barometricPressure.value / 3386.39).toFixed(2) : null,
+      timestamp: p.timestamp,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * UDOT — Fetch all RWIS stations from the cached feed, filter by distance.
+ * No API key required if UDOT_API_KEY is set; otherwise skipped.
+ */
+async function fetchUdotDenseStations(lat, lng, radiusMiles) {
+  const apiKey = process.env.UDOT_API_KEY;
+  if (!apiKey) return [];
+
+  try {
+    const url = `https://www.udottraffic.utah.gov/api/v2/get/weatherstations?key=${apiKey}&format=json`;
+    const r = await fetch(url, { signal: AbortSignal.timeout(10000) });
+    if (!r.ok) return [];
+    const all = await r.json();
+    if (!Array.isArray(all)) return [];
+
+    const COMPASS = {
+      N: 0, NNE: 22.5, NE: 45, ENE: 67.5,
+      E: 90, ESE: 112.5, SE: 135, SSE: 157.5,
+      S: 180, SSW: 202.5, SW: 225, WSW: 247.5,
+      W: 270, WNW: 292.5, NW: 315, NNW: 337.5,
+    };
+
+    const out = [];
+    for (const s of all) {
+      const sLat = parseFloat(s.Latitude);
+      const sLng = parseFloat(s.Longitude);
+      if (!isFinite(sLat) || !isFinite(sLng)) continue;
+      const dist = haversineDistance(lat, lng, sLat, sLng);
+      if (dist > radiusMiles) continue;
+
+      const windSpeed = s.WindSpeedAvg ? parseFloat(s.WindSpeedAvg) : null;
+      const windGust = s.WindSpeedGust ? parseFloat(s.WindSpeedGust) : null;
+      const windDir = COMPASS[s.WindDirection] ?? null;
+      const temp = s.AirTemperature ? parseFloat(s.AirTemperature) : null;
+
+      if (windSpeed == null && temp == null) continue;
+
+      out.push({
+        id: `UDOT_${s.Id || s.StationName}`,
+        stationId: String(s.Id || s.StationName),
+        name: s.StationName || 'UDOT RWIS',
+        lat: sLat,
+        lon: sLng,
+        source: 'udot',
+        windSpeed,
+        windDir,
+        windGust,
+        temp,
+        humidity: s.RelativeHumidity ? parseFloat(s.RelativeHumidity) : null,
+        pressure: null,
+        obsTime: s.LastUpdated ? new Date(s.LastUpdated * 1000).toISOString() : null,
+        distanceKm: dist * 1.609344,
+      });
+    }
+    return out;
+  } catch (err) {
+    console.warn('[StationsDense] UDOT error:', err.message);
+    return [];
+  }
+}
+
+/**
+ * WU PWS — Reuse the existing dense flow when an API key is configured.
+ */
+async function fetchWuDenseStations(lat, lng, apiKey, radiusKm) {
+  try {
+    const nearbyUrl = `https://api.weather.com/v3/location/near?geocode=${lat},${lng}&product=pws&format=json&apiKey=${apiKey}`;
+    const r = await fetch(nearbyUrl, { signal: AbortSignal.timeout(8000) });
+    if (!r.ok) return [];
+    const nearby = await r.json();
+    const ids = nearby?.location?.stationId || [];
+    const lats = nearby?.location?.latitude || [];
+    const lons = nearby?.location?.longitude || [];
+    const dists = nearby?.location?.distanceKm || [];
+
+    const candidates = ids.map((id, i) => ({
+      id, lat: lats[i], lon: lons[i], distanceKm: dists[i],
+    })).filter(s => s.distanceKm <= radiusKm).slice(0, 30);
+
+    const BATCH = 10;
+    const obs = [];
+    for (let i = 0; i < candidates.length; i += BATCH) {
+      const batch = candidates.slice(i, i + BATCH);
+      const results = await Promise.allSettled(
+        batch.map(async (s) => {
+          const url = `https://api.weather.com/v2/pws/observations/current?stationId=${s.id}&format=json&units=e&numericPrecision=decimal&apiKey=${apiKey}`;
+          const resp = await fetch(url, { signal: AbortSignal.timeout(5000) });
+          if (!resp.ok) return null;
+          const d = await resp.json();
+          const o = d.observations?.[0];
+          if (!o) return null;
+          return {
+            id: s.id,
+            stationId: o.stationID,
+            name: s.id,
+            lat: o.lat ?? s.lat,
+            lon: o.lon ?? s.lon,
+            source: 'wu-pws',
+            windSpeed: o.imperial?.windSpeed ?? null,
+            windDir: o.winddir ?? null,
+            windGust: o.imperial?.windGust ?? null,
+            temp: o.imperial?.temp ?? null,
+            humidity: o.humidity ?? null,
+            pressure: o.imperial?.pressure ?? null,
+            obsTime: o.obsTimeUtc,
+            distanceKm: s.distanceKm,
+          };
+        })
+      );
+      for (const r2 of results) {
+        if (r2.status === 'fulfilled' && r2.value) obs.push(r2.value);
+      }
+    }
+    return obs;
+  } catch (err) {
+    console.warn('[StationsDense] WU error:', err.message);
+    return [];
+  }
 }
