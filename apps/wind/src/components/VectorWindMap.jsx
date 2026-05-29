@@ -424,14 +424,72 @@ function colorForSpeed(speed) {
 }
 
 /**
+ * Rasterize a wind-arrow into an ImageData blob that MapLibre can register
+ * as an SDF icon. SDF mode lets us tint each individual arrow with its own
+ * `icon-color` (one shared image, infinite color variations).
+ *
+ * The arrow points "up" (north / 0°) by default — at runtime we rotate each
+ * feature by its wind bearing using the `icon-rotate` paint expression.
+ * Geometry: tail dot → shaft → filled triangular head.
+ */
+function createWindArrowImage(size = 64) {
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, size, size);
+
+  ctx.fillStyle = 'rgba(255,255,255,1)';   // white opaque so SDF tinting works
+  ctx.strokeStyle = 'rgba(255,255,255,1)';
+  ctx.lineWidth = size * 0.13;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  const cx = size / 2;
+
+  // Tail anchor circle — marks station location
+  ctx.beginPath();
+  ctx.arc(cx, size * 0.86, size * 0.085, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Shaft — line from tail up toward head neck
+  ctx.beginPath();
+  ctx.moveTo(cx, size * 0.86);
+  ctx.lineTo(cx, size * 0.34);
+  ctx.stroke();
+
+  // Filled arrowhead triangle
+  ctx.beginPath();
+  ctx.moveTo(cx, size * 0.10);
+  ctx.lineTo(cx - size * 0.20, size * 0.42);
+  ctx.lineTo(cx + size * 0.20, size * 0.42);
+  ctx.closePath();
+  ctx.fill();
+
+  return ctx.getImageData(0, 0, size, size);
+}
+
+/**
+ * Register the shared wind-arrow icon on the MapLibre map instance. Idempotent
+ * — safe to call multiple times (e.g. after style changes that wipe images).
+ */
+function ensureWindArrowImage(map) {
+  if (!map || map.hasImage?.('wind-arrow')) return;
+  try {
+    const img = createWindArrowImage(64);
+    map.addImage('wind-arrow', img, { sdf: true, pixelRatio: 2 });
+  } catch (err) {
+    console.warn('[WindArrow] failed to register icon:', err.message);
+  }
+}
+
+/**
  * Build the wind-field GeoJSON.
  *
- * Each station becomes a VECTOR ARROW (no dot) pointing in the direction
- * the wind is going TO (i.e. opposite of meteorological "from" direction).
- * The whole arrow is speed-colored: shaft, head, and base.
- *
- * Stations without a direction (rare — temp-only sensors) get a small
- * speed-colored circle so they still appear on the map.
+ * One Point feature per station. Stations with a wind direction carry
+ * `kind: 'arrow'` and a `rotation` (clockwise-from-north bearing in the
+ * direction the wind is GOING TO). Stations without direction fall back to
+ * a small speed-colored dot so they still appear on the map.
  */
 function buildPwsGeoJSON(stations) {
   const features = [];
@@ -439,60 +497,33 @@ function buildPwsGeoJSON(stations) {
     if (s.lat == null || s.lon == null) continue;
     const speed = s.windSpeed ?? 0;
     const dir = s.windDir;
-    const hasDir = dir != null;
     const color = colorForSpeed(speed);
 
-    // No direction → small fallback dot only
-    if (!hasDir) {
+    // Show an arrow whenever we know which way the wind is blowing.
+    // Dead-calm (speed < 1) collapses to a dot so we don't draw misleading
+    // arrows for noisy direction readings on stagnant air.
+    const hasDir = dir != null && speed >= 1;
+
+    if (hasDir) {
       features.push({
         type: 'Feature',
-        properties: { kind: 'fallback-dot', color, speed, id: s.id },
+        properties: {
+          kind: 'arrow',
+          color,
+          speed,
+          // Met dir is "from" — arrows should fly with the wind, so add 180°.
+          rotation: (dir + 180) % 360,
+          id: s.id,
+        },
         geometry: { type: 'Point', coordinates: [s.lon, s.lat] },
       });
-      continue;
+    } else {
+      features.push({
+        type: 'Feature',
+        properties: { kind: 'dot', color, speed, id: s.id },
+        geometry: { type: 'Point', coordinates: [s.lon, s.lat] },
+      });
     }
-
-    // Arrow length scales with speed but is bounded so the map stays readable
-    // when a 30 mph station sits next to a 4 mph station.
-    const len = 0.0035 + Math.min(speed, 30) * 0.00045;
-    const bearing = (dir + 180) % 360;             // "going to" direction
-    const rad = bearing * (Math.PI / 180);
-    const tipLon = s.lon + Math.sin(rad) * len;
-    const tipLat = s.lat + Math.cos(rad) * len;
-
-    // Tail anchor — small base circle at the station so location is unambiguous
-    features.push({
-      type: 'Feature',
-      properties: { kind: 'tail', color, speed, id: s.id },
-      geometry: { type: 'Point', coordinates: [s.lon, s.lat] },
-    });
-
-    // Shaft — speed-colored line from station to tip
-    features.push({
-      type: 'Feature',
-      properties: { kind: 'shaft', color, speed, id: s.id },
-      geometry: { type: 'LineString', coordinates: [[s.lon, s.lat], [tipLon, tipLat]] },
-    });
-
-    // Head — filled triangle at the tip
-    const hLen = len * 0.38;
-    const hHalf = hLen * 0.55;
-    const neckLon = tipLon - Math.sin(rad) * hLen;
-    const neckLat = tipLat - Math.cos(rad) * hLen;
-    const perpRad = (bearing + 90) * (Math.PI / 180);
-    features.push({
-      type: 'Feature',
-      properties: { kind: 'head', color, speed, id: s.id },
-      geometry: {
-        type: 'Polygon',
-        coordinates: [[
-          [tipLon, tipLat],
-          [neckLon + Math.sin(perpRad) * hHalf, neckLat + Math.cos(perpRad) * hHalf],
-          [neckLon - Math.sin(perpRad) * hHalf, neckLat - Math.cos(perpRad) * hHalf],
-          [tipLon, tipLat],
-        ]],
-      },
-    });
   }
   return { type: 'FeatureCollection', features };
 }
@@ -503,59 +534,45 @@ function PwsWindFieldLayer({ stations }) {
 
   return (
     <Source id="pws-wind-field" type="geojson" data={geojson}>
+      {/* Dead-calm or direction-less stations — small colored dot */}
       <Layer
-        id="pws-shaft-glow"
-        type="line"
-        filter={['==', ['get', 'kind'], 'shaft']}
-        paint={{
-          'line-color': ['get', 'color'],
-          'line-width': 6,
-          'line-opacity': 0.15,
-          'line-blur': 4,
-        }}
-      />
-      <Layer
-        id="pws-shaft"
-        type="line"
-        filter={['==', ['get', 'kind'], 'shaft']}
-        paint={{
-          'line-color': ['get', 'color'],
-          'line-width': ['interpolate', ['linear'], ['get', 'speed'], 0, 1.5, 10, 2.5, 20, 3.5],
-          'line-opacity': 0.8,
-          'line-cap': 'round',
-        }}
-      />
-      <Layer
-        id="pws-head"
-        type="fill"
-        filter={['==', ['get', 'kind'], 'head']}
-        paint={{
-          'fill-color': ['get', 'color'],
-          'fill-opacity': 0.85,
-        }}
-      />
-      <Layer
-        id="pws-tail"
+        id="pws-dot"
         type="circle"
-        filter={['==', ['get', 'kind'], 'tail']}
+        filter={['==', ['get', 'kind'], 'dot']}
         paint={{
-          'circle-radius': ['interpolate', ['linear'], ['get', 'speed'], 0, 2.5, 10, 3.5, 25, 4.5],
+          'circle-radius': ['interpolate', ['linear'], ['zoom'], 6, 2.5, 10, 3.5, 14, 4.5],
           'circle-color': ['get', 'color'],
-          'circle-opacity': 0.95,
+          'circle-opacity': 0.85,
           'circle-stroke-width': 1,
           'circle-stroke-color': 'rgba(0,0,0,0.45)',
         }}
       />
+      {/* Wind arrows — SDF icon tinted by speed-color, rotated to bearing */}
       <Layer
-        id="pws-fallback-dot"
-        type="circle"
-        filter={['==', ['get', 'kind'], 'fallback-dot']}
+        id="pws-arrow"
+        type="symbol"
+        filter={['==', ['get', 'kind'], 'arrow']}
+        layout={{
+          'icon-image': 'wind-arrow',
+          'icon-rotate': ['get', 'rotation'],
+          'icon-rotation-alignment': 'map',
+          'icon-pitch-alignment': 'map',
+          'icon-allow-overlap': true,
+          'icon-ignore-placement': true,
+          // Scale arrow with both zoom AND wind speed so a 25 mph reading
+          // is visually bigger than a 5 mph reading at the same zoom.
+          'icon-size': [
+            'interpolate', ['linear'], ['zoom'],
+            6,  ['interpolate', ['linear'], ['get', 'speed'], 0, 0.22, 10, 0.28, 25, 0.34],
+            10, ['interpolate', ['linear'], ['get', 'speed'], 0, 0.32, 10, 0.42, 25, 0.52],
+            14, ['interpolate', ['linear'], ['get', 'speed'], 0, 0.42, 10, 0.55, 25, 0.70],
+          ],
+        }}
         paint={{
-          'circle-radius': 4,
-          'circle-color': ['get', 'color'],
-          'circle-opacity': 0.7,
-          'circle-stroke-width': 1,
-          'circle-stroke-color': 'rgba(0,0,0,0.4)',
+          'icon-color': ['get', 'color'],
+          'icon-halo-color': 'rgba(0,0,0,0.65)',
+          'icon-halo-width': 1.5,
+          'icon-opacity': 0.95,
         }}
       />
     </Source>
@@ -883,7 +900,12 @@ export function VectorWindMap({
           onLoad={() => {
             const map = mapRef.current?.getMap();
             if (!map) return;
-            
+
+            // Register the shared wind-arrow SDF icon used by the PWS layer.
+            // Re-register on styledata in case a style swap clears the image registry.
+            ensureWindArrowImage(map);
+            map.on('styledata', () => ensureWindArrowImage(map));
+
             try {
               // Add terrain DEM source (AWS Mapzen Terrarium)
               if (!map.getSource('terrain-dem')) {
