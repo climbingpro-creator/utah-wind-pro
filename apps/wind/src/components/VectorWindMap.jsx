@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import Map, { Source, Layer, Marker, Popup, NavigationControl, GeolocateControl } from 'react-map-gl/maplibre';
+import MapGL, { Source, Layer, Marker, Popup, NavigationControl, GeolocateControl } from 'react-map-gl/maplibre';
 import maplibregl from 'maplibre-gl';
 import { Protocol } from 'pmtiles';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -868,7 +868,7 @@ export function VectorWindMap({
 
       {/* Map Container */}
       <div className={`relative transition-[height] duration-300 ease-in-out ${mapHeight}`}>
-        <Map
+        <MapGL
           ref={mapRef}
           {...viewState}
           onMove={evt => setViewState(evt.viewState)}
@@ -1107,7 +1107,7 @@ export function VectorWindMap({
               </div>
             </Popup>
           )}
-        </Map>
+        </MapGL>
 
         {/* Loading overlay */}
         {isLoading && (

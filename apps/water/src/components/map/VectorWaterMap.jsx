@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
-import Map, { Source, Layer, Marker, Popup, NavigationControl, GeolocateControl } from 'react-map-gl/maplibre';
+import MapGL, { Source, Layer, Marker, Popup, NavigationControl, GeolocateControl } from 'react-map-gl/maplibre';
 import maplibregl from 'maplibre-gl';
 import { Protocol } from 'pmtiles';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -1037,7 +1037,7 @@ export function VectorWaterMap({ currentWeatherData = {}, selectedLocation, onLo
 
       {/* Map Container */}
       <div className={`relative ${mapHeight}`}>
-        <Map
+        <MapGL
           ref={mapRef}
           {...viewState}
           onMove={(evt) => setViewState(evt.viewState)}
@@ -1342,7 +1342,7 @@ export function VectorWaterMap({ currentWeatherData = {}, selectedLocation, onLo
               </div>
             </Popup>
           )}
-        </Map>
+        </MapGL>
 
         {/* Instructional banner */}
         {!hasDroppedPin && (
