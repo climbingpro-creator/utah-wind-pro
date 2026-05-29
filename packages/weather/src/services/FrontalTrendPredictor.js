@@ -13,8 +13,24 @@
 import registry from '../config/mesoRegistry.json';
 import { safeToFixed } from '../utils/safeToFixed';
 
-const CONFIG = registry.SWING_MONITOR;
-const ALERTS = CONFIG.alerts;
+// Defensive defaults so module load never crashes when the registry
+// is mocked or stripped (e.g. test environments, partial deploys).
+// Production registry values override these via the spread merge.
+const DEFAULT_CONFIG = {
+  front_trigger_3h: 10,
+  front_trigger_1h: 5,
+  pressure_trigger_3h: 0.04,
+  pressure_trigger_1h: 0.02,
+  gust_spike_threshold: 15,
+  alerts: {
+    FRONTAL_HIT:   { message: 'Frontal boundary hit',  wind_expectation: 'North surge expected', severity: 'critical' },
+    PRESSURE_BOMB: { message: 'Pressure surge',         wind_expectation: 'Gusty NW',             severity: 'warning'  },
+    WIND_SHIFT:    { message: 'Major wind shift',       wind_expectation: 'Frontal passage',      severity: 'warning', direction_change_1h: 90 },
+  },
+};
+
+const CONFIG = { ...DEFAULT_CONFIG, ...(registry.SWING_MONITOR || {}) };
+const ALERTS = { ...DEFAULT_CONFIG.alerts, ...(CONFIG.alerts || {}) };
 
 /**
  * Analyze recent station history for swing events.

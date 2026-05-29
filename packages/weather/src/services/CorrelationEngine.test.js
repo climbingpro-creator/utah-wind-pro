@@ -1,5 +1,11 @@
 import { describe, it, expect, vi } from 'vitest';
 
+// IMPORTANT: This mock must include ALL top-level registry keys that any
+// module reached via the @utahwind/weather barrel touches at module-load
+// time. FrontalTrendPredictor reads SWING_MONITOR.alerts at load — if you
+// omit it the entire suite fails with "0 tests" before any test runs.
+// (FrontalTrendPredictor now has defensive defaults, so this mock would
+//  work without SWING_MONITOR, but keeping it correct is good hygiene.)
 vi.mock('../config/mesoRegistry.json', () => ({
   default: {
     RELATIONS: {
@@ -20,6 +26,18 @@ vi.mock('../config/mesoRegistry.json', () => ({
           speed_range: [6, 18],
           multiplier: 1.15,
         },
+      },
+    },
+    SWING_MONITOR: {
+      front_trigger_3h: 10,
+      front_trigger_1h: 5,
+      pressure_trigger_3h: 0.04,
+      pressure_trigger_1h: 0.02,
+      gust_spike_threshold: 15,
+      alerts: {
+        FRONTAL_HIT:   { message: 'Frontal hit',     wind_expectation: 'N surge', severity: 'critical' },
+        PRESSURE_BOMB: { message: 'Pressure surge',  wind_expectation: 'NW gusty', severity: 'warning' },
+        WIND_SHIFT:    { message: 'Wind shift',      wind_expectation: 'Frontal',  severity: 'warning', direction_change_1h: 90 },
       },
     },
   },
