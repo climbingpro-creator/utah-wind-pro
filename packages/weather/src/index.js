@@ -122,6 +122,19 @@ export { applyLiveCorrections } from './services/NowcastEngine.js';
 // ─── Spatial Interpolation ───────────────────────────────────
 export { SpatialInterpolator } from './services/SpatialInterpolator.js';
 
+// ─── Live Station Field (dense observation store) ────────────
+export {
+  updateBatch as updateLiveStationField,
+  getStation as getLiveStation,
+  getNearestActive as getNearestLiveStation,
+  getNearbyActive as getNearbyLiveStations,
+  getActiveCount as getLiveStationCount,
+  recordPredictionDelta,
+  getAccuracyStats as getLiveAccuracyStats,
+  getGlobalAccuracyStats as getLiveGlobalAccuracyStats,
+} from './services/LiveStationField.js';
+export { default as LiveStationField } from './services/LiveStationField.js';
+
 // ─── Surface Physics ─────────────────────────────────────────
 export {
   applySurfacePhysics,

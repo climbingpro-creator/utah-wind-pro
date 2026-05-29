@@ -51,6 +51,103 @@
  */
 
 import { safeToFixed } from '../utils/safeToFixed';
+import LiveStationField from './LiveStationField.js';
+
+// ─── Indicator station coordinates ──────────────────────────────────
+// Used to look up a station's live observation from LiveStationField when
+// the caller didn't pre-assemble the named indicator slot. This is the
+// "Step C — Ground Truth" reinforcement layer.
+const INDICATOR_STATIONS = {
+  // Spanish Fork canyon — Utah Lake SE thermal early warning
+  QSF:   { lat: 40.115, lng: -111.655, role: 'spanishFork' },
+  // Salt Lake City — North flow indicator
+  KSLC:  { lat: 40.7884, lng: -111.9778, role: 'kslc' },
+  // Provo Airport — Southern Utah Lake locations
+  KPVU:  { lat: 40.2192, lng: -111.7235, role: 'kpvu' },
+  // Point of the Mountain (FPS) — primary Utah Lake station
+  FPS:   { lat: 40.4477, lng: -111.8971, role: 'utalp' },
+  UTALP: { lat: 40.4477, lng: -111.8971, role: 'utalp' },
+  // Heber — Deer Creek/Jordanelle
+  KHCR:  { lat: 40.482, lng: -111.429, role: 'heber' },
+  // Wahsatch summit (I-80) — Sulphur Creek jet stream
+  UT1:   { lat: 41.1952, lng: -111.114, role: 'wahsatch' },
+  // First Divide WYDOT — Sulphur Creek ridge
+  KFIR:  { lat: 41.2765, lng: -110.8007, role: 'firstDivide' },
+};
+
+// ─── Lake centroid coords for cross-validation lookups ──────────────
+// Used to find the nearest live observation to a lake's surface when
+// recording prediction-vs-observation deltas.
+const THERMAL_LAKE_COORDS = {
+  'utah-lake':          { lat: 40.144, lng: -111.802 },
+  'utah-lake-lincoln':  { lat: 40.171, lng: -111.746 },
+  'utah-lake-sandy':    { lat: 40.197, lng: -111.886 },
+  'utah-lake-vineyard': { lat: 40.300, lng: -111.760 },
+  'utah-lake-zigzag':   { lat: 40.303, lng: -111.880 },
+  'utah-lake-mm19':     { lat: 40.318, lng: -111.765 },
+  'potm-south':         { lat: 40.448, lng: -111.897 },
+  'potm-north':         { lat: 40.460, lng: -111.910 },
+  'deer-creek':         { lat: 40.482, lng: -111.510 },
+  'willard-bay':        { lat: 41.380, lng: -112.060 },
+  'jordanelle':         { lat: 40.605, lng: -111.413 },
+  'strawberry-ladders': { lat: 40.180, lng: -111.180 },
+  'strawberry-bay':     { lat: 40.215, lng: -111.143 },
+  'strawberry-soldier': { lat: 40.119, lng: -111.078 },
+  'strawberry-view':    { lat: 40.180, lng: -111.180 },
+  'strawberry-river':   { lat: 40.150, lng: -111.090 },
+  'skyline-drive':      { lat: 39.645, lng: -111.315 },
+  'sulfur-creek':       { lat: 41.280, lng: -110.800 },
+};
+
+/**
+ * Resolve a named indicator station's live wind reading.
+ * Order of preference:
+ *   1. Caller-supplied currentConditions[slotName]
+ *   2. LiveStationField.getStation(stationId)  — exact match
+ *   3. LiveStationField.getNearestActive(lat,lng, maxMiles:6) — closest dense sub
+ *
+ * Returns { speed, direction, temperature, source, stationId } or null.
+ */
+function resolveIndicator(currentConditions, slotName, stationId) {
+  // (1) caller-provided slot wins
+  const direct = currentConditions?.[slotName];
+  if (direct && direct.speed != null) {
+    return { ...direct, source: 'caller', stationId };
+  }
+
+  // (2) exact station from live field
+  const exact = LiveStationField.getStation(stationId);
+  if (exact && exact.speed != null) {
+    return {
+      speed: exact.speed,
+      direction: exact.direction,
+      temperature: exact.temperature,
+      source: `live:${exact.source}`,
+      stationId,
+    };
+  }
+
+  // (3) nearest dense substitute within 6 miles
+  const meta = INDICATOR_STATIONS[stationId];
+  if (meta) {
+    const sub = LiveStationField.getNearestActive(meta.lat, meta.lng, {
+      maxMiles: 6,
+      requireWind: true,
+    });
+    if (sub && sub.speed != null) {
+      return {
+        speed: sub.speed,
+        direction: sub.direction,
+        temperature: sub.temperature,
+        source: `live-sub:${sub.source}@${sub.distanceMiles}mi`,
+        stationId: sub.stationId,
+        substituteFor: stationId,
+      };
+    }
+  }
+
+  return null;
+}
 
 // Learned weights cache (loaded from LearningSystem)
 let learnedWeights = null;
@@ -1089,9 +1186,14 @@ export function predictThermal(lakeId, currentConditions) {
   let wahsatchStatus = 'unknown';
   let wahsatchMessage = '';
 
-  if (lakeId === 'sulfur-creek' && currentConditions?.wahsatchWind) {
-    const wSpeed = currentConditions.wahsatchWind.speed;
-    const wDir = currentConditions.wahsatchWind.direction;
+  // Resolve Wahsatch indicator (caller → LiveStationField fallback)
+  const wahsatchResolved = lakeId === 'sulfur-creek'
+    ? resolveIndicator(currentConditions, 'wahsatchWind', 'UT1')
+    : null;
+
+  if (lakeId === 'sulfur-creek' && wahsatchResolved) {
+    const wSpeed = wahsatchResolved.speed;
+    const wDir = wahsatchResolved.direction;
     const trigger = SULFUR_CREEK_WAHSATCH_TRIGGER;
 
     let speedScore = 0;
@@ -1317,8 +1419,13 @@ export function predictThermal(lakeId, currentConditions) {
   let spanishForkMessage = '';
   let spanishForkETA = null;
   
-  if (lakeId.startsWith('utah-lake') && currentConditions?.spanishForkWind) {
-    const sfWind = currentConditions.spanishForkWind;
+  // Resolve Spanish Fork indicator (caller → LiveStationField fallback)
+  const sfResolved = lakeId.startsWith('utah-lake')
+    ? resolveIndicator(currentConditions, 'spanishForkWind', 'QSF')
+    : null;
+
+  if (lakeId.startsWith('utah-lake') && sfResolved) {
+    const sfWind = sfResolved;
     const sfSpeed = sfWind.speed;
     const sfDir = sfWind.direction;
     const trigger = SPANISH_FORK_INDICATOR.trigger;
@@ -1369,8 +1476,13 @@ export function predictThermal(lakeId, currentConditions) {
   let foilKiteablePct = null;
   let twinTipKiteablePct = null;
   
-  if (lakeId.startsWith('utah-lake') && currentConditions?.kslcWind) {
-    const kslcWind = currentConditions.kslcWind;
+  // Resolve KSLC indicator (caller → LiveStationField fallback)
+  const kslcResolved = lakeId.startsWith('utah-lake')
+    ? resolveIndicator(currentConditions, 'kslcWind', 'KSLC')
+    : null;
+
+  if (lakeId.startsWith('utah-lake') && kslcResolved) {
+    const kslcWind = kslcResolved;
     const kslcSpeed = kslcWind.speed;
     const kslcDir = kslcWind.direction;
     const trigger = NORTH_FLOW_INDICATOR.trigger;
@@ -1473,8 +1585,12 @@ export function predictThermal(lakeId, currentConditions) {
   // VALIDATED: KPVU 8-10 mph N → 78% foil kiteable (better than KSLC's 56%)
   let provoIndicator = null;
   
-  if ((lakeId === 'utah-lake-lincoln' || lakeId === 'utah-lake-sandy') && currentConditions?.kpvuWind) {
-    const kpvuWind = currentConditions.kpvuWind;
+  const kpvuResolved = (lakeId === 'utah-lake-lincoln' || lakeId === 'utah-lake-sandy')
+    ? resolveIndicator(currentConditions, 'kpvuWind', 'KPVU')
+    : null;
+
+  if (kpvuResolved) {
+    const kpvuWind = kpvuResolved;
     const kpvuSpeed = kpvuWind.speed;
     const kpvuDir = kpvuWind.direction;
     const correlation = PROVO_AIRPORT_INDICATOR.speedCorrelation;
@@ -1540,8 +1656,12 @@ export function predictThermal(lakeId, currentConditions) {
   // Shows wind funneling through the gap - good confirmation
   let pointOfMountainIndicator = null;
   
-  if (lakeId.startsWith('utah-lake') && currentConditions?.utalpWind) {
-    const utalpWind = currentConditions.utalpWind;
+  const utalpResolved = lakeId.startsWith('utah-lake')
+    ? resolveIndicator(currentConditions, 'utalpWind', 'UTALP')
+    : null;
+
+  if (utalpResolved) {
+    const utalpWind = utalpResolved;
     const utalpSpeed = utalpWind.speed;
     const utalpDir = utalpWind.direction;
     const correlation = POINT_OF_MOUNTAIN_INDICATOR.speedCorrelation;
@@ -1706,7 +1826,34 @@ export function predictThermal(lakeId, currentConditions) {
       predictionMessage = `0% - Conditions not favorable`;
     }
   }
-  
+
+  // ─── CROSS-VALIDATION ──────────────────────────────────────────
+  // Compare what we predicted against the freshest dense-field observation
+  // for this lake. Builds a running accuracy record per lakeId that
+  // RALPH and the LearningSystem can consume to tune weights.
+  try {
+    const lakeCoords = THERMAL_LAKE_COORDS[lakeId];
+    if (lakeCoords) {
+      const observed = LiveStationField.getNearestActive(lakeCoords.lat, lakeCoords.lng, {
+        maxMiles: 8,
+        requireWind: true,
+      });
+      if (observed && observed.speed != null) {
+        LiveStationField.recordPredictionDelta(lakeId, {
+          predictedSpeed: expectedPeakSpeed,
+          observedSpeed: observed.speed,
+          predictedDir: direction?.optimal?.ideal,
+          observedDir: observed.direction,
+          stationId: observed.stationId,
+          distanceMiles: observed.distanceMiles,
+        });
+      }
+    }
+  } catch (e) {
+    // Never block a prediction on a cross-validation failure
+    if (typeof console !== 'undefined') console.warn('[ThermalPredictor] cross-val skipped:', e.message);
+  }
+
   return {
     lakeId,
     profile,

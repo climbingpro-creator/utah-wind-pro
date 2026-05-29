@@ -6,7 +6,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import { Compass, Maximize2, X, Wind, Droplets, Layers } from 'lucide-react';
 
 const PMTILES_URL = import.meta.env.VITE_PMTILES_WATER_URL || null;
-import { LAKE_CONFIGS, STATION_REGISTRY, SpatialInterpolator, applySurfacePhysics, calculateFetchMultiplier, calculateVenturiMultiplier, weatherService, isIOS } from '@utahwind/weather';
+import { LAKE_CONFIGS, STATION_REGISTRY, SpatialInterpolator, applySurfacePhysics, calculateFetchMultiplier, calculateVenturiMultiplier, weatherService, isIOS, updateLiveStationField } from '@utahwind/weather';
 import { trackPinDrop } from '@utahwind/ui';
 import { impactMedium, impactLight } from '../services/HapticService';
 import { safeToFixed } from '../utils/safeToFixed';
@@ -377,6 +377,14 @@ function usePwsWindField(viewState, enabled) {
           return true;
         });
 
+        // ── Feed dense observations into the shared prediction store.
+        //    ThermalPredictor & CrossValidation read from this for ground truth.
+        try {
+          updateLiveStationField(fresh);
+        } catch (e) {
+          console.warn('[LiveStationField] update failed:', e.message);
+        }
+
         // Merge with existing field by ID so meters from previous fetches
         // remain visible when the user pans incrementally. Drop stations
         // outside the new view's reasonable bounding box.
@@ -404,6 +412,27 @@ function usePwsWindField(viewState, enabled) {
   return { stations, loading };
 }
 
+// Beaufort-style speed→color ramp. Same colors competitor sites use.
+function colorForSpeed(speed) {
+  if (speed == null || speed < 3) return 'rgb(100,116,139)';   // slate (calm)
+  if (speed < 6)   return 'rgb(56,189,248)';                    // cyan (light)
+  if (speed < 10)  return 'rgb(34,211,238)';                    // cyan (moderate)
+  if (speed < 15)  return 'rgb(74,222,128)';                    // green (rideable)
+  if (speed < 20)  return 'rgb(250,204,21)';                    // yellow (strong)
+  if (speed < 25)  return 'rgb(251,146,60)';                    // orange (high)
+  return 'rgb(248,113,113)';                                    // red (extreme)
+}
+
+/**
+ * Build the wind-field GeoJSON.
+ *
+ * Each station becomes a VECTOR ARROW (no dot) pointing in the direction
+ * the wind is going TO (i.e. opposite of meteorological "from" direction).
+ * The whole arrow is speed-colored: shaft, head, and base.
+ *
+ * Stations without a direction (rare — temp-only sensors) get a small
+ * speed-colored circle so they still appear on the map.
+ */
 function buildPwsGeoJSON(stations) {
   const features = [];
   for (const s of stations) {
@@ -411,55 +440,59 @@ function buildPwsGeoJSON(stations) {
     const speed = s.windSpeed ?? 0;
     const dir = s.windDir;
     const hasDir = dir != null;
-    const bearing = hasDir ? (dir + 180) % 360 : 0;
+    const color = colorForSpeed(speed);
+
+    // No direction → small fallback dot only
+    if (!hasDir) {
+      features.push({
+        type: 'Feature',
+        properties: { kind: 'fallback-dot', color, speed, id: s.id },
+        geometry: { type: 'Point', coordinates: [s.lon, s.lat] },
+      });
+      continue;
+    }
+
+    // Arrow length scales with speed but is bounded so the map stays readable
+    // when a 30 mph station sits next to a 4 mph station.
+    const len = 0.0035 + Math.min(speed, 30) * 0.00045;
+    const bearing = (dir + 180) % 360;             // "going to" direction
     const rad = bearing * (Math.PI / 180);
-    const len = 0.004 + Math.min(speed, 25) * 0.0004;
+    const tipLon = s.lon + Math.sin(rad) * len;
+    const tipLat = s.lat + Math.cos(rad) * len;
 
-    let r, g, b;
-    if (speed < 3) { r = 100; g = 116; b = 139; }
-    else if (speed < 6) { r = 56; g = 189; b = 248; }
-    else if (speed < 10) { r = 34; g = 211; b = 238; }
-    else if (speed < 15) { r = 74; g = 222; b = 128; }
-    else if (speed < 20) { r = 250; g = 204; b = 21; }
-    else { r = 248; g = 113; b = 113; }
-
-    const color = `rgb(${r},${g},${b})`;
-
+    // Tail anchor — small base circle at the station so location is unambiguous
     features.push({
       type: 'Feature',
-      properties: { kind: 'dot', color, speed, id: s.id },
+      properties: { kind: 'tail', color, speed, id: s.id },
       geometry: { type: 'Point', coordinates: [s.lon, s.lat] },
     });
 
-    if (hasDir && speed >= 1) {
-      const tipLon = s.lon + Math.sin(rad) * len;
-      const tipLat = s.lat + Math.cos(rad) * len;
+    // Shaft — speed-colored line from station to tip
+    features.push({
+      type: 'Feature',
+      properties: { kind: 'shaft', color, speed, id: s.id },
+      geometry: { type: 'LineString', coordinates: [[s.lon, s.lat], [tipLon, tipLat]] },
+    });
 
-      features.push({
-        type: 'Feature',
-        properties: { kind: 'shaft', color, speed },
-        geometry: { type: 'LineString', coordinates: [[s.lon, s.lat], [tipLon, tipLat]] },
-      });
-
-      const hLen = len * 0.35;
-      const hHalf = hLen * 0.5;
-      const neckLon = tipLon - Math.sin(rad) * hLen;
-      const neckLat = tipLat - Math.cos(rad) * hLen;
-      const perpRad = (bearing + 90) * (Math.PI / 180);
-      features.push({
-        type: 'Feature',
-        properties: { kind: 'head', color, speed },
-        geometry: {
-          type: 'Polygon',
-          coordinates: [[
-            [tipLon, tipLat],
-            [neckLon + Math.sin(perpRad) * hHalf, neckLat + Math.cos(perpRad) * hHalf],
-            [neckLon - Math.sin(perpRad) * hHalf, neckLat - Math.cos(perpRad) * hHalf],
-            [tipLon, tipLat],
-          ]],
-        },
-      });
-    }
+    // Head — filled triangle at the tip
+    const hLen = len * 0.38;
+    const hHalf = hLen * 0.55;
+    const neckLon = tipLon - Math.sin(rad) * hLen;
+    const neckLat = tipLat - Math.cos(rad) * hLen;
+    const perpRad = (bearing + 90) * (Math.PI / 180);
+    features.push({
+      type: 'Feature',
+      properties: { kind: 'head', color, speed, id: s.id },
+      geometry: {
+        type: 'Polygon',
+        coordinates: [[
+          [tipLon, tipLat],
+          [neckLon + Math.sin(perpRad) * hHalf, neckLat + Math.cos(perpRad) * hHalf],
+          [neckLon - Math.sin(perpRad) * hHalf, neckLat - Math.cos(perpRad) * hHalf],
+          [tipLon, tipLat],
+        ]],
+      },
+    });
   }
   return { type: 'FeatureCollection', features };
 }
@@ -502,14 +535,26 @@ function PwsWindFieldLayer({ stations }) {
         }}
       />
       <Layer
-        id="pws-dot"
+        id="pws-tail"
         type="circle"
-        filter={['==', ['get', 'kind'], 'dot']}
+        filter={['==', ['get', 'kind'], 'tail']}
         paint={{
-          'circle-radius': ['interpolate', ['linear'], ['get', 'speed'], 0, 3, 10, 5, 20, 7],
+          'circle-radius': ['interpolate', ['linear'], ['get', 'speed'], 0, 2.5, 10, 3.5, 25, 4.5],
           'circle-color': ['get', 'color'],
-          'circle-opacity': 0.9,
-          'circle-stroke-width': 1.5,
+          'circle-opacity': 0.95,
+          'circle-stroke-width': 1,
+          'circle-stroke-color': 'rgba(0,0,0,0.45)',
+        }}
+      />
+      <Layer
+        id="pws-fallback-dot"
+        type="circle"
+        filter={['==', ['get', 'kind'], 'fallback-dot']}
+        paint={{
+          'circle-radius': 4,
+          'circle-color': ['get', 'color'],
+          'circle-opacity': 0.7,
+          'circle-stroke-width': 1,
           'circle-stroke-color': 'rgba(0,0,0,0.4)',
         }}
       />

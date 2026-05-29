@@ -1,6 +1,6 @@
 {
   "summary": {
-    "timestamp": "2026-05-28T20:55:54.456Z",
+    "timestamp": "2026-05-29T13:06:16.697Z",
     "total": 46,
     "byGrade": {
       "A": 32,
@@ -15,10 +15,10 @@
       "high": 0,
       "medium": 14,
       "low": 2,
-      "info": 17
+      "info": 15
     },
     "issuesByCode": {
-      "INSUFFICIENT_THERMAL_DAYS": 17,
+      "INSUFFICIENT_THERMAL_DAYS": 15,
       "PEAK_HOUR_DRIFT": 14,
       "DIRECTION_DRIFT": 2
     }
@@ -67,19 +67,19 @@
           "observedPeakHour": null,
           "observedPeakSpeed": null,
           "observedDirectionAtPeak": null,
-          "candidateDayCount": 1,
+          "candidateDayCount": 0,
           "observationWindowDays": 16,
           "sufficient": false
         },
         "predict": {
           "predictedPeakHour": 11,
           "predictedOptimalDir": 150,
-          "probability": 12,
+          "probability": 8,
           "direction": "unknown",
           "speed": "unknown",
           "pressure": "marginal",
           "elevation": "unknown",
-          "phase": "fading"
+          "phase": "building"
         },
         "hone": {
           "peakHourDrift": null,
@@ -94,7 +94,7 @@
         {
           "severity": "info",
           "code": "INSUFFICIENT_THERMAL_DAYS",
-          "detail": "Only 1/16 days in 14-day window matched thermal direction window. Off-season or wrong synoptic regime. Drift alerts suppressed."
+          "detail": "Only 0/16 days in 14-day window matched thermal direction window. Off-season or wrong synoptic regime. Drift alerts suppressed."
         }
       ],
       "grade": "A"
@@ -142,19 +142,19 @@
           "observedPeakHour": null,
           "observedPeakSpeed": null,
           "observedDirectionAtPeak": null,
-          "candidateDayCount": 1,
+          "candidateDayCount": 0,
           "observationWindowDays": 16,
           "sufficient": false
         },
         "predict": {
           "predictedPeakHour": 11,
           "predictedOptimalDir": 145,
-          "probability": 12,
+          "probability": 8,
           "direction": "unknown",
           "speed": "unknown",
           "pressure": "marginal",
           "elevation": "unknown",
-          "phase": "fading"
+          "phase": "building"
         },
         "hone": {
           "peakHourDrift": null,
@@ -169,7 +169,7 @@
         {
           "severity": "info",
           "code": "INSUFFICIENT_THERMAL_DAYS",
-          "detail": "Only 1/16 days in 14-day window matched thermal direction window. Off-season or wrong synoptic regime. Drift alerts suppressed."
+          "detail": "Only 0/16 days in 14-day window matched thermal direction window. Off-season or wrong synoptic regime. Drift alerts suppressed."
         }
       ],
       "grade": "A"
@@ -217,19 +217,19 @@
           "observedPeakHour": null,
           "observedPeakSpeed": null,
           "observedDirectionAtPeak": null,
-          "candidateDayCount": 0,
+          "candidateDayCount": 1,
           "observationWindowDays": 16,
           "sufficient": false
         },
         "predict": {
           "predictedPeakHour": 12,
           "predictedOptimalDir": 225,
-          "probability": 12,
+          "probability": 8,
           "direction": "unknown",
           "speed": "unknown",
           "pressure": "marginal",
           "elevation": "unknown",
-          "phase": "fading"
+          "phase": "building"
         },
         "hone": {
           "peakHourDrift": null,
@@ -244,7 +244,7 @@
         {
           "severity": "info",
           "code": "INSUFFICIENT_THERMAL_DAYS",
-          "detail": "Only 0/16 days in 14-day window matched thermal direction window. Off-season or wrong synoptic regime. Drift alerts suppressed."
+          "detail": "Only 1/16 days in 14-day window matched thermal direction window. Off-season or wrong synoptic regime. Drift alerts suppressed."
         }
       ],
       "grade": "A"
@@ -299,12 +299,12 @@
         "predict": {
           "predictedPeakHour": 11,
           "predictedOptimalDir": 150,
-          "probability": 12,
+          "probability": 8,
           "direction": "unknown",
           "speed": "unknown",
           "pressure": "marginal",
           "elevation": "unknown",
-          "phase": "fading"
+          "phase": "building"
         },
         "hone": {
           "peakHourDrift": null,
@@ -364,8 +364,8 @@
           }
         },
         "log": {
-          "observedPeakHour": 16,
-          "observedPeakSpeed": 15.5,
+          "observedPeakHour": 17,
+          "observedPeakSpeed": 14.7,
           "observedDirectionAtPeak": 140,
           "candidateDayCount": 4,
           "observationWindowDays": 16,
@@ -374,23 +374,23 @@
         "predict": {
           "predictedPeakHour": 11,
           "predictedOptimalDir": 140,
-          "probability": 19,
+          "probability": 12,
           "direction": "optimal",
           "speed": "good",
           "pressure": "marginal",
           "elevation": "unknown",
-          "phase": "fading"
+          "phase": "building"
         },
         "hone": {
-          "peakHourDrift": 5,
-          "directionDrift": 0.07311815947190325,
+          "peakHourDrift": 6,
+          "directionDrift": 0.25633278989187147,
           "peakHourOk": false,
           "directionOk": true,
           "sufficient": true
         },
         "verify": {
           "proposed": {
-            "peakHour": 16,
+            "peakHour": 17,
             "currentPeakHour": 11
           },
           "note": "Adjust config.thermal.peakHours.peak to align with observed maximum."
@@ -400,7 +400,7 @@
         {
           "severity": "medium",
           "code": "PEAK_HOUR_DRIFT",
-          "detail": "Predicted peak 11:00, observed 16:00 across 4 qualifying days (drift 5h)"
+          "detail": "Predicted peak 11:00, observed 17:00 across 4 qualifying days (drift 6h)"
         }
       ],
       "grade": "B"
@@ -445,40 +445,46 @@
           }
         },
         "log": {
-          "observedPeakHour": null,
-          "observedPeakSpeed": null,
-          "observedDirectionAtPeak": null,
-          "candidateDayCount": 2,
+          "observedPeakHour": 17,
+          "observedPeakSpeed": 14.4,
+          "observedDirectionAtPeak": 144,
+          "candidateDayCount": 3,
           "observationWindowDays": 16,
-          "sufficient": false
+          "sufficient": true
         },
         "predict": {
           "predictedPeakHour": 11,
           "predictedOptimalDir": 150,
           "probability": 12,
-          "direction": "unknown",
-          "speed": "unknown",
+          "direction": "optimal",
+          "speed": "good",
           "pressure": "marginal",
           "elevation": "unknown",
-          "phase": "fading"
+          "phase": "building"
         },
         "hone": {
-          "peakHourDrift": null,
-          "directionDrift": null,
-          "peakHourOk": null,
-          "directionOk": null,
-          "sufficient": false
+          "peakHourDrift": 6,
+          "directionDrift": 6.002747204714979,
+          "peakHourOk": false,
+          "directionOk": true,
+          "sufficient": true
         },
-        "verify": null
+        "verify": {
+          "proposed": {
+            "peakHour": 17,
+            "currentPeakHour": 11
+          },
+          "note": "Adjust config.thermal.peakHours.peak to align with observed maximum."
+        }
       },
       "issues": [
         {
-          "severity": "info",
-          "code": "INSUFFICIENT_THERMAL_DAYS",
-          "detail": "Only 2/16 days in 14-day window matched thermal direction window. Off-season or wrong synoptic regime. Drift alerts suppressed."
+          "severity": "medium",
+          "code": "PEAK_HOUR_DRIFT",
+          "detail": "Predicted peak 11:00, observed 17:00 across 3 qualifying days (drift 6h)"
         }
       ],
-      "grade": "A"
+      "grade": "B"
     },
     {
       "lakeId": "potm-south",
@@ -521,9 +527,9 @@
         },
         "log": {
           "observedPeakHour": 16,
-          "observedPeakSpeed": 16,
-          "observedDirectionAtPeak": 138,
-          "candidateDayCount": 6,
+          "observedPeakSpeed": 14.2,
+          "observedDirectionAtPeak": 140,
+          "candidateDayCount": 7,
           "observationWindowDays": 16,
           "sufficient": true
         },
@@ -539,7 +545,7 @@
         },
         "hone": {
           "peakHourDrift": 6,
-          "directionDrift": 42.00107361703232,
+          "directionDrift": 39.858880853854316,
           "peakHourOk": false,
           "directionOk": false,
           "sufficient": true
@@ -556,12 +562,12 @@
         {
           "severity": "medium",
           "code": "PEAK_HOUR_DRIFT",
-          "detail": "Predicted peak 10:00, observed 16:00 across 6 qualifying days (drift 6h)"
+          "detail": "Predicted peak 10:00, observed 16:00 across 7 qualifying days (drift 6h)"
         },
         {
           "severity": "low",
           "code": "DIRECTION_DRIFT",
-          "detail": "Predicted optimal 180°, observed 138° (drift 42° across 6 qualifying days)"
+          "detail": "Predicted optimal 180°, observed 140° (drift 40° across 7 qualifying days)"
         }
       ],
       "grade": "B"
@@ -756,9 +762,9 @@
           }
         },
         "log": {
-          "observedPeakHour": 15,
-          "observedPeakSpeed": 8.7,
-          "observedDirectionAtPeak": 210,
+          "observedPeakHour": 14,
+          "observedPeakSpeed": 9.8,
+          "observedDirectionAtPeak": 214,
           "candidateDayCount": 5,
           "observationWindowDays": 16,
           "sufficient": true
@@ -766,16 +772,16 @@
         "predict": {
           "predictedPeakHour": 15,
           "predictedOptimalDir": 215,
-          "probability": 92,
-          "direction": "acceptable",
+          "probability": 3,
+          "direction": "optimal",
           "speed": "good",
           "pressure": "marginal",
           "elevation": "unknown",
-          "phase": "peak"
+          "phase": "pre-thermal"
         },
         "hone": {
-          "peakHourDrift": 0,
-          "directionDrift": 5.382900186683486,
+          "peakHourDrift": 1,
+          "directionDrift": 0.6026725624718381,
           "peakHourOk": true,
           "directionOk": true,
           "sufficient": true
@@ -828,7 +834,7 @@
           "observedPeakHour": null,
           "observedPeakSpeed": null,
           "observedDirectionAtPeak": null,
-          "candidateDayCount": 2,
+          "candidateDayCount": 0,
           "observationWindowDays": 16,
           "sufficient": false
         },
@@ -840,7 +846,7 @@
           "speed": "unknown",
           "pressure": "marginal",
           "elevation": "unknown",
-          "phase": "peak"
+          "phase": "pre-thermal"
         },
         "hone": {
           "peakHourDrift": null,
@@ -855,7 +861,7 @@
         {
           "severity": "info",
           "code": "INSUFFICIENT_THERMAL_DAYS",
-          "detail": "Only 2/16 days in 14-day window matched thermal direction window. Off-season or wrong synoptic regime. Drift alerts suppressed."
+          "detail": "Only 0/16 days in 14-day window matched thermal direction window. Off-season or wrong synoptic regime. Drift alerts suppressed."
         }
       ],
       "grade": "A"
@@ -1063,9 +1069,9 @@
         },
         "log": {
           "observedPeakHour": 15,
-          "observedPeakSpeed": 11.3,
+          "observedPeakSpeed": 11.4,
           "observedDirectionAtPeak": 260,
-          "candidateDayCount": 8,
+          "candidateDayCount": 7,
           "observationWindowDays": 16,
           "sufficient": true
         },
@@ -1081,7 +1087,7 @@
         },
         "hone": {
           "peakHourDrift": 2,
-          "directionDrift": 10.277803329342873,
+          "directionDrift": 10.46470276918376,
           "peakHourOk": true,
           "directionOk": true,
           "sufficient": true
@@ -1134,7 +1140,7 @@
           "observedPeakHour": null,
           "observedPeakSpeed": null,
           "observedDirectionAtPeak": null,
-          "candidateDayCount": 0,
+          "candidateDayCount": 1,
           "observationWindowDays": 16,
           "sufficient": false
         },
@@ -1161,7 +1167,7 @@
         {
           "severity": "info",
           "code": "INSUFFICIENT_THERMAL_DAYS",
-          "detail": "Only 0/16 days in 14-day window matched thermal direction window. Off-season or wrong synoptic regime. Drift alerts suppressed."
+          "detail": "Only 1/16 days in 14-day window matched thermal direction window. Off-season or wrong synoptic regime. Drift alerts suppressed."
         }
       ],
       "grade": "A"
@@ -1206,10 +1212,10 @@
           }
         },
         "log": {
-          "observedPeakHour": 15,
-          "observedPeakSpeed": 14,
-          "observedDirectionAtPeak": 274,
-          "candidateDayCount": 8,
+          "observedPeakHour": 14,
+          "observedPeakSpeed": 14.1,
+          "observedDirectionAtPeak": 276,
+          "candidateDayCount": 7,
           "observationWindowDays": 16,
           "sufficient": true
         },
@@ -1224,8 +1230,8 @@
           "phase": null
         },
         "hone": {
-          "peakHourDrift": 2,
-          "directionDrift": 20.550260233251834,
+          "peakHourDrift": 1,
+          "directionDrift": 18.737766800685336,
           "peakHourOk": true,
           "directionOk": true,
           "sufficient": true
@@ -1275,9 +1281,9 @@
           }
         },
         "log": {
-          "observedPeakHour": 15,
-          "observedPeakSpeed": 9.7,
-          "observedDirectionAtPeak": 256,
+          "observedPeakHour": 18,
+          "observedPeakSpeed": 9.4,
+          "observedDirectionAtPeak": 239,
           "candidateDayCount": 4,
           "observationWindowDays": 16,
           "sufficient": true
@@ -1293,16 +1299,28 @@
           "phase": null
         },
         "hone": {
-          "peakHourDrift": 2,
-          "directionDrift": 26.476482220499406,
-          "peakHourOk": true,
+          "peakHourDrift": 5,
+          "directionDrift": 9.028840325925643,
+          "peakHourOk": false,
           "directionOk": true,
           "sufficient": true
         },
-        "verify": null
+        "verify": {
+          "proposed": {
+            "peakHour": 18,
+            "currentPeakHour": 13
+          },
+          "note": "Adjust config.thermal.peakHours.peak to align with observed maximum."
+        }
       },
-      "issues": [],
-      "grade": "A"
+      "issues": [
+        {
+          "severity": "medium",
+          "code": "PEAK_HOUR_DRIFT",
+          "detail": "Predicted peak 13:00, observed 18:00 across 4 qualifying days (drift 5h)"
+        }
+      ],
+      "grade": "B"
     },
     {
       "lakeId": "pineview",
@@ -1344,10 +1362,10 @@
           }
         },
         "log": {
-          "observedPeakHour": 15,
-          "observedPeakSpeed": 8.7,
-          "observedDirectionAtPeak": 281,
-          "candidateDayCount": 7,
+          "observedPeakHour": 16,
+          "observedPeakSpeed": 8.8,
+          "observedDirectionAtPeak": 277,
+          "candidateDayCount": 8,
           "observationWindowDays": 16,
           "sufficient": true
         },
@@ -1359,11 +1377,11 @@
           "speed": "good",
           "pressure": "marginal",
           "elevation": "unknown",
-          "phase": "peak"
+          "phase": "pre-thermal"
         },
         "hone": {
-          "peakHourDrift": 1,
-          "directionDrift": 10.766460054055074,
+          "peakHourDrift": 2,
+          "directionDrift": 7.112669561864493,
           "peakHourOk": true,
           "directionOk": true,
           "sufficient": true
@@ -1414,8 +1432,8 @@
         },
         "log": {
           "observedPeakHour": 15,
-          "observedPeakSpeed": 12.5,
-          "observedDirectionAtPeak": 291,
+          "observedPeakSpeed": 13.9,
+          "observedDirectionAtPeak": 292,
           "candidateDayCount": 7,
           "observationWindowDays": 16,
           "sufficient": true
@@ -1432,7 +1450,7 @@
         },
         "hone": {
           "peakHourDrift": 1,
-          "directionDrift": 5.789841915140585,
+          "directionDrift": 6.525864037904512,
           "peakHourOk": true,
           "directionOk": true,
           "sufficient": true
@@ -1482,12 +1500,12 @@
           }
         },
         "log": {
-          "observedPeakHour": null,
-          "observedPeakSpeed": null,
-          "observedDirectionAtPeak": null,
-          "candidateDayCount": 2,
+          "observedPeakHour": 17,
+          "observedPeakSpeed": 11.6,
+          "observedDirectionAtPeak": 221,
+          "candidateDayCount": 3,
           "observationWindowDays": 16,
-          "sufficient": false
+          "sufficient": true
         },
         "predict": {
           "predictedPeakHour": 14,
@@ -1500,22 +1518,28 @@
           "phase": null
         },
         "hone": {
-          "peakHourDrift": null,
-          "directionDrift": null,
-          "peakHourOk": null,
-          "directionOk": null,
-          "sufficient": false
+          "peakHourDrift": 3,
+          "directionDrift": 4.390457388742561,
+          "peakHourOk": false,
+          "directionOk": true,
+          "sufficient": true
         },
-        "verify": null
+        "verify": {
+          "proposed": {
+            "peakHour": 17,
+            "currentPeakHour": 14
+          },
+          "note": "Adjust config.thermal.peakHours.peak to align with observed maximum."
+        }
       },
       "issues": [
         {
-          "severity": "info",
-          "code": "INSUFFICIENT_THERMAL_DAYS",
-          "detail": "Only 2/16 days in 14-day window matched thermal direction window. Off-season or wrong synoptic regime. Drift alerts suppressed."
+          "severity": "medium",
+          "code": "PEAK_HOUR_DRIFT",
+          "detail": "Predicted peak 14:00, observed 17:00 across 3 qualifying days (drift 3h)"
         }
       ],
-      "grade": "A"
+      "grade": "B"
     },
     {
       "lakeId": "hyrum",
@@ -1560,7 +1584,7 @@
           "observedPeakHour": null,
           "observedPeakSpeed": null,
           "observedDirectionAtPeak": null,
-          "candidateDayCount": 1,
+          "candidateDayCount": 2,
           "observationWindowDays": 16,
           "sufficient": false
         },
@@ -1587,7 +1611,7 @@
         {
           "severity": "info",
           "code": "INSUFFICIENT_THERMAL_DAYS",
-          "detail": "Only 1/16 days in 14-day window matched thermal direction window. Off-season or wrong synoptic regime. Drift alerts suppressed."
+          "detail": "Only 2/16 days in 14-day window matched thermal direction window. Off-season or wrong synoptic regime. Drift alerts suppressed."
         }
       ],
       "grade": "A"
@@ -1632,10 +1656,10 @@
           }
         },
         "log": {
-          "observedPeakHour": 14,
-          "observedPeakSpeed": 9.7,
-          "observedDirectionAtPeak": 241,
-          "candidateDayCount": 7,
+          "observedPeakHour": 15,
+          "observedPeakSpeed": 9.1,
+          "observedDirectionAtPeak": 233,
+          "candidateDayCount": 8,
           "observationWindowDays": 16,
           "sufficient": true
         },
@@ -1650,8 +1674,8 @@
           "phase": null
         },
         "hone": {
-          "peakHourDrift": 1,
-          "directionDrift": 16.250749522594788,
+          "peakHourDrift": 2,
+          "directionDrift": 7.799903030816466,
           "peakHourOk": true,
           "directionOk": true,
           "sufficient": true
@@ -1783,9 +1807,9 @@
         },
         "log": {
           "observedPeakHour": 17,
-          "observedPeakSpeed": 14.3,
-          "observedDirectionAtPeak": 273,
-          "candidateDayCount": 10,
+          "observedPeakSpeed": 14.4,
+          "observedDirectionAtPeak": 274,
+          "candidateDayCount": 9,
           "observationWindowDays": 16,
           "sufficient": true
         },
@@ -1801,7 +1825,7 @@
         },
         "hone": {
           "peakHourDrift": 4,
-          "directionDrift": 21.984001173631498,
+          "directionDrift": 21.082034197253847,
           "peakHourOk": false,
           "directionOk": true,
           "sufficient": true
@@ -1818,7 +1842,7 @@
         {
           "severity": "medium",
           "code": "PEAK_HOUR_DRIFT",
-          "detail": "Predicted peak 13:00, observed 17:00 across 10 qualifying days (drift 4h)"
+          "detail": "Predicted peak 13:00, observed 17:00 across 9 qualifying days (drift 4h)"
         }
       ],
       "grade": "B"
@@ -1864,8 +1888,8 @@
         },
         "log": {
           "observedPeakHour": 14,
-          "observedPeakSpeed": 11.2,
-          "observedDirectionAtPeak": 195,
+          "observedPeakSpeed": 11.5,
+          "observedDirectionAtPeak": 193,
           "candidateDayCount": 3,
           "observationWindowDays": 16,
           "sufficient": true
@@ -1882,7 +1906,7 @@
         },
         "hone": {
           "peakHourDrift": 1,
-          "directionDrift": 4.942721092146456,
+          "directionDrift": 7.37996526131883,
           "peakHourOk": true,
           "directionOk": true,
           "sufficient": true
@@ -1932,8 +1956,8 @@
           }
         },
         "log": {
-          "observedPeakHour": 16,
-          "observedPeakSpeed": 12.9,
+          "observedPeakHour": 18,
+          "observedPeakSpeed": 12.5,
           "observedDirectionAtPeak": 298,
           "candidateDayCount": 11,
           "observationWindowDays": 16,
@@ -1950,7 +1974,7 @@
           "phase": null
         },
         "hone": {
-          "peakHourDrift": 3,
+          "peakHourDrift": 5,
           "directionDrift": 12.840472183561474,
           "peakHourOk": false,
           "directionOk": true,
@@ -1958,7 +1982,7 @@
         },
         "verify": {
           "proposed": {
-            "peakHour": 16,
+            "peakHour": 18,
             "currentPeakHour": 13
           },
           "note": "Adjust config.thermal.peakHours.peak to align with observed maximum."
@@ -1968,7 +1992,7 @@
         {
           "severity": "medium",
           "code": "PEAK_HOUR_DRIFT",
-          "detail": "Predicted peak 13:00, observed 16:00 across 11 qualifying days (drift 3h)"
+          "detail": "Predicted peak 13:00, observed 18:00 across 11 qualifying days (drift 5h)"
         }
       ],
       "grade": "B"
@@ -2013,9 +2037,9 @@
           }
         },
         "log": {
-          "observedPeakHour": 17,
-          "observedPeakSpeed": 10.8,
-          "observedDirectionAtPeak": 201,
+          "observedPeakHour": 16,
+          "observedPeakSpeed": 10.7,
+          "observedDirectionAtPeak": 199,
           "candidateDayCount": 4,
           "observationWindowDays": 16,
           "sufficient": true
@@ -2031,28 +2055,16 @@
           "phase": null
         },
         "hone": {
-          "peakHourDrift": 3,
-          "directionDrift": 3.8629318892935203,
-          "peakHourOk": false,
+          "peakHourDrift": 2,
+          "directionDrift": 5.887931278421632,
+          "peakHourOk": true,
           "directionOk": true,
           "sufficient": true
         },
-        "verify": {
-          "proposed": {
-            "peakHour": 17,
-            "currentPeakHour": 14
-          },
-          "note": "Adjust config.thermal.peakHours.peak to align with observed maximum."
-        }
+        "verify": null
       },
-      "issues": [
-        {
-          "severity": "medium",
-          "code": "PEAK_HOUR_DRIFT",
-          "detail": "Predicted peak 14:00, observed 17:00 across 4 qualifying days (drift 3h)"
-        }
-      ],
-      "grade": "B"
+      "issues": [],
+      "grade": "A"
     },
     {
       "lakeId": "fish-lake",
@@ -2164,7 +2176,7 @@
         },
         "log": {
           "observedPeakHour": 14,
-          "observedPeakSpeed": 13.4,
+          "observedPeakSpeed": 13.3,
           "observedDirectionAtPeak": 194,
           "candidateDayCount": 4,
           "observationWindowDays": 16,
@@ -2182,7 +2194,7 @@
         },
         "hone": {
           "peakHourDrift": 0,
-          "directionDrift": 11.380467206004909,
+          "directionDrift": 10.872345721736735,
           "peakHourOk": true,
           "directionOk": true,
           "sufficient": true
@@ -2233,9 +2245,9 @@
         },
         "log": {
           "observedPeakHour": 17,
-          "observedPeakSpeed": 16.1,
-          "observedDirectionAtPeak": 201,
-          "candidateDayCount": 7,
+          "observedPeakSpeed": 16.4,
+          "observedDirectionAtPeak": 202,
+          "candidateDayCount": 6,
           "observationWindowDays": 16,
           "sufficient": true
         },
@@ -2251,7 +2263,7 @@
         },
         "hone": {
           "peakHourDrift": 3,
-          "directionDrift": 1.163727343010578,
+          "directionDrift": 1.9047917113136918,
           "peakHourOk": false,
           "directionOk": true,
           "sufficient": true
@@ -2268,7 +2280,7 @@
         {
           "severity": "medium",
           "code": "PEAK_HOUR_DRIFT",
-          "detail": "Predicted peak 14:00, observed 17:00 across 7 qualifying days (drift 3h)"
+          "detail": "Predicted peak 14:00, observed 17:00 across 6 qualifying days (drift 3h)"
         }
       ],
       "grade": "B"
@@ -2315,7 +2327,7 @@
         "log": {
           "observedPeakHour": 17,
           "observedPeakSpeed": 18.1,
-          "observedDirectionAtPeak": 220,
+          "observedDirectionAtPeak": 222,
           "candidateDayCount": 6,
           "observationWindowDays": 16,
           "sufficient": true
@@ -2332,7 +2344,7 @@
         },
         "hone": {
           "peakHourDrift": 3,
-          "directionDrift": 5.356315048776622,
+          "directionDrift": 2.6474548941617684,
           "peakHourOk": false,
           "directionOk": true,
           "sufficient": true
@@ -2470,9 +2482,9 @@
         },
         "log": {
           "observedPeakHour": 18,
-          "observedPeakSpeed": 16.5,
-          "observedDirectionAtPeak": 232,
-          "candidateDayCount": 8,
+          "observedPeakSpeed": 17.3,
+          "observedDirectionAtPeak": 230,
+          "candidateDayCount": 7,
           "observationWindowDays": 16,
           "sufficient": true
         },
@@ -2488,7 +2500,7 @@
         },
         "hone": {
           "peakHourDrift": 5,
-          "directionDrift": 6.524856092358675,
+          "directionDrift": 5.445117724445993,
           "peakHourOk": false,
           "directionOk": true,
           "sufficient": true
@@ -2505,7 +2517,7 @@
         {
           "severity": "medium",
           "code": "PEAK_HOUR_DRIFT",
-          "detail": "Predicted peak 13:00, observed 18:00 across 8 qualifying days (drift 5h)"
+          "detail": "Predicted peak 13:00, observed 18:00 across 7 qualifying days (drift 5h)"
         }
       ],
       "grade": "B"
@@ -2569,7 +2581,7 @@
         },
         "hone": {
           "peakHourDrift": 4,
-          "directionDrift": 5.080167102988298,
+          "directionDrift": 5.002335948499365,
           "peakHourOk": false,
           "directionOk": true,
           "sufficient": true
@@ -2706,10 +2718,10 @@
           }
         },
         "log": {
-          "observedPeakHour": 17,
-          "observedPeakSpeed": 15.1,
-          "observedDirectionAtPeak": 167,
-          "candidateDayCount": 6,
+          "observedPeakHour": 12,
+          "observedPeakSpeed": 15.3,
+          "observedDirectionAtPeak": 168,
+          "candidateDayCount": 7,
           "observationWindowDays": 16,
           "sufficient": true
         },
@@ -2724,28 +2736,16 @@
           "phase": null
         },
         "hone": {
-          "peakHourDrift": 3,
-          "directionDrift": 1.514987183800713,
-          "peakHourOk": false,
+          "peakHourDrift": 2,
+          "directionDrift": 3.141600294813088,
+          "peakHourOk": true,
           "directionOk": true,
           "sufficient": true
         },
-        "verify": {
-          "proposed": {
-            "peakHour": 17,
-            "currentPeakHour": 14
-          },
-          "note": "Adjust config.thermal.peakHours.peak to align with observed maximum."
-        }
+        "verify": null
       },
-      "issues": [
-        {
-          "severity": "medium",
-          "code": "PEAK_HOUR_DRIFT",
-          "detail": "Predicted peak 14:00, observed 17:00 across 6 qualifying days (drift 3h)"
-        }
-      ],
-      "grade": "B"
+      "issues": [],
+      "grade": "A"
     },
     {
       "lakeId": "echo",
@@ -2790,7 +2790,7 @@
           "observedPeakHour": null,
           "observedPeakSpeed": null,
           "observedDirectionAtPeak": null,
-          "candidateDayCount": 1,
+          "candidateDayCount": 2,
           "observationWindowDays": 16,
           "sufficient": false
         },
@@ -2817,7 +2817,7 @@
         {
           "severity": "info",
           "code": "INSUFFICIENT_THERMAL_DAYS",
-          "detail": "Only 1/16 days in 14-day window matched thermal direction window. Off-season or wrong synoptic regime. Drift alerts suppressed."
+          "detail": "Only 2/16 days in 14-day window matched thermal direction window. Off-season or wrong synoptic regime. Drift alerts suppressed."
         }
       ],
       "grade": "A"
@@ -2938,8 +2938,8 @@
         },
         "log": {
           "observedPeakHour": 16,
-          "observedPeakSpeed": 12.2,
-          "observedDirectionAtPeak": 202,
+          "observedPeakSpeed": 12.9,
+          "observedDirectionAtPeak": 199,
           "candidateDayCount": 5,
           "observationWindowDays": 16,
           "sufficient": true
@@ -2956,7 +2956,7 @@
         },
         "hone": {
           "peakHourDrift": 2,
-          "directionDrift": 2.8774821229261818,
+          "directionDrift": 5.502780133692113,
           "peakHourOk": true,
           "directionOk": true,
           "sufficient": true
@@ -3006,9 +3006,9 @@
           }
         },
         "log": {
-          "observedPeakHour": 17,
-          "observedPeakSpeed": 11.9,
-          "observedDirectionAtPeak": 201,
+          "observedPeakHour": 16,
+          "observedPeakSpeed": 12.3,
+          "observedDirectionAtPeak": 195,
           "candidateDayCount": 6,
           "observationWindowDays": 16,
           "sufficient": true
@@ -3024,28 +3024,16 @@
           "phase": null
         },
         "hone": {
-          "peakHourDrift": 3,
-          "directionDrift": 4.243550764513344,
-          "peakHourOk": false,
+          "peakHourDrift": 2,
+          "directionDrift": 10.149903345532636,
+          "peakHourOk": true,
           "directionOk": true,
           "sufficient": true
         },
-        "verify": {
-          "proposed": {
-            "peakHour": 17,
-            "currentPeakHour": 14
-          },
-          "note": "Adjust config.thermal.peakHours.peak to align with observed maximum."
-        }
+        "verify": null
       },
-      "issues": [
-        {
-          "severity": "medium",
-          "code": "PEAK_HOUR_DRIFT",
-          "detail": "Predicted peak 14:00, observed 17:00 across 6 qualifying days (drift 3h)"
-        }
-      ],
-      "grade": "B"
+      "issues": [],
+      "grade": "A"
     },
     {
       "lakeId": "rush-lake",
@@ -3088,9 +3076,9 @@
         },
         "log": {
           "observedPeakHour": 15,
-          "observedPeakSpeed": 13.3,
+          "observedPeakSpeed": 13.7,
           "observedDirectionAtPeak": 178,
-          "candidateDayCount": 4,
+          "candidateDayCount": 3,
           "observationWindowDays": 16,
           "sufficient": true
         },
@@ -3106,7 +3094,7 @@
         },
         "hone": {
           "peakHourDrift": 1,
-          "directionDrift": 12.24927005554082,
+          "directionDrift": 11.668908442149814,
           "peakHourOk": true,
           "directionOk": true,
           "sufficient": true
@@ -3232,9 +3220,9 @@
         },
         "log": {
           "observedPeakHour": 17,
-          "observedPeakSpeed": 12.4,
-          "observedDirectionAtPeak": 343,
-          "candidateDayCount": 9,
+          "observedPeakSpeed": 12.8,
+          "observedDirectionAtPeak": 344,
+          "candidateDayCount": 8,
           "observationWindowDays": 16,
           "sufficient": true
         },
@@ -3250,7 +3238,7 @@
         },
         "hone": {
           "peakHourDrift": 2,
-          "directionDrift": 2.678466317915138,
+          "directionDrift": 4.394113448376743,
           "peakHourOk": true,
           "directionOk": true,
           "sufficient": true
@@ -3301,8 +3289,8 @@
         },
         "log": {
           "observedPeakHour": 17,
-          "observedPeakSpeed": 11,
-          "observedDirectionAtPeak": 6,
+          "observedPeakSpeed": 11.2,
+          "observedDirectionAtPeak": 3,
           "candidateDayCount": 10,
           "observationWindowDays": 16,
           "sufficient": true
@@ -3319,7 +3307,7 @@
         },
         "hone": {
           "peakHourDrift": 2,
-          "directionDrift": 174.40377580604712,
+          "directionDrift": 176.77736557213444,
           "peakHourOk": true,
           "directionOk": false,
           "sufficient": true
@@ -3330,7 +3318,7 @@
         {
           "severity": "low",
           "code": "DIRECTION_DRIFT",
-          "detail": "Predicted optimal 180°, observed 6° (drift 174° across 10 qualifying days)"
+          "detail": "Predicted optimal 180°, observed 3° (drift 177° across 10 qualifying days)"
         }
       ],
       "grade": "A"
@@ -3378,7 +3366,7 @@
           "observedPeakHour": null,
           "observedPeakSpeed": null,
           "observedDirectionAtPeak": null,
-          "candidateDayCount": 0,
+          "candidateDayCount": 1,
           "observationWindowDays": 16,
           "sufficient": false
         },
@@ -3405,7 +3393,7 @@
         {
           "severity": "info",
           "code": "INSUFFICIENT_THERMAL_DAYS",
-          "detail": "Only 0/16 days in 14-day window matched thermal direction window. Off-season or wrong synoptic regime. Drift alerts suppressed."
+          "detail": "Only 1/16 days in 14-day window matched thermal direction window. Off-season or wrong synoptic regime. Drift alerts suppressed."
         }
       ],
       "grade": "A"
@@ -3451,25 +3439,25 @@
         },
         "log": {
           "observedPeakHour": 16,
-          "observedPeakSpeed": 13.6,
+          "observedPeakSpeed": 13.8,
           "observedDirectionAtPeak": 264,
-          "candidateDayCount": 6,
+          "candidateDayCount": 5,
           "observationWindowDays": 16,
           "sufficient": true
         },
         "predict": {
           "predictedPeakHour": 14,
           "predictedOptimalDir": 270,
-          "probability": 31,
+          "probability": 5,
           "direction": "optimal",
           "speed": "good",
           "pressure": "marginal",
           "elevation": "unknown",
-          "phase": "peak"
+          "phase": "pre-thermal"
         },
         "hone": {
           "peakHourDrift": 2,
-          "directionDrift": 6.1565662475286445,
+          "directionDrift": 5.7841810607009165,
           "peakHourOk": true,
           "directionOk": true,
           "sufficient": true
