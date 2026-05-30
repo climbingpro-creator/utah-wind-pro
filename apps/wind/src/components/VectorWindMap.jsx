@@ -862,10 +862,13 @@ export function VectorWindMap({
     }`}>
       {/* Header */}
       <div className="px-4 py-2 border-b border-slate-700 flex items-center justify-between bg-slate-800/80 z-10 relative">
-        <div className="flex items-center gap-2">
-          <Compass className="w-4 h-4 text-cyan-400" />
-          <span className="text-sm font-medium text-slate-300">
-            {mapArea?.name ? `${mapArea.name} Wind Map` : 'Global Wind Map'}
+        <div className="flex items-center gap-2 min-w-0">
+          <Compass className="w-4 h-4 text-cyan-400 flex-shrink-0" />
+          <span className="text-sm font-medium text-slate-300 truncate">
+            Live Wind Map
+            {mapArea?.name && (
+              <span className="text-slate-500 font-normal"> · focused on {mapArea.name}</span>
+            )}
           </span>
         </div>
         <div className="flex items-center gap-3">
