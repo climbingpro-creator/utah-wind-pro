@@ -1,5 +1,5 @@
 /**
- * Thermal Wind Prediction Calculations for Utah Wind Pro
+ * Thermal Wind Prediction Calculations for LiftForecast
  * 
  * Key Variables:
  * - G (Pressure Gap): P_SLC - P_Provo

@@ -35,9 +35,9 @@ export function ToastContainer() {
       }
 
       if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification('UtahWindFinder', {
+        new Notification('LiftForecast', {
           body: message,
-          icon: '/vite.svg',
+          icon: '/icons/icon-192x192.png',
           tag: 'thermal-alert',
         });
       }

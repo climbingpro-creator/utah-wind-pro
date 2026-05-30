@@ -865,10 +865,8 @@ export function VectorWindMap({
         <div className="flex items-center gap-2 min-w-0">
           <Compass className="w-4 h-4 text-cyan-400 flex-shrink-0" />
           <span className="text-sm font-medium text-slate-300 truncate">
-            Live Wind Map
-            {mapArea?.name && (
-              <span className="text-slate-500 font-normal"> · focused on {mapArea.name}</span>
-            )}
+            LiftForecast
+            <span className="text-slate-500 font-normal"> · Live Wind Field</span>
           </span>
         </div>
         <div className="flex items-center gap-3">

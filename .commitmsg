@@ -1,1 +1,17 @@
-feat: scaffold apps/water with Vite, Tailwind v4, and @utahwind/ui wiring - Phase 5
+feat(map): real wind arrows — SDF symbol layer w/ speed tint + bearing rotation
+
+Replaces the lat/lng-based shaft+head polygons (which collapsed to invisible
+sub-pixel geometry at city zoom levels) with a proper screen-space MapLibre
+symbol layer:
+
+- One Point feature per station (instead of three: tail+shaft+head)
+- Shared SDF arrow icon rasterized from <canvas>, registered once on map load
+- icon-rotate set per-feature to the wind bearing (met "from" + 180 deg)
+- icon-color tints each arrow with its Beaufort-style speed color
+- icon-size interpolated by BOTH zoom and wind speed — a 25 mph reading
+  visually dominates a 5 mph one at the same zoom
+- Dead-calm / direction-less stations still render as a small colored dot
+- Icon re-registers on styledata so basemap swaps don't wipe it
+
+Net result: 129 PWS readings on the SLC viewport now read as a real wind
+field instead of an undifferentiated dot cluster.
