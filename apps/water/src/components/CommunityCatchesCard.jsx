@@ -3,6 +3,15 @@ import { Camera, ChevronRight, MapPin, Heart, MessageCircle } from 'lucide-react
 
 const API_BASE = '/api/community/post';
 
+const FEATURED_BOATING = [
+  { id: 'feat-1', photo_url: '/images/featured/sunset-paragliders.png', caption: 'Glass evening at the marina', display_name: 'tyler', location_name: 'Utah Lake', activity: 'boating', created_at: new Date(Date.now() - 86400000).toISOString() },
+  { id: 'feat-2', photo_url: '/images/featured/wakesurf-selfie.png', caption: 'Perfect glass for the boat!', display_name: 'sara', location_name: 'Utah Lake', activity: 'boating', created_at: new Date(Date.now() - 172800000).toISOString() },
+  { id: 'feat-3', photo_url: '/images/featured/foil-glass.png', caption: 'Mirror flat — foil day', display_name: 'tyler', location_name: 'Utah Lake', activity: 'boating', created_at: new Date(Date.now() - 259200000).toISOString() },
+  { id: 'feat-4', photo_url: '/images/featured/foil-action.png', caption: 'Sending it on the foil', display_name: 'tyler', location_name: 'Utah Lake', activity: 'boating', created_at: new Date(Date.now() - 345600000).toISOString() },
+  { id: 'feat-5', photo_url: '/images/featured/family-lake.png', caption: 'Family lake day — the best days', display_name: 'tyler', location_name: 'Utah Lake', activity: 'boating', created_at: new Date(Date.now() - 432000000).toISOString() },
+  { id: 'feat-6', photo_url: '/images/featured/kid-foilboard.png', caption: 'Starting them young!', display_name: 'tyler', location_name: 'Utah Lake', activity: 'boating', created_at: new Date(Date.now() - 518400000).toISOString() },
+];
+
 function timeAgo(dateStr) {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
@@ -140,8 +149,21 @@ export default function CommunityCatchesCard({ onViewAll, activity = 'fishing' }
         const resp = await fetch(url);
         if (!resp.ok) throw new Error();
         const data = await resp.json();
-        if (!cancelled) setPosts(data.posts || []);
-      } catch { /* ignore */ }
+        const fetched = data.posts || [];
+        if (!cancelled) {
+          // For non-fishing activities, blend community posts with featured
+          // photos so the gallery is never empty while community grows
+          if (!isFishing && fetched.length < 4) {
+            const communityIds = new Set(fetched.map(p => p.id));
+            const fillers = FEATURED_BOATING.filter(f => !communityIds.has(f.id));
+            setPosts([...fetched, ...fillers].slice(0, 10));
+          } else {
+            setPosts(fetched);
+          }
+        }
+      } catch {
+        if (!cancelled && !isFishing) setPosts(FEATURED_BOATING);
+      }
       if (!cancelled) setLoading(false);
     })();
     return () => { cancelled = true; };
