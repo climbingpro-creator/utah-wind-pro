@@ -135,7 +135,7 @@ function CommentSection({ postId, user }) {
   );
 }
 
-function PostCard({ post, currentUserId, onDelete, onUpdate, user }) {
+function PostCard({ post, currentUserId, onDelete, onUpdate, user, onPhotoTap }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(post.like_count || 0);
@@ -190,11 +190,11 @@ function PostCard({ post, currentUserId, onDelete, onUpdate, user }) {
 
   return (
     <div className="rounded-2xl border border-slate-700/50 bg-slate-800/50 overflow-hidden">
-      <div className="aspect-[4/3] relative overflow-hidden bg-slate-900">
+      <div className="relative overflow-hidden bg-black cursor-pointer" onClick={onPhotoTap}>
         <img
           src={post.photo_url}
           alt={post.caption || 'Catch photo'}
-          className="w-full h-full object-cover"
+          className="w-full max-h-[70vh] object-contain"
           loading="lazy"
         />
         {post.species && !editing && (
@@ -532,6 +532,7 @@ export default function CommunityFeed({ onBack, activity = 'fishing' }) {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [showUpload, setShowUpload] = useState(false);
+  const [lightboxUrl, setLightboxUrl] = useState(null);
   const [page, setPage] = useState(0);
   const PAGE_SIZE = 20;
   const isFishing = activity === 'fishing';
@@ -628,6 +629,7 @@ export default function CommunityFeed({ onBack, activity = 'fishing' }) {
             onDelete={handleDelete}
             onUpdate={(updated) => setPosts(prev => prev.map(p => p.id === updated.id ? { ...p, ...updated } : p))}
             user={user}
+            onPhotoTap={() => setLightboxUrl(post.photo_url)}
           />
         ))}
       </div>
@@ -655,6 +657,20 @@ export default function CommunityFeed({ onBack, activity = 'fishing' }) {
           onSuccess={() => { setPage(0); fetchFeed(0); }}
           activity={activity}
         />
+      )}
+
+      {lightboxUrl && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm" onClick={() => setLightboxUrl(null)}>
+          <button onClick={() => setLightboxUrl(null)} className="absolute top-4 right-4 z-10 p-2 rounded-full bg-black/50 hover:bg-black/80 transition-colors">
+            <X className="w-6 h-6 text-white" />
+          </button>
+          <img
+            src={lightboxUrl}
+            alt="Full size"
+            className="max-w-[95vw] max-h-[90vh] object-contain rounded-xl"
+            onClick={e => e.stopPropagation()}
+          />
+        </div>
       )}
     </div>
   );

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Camera, ChevronRight, MapPin, Heart, MessageCircle } from 'lucide-react';
+import { Camera, ChevronRight, MapPin, Heart, MessageCircle, X, ChevronLeft } from 'lucide-react';
 
 const API_BASE = '/api/community/post';
 
@@ -47,11 +47,11 @@ function CatchCard({ post, onClick, activity }) {
       onClick={onClick}
       className="flex-shrink-0 w-[72%] sm:w-[45%] snap-center relative rounded-2xl overflow-hidden bg-slate-900 cursor-pointer group"
     >
-      <div className="aspect-[3/4] relative overflow-hidden">
+      <div className="aspect-[3/4] relative overflow-hidden bg-black">
         <img
           src={post.photo_url}
           alt={post.caption || 'Photo'}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
           loading="lazy"
         />
 
@@ -120,11 +120,66 @@ function CatchCard({ post, onClick, activity }) {
   );
 }
 
+function Lightbox({ posts, startIndex, onClose, activity }) {
+  const [idx, setIdx] = useState(startIndex);
+  const post = posts[idx];
+  const isFishing = activity === 'fishing';
+  if (!post) return null;
+
+  function prev(e) { e.stopPropagation(); setIdx(i => Math.max(0, i - 1)); }
+  function next(e) { e.stopPropagation(); setIdx(i => Math.min(posts.length - 1, i + 1)); }
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm" onClick={onClose}>
+      <button onClick={onClose} className="absolute top-4 right-4 z-10 p-2 rounded-full bg-black/50 hover:bg-black/80 transition-colors">
+        <X className="w-6 h-6 text-white" />
+      </button>
+
+      {idx > 0 && (
+        <button onClick={prev} className="absolute left-2 z-10 p-2 rounded-full bg-black/50 hover:bg-black/80 transition-colors">
+          <ChevronLeft className="w-6 h-6 text-white" />
+        </button>
+      )}
+      {idx < posts.length - 1 && (
+        <button onClick={next} className="absolute right-2 z-10 p-2 rounded-full bg-black/50 hover:bg-black/80 transition-colors">
+          <ChevronRight className="w-6 h-6 text-white" />
+        </button>
+      )}
+
+      <div className="max-w-[92vw] max-h-[85vh] flex flex-col items-center" onClick={e => e.stopPropagation()}>
+        <img
+          src={post.photo_url}
+          alt={post.caption || 'Photo'}
+          className="max-w-full max-h-[75vh] object-contain rounded-xl"
+        />
+        <div className="mt-3 text-center max-w-md">
+          <div className="flex items-center justify-center gap-2 mb-1">
+            <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+              isFishing ? 'bg-gradient-to-br from-cyan-500 to-blue-600' : 'bg-gradient-to-br from-sky-400 to-indigo-500'
+            }`}>
+              <span className="text-[10px] font-bold text-white">{(post.display_name || 'A')[0].toUpperCase()}</span>
+            </div>
+            <span className="text-sm font-semibold text-white">{post.display_name || (isFishing ? 'Angler' : 'Captain')}</span>
+            {post.location_name && (
+              <span className="flex items-center gap-0.5 text-xs text-slate-400">
+                <MapPin className="w-3 h-3" /> {post.location_name}
+              </span>
+            )}
+          </div>
+          {post.caption && <p className="text-xs text-slate-300">{post.caption}</p>}
+          <p className="text-[10px] text-slate-500 mt-1">{idx + 1} / {posts.length}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function CommunityCatchesCard({ onViewAll, activity = 'fishing' }) {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const scrollRef = useRef(null);
   const [canScrollRight, setCanScrollRight] = useState(false);
+  const [lightboxIdx, setLightboxIdx] = useState(null);
 
   const isFishing = activity === 'fishing';
   const galleryTitle = isFishing ? 'Community Catches' : 'Community Photos';
@@ -232,20 +287,29 @@ export default function CommunityCatchesCard({ onViewAll, activity = 'fishing' }
       </div>
 
       {/* Horizontal carousel */}
-      <div className="relative">
+      <div className="relative -mx-4">
         <div
           ref={scrollRef}
-          className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-1 hide-scrollbar"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-1 px-4 hide-scrollbar"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
         >
-          {posts.slice(0, 10).map(post => (
-            <CatchCard key={post.id} post={post} onClick={onViewAll} activity={activity} />
+          {posts.slice(0, 10).map((post, i) => (
+            <CatchCard key={post.id} post={post} onClick={() => setLightboxIdx(i)} activity={activity} />
           ))}
         </div>
         {canScrollRight && (
           <div className="absolute right-0 top-0 bottom-1 w-10 bg-gradient-to-l from-slate-800/80 to-transparent pointer-events-none rounded-r-2xl" />
         )}
       </div>
+
+      {lightboxIdx !== null && (
+        <Lightbox
+          posts={posts}
+          startIndex={lightboxIdx}
+          onClose={() => setLightboxIdx(null)}
+          activity={activity}
+        />
+      )}
     </div>
   );
 }
