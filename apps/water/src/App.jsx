@@ -423,29 +423,33 @@ function WaterApp() {
                 {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                 <span className="text-[8px] font-medium">{isDark ? 'Light' : 'Dark'}</span>
               </button>
-              {/* Community catch gallery */}
-              <button
-                onClick={() => setShowCommunity(true)}
-                className={`flex flex-col items-center gap-0.5 p-1.5 rounded-lg transition-colors ${showCommunity ? 'bg-cyan-500/15 text-cyan-400' : 'hover:bg-cyan-500/10 text-cyan-400/70 hover:text-cyan-400'}`}
-                title="Community Catches"
-              >
-                <Camera className="w-4 h-4" />
-                <span className="text-[8px] font-medium">Catches</span>
-              </button>
-              {/* Smart Catch Log */}
-              <button
-                onClick={() => setShowCatchLog(true)}
-                className={`flex flex-col items-center gap-0.5 p-1.5 rounded-lg transition-colors ${showCatchLog ? 'bg-emerald-500/15 text-emerald-400' : 'hover:bg-emerald-500/10 text-emerald-400/70 hover:text-emerald-400'}`}
-                title="Catch Log"
-              >
-                <Fish className="w-4 h-4" />
-                <span className="text-[8px] font-medium">Log</span>
-              </button>
-              {/* Fishing Alerts */}
+              {/* Community catches — fishing only */}
+              {isFishing && (
+                <button
+                  onClick={() => setShowCommunity(true)}
+                  className={`flex flex-col items-center gap-0.5 p-1.5 rounded-lg transition-colors ${showCommunity ? 'bg-cyan-500/15 text-cyan-400' : 'hover:bg-cyan-500/10 text-cyan-400/70 hover:text-cyan-400'}`}
+                  title="Community Catches"
+                >
+                  <Camera className="w-4 h-4" />
+                  <span className="text-[8px] font-medium">Catches</span>
+                </button>
+              )}
+              {/* Catch log — fishing only */}
+              {isFishing && (
+                <button
+                  onClick={() => setShowCatchLog(true)}
+                  className={`flex flex-col items-center gap-0.5 p-1.5 rounded-lg transition-colors ${showCatchLog ? 'bg-emerald-500/15 text-emerald-400' : 'hover:bg-emerald-500/10 text-emerald-400/70 hover:text-emerald-400'}`}
+                  title="Catch Log"
+                >
+                  <Fish className="w-4 h-4" />
+                  <span className="text-[8px] font-medium">Log</span>
+                </button>
+              )}
+              {/* Alerts */}
               <button
                 onClick={() => setShowAlertSettings(true)}
                 className={`flex flex-col items-center gap-0.5 p-1.5 rounded-lg transition-colors ${showAlertSettings ? 'bg-cyan-500/15 text-cyan-400' : 'hover:bg-cyan-500/10 text-cyan-400/70 hover:text-cyan-400'}`}
-                title="Fishing Alerts"
+                title={isFishing ? 'Fishing Alerts' : 'Weather Alerts'}
               >
                 <Bell className="w-4 h-4" />
                 <span className="text-[8px] font-medium">Alerts</span>
@@ -768,8 +772,8 @@ function WaterApp() {
           />
         </Suspense>
 
-        {/* ═══════ COMMUNITY CATCHES CARD ═══════ */}
-        <CommunityCatchesCard onViewAll={() => setShowCommunity(true)} />
+        {/* ═══════ COMMUNITY CATCHES CARD — fishing only ═══════ */}
+        {isFishing && <CommunityCatchesCard onViewAll={() => setShowCommunity(true)} />}
 
         {/* ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ SPORT INTELLIGENCE — Optimal Time Windows ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ */}
         {sportWindows && Object.keys(sportWindows).length > 0 && (
