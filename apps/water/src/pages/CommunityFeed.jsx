@@ -308,7 +308,8 @@ function PostCard({ post, currentUserId, onDelete, onUpdate, user }) {
   );
 }
 
-function UploadModal({ onClose, onSuccess }) {
+function UploadModal({ onClose, onSuccess, activity = 'fishing' }) {
+  const isFishing = activity === 'fishing';
   const [image, setImage] = useState(null);
   const [preview, setPreview] = useState(null);
   const [caption, setCaption] = useState('');
@@ -369,7 +370,8 @@ function UploadModal({ onClose, onSuccess }) {
         body: JSON.stringify({
           image,
           caption: caption.trim(),
-          species: species.trim() || null,
+          species: isFishing ? (species.trim() || null) : null,
+          activity,
           locationId: locationId || null,
           locationName: loc?.name || null,
           weatherTemp: weatherTemp ? parseInt(weatherTemp) : null,
@@ -394,7 +396,7 @@ function UploadModal({ onClose, onSuccess }) {
         onClick={e => e.stopPropagation()}
       >
         <div className="sticky top-0 bg-slate-900/95 backdrop-blur-sm border-b border-slate-700/50 px-4 py-3 flex items-center justify-between z-10">
-          <h3 className="text-sm font-bold text-white">Share Your Catch</h3>
+          <h3 className="text-sm font-bold text-white">{isFishing ? 'Share Your Catch' : 'Share Your Day'}</h3>
           <button onClick={onClose} className="p-1 rounded-lg hover:bg-slate-700 transition-colors">
             <X className="w-5 h-5 text-slate-400" />
           </button>
@@ -426,22 +428,24 @@ function UploadModal({ onClose, onSuccess }) {
           <textarea
             value={caption}
             onChange={e => setCaption(e.target.value)}
-            placeholder="What's the story? Flies, conditions, tips..."
+            placeholder={isFishing ? "What's the story? Flies, conditions, tips..." : "What's the story? Glass morning, epic sunset, best run of the day..."}
             maxLength={500}
             rows={3}
             className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2.5 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-500/50 resize-none"
           />
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1 block">Species</label>
-              <input
-                value={species}
-                onChange={e => setSpecies(e.target.value)}
-                placeholder="e.g. Brown Trout"
-                className="w-full rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-500/50"
-              />
-            </div>
+          <div className={`grid gap-3 ${isFishing ? 'grid-cols-2' : 'grid-cols-1'}`}>
+            {isFishing && (
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1 block">Species</label>
+                <input
+                  value={species}
+                  onChange={e => setSpecies(e.target.value)}
+                  placeholder="e.g. Brown Trout"
+                  className="w-full rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-500/50"
+                />
+              </div>
+            )}
             <div>
               <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1 block">Location</label>
               <select
@@ -459,7 +463,7 @@ function UploadModal({ onClose, onSuccess }) {
 
           {/* Weather at catch */}
           <div>
-            <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2 block">Conditions at Catch</label>
+            <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2 block">{isFishing ? 'Conditions at Catch' : 'Conditions'}</label>
             <div className="flex gap-2 mb-2 flex-wrap">
               {SKY_OPTIONS.map(s => (
                 <button
@@ -650,6 +654,7 @@ export default function CommunityFeed({ onBack, activity = 'fishing' }) {
         <UploadModal
           onClose={() => setShowUpload(false)}
           onSuccess={() => { setPage(0); fetchFeed(0); }}
+          activity={activity}
         />
       )}
     </div>
