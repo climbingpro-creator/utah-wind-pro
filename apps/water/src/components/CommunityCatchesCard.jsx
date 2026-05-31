@@ -151,14 +151,22 @@ export default function CommunityCatchesCard({ onViewAll, activity = 'fishing' }
         const data = await resp.json();
         const fetched = data.posts || [];
         if (!cancelled) {
-          // For non-fishing activities, blend community posts with featured
-          // photos so the gallery is never empty while community grows
-          if (!isFishing && fetched.length < 4) {
-            const communityIds = new Set(fetched.map(p => p.id));
-            const fillers = FEATURED_BOATING.filter(f => !communityIds.has(f.id));
-            setPosts([...fetched, ...fillers].slice(0, 10));
-          } else {
+          if (isFishing) {
             setPosts(fetched);
+          } else {
+            // Filter to only posts tagged with the current activity.
+            // The API may not support activity filtering server-side yet,
+            // so we do it client-side and backfill with featured photos.
+            const matched = fetched.filter(p =>
+              p.activity === activity || p.activity === 'boating' || p.activity === 'paddling'
+            );
+            if (matched.length >= 4) {
+              setPosts(matched.slice(0, 10));
+            } else {
+              const communityIds = new Set(matched.map(p => p.id));
+              const fillers = FEATURED_BOATING.filter(f => !communityIds.has(f.id));
+              setPosts([...matched, ...fillers].slice(0, 10));
+            }
           }
         }
       } catch {
