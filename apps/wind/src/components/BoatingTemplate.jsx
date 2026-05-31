@@ -180,7 +180,7 @@ function ChopForecast({ hourlyForecast, activity }) {
   );
 }
 
-function BoatingBriefing({ boatingPrediction, speed, activity, locName }) {
+function BoatingBriefing({ boatingPrediction, speed, activity }) {
   if (!boatingPrediction) return null;
 
   const rec = boatingPrediction.recommendation;
@@ -265,7 +265,7 @@ function TipsSection({ activity, waveEstimate }) {
 }
 
 export default function BoatingTemplate({
-  selectedActivity, selectedLake, activityConfig,
+  selectedActivity, selectedLake, activityConfig: _activityConfig,
   currentWindSpeed, currentWindGust, currentWindDirection,
   effectiveBoatingPrediction, lakeState, effectiveBriefing,
   prediction,
@@ -329,7 +329,6 @@ export default function BoatingTemplate({
         boatingPrediction={boatingPrediction}
         speed={speed}
         activity={selectedActivity}
-        locName={locName}
       />
 
       {/* Glass window timeline */}
