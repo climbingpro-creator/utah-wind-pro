@@ -180,6 +180,8 @@ export default function CommunityCatchesCard({ onViewAll, activity = 'fishing' }
   const scrollRef = useRef(null);
   const [canScrollRight, setCanScrollRight] = useState(false);
   const [lightboxIdx, setLightboxIdx] = useState(null);
+  const autoScrollRef = useRef(null);
+  const pausedRef = useRef(false);
 
   const isFishing = activity === 'fishing';
   const galleryTitle = isFishing ? 'Community Catches' : 'Community Photos';
@@ -241,6 +243,50 @@ export default function CommunityCatchesCard({ onViewAll, activity = 'fishing' }
     ro.observe(el);
     return () => { el.removeEventListener('scroll', checkScroll); ro.disconnect(); };
   }, [checkScroll, posts]);
+
+  // Auto-scroll: advance one card every 3.5s, loop back at end
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el || posts.length <= 1) return;
+
+    function tick() {
+      if (pausedRef.current) return;
+      const cardWidth = el.querySelector('button')?.offsetWidth || 300;
+      const gap = 12;
+      const maxScroll = el.scrollWidth - el.clientWidth;
+      if (el.scrollLeft >= maxScroll - 4) {
+        el.scrollTo({ left: 0, behavior: 'smooth' });
+      } else {
+        el.scrollBy({ left: cardWidth + gap, behavior: 'smooth' });
+      }
+    }
+
+    autoScrollRef.current = setInterval(tick, 3500);
+
+    // Pause on touch/pointer interaction, resume 5s after release
+    let resumeTimer;
+    function pause() {
+      pausedRef.current = true;
+      clearTimeout(resumeTimer);
+    }
+    function resume() {
+      clearTimeout(resumeTimer);
+      resumeTimer = setTimeout(() => { pausedRef.current = false; }, 5000);
+    }
+    el.addEventListener('pointerdown', pause);
+    el.addEventListener('pointerup', resume);
+    el.addEventListener('touchstart', pause, { passive: true });
+    el.addEventListener('touchend', resume);
+
+    return () => {
+      clearInterval(autoScrollRef.current);
+      clearTimeout(resumeTimer);
+      el.removeEventListener('pointerdown', pause);
+      el.removeEventListener('pointerup', resume);
+      el.removeEventListener('touchstart', pause);
+      el.removeEventListener('touchend', resume);
+    };
+  }, [posts]);
 
   if (loading) {
     return (
