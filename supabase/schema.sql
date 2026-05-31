@@ -573,6 +573,11 @@ ALTER TABLE community_posts ADD COLUMN IF NOT EXISTS weather_temp   INTEGER;
 ALTER TABLE community_posts ADD COLUMN IF NOT EXISTS weather_wind   INTEGER;
 ALTER TABLE community_posts ADD COLUMN IF NOT EXISTS weather_sky    TEXT CHECK (weather_sky IN ('sunny', 'partly-cloudy', 'overcast', 'rain', 'snow'));
 
+-- Activity tag: fishing (default), boating, paddling
+ALTER TABLE community_posts ADD COLUMN IF NOT EXISTS activity TEXT NOT NULL DEFAULT 'fishing'
+  CHECK (activity IN ('fishing', 'boating', 'paddling'));
+CREATE INDEX IF NOT EXISTS idx_community_posts_activity ON community_posts(activity);
+
 -- ══════════════════════════════════════════════════════════════
 -- Community Post Likes — one like per user per post
 -- ══════════════════════════════════════════════════════════════

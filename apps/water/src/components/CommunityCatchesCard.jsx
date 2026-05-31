@@ -152,7 +152,7 @@ export default function CommunityCatchesCard({ onViewAll, activity = 'fishing' }
         const fetched = data.posts || [];
         if (!cancelled) {
           if (isFishing) {
-            setPosts(fetched);
+            setPosts(fetched.filter(p => !p.activity || p.activity === 'fishing'));
           } else {
             // Filter to only posts tagged with the current activity.
             // The API may not support activity filtering server-side yet,

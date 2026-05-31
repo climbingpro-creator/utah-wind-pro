@@ -1,6 +1,6 @@
 /**
- * POST /api/community/post — Create a community catch post with photo
- * Body: { image: "data:image/jpeg;base64,...", caption?, locationId?, locationName?, species? }
+ * POST /api/community/post — Create a community catch/photo post
+ * Body: { image: "data:image/jpeg;base64,...", caption?, activity?, locationId?, locationName?, species? }
  *
  * GET  /api/community/post — Fetch the community feed (newest first)
  * Query: ?limit=20&offset=0
@@ -129,14 +129,18 @@ async function handleCreate(req, res) {
       return res.status(500).json({ error: 'Failed to upload photo. Storage bucket may not exist — create a "community-photos" public bucket in Supabase.' });
     }
 
+    const validActivities = ['fishing', 'boating', 'paddling'];
+    const activity = validActivities.includes(body.activity) ? body.activity : 'fishing';
+
     const { data: post, error: insertErr } = await supabase
       .from('community_posts')
       .insert({
         user_id: auth.user.id,
         user_email: auth.user.email,
-        display_name: auth.user.user_metadata?.full_name || auth.user.email?.split('@')[0] || 'Angler',
+        display_name: auth.user.user_metadata?.full_name || auth.user.email?.split('@')[0] || (activity === 'fishing' ? 'Angler' : 'Captain'),
         photo_url: photoUrl,
         caption: (body.caption || '').slice(0, 500),
+        activity,
         location_id: body.locationId || null,
         location_name: body.locationName || null,
         species: body.species || null,
@@ -181,6 +185,10 @@ async function handleUpdate(req, res) {
 
     const updates = {};
     if (body.caption !== undefined) updates.caption = (body.caption || '').slice(0, 500);
+    if (body.activity !== undefined) {
+      const valid = ['fishing', 'boating', 'paddling'];
+      if (valid.includes(body.activity)) updates.activity = body.activity;
+    }
     if (body.species !== undefined) updates.species = body.species || null;
     if (body.locationId !== undefined) updates.location_id = body.locationId || null;
     if (body.locationName !== undefined) updates.location_name = body.locationName || null;

@@ -543,9 +543,8 @@ export default function CommunityFeed({ onBack, activity = 'fishing' }) {
       const data = await resp.json();
       if (resp.ok) {
         const all = data.posts || [];
-        // Client-side activity filter until the API supports it natively
         const filtered = isFishing
-          ? all
+          ? all.filter(p => !p.activity || p.activity === 'fishing')
           : all.filter(p => p.activity === activity || p.activity === 'boating' || p.activity === 'paddling');
         setPosts(prev => offset === 0 ? filtered : [...prev, ...filtered]);
         setTotal(isFishing ? (data.total || 0) : filtered.length);
