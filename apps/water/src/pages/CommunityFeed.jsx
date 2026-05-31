@@ -310,8 +310,7 @@ function PostCard({ post, currentUserId, onDelete, onUpdate, user, onPhotoTap })
 
 function UploadModal({ onClose, onSuccess, activity = 'fishing' }) {
   const isFishing = activity === 'fishing';
-  const [image, setImage] = useState(null);
-  const [preview, setPreview] = useState(null);
+  const [images, setImages] = useState([]);
   const [caption, setCaption] = useState('');
   const [species, setSpecies] = useState('');
   const [locationId, setLocationId] = useState('');
@@ -319,8 +318,10 @@ function UploadModal({ onClose, onSuccess, activity = 'fishing' }) {
   const [weatherWind, setWeatherWind] = useState('');
   const [weatherSky, setWeatherSky] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState('');
   const [error, setError] = useState(null);
   const fileRef = useRef(null);
+  const MAX_PHOTOS = 10;
 
   const locationOptions = Object.entries(FISHING_LOCATIONS).map(([id, loc]) => ({
     id,
@@ -347,46 +348,69 @@ function UploadModal({ onClose, onSuccess, activity = 'fishing' }) {
     });
   }
 
-  async function handleFile(e) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  async function handleFiles(e) {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
     setError(null);
-    setPreview(URL.createObjectURL(file));
-    const compressed = await compressImage(file);
-    setImage(compressed);
+    const remaining = MAX_PHOTOS - images.length;
+    const toProcess = files.slice(0, remaining);
+    if (files.length > remaining) {
+      setError(`Max ${MAX_PHOTOS} photos — ${files.length - remaining} skipped`);
+    }
+    const newImages = await Promise.all(
+      toProcess.map(async (file) => ({
+        preview: URL.createObjectURL(file),
+        compressed: await compressImage(file),
+      }))
+    );
+    setImages(prev => [...prev, ...newImages]);
+    if (fileRef.current) fileRef.current.value = '';
+  }
+
+  function removeImage(idx) {
+    setImages(prev => prev.filter((_, i) => i !== idx));
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
-    if (!image) return;
+    if (images.length === 0) return;
     setUploading(true);
     setError(null);
-    try {
-      const headers = await getAuthHeaders();
-      const loc = locationId ? FISHING_LOCATIONS[locationId] : null;
-      const resp = await fetch(API_BASE, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          image,
-          caption: caption.trim(),
-          species: isFishing ? (species.trim() || null) : null,
-          activity,
-          locationId: locationId || null,
-          locationName: loc?.name || null,
-          weatherTemp: weatherTemp ? parseInt(weatherTemp) : null,
-          weatherWind: weatherWind ? parseInt(weatherWind) : null,
-          weatherSky: weatherSky || null,
-        }),
-      });
-      const data = await resp.json();
-      if (!resp.ok) throw new Error(data.error || 'Upload failed');
-      onSuccess();
-      onClose();
-    } catch (err) {
-      setError(err.message);
+    const loc = locationId ? FISHING_LOCATIONS[locationId] : null;
+    const shared = {
+      caption: caption.trim(),
+      species: isFishing ? (species.trim() || null) : null,
+      activity,
+      locationId: locationId || null,
+      locationName: loc?.name || null,
+      weatherTemp: weatherTemp ? parseInt(weatherTemp) : null,
+      weatherWind: weatherWind ? parseInt(weatherWind) : null,
+      weatherSky: weatherSky || null,
+    };
+    let failed = 0;
+    for (let i = 0; i < images.length; i++) {
+      setProgress(`Uploading ${i + 1} of ${images.length}...`);
+      try {
+        const headers = await getAuthHeaders();
+        const resp = await fetch(API_BASE, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ image: images[i].compressed, ...shared }),
+        });
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data.error || 'Upload failed');
+      } catch {
+        failed++;
+      }
     }
     setUploading(false);
+    setProgress('');
+    if (failed > 0) {
+      setError(`${failed} of ${images.length} photos failed to upload`);
+    } else {
+      onSuccess();
+      onClose();
+    }
   }
 
   return (
@@ -402,28 +426,47 @@ function UploadModal({ onClose, onSuccess, activity = 'fishing' }) {
           </button>
         </div>
         <form onSubmit={handleSubmit} className="p-4 space-y-4">
-          {preview ? (
-            <div className="relative rounded-xl overflow-hidden aspect-[4/3] bg-slate-800">
-              <img src={preview} alt="Preview" className="w-full h-full object-cover" />
-              <button
-                type="button"
-                onClick={() => { setPreview(null); setImage(null); }}
-                className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/50 hover:bg-black/70 transition-colors"
-              >
-                <X className="w-4 h-4 text-white" />
-              </button>
+          {/* Photo thumbnails grid */}
+          {images.length > 0 && (
+            <div className="grid grid-cols-3 gap-2">
+              {images.map((img, i) => (
+                <div key={i} className="relative rounded-xl overflow-hidden aspect-square bg-slate-800">
+                  <img src={img.preview} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => removeImage(i)}
+                    className="absolute top-1 right-1 p-1 rounded-full bg-black/60 hover:bg-black/80 transition-colors"
+                  >
+                    <X className="w-3 h-3 text-white" />
+                  </button>
+                  <span className="absolute bottom-1 left-1 text-[9px] font-bold text-white bg-black/50 px-1.5 py-0.5 rounded-full">{i + 1}</span>
+                </div>
+              ))}
+              {images.length < MAX_PHOTOS && (
+                <button
+                  type="button"
+                  onClick={() => fileRef.current?.click()}
+                  className="aspect-square rounded-xl border-2 border-dashed border-slate-600 hover:border-cyan-500/50 transition-colors flex flex-col items-center justify-center gap-1 bg-slate-800/50"
+                >
+                  <ImagePlus className="w-5 h-5 text-slate-500" />
+                  <span className="text-[9px] text-slate-500">Add more</span>
+                </button>
+              )}
             </div>
-          ) : (
+          )}
+
+          {images.length === 0 && (
             <button
               type="button"
               onClick={() => fileRef.current?.click()}
               className="w-full aspect-[4/3] rounded-xl border-2 border-dashed border-slate-600 hover:border-cyan-500/50 transition-colors flex flex-col items-center justify-center gap-2 bg-slate-800/50"
             >
               <ImagePlus className="w-8 h-8 text-slate-500" />
-              <span className="text-sm text-slate-400">Tap to add a photo</span>
+              <span className="text-sm text-slate-400">Tap to add photos</span>
+              <span className="text-[10px] text-slate-600">Up to {MAX_PHOTOS} at once</span>
             </button>
           )}
-          <input ref={fileRef} type="file" accept="image/*" capture="environment" onChange={handleFile} className="hidden" />
+          <input ref={fileRef} type="file" accept="image/*" multiple onChange={handleFiles} className="hidden" />
 
           <textarea
             value={caption}
@@ -514,11 +557,11 @@ function UploadModal({ onClose, onSuccess, activity = 'fishing' }) {
 
           <button
             type="submit"
-            disabled={!image || uploading}
+            disabled={images.length === 0 || uploading}
             className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold bg-gradient-to-r from-cyan-500 to-blue-600 text-white disabled:opacity-40 disabled:cursor-not-allowed hover:shadow-lg hover:shadow-cyan-500/20 transition-all"
           >
             {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-            {uploading ? 'Uploading...' : 'Share with Community'}
+            {uploading ? progress : `Share ${images.length > 1 ? `${images.length} Photos` : 'with Community'}`}
           </button>
         </form>
       </div>
