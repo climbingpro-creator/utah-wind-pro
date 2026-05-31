@@ -46,6 +46,7 @@ const ParaglidingMode = lazy(() => import('./ParaglidingMode'));
 const ProUpgrade = lazy(() => import('./ProUpgrade'));
 const WindSeekerTemplate = lazy(() => import('./WindSeekerTemplate'));
 const WinterRiderTemplate = lazy(() => import('./WinterRiderTemplate'));
+const BoatingTemplate = lazy(() => import('./BoatingTemplate'));
 const LearnView = lazy(() => import('./LearnView'));
 const PhotoSubmit = lazy(() => import('./PhotoSubmit'));
 const SMSAlertSettings = lazy(() => import('./SMSAlertSettings'));
@@ -769,6 +770,13 @@ export function Dashboard() {
               prediction={prediction} effectiveThermalPrediction={effectiveThermalPrediction} effectiveBoatingPrediction={effectiveBoatingPrediction}
               effectiveActivityScore={null} effectiveBriefing={liveBriefing}
               mesoData={mesoData} isLoading={isLoading} onSelectSpot={handleSelectLake} contentRef={contentRef}
+            />
+          ) : selectedActivity === 'boating' || selectedActivity === 'paddling' || selectedActivity === 'fishing' ? (
+            <BoatingTemplate
+              selectedActivity={selectedActivity} selectedLake={selectedLake} activityConfig={activityConfig}
+              currentWindSpeed={currentWindSpeed} currentWindGust={currentWindGust} currentWindDirection={currentWindDirection}
+              effectiveBoatingPrediction={effectiveBoatingPrediction} lakeState={lakeState}
+              effectiveBriefing={liveBriefing} prediction={prediction}
             />
           ) : (
             <WindSeekerTemplate

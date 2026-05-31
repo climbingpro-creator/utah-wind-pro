@@ -1,5 +1,5 @@
 import React from 'react';
-import { Wind, Sailboat, Mountain, Anchor } from 'lucide-react';
+import { Wind, Sailboat, Mountain, Anchor, Ship, Waves, Fish } from 'lucide-react';
 
 const WindsurferIcon = ({ className }) => (
   <svg className={className} viewBox="0 0 24 24" fill="currentColor">
@@ -108,6 +108,57 @@ export const ACTIVITY_CONFIGS = {
     wantsWind: true,
     primaryMetric: 'windProbability',
     goodCondition: (speed, gust) => speed >= 8 && speed <= 25 && (!gust || gust/speed < 1.7),
+  },
+
+  boating: {
+    id: 'boating',
+    name: 'Boating',
+    icon: <Ship className="w-10 h-10" />,
+    description: 'Flat water cruising — glass under 5 mph, good under 10',
+    heroImage: '/images/storm-clouds.png',
+    thresholds: {
+      ideal: { min: 0, max: 5 },
+      choppy: 10,
+      rough: 15,
+      dangerous: 25,
+    },
+    wantsWind: false,
+    primaryMetric: 'glassScore',
+    goodCondition: (speed) => speed <= 10,
+  },
+
+  paddling: {
+    id: 'paddling',
+    name: 'Paddling',
+    icon: <Waves className="w-10 h-10" />,
+    description: 'SUP & Kayak — flat water, light wind preferred',
+    heroImage: '/images/storm-clouds.png',
+    thresholds: {
+      ideal: { min: 0, max: 4 },
+      choppy: 8,
+      rough: 12,
+      dangerous: 20,
+    },
+    wantsWind: false,
+    primaryMetric: 'glassScore',
+    goodCondition: (speed) => speed <= 8,
+  },
+
+  fishing: {
+    id: 'fishing',
+    name: 'Fishing',
+    icon: <Fish className="w-10 h-10" />,
+    description: 'Angling — calm water best, light ripple OK',
+    heroImage: '/images/storm-clouds.png',
+    thresholds: {
+      ideal: { min: 0, max: 6 },
+      choppy: 12,
+      rough: 18,
+      dangerous: 25,
+    },
+    wantsWind: false,
+    primaryMetric: 'glassScore',
+    goodCondition: (speed) => speed <= 12,
   },
 };
 
