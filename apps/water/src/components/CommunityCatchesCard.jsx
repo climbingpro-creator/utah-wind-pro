@@ -26,10 +26,12 @@ function weatherBadge(post) {
   return parts.join(' ');
 }
 
-function CatchCard({ post, onClick }) {
+function CatchCard({ post, onClick, activity }) {
   const likes = post.like_count || 0;
   const comments = post.comment_count || 0;
   const badge = weatherBadge(post);
+  const isFishing = activity === 'fishing';
+  const defaultName = isFishing ? 'Angler' : 'Captain';
 
   return (
     <button
@@ -39,7 +41,7 @@ function CatchCard({ post, onClick }) {
       <div className="aspect-[3/4] relative overflow-hidden">
         <img
           src={post.photo_url}
-          alt={post.caption || 'Catch'}
+          alt={post.caption || 'Photo'}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           loading="lazy"
         />
@@ -51,10 +53,17 @@ function CatchCard({ post, onClick }) {
           </span>
         )}
 
-        {/* Species badge — top-left */}
-        {post.species && (
+        {/* Species badge — fishing only */}
+        {isFishing && post.species && (
           <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/80 text-white backdrop-blur-sm">
             {post.species}
+          </span>
+        )}
+
+        {/* Activity tag — boating/paddling */}
+        {!isFishing && post.activity && (
+          <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full text-[9px] font-bold bg-sky-500/80 text-white backdrop-blur-sm">
+            {post.activity === 'boating' ? '⛵ Boat Day' : post.activity === 'paddling' ? '🏄 Paddle' : post.activity}
           </span>
         )}
 
@@ -64,12 +73,14 @@ function CatchCard({ post, onClick }) {
         {/* Text content on scrim */}
         <div className="absolute inset-x-0 bottom-0 p-3">
           <div className="flex items-center gap-1.5 mb-1">
-            <div className="w-5 h-5 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shrink-0">
+            <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${
+              isFishing ? 'bg-gradient-to-br from-cyan-500 to-blue-600' : 'bg-gradient-to-br from-sky-400 to-indigo-500'
+            }`}>
               <span className="text-[8px] font-bold text-white">
                 {(post.display_name || 'A')[0].toUpperCase()}
               </span>
             </div>
-            <span className="text-[10px] font-semibold text-white truncate">{post.display_name || 'Angler'}</span>
+            <span className="text-[10px] font-semibold text-white truncate">{post.display_name || defaultName}</span>
             <span className="text-[8px] text-white/50 shrink-0 ml-auto">{timeAgo(post.created_at)}</span>
           </div>
 
@@ -100,11 +111,18 @@ function CatchCard({ post, onClick }) {
   );
 }
 
-export default function CommunityCatchesCard({ onViewAll }) {
+export default function CommunityCatchesCard({ onViewAll, activity = 'fishing' }) {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const scrollRef = useRef(null);
   const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const isFishing = activity === 'fishing';
+  const galleryTitle = isFishing ? 'Community Catches' : 'Community Photos';
+  const emptyText = isFishing
+    ? 'No catches shared yet. Be the first!'
+    : 'No photos shared yet. Show us your day on the water!';
+  const shareText = isFishing ? 'Share yours' : 'Post a photo';
 
   const checkScroll = useCallback(() => {
     const el = scrollRef.current;
@@ -116,7 +134,10 @@ export default function CommunityCatchesCard({ onViewAll }) {
     let cancelled = false;
     (async () => {
       try {
-        const resp = await fetch(`${API_BASE}?limit=10&offset=0`);
+        const url = isFishing
+          ? `${API_BASE}?limit=10&offset=0`
+          : `${API_BASE}?limit=10&offset=0&activity=${activity}`;
+        const resp = await fetch(url);
         if (!resp.ok) throw new Error();
         const data = await resp.json();
         if (!cancelled) setPosts(data.posts || []);
@@ -124,7 +145,7 @@ export default function CommunityCatchesCard({ onViewAll }) {
       if (!cancelled) setLoading(false);
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, [activity, isFishing]);
 
   useEffect(() => {
     checkScroll();
@@ -141,7 +162,7 @@ export default function CommunityCatchesCard({ onViewAll }) {
       <div className="rounded-2xl border border-slate-700/50 bg-slate-800/30 p-4">
         <div className="flex items-center gap-2 mb-3">
           <Camera className="w-4 h-4 text-cyan-400" />
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Community Catches</span>
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-400">{galleryTitle}</span>
         </div>
         <div className="flex gap-3 overflow-hidden">
           {[1, 2].map(i => <div key={i} className="flex-shrink-0 w-[72%] aspect-[3/4] rounded-2xl bg-slate-700/50 animate-pulse" />)}
@@ -156,13 +177,13 @@ export default function CommunityCatchesCard({ onViewAll }) {
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <Camera className="w-4 h-4 text-cyan-400" />
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Community Catches</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">{galleryTitle}</span>
           </div>
           <button onClick={onViewAll} className="flex items-center gap-0.5 text-[10px] font-semibold text-cyan-400 hover:text-cyan-300 transition-colors">
-            Share yours <ChevronRight className="w-3 h-3" />
+            {shareText} <ChevronRight className="w-3 h-3" />
           </button>
         </div>
-        <p className="text-xs text-slate-500 text-center py-4">No catches shared yet. Be the first!</p>
+        <p className="text-xs text-slate-500 text-center py-4">{emptyText}</p>
       </div>
     );
   }
@@ -172,7 +193,7 @@ export default function CommunityCatchesCard({ onViewAll }) {
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Camera className="w-4 h-4 text-cyan-400" />
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Community Catches</span>
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-400">{galleryTitle}</span>
           <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-cyan-500/15 text-cyan-400">{posts.length}+</span>
         </div>
         <button onClick={onViewAll} className="flex items-center gap-0.5 text-[10px] font-semibold text-cyan-400 hover:text-cyan-300 transition-colors">
@@ -188,7 +209,7 @@ export default function CommunityCatchesCard({ onViewAll }) {
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {posts.slice(0, 10).map(post => (
-            <CatchCard key={post.id} post={post} onClick={onViewAll} />
+            <CatchCard key={post.id} post={post} onClick={onViewAll} activity={activity} />
           ))}
         </div>
         {canScrollRight && (

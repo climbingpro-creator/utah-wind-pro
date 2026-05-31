@@ -423,17 +423,15 @@ function WaterApp() {
                 {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                 <span className="text-[8px] font-medium">{isDark ? 'Light' : 'Dark'}</span>
               </button>
-              {/* Community catches — fishing only */}
-              {isFishing && (
-                <button
-                  onClick={() => setShowCommunity(true)}
-                  className={`flex flex-col items-center gap-0.5 p-1.5 rounded-lg transition-colors ${showCommunity ? 'bg-cyan-500/15 text-cyan-400' : 'hover:bg-cyan-500/10 text-cyan-400/70 hover:text-cyan-400'}`}
-                  title="Community Catches"
-                >
-                  <Camera className="w-4 h-4" />
-                  <span className="text-[8px] font-medium">Catches</span>
-                </button>
-              )}
+              {/* Community gallery — all activities */}
+              <button
+                onClick={() => setShowCommunity(true)}
+                className={`flex flex-col items-center gap-0.5 p-1.5 rounded-lg transition-colors ${showCommunity ? 'bg-cyan-500/15 text-cyan-400' : 'hover:bg-cyan-500/10 text-cyan-400/70 hover:text-cyan-400'}`}
+                title={isFishing ? 'Community Catches' : 'Community Photos'}
+              >
+                <Camera className="w-4 h-4" />
+                <span className="text-[8px] font-medium">{isFishing ? 'Catches' : 'Photos'}</span>
+              </button>
               {/* Catch log — fishing only */}
               {isFishing && (
                 <button
@@ -772,8 +770,8 @@ function WaterApp() {
           />
         </Suspense>
 
-        {/* ═══════ COMMUNITY CATCHES CARD — fishing only ═══════ */}
-        {isFishing && <CommunityCatchesCard onViewAll={() => setShowCommunity(true)} />}
+        {/* ═══════ COMMUNITY GALLERY — adapts to selected activity ═══════ */}
+        <CommunityCatchesCard onViewAll={() => setShowCommunity(true)} activity={selectedActivity} />
 
         {/* ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ SPORT INTELLIGENCE — Optimal Time Windows ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ */}
         {sportWindows && Object.keys(sportWindows).length > 0 && (
