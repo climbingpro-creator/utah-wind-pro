@@ -522,7 +522,7 @@ function UploadModal({ onClose, onSuccess }) {
   );
 }
 
-export default function CommunityFeed({ onBack }) {
+export default function CommunityFeed({ onBack, activity = 'fishing' }) {
   const { user } = useAuth();
   const [posts, setPosts] = useState([]);
   const [total, setTotal] = useState(0);
@@ -530,6 +530,7 @@ export default function CommunityFeed({ onBack }) {
   const [showUpload, setShowUpload] = useState(false);
   const [page, setPage] = useState(0);
   const PAGE_SIZE = 20;
+  const isFishing = activity === 'fishing';
 
   const fetchFeed = useCallback(async (offset = 0) => {
     setLoading(true);
@@ -537,12 +538,17 @@ export default function CommunityFeed({ onBack }) {
       const resp = await fetch(`${API_BASE}?limit=${PAGE_SIZE}&offset=${offset}`);
       const data = await resp.json();
       if (resp.ok) {
-        setPosts(prev => offset === 0 ? (data.posts || []) : [...prev, ...(data.posts || [])]);
-        setTotal(data.total || 0);
+        const all = data.posts || [];
+        // Client-side activity filter until the API supports it natively
+        const filtered = isFishing
+          ? all
+          : all.filter(p => p.activity === activity || p.activity === 'boating' || p.activity === 'paddling');
+        setPosts(prev => offset === 0 ? filtered : [...prev, ...filtered]);
+        setTotal(isFishing ? (data.total || 0) : filtered.length);
       }
     } catch (_err) { /* network error */ }
     setLoading(false);
-  }, []);
+  }, [isFishing, activity]);
 
   useEffect(() => { fetchFeed(0); }, [fetchFeed]);
 
@@ -573,9 +579,11 @@ export default function CommunityFeed({ onBack }) {
           <div>
             <h2 className="text-lg font-bold text-white flex items-center gap-2">
               <Camera className="w-5 h-5 text-cyan-400" />
-              Community Catches
+              {isFishing ? 'Community Catches' : 'Community Photos'}
             </h2>
-            <p className="text-[11px] text-slate-500">{total} {total === 1 ? 'post' : 'posts'} from Utah anglers</p>
+            <p className="text-[11px] text-slate-500">
+              {total} {total === 1 ? 'post' : 'posts'} from {isFishing ? 'anglers' : 'the community'}
+            </p>
           </div>
         </div>
         {user ? (
@@ -584,7 +592,7 @@ export default function CommunityFeed({ onBack }) {
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-cyan-500 to-blue-600 text-white hover:shadow-lg hover:shadow-cyan-500/20 transition-all"
           >
             <Camera className="w-3.5 h-3.5" />
-            Share Catch
+            {isFishing ? 'Share Catch' : 'Share Photo'}
           </button>
         ) : (
           <button
@@ -599,8 +607,12 @@ export default function CommunityFeed({ onBack }) {
       {posts.length === 0 && !loading && (
         <div className="text-center py-16">
           <MessageCircle className="w-10 h-10 text-slate-600 mx-auto mb-3" />
-          <h3 className="text-sm font-semibold text-slate-400 mb-1">No catches shared yet</h3>
-          <p className="text-xs text-slate-500">Be the first to share your Utah catch!</p>
+          <h3 className="text-sm font-semibold text-slate-400 mb-1">
+            {isFishing ? 'No catches shared yet' : 'No photos shared yet'}
+          </h3>
+          <p className="text-xs text-slate-500">
+            {isFishing ? 'Be the first to share your catch!' : 'Share your day on the water — sunsets, wake shots, glass mornings!'}
+          </p>
         </div>
       )}
 

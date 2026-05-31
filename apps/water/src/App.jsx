@@ -527,7 +527,7 @@ function WaterApp() {
         {/* ═══════ COMMUNITY FEED ═══════ */}
         {showCommunity ? (
           <Suspense fallback={<div className="flex items-center justify-center py-16"><div className="w-6 h-6 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" /></div>}>
-            <CommunityFeed onBack={() => setShowCommunity(false)} />
+            <CommunityFeed onBack={() => setShowCommunity(false)} activity={selectedActivity} />
           </Suspense>
         ) : (<>
 
