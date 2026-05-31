@@ -46,7 +46,6 @@ const ParaglidingMode = lazy(() => import('./ParaglidingMode'));
 const ProUpgrade = lazy(() => import('./ProUpgrade'));
 const WindSeekerTemplate = lazy(() => import('./WindSeekerTemplate'));
 const WinterRiderTemplate = lazy(() => import('./WinterRiderTemplate'));
-const BoatingTemplate = lazy(() => import('./BoatingTemplate'));
 const LearnView = lazy(() => import('./LearnView'));
 const PhotoSubmit = lazy(() => import('./PhotoSubmit'));
 const SMSAlertSettings = lazy(() => import('./SMSAlertSettings'));
@@ -597,7 +596,7 @@ export function Dashboard() {
       }`}>
         <div className="max-w-6xl mx-auto px-5 sm:px-8">
           <div className="flex items-center gap-2 py-2 overflow-x-auto scrollbar-hide">
-            {['kiting', 'paragliding', 'sailing', 'snowkiting', 'boating', 'paddling', 'fishing', 'windsurfing'].map(act => {
+            {['kiting', 'paragliding', 'sailing', 'snowkiting', 'windsurfing'].map(act => {
               const cfg = ACTIVITY_CONFIGS[act];
               if (!cfg) return null;
               const isActive = selectedActivity === act;
@@ -770,13 +769,6 @@ export function Dashboard() {
               prediction={prediction} effectiveThermalPrediction={effectiveThermalPrediction} effectiveBoatingPrediction={effectiveBoatingPrediction}
               effectiveActivityScore={null} effectiveBriefing={liveBriefing}
               mesoData={mesoData} isLoading={isLoading} onSelectSpot={handleSelectLake} contentRef={contentRef}
-            />
-          ) : selectedActivity === 'boating' || selectedActivity === 'paddling' || selectedActivity === 'fishing' ? (
-            <BoatingTemplate
-              selectedActivity={selectedActivity} selectedLake={selectedLake} activityConfig={activityConfig}
-              currentWindSpeed={currentWindSpeed} currentWindGust={currentWindGust} currentWindDirection={currentWindDirection}
-              effectiveBoatingPrediction={effectiveBoatingPrediction} lakeState={lakeState}
-              effectiveBriefing={liveBriefing} prediction={prediction}
             />
           ) : (
             <WindSeekerTemplate
