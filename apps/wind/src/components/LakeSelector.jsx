@@ -2,7 +2,6 @@ import { MapPin, ChevronDown, ChevronUp, Wind, Snowflake, Mountain, Fish, Clock,
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { LAKE_CONFIGS, weatherService } from '@utahwind/weather';
-import { safeToFixed } from '../utils/safeToFixed';
 
 // ─── SPOT METADATA ──────────────────────────────────────────────────────────
 
@@ -350,7 +349,7 @@ function plainWindOutlook(prob, speed, propagation) {
   return { text: 'Calm — no wind expected', color: 'slate' };
 }
 
-function SelectedSpotCard({ spot, stationCache, thermalPrediction, lakeState, selectedLake, isDark, onSelectLake, activity }) {
+function SelectedSpotCard({ spot, stationCache, thermalPrediction, lakeState, selectedLake, isDark, onSelectLake, activity: _activity }) {
   const [expandLaunches, setExpandLaunches] = useState(false);
   const isUL = spot?.id === 'utah-lake' || isUtahLakeLaunch(selectedLake);
   const cfg = LAKE_CONFIGS[selectedLake];

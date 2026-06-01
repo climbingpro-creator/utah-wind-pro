@@ -806,7 +806,6 @@ function calibrate(regime, pressure, propagation, context, hour, month, obs) {
   const thermalDir = spotConfig?.thermal?.optimalDirection;
   const tdMin = thermalDir?.min ?? 100;
   const tdMax = thermalDir?.max ?? 200;
-  const tdWrap = tdMin > tdMax;
   // Wider range for confirmation (+/- 30°)
   const wMin = (tdMin - 30 + 360) % 360;
   const wMax = (tdMax + 30) % 360;
