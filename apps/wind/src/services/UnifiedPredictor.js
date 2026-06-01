@@ -807,10 +807,6 @@ function calibrate(regime, pressure, propagation, context, hour, month, obs) {
   const tdMin = thermalDir?.min ?? 100;
   const tdMax = thermalDir?.max ?? 200;
   const tdWrap = tdMin > tdMax;
-  const inThDir = (d) => {
-    if (d == null) return false;
-    return tdWrap ? (d >= tdMin || d <= tdMax) : (d >= tdMin && d <= tdMax);
-  };
   // Wider range for confirmation (+/- 30°)
   const wMin = (tdMin - 30 + 360) % 360;
   const wMax = (tdMax + 30) % 360;
@@ -1182,7 +1178,6 @@ function brief(regime, decision, propagation, pressure, activities, currentActiv
     bullets.push(`Also good for: ${goActivities.join(', ')}`);
   }
 
-  const verb = ACTIVITY_VERBS[currentActivity] || currentActivity;
   let bestAction = '';
   if (decision.decision === 'GO') {
     const hoursLeft = Math.max(1, 18 - hour);
