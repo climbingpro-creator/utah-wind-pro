@@ -143,7 +143,6 @@ export const utahLakeConfigs = {
     name: 'Sandy Beach',
     shortName: 'Sandy',
     region: 'Utah Lake - South-Central',
-    // Sandy Beach - south-central Utah Lake
     coordinates: { lat: 40.17049661378955, lng: -111.74571902175627 },
     elevation: 4489,
     
@@ -151,7 +150,6 @@ export const utahLakeConfigs = {
     thermalDirection: 'SE to SSE (130-160°)',
     description: 'South-Central launch - SE thermal',
     
-    // Sandy Beach south shore. Safe from West (270) through North (0) to East (90).
     safeWindArc: [270, 90],
     shoreFacing: 0,
     kiting: {
@@ -183,8 +181,15 @@ export const utahLakeConfigs = {
           id: 'CSC', 
           name: 'Cascade Peak',
           elevation: 10875,
-          role: 'Elevation Delta - High reference',
+          role: 'Elevation Delta - High reference for thermal pump',
           priority: 1
+        },
+        { 
+          id: 'TIMU1', 
+          name: 'Timpanogos Divide',
+          elevation: 8170,
+          role: 'Backup high elevation reference',
+          priority: 2
         },
       ],
       
@@ -192,6 +197,24 @@ export const utahLakeConfigs = {
         id: 'KPVU',
         name: 'Provo Municipal Airport',
         role: 'Ground Truth - Best indicator for southern launches',
+      },
+      
+      earlyIndicator: {
+        id: 'QSF',
+        name: 'Spanish Fork Canyon',
+        elevation: 4550,
+        coordinates: { lat: 40.115, lng: -111.655 },
+        role: 'Early Warning - SE wind here precedes Sandy Beach thermal by ~2 hours',
+        leadTimeMinutes: 120,
+        trigger: {
+          direction: { min: 100, max: 180, label: 'SE' },
+          speed: { min: 6, optimal: 7.5 },
+        },
+        statistics: {
+          seDirectionOnGoodDays: 97,
+          avgSpeedOnGoodDays: 7.6,
+          accuracy: 62.5,
+        },
       },
       
       lakeshore: [
@@ -206,14 +229,25 @@ export const utahLakeConfigs = {
           id: 'FPS', 
           name: 'Flight Park South',
           elevation: 5202,
-          role: 'Secondary - good for SE thermal only',
+          role: 'Ridge-amplified SE thermal indicator',
           priority: 2
+        },
+        {
+          id: 'UTPCR',
+          name: 'Pioneer Crossing, Lehi (UDOT)',
+          elevation: 4500,
+          role: 'North lake shore reference',
+          priority: 3
         },
       ],
       
       reference: [
         { id: 'UTALP', name: 'Point of the Mountain', elevation: 4796 },
         { id: 'FPS', name: 'Flight Park South', elevation: 5202 },
+        { id: 'UTORM', name: 'I-15 Orem (UDOT)', elevation: 4500 },
+        { id: 'UTLAK', name: 'SR-68 Mosida (UDOT)', elevation: 4500 },
+        { id: 'QLN', name: 'Lindon', elevation: 4738 },
+        { id: 'KUTSARAT88', name: 'Saratoga Springs S (WU)', elevation: 4500 },
       ],
     },
     
@@ -296,7 +330,20 @@ export const utahLakeConfigs = {
       groundTruth: {
         id: 'PWS',
         name: 'Saratoga Springs (Zigzag)',
-        role: 'Ground Truth - Your PWS',
+        role: 'Ground Truth - Your PWS (shared with Zigzag)',
+      },
+      
+      earlyIndicator: {
+        id: 'QSF',
+        name: 'Spanish Fork Canyon',
+        elevation: 4550,
+        coordinates: { lat: 40.115, lng: -111.655 },
+        role: 'Early Warning - SE/S flow at QSF indicates thermal development; S/SSW component favorable for Vineyard',
+        leadTimeMinutes: 90,
+        trigger: {
+          direction: { min: 100, max: 230, label: 'SE-SW' },
+          speed: { min: 6, optimal: 8 },
+        },
       },
       
       lakeshore: [
@@ -311,20 +358,37 @@ export const utahLakeConfigs = {
           id: 'QLN', 
           name: 'Lindon',
           elevation: 4738,
-          role: 'East shore reference',
+          role: 'East shore — closest to Vineyard',
           priority: 2
+        },
+        {
+          id: 'KPVU',
+          name: 'Provo Municipal Airport',
+          elevation: 4495,
+          role: 'Valley floor confirmation',
+          priority: 3
+        },
+        {
+          id: 'UTPCR',
+          name: 'Pioneer Crossing, Lehi (UDOT)',
+          elevation: 4500,
+          role: 'North shore reference',
+          priority: 4
         },
       ],
       
       reference: [
         { id: 'UTALP', name: 'Point of the Mountain', elevation: 4796 },
+        { id: 'UTORM', name: 'I-15 Orem (UDOT)', elevation: 4500 },
+        { id: 'KUTSARAT88', name: 'Saratoga Springs S (WU)', elevation: 4500 },
+        { id: 'KUTSARAT62', name: 'Saratoga Springs N (WU)', elevation: 4500 },
+        { id: 'UID28', name: 'Saratoga Springs', elevation: 4500 },
+        { id: 'UTLAK', name: 'SR-68 Mosida (UDOT)', elevation: 4500 },
       ],
     },
     
     thermal: {
-      // S, SSW, W are good for Vineyard (onshore/side-on from east shore)
-      // SE is OFFSHORE and dangerous!
-      optimalDirection: { min: 180, max: 270, ideal: 225 }, // S to W, ideal SSW
+      optimalDirection: { min: 180, max: 270, ideal: 225 },
       optimalSpeed: { min: 6, max: 16, average: 9 },
       peakHours: { start: 10, end: 14, peak: 12 },
       buildTime: { start: 6, usable: 9 },
@@ -542,7 +606,20 @@ export const utahLakeConfigs = {
       groundTruth: {
         id: 'PWS',
         name: 'Saratoga Springs (Zigzag)',
-        role: 'Ground Truth - Nearby PWS',
+        role: 'Ground Truth - Nearby PWS (shared with Zigzag)',
+      },
+      
+      earlyIndicator: {
+        id: 'QSF',
+        name: 'Spanish Fork Canyon',
+        elevation: 4550,
+        coordinates: { lat: 40.115, lng: -111.655 },
+        role: 'Early Warning - SE canyon drainage is the primary wind source for MM19',
+        leadTimeMinutes: 30,
+        trigger: {
+          direction: { min: 100, max: 170, label: 'SE/E' },
+          speed: { min: 6, optimal: 8 },
+        },
       },
       
       lakeshore: [
@@ -560,10 +637,29 @@ export const utahLakeConfigs = {
           role: 'North reference',
           priority: 2
         },
+        {
+          id: 'KPVU',
+          name: 'Provo Municipal Airport',
+          elevation: 4495,
+          role: 'Valley floor confirmation',
+          priority: 3
+        },
+        {
+          id: 'UTPCR',
+          name: 'Pioneer Crossing, Lehi (UDOT)',
+          elevation: 4500,
+          role: 'Near-target reference',
+          priority: 4
+        },
       ],
       
       reference: [
         { id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226 },
+        { id: 'UTOLY', name: 'Lake Shore / Zig Zag', elevation: 4489 },
+        { id: 'UID28', name: 'Saratoga Springs', elevation: 4500 },
+        { id: 'KUTSARAT88', name: 'Saratoga Springs S (WU)', elevation: 4500 },
+        { id: 'UTLAK', name: 'SR-68 Mosida (UDOT)', elevation: 4500 },
+        { id: 'UTORM', name: 'I-15 Orem (UDOT)', elevation: 4500 },
       ],
     },
     

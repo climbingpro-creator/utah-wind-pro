@@ -314,24 +314,54 @@ function classify(obs, context, overallAnomaly) {
     description: '',
   };
 
-  // ── SE thermal detection: QSF (Spanish Fork Canyon) is THE leading indicator.
-  // Chain: QSF SE ≥6 mph → KPVU SE → FPS SE → PWS. QSF fires ~2 hrs ahead.
+  const config = context?._config;
+  const thermal = config?.thermal;
+
+  // ── Config-driven direction ranges for this specific spot ────────
+  // Each spot defines its own thermal direction — Zigzag is SE (100-200),
+  // Deer Creek is SSW-WSW (170-260), Willard is S (150-220), etc.
+  const thermalDirMin = thermal?.optimalDirection?.min ?? 100;
+  const thermalDirMax = thermal?.optimalDirection?.max ?? 200;
+  const thermalDirWrap = thermalDirMin > thermalDirMax;
+  const inThermalDir = (d) => {
+    if (d == null) return false;
+    return thermalDirWrap ? (d >= thermalDirMin || d <= thermalDirMax) : (d >= thermalDirMin && d <= thermalDirMax);
+  };
+  // Wider acceptance range for "thermal-ish" flow (+/- 30° from optimal)
+  const wideMin = (thermalDirMin - 30 + 360) % 360;
+  const wideMax = (thermalDirMax + 30) % 360;
+  const wideWrap = wideMin > wideMax;
+  const inWideThermalDir = (d) => {
+    if (d == null) return false;
+    return wideWrap ? (d >= wideMin || d <= wideMax) : (d >= wideMin && d <= wideMax);
+  };
+  const inNorthDir = (d) => d != null && (d >= 315 || d <= 45);
+
+  // Derive the thermal regime name from the spot's primaryWindType
+  const primaryType = config?.primaryWindType || '';
+  const regimeName = primaryType.toLowerCase().includes('canyon') ? 'canyon_thermal'
+    : primaryType.toLowerCase().includes('north') ? 'north_flow'
+    : primaryType.toLowerCase().includes('south') ? 'south_flow'
+    : primaryType.toLowerCase().includes('se') ? 'se_thermal'
+    : primaryType.toLowerCase().includes('ssw') ? 'canyon_thermal'
+    : 'thermal';
+
+  // ── Early indicator check (works for any spot's configured indicator) ──
   const ei = obs.earlyIndicator;
   const eiId = obs.earlyIndicatorId;
-  const _eiTrigger = context?._config?.stations?.earlyIndicator?.trigger;
+  const eiTrigger = config?.stations?.earlyIndicator?.trigger;
+  const eiDirMin = eiTrigger?.direction?.min ?? thermalDirMin;
+  const eiDirMax = eiTrigger?.direction?.max ?? thermalDirMax;
+  const eiSpeedMin = eiTrigger?.speed?.min ?? 6;
+  const eiInDir = (d) => {
+    if (d == null) return false;
+    return eiDirMin > eiDirMax ? (d >= eiDirMin || d <= eiDirMax) : (d >= eiDirMin && d <= eiDirMax);
+  };
+  const eiActive = ei && eiInDir(ei.dir) && ei.speed >= eiSpeedMin;
 
-  const qsfSE = ei && eiId === 'QSF'
-    && ei.dir != null && ei.dir >= 100 && ei.dir <= 180
-    && ei.speed >= 6;
-
-  // Also check KPVU for confirming SE flow (mid-chain)
-  const kpvu = obs.allReadings?.KPVU;
-  const kpvuSE = kpvu && kpvu.dir != null && kpvu.dir >= 120 && kpvu.dir <= 200 && kpvu.speed >= 4;
-
-  // Ground truth or fallback signal for other regime checks
+  // ── Ground truth and best-signal determination ────────────────────
   let sigDir = obs.groundTruth?.dir;
   let sigSpeed = obs.groundTruth?.speed ?? 0;
-  // sigSource tracked for debugging
 
   if (sigSpeed < 1 || sigDir == null) {
     const candidates = [
@@ -344,28 +374,79 @@ function classify(obs, context, overallAnomaly) {
       const best = candidates.reduce((a, b) => (b.speed > a.speed ? b : a));
       sigDir = best.dir;
       sigSpeed = best.speed;
-      void best.src;
     }
   }
 
-  const seFlow = sigDir != null && sigDir >= 100 && sigDir <= 200 && sigSpeed >= 5;
-  const northFlow = sigDir != null && (sigDir >= 315 || sigDir <= 45) && sigSpeed >= 5;
+  const thermalFlow = inWideThermalDir(sigDir) && sigSpeed >= 5;
+  const northFlow = inNorthDir(sigDir) && sigSpeed >= 5;
   const clearing = sigDir != null && (sigDir >= 270 || sigDir <= 45) && sigSpeed >= 8;
   const calm = sigSpeed < 3;
 
-  // QSF SE is the strongest SE thermal signal — if QSF says SE, trust it
-  if (qsfSE && kpvuSE) {
-    result.regime = 'se_thermal'; result.confidence = 0.85; result.description = `SE thermal confirmed: QSF ${Math.round(ei.speed)} mph SE + KPVU SE`;
+  // ── Multi-station thermal confirmation ────────────────────────────
+  // Count ALL stations (lakeshore, reference, ridge, allReadings) that
+  // show wind from the spot's thermal direction. This works for any spot.
+  let thermalConfirmCount = eiActive ? 1 : 0;
+  const confirmers = [];
+
+  // Check all lakeshore, reference, and ridge stations
+  const allNetworkStations = [
+    ...(obs.lakeshore || []),
+    ...(obs.reference || []),
+    ...(obs.ridge || []),
+  ];
+  for (const s of allNetworkStations) {
+    if (s.speed >= 3 && inWideThermalDir(s.dir)) {
+      thermalConfirmCount++;
+      confirmers.push(`${s.id} ${Math.round(s.speed)} mph`);
+    }
+  }
+
+  // Also check key allReadings stations (pressure pair, early indicator's chain)
+  const pressureHighSt = obs.allReadings?.[obs.pressureHighId];
+  const pressureLowSt = obs.allReadings?.[obs.pressureLowId];
+  if (pressureLowSt && pressureLowSt.speed >= 4 && inWideThermalDir(pressureLowSt.dir)) {
+    thermalConfirmCount++;
+    confirmers.push(`${obs.pressureLowId} ${Math.round(pressureLowSt.speed)} mph`);
+  }
+  if (pressureHighSt && pressureHighSt.speed >= 4 && inWideThermalDir(pressureHighSt.dir)) {
+    thermalConfirmCount++;
+  }
+
+  // Ground truth / PWS thermal check
+  const pwsReading = obs.pws || obs.groundTruth;
+  const pwsThermal = pwsReading && inThermalDir(pwsReading.dir) && pwsReading.speed >= 8;
+  const pwsBuilding = pwsReading && inWideThermalDir(pwsReading.dir) && pwsReading.speed >= 5;
+
+  // ── Classification cascade ────────────────────────────────────────
+  if (pwsThermal) {
+    const helpers = confirmers.slice(0, 3).join(', ');
+    result.regime = regimeName; result.confidence = 0.9;
+    result.description = `${primaryType || 'Thermal'} confirmed at ground truth: ${Math.round(pwsReading.speed)} mph` + (helpers ? ` (${helpers})` : '');
+    result.qsfSignal = eiActive;
+  } else if (eiActive && thermalConfirmCount >= 3) {
+    result.regime = regimeName; result.confidence = 0.85;
+    result.description = `${primaryType || 'Thermal'} confirmed: ${eiId} ${Math.round(ei.speed)} mph + ${thermalConfirmCount - 1} stations`;
     result.qsfSignal = true;
-  } else if (qsfSE) {
-    result.regime = 'se_thermal'; result.confidence = 0.7; result.description = `SE thermal building: QSF ${Math.round(ei.speed)} mph SE`;
+  } else if (eiActive) {
+    result.regime = regimeName; result.confidence = 0.7;
+    result.description = `${primaryType || 'Thermal'} building: ${eiId} ${Math.round(ei.speed)} mph`;
     result.qsfSignal = true;
+  } else if (thermalConfirmCount >= 3) {
+    result.regime = regimeName; result.confidence = 0.75;
+    result.description = `${primaryType || 'Thermal'} confirmed by ${thermalConfirmCount} stations`;
+    result.qsfSignal = false;
+  } else if (pwsBuilding || thermalConfirmCount >= 2) {
+    result.regime = regimeName; result.confidence = 0.6;
+    result.description = pwsBuilding
+      ? `${primaryType || 'Thermal'} building at ground truth: ${Math.round(pwsReading.speed)} mph`
+      : `${primaryType || 'Thermal'} flow on ${thermalConfirmCount} stations`;
+    result.qsfSignal = false;
   } else if (northFlow) {
     result.regime = 'north_flow'; result.confidence = 0.6; result.description = 'N/NW flow detected';
   } else if (clearing && overallAnomaly > 1.0) {
     result.regime = 'postfrontal_clearing'; result.confidence = 0.5; result.description = 'Post-frontal clearing wind';
-  } else if (seFlow) {
-    result.regime = 'se_thermal'; result.confidence = 0.5; result.description = 'SE thermal flow (weaker signal)';
+  } else if (thermalFlow) {
+    result.regime = regimeName; result.confidence = 0.5; result.description = `${primaryType || 'Thermal'} flow (weaker signal)`;
   } else if (calm) {
     result.regime = 'calm'; result.confidence = 0.5; result.description = 'Calm conditions';
   } else {
@@ -429,6 +510,26 @@ function propagate(obs, context, config, regime) {
     dominantSource: null,
     lagConfidence: 0,
   };
+
+  // Ground truth early-exit: if PWS is already showing real wind, skip the
+  // lag-correlation chain and mark arrived immediately.
+  const gtWind = obs.groundTruth || obs.pws;
+  if (gtWind && gtWind.speed >= 8) {
+    result.phase = 'arrived';
+    result.eta = 0;
+    result.expectedSpeed = gtWind.speed;
+    result.lagConfidence = 0.9;
+    result.dominantSource = obs.groundTruthId || 'PWS';
+    return result;
+  }
+  if (gtWind && gtWind.speed >= 5) {
+    result.phase = 'arrived';
+    result.eta = 0;
+    result.expectedSpeed = gtWind.speed;
+    result.lagConfidence = 0.7;
+    result.dominantSource = obs.groundTruthId || 'PWS';
+    // Don't return — let lag correlations potentially set higher expectedSpeed
+  }
 
   const gtId = obs.groundTruthId;
   const lagCorr = context?.lagCorrelations;
@@ -626,25 +727,21 @@ function calibrate(regime, pressure, propagation, context, hour, month, obs) {
   let confidence = 0.5;
   let speedMultiplier = 1.0;
 
-  // Base probability from regime — QSF-confirmed SE thermal is strongest signal
-  switch (regime.regime) {
-    case 'se_thermal':
-      probability = regime.qsfSignal && regime.confidence >= 0.8 ? 75 : 60;
-      break;
-    case 'north_flow':
-      probability = 55;
-      break;
-    case 'postfrontal_clearing':
-      probability = 55;
-      break;
-    case 'calm':
-      probability = 15;
-      break;
-    case 'transitional':
-      probability = 35;
-      break;
-    default:
-      probability = 30;
+  // Base probability from regime — config-driven for any spot
+  const isThermalRegime = ['se_thermal', 'canyon_thermal', 'thermal', 'south_flow'].includes(regime.regime);
+  if (isThermalRegime) {
+    probability = regime.qsfSignal && regime.confidence >= 0.8 ? 75
+      : regime.confidence >= 0.85 ? 75
+      : regime.confidence >= 0.6 ? 60
+      : 50;
+  } else {
+    switch (regime.regime) {
+      case 'north_flow': probability = 55; break;
+      case 'postfrontal_clearing': probability = 55; break;
+      case 'calm': probability = 15; break;
+      case 'transitional': probability = 35; break;
+      default: probability = 30;
+    }
   }
 
   // ── NORTH FLOW GATE ──────────────────────────────────────────────
@@ -701,57 +798,91 @@ function calibrate(regime, pressure, propagation, context, hour, month, obs) {
     }
   }
 
-  // ── SE THERMAL GATE ──────────────────────────────────────────────
-  // QSF (Spanish Fork Canyon) is the best leading indicator.
-  // UTORM (Orem I-15) and KPVU provide mid-chain confirmation.
-  // UTPCR (Pioneer Crossing) provides close-range confirmation.
-  // WU PWS: Saratoga Springs + Lehi stations provide neighborhood-level validation.
-  if (regime.regime === 'se_thermal' && obs?.earlyIndicator) {
+  // ── THERMAL INDICATOR GATE (generic — works for any spot) ────────
+  // Uses the spot's configured earlyIndicator + all lakeshore/reference
+  // stations to confirm or deny the thermal regime.
+  const isThermal = ['se_thermal', 'canyon_thermal', 'thermal', 'south_flow'].includes(regime.regime);
+  const spotConfig = context?._config;
+  const thermalDir = spotConfig?.thermal?.optimalDirection;
+  const tdMin = thermalDir?.min ?? 100;
+  const tdMax = thermalDir?.max ?? 200;
+  const tdWrap = tdMin > tdMax;
+  const inThDir = (d) => {
+    if (d == null) return false;
+    return tdWrap ? (d >= tdMin || d <= tdMax) : (d >= tdMin && d <= tdMax);
+  };
+  // Wider range for confirmation (+/- 30°)
+  const wMin = (tdMin - 30 + 360) % 360;
+  const wMax = (tdMax + 30) % 360;
+  const wWrap = wMin > wMax;
+  const inWideThDir = (d) => {
+    if (d == null) return false;
+    return wWrap ? (d >= wMin || d <= wMax) : (d >= wMin && d <= wMax);
+  };
+
+  if (isThermal && obs?.earlyIndicator) {
     const ei = obs.earlyIndicator;
-    const eiSE = ei.dir != null && ei.dir >= 100 && ei.dir <= 180;
-    const eiStrong = ei.speed >= 6;
-    const kpvu = obs.allReadings?.KPVU;
-    const utorm = obs.allReadings?.UTORM;
-    const utpcr = obs.allReadings?.UTPCR;
-    const kpvuSE = kpvu && kpvu.dir != null && kpvu.dir >= 120 && kpvu.dir <= 200 && kpvu.speed >= 4;
-    const utormSE = utorm && utorm.dir != null && utorm.dir >= 100 && utorm.dir <= 180 && utorm.speed >= 4;
-    const utpcrSE = utpcr && utpcr.dir != null && utpcr.dir >= 100 && utpcr.dir <= 180 && utpcr.speed >= 4;
+    const eiInDir = inWideThDir(ei.dir);
+    const eiTrigger = spotConfig?.stations?.earlyIndicator?.trigger;
+    const eiStrong = ei.speed >= (eiTrigger?.speed?.min ?? 6);
 
-    // WU PWS close-range validation: trained from 90 days of cross-validation.
-    // KUTSARAT88 sees 0.83x of PWS during SE thermal — closest WU proxy.
-    // KUTBLUFF18 and KUTRIVER67 see ~1.0x during SE thermal — excellent confirmation.
-    const isSE = (d) => d != null && d >= 100 && d <= 200;
-    const wuSS88 = obs.allReadings?.KUTSARAT88;
-    const wuSS81 = obs.allReadings?.KUTSARAT81;
-    const wuBluffSE = obs.allReadings?.KUTBLUFF18;
-    const wuRiverSE = obs.allReadings?.KUTRIVER67;
-    const wuSS88SE = wuSS88?.speed >= 3 && isSE(wuSS88?.dir);
-    const wuSS81SE = wuSS81?.speed >= 3 && isSE(wuSS81?.dir);
-    const wuBluffSESig = wuBluffSE?.speed >= 4 && isSE(wuBluffSE?.dir);
-    const wuRiverSESig = wuRiverSE?.speed >= 4 && isSE(wuRiverSE?.dir);
-    const wuSECount = (wuSS88SE ? 1 : 0) + (wuSS81SE ? 1 : 0) + (wuBluffSESig ? 1 : 0) + (wuRiverSESig ? 1 : 0);
+    // Count all lakeshore + reference stations confirming thermal direction
+    let midConfirm = 0;
+    for (const s of [...(obs.lakeshore || []), ...(obs.reference || [])]) {
+      if (s.speed >= 3 && inWideThDir(s.dir)) midConfirm++;
+    }
 
-    const midConfirm = (kpvuSE ? 1 : 0) + (utormSE ? 1 : 0) + (utpcrSE ? 1 : 0) + Math.min(wuSECount, 2);
-
-    if (eiSE && eiStrong && midConfirm >= 3) {
+    if (eiInDir && eiStrong && midConfirm >= 3) {
       probability = Math.max(probability, 80);
       confidence = Math.max(confidence, 0.75);
-    } else if (eiSE && eiStrong && midConfirm >= 2) {
+    } else if (eiInDir && eiStrong && midConfirm >= 2) {
       probability = Math.max(probability, 75);
       confidence = Math.max(confidence, 0.7);
-    } else if (eiSE && eiStrong && midConfirm >= 1) {
+    } else if (eiInDir && eiStrong && midConfirm >= 1) {
       probability = Math.max(probability, 70);
       confidence = Math.max(confidence, 0.65);
-    } else if (eiSE && eiStrong) {
+    } else if (eiInDir && eiStrong) {
       probability = Math.max(probability, 60);
       confidence = Math.max(confidence, 0.5);
-    } else if (eiSE) {
-      probability = probability * 0.8;
+    } else if (eiInDir) {
+      probability = probability * 0.85;
     } else {
-      probability *= 0.4;
+      probability *= 0.5;
     }
-  } else if (regime.regime === 'se_thermal' && !obs?.earlyIndicator) {
-    probability *= 0.7;
+  } else if (isThermal && !obs?.earlyIndicator) {
+    // No early indicator reporting — check the full station network
+    let confirmCount = 0;
+    for (const s of [...(obs.lakeshore || []), ...(obs.reference || []), ...(obs.ridge || [])]) {
+      if (s.speed >= 3 && inWideThDir(s.dir)) confirmCount++;
+    }
+
+    if (confirmCount >= 3) {
+      probability = Math.max(probability, 70);
+      confidence = Math.max(confidence, 0.65);
+    } else if (confirmCount >= 2) {
+      probability = Math.max(probability, 60);
+      confidence = Math.max(confidence, 0.55);
+    } else if (confirmCount >= 1) {
+      probability *= 0.85;
+    } else {
+      probability *= 0.7;
+    }
+  }
+
+  // ── TEMPERATURE DELTA THERMAL BOOST ────────────────────────────
+  // Valley-ridge temperature differential drives thermal strength.
+  // ΔT > 25°F = strong pump, > 35°F = very strong.
+  if (isThermal && pressure.elevationDelta != null) {
+    const dt = pressure.elevationDelta;
+    if (dt >= 35) {
+      probability = Math.max(probability, 70);
+      confidence = Math.max(confidence, 0.65);
+    } else if (dt >= 25) {
+      probability = Math.max(probability, 55);
+      confidence = Math.max(confidence, 0.55);
+    } else if (dt < 15 && hour >= 10 && hour <= 16) {
+      probability *= 0.8;
+    }
   }
 
   // Thermal profiles from 365-day analysis (hourlyProbability[h] is 0–100 from historicalAnalysis)
@@ -760,17 +891,16 @@ function calibrate(regime, pressure, propagation, context, hour, month, obs) {
     for (const [, lakeProfile] of Object.entries(profiles)) {
       const hp = lakeProfile?.hourlyProbability?.[hour];
       if (hp != null && typeof hp === 'number') {
-        probability = probability * 0.6 + hp * 0.4;
+        // Blend 70% current model + 30% climatology (was 60/40 — less dilution)
+        probability = probability * 0.7 + hp * 0.3;
         break;
       }
     }
   }
 
-  // Pressure bust override
-  if (pressure.thermalBusted) {
-    if (regime.regime === 'se_thermal') {
-      probability *= 0.2;
-    }
+  // Pressure bust override — applies to ALL thermal regimes, not just SE
+  if (pressure.thermalBusted && isThermal) {
+    probability *= 0.2;
   }
 
   // Hourly multipliers from learned weights
@@ -784,10 +914,10 @@ function calibrate(regime, pressure, propagation, context, hour, month, obs) {
 
   // Propagation boost
   if (propagation.phase === 'arrived') {
-    probability = Math.max(probability, 70);
-    confidence = Math.max(confidence, 0.7);
+    probability = Math.max(probability, 80);
+    confidence = Math.max(confidence, 0.75);
   } else if (propagation.phase === 'building' || propagation.phase === 'approaching') {
-    probability = Math.max(probability, 45);
+    probability = Math.max(probability, 50);
   }
 
   // Lag correlation confidence
@@ -830,6 +960,36 @@ function calibrate(regime, pressure, propagation, context, hour, month, obs) {
   // Speed bias correction
   if (lw?.speedBiasCorrection) {
     speedMultiplier += lw.speedBiasCorrection / 10;
+  }
+
+  // ── GROUND TRUTH OVERRIDE (final) ─────────────────────────────────
+  // If the PWS / ground truth station IS ALREADY reporting kiteable SE
+  // wind, the thermal is here — no indicator chain, calibration curve,
+  // or hourly multiplier can override observed reality on the ground.
+  // This is the last gate before output so nothing can suppress it.
+  const gt = obs?.groundTruth || obs?.pws;
+  const gtSpeed = gt?.speed ?? 0;
+  const gtDir = gt?.dir;
+  const gtIsSE = gtDir != null && gtDir >= 100 && gtDir <= 200;
+  const gtIsKiteable = gtSpeed >= 8 && gtIsSE;
+  const gtIsBuildingSE = gtSpeed >= 5 && gtIsSE;
+
+  if (gtIsKiteable) {
+    probability = Math.max(probability, 85);
+    confidence = Math.max(confidence, 0.85);
+  } else if (gtIsBuildingSE) {
+    probability = Math.max(probability, 70);
+    confidence = Math.max(confidence, 0.7);
+  }
+
+  // Also override for any regime: if GT is showing real wind >= 10 mph
+  // from any direction, don't let the model say < 60%
+  if (gtSpeed >= 10) {
+    probability = Math.max(probability, 75);
+    confidence = Math.max(confidence, 0.75);
+  } else if (gtSpeed >= 6) {
+    probability = Math.max(probability, 55);
+    confidence = Math.max(confidence, 0.55);
   }
 
   probability = clamp(probability, 0, 95);
@@ -912,17 +1072,28 @@ function scoreAllActivities(speed, gust, probability, dir, config) {
 //  STEP 8: DECIDE — GO / WAIT / PASS with confidence
 // ═══════════════════════════════════════════════════════════════════
 
+const ACTIVITY_VERBS = {
+  kiting: 'kite', snowkiting: 'snowkite', sailing: 'sail',
+  windsurfing: 'windsurf', paragliding: 'fly',
+  boating: 'get out on the water', paddling: 'paddle', fishing: 'fish',
+};
+
 function decide(activity, activityScore, speed, gust, dir, _probability, propagation, _pressure) {
   const p = PROFILES[activity];
-  if (!p) return { decision: 'WAIT', confidence: 0.3, headline: 'Unknown activity', detail: '', action: '' };
+  if (!p) return { decision: 'WAIT', confidence: 0.3, headline: 'Checking conditions...', detail: '', action: '' };
+
+  const verb = ACTIVITY_VERBS[activity] || activity;
+  const cardinal = getCardinal(dir);
+  const spd = Math.round(speed);
+  const gstStr = gust ? ` with ${Math.round(gust)} mph gusts` : '';
 
   if (activityScore.status === 'dangerous') {
     return {
       decision: 'PASS',
       confidence: 0.9,
-      headline: `Too strong — ${Math.round(speed)} mph with ${Math.round(gust || speed)} mph gusts`,
-      detail: 'Dangerous conditions. Do not launch.',
-      action: p.wantsWind ? 'Stay safe — conditions exceed limits' : 'Stay off the water',
+      headline: `Don't ${verb} today — ${spd} mph${gstStr} is dangerous`,
+      detail: `Wind is well above safe limits. Stay home and wait for calmer conditions.`,
+      action: `Not safe to ${verb} right now`,
     };
   }
 
@@ -930,22 +1101,28 @@ function decide(activity, activityScore, speed, gust, dir, _probability, propaga
     return {
       decision: 'GO',
       confidence: clamp(activityScore.score / 100, 0.6, 0.95),
-      headline: `${Math.round(speed)} mph ${getCardinal(dir)} — ${p.wantsWind ? 'sending it' : 'calm & beautiful'}`,
+      headline: p.wantsWind
+        ? `You should go ${verb} today — ${spd} mph ${cardinal}`
+        : `Great time to ${verb} — calm at ${spd} mph`,
       detail: activityScore.message,
-      action: p.wantsWind ? 'Get out there — conditions are ideal' : 'Perfect time on the water',
+      action: p.wantsWind
+        ? `Conditions are dialed. Get out there.`
+        : `Smooth water — perfect conditions right now`,
     };
   }
 
   if (propagation.phase === 'building' || propagation.phase === 'approaching') {
     const etaMin = propagation.eta || 60;
+    const upstream = propagation.dominantSource;
+    const expectedSpd = Math.round(propagation.expectedSpeed || 0);
     return {
       decision: 'WAIT',
       confidence: clamp(propagation.lagConfidence, 0.3, 0.8),
-      headline: `Wind building — ETA ~${etaMin} min`,
-      detail: propagation.dominantSource
-        ? `${propagation.dominantSource} showing ${Math.round(propagation.expectedSpeed || 0)} mph upstream`
-        : 'Upstream stations showing wind building',
-      action: p.wantsWind ? `Rig up — wind expected in ~${etaMin} minutes` : `Wait ${etaMin} min for conditions to change`,
+      headline: `Wind is building — could be good to ${verb} by ${formatETA(_pressure?._hour ?? 12, etaMin)}`,
+      detail: upstream
+        ? `${upstream} is showing ${expectedSpd} mph upstream. Give it about ${etaMin} minutes to arrive.`
+        : `Upstream stations showing wind building. Keep an eye on it.`,
+      action: `Start getting ready — wind should arrive in ~${etaMin} min`,
     };
   }
 
@@ -953,18 +1130,22 @@ function decide(activity, activityScore, speed, gust, dir, _probability, propaga
     return {
       decision: 'WAIT',
       confidence: 0.4,
-      headline: `Marginal — ${Math.round(speed)} mph`,
-      detail: activityScore.message,
-      action: 'Keep watching — could improve',
+      headline: `There's a chance today but it could bust — ${spd} mph right now`,
+      detail: `Marginal conditions. ${p.wantsWind ? 'It might pick up, or it might stay light.' : 'Could get rougher.'}`,
+      action: `Keep watching — don't drive to the spot yet`,
     };
   }
 
   return {
     decision: 'PASS',
     confidence: clamp(1 - activityScore.score / 100, 0.5, 0.9),
-    headline: p.wantsWind ? `Too light — ${Math.round(speed)} mph` : `Too windy — ${Math.round(speed)} mph`,
-    detail: activityScore.message,
-    action: p.wantsWind ? 'Not enough wind yet' : 'Too rough right now',
+    headline: p.wantsWind
+      ? `It's not going to be windy today — probably skip ${activity}`
+      : `Too windy to ${verb} right now — ${spd} mph`,
+    detail: p.wantsWind
+      ? `Only ${spd} mph and no signs of it picking up. Save the drive.`
+      : `${spd} mph is making the water rough. Wait for it to calm down.`,
+    action: p.wantsWind ? `Not worth the trip today` : `Wait for calmer conditions`,
   };
 }
 
@@ -1001,13 +1182,17 @@ function brief(regime, decision, propagation, pressure, activities, currentActiv
     bullets.push(`Also good for: ${goActivities.join(', ')}`);
   }
 
-  // Best window estimate
+  const verb = ACTIVITY_VERBS[currentActivity] || currentActivity;
   let bestAction = '';
   if (decision.decision === 'GO') {
     const hoursLeft = Math.max(1, 18 - hour);
-    bestAction = `Conditions good for the next ${hoursLeft}+ hours`;
+    bestAction = hoursLeft >= 4
+      ? `You've got all afternoon — good conditions for the next ${hoursLeft}+ hours`
+      : `Window is closing — maybe ${hoursLeft} hour${hoursLeft > 1 ? 's' : ''} of light left`;
   } else if (decision.decision === 'WAIT' && propagation.eta) {
-    bestAction = `Be ready by ${formatETA(hour, propagation.eta)}`;
+    bestAction = `Be ready by ${formatETA(hour, propagation.eta)} — start getting your gear together`;
+  } else if (decision.decision === 'PASS') {
+    bestAction = `Save the drive. Check back tomorrow or try a different spot.`;
   }
 
   const excitement = decision.decision === 'GO' && actScore?.score >= 80 ? 'high'
@@ -1159,15 +1344,39 @@ function paraglidingOverride(lakeId, obs, activities, decision, _propagation) {
 // ═══════════════════════════════════════════════════════════════════
 
 function backwardCompat(calibration, regime, propagation, pressure, speed, gust, hour) {
+  // If wind is already blowing kiteable, windProbability must reflect reality
+  const windProb = speed >= 10 ? Math.max(calibration.probability, 85)
+    : speed >= 8 ? Math.max(calibration.probability, 75)
+    : speed >= 5 ? Math.max(calibration.probability, 60)
+    : calibration.probability;
+
+  // Status: if wind is already here, it's active — not "building"
+  const status = speed >= 8 ? 'active'
+    : windProb > 60 ? 'active'
+    : windProb > 30 ? 'building'
+    : 'quiet';
+
+  // startHour: if wind is already >= 5 mph, it has started — don't say "expected at 10 AM"
+  let startHour;
+  if (speed >= 5) {
+    startHour = null; // already started
+  } else if (propagation.phase === 'approaching' && propagation.eta) {
+    startHour = hour + Math.floor(propagation.eta / 60);
+  } else if (hour < 10) {
+    startHour = 10;
+  } else {
+    startHour = null;
+  }
+
   // thermalPrediction shape expected by older components
   const thermalPrediction = {
-    probability: calibration.probability,
-    windProbability: calibration.probability,
+    probability: windProb,
+    windProbability: windProb,
     confidence: calibration.confidence,
     regime: regime.regime,
-    status: calibration.probability > 60 ? 'active' : calibration.probability > 30 ? 'building' : 'quiet',
-    arrivalTime: propagation.eta ? formatETA(hour, propagation.eta) : null,
-    startHour: propagation.phase === 'approaching' && propagation.eta ? hour + Math.floor(propagation.eta / 60) : (hour < 10 ? 10 : null),
+    status,
+    arrivalTime: propagation.eta && speed < 5 ? formatETA(hour, propagation.eta) : null,
+    startHour,
     endHour: 17,
     expectedSpeed: propagation.expectedSpeed || speed,
     pressureGradient: pressure.gradient,
@@ -1210,7 +1419,8 @@ export function predict(lakeId, activity, liveStations, modelContext, config, op
   const hour = modelContext?.currentHour ?? denverHour(now);
   const month = modelContext?.currentMonth ?? denverMonth(now);
   const ctx = modelContext || {};
-  
+  ctx._config = config;
+
   // ─── DAYLIGHT CHECK — Critical for outdoor activities ───────────
   const daylight = calculateDaylight(config?.lat || 40.45, now);
   
@@ -1218,10 +1428,11 @@ export function predict(lakeId, activity, liveStations, modelContext, config, op
   const DAYLIGHT_REQUIRED = ['kiting', 'paragliding', 'wingfoil', 'windsurf', 'sup', 'kayak'];
   const requiresDaylight = DAYLIGHT_REQUIRED.includes(activity);
   
+  const _verb = ACTIVITY_VERBS[activity] || activity;
   if (requiresDaylight && daylight.isNight) {
-    const nightHeadline = `After Dark — ${activity === 'paragliding' ? 'No flying' : 'No sessions'} at night`;
-    const nightDetail = `${activity.charAt(0).toUpperCase() + activity.slice(1)} requires daylight for safety. Sunrise at ${formatHour(daylight.sunrise)}.`;
-    const nightAction = `Wait for sunrise at ${formatHour(daylight.sunrise)}`;
+    const nightHeadline = `It's dark out — can't ${_verb} until sunrise at ${formatHour(daylight.sunrise)}`;
+    const nightDetail = `Check back in the morning. We'll have conditions ready for you at first light.`;
+    const nightAction = `Get some sleep — sunrise is at ${formatHour(daylight.sunrise)}`;
     return {
       // Match normal return structure - decision is a STRING
       decision: 'PASS',
@@ -1246,11 +1457,13 @@ export function predict(lakeId, activity, liveStations, modelContext, config, op
   
   if (requiresDaylight && daylight.isTwilight) {
     const isMorning = daylight.currentHour < 12;
-    const twilightHeadline = isMorning ? 'Pre-Dawn — Almost time' : 'Dusk — Wrapping up';
+    const twilightHeadline = isMorning
+      ? `Almost sunrise — you can ${_verb} soon at ${formatHour(daylight.sunrise)}`
+      : `Sun's going down — time to wrap up`;
     const twilightDetail = isMorning 
-      ? `Sunrise at ${formatHour(daylight.sunrise)}. ${activity === 'paragliding' ? 'Flying' : 'Sessions'} start soon.`
-      : `Sunset was at ${formatHour(daylight.sunset)}. Limited visibility — pack up for safety.`;
-    const twilightAction = isMorning ? `Wait for full light at ${formatHour(daylight.sunrise + 0.3)}` : 'Call it a day';
+      ? `Give it a few more minutes for full light. We're checking conditions for you.`
+      : `Sunset was at ${formatHour(daylight.sunset)}. Visibility is dropping — pack it in for safety.`;
+    const twilightAction = isMorning ? `Wait for full light around ${formatHour(daylight.sunrise + 0.3)}` : 'Call it a day — great session';
     return {
       // Match normal return structure - decision is a STRING
       decision: 'WAIT',

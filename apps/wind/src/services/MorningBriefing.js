@@ -144,12 +144,13 @@ function computeExcitement(activity, params) {
 function buildUpstreamSnippet(upstream) {
   if (!upstream) return '';
   const parts = [];
-  if (upstream.kslcSpeed != null) {
-    parts.push(`KSLC pushing ${Math.round(upstream.kslcSpeed)} mph ${dirLabel(upstream.kslcDirection) || ''}`);
+  if (upstream.kslcSpeed != null && upstream.kslcSpeed >= 5) {
+    parts.push(`SLC airport ${Math.round(upstream.kslcSpeed)} mph ${dirLabel(upstream.kslcDirection) || ''}`);
   }
-  if (upstream.kpvuSpeed != null) {
-    parts.push(`KPVU at ${Math.round(upstream.kpvuSpeed)} mph ${dirLabel(upstream.kpvuDirection) || ''}`);
+  if (upstream.kpvuSpeed != null && upstream.kpvuSpeed >= 5) {
+    parts.push(`Provo airport ${Math.round(upstream.kpvuSpeed)} mph ${dirLabel(upstream.kpvuDirection) || ''}`);
   }
+  if (parts.length === 0) return '';
   return parts.join(', ');
 }
 
@@ -175,11 +176,25 @@ function buildWindSnippet(thermal, regime) {
     return '';
   }
 
-  let s = `${pct}% thermal probability`;
-  if (start) s += `, onset ~${start}`;
-  if (peak) s += `, peaking ${peak}`;
-  if (end) s += `, dying by ${end}`;
-  return s;
+  if (pct >= 70) {
+    let s = 'Strong wind likely';
+    if (start) s += ` starting ~${start}`;
+    if (peak) s += `, best around ${peak}`;
+    if (end) s += `, fading by ${end}`;
+    return s;
+  }
+  if (pct >= 40) {
+    let s = 'Fair chance of wind';
+    if (start) s += ` around ${start}`;
+    if (end) s += `, through ${end}`;
+    return s;
+  }
+  if (pct >= 15) {
+    let s = 'Slim wind chance';
+    if (start) s += ` — if it comes, after ${start}`;
+    return s;
+  }
+  return '';
 }
 
 function buildSwingWarning(swingAlerts) {
@@ -239,7 +254,12 @@ function briefWind(activity, params) {
 
   const bodyParts = [];
   if (speed > 0) {
-    bodyParts.push(`Currently ${Math.round(speed)} mph${gust > speed ? ` gusting ${Math.round(gust)}` : ''} from the ${dirLabel(dir) || 'variable directions'}. ${gustDescription(gf)}.`);
+    let windNow = `Currently ${Math.round(speed)} mph`;
+    if (gust > speed + 3) windNow += ` gusting ${Math.round(gust)}`;
+    windNow += ` from the ${dirLabel(dir) || 'variable directions'}`;
+    if (gf >= 0.5) windNow += ', gusty';
+    else if (gf < 0.15 && speed >= 6) windNow += ', steady';
+    bodyParts.push(windNow + '.');
   } else {
     bodyParts.push('Calm right now.');
   }
@@ -250,12 +270,12 @@ function briefWind(activity, params) {
   const nf = thermal.northFlow;
   if (!isNonThermal) {
     if (nf?.persistenceHours >= 6) {
-      bodyParts.push(`All-day north flow event (${nf.persistenceHours}h+) — sustained and reliable. High confidence it continues.`);
+      bodyParts.push(`All-day north flow — sustained and reliable.`);
     } else if (nf?.persistenceHours >= 3) {
-      bodyParts.push(`North flow building (${nf.persistenceHours}h) — likely to persist through the window.`);
+      bodyParts.push(`North flow building — likely to continue.`);
     } else if (nf?.status === 'strong') {
       const zzSpeedStr = safeToFixed(nf.expectedZigZagSpeed, 0);
-      bodyParts.push(`Strong north signal from KSLC — expect ${zzSpeedStr === '--' ? '15' : zzSpeedStr}+ mph at the lake in ~1 hour.`);
+      bodyParts.push(`North flow incoming — expect ${zzSpeedStr === '--' ? '15' : zzSpeedStr}+ mph at the lake in ~1 hour.`);
     }
   }
 

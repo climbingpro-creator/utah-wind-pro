@@ -8,6 +8,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { ErrorBoundary, FeedbackWidget, initAnalytics, trackPageView } from '@utahwind/ui';
 import { supabase } from '@utahwind/database';
 import { isNativeApp } from '@utahwind/weather';
+import { useModelContext } from './hooks/useModelContext';
 
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const Login = lazy(() => import('./pages/Login'));
@@ -86,6 +87,7 @@ function AppShell() {
   const hash = useHashRoute();
   const { user } = useAuth();
   useNativePlatform();
+  useModelContext();
 
   useEffect(() => {
     dataCollector.start();

@@ -77,7 +77,7 @@ export const LAKE_STATIONS = {
   },
   'echo': {
     name: 'Echo Reservoir',
-    synoptic: ['KSLC', 'KHCR'],
+    synoptic: ['KSLC', 'KHCR', 'UTALP'],
     wuPws: ['KUTCOALV2', 'KUTWANSH1', 'KUTPARKCITY4'],
     primary: 'KSLC',
     hasAmbient: false,
@@ -321,8 +321,8 @@ export const LAKE_STATIONS = {
   // ── Dixie / Washington County ──
   'sand-hollow': {
     name: 'Sand Hollow Reservoir',
-    synoptic: ['KSGU', 'UTSHR'],
-    wuPws: ['KUTSTGEO128', 'KUTSTGEO44'],
+    synoptic: ['KSGU', 'UTSHR', 'KCDC'],
+    wuPws: ['KUTSTGEO128', 'KUTSTGEO44', 'KUTHURRIC3'],
     tempest: ['TEMPEST_103270'],
     primary: 'UTSHR',
     hasAmbient: false,

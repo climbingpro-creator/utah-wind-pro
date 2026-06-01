@@ -94,6 +94,19 @@ export const willardBayConfigs = {
         },
       ],
       
+      earlyIndicator: {
+        id: 'KHIF',
+        name: 'Hill Air Force Base',
+        elevation: 4783,
+        coordinates: { lat: 41.124, lng: -111.973 },
+        role: 'Early Warning - south flow at Hill AFB precedes Willard by ~60 min',
+        leadTimeMinutes: 60,
+        trigger: {
+          direction: { min: 150, max: 220, label: 'S' },
+          speed: { min: 5, optimal: 8 },
+        },
+      },
+
       reference: [
         { id: 'GSLM', name: 'Great Salt Lake Minerals', elevation: 4212 },
         { id: 'UTANT', name: 'I-15 Antelope Drive (UDOT)', elevation: 4300 },

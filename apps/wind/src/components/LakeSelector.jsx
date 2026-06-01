@@ -199,8 +199,8 @@ function getSpotList(activity) {
       { id: 'grantsville', name: 'Grantsville', wind: 'S/SW', meter: 'KSLC', group: 'kite' },
       { id: 'bear-lake', name: 'Bear Lake', wind: 'Strong W', meter: 'BERU1', group: 'kite' },
       { id: 'pineview', name: 'Pineview', wind: 'E/W Canyon', meter: 'KOGD', group: 'kite' },
-      { id: 'sand-hollow', name: 'Sand Hollow', wind: 'Desert', meter: 'KSGU', group: 'kite' },
-      { id: 'yuba', name: 'Yuba', wind: 'Valley', meter: 'KPVU', group: 'kite' },
+      { id: 'sand-hollow', name: 'Sand Hollow', wind: 'Desert SW', meter: 'KSGU', group: 'kite' },
+      { id: 'yuba', name: 'Yuba', wind: 'Valley S', meter: 'KPVU', group: 'kite' },
     );
   }
 
@@ -280,28 +280,50 @@ function getFishingRecommendation(windStatuses, pressureData) {
 
 // ─── SUB-COMPONENTS ─────────────────────────────────────────────────────────
 
-function SpotPill({ spot, speed, isSelected, isUtahLake, isDark, onSelect }) {
-  const hasWind = speed != null && speed > 0;
+function spotVibe(speed, activity) {
+  if (speed == null) return 'unknown';
+  const isWind = ['kiting', 'windsurfing', 'sailing', 'snowkiting', 'paragliding'].includes(activity);
+  if (isWind) {
+    if (speed >= 12) return 'great';
+    if (speed >= 8) return 'good';
+    if (speed >= 4) return 'light';
+    return 'calm';
+  }
+  if (speed < 5) return 'great';
+  if (speed < 10) return 'good';
+  if (speed < 15) return 'light';
+  return 'windy';
+}
+
+function SpotPill({ spot, speed, isSelected, isUtahLake, isDark, onSelect, activity }) {
+  const hasData = speed != null;
+  const vibe = spotVibe(speed, activity);
+
+  const borderColor = isSelected ? 'border-sky-500 ring-1 ring-sky-500/30'
+    : vibe === 'great' ? (isDark ? 'border-emerald-500/40' : 'border-emerald-300')
+    : vibe === 'good' ? (isDark ? 'border-emerald-500/20' : 'border-emerald-200')
+    : (isDark ? 'border-[var(--border-subtle)]' : 'border-slate-200');
+
+  const bgColor = isSelected ? 'bg-sky-500/[0.08]'
+    : vibe === 'great' ? (isDark ? 'bg-emerald-500/[0.10]' : 'bg-emerald-50')
+    : vibe === 'good' ? (isDark ? 'bg-emerald-500/[0.04]' : 'bg-emerald-50/50')
+    : (isDark ? 'bg-[var(--bg-card)]' : 'bg-white');
+
+  const speedColor = isSelected ? 'text-sky-400'
+    : vibe === 'great' ? (isDark ? 'text-emerald-400' : 'text-emerald-600')
+    : vibe === 'good' ? (isDark ? 'text-emerald-400/80' : 'text-emerald-600')
+    : hasData ? 'text-[var(--text-secondary)]' : 'text-[var(--text-tertiary)]';
+
   return (
     <button
       onClick={() => onSelect(spot.id)}
-      className={`shrink-0 flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl border transition-all min-w-[5.5rem] ${
-        isSelected
-          ? 'border-sky-500 bg-sky-500/[0.08] ring-1 ring-sky-500/30'
-          : hasWind && speed >= 8
-            ? (isDark ? 'border-emerald-500/30 bg-emerald-500/[0.06]' : 'border-emerald-200 bg-emerald-50')
-            : (isDark ? 'border-[var(--border-subtle)] bg-[var(--bg-card)]' : 'border-slate-200 bg-white')
-      }`}
+      className={`shrink-0 flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl border transition-all min-w-[5.5rem] ${borderColor} ${bgColor}`}
     >
       <span className={`text-[11px] font-bold truncate max-w-[6rem] ${isSelected ? 'text-sky-400' : 'text-[var(--text-primary)]'}`}>
         {spot.name}
       </span>
-      <span className={`text-sm font-extrabold tabular-nums ${
-        isSelected ? 'text-sky-400'
-          : hasWind && speed >= 8 ? (isDark ? 'text-emerald-400' : 'text-emerald-600')
-          : 'text-[var(--text-secondary)]'
-      }`}>
-        {hasWind ? Math.round(speed) : '--'} <span className="text-[9px] font-semibold opacity-60">mph</span>
+      <span className={`text-sm font-extrabold tabular-nums ${speedColor}`}>
+        {hasData ? Math.round(speed) : '...'} <span className="text-[9px] font-semibold opacity-60">{hasData ? 'mph' : ''}</span>
       </span>
       {isUtahLake && (
         <span className={`text-[8px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>5 spots</span>
@@ -310,7 +332,25 @@ function SpotPill({ spot, speed, isSelected, isUtahLake, isDark, onSelect }) {
   );
 }
 
-function SelectedSpotCard({ spot, stationCache, thermalPrediction, lakeState, selectedLake, isDark, onSelectLake }) {
+function plainWindOutlook(prob, speed, propagation) {
+  if (propagation?.phase === 'arrived' && speed >= 8) return { text: 'Wind is ON right now', color: 'emerald' };
+  if (propagation?.phase === 'propagating' && propagation?.etaMinutes != null) {
+    const min = propagation.etaMinutes;
+    if (min <= 30) return { text: `Wind arriving in ~${min} min`, color: 'amber' };
+    if (min <= 90) return { text: `Wind building — ~${Math.round(min / 60)}h out`, color: 'amber' };
+    return { text: 'Wind signal detected upstream', color: 'slate' };
+  }
+  if (speed >= 12) return { text: 'Solid wind — go now', color: 'emerald' };
+  if (speed >= 8) return { text: 'Rideable wind right now', color: 'emerald' };
+  if (prob >= 70) return { text: 'Strong chance of wind today', color: 'emerald' };
+  if (prob >= 50) return { text: 'Good chance of wind today', color: 'amber' };
+  if (prob >= 30) return { text: 'Possible wind later today', color: 'amber' };
+  if (speed >= 4) return { text: 'Light breeze — not rideable yet', color: 'slate' };
+  if (prob >= 10) return { text: 'Slim chance today', color: 'slate' };
+  return { text: 'Calm — no wind expected', color: 'slate' };
+}
+
+function SelectedSpotCard({ spot, stationCache, thermalPrediction, lakeState, selectedLake, isDark, onSelectLake, activity }) {
   const [expandLaunches, setExpandLaunches] = useState(false);
   const isUL = spot?.id === 'utah-lake' || isUtahLakeLaunch(selectedLake);
   const cfg = LAKE_CONFIGS[selectedLake];
@@ -320,19 +360,24 @@ function SelectedSpotCard({ spot, stationCache, thermalPrediction, lakeState, se
   const thermal = thermalPrediction || {};
   const rawProb = thermal.windProbability ?? thermal.probability ?? 0;
   const prob = rawProb >= 1 ? Math.round(rawProb) : Math.round(rawProb * 100);
-  const arrowhead = thermal.arrowhead;
-  const wahsatch = thermal.wahsatch;
   const propagation = lakeState?.propagation;
+
+  const outlook = plainWindOutlook(prob, speed ?? 0, propagation);
+  const colorMap = {
+    emerald: isDark ? 'bg-emerald-500/15 text-emerald-400' : 'bg-emerald-100 text-emerald-700',
+    amber: isDark ? 'bg-amber-500/15 text-amber-400' : 'bg-amber-100 text-amber-700',
+    slate: isDark ? 'bg-white/5 text-slate-400' : 'bg-slate-100 text-slate-600',
+  };
 
   return (
     <div className={`rounded-xl border p-4 ${isDark ? 'bg-[var(--bg-card)] border-[var(--border-color)]' : 'bg-white border-slate-200 shadow-sm'}`}>
-      <div className="flex items-start justify-between mb-3">
+      <div className="flex items-start justify-between mb-2">
         <div>
           <h3 className="text-base font-extrabold text-[var(--text-primary)]">
             {isUL ? 'Utah Lake' : (cfg?.name || spot?.name)}
           </h3>
           <p className={`text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-            {isUL ? '5 launch locations · SE Thermal' : (spot?.wind || cfg?.primaryWindType || '')}
+            {isUL ? '5 launch locations' : (spot?.wind || cfg?.primaryWindType || '')}
             {cfg?.elevation ? ` · ${cfg.elevation.toLocaleString()} ft` : ''}
           </p>
         </div>
@@ -343,47 +388,17 @@ function SelectedSpotCard({ spot, stationCache, thermalPrediction, lakeState, se
               <span className="text-xs font-semibold ml-0.5 text-[var(--text-tertiary)]">mph</span>
             </div>
           ) : (
-            <div className="text-xl font-bold text-[var(--text-tertiary)]">--</div>
+            <div className={`text-lg font-bold ${isDark ? 'text-slate-600' : 'text-slate-300'}`}>...</div>
           )}
           {dir != null && <div className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{cardinal(dir)} ({Math.round(dir)}°)</div>}
         </div>
       </div>
 
-      {/* Prediction chips */}
-      <div className="flex flex-wrap gap-1.5 mb-3">
-        {prob > 0 && (
-          <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold ${
-            prob >= 50 ? (isDark ? 'bg-emerald-500/15 text-emerald-400' : 'bg-emerald-100 text-emerald-700')
-              : prob >= 20 ? (isDark ? 'bg-amber-500/15 text-amber-400' : 'bg-amber-100 text-amber-700')
-              : (isDark ? 'bg-slate-700 text-slate-400' : 'bg-slate-100 text-slate-500')
-          }`}>
-            <TrendingUp className="w-3 h-3" />
-            {prob}% wind probability
-          </span>
-        )}
-        {arrowhead?.status === 'trigger' && (
-          <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold ${isDark ? 'bg-sky-500/15 text-sky-400' : 'bg-sky-100 text-sky-700'}`}>
-            <Zap className="w-3 h-3" />
-            Arrowhead TRIGGER
-          </span>
-        )}
-        {wahsatch?.status === 'trigger' && (
-          <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold ${isDark ? 'bg-violet-500/15 text-violet-400' : 'bg-violet-100 text-violet-700'}`}>
-            <Zap className="w-3 h-3" />
-            Wahsatch TRIGGER
-          </span>
-        )}
-        {propagation?.phase === 'propagating' && propagation?.etaMinutes != null && (
-          <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold ${isDark ? 'bg-amber-500/15 text-amber-400' : 'bg-amber-100 text-amber-700'}`}>
-            <Clock className="w-3 h-3" />
-            Wind arriving ~{propagation.etaMinutes} min
-          </span>
-        )}
-        {lakeState?.pressure?.gradient != null && (
-          <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold ${isDark ? 'bg-white/5 text-slate-400' : 'bg-slate-100 text-slate-500'}`}>
-            ΔP {lakeState.pressure.gradient > 0 ? '+' : ''}{safeToFixed(lakeState.pressure.gradient, 1)} mb
-          </span>
-        )}
+      {/* One clear status line */}
+      <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold mb-3 ${colorMap[outlook.color]}`}>
+        {outlook.color === 'emerald' && <Wind className="w-3 h-3" />}
+        {outlook.color === 'amber' && <Clock className="w-3 h-3" />}
+        {outlook.text}
       </div>
 
       {/* Utah Lake sub-launches */}
@@ -575,6 +590,59 @@ function SpotGroup({ label, icon, spots, stationCache, selectedLake, onSelectLak
 
 // ─── MAIN COMPONENT ─────────────────────────────────────────────────────────
 
+function TodaysBestHero({ spots, stationCache, activity, isDark, onSelect }) {
+  const isWindSport = ['kiting', 'windsurfing', 'sailing', 'snowkiting', 'paragliding'].includes(activity);
+
+  const ranked = spots
+    .map(s => ({ ...s, speed: getSpeedFromCache(stationCache, s.meter) ?? null }))
+    .filter(s => s.speed != null)
+    .sort((a, b) => isWindSport ? b.speed - a.speed : a.speed - b.speed);
+
+  if (ranked.length === 0) return null;
+  const best = ranked[0];
+  const runner = ranked.length > 1 ? ranked[1] : null;
+
+  const isGood = isWindSport ? best.speed >= 8 : best.speed < 10;
+  if (!isGood && isWindSport && best.speed < 4) return null;
+
+  const verdict = isWindSport
+    ? (best.speed >= 12 ? 'GO' : best.speed >= 8 ? 'RIDEABLE' : 'BUILDING')
+    : (best.speed < 5 ? 'PERFECT' : best.speed < 10 ? 'GOOD' : 'BREEZY');
+
+  const verdictColor = verdict === 'GO' || verdict === 'PERFECT'
+    ? (isDark ? 'text-emerald-400 bg-emerald-500/15' : 'text-emerald-700 bg-emerald-100')
+    : verdict === 'RIDEABLE' || verdict === 'GOOD'
+      ? (isDark ? 'text-emerald-400/80 bg-emerald-500/10' : 'text-emerald-600 bg-emerald-50')
+      : (isDark ? 'text-amber-400 bg-amber-500/15' : 'text-amber-700 bg-amber-100');
+
+  return (
+    <button
+      onClick={() => onSelect(best.id)}
+      className={`w-full rounded-xl border p-3 text-left transition-all ${
+        isDark ? 'bg-[var(--bg-card)] border-emerald-500/20 hover:border-emerald-500/40' : 'bg-white border-emerald-200 hover:border-emerald-300 shadow-sm'
+      }`}
+    >
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 mb-0.5">
+            <span className={`text-[10px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded ${verdictColor}`}>{verdict}</span>
+            <span className={`text-[10px] font-semibold ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Best spot right now</span>
+          </div>
+          <div className={`text-sm font-extrabold ${isDark ? 'text-white' : 'text-slate-900'}`}>
+            {best.name} — {Math.round(best.speed)} mph {best.wind}
+          </div>
+          {runner && (
+            <div className={`text-[10px] mt-0.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+              Runner-up: {runner.name} ({Math.round(runner.speed)} mph)
+            </div>
+          )}
+        </div>
+        <ArrowRight className={`w-4 h-4 shrink-0 ${isDark ? 'text-slate-600' : 'text-slate-300'}`} />
+      </div>
+    </button>
+  );
+}
+
 export function LakeSelector({ selectedLake, onSelectLake, stationReadings, activity, pressureData, lakeState, thermalPrediction }) {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
@@ -656,7 +724,18 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
     return spots.find(s => s.id === selectedLake) || spots[0];
   }, [spots, selectedLake]);
 
+  const isWindSport = ['kiting', 'windsurfing', 'sailing', 'snowkiting', 'paragliding'].includes(activity);
   const isFishing = activity === 'fishing';
+
+  const sortedSpots = useMemo(() => {
+    const withSpeed = spots.map(s => ({ ...s, _speed: getSpeedFromCache(stationCache, s.meter) }));
+    return withSpeed.sort((a, b) => {
+      const aS = a._speed ?? -1;
+      const bS = b._speed ?? -1;
+      return isWindSport ? bS - aS : aS - bS;
+    });
+  }, [spots, stationCache, isWindSport]);
+
   const windSpeedMap = useMemo(() => {
     const m = {};
     for (const lake of LAKE_REGIONS.flatMap(r => r.lakes)) {
@@ -673,12 +752,17 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
 
   return (
     <div className="space-y-3">
-      {/* SECTION 1: Horizontal scroll strip */}
+      {/* HERO: Today's best spot — immediate answer */}
+      {!isFishing && (
+        <TodaysBestHero spots={spots} stationCache={stationCache} activity={activity} isDark={isDark} onSelect={handleSelect} />
+      )}
+
+      {/* Spot pills — sorted best-first */}
       <div className="flex items-stretch gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
-        {spots.map(spot => {
+        {sortedSpots.map(spot => {
           const isUL = spot.id === 'utah-lake';
           const isSelected = isUL ? isUtahLakeLaunch(selectedLake) : selectedLake === spot.id;
-          const speed = getSpeedFromCache(stationCache, spot.meter);
+          const speed = spot._speed ?? getSpeedFromCache(stationCache, spot.meter);
           return (
             <SpotPill
               key={spot.id}
@@ -688,12 +772,13 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
               isUtahLake={isUL}
               isDark={isDark}
               onSelect={handleSelect}
+              activity={activity}
             />
           );
         })}
       </div>
 
-      {/* SECTION 2: Selected spot detail card */}
+      {/* Selected spot detail */}
       {selectedSpot && (
         <SelectedSpotCard
           spot={selectedSpot}
@@ -703,15 +788,16 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
           selectedLake={selectedLake}
           isDark={isDark}
           onSelectLake={onSelectLake}
+          activity={activity}
         />
       )}
 
-      {/* Fishing hero (fishing only) */}
+      {/* Fishing hero */}
       {isFishing && fishingRec && (
         <FishingHero recommendation={fishingRec} onSelectLake={onSelectLake} isDark={isDark} />
       )}
 
-      {/* SECTION 3: All spots expandable */}
+      {/* All spots expandable */}
       <AllSpotsSection
         isDark={isDark}
         selectedLake={selectedLake}

@@ -225,6 +225,82 @@ const CHAIN_DEFS = {
     pressureCheck: null,
   },
 
+  // ── Echo Reservoir: I-80 Corridor W/SW Flow ────────────────────
+  'echo:i80_corridor': {
+    label: 'I-80 Corridor → Echo Reservoir',
+    flowDir: 'W → E (I-80)',
+    nodes: [
+      { id: 'KSLC',        name: 'SLC Airport',       role: 'Western origin — W/SW flow enters Parleys',  lagMinutes: -90, dir: [220, 300], speed: 8 },
+      { id: 'UTALP',       name: 'Point of Mountain', role: 'Gap wind confirmation',                      lagMinutes: -75, dir: [220, 300], speed: 5 },
+      { id: 'KUTPARKCITY4',name: 'Park City (WU)',    role: 'WU mid-corridor — Snyderville Basin',        lagMinutes: -45, dir: [220, 300], speed: 4, optional: true },
+      { id: 'KUTWANSH1',   name: 'Wanship (WU)',      role: 'WU Weber Canyon corridor',                   lagMinutes: -20, dir: [220, 280], speed: 3, optional: true },
+      { id: 'KUTCOALV2',   name: 'Coalville (WU)',    role: 'Target — nearest station to Echo',            lagMinutes: 0,   dir: [220, 280], speed: 4 },
+    ],
+    pressureCheck: null,
+  },
+
+  // ── Rockport Reservoir: I-80/I-84 Corridor SW Flow ────────────
+  'rockport:sw_corridor': {
+    label: 'SW Corridor → Rockport',
+    flowDir: 'SW → NE',
+    nodes: [
+      { id: 'KSLC',        name: 'SLC Airport',       role: 'Valley-wide SW flow origin',        lagMinutes: -75, dir: [200, 280], speed: 8 },
+      { id: 'KUTPARKCITY4',name: 'Park City (WU)',    role: 'WU Snyderville check',              lagMinutes: -45, dir: [200, 280], speed: 4, optional: true },
+      { id: 'KUTWANSH1',   name: 'Wanship (WU)',      role: 'WU Weber Canyon corridor',          lagMinutes: -20, dir: [200, 270], speed: 3, optional: true },
+      { id: 'KUTCOALV2',   name: 'Coalville (WU)',    role: 'Target — upper Weber River',        lagMinutes: 0,   dir: [200, 270], speed: 4 },
+    ],
+    pressureCheck: null,
+  },
+
+  // ── East Canyon: Weber Canyon SW Flow ─────────────────────────
+  'east-canyon:weber_corridor': {
+    label: 'Weber Canyon → East Canyon',
+    flowDir: 'SW → NE',
+    nodes: [
+      { id: 'KSLC',        name: 'SLC Airport',       role: 'Western origin — Parleys Canyon entry',  lagMinutes: -75, dir: [200, 280], speed: 8 },
+      { id: 'KUTHENEF1',   name: 'Henefer (WU)',      role: 'WU Weber Canyon mid-point',              lagMinutes: -30, dir: [200, 270], speed: 3, optional: true },
+      { id: 'KUTMORGA4',   name: 'Morgan (WU)',       role: 'Target — Morgan Valley near reservoir',   lagMinutes: 0,   dir: [200, 270], speed: 4 },
+    ],
+    pressureCheck: null,
+  },
+
+  // ── Yuba: I-15 South Corridor Flow ────────────────────────────
+  'yuba:i15_south': {
+    label: 'I-15 South → Yuba',
+    flowDir: 'S → N (I-15)',
+    nodes: [
+      { id: 'KPVU',  name: 'Provo Airport',       role: 'Valley S flow origin',                   lagMinutes: -90, dir: [150, 230], speed: 6 },
+      { id: 'QSF',   name: 'Spanish Fork Canyon',  role: 'Canyon S confirmation',                  lagMinutes: -75, dir: [130, 220], speed: 6 },
+      { id: 'UTRKY', name: 'Rocky Ridge (UDOT)',   role: 'I-15 approach — near Nephi',             lagMinutes: -30, dir: [150, 230], speed: 5 },
+      { id: 'UTLMP', name: 'Lampson Canyon (UDOT)',role: 'Target — closest station to Yuba',       lagMinutes: 0,   dir: [150, 230], speed: 5 },
+    ],
+    pressureCheck: null,
+  },
+
+  // ── Sand Hollow: Desert Thermal SW Flow ───────────────────────
+  'sand-hollow:desert_thermal': {
+    label: 'Desert Thermal → Sand Hollow',
+    flowDir: 'SW → NE',
+    nodes: [
+      { id: 'KCDC',        name: 'Cedar City Regional', role: 'Upstream — I-15 corridor N',         lagMinutes: -75, dir: [190, 260], speed: 6 },
+      { id: 'KUTHURRIC3',  name: 'Hurricane (WU)',      role: 'WU mid-corridor',                    lagMinutes: -30, dir: [190, 260], speed: 3, optional: true },
+      { id: 'KSGU',        name: 'St George Airport',   role: 'Target — nearest to Sand Hollow',    lagMinutes: 0,   dir: [190, 260], speed: 5 },
+    ],
+    pressureCheck: null,
+  },
+
+  // ── Pineview: Ogden Canyon Flow ──────────────────────────────
+  'pineview:canyon_flow': {
+    label: 'Ogden Canyon → Pineview',
+    flowDir: 'W → E',
+    nodes: [
+      { id: 'KOGD',   name: 'Ogden Airport',    role: 'Valley west flow origin',         lagMinutes: -60, dir: [240, 310], speed: 5 },
+      { id: 'UTHUN',  name: 'Huntsville (UDOT)',role: 'Canyon passage confirmation',      lagMinutes: -20, dir: [240, 310], speed: 4 },
+      { id: 'UTPVD',  name: 'Pineview Dam',     role: 'Target — at the reservoir dam',   lagMinutes: 0,   dir: [240, 310], speed: 5 },
+    ],
+    pressureCheck: null,
+  },
+
   // ── Sulphur Creek: Jet Stream West Flow ──────────────────────
   // Upstream chain: Wahsatch summit (UT/WY border) → First Divide → reservoir
   'sulfur-creek:west_flow': {
@@ -272,6 +348,12 @@ const LAKE_CHAINS = {
   'bear-lake':          ['bear-lake:west_flow'],
   'skyline-drive':      ['skyline:ridge_flow'],
   'sulfur-creek':       ['sulfur-creek:west_flow', 'sulfur-creek:evanston_local'],
+  'echo':               ['echo:i80_corridor'],
+  'rockport':           ['rockport:sw_corridor'],
+  'east-canyon':        ['east-canyon:weber_corridor'],
+  'yuba':               ['yuba:i15_south'],
+  'sand-hollow':        ['sand-hollow:desert_thermal'],
+  'pineview':           ['pineview:canyon_flow'],
 };
 
 // ─── Session viability: minimum wind duration for a real session ──

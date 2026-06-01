@@ -186,9 +186,58 @@ const CHAIN_DEFS = {
   'yuba:valley_flow': {
     label: 'Valley Flow → Yuba', target: 'UTLMP',
     nodes: [
-      { id: 'KPVU',  lag: -120, dir: [170, 230], speed: 5 },
-      { id: 'UTRKY', lag: -60,  dir: [170, 230], speed: 5 },
-      { id: 'UTLMP', lag: 0,    dir: [170, 230], speed: 5 },
+      { id: 'KPVU',  lag: -90,  dir: [150, 230], speed: 6 },
+      { id: 'QSF',   lag: -75,  dir: [130, 220], speed: 6 },
+      { id: 'UTRKY', lag: -30,  dir: [150, 230], speed: 5 },
+      { id: 'UTLMP', lag: 0,    dir: [150, 230], speed: 5 },
+    ],
+  },
+  // ── I-80 CORRIDOR: Echo ──
+  'echo:i80_corridor': {
+    label: 'I-80 Corridor → Echo', target: 'KUTCOALV2',
+    nodes: [
+      { id: 'KSLC',         lag: -90, dir: [220, 300], speed: 8 },
+      { id: 'UTALP',        lag: -75, dir: [220, 300], speed: 5 },
+      { id: 'KUTPARKCITY4', lag: -45, dir: [220, 300], speed: 4, optional: true },
+      { id: 'KUTWANSH1',    lag: -20, dir: [220, 280], speed: 3, optional: true },
+      { id: 'KUTCOALV2',    lag: 0,   dir: [220, 280], speed: 4 },
+    ],
+  },
+  // ── I-80/I-84 CORRIDOR: Rockport ──
+  'rockport:sw_corridor': {
+    label: 'SW Corridor → Rockport', target: 'KUTCOALV2',
+    nodes: [
+      { id: 'KSLC',         lag: -75, dir: [200, 280], speed: 8 },
+      { id: 'KUTPARKCITY4', lag: -45, dir: [200, 280], speed: 4, optional: true },
+      { id: 'KUTWANSH1',    lag: -20, dir: [200, 270], speed: 3, optional: true },
+      { id: 'KUTCOALV2',    lag: 0,   dir: [200, 270], speed: 4 },
+    ],
+  },
+  // ── WEBER CANYON: East Canyon ──
+  'east-canyon:weber_corridor': {
+    label: 'Weber Canyon → East Canyon', target: 'KUTMORGA4',
+    nodes: [
+      { id: 'KSLC',       lag: -75, dir: [200, 280], speed: 8 },
+      { id: 'KUTHENEF1',  lag: -30, dir: [200, 270], speed: 3, optional: true },
+      { id: 'KUTMORGA4',  lag: 0,   dir: [200, 270], speed: 4 },
+    ],
+  },
+  // ── DESERT THERMAL: Sand Hollow ──
+  'sand-hollow:desert_thermal': {
+    label: 'Desert Thermal → Sand Hollow', target: 'KSGU',
+    nodes: [
+      { id: 'KCDC',        lag: -75, dir: [190, 260], speed: 6 },
+      { id: 'KUTHURRIC3',  lag: -30, dir: [190, 260], speed: 3, optional: true },
+      { id: 'KSGU',        lag: 0,   dir: [190, 260], speed: 5 },
+    ],
+  },
+  // ── OGDEN CANYON: Pineview ──
+  'pineview:canyon_flow': {
+    label: 'Ogden Canyon → Pineview', target: 'UTPVD',
+    nodes: [
+      { id: 'KOGD',  lag: -60, dir: [240, 310], speed: 5 },
+      { id: 'UTHUN', lag: -20, dir: [240, 310], speed: 4 },
+      { id: 'UTPVD', lag: 0,   dir: [240, 310], speed: 5 },
     ],
   },
   'bear-lake:west_flow': {
@@ -277,6 +326,11 @@ const LAKE_CHAINS = {
   'yuba':               ['yuba:valley_flow'],
   'bear-lake':          ['bear-lake:west_flow'],
   'skyline-drive':      ['skyline:ridge_flow'],
+  'echo':               ['echo:i80_corridor'],
+  'rockport':           ['rockport:sw_corridor'],
+  'east-canyon':        ['east-canyon:weber_corridor'],
+  'sand-hollow':        ['sand-hollow:desert_thermal'],
+  'pineview':           ['pineview:canyon_flow'],
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────
@@ -300,7 +354,7 @@ function passesPresCheck(check, gradient) {
 
 // ─── Analyze all chains for all spots from station array ──────────
 
-export function analyzeAllSpots(stations, ambientPWS, pressureGradient) {
+export function analyzeAllSpots(stations, ambientPWS, pressureGradient, learnedLags = null) {
   const map = {};
   for (const s of stations) map[s.stationId] = s;
   if (ambientPWS) {
@@ -350,7 +404,9 @@ export function analyzeAllSpots(stations, ambientPWS, pressureGradient) {
         phase = 'arrived'; conf = 95;
       } else if (farthest) {
         phase = 'propagating';
-        eta = Math.max(0, target.lag - farthest.lag);
+        const farthestLag = learnedLags?.[`${chainKey}:${farthest.id}`]?.avgLag ?? farthest.lag;
+        const targetLag = target.lag;
+        eta = Math.max(0, targetLag - farthestLag);
         // Required stations count 20pts each, optional (WU PWS) count 8pts each
         conf = Math.min(95, 30 + requiredFired * 20 + optionalFired * 8);
       }
@@ -374,8 +430,8 @@ export function analyzeAllSpots(stations, ambientPWS, pressureGradient) {
 
 // ── Backward-compat single-spot analysis (used by cron response) ──
 
-export function analyzeFromStations(stations, ambientPWS, pressureGradient) {
-  const all = analyzeAllSpots(stations, ambientPWS, pressureGradient);
+export function analyzeFromStations(stations, ambientPWS, pressureGradient, learnedLags = null) {
+  const all = analyzeAllSpots(stations, ambientPWS, pressureGradient, learnedLags);
   const zigzag = all['utah-lake-zigzag'];
   if (!zigzag) return { dominant: 'none', dominantPhase: 'none', dominantConfidence: 0, seThermal: { phase: 'none' }, northFlow: { phase: 'none' } };
 
@@ -917,6 +973,128 @@ export async function backfillPWSHistory(redis, days = 90) {
   };
 }
 
+// ─── Auto-tuning: apply learned lags and detect degradation ───────
+
+export async function autoTuneChains(redis) {
+  const lags = await loadLearnedLags(redis);
+  const sessions = await loadSessionStats(redis);
+  const eventsRaw = await redis('LRANGE', 'prop:events', '0', '29');
+  const events = (eventsRaw || []).map(r => { try { return JSON.parse(r); } catch { return null; } }).filter(Boolean);
+
+  const tuning = { adjustments: [], alerts: [], chainHealth: {} };
+
+  // Per-chain: compute hit rate, detect drift, flag degradation
+  const chainStats = {};
+  for (const event of events) {
+    for (const e of event.events || []) {
+      if (!chainStats[e.chain]) chainStats[e.chain] = { signaled: 0, arrived: 0, recentResults: [] };
+      if (e.signaled) chainStats[e.chain].signaled++;
+      if (e.arrived) chainStats[e.chain].arrived++;
+      chainStats[e.chain].recentResults.push({ signaled: e.signaled, arrived: e.arrived, date: event.date });
+    }
+  }
+
+  for (const [chainKey, stats] of Object.entries(chainStats)) {
+    const hitRate = stats.signaled > 0 ? Math.round((stats.arrived / stats.signaled) * 100) : 0;
+    const def = CHAIN_DEFS[chainKey];
+    if (!def) continue;
+
+    // Hit rate trending: compare last 7 days vs all-time
+    const recent7 = stats.recentResults.slice(0, 7);
+    const recentSignaled = recent7.filter(r => r.signaled).length;
+    const recentArrived = recent7.filter(r => r.arrived).length;
+    const recentHitRate = recentSignaled > 0 ? Math.round((recentArrived / recentSignaled) * 100) : null;
+
+    tuning.chainHealth[chainKey] = {
+      hitRate,
+      recentHitRate,
+      signalDays: stats.signaled,
+      arrivedDays: stats.arrived,
+      status: hitRate >= 70 ? 'healthy' : hitRate >= 50 ? 'degraded' : hitRate > 0 ? 'poor' : 'no_data',
+    };
+
+    // Degradation alert: hit rate dropped below 50% with enough data
+    if (hitRate < 50 && stats.signaled >= 5) {
+      tuning.alerts.push({
+        chain: chainKey,
+        label: def.label,
+        type: 'low_hit_rate',
+        severity: hitRate < 30 ? 'critical' : 'warning',
+        message: `${chainKey} hit rate ${hitRate}% (${stats.arrived}/${stats.signaled} days) — needs tuning`,
+      });
+    }
+
+    // Lag drift detection: learned lag deviates >30min from configured lag
+    for (const node of def.nodes) {
+      const lagKey = `${chainKey}:${node.id}`;
+      const learned = lags[lagKey];
+      if (!learned || learned.samples < 3) continue;
+
+      const drift = learned.avgLag - node.lag;
+      if (Math.abs(drift) > 30) {
+        tuning.adjustments.push({
+          chain: chainKey,
+          station: node.id,
+          configuredLag: node.lag,
+          learnedLag: learned.avgLag,
+          drift,
+          samples: learned.samples,
+          recommendation: `Update ${node.id} lag from ${node.lag} to ${learned.avgLag} min`,
+        });
+
+        if (Math.abs(drift) > 60) {
+          tuning.alerts.push({
+            chain: chainKey,
+            label: def.label,
+            type: 'lag_drift',
+            severity: 'warning',
+            message: `${node.id} lag drifted ${drift > 0 ? '+' : ''}${drift} min from config (learned: ${learned.avgLag}, config: ${node.lag})`,
+          });
+        }
+      }
+    }
+
+    // Speed ratio drift detection
+    if (def.speedRatios) {
+      for (const [nodeId, configRatio] of Object.entries(def.speedRatios)) {
+        const rk = `ratio:${chainKey}:${nodeId}`;
+        const learned = lags[rk];
+        if (!learned || learned.samples < 3) continue;
+
+        const ratioDrift = learned.avgRatio - configRatio;
+        if (Math.abs(ratioDrift) > 0.3) {
+          tuning.adjustments.push({
+            chain: chainKey,
+            station: nodeId,
+            type: 'speed_ratio',
+            configuredRatio: configRatio,
+            learnedRatio: learned.avgRatio,
+            drift: Math.round(ratioDrift * 100) / 100,
+            samples: learned.samples,
+            recommendation: `Update ${nodeId} speed ratio from ${configRatio} to ${learned.avgRatio}`,
+          });
+        }
+      }
+    }
+  }
+
+  // Store tuning results in Redis for dashboard
+  tuning.timestamp = new Date().toISOString();
+  tuning.totalChains = Object.keys(CHAIN_DEFS).length;
+  tuning.healthyChains = Object.values(tuning.chainHealth).filter(h => h.status === 'healthy').length;
+  tuning.degradedChains = Object.values(tuning.chainHealth).filter(h => h.status === 'degraded').length;
+  tuning.poorChains = Object.values(tuning.chainHealth).filter(h => h.status === 'poor').length;
+
+  await redis('SET', 'prop:tuning', JSON.stringify(tuning), 'EX', '172800');
+
+  // Store alerts separately for the alerting pipeline
+  if (tuning.alerts.length > 0) {
+    await redis('SET', 'prop:alerts', JSON.stringify(tuning.alerts), 'EX', '172800');
+  }
+
+  return tuning;
+}
+
 // ─── Client endpoint ──────────────────────────────────────────────
 
 export async function getPropagationData(redis) {
@@ -952,6 +1130,12 @@ export async function getPropagationData(redis) {
   const pwsActual = sessions['pws:actual'] || null;
   const pwsBackfill = sessions['pws:backfill'] || null;
 
+  let tuning = null;
+  try {
+    const tuningRaw = await redis('GET', 'prop:tuning');
+    if (tuningRaw) tuning = JSON.parse(tuningRaw);
+  } catch { /* non-fatal */ }
+
   return {
     lags,
     sessions,
@@ -961,5 +1145,6 @@ export async function getPropagationData(redis) {
     hitRates,
     totalDaysTracked: events.length,
     sessionThresholds: SESSION_THRESHOLDS,
+    tuning,
   };
 }

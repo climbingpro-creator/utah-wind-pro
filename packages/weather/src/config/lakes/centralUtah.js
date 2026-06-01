@@ -132,15 +132,32 @@ export const centralUtahConfigs = {
       },
       ridge: [
         { id: 'UTRKY', name: 'I-15 Rocky Ridge (UDOT)', elevation: 5400, role: 'North approach indicator', priority: 1 },
+        { id: 'CSC', name: 'Cascade Peak', elevation: 10875, role: 'High elevation thermal reference', priority: 2 },
       ],
       groundTruth: { id: 'UTLMP', name: 'I-15 Lampson Canyon (UDOT)', role: 'Ground Truth — nearest I-15 station to Yuba' },
+      earlyIndicator: {
+        id: 'KPVU',
+        name: 'Provo Municipal Airport',
+        elevation: 4495,
+        role: 'Early Warning — S flow at Provo pushes down I-15 corridor ~90 min before Yuba',
+        leadTimeMinutes: 90,
+        trigger: {
+          direction: { min: 150, max: 230, label: 'S/SW' },
+          speed: { min: 6, optimal: 10 },
+        },
+      },
       lakeshore: [
         { id: 'UTLMP', name: 'I-15 Lampson Canyon (UDOT)', elevation: 5200, role: 'Primary — closest station to Yuba', priority: 1 },
         { id: 'UTRKY', name: 'I-15 Rocky Ridge (UDOT)', elevation: 5400, role: 'North approach — near Nephi', priority: 2 },
+        { id: 'UTSCI', name: 'I-15 Scipio Summit (UDOT)', elevation: 5900, role: 'South approach — I-15 south of Yuba', priority: 3 },
       ],
       reference: [
         { id: 'KPVU', name: 'Provo Municipal', elevation: 4495 },
         { id: 'UTSCI', name: 'I-15 Scipio Summit (UDOT)', elevation: 5900 },
+        { id: 'KSLC', name: 'Salt Lake City Intl', elevation: 4226 },
+        { id: 'UTORM', name: 'I-15 Orem (UDOT)', elevation: 4500 },
+        { id: 'QSF', name: 'Spanish Fork Canyon', elevation: 4550 },
+        { id: 'EPMU1', name: 'Ephraim NWS', elevation: 5530 },
       ],
     },
     thermal: {

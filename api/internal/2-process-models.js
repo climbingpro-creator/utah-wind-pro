@@ -17,7 +17,7 @@
 import { runServerLearningCycle, evaluateAndAdjustWindows, storeWindowPredictions, loadWeights, saveWeights } from '../lib/serverLearning.js';
 import { findAllSportWindows } from '../../packages/weather/src/SportIntelligenceEngine.js';
 import CrossValidationEngine from '../../packages/weather/src/services/CrossValidationEngine.js';
-import { analyzeFromStations, analyzeAllSpots, storePropagationSnapshot, learnFromPropagation } from '../lib/serverPropagation.js';
+import { analyzeFromStations, analyzeAllSpots, storePropagationSnapshot, learnFromPropagation, autoTuneChains } from '../lib/serverPropagation.js';
 import { buildStatisticalModels } from '../lib/historicalAnalysis.js';
 import { LAKE_STATION_MAP, ALL_STATION_IDS } from '../lib/stations.js';
 import { getEnv, redisCommand, redisMGet, hasRedis, toMountainHour } from '../lib/redis.js';
@@ -188,10 +188,16 @@ export default async function handler(req, res) {
       }
     }
 
-    // ── PROPAGATION ANALYSIS ──
+    // ── PROPAGATION ANALYSIS (with learned lags for ETA correction) ──
+    let learnedLags = null;
     try {
-      const allPropagation = analyzeAllSpots(stations, ambientPWS, gradient);
-      const propagationResult = analyzeFromStations(stations, ambientPWS, gradient);
+      const lagRaw = await redisCommand('GET', 'prop:lags');
+      if (lagRaw) learnedLags = JSON.parse(lagRaw);
+    } catch { /* non-fatal — use static lags */ }
+
+    try {
+      const allPropagation = analyzeAllSpots(stations, ambientPWS, gradient, learnedLags);
+      const propagationResult = analyzeFromStations(stations, ambientPWS, gradient, learnedLags);
 
       const readings = {};
       for (const s of stations) readings[s.stationId] = s;
@@ -203,6 +209,11 @@ export default async function handler(req, res) {
       if (mtHour === 22) {
         const lagResult = await learnFromPropagation(redisCommand);
         if (lagResult) console.log('[2-process] Propagation lag learning complete:', lagResult.date);
+
+        const tuneResult = await autoTuneChains(redisCommand);
+        if (tuneResult) {
+          console.log(`[2-process] Auto-tune: ${tuneResult.healthyChains} healthy, ${tuneResult.degradedChains} degraded, ${tuneResult.poorChains} poor, ${tuneResult.adjustments.length} lag adjustments, ${tuneResult.alerts.length} alerts`);
+        }
       }
 
       diagnostics.propagation = {

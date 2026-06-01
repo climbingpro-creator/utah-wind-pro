@@ -31,17 +31,17 @@ const LAKE_THERMAL = {
   'starvation':           { dir: [180, 230], peak: [11, 17], station: 'KVEL' },
   'flaming-gorge':        { dir: [130, 200], peak: [11, 17], station: 'KFGR' },
   'scofield':             { dir: [250, 320], peak: [11, 17], station: 'KPUC' },
-  'sand-hollow':          { dir: [200, 250], peak: [10, 17], station: 'KSGU' },
+  'sand-hollow':          { dir: [200, 250], peak: [11, 16], station: 'KSGU' },
   'lake-powell':          { dir: [180, 270], peak: [10, 18], station: 'KPGA' },
   'rush-lake':            { dir: [170, 210], peak: [10, 18], station: 'KSLC' },
   'potm-south':           { dir: [110, 250], peak: [7, 15],  station: 'FPS' },
   'potm-north':           { dir: [320, 45], peak: [12, 18], station: 'UTALP' },
   'powder-mountain':      { dir: [180, 270], peak: [10, 18], station: 'KOGD' },
-  // ── Northern Utah (missing) ──
-  'east-canyon':          { dir: [180, 270], peak: [11, 17], station: 'KSLC' },
-  'echo':                 { dir: [180, 270], peak: [11, 17], station: 'KSLC' },
-  'rockport':             { dir: [180, 270], peak: [11, 17], station: 'KSLC' },
-  'pineview':             { dir: [180, 270], peak: [11, 17], station: 'KOGD' },
+  // ── Northern Utah ──
+  'east-canyon':          { dir: [200, 270], peak: [12, 17], station: 'KUTMORGA4' },
+  'echo':                 { dir: [240, 270], peak: [12, 16], station: 'KUTCOALV2' },
+  'rockport':             { dir: [200, 250], peak: [12, 16], station: 'KUTCOALV2' },
+  'pineview':             { dir: [240, 300], peak: [12, 16], station: 'UTPVD' },
   'hyrum':                { dir: [180, 270], peak: [11, 17], station: 'KLGU' },
   'monte-cristo':         { dir: [180, 270], peak: [11, 17], station: 'KLGU' },
   // ── Strawberry variants (missing) ──
@@ -52,7 +52,7 @@ const LAKE_THERMAL = {
   'steinaker':            { dir: [180, 270], peak: [11, 17], station: 'KVEL' },
   'red-fleet':            { dir: [180, 270], peak: [11, 17], station: 'KVEL' },
   // ── Southern (missing) ──
-  'yuba':                 { dir: [150, 240], peak: [10, 16], station: 'KPVU' },
+  'yuba':                 { dir: [170, 230], peak: [11, 16], station: 'UTLMP' },
   'otter-creek':          { dir: [150, 240], peak: [10, 16], station: 'KCDC' },
   'fish-lake':            { dir: [150, 240], peak: [10, 16], station: 'KCDC' },
   'minersville':          { dir: [150, 240], peak: [10, 16], station: 'KCDC' },
@@ -99,6 +99,12 @@ const STATION_ALIASES = {
   'RVZU1':   ['KUTSTRAW2'],
   'SKY':     ['KUTBRIGH3'],
   'UTOLY':   ['KUTSARAT50'],
+  'KUTCOALV2': ['KUTWANSH1', 'KUTHENEF1'],
+  'KUTMORGA4': ['KUTHENEF1', 'KUTWANSH1'],
+  'UTPVD':   ['COOPOGNU1', 'PC496', 'UTHUN'],
+  'UTLMP':   ['UTRKY', 'UTSCI'],
+  'UR328':   ['KUTWILLA3', 'KBMC'],
+  'UTGRC':   ['KUTGARDE9'],
 };
 
 /**

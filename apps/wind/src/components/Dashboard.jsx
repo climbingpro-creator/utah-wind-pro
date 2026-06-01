@@ -30,6 +30,7 @@ import { CreditCard, Wind, Target, TrendingUp, Calendar, ChevronDown, ChevronUp 
 
 import LiveBriefingCard from './LiveBriefingCard';
 import LaunchBriefingCard from './LaunchBriefingCard';
+import AnswerCard from './AnswerCard';
 import WelcomeCard from './WelcomeCard';
 import AppHeader from './AppHeader';
 import { LakeSelector } from './LakeSelector';
@@ -37,6 +38,7 @@ import { ToastContainer } from './ToastNotification';
 import { ACTIVITY_CONFIGS } from './ActivityMode';
 import CollapsibleSensorCard from './CollapsibleSensorCard';
 import { generateBriefing } from '../services/MorningBriefing';
+import { useAnswer } from '../hooks/useAnswer';
 
 const DetailedPanels = lazy(() => import('./DetailedPanels'));
 const VectorWindMap = lazy(() => import('./VectorWindMap').then(m => ({ default: m.VectorWindMap })));
@@ -281,6 +283,7 @@ export function Dashboard() {
   const [showDeepDive, setShowDeepDive] = useState(false);
   
   const { lakeState, history, status, isLoading, error, lastUpdated, refresh } = useWeatherData(selectedLake);
+  const { answer, isLoading: answerLoading, error: answerError } = useAnswer(selectedLake, selectedActivity);
   const { theme } = useTheme();
   const { isPro, rawTier, trialActive, trialDaysLeft, openPaywall, showPaywall } = useAuth();
   const contentRef = useRef(null);
@@ -636,6 +639,16 @@ export function Dashboard() {
           pressureData={pressureData}
           lakeState={lakeState}
           thermalPrediction={effectiveThermalPrediction}
+        />
+
+        {/* ═══════════════════════════════════════════════════════════════════
+            THE ANSWER — One-glance GO / WAIT / PASS verdict
+            ═══════════════════════════════════════════════════════════════════ */}
+        <AnswerCard
+          answer={answer}
+          isLoading={answerLoading}
+          error={answerError}
+          spotName={LAKE_CONFIGS[selectedLake]?.name || selectedLake}
         />
 
         {/* ═══════════════════════════════════════════════════════════════════

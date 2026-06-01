@@ -172,29 +172,48 @@ export const southernUtahConfigs = {
     name: 'Sand Hollow Reservoir',
     shortName: 'Sand Hollow',
     region: 'Washington County',
-    coordinates: { lat: 37.1072, lng: -113.3850 }, // Sand Hollow State Park main boat ramp
+    coordinates: { lat: 37.1072, lng: -113.3850 },
     elevation: 3000,
     surfaceAcres: 1322,
     maxDepth: 80,
-    primaryWindType: 'Desert Thermal',
+    primaryWindType: 'Desert Thermal SW',
     thermalDirection: 'SW (200-250°)',
-    description: 'Dixie warm-water paradise — largemouth bass and bluegill in red rock',
-    // Sand Hollow. NW to NE flow (crosses North): 320-45°.
+    description: 'Dixie warm-water paradise — afternoon desert thermal from SW',
     safeWindArc: [320, 45],
     stations: {
       pressure: {
         high: { id: 'KSGU', name: 'St George Regional', elevation: 2941, role: 'Nearest ASOS' },
-        low: { id: 'KSGU', name: 'St George Regional', elevation: 2941, role: 'Local reference' },
+        low: { id: 'KCDC', name: 'Cedar City Regional', elevation: 5622, role: 'North pressure reference (higher elevation)' },
         bustThreshold: 2.0,
       },
       ridge: [
         { id: 'KSGU', name: 'St George Regional', elevation: 2941, role: 'Primary reference', priority: 1 },
       ],
-      groundTruth: { id: 'KSGU', name: 'St George Regional', role: 'Ground Truth — close' },
+      groundTruth: { id: 'KSGU', name: 'St George Regional', role: 'Ground Truth — 8 mi from reservoir' },
+      earlyIndicator: {
+        id: 'KCDC',
+        name: 'Cedar City Regional',
+        elevation: 5622,
+        role: 'Early Warning — SW flow at Cedar City precedes Sand Hollow by ~75 min',
+        leadTimeMinutes: 75,
+        trigger: {
+          direction: { min: 190, max: 260, label: 'SW' },
+          speed: { min: 6, optimal: 10 },
+        },
+      },
       lakeshore: [
-        { id: 'KSGU', name: 'St George Regional', elevation: 2941, role: 'Primary — close', priority: 1 },
+        { id: 'KSGU', name: 'St George Regional', elevation: 2941, role: 'Primary — closest ASOS', priority: 1 },
+        { id: 'KUTSTGEOR7', name: 'St George NW (WU)', elevation: 2800, role: 'WU close-range validation', priority: 2 },
+        { id: 'KUTHURRIC3', name: 'Hurricane (WU)', elevation: 3300, role: 'Eastern corridor check', priority: 3 },
       ],
-      reference: [{ id: 'KSGU', name: 'St George Regional', elevation: 2941 }],
+      reference: [
+        { id: 'KSGU', name: 'St George Regional', elevation: 2941 },
+        { id: 'KCDC', name: 'Cedar City Regional', elevation: 5622 },
+        { id: 'KUTSTGEOR7', name: 'St George NW (WU)', elevation: 2800 },
+        { id: 'KUTHURRIC3', name: 'Hurricane (WU)', elevation: 3300 },
+        { id: 'KUTIVINS5', name: 'Ivins (WU)', elevation: 3400 },
+        { id: 'KPGA', name: 'Page AZ Airport', elevation: 4316 },
+      ],
     },
     thermal: {
       optimalDirection: { min: 200, max: 250, ideal: 225 },
