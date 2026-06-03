@@ -580,11 +580,13 @@ function propagate(obs, context, config, regime) {
       const KNOWN_RATIOS_N  = { FPS: 2.8, KPVU: 1.5, UTALP: 1.5, KSLC: 1.6 };
       const KNOWN_RATIOS = regime.regime === 'north_flow' ? KNOWN_RATIOS_N : KNOWN_RATIOS_SE;
 
-      // Use known ratios when ground truth is below meaningful threshold (< 5 mph).
-      // At 1-4 mph the reading is ambient/noise, not the thermal signal, so
-      // computing ratio = 3/13.8 gives a nonsense 0.22 multiplier.
+      // Use known ratios when ground truth is below the usable wind threshold
+      // (< 8 mph for wind sports). Below 8 the station reading is ambient/early
+      // stirring, NOT the thermal signal — computing ratio from it is nonsense.
+      // Example: 6 mph gt / 13.8 QSF = 0.43 → expects only 6 mph. Wrong.
+      // Known ratio QSF→ZZ is ~0.7 → expects 9.7 mph. Correct.
       let ratio;
-      const gtMeaningful = obs.groundTruth?.speed >= 5;
+      const gtMeaningful = obs.groundTruth?.speed >= 8;
       if (gtMeaningful && bestUpstream.speed > 0) {
         ratio = obs.groundTruth.speed / bestUpstream.speed;
       } else {
@@ -600,7 +602,13 @@ function propagate(obs, context, config, regime) {
       const proxySpeed = localSpeed > 0 ? localSpeed
         : obs.lakeshore.length > 0 ? obs.lakeshore[0].speed / (KNOWN_RATIOS[obs.lakeshore[0].id] || 1) : 0;
 
-      if (proxySpeed >= 5) {
+      // Only mark "arrived" when ground truth >= 8 (usable for wind sports).
+      // At 5-7 mph with strong upstream, the thermal is still building at
+      // this location — don't short-circuit to "arrived."
+      if (proxySpeed >= 8) {
+        result.phase = 'arrived';
+        result.eta = 0;
+      } else if (proxySpeed >= 5 && !upstreamMuchStronger) {
         result.phase = 'arrived';
         result.eta = 0;
       } else if (bestUpstream.speed >= 5) {
@@ -636,16 +644,17 @@ function propagate(obs, context, config, regime) {
           status: 'active',
         });
 
-        if (result.phase === 'quiet' || result.phase === 'unknown') {
-          result.phase = 'building';
-          result.eta = leadTime;
+        const gtBelowUsable = (obs.groundTruth?.speed ?? 0) < 8;
+        if (result.phase === 'quiet' || result.phase === 'unknown' || (result.phase === 'arrived' && gtBelowUsable)) {
+          result.phase = gtBelowUsable ? 'building' : 'arrived';
+          result.eta = gtBelowUsable ? leadTime : 0;
         }
 
       // QSF SE maps roughly 0.75:1 to PWS (validated over 3yr backtest).
       // With KPVU confirming SE, bump to 0.8.
-      // Apply when ground truth is below meaningful threshold (< 5 mph)
-      // or absent — at 1-4 mph the station isn't reading thermal signal yet.
-      if ((obs.groundTruth?.speed ?? 0) < 5 && regime.regime === 'se_thermal') {
+      // Apply when ground truth is below usable threshold (< 8 mph) — at
+      // 4-7 mph the station is in early stirring, not full thermal signal.
+      if ((obs.groundTruth?.speed ?? 0) < 8 && regime.regime === 'se_thermal') {
           const kpvu = obs.allReadings?.KPVU;
           const kpvuConfirmed = kpvu && kpvu.dir != null && kpvu.dir >= 120 && kpvu.dir <= 200 && kpvu.speed >= 4;
           const qsfRatio = kpvuConfirmed ? 0.8 : 0.7;
@@ -1305,7 +1314,7 @@ function buildHourlyForecast(lakeId, context, calibrationResult, regime, propaga
   const isSEThermal = regime?.regime === 'se_thermal' && regime?.confidence >= 0.5;
   const expectedSpeed = propagation?.expectedSpeed;
   const etaMin = propagation?.eta;
-  const liveSpeed = propagation?.phase === 'arrived' ? expectedSpeed : 0;
+  const liveSpeed = (propagation?.phase === 'arrived' || propagation?.phase === 'building' || propagation?.phase === 'approaching') ? expectedSpeed : 0;
   const nowHour = new Date().getHours();
 
   return periods.slice(0, 24).map(p => {
@@ -1463,10 +1472,7 @@ function backwardCompat(calibration, regime, propagation, pressure, speed, gust,
     arrivalTime: propagation.eta && speed < 5 ? formatETA(hour, propagation.eta) : null,
     startHour,
     endHour: regime.regime === 'se_thermal' ? 14 : 17,
-    expectedSpeed: Math.min(
-      Math.max(propagation.expectedSpeed || 0, speed, gust ? gust * 0.85 : 0),
-      speed > 0 ? speed * 2 : 20
-    ),
+    expectedSpeed: Math.max(propagation.expectedSpeed || 0, speed, gust ? gust * 0.85 : 0),
     pressureGradient: pressure.gradient,
     thermalBusted: pressure.thermalBusted,
     description: regime.description,

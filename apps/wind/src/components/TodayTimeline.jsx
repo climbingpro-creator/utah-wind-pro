@@ -360,9 +360,9 @@ export default function TodayTimeline({ locationId = 'utah-lake', activity = 'ki
             <h3 className="font-bold text-white text-base">{isCalmActivity ? `${activityName} Conditions` : "Today's Wind"}</h3>
             <span className="text-sm text-slate-400">—</span>
             <span className="text-sm font-medium text-sky-400">{SPOT_NAMES[locationId] || locationId}</span>
-            {mlActive && (
+            {(mlActive || todayHours.some(h => h.thermalBoosted || h.mlCorrected)) && (
               <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-purple-900/30 text-purple-400">
-                AI Enhanced
+                {todayHours.some(h => h.thermalBoosted) ? 'Thermal Enhanced' : 'AI Enhanced'}
               </span>
             )}
             {isNowcastActive && (
