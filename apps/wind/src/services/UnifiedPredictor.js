@@ -580,8 +580,12 @@ function propagate(obs, context, config, regime) {
       const KNOWN_RATIOS_N  = { FPS: 2.8, KPVU: 1.5, UTALP: 1.5, KSLC: 1.6 };
       const KNOWN_RATIOS = regime.regime === 'north_flow' ? KNOWN_RATIOS_N : KNOWN_RATIOS_SE;
 
+      // Use known ratios when ground truth is below meaningful threshold (< 5 mph).
+      // At 1-4 mph the reading is ambient/noise, not the thermal signal, so
+      // computing ratio = 3/13.8 gives a nonsense 0.22 multiplier.
       let ratio;
-      if (obs.groundTruth?.speed > 0 && bestUpstream.speed > 0) {
+      const gtMeaningful = obs.groundTruth?.speed >= 5;
+      if (gtMeaningful && bestUpstream.speed > 0) {
         ratio = obs.groundTruth.speed / bestUpstream.speed;
       } else {
         const knownR = KNOWN_RATIOS[bestUpstream.id];
@@ -592,8 +596,8 @@ function propagate(obs, context, config, regime) {
       result.lagConfidence = bestR;
       result.expectedSpeed = bestUpstream.speed * (ratio > 0.05 ? ratio : 0.6);
 
-      const gtSpeed = obs.groundTruth?.speed ?? 0;
-      const proxySpeed = gtSpeed > 0 ? gtSpeed
+      const localSpeed = obs.groundTruth?.speed ?? 0;
+      const proxySpeed = localSpeed > 0 ? localSpeed
         : obs.lakeshore.length > 0 ? obs.lakeshore[0].speed / (KNOWN_RATIOS[obs.lakeshore[0].id] || 1) : 0;
 
       if (proxySpeed >= 5) {
@@ -639,7 +643,9 @@ function propagate(obs, context, config, regime) {
 
       // QSF SE maps roughly 0.75:1 to PWS (validated over 3yr backtest).
       // With KPVU confirming SE, bump to 0.8.
-      if (!obs.groundTruth?.speed && regime.regime === 'se_thermal') {
+      // Apply when ground truth is below meaningful threshold (< 5 mph)
+      // or absent — at 1-4 mph the station isn't reading thermal signal yet.
+      if ((obs.groundTruth?.speed ?? 0) < 5 && regime.regime === 'se_thermal') {
           const kpvu = obs.allReadings?.KPVU;
           const kpvuConfirmed = kpvu && kpvu.dir != null && kpvu.dir >= 120 && kpvu.dir <= 200 && kpvu.speed >= 4;
           const qsfRatio = kpvuConfirmed ? 0.8 : 0.7;
@@ -1241,10 +1247,13 @@ function brief(regime, decision, propagation, pressure, activities, currentActiv
 
   let bestAction = '';
   if (decision.decision === 'GO') {
-    const hoursLeft = Math.max(1, 18 - hour);
-    bestAction = hoursLeft >= 4
-      ? `You've got all afternoon — good conditions for the next ${hoursLeft}+ hours`
-      : `Window is closing — maybe ${hoursLeft} hour${hoursLeft > 1 ? 's' : ''} of light left`;
+    const thermalEnd = 17;
+    const hoursLeft = Math.max(1, thermalEnd - hour);
+    bestAction = hoursLeft >= 6
+      ? `Good conditions into the afternoon — thermal typically peaks 12–3 PM`
+      : hoursLeft >= 3
+        ? `${hoursLeft} hours of good wind ahead — make the most of it`
+        : `Window is closing — maybe ${hoursLeft} hour${hoursLeft > 1 ? 's' : ''} left`;
   } else if (decision.decision === 'WAIT' && propagation.eta) {
     bestAction = `Be ready by ${formatETA(hour, propagation.eta)} — start getting your gear together`;
   } else if (decision.decision === 'PASS') {
@@ -1317,7 +1326,9 @@ function buildHourlyForecast(lakeId, context, calibrationResult, regime, propaga
         const etaHours = (etaMin || 90) / 60;
 
         if (hoursFromNow <= 0 || hoursFromNow >= etaHours - 0.5) {
-          const thermalPeak = expectedSpeed * (calibrationResult?.speedMultiplier ?? 1.0);
+          // expectedSpeed is already calibrated from upstream ratios — don't
+          // apply speedMultiplier again (that's for NWS→reality correction)
+          const thermalPeak = expectedSpeed;
           const peakHour = 13;
           const distFromPeak = Math.abs(periodHour - peakHour);
           const thermalShape = Math.max(0.5, 1.0 - distFromPeak * 0.1);
@@ -1447,7 +1458,10 @@ function backwardCompat(calibration, regime, propagation, pressure, speed, gust,
     arrivalTime: propagation.eta && speed < 5 ? formatETA(hour, propagation.eta) : null,
     startHour,
     endHour: 17,
-    expectedSpeed: Math.max(propagation.expectedSpeed || 0, speed, gust ? gust * 0.85 : 0),
+    expectedSpeed: Math.min(
+      Math.max(propagation.expectedSpeed || 0, speed, gust ? gust * 0.85 : 0),
+      speed > 0 ? speed * 2 : 20
+    ),
     pressureGradient: pressure.gradient,
     thermalBusted: pressure.thermalBusted,
     description: regime.description,
