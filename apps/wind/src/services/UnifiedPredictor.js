@@ -1113,7 +1113,6 @@ function decide(activity, activityScore, speed, gust, dir, _probability, propaga
   const upstreamConfirmed = hasActiveUpstreamChains || upstreamExpected >= (p.min || 8);
   // For wind sports: gusts matter. If gusts are in the rideable range, factor that in.
   const effectiveSpeed = p.wantsWind && gust > speed ? (speed * 0.6 + gust * 0.4) : speed;
-  const effectiveSpd = Math.round(effectiveSpeed);
 
   if (activityScore.score >= 70) {
     return {
