@@ -216,7 +216,7 @@ export default function WinterRiderTemplate({
 
       {/* ═══════ HOURLY FORECAST ═══════ */}
       <SafeComponent name="Today Timeline">
-        <TodayTimeline locationId={selectedLake} activity={selectedActivity} unifiedHourly={prediction?.hourly} />
+        <TodayTimeline locationId={selectedLake} activity={selectedActivity} unifiedHourly={prediction?.hourly} liveDecision={prediction?.decision} liveSpeed={prediction?.thermalPrediction?.expectedSpeed} />
       </SafeComponent>
 
       {/* ═══════ AI BRIEFING ═══════ */}

@@ -520,15 +520,17 @@ function propagate(obs, context, config, regime) {
     ...[obs.earlyIndicator?.speed, ...obs.lakeshore.map(s => s.speed), ...obs.reference.map(s => s.speed)]
       .filter(s => s != null && s > 0)
   ) || 0;
-  const upstreamMuchStronger = upstreamMax > gtSpeed * 2 && upstreamMax >= 10;
+  const upstreamMuchStronger = upstreamMax > gtSpeed * 1.5 && upstreamMax >= 10;
 
   if (gtSpeed >= 8) {
     result.phase = 'arrived';
     result.eta = 0;
-    result.expectedSpeed = gtSpeed;
+    result.expectedSpeed = upstreamMuchStronger ? Math.max(gtSpeed, upstreamMax * 0.75) : gtSpeed;
     result.lagConfidence = 0.9;
     result.dominantSource = obs.groundTruthId || 'PWS';
     if (!upstreamMuchStronger) return result;
+    // When upstream is much stronger, continue to gather chain/indicator data
+    // but keep the "arrived" phase — wind is here AND still building
   }
   if (gtSpeed >= 5 && !upstreamMuchStronger) {
     result.phase = 'arrived';
@@ -1012,16 +1014,19 @@ function scoreActivity(activityId, speed, gust, probability, dir, _config) {
   let score = 0;
 
   if (p.wantsWind) {
-    if (speed >= p.idealMin && speed <= p.idealMax) {
-      score = 80 + 20 * (1 - Math.abs(speed - (p.idealMin + p.idealMax) / 2) / ((p.idealMax - p.idealMin) / 2));
-    } else if (speed >= p.min && speed < p.idealMin) {
-      score = 30 + 50 * ((speed - p.min) / Math.max(1, p.idealMin - p.min));
-    } else if (speed > p.idealMax && speed <= p.max) {
-      score = 40 + 40 * (1 - (speed - p.idealMax) / Math.max(1, p.max - p.idealMax));
-    } else if (speed < p.min) {
-      score = Math.max(0, 20 * (speed / p.min));
+    // For wind sports, blend sustained and gust: gusts = rideable peaks
+    const rideableSpeed = gust > speed ? speed * 0.65 + gust * 0.35 : speed;
+
+    if (rideableSpeed >= p.idealMin && rideableSpeed <= p.idealMax) {
+      score = 80 + 20 * (1 - Math.abs(rideableSpeed - (p.idealMin + p.idealMax) / 2) / ((p.idealMax - p.idealMin) / 2));
+    } else if (rideableSpeed >= p.min && rideableSpeed < p.idealMin) {
+      score = 30 + 50 * ((rideableSpeed - p.min) / Math.max(1, p.idealMin - p.min));
+    } else if (rideableSpeed > p.idealMax && rideableSpeed <= p.max) {
+      score = 40 + 40 * (1 - (rideableSpeed - p.idealMax) / Math.max(1, p.max - p.idealMax));
+    } else if (rideableSpeed < p.min) {
+      score = Math.max(0, 20 * (rideableSpeed / p.min));
     } else {
-      score = Math.max(0, 20 * (1 - (speed - p.max) / 10));
+      score = Math.max(0, 20 * (1 - (rideableSpeed - p.max) / 10));
     }
 
     if (gustFactor > p.gustLimit) {
@@ -1102,17 +1107,39 @@ function decide(activity, activityScore, speed, gust, dir, _probability, propaga
     };
   }
 
+  // Upstream confidence: are indicators strongly confirming wind?
+  const hasActiveUpstreamChains = propagation.chains?.some(c => c.status === 'active' || c.status === 'strong');
+  const upstreamExpected = propagation.expectedSpeed ?? 0;
+  const upstreamConfirmed = hasActiveUpstreamChains || upstreamExpected >= (p.min || 8);
+  // For wind sports: gusts matter. If gusts are in the rideable range, factor that in.
+  const effectiveSpeed = p.wantsWind && gust > speed ? (speed * 0.6 + gust * 0.4) : speed;
+  const effectiveSpd = Math.round(effectiveSpeed);
+
   if (activityScore.score >= 70) {
     return {
       decision: 'GO',
       confidence: clamp(activityScore.score / 100, 0.6, 0.95),
       headline: p.wantsWind
-        ? `You should go ${verb} today — ${spd} mph ${cardinal}`
+        ? `You should go ${verb} today — ${spd} mph ${cardinal}${gstStr}`
         : `Great time to ${verb} — calm at ${spd} mph`,
       detail: activityScore.message,
       action: p.wantsWind
         ? `Conditions are dialed. Get out there.`
         : `Smooth water — perfect conditions right now`,
+    };
+  }
+
+  // Wind is here + upstream confirms it's going to stay or build → GO
+  if (p.wantsWind && effectiveSpeed >= p.min && upstreamConfirmed && activityScore.score >= 40) {
+    const peakStr = upstreamExpected > speed ? ` Building to ~${Math.round(upstreamExpected)} mph.` : '';
+    return {
+      decision: 'GO',
+      confidence: clamp(0.6 + (upstreamExpected > speed ? 0.15 : 0), 0.5, 0.85),
+      headline: `${spd} mph ${cardinal}${gstStr} — go ${verb}!${peakStr ? ' Building.' : ''}`,
+      detail: `Wind is here and upstream confirms it's building.${peakStr}`,
+      action: effectiveSpeed >= p.idealMin
+        ? `Conditions are good — get on the water now`
+        : `Rideable now and improving — bring your biggest kite`,
     };
   }
 
@@ -1123,7 +1150,7 @@ function decide(activity, activityScore, speed, gust, dir, _probability, propaga
     return {
       decision: 'WAIT',
       confidence: clamp(propagation.lagConfidence, 0.3, 0.8),
-      headline: `Wind is building — could be good to ${verb} by ${formatETA(_pressure?._hour ?? 12, etaMin)}`,
+      headline: `Wind is building — should be good to ${verb} by ${formatETA(_pressure?._hour ?? 12, etaMin)}`,
       detail: upstream
         ? `${upstream} is showing ${expectedSpd} mph upstream. Give it about ${etaMin} minutes to arrive.`
         : `Upstream stations showing wind building. Keep an eye on it.`,
@@ -1132,6 +1159,15 @@ function decide(activity, activityScore, speed, gust, dir, _probability, propaga
   }
 
   if (activityScore.score >= 40) {
+    if (p.wantsWind && upstreamConfirmed) {
+      return {
+        decision: 'WAIT',
+        confidence: 0.5,
+        headline: `${spd} mph and building — upstream looks strong`,
+        detail: `Currently marginal but upstream stations confirm wind is on the way.`,
+        action: `Get your gear ready — conditions are improving`,
+      };
+    }
     return {
       decision: 'WAIT',
       confidence: 0.4,
@@ -1256,29 +1292,36 @@ function buildHourlyForecast(lakeId, context, calibrationResult, regime, propaga
   const isSEThermal = regime?.regime === 'se_thermal' && regime?.confidence >= 0.5;
   const expectedSpeed = propagation?.expectedSpeed;
   const etaMin = propagation?.eta;
+  const liveSpeed = propagation?.phase === 'arrived' ? expectedSpeed : 0;
+  const nowHour = new Date().getHours();
 
   return periods.slice(0, 24).map(p => {
     let speed = p.windSpeed;
     if (typeof speed === 'string') speed = parseFloat(speed) || 0;
 
     let adjustedSpeed = speed * (calibrationResult?.speedMultiplier ?? 1.0);
+    const periodTime = new Date(p.startTime || p.time);
+    const periodHour = periodTime.getHours();
 
+    // Override current hour with live readings when live > NWS
+    if (periodHour === nowHour && liveSpeed > adjustedSpeed) {
+      adjustedSpeed = liveSpeed;
+    }
+
+    // Thermal window: 8 AM - 6 PM (NWS routinely misses lake thermals)
     if (isSEThermal && expectedSpeed > adjustedSpeed) {
-      const periodTime = new Date(p.startTime || p.time);
-      const periodHour = periodTime.getHours();
-
-      const thermalWindow = periodHour >= 10 && periodHour <= 18;
+      const thermalWindow = periodHour >= 8 && periodHour <= 18;
 
       if (thermalWindow) {
         const now = new Date();
         const hoursFromNow = (periodTime - now) / 3600000;
         const etaHours = (etaMin || 90) / 60;
 
-        if (hoursFromNow >= etaHours - 0.5) {
+        if (hoursFromNow <= 0 || hoursFromNow >= etaHours - 0.5) {
           const thermalPeak = expectedSpeed * (calibrationResult?.speedMultiplier ?? 1.0);
-          const peakHour = 14;
+          const peakHour = 13;
           const distFromPeak = Math.abs(periodHour - peakHour);
-          const thermalShape = Math.max(0.6, 1.0 - distFromPeak * 0.08);
+          const thermalShape = Math.max(0.5, 1.0 - distFromPeak * 0.1);
           const thermalSpeed = thermalPeak * thermalShape;
 
           if (thermalSpeed > adjustedSpeed) {
@@ -1405,7 +1448,7 @@ function backwardCompat(calibration, regime, propagation, pressure, speed, gust,
     arrivalTime: propagation.eta && speed < 5 ? formatETA(hour, propagation.eta) : null,
     startHour,
     endHour: 17,
-    expectedSpeed: propagation.expectedSpeed || speed,
+    expectedSpeed: Math.max(propagation.expectedSpeed || 0, speed, gust ? gust * 0.85 : 0),
     pressureGradient: pressure.gradient,
     thermalBusted: pressure.thermalBusted,
     description: regime.description,
@@ -1414,7 +1457,7 @@ function backwardCompat(calibration, regime, propagation, pressure, speed, gust,
       persistenceHours: pressure.gradient > 2 ? 2 : 1,
     } : null,
     phase: propagation.phase,
-    speed: { expectedAvg: propagation.expectedSpeed || speed },
+    speed: { expectedAvg: Math.max(propagation.expectedSpeed || 0, speed) },
     pressure: { gradient: pressure.gradient, isBusted: pressure.thermalBusted },
     direction: { status: speed >= 5 ? 'optimal' : 'unknown' },
   };

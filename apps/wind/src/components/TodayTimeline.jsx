@@ -176,7 +176,7 @@ function findBestWindow(hours, activity) {
 
 const MPH_TO_KT = 0.868976;
 
-export default function TodayTimeline({ locationId = 'utah-lake', activity = 'kiting', unifiedHourly }) {
+export default function TodayTimeline({ locationId = 'utah-lake', activity = 'kiting', unifiedHourly, liveDecision, liveSpeed }) {
   const isNowcastActive = useWeatherStore((s) => s.isNowcastActive);
   const hourlyForecast = useWeatherStore((s) => s.hourlyForecast);
   const setHourlyForecast = useWeatherStore((s) => s.setHourlyForecast);
@@ -399,6 +399,15 @@ export default function TodayTimeline({ locationId = 'utah-lake', activity = 'ki
               </span>
             </div>
             <ChevronRight size={14} className="text-emerald-400/50 shrink-0" />
+          </div>
+        ) : liveDecision === 'GO' || liveDecision === 'WAIT' ? (
+          <div className="flex items-center gap-2 mt-2 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
+            <Wind size={16} className="text-amber-400 shrink-0" />
+            <span className="text-sm text-amber-300">
+              {liveDecision === 'GO'
+                ? `Live stations show ${liveSpeed ? `~${displaySpeed(liveSpeed)} ${unitLabel}` : 'wind'} — NWS forecast doesn't capture local thermals`
+                : 'Wind building — live stations override NWS hourly forecast'}
+            </span>
           </div>
         ) : (
           <div className="flex items-center gap-2 mt-2 px-3 py-2 rounded-lg bg-slate-800/50 border border-slate-700/50">
