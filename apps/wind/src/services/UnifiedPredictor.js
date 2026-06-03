@@ -1247,13 +1247,18 @@ function brief(regime, decision, propagation, pressure, activities, currentActiv
 
   let bestAction = '';
   if (decision.decision === 'GO') {
-    const thermalEnd = 17;
+    const isSE = regime.regime === 'se_thermal';
+    const thermalEnd = isSE ? 14 : 17;
     const hoursLeft = Math.max(1, thermalEnd - hour);
-    bestAction = hoursLeft >= 6
-      ? `Good conditions into the afternoon — thermal typically peaks 12–3 PM`
-      : hoursLeft >= 3
-        ? `${hoursLeft} hours of good wind ahead — make the most of it`
-        : `Window is closing — maybe ${hoursLeft} hour${hoursLeft > 1 ? 's' : ''} left`;
+    bestAction = isSE
+      ? (hoursLeft >= 3
+        ? `SE thermal peaks 9–11 AM — ${hoursLeft} hours of wind ahead`
+        : hoursLeft >= 1
+          ? `Window closing — maybe ${hoursLeft} hour${hoursLeft > 1 ? 's' : ''} of SE thermal left`
+          : `Thermal fading — get on the water now if you're going`)
+      : (hoursLeft >= 4
+        ? `Good conditions for the next ${hoursLeft} hours`
+        : `Window is closing — maybe ${hoursLeft} hour${hoursLeft > 1 ? 's' : ''} left`);
   } else if (decision.decision === 'WAIT' && propagation.eta) {
     bestAction = `Be ready by ${formatETA(hour, propagation.eta)} — start getting your gear together`;
   } else if (decision.decision === 'PASS') {
@@ -1316,9 +1321,9 @@ function buildHourlyForecast(lakeId, context, calibrationResult, regime, propaga
       adjustedSpeed = liveSpeed;
     }
 
-    // Thermal window: 8 AM - 6 PM (NWS routinely misses lake thermals)
+    // SE thermal window: 8 AM - 2 PM (peaks 9-11 AM, fades by noon-2 PM)
     if (isSEThermal && expectedSpeed > adjustedSpeed) {
-      const thermalWindow = periodHour >= 8 && periodHour <= 18;
+      const thermalWindow = periodHour >= 8 && periodHour <= 14;
 
       if (thermalWindow) {
         const now = new Date();
@@ -1329,7 +1334,7 @@ function buildHourlyForecast(lakeId, context, calibrationResult, regime, propaga
           // expectedSpeed is already calibrated from upstream ratios — don't
           // apply speedMultiplier again (that's for NWS→reality correction)
           const thermalPeak = expectedSpeed;
-          const peakHour = 13;
+          const peakHour = 10;
           const distFromPeak = Math.abs(periodHour - peakHour);
           const thermalShape = Math.max(0.5, 1.0 - distFromPeak * 0.1);
           const thermalSpeed = thermalPeak * thermalShape;
@@ -1457,7 +1462,7 @@ function backwardCompat(calibration, regime, propagation, pressure, speed, gust,
     status,
     arrivalTime: propagation.eta && speed < 5 ? formatETA(hour, propagation.eta) : null,
     startHour,
-    endHour: 17,
+    endHour: regime.regime === 'se_thermal' ? 14 : 17,
     expectedSpeed: Math.min(
       Math.max(propagation.expectedSpeed || 0, speed, gust ? gust * 0.85 : 0),
       speed > 0 ? speed * 2 : 20

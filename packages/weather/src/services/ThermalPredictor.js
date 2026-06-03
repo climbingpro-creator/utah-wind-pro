@@ -598,10 +598,10 @@ export const THERMAL_PROFILES = {
     timing: {
       buildStart: { hour: 5, minute: 0, label: '5:00 AM' },
       usableStart: { hour: 8, minute: 0, label: '8:00 AM' },
-      peakWindow: { start: 10, end: 13, label: '10:00 AM - 1:00 PM' },
-      peakHour: 11,
-      fadeStart: { hour: 15, minute: 0, label: '3:00 PM' },
-      fadeEnd: { hour: 18, minute: 0, label: '6:00 PM' },
+      peakWindow: { start: 9, end: 11, label: '9:00 AM - 11:00 AM' },
+      peakHour: 10,
+      fadeStart: { hour: 12, minute: 0, label: '12:00 PM' },
+      fadeEnd: { hour: 14, minute: 0, label: '2:00 PM' },
     },
     
     statistics: {
@@ -635,10 +635,10 @@ export const THERMAL_PROFILES = {
     timing: {
       buildStart: { hour: 5, minute: 0, label: '5:00 AM' },
       usableStart: { hour: 8, minute: 0, label: '8:00 AM' },
-      peakWindow: { start: 10, end: 13, label: '10:00 AM - 1:00 PM' },
-      peakHour: 11,
-      fadeStart: { hour: 15, minute: 0, label: '3:00 PM' },
-      fadeEnd: { hour: 18, minute: 0, label: '6:00 PM' },
+      peakWindow: { start: 9, end: 11, label: '9:00 AM - 11:00 AM' },
+      peakHour: 10,
+      fadeStart: { hour: 12, minute: 0, label: '12:00 PM' },
+      fadeEnd: { hour: 14, minute: 0, label: '2:00 PM' },
     },
     
     statistics: {
@@ -672,10 +672,10 @@ export const THERMAL_PROFILES = {
     timing: {
       buildStart: { hour: 6, minute: 0, label: '6:00 AM' },
       usableStart: { hour: 9, minute: 0, label: '9:00 AM' },
-      peakWindow: { start: 10, end: 14, label: '10:00 AM - 2:00 PM' },
-      peakHour: 12,
-      fadeStart: { hour: 15, minute: 0, label: '3:00 PM' },
-      fadeEnd: { hour: 18, minute: 0, label: '6:00 PM' },
+      peakWindow: { start: 9, end: 11, label: '9:00 AM - 11:00 AM' },
+      peakHour: 10,
+      fadeStart: { hour: 12, minute: 0, label: '12:00 PM' },
+      fadeEnd: { hour: 14, minute: 0, label: '2:00 PM' },
     },
     
     statistics: {
@@ -709,10 +709,10 @@ export const THERMAL_PROFILES = {
     timing: {
       buildStart: { hour: 5, minute: 0, label: '5:00 AM' },
       usableStart: { hour: 8, minute: 0, label: '8:00 AM' },
-      peakWindow: { start: 10, end: 13, label: '10:00 AM - 1:00 PM' },
-      peakHour: 11,
-      fadeStart: { hour: 15, minute: 0, label: '3:00 PM' },
-      fadeEnd: { hour: 18, minute: 0, label: '6:00 PM' },
+      peakWindow: { start: 9, end: 11, label: '9:00 AM - 11:00 AM' },
+      peakHour: 10,
+      fadeStart: { hour: 12, minute: 0, label: '12:00 PM' },
+      fadeEnd: { hour: 14, minute: 0, label: '2:00 PM' },
     },
     
     statistics: {
@@ -746,10 +746,10 @@ export const THERMAL_PROFILES = {
     timing: {
       buildStart: { hour: 5, minute: 0, label: '5:00 AM' },
       usableStart: { hour: 8, minute: 0, label: '8:00 AM' },
-      peakWindow: { start: 10, end: 13, label: '10:00 AM - 1:00 PM' },
-      peakHour: 11,
-      fadeStart: { hour: 15, minute: 0, label: '3:00 PM' },
-      fadeEnd: { hour: 18, minute: 0, label: '6:00 PM' },
+      peakWindow: { start: 9, end: 11, label: '9:00 AM - 11:00 AM' },
+      peakHour: 10,
+      fadeStart: { hour: 12, minute: 0, label: '12:00 PM' },
+      fadeEnd: { hour: 14, minute: 0, label: '2:00 PM' },
     },
     
     statistics: {
@@ -784,10 +784,10 @@ export const THERMAL_PROFILES = {
     timing: {
       buildStart: { hour: 5, minute: 0, label: '5:00 AM' },
       usableStart: { hour: 8, minute: 0, label: '8:00 AM' },
-      peakWindow: { start: 10, end: 13, label: '10:00 AM - 1:00 PM' },
-      peakHour: 11,
-      fadeStart: { hour: 15, minute: 0, label: '3:00 PM' },
-      fadeEnd: { hour: 18, minute: 0, label: '6:00 PM' },
+      peakWindow: { start: 9, end: 11, label: '9:00 AM - 11:00 AM' },
+      peakHour: 10,
+      fadeStart: { hour: 12, minute: 0, label: '12:00 PM' },
+      fadeEnd: { hour: 14, minute: 0, label: '2:00 PM' },
     },
     
     statistics: {
