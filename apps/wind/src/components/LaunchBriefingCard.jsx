@@ -488,9 +488,14 @@ export default function LaunchBriefingCard({ lakeId, lakeState, hourlyForecast, 
             {/* Sparkline */}
             <TimelineStrip points={forecastWindow.points} />
           </>
+        ) : prediction?.phase === 'building' || prediction?.phase === 'peak' ? (
+          <div className="text-sm text-amber-400/80 py-2">
+            {prediction.phase === 'peak' ? 'Peak thermal window active' : 'Thermal building'} — live stations override NWS hourly. Watch indicators below.
+          </div>
         ) : (
           <div className="text-sm text-slate-400 py-2">
-            No usable window remaining today in the safe arc.
+            No usable window detected in the NWS hourly forecast.
+            {prediction?.phase === 'pre-thermal' ? ' Thermal season starts later — check back.' : ''}
           </div>
         )}
 

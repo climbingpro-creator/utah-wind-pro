@@ -119,8 +119,11 @@ function computeExcitement(activity, params) {
     }
 
     if (isActiveNonThermal && speed >= (thresholds.foilable?.[0] || thresholds.rideable[0])) score += 1;
-    if (prob >= 0.7) score += 1;
+    const pNorm = prob > 1 ? prob / 100 : prob;
+    if (pNorm >= 0.7) score += 1;
+    else if (pNorm >= 0.5) score += 0.5;
     if (activeTriggers?.length >= 2) score += 1;
+    if (activeTriggers?.length >= 1 && pNorm >= 0.5) score += 0.5;
   } else if (CALM_ACTIVITIES.has(activity)) {
     if (speed <= thresholds.ideal[1]) score += 2;
     else if (speed <= thresholds.rideable[1]) score += 1;
@@ -148,7 +151,18 @@ function buildUpstreamSnippet(upstream) {
     parts.push(`SLC airport ${Math.round(upstream.kslcSpeed)} mph ${dirLabel(upstream.kslcDirection) || ''}`);
   }
   if (upstream.kpvuSpeed != null && upstream.kpvuSpeed >= 5) {
-    parts.push(`Provo airport ${Math.round(upstream.kpvuSpeed)} mph ${dirLabel(upstream.kpvuDirection) || ''}`);
+    const kpvuDir = upstream.kpvuDirection;
+    const kslcDir = upstream.kslcDirection;
+    let dirOff = false;
+    if (kpvuDir != null && kslcDir != null) {
+      let dd = Math.abs(kpvuDir - kslcDir) % 360;
+      if (dd > 180) dd = 360 - dd;
+      dirOff = dd > 90;
+    }
+    const spdOff = upstream.kslcSpeed != null && Math.abs(upstream.kpvuSpeed - upstream.kslcSpeed) > 15;
+    if (!dirOff && !spdOff) {
+      parts.push(`Provo airport ${Math.round(upstream.kpvuSpeed)} mph ${dirLabel(kpvuDir) || ''}`);
+    }
   }
   if (parts.length === 0) return '';
   return parts.join(', ');

@@ -1058,10 +1058,14 @@ export function predictThermal(lakeId, currentConditions) {
     phase = 'building';
     timeToThermal = Math.round((timing.usableStart.hour - hourDecimal) * 60);
     phaseMessage = `Thermal building. Usable conditions expected by ${timing.usableStart.label}`;
-  } else if (hourDecimal >= timing.peakWindow.start && hourDecimal <= timing.peakWindow.end) {
+  } else if (hourDecimal < timing.peakWindow.start) {
+    phase = 'building';
+    const minToPeak = Math.round((timing.peakWindow.start - hourDecimal) * 60);
+    phaseMessage = `Thermal active and building toward peak in ~${minToPeak} min`;
+  } else if (hourDecimal <= timing.peakWindow.end) {
     phase = 'peak';
     phaseMessage = `PEAK WINDOW: ${timing.peakWindow.label}`;
-  } else if (hourDecimal > timing.peakWindow.end && hourDecimal < timing.fadeEnd.hour) {
+  } else if (hourDecimal < timing.fadeEnd.hour) {
     phase = 'fading';
     phaseMessage = `Thermal fading. ${Math.round((timing.fadeEnd.hour - hourDecimal) * 60)} min remaining`;
   } else {
@@ -1871,6 +1875,8 @@ export function predictThermal(lakeId, currentConditions) {
       message: directionMessage,
       expected: direction.label,
       expectedRange: `${direction.optimal.min}-${direction.optimal.max}°`,
+      optimal: direction.optimal,
+      acceptable: direction.acceptable,
       current: currentConditions?.windDirection,
     },
     
