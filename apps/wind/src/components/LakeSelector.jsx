@@ -140,6 +140,52 @@ function findStation(cache, meterId) {
   return cache[meterId] || null;
 }
 
+const METER_NEIGHBORS = {
+  KPVU: ['KUTPLEAS11', 'KUTLEHI160', 'KUTOREM47', 'FPS', 'KSLC', 'QLN'],
+  KSLC: ['KUTSANDY188', 'KUTDRAPE132', 'UT7', 'UTALP', 'KPVU', 'KOGD'],
+  KHCR: ['KUTHEBER105', 'KUTMIDWA37', 'UTDCD'],
+  KHIF: ['KOGD', 'KUTOGDEN32', 'KSLC'],
+  KSGU: ['KUTHURRIC3', 'KUTSTGEO128'],
+};
+
+function getDirFromCacheRaw(cache, meterId) {
+  const s = findStation(cache, meterId);
+  if (!s) return null;
+  return s.direction ?? s.windDirection ?? null;
+}
+
+function dirDiff(a, b) {
+  if (a == null || b == null) return null;
+  let d = Math.abs(a - b) % 360;
+  return d > 180 ? 360 - d : d;
+}
+
+function isMeterSuspect(cache, meterId) {
+  const neighbors = METER_NEIGHBORS[meterId];
+  if (!neighbors || !cache) return false;
+  const meterSpeed = getSpeedFromCacheRaw(cache, meterId);
+  if (meterSpeed == null) return false;
+
+  const neighborSpeeds = neighbors.map(n => getSpeedFromCacheRaw(cache, n)).filter(s => s != null);
+  if (neighborSpeeds.length < 2) return false;
+
+  const avg = neighborSpeeds.reduce((a, b) => a + b, 0) / neighborSpeeds.length;
+  const speedSuspect = Math.abs(meterSpeed - avg) > 8;
+
+  const meterDir = getDirFromCacheRaw(cache, meterId);
+  const neighborDirs = neighbors.map(n => getDirFromCacheRaw(cache, n)).filter(d => d != null);
+  const dirSuspect = meterDir != null && meterSpeed > 5 && neighborDirs.length >= 2
+    && neighborDirs.every(nd => dirDiff(meterDir, nd) > 90);
+
+  return speedSuspect || dirSuspect;
+}
+
+function getSpeedFromCacheRaw(cache, meterId) {
+  const s = findStation(cache, meterId);
+  if (!s) return null;
+  return s.speed ?? s.windSpeed ?? null;
+}
+
 function getSpeedFromCache(cache, meterId) {
   const s = findStation(cache, meterId);
   if (!s) return null;
@@ -294,21 +340,24 @@ function spotVibe(speed, activity) {
   return 'windy';
 }
 
-function SpotPill({ spot, speed, isSelected, isUtahLake, isDark, onSelect, activity }) {
+function SpotPill({ spot, speed, isSelected, isUtahLake, isDark, onSelect, activity, suspect }) {
   const hasData = speed != null;
-  const vibe = spotVibe(speed, activity);
+  const vibe = suspect ? 'suspect' : spotVibe(speed, activity);
 
   const borderColor = isSelected ? 'border-sky-500 ring-1 ring-sky-500/30'
+    : vibe === 'suspect' ? (isDark ? 'border-amber-500/40' : 'border-amber-300')
     : vibe === 'great' ? (isDark ? 'border-emerald-500/40' : 'border-emerald-300')
     : vibe === 'good' ? (isDark ? 'border-emerald-500/20' : 'border-emerald-200')
     : (isDark ? 'border-[var(--border-subtle)]' : 'border-slate-200');
 
   const bgColor = isSelected ? 'bg-sky-500/[0.08]'
+    : vibe === 'suspect' ? (isDark ? 'bg-amber-500/[0.06]' : 'bg-amber-50')
     : vibe === 'great' ? (isDark ? 'bg-emerald-500/[0.10]' : 'bg-emerald-50')
     : vibe === 'good' ? (isDark ? 'bg-emerald-500/[0.04]' : 'bg-emerald-50/50')
     : (isDark ? 'bg-[var(--bg-card)]' : 'bg-white');
 
   const speedColor = isSelected ? 'text-sky-400'
+    : vibe === 'suspect' ? (isDark ? 'text-amber-400' : 'text-amber-600')
     : vibe === 'great' ? (isDark ? 'text-emerald-400' : 'text-emerald-600')
     : vibe === 'good' ? (isDark ? 'text-emerald-400/80' : 'text-emerald-600')
     : hasData ? 'text-[var(--text-secondary)]' : 'text-[var(--text-tertiary)]';
@@ -322,9 +371,12 @@ function SpotPill({ spot, speed, isSelected, isUtahLake, isDark, onSelect, activ
         {spot.name}
       </span>
       <span className={`text-sm font-extrabold tabular-nums ${speedColor}`}>
-        {hasData ? Math.round(speed) : '...'} <span className="text-[9px] font-semibold opacity-60">{hasData ? 'mph' : ''}</span>
+        {suspect ? '~' : ''}{hasData ? Math.round(speed) : '...'} <span className="text-[9px] font-semibold opacity-60">{hasData ? 'mph' : ''}</span>
       </span>
-      {isUtahLake && (
+      {suspect && (
+        <span className={`text-[8px] ${isDark ? 'text-amber-500/70' : 'text-amber-500'}`}>sensor check</span>
+      )}
+      {isUtahLake && !suspect && (
         <span className={`text-[8px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>5 spots</span>
       )}
     </button>
@@ -354,6 +406,7 @@ function SelectedSpotCard({ spot, stationCache, thermalPrediction, lakeState, se
   const isUL = spot?.id === 'utah-lake' || isUtahLakeLaunch(selectedLake);
   const cfg = LAKE_CONFIGS[selectedLake];
 
+  const meterSuspect = spot?.meter && isMeterSuspect(stationCache, spot.meter);
   const speed = getSpeedFromCache(stationCache, spot?.meter);
   const dir = getDirFromCache(stationCache, spot?.meter);
   const thermal = thermalPrediction || {};
@@ -361,7 +414,9 @@ function SelectedSpotCard({ spot, stationCache, thermalPrediction, lakeState, se
   const prob = rawProb >= 1 ? Math.round(rawProb) : Math.round(rawProb * 100);
   const propagation = lakeState?.propagation;
 
-  const outlook = plainWindOutlook(prob, speed ?? 0, propagation);
+  const outlook = meterSuspect
+    ? { text: `${spot?.meterName || spot?.meter} reading looks off — check nearby stations`, color: 'amber' }
+    : plainWindOutlook(prob, speed ?? 0, propagation);
   const colorMap = {
     emerald: isDark ? 'bg-emerald-500/15 text-emerald-400' : 'bg-emerald-100 text-emerald-700',
     amber: isDark ? 'bg-amber-500/15 text-amber-400' : 'bg-amber-100 text-amber-700',
@@ -761,6 +816,7 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
         {sortedSpots.map(spot => {
           const isUL = spot.id === 'utah-lake';
           const isSelected = isUL ? isUtahLakeLaunch(selectedLake) : selectedLake === spot.id;
+          const meterSuspect = spot.meter && isMeterSuspect(stationCache, spot.meter);
           const speed = spot._speed ?? getSpeedFromCache(stationCache, spot.meter);
           return (
             <SpotPill
@@ -772,6 +828,7 @@ export function LakeSelector({ selectedLake, onSelectLake, stationReadings, acti
               isDark={isDark}
               onSelect={handleSelect}
               activity={activity}
+              suspect={meterSuspect}
             />
           );
         })}

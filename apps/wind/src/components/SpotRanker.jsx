@@ -197,10 +197,16 @@ function scoreSpot(spot, activity, currentWind, lakeState, mesoData, thermalOver
     // Speed scoring — wind must actually exist for wind sports
     const { ideal, tooLight, tooStrong } = config.thresholds;
     if (speed < (tooLight ?? 0)) {
-      // Below minimum: cap the entire score. Direction is irrelevant without wind.
       const fraction = speed / (tooLight || 1);
-      score = Math.round(fraction * 30);
-      reason = `Too light (${safeToFixed(speed, 0)} mph) — need ${tooLight}+ mph`;
+      if (thermalProb >= 50 || (mesoData && spot.upstream?.length > 0)) {
+        score = Math.round(fraction * 30 + thermalProb * 0.3);
+        reason = speed < 2
+          ? `Light now but ${thermalProb}% wind expected — building`
+          : `${safeToFixed(speed, 0)} mph building — ${thermalProb}% chance of more`;
+      } else {
+        score = Math.round(fraction * 30);
+        reason = `Too light (${safeToFixed(speed, 0)} mph) — need ${tooLight}+ mph`;
+      }
     } else if (ideal && speed >= ideal.min && speed <= ideal.max) {
       score += 15;
     } else if (speed > (tooStrong ?? 999)) {

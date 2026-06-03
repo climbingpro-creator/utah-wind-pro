@@ -147,6 +147,18 @@ function getDecision(activity, windSpeed, windGust, thermalPrediction, boatingPr
       };
     }
 
+    const phase = thermal.phase;
+    if (phase === 'building' || phase === 'approaching' || phase === 'propagating') {
+      return {
+        decision: 'WAIT',
+        headline: `Wind building upstream — watch for increase`,
+        detail: `Currently ${Math.round(speed)} mph but upstream indicators are active. Wind should build.`,
+        action: briefing?.bestAction || `Get your gear ready — conditions are developing`,
+        color: 'amber',
+        icon: Clock,
+      };
+    }
+
     return {
       decision: 'PASS',
       headline: `Not enough wind for ${cfg.name}`,

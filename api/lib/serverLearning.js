@@ -13,6 +13,7 @@
  */
 
 import { getNWSForLake, getNWSFrontMentions } from './nwsForecast.js';
+import { detectSuspectStations } from './serverPropagation.js';
 
 // ── Lake thermal configurations (server-side subset of lakeStations.js) ──
 const LAKE_THERMAL = {
@@ -79,6 +80,14 @@ const LAKE_THERMAL = {
   'inspo':                { dir: [110, 250], peak: [7, 15],  station: 'KPVU' },
   'west-mountain':        { dir: [110, 250], peak: [7, 15],  station: 'KPVU' },
   'stockton-bar':         { dir: [170, 210], peak: [10, 18], station: 'KSLC' },
+};
+
+const STATION_FALLBACKS = {
+  KPVU: ['QLN', 'KUTPLEAS11', 'FPS', 'UTORM'],
+  KSLC: ['KUTDRAPE132', 'UT7', 'UTALP'],
+  KHCR: ['KUTHEBER105', 'KUTMIDWA37', 'UTDCD'],
+  KHIF: ['KOGD', 'KUTOGDEN32'],
+  KSGU: ['KUTHURRIC3', 'KUTSTGEO128'],
 };
 
 // WU/Tempest aliases for mesonet stations that may lose Synoptic data
@@ -1216,10 +1225,13 @@ function predictForLake(lakeId, primaryStation, pressure, history, hour, learned
 // Both stations report altimeter setting (already altitude-corrected).
 // The difference IS the weather gradient — no altitude correction needed.
 // A positive gradient (SLC > PVU) indicates north-to-south pressure push.
-function analyzePressure(currentStations, recentSnapshots) {
+function analyzePressure(currentStations, recentSnapshots, suspectStations = {}) {
   const slc = currentStations.find(s => s.stationId === 'KSLC');
   const pvu = currentStations.find(s => s.stationId === 'KPVU');
-  const rawGradient = (slc?.pressure && pvu?.pressure) ? slc.pressure - pvu.pressure : null;
+  const pvuSuspect = !!suspectStations['KPVU'];
+  const slcSuspect = !!suspectStations['KSLC'];
+  const rawGradient = (slc?.pressure && pvu?.pressure && !pvuSuspect && !slcSuspect)
+    ? slc.pressure - pvu.pressure : null;
   const gradient = rawGradient ?? 0;
 
   let trend = 'stable';
@@ -1262,7 +1274,7 @@ const DEFAULT_VERIFY_WINDOW = { min: 90, max: 300 };
 
 // ── Verification: compare old predictions against what actually happened ──
 
-function verifyPredictions(predictions, actualStations, lakeStationMap) {
+function verifyPredictions(predictions, actualStations, lakeStationMap, suspectStations = {}) {
   const results = [];
 
   for (const pred of predictions) {
@@ -1271,7 +1283,12 @@ function verifyPredictions(predictions, actualStations, lakeStationMap) {
     const actuals = actualStations.filter(s => stationIds.includes(s.stationId));
     if (actuals.length === 0) continue;
 
-    const primary = actuals.find(s => s.stationId === pred.primaryStation) || actuals[0];
+    let primary = actuals.find(s => s.stationId === pred.primaryStation) || actuals[0];
+    if (suspectStations[primary.stationId]) {
+      const fallback = actuals.find(s => s.stationId !== primary.stationId && !suspectStations[s.stationId] && s.windSpeed != null);
+      if (fallback) primary = fallback;
+      else continue;
+    }
     if (primary.windSpeed == null) continue;
 
     let score = 0;
@@ -1875,7 +1892,12 @@ async function runServerLearningCycle(redisCmd, currentStations, recentSnapshots
   const hour = toMountainHour(now);
   let _step = 'analyzePressure';
   try {
-  const pressure = analyzePressure(currentStations, recentSnapshots);
+  const suspectMap = detectSuspectStations(currentStations);
+  if (Object.keys(suspectMap).length > 0) {
+    console.log('[learning] Suspect stations detected:', Object.keys(suspectMap).join(', '),
+      Object.values(suspectMap).map(s => s.reason).join('; '));
+  }
+  const pressure = analyzePressure(currentStations, recentSnapshots, suspectMap);
 
   // 1. Load current weights
   _step = 'loadWeights';
@@ -1946,7 +1968,11 @@ async function runServerLearningCycle(redisCmd, currentStations, recentSnapshots
     const lakeStations = currentStations.filter(s => stationIds.includes(s.stationId));
     if (lakeStations.length === 0) continue;
 
-    const primaryId = LAKE_THERMAL[lakeId]?.station || stationIds[0];
+    let primaryId = LAKE_THERMAL[lakeId]?.station || stationIds[0];
+    if (suspectMap[primaryId]) {
+      const fb = STATION_FALLBACKS[primaryId]?.find(f => resolveStation(f, lakeStations) && !suspectMap[f]);
+      if (fb) primaryId = fb;
+    }
     const primary = resolveStation(primaryId, lakeStations) || lakeStations[0];
     const history = buildStationHistory(primary.stationId, recentSnapshots);
 
@@ -2009,7 +2035,7 @@ async function runServerLearningCycle(redisCmd, currentStations, recentSnapshots
 
   let accuracyRecords = [];
   if (deduped.length > 0) {
-    accuracyRecords = verifyPredictions(deduped, currentStations, lakeStationMap);
+    accuracyRecords = verifyPredictions(deduped, currentStations, lakeStationMap, suspectMap);
   }
 
   // Mark verified predictions so they aren't re-checked
@@ -2149,7 +2175,7 @@ async function backfillHistorical(redisCmd, synopticToken, allStations, lakeStat
       if (histStations.length > 0) recentHistory.push({ stations: histStations });
     }
 
-    const pressure = analyzePressure(stations, recentHistory);
+    const pressure = analyzePressure(stations, recentHistory, detectSuspectStations(stations));
 
     // Make predictions for this time step
     const stepPredictions = [];

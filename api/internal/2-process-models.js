@@ -17,7 +17,7 @@
 import { runServerLearningCycle, evaluateAndAdjustWindows, storeWindowPredictions, loadWeights, saveWeights } from '../lib/serverLearning.js';
 import { findAllSportWindows } from '../../packages/weather/src/SportIntelligenceEngine.js';
 import CrossValidationEngine from '../../packages/weather/src/services/CrossValidationEngine.js';
-import { analyzeFromStations, analyzeAllSpots, storePropagationSnapshot, learnFromPropagation, autoTuneChains } from '../lib/serverPropagation.js';
+import { analyzeFromStations, analyzeAllSpots, storePropagationSnapshot, learnFromPropagation, autoTuneChains, detectSuspectStations } from '../lib/serverPropagation.js';
 import { buildStatisticalModels } from '../lib/historicalAnalysis.js';
 import { LAKE_STATION_MAP, ALL_STATION_IDS } from '../lib/stations.js';
 import { getEnv, redisCommand, redisMGet, hasRedis, toMountainHour } from '../lib/redis.js';
@@ -196,6 +196,11 @@ export default async function handler(req, res) {
     } catch { /* non-fatal — use static lags */ }
 
     try {
+      const suspectStations = detectSuspectStations(stations);
+      if (Object.keys(suspectStations).length > 0) {
+        console.log('[2-process] SUSPECT STATIONS:', JSON.stringify(suspectStations));
+      }
+
       const allPropagation = analyzeAllSpots(stations, ambientPWS, gradient, learnedLags);
       const propagationResult = analyzeFromStations(stations, ambientPWS, gradient, learnedLags);
 
@@ -224,6 +229,7 @@ export default async function handler(req, res) {
         northFlow: propagationResult?.northFlow?.phase,
         spotsTracked: allPropagation ? Object.keys(allPropagation).length : 0,
         activeSpots: allPropagation ? Object.values(allPropagation).filter(s => s.dominantConfidence > 0).length : 0,
+        ...(Object.keys(suspectStations).length > 0 && { suspectStations }),
       };
     } catch (err) {
       console.error('[2-process] Propagation error (non-fatal):', err.message);

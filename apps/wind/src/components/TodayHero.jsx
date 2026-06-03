@@ -182,6 +182,11 @@ function getActivityVerdict(id, speed, gust, thermalPrediction, _boatingPredicti
         const windType = id === 'snowkiting' ? 'wind' : id === 'paragliding' ? 'lift' : 'thermal';
         return { status: 'wait', label: 'WAIT', reason: `${prob}% ${windType} by ${formatHour(thermalStart)}${estStr}${sessionStr}`, color: 'amber', window: formatHour(thermalStart) };
       }
+      const phase = thermal.phase;
+      if (phase === 'building' || phase === 'approaching' || phase === 'propagating') {
+        const estStr = estTargetSpeed != null ? ` (~${Math.round(estTargetSpeed)} mph expected)` : '';
+        return { status: 'wait', label: 'BUILDING', reason: `${Math.round(speed)} mph but upstream active${estStr}`, color: 'amber' };
+      }
       return { status: 'off', label: 'TOO LIGHT', reason: `${Math.round(speed)} mph — need ${cfg.thresholds?.tooLight || 6}+`, color: 'slate' };
     }
     if (speed > (cfg.thresholds?.tooStrong || 30)) {

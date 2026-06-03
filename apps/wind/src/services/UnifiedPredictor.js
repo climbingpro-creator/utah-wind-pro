@@ -511,24 +511,31 @@ function propagate(obs, context, config, regime) {
     lagConfidence: 0,
   };
 
-  // Ground truth early-exit: if PWS is already showing real wind, skip the
-  // lag-correlation chain and mark arrived immediately.
+  // Ground truth early-exit: if PWS is already showing solid wind, mark arrived.
+  // But don't mark "arrived" at marginal speeds (5-7 mph) if upstream indicators
+  // are much stronger — that's a "building" situation, not "arrived."
   const gtWind = obs.groundTruth || obs.pws;
-  if (gtWind && gtWind.speed >= 8) {
+  const gtSpeed = gtWind?.speed ?? 0;
+  const upstreamMax = Math.max(
+    ...[obs.earlyIndicator?.speed, ...obs.lakeshore.map(s => s.speed), ...obs.reference.map(s => s.speed)]
+      .filter(s => s != null && s > 0)
+  ) || 0;
+  const upstreamMuchStronger = upstreamMax > gtSpeed * 2 && upstreamMax >= 10;
+
+  if (gtSpeed >= 8) {
     result.phase = 'arrived';
     result.eta = 0;
-    result.expectedSpeed = gtWind.speed;
+    result.expectedSpeed = gtSpeed;
     result.lagConfidence = 0.9;
     result.dominantSource = obs.groundTruthId || 'PWS';
-    return result;
+    if (!upstreamMuchStronger) return result;
   }
-  if (gtWind && gtWind.speed >= 5) {
+  if (gtSpeed >= 5 && !upstreamMuchStronger) {
     result.phase = 'arrived';
     result.eta = 0;
-    result.expectedSpeed = gtWind.speed;
+    result.expectedSpeed = gtSpeed;
     result.lagConfidence = 0.7;
     result.dominantSource = obs.groundTruthId || 'PWS';
-    // Don't return — let lag correlations potentially set higher expectedSpeed
   }
 
   const gtId = obs.groundTruthId;
@@ -1033,9 +1040,12 @@ function scoreActivity(activityId, speed, gust, probability, dir, _config) {
     }
   }
 
-  // Weight by model probability
-  if (p.wantsWind && probability < 50) {
+  // Weight by model probability — but don't punish too hard when probability
+  // is moderate, because upstream indicators may already be firing
+  if (p.wantsWind && probability < 50 && probability > 0) {
     score = score * 0.7 + score * 0.3 * (probability / 50);
+  } else if (p.wantsWind && probability === 0) {
+    score = score * 0.6;
   }
 
   score = clamp(Math.round(score), 0, 100);
@@ -1128,6 +1138,23 @@ function decide(activity, activityScore, speed, gust, dir, _probability, propaga
       headline: `There's a chance today but it could bust — ${spd} mph right now`,
       detail: `Marginal conditions. ${p.wantsWind ? 'It might pick up, or it might stay light.' : 'Could get rougher.'}`,
       action: `Keep watching — don't drive to the spot yet`,
+    };
+  }
+
+  // Before giving up with PASS, check if upstream stations show wind building.
+  // This prevents contradictions with the LaunchBriefing which sees the same upstream data.
+  const hasActiveUpstream = propagation.chains?.some(c => c.status === 'active' || c.status === 'strong');
+  const expectedArrival = propagation.expectedSpeed ?? 0;
+  if (p.wantsWind && (hasActiveUpstream || expectedArrival >= p.min)) {
+    const etaMin = propagation.eta || 60;
+    return {
+      decision: 'WAIT',
+      confidence: clamp(propagation.lagConfidence || 0.4, 0.3, 0.7),
+      headline: `Wind building upstream — could be rideable by ${formatETA(_pressure?._hour ?? 12, etaMin)}`,
+      detail: propagation.dominantSource
+        ? `${propagation.dominantSource} showing ${Math.round(expectedArrival || propagation.chains?.[0]?.speed || 0)} mph — give it time to propagate`
+        : `Upstream indicators active. Currently ${spd} mph but building.`,
+      action: `Get your gear ready — wind should build in ~${etaMin} min`,
     };
   }
 
@@ -1350,12 +1377,18 @@ function backwardCompat(calibration, regime, propagation, pressure, speed, gust,
     : windProb > 30 ? 'building'
     : 'quiet';
 
-  // startHour: if wind is already >= 5 mph, it has started — don't say "expected at 10 AM"
+  // startHour: when do we expect usable wind?
+  // Don't suppress startHour just because ground truth shows marginal 5 mph —
+  // if upstream is building, wind hasn't truly "arrived" for wind sports.
+  const upstreamBuilding = propagation.phase === 'building' || propagation.phase === 'approaching'
+    || propagation.chains?.some(c => c.status === 'active' || c.status === 'strong');
   let startHour;
-  if (speed >= 5) {
-    startHour = null; // already started
-  } else if (propagation.phase === 'approaching' && propagation.eta) {
-    startHour = hour + Math.floor(propagation.eta / 60);
+  if (speed >= 8) {
+    startHour = null;
+  } else if (speed >= 5 && !upstreamBuilding) {
+    startHour = null;
+  } else if ((propagation.phase === 'approaching' || propagation.phase === 'building') && propagation.eta) {
+    startHour = hour + Math.ceil(propagation.eta / 60);
   } else if (hour < 10) {
     startHour = 10;
   } else {

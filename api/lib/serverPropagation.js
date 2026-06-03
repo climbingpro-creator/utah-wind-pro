@@ -333,6 +333,85 @@ const LAKE_CHAINS = {
   'pineview':           ['pineview:canyon_flow'],
 };
 
+// ─── Station Sanity Check ─────────────────────────────────────────
+// Cross-validates key ASOS stations against nearby neighbors.
+// If a station disagrees with ALL neighbors by >8 mph, flag it suspect.
+
+const NEIGHBOR_GROUPS = {
+  KPVU: ['KUTPLEAS11', 'KUTLEHI160', 'KUTOREM47', 'UTPCR', 'FPS', 'KSLC', 'UTORM', 'QLN'],
+  KSLC: ['KUTSANDY188', 'KUTDRAPE132', 'UT7', 'UTALP', 'KPVU', 'KOGD'],
+  KHCR: ['KUTHEBER105', 'KUTMIDWA37', 'UTDCD', 'UTCHL', 'UTLPC'],
+  KHIF: ['KOGD', 'KUTOGDEN32', 'KSLC'],
+  KOGD: ['KHIF', 'KUTOGDEN32', 'KSLC'],
+  KSGU: ['KUTHURRIC3', 'KUTSTGEO128', 'KUTSTGEO44'],
+};
+
+const SUSPECT_SPEED_DELTA = 8;
+
+function dirDelta(a, b) {
+  if (a == null || b == null) return null;
+  let d = Math.abs(a - b) % 360;
+  return d > 180 ? 360 - d : d;
+}
+
+export function detectSuspectStations(stations) {
+  const speedMap = {};
+  const dirMap = {};
+  for (const s of stations) {
+    const id = s.stationId || s.id;
+    if (!id) continue;
+    speedMap[id] = s.windSpeed ?? s.speed ?? null;
+    dirMap[id] = s.windDirection ?? s.direction ?? null;
+  }
+
+  const suspect = {};
+  for (const [stationId, neighbors] of Object.entries(NEIGHBOR_GROUPS)) {
+    const stationSpeed = speedMap[stationId];
+    const stationDir = dirMap[stationId];
+    if (stationSpeed == null) continue;
+
+    const neighborSpeeds = neighbors.map(n => speedMap[n]).filter(s => s != null);
+    const neighborDirs = neighbors.map(n => dirMap[n]).filter(d => d != null);
+
+    if (neighborSpeeds.length < 2) continue;
+
+    const avgNeighbor = neighborSpeeds.reduce((a, b) => a + b, 0) / neighborSpeeds.length;
+    const speedDelta = stationSpeed - avgNeighbor;
+
+    // Speed check: > 8 mph different from neighbors
+    const speedSuspect = Math.abs(speedDelta) > SUSPECT_SPEED_DELTA;
+
+    // Direction check: if station shows >90 degrees off from ALL neighbors AND speed > 5
+    let dirSuspect = false;
+    if (stationDir != null && stationSpeed > 5 && neighborDirs.length >= 2) {
+      const allDirOff = neighborDirs.every(nd => dirDelta(stationDir, nd) > 90);
+      if (allDirOff) dirSuspect = true;
+    }
+
+    if (speedSuspect || dirSuspect) {
+      const reasons = [];
+      if (speedSuspect) {
+        reasons.push(speedDelta > 0
+          ? `${Math.round(speedDelta)} mph above ${neighborSpeeds.length} neighbors`
+          : `${Math.round(Math.abs(speedDelta))} mph below ${neighborSpeeds.length} neighbors`);
+      }
+      if (dirSuspect) {
+        reasons.push(`Direction >90° off from all ${neighborDirs.length} neighbors`);
+      }
+      suspect[stationId] = {
+        reportedSpeed: Math.round(stationSpeed * 10) / 10,
+        neighborAvg: Math.round(avgNeighbor * 10) / 10,
+        delta: Math.round(speedDelta * 10) / 10,
+        neighborsChecked: neighborSpeeds.length,
+        directionSuspect: dirSuspect,
+        reason: reasons.join('; '),
+      };
+    }
+  }
+
+  return suspect;
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────
 
 function dirInRange(dir, node) {
@@ -367,6 +446,8 @@ export function analyzeAllSpots(stations, ambientPWS, pressureGradient, learnedL
     };
   }
 
+  const suspectStations = detectSuspectStations(stations);
+
   const results = {};
   const processedChains = new Set();
 
@@ -384,12 +465,16 @@ export function analyzeAllSpots(stations, ambientPWS, pressureGradient, learnedL
       const pressOk = passesPresCheck(def.pressure, pressureGradient);
       const target = def.nodes[def.nodes.length - 1];
 
-      const nodes = def.nodes.map(n => ({
-        ...n,
-        fired: hasFired(n, map[n.id]),
-        speed: map[n.id]?.windSpeed ?? null,
-        direction: map[n.id]?.windDirection ?? null,
-      }));
+      const nodes = def.nodes.map(n => {
+        const isSuspect = !!suspectStations[n.id];
+        return {
+          ...n,
+          fired: isSuspect ? false : hasFired(n, map[n.id]),
+          suspect: isSuspect,
+          speed: map[n.id]?.windSpeed ?? null,
+          direction: map[n.id]?.windDirection ?? null,
+        };
+      });
 
       const firedCount = nodes.filter(n => n.fired).length;
       const requiredFired = nodes.filter(n => n.fired && !n.optional).length;
@@ -411,7 +496,14 @@ export function analyzeAllSpots(stations, ambientPWS, pressureGradient, learnedL
         conf = Math.min(95, 30 + requiredFired * 20 + optionalFired * 8);
       }
 
-      lakeResults.push({ chainKey, label: def.label, phase, confidence: conf, etaMinutes: eta, firedCount, nodes });
+      const suspectInChain = nodes
+        .filter(n => n.suspect)
+        .map(n => ({ id: n.id, ...suspectStations[n.id] }));
+
+      lakeResults.push({
+        chainKey, label: def.label, phase, confidence: conf, etaMinutes: eta, firedCount, nodes,
+        ...(suspectInChain.length > 0 && { suspectStations: suspectInChain }),
+      });
     }
 
     if (lakeResults.length > 0) {
@@ -423,6 +515,10 @@ export function analyzeAllSpots(stations, ambientPWS, pressureGradient, learnedL
         chains: lakeResults,
       };
     }
+  }
+
+  if (Object.keys(suspectStations).length > 0) {
+    results._suspectStations = suspectStations;
   }
 
   return results;
