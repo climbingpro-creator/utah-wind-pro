@@ -1508,13 +1508,13 @@ async function handleStationsDense(res, query) {
   const radiusKm = Math.min(parseFloat(radius) || 50, 250);
   const radiusMiles = radiusKm * 0.621371;
   const enabledNetworks = new Set(
-    (networks || 'nws,udot,wu').split(',').map(s => s.trim().toLowerCase())
+    (networks || 'nws,udot,wu,openmeteo').split(',').map(s => s.trim().toLowerCase())
   );
 
   const observations = [];
   let discoveredCount = 0;
 
-  // ── NWS: dynamic station discovery near point ──
+  // ── NWS: multi-grid station discovery near point ──
   const nwsPromise = enabledNetworks.has('nws')
     ? fetchNwsDenseStations(targetLat, targetLng, radiusMiles)
     : Promise.resolve([]);
@@ -1530,9 +1530,17 @@ async function handleStationsDense(res, query) {
     ? fetchWuDenseStations(targetLat, targetLng, wuApiKey, radiusKm)
     : Promise.resolve([]);
 
-  const [nws, udot, wu] = await Promise.all([nwsPromise, udotPromise, wuPromise]);
-  observations.push(...nws, ...udot, ...wu);
-  discoveredCount = nws.length + udot.length + wu.length;
+  // ── Open-Meteo: free global weather stations (no key required) ──
+  const omPromise = enabledNetworks.has('openmeteo')
+    ? fetchOpenMeteoDenseStations(targetLat, targetLng, radiusKm)
+    : Promise.resolve([]);
+
+  const [nws, udot, wu, om] = await Promise.all([nwsPromise, udotPromise, wuPromise, omPromise]);
+
+  // Deduplicate by proximity (stations <0.5km apart from different sources)
+  const deduped = deduplicateStations([...nws, ...udot, ...wu, ...om]);
+  observations.push(...deduped);
+  discoveredCount = nws.length + udot.length + wu.length + om.length;
 
   res.setHeader('Cache-Control', 's-maxage=120, stale-while-revalidate=300');
   return res.status(200).json({
@@ -1542,6 +1550,7 @@ async function handleStationsDense(res, query) {
       nws: nws.length,
       udot: udot.length,
       wu: wu.length,
+      openmeteo: om.length,
     },
     center: { lat: targetLat, lon: targetLng },
     radiusKm,
@@ -1556,12 +1565,34 @@ async function handleStationsDense(res, query) {
 async function fetchNwsDenseStations(lat, lng, radiusMiles) {
   try {
     const { discoverStations } = await import('./lib/nwsDiscovery.js');
-    const stations = await discoverStations(lat, lng);
-    const inRange = stations
+
+    // Query multiple grid points to discover more stations. NWS returns
+    // stations for a SINGLE grid point; querying offset points catches
+    // stations that belong to adjacent grids (e.g. Utah County + Salt Lake).
+    const offsets = [
+      [0, 0],
+      [0.15, 0], [-0.15, 0], [0, 0.15], [0, -0.15],
+    ];
+    const allDiscoveries = await Promise.allSettled(
+      offsets.map(([dLat, dLng]) => discoverStations(lat + dLat, lng + dLng))
+    );
+
+    const seen = new Set();
+    const merged = [];
+    for (const r of allDiscoveries) {
+      if (r.status !== 'fulfilled' || !r.value) continue;
+      for (const s of r.value) {
+        if (seen.has(s.id)) continue;
+        seen.add(s.id);
+        merged.push(s);
+      }
+    }
+
+    const inRange = merged
       .map(s => ({ ...s, distanceMiles: haversineDistance(lat, lng, s.lat, s.lng) }))
       .filter(s => s.distanceMiles <= radiusMiles)
       .sort((a, b) => a.distanceMiles - b.distanceMiles)
-      .slice(0, 40); // Cap to keep payload manageable
+      .slice(0, 60);
 
     const results = await Promise.allSettled(
       inRange.map(async (s) => {
@@ -1571,6 +1602,7 @@ async function fetchNwsDenseStations(lat, lng, radiusMiles) {
           id: s.id,
           stationId: s.id,
           name: s.name,
+          stationName: s.name,
           lat: s.lat,
           lon: s.lng,
           source: 'nws',
@@ -1713,9 +1745,9 @@ async function fetchWuDenseStations(lat, lng, apiKey, radiusKm) {
 
     const candidates = ids.map((id, i) => ({
       id, lat: lats[i], lon: lons[i], distanceKm: dists[i],
-    })).filter(s => s.distanceKm <= radiusKm).slice(0, 30);
+    })).filter(s => s.distanceKm <= radiusKm).slice(0, 120);
 
-    const BATCH = 10;
+    const BATCH = 15;
     const obs = [];
     for (let i = 0; i < candidates.length; i += BATCH) {
       const batch = candidates.slice(i, i + BATCH);
@@ -1730,7 +1762,8 @@ async function fetchWuDenseStations(lat, lng, apiKey, radiusKm) {
           return {
             id: s.id,
             stationId: o.stationID,
-            name: s.id,
+            name: o.neighborhood || s.id,
+            stationName: o.neighborhood || o.stationID || s.id,
             lat: o.lat ?? s.lat,
             lon: o.lon ?? s.lon,
             source: 'wu-pws',
@@ -1742,6 +1775,7 @@ async function fetchWuDenseStations(lat, lng, apiKey, radiusKm) {
             pressure: o.imperial?.pressure ?? null,
             obsTime: o.obsTimeUtc,
             distanceKm: s.distanceKm,
+            elevation: o.imperial?.elev ?? null,
           };
         })
       );
@@ -1754,4 +1788,92 @@ async function fetchWuDenseStations(lat, lng, apiKey, radiusKm) {
     console.warn('[StationsDense] WU error:', err.message);
     return [];
   }
+}
+
+/**
+ * Open-Meteo — Free global weather API, no key required.
+ * Uses their "current weather" endpoint with a grid of points
+ * around the target to synthesize station-like observations.
+ * Also queries their weather station database for nearby stations.
+ */
+async function fetchOpenMeteoDenseStations(lat, lng, radiusKm) {
+  try {
+    // Generate a grid of sample points around target (every ~0.1°, ~11km)
+    const step = 0.08;
+    const gridSize = Math.min(Math.ceil(radiusKm / 10), 4);
+    const points = [];
+    for (let dLat = -gridSize; dLat <= gridSize; dLat++) {
+      for (let dLng = -gridSize; dLng <= gridSize; dLng++) {
+        const pLat = lat + dLat * step;
+        const pLng = lng + dLng * step;
+        const dist = haversineDistance(lat, lng, pLat, pLng) * 1.609344;
+        if (dist <= radiusKm) {
+          points.push({ lat: pLat, lng: pLng, dist });
+        }
+      }
+    }
+
+    if (points.length === 0) return [];
+
+    const lats = points.map(p => p.lat.toFixed(4)).join(',');
+    const lngs = points.map(p => p.lng.toFixed(4)).join(',');
+
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lngs}&current=wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,relative_humidity_2m,surface_pressure&wind_speed_unit=mph&temperature_unit=fahrenheit`;
+    const r = await fetch(url, { signal: AbortSignal.timeout(10000) });
+    if (!r.ok) return [];
+    const data = await r.json();
+
+    const results = [];
+    const items = Array.isArray(data) ? data : [data];
+    for (let i = 0; i < items.length && i < points.length; i++) {
+      const d = items[i];
+      const c = d?.current;
+      if (!c) continue;
+      const speed = c.wind_speed_10m ?? null;
+      const dir = c.wind_direction_10m ?? null;
+      if (speed == null) continue;
+
+      results.push({
+        id: `OM_${points[i].lat.toFixed(3)}_${points[i].lng.toFixed(3)}`,
+        stationId: `open-meteo-${i}`,
+        name: `Open-Meteo Grid ${i + 1}`,
+        stationName: `Open-Meteo ${points[i].lat.toFixed(2)}, ${points[i].lng.toFixed(2)}`,
+        lat: points[i].lat,
+        lon: points[i].lng,
+        source: 'open-meteo',
+        windSpeed: speed,
+        windDir: dir,
+        windGust: c.wind_gusts_10m ?? null,
+        temp: c.temperature_2m ?? null,
+        humidity: c.relative_humidity_2m ?? null,
+        pressure: c.surface_pressure != null
+          ? +(c.surface_pressure * 0.02953).toFixed(2) : null,
+        obsTime: c.time ? new Date(c.time).toISOString() : new Date().toISOString(),
+        distanceKm: points[i].dist,
+      });
+    }
+    return results;
+  } catch (err) {
+    console.warn('[StationsDense] Open-Meteo error:', err.message);
+    return [];
+  }
+}
+
+/**
+ * Deduplicate stations from multiple sources that are within 0.5km of each
+ * other. Prefers real station readings (NWS/WU/UDOT) over grid-based (Open-Meteo).
+ */
+function deduplicateStations(stations) {
+  const SOURCE_PRIORITY = { nws: 4, udot: 3, 'wu-pws': 2, 'open-meteo': 1 };
+  const sorted = [...stations].sort(
+    (a, b) => (SOURCE_PRIORITY[b.source] || 0) - (SOURCE_PRIORITY[a.source] || 0)
+  );
+  const kept = [];
+  for (const s of sorted) {
+    const tooClose = kept.some(k =>
+      haversineDistance(s.lat, s.lon, k.lat, k.lon) < 0.31 // <0.5km
+    );
+    if (!tooClose) kept.push(s);
+  }
+  return kept;
 }

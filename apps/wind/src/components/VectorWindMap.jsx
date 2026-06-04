@@ -12,6 +12,7 @@ import { impactMedium, impactLight } from '../services/HapticService';
 import { safeToFixed } from '../utils/safeToFixed';
 import SyntheticForecastCard from './map/SyntheticForecastCard';
 import StationPopupCard from './map/StationPopupCard';
+import WindStreamLayer from './map/WindStreamLayer';
 
 const MAP_AREAS = {
   'utah-lake': {
@@ -681,6 +682,7 @@ export function VectorWindMap({
   const [pmtilesReady, setPmtilesReady] = useState(false);
   const [showSatellite, setShowSatellite] = useState(false);
   const [showPwsField, setShowPwsField] = useState(true);
+  const [showWindStream, setShowWindStream] = useState(false);
   const [viewState, setViewState] = useState({
     longitude: -111.83,
     latitude: 40.23,
@@ -1105,6 +1107,13 @@ export function VectorWindMap({
           {/* Dense PWS wind field */}
           {showPwsField && <PwsWindFieldLayer stations={pwsStations} />}
 
+          {/* Animated windstream particles */}
+          <WindStreamLayer
+            map={mapRef.current?.getMap()}
+            stations={pwsStations}
+            enabled={showWindStream}
+          />
+
           {/* Station markers */}
           {(mapArea?.stations || []).map(station => (
             <StationMarker
@@ -1241,6 +1250,19 @@ export function VectorWindMap({
             )}
           </div>
         </div>
+
+        {/* Windstream toggle */}
+        <button
+          onClick={() => setShowWindStream(v => !v)}
+          className={`absolute bottom-2 right-44 z-20 flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all shadow-lg ${
+            showWindStream
+              ? 'bg-cyan-500 text-white hover:bg-cyan-600'
+              : 'bg-slate-900/90 text-slate-300 hover:bg-slate-800 border border-slate-700'
+          }`}
+        >
+          <Wind className="w-4 h-4" />
+          <span>{showWindStream ? 'Flow On' : 'Flow'}</span>
+        </button>
 
         {/* PWS wind field toggle */}
         <button
