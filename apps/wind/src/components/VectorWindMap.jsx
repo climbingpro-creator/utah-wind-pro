@@ -501,6 +501,9 @@ function buildPwsGeoJSON(stations) {
   const features = [];
   for (const s of stations) {
     if (s.lat == null || s.lon == null) continue;
+    // Open-Meteo grid points are model interpolation, not real stations —
+    // they feed the windstream field but shouldn't appear as map markers.
+    if (s.source === 'open-meteo' || s.id?.startsWith('OM_')) continue;
     const speed = s.windSpeed ?? 0;
     const dir = s.windDir;
     const gust = s.windGust ?? null;

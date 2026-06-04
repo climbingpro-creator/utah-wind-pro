@@ -1857,9 +1857,22 @@ async function fetchWuDenseStations(lat, lng, apiKey, radiusKm) {
  * around the target to synthesize station-like observations.
  * Also queries their weather station database for nearby stations.
  */
+// Simple water body bounding boxes — skip grid points that fall on lakes
+const WATER_BODIES = [
+  { name: 'Utah Lake',    minLat: 40.08, maxLat: 40.35, minLng: -111.88, maxLng: -111.68 },
+  { name: 'Great Salt Lake', minLat: 40.70, maxLat: 41.70, minLng: -112.80, maxLng: -112.00 },
+  { name: 'Lake Powell',  minLat: 36.90, maxLat: 37.45, minLng: -111.60, maxLng: -110.40 },
+  { name: 'Deer Creek',   minLat: 40.39, maxLat: 40.43, minLng: -111.54, maxLng: -111.49 },
+  { name: 'Jordanelle',   minLat: 40.58, maxLat: 40.63, minLng: -111.44, maxLng: -111.39 },
+];
+function isOnWater(lat, lng) {
+  return WATER_BODIES.some(w =>
+    lat >= w.minLat && lat <= w.maxLat && lng >= w.minLng && lng <= w.maxLng
+  );
+}
+
 async function fetchOpenMeteoDenseStations(lat, lng, radiusKm) {
   try {
-    // Generate a grid of sample points around target (every ~0.1°, ~11km)
     const step = 0.08;
     const gridSize = Math.min(Math.ceil(radiusKm / 10), 4);
     const points = [];
@@ -1867,6 +1880,7 @@ async function fetchOpenMeteoDenseStations(lat, lng, radiusKm) {
       for (let dLng = -gridSize; dLng <= gridSize; dLng++) {
         const pLat = lat + dLat * step;
         const pLng = lng + dLng * step;
+        if (isOnWater(pLat, pLng)) continue;
         const dist = haversineDistance(lat, lng, pLat, pLng) * 1.609344;
         if (dist <= radiusKm) {
           points.push({ lat: pLat, lng: pLng, dist });
