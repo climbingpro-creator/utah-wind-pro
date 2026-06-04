@@ -1660,8 +1660,6 @@ export function predict(lakeId, activity, liveStations, modelContext, config, op
   // The wind might not be at the actual beach yet.
   const gtActual = obs.groundTruth?.speed ?? 0;
   if (usingFallback && decision.decision === 'GO') {
-    const p = PROFILES[activity];
-    const verb = ACTIVITY_VERBS[activity] || activity;
     decision = {
       decision: 'WAIT',
       confidence: Math.min(decision.confidence, 0.6),
