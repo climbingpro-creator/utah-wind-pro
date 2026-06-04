@@ -326,7 +326,7 @@ export default function TodayTimeline({ locationId = 'utah-lake', activity = 'ki
   }, [allHourly, nowHour]);
 
   const maxSpeed = useMemo(() =>
-    Math.max(25, ...todayHours.map(h => Math.max(h.speed || 0, h.nwsSpeed || 0))),
+    Math.max(25, ...todayHours.map(h => Math.max(h.speed || 0, h.nwsSpeed || 0, h.gust || 0))),
   [todayHours]);
 
   const bestWindow = useMemo(() =>
@@ -431,93 +431,102 @@ export default function TodayTimeline({ locationId = 'utah-lake', activity = 'ki
 
       {/* Scrollable Timeline */}
       <div className="px-4 pb-2 pt-1 overflow-x-auto scrollbar-hide" ref={scrollRef}>
-        <div className="flex gap-1" style={{ minWidth: `${todayHours.length * 60}px` }}>
+        <div className="flex gap-0.5" style={{ minWidth: `${todayHours.length * 56}px` }}>
           {todayHours.map((h, i) => {
             const augSpeed = h.speed || 0;
             const nwsSpd = h.nwsSpeed ?? augSpeed;
             const isBoosted = h.thermalBoosted && augSpeed > nwsSpd + 1;
-            const displaySpd = isBoosted ? augSpeed : nwsSpd;
+            const bestSpeed = Math.max(augSpeed, nwsSpd);
+            const gustSpd = h.gust || 0;
 
-            const status = getHourStatus(displaySpd, activity);
+            const status = getHourStatus(bestSpeed, activity);
             const colors = STATUS_COLORS[status];
-            const nwsBarH = Math.max(8, (nwsSpd / maxSpeed) * 80);
-            const augBarH = isBoosted ? Math.max(8, (augSpeed / maxSpeed) * 80) : 0;
+            const barH = Math.max(6, (bestSpeed / maxSpeed) * 100);
+            const gustBarH = gustSpd > bestSpeed ? Math.max(barH, (gustSpd / maxSpeed) * 100) : 0;
             const isNow = h.localHour === nowHour;
             const dirDeg = h.dirDeg != null ? h.dirDeg : 0;
+            const isGo = status === 'ideal' || status === 'good';
 
             return (
               <div
                 key={i}
                 data-now={isNow}
-                className={`flex flex-col items-center w-14 shrink-0 rounded-lg py-2 px-1 transition-all ${
+                className={`flex flex-col items-center w-[52px] shrink-0 rounded-lg py-1.5 px-0.5 transition-all ${
                   isNow ? 'bg-sky-500/15 ring-1 ring-sky-500/40' : 'hover:bg-slate-800/50'
                 }`}
               >
-                {/* Time — top */}
-                <span className={`text-sm font-semibold tabular-nums mb-1 ${
-                  isNow ? 'text-sky-400' : 'text-slate-300'
+                {/* Time */}
+                <span className={`text-[11px] font-semibold tabular-nums ${
+                  isNow ? 'text-sky-400' : 'text-slate-400'
                 }`}>
                   {formatHour(h.localHour)}
                 </span>
 
-                {/* NOW badge */}
                 {isNow && (
-                  <span className="text-[10px] font-bold text-sky-400 bg-sky-500/20 rounded px-1 mb-1">NOW</span>
+                  <span className="text-[9px] font-bold text-sky-400 bg-sky-500/20 rounded px-1 mb-0.5">NOW</span>
                 )}
 
-                {/* Wind speed + gust — above bar */}
-                <div className="flex flex-col items-center">
-                  <span className={`text-sm font-bold tabular-nums ${
-                    isBoosted ? 'text-cyan-400' : isNow ? 'text-sky-400' : colors.text
-                  }`}>
-                    {displaySpeed(isBoosted ? augSpeed : nwsSpd)}
-                  </span>
-                  {h.gust != null && h.gust > displaySpd * 1.25 ? (
-                    <span className="text-[9px] font-semibold text-amber-400">G{displaySpeed(h.gust)}</span>
-                  ) : isBoosted ? (
-                    <span className="text-[9px] font-semibold text-slate-500">NWS {displaySpeed(nwsSpd)}</span>
-                  ) : (
-                    <span className="text-[9px] text-slate-500">{unitLabel}</span>
-                  )}
-                </div>
+                {/* Speed — large, colored by status */}
+                <span className={`text-base font-black tabular-nums leading-tight ${
+                  isBoosted ? 'text-cyan-400' : isNow ? 'text-white' : isGo ? colors.text : 'text-slate-300'
+                }`}>
+                  {displaySpeed(bestSpeed)}
+                </span>
+                <span className="text-[9px] text-slate-500 -mt-0.5 mb-0.5">{unitLabel}</span>
 
-                {/* Bar — dual: augmented prediction behind, NWS in front */}
-                <div className="w-5 bg-slate-800 rounded-full mt-1 mb-1 relative" style={{ height: '70px' }}>
-                  {/* Augmented/thermal bar behind (cyan/green) */}
-                  {isBoosted && (
+                {/* Bar — taller, wider, colored by activity status */}
+                <div className="w-7 bg-slate-800/80 rounded-md relative" style={{ height: '100px' }}>
+                  {/* Gust indicator (thin dashed line) */}
+                  {gustBarH > barH && (
                     <div
-                      className="absolute bottom-0 w-full rounded-full bg-cyan-500 opacity-40 transition-all"
-                      style={{ height: `${augBarH}px` }}
+                      className="absolute w-full border-t border-dashed border-amber-500/60"
+                      style={{ bottom: `${gustBarH}px` }}
                     />
                   )}
-                  {/* NWS bar in front (grey or status-colored) */}
+                  {/* Augmented thermal bar */}
+                  {isBoosted && (
+                    <div
+                      className="absolute bottom-0 w-full rounded-md bg-cyan-500/30 transition-all"
+                      style={{ height: `${barH}px` }}
+                    />
+                  )}
+                  {/* Primary bar — fully colored by status */}
                   <div
-                    className={`absolute bottom-0 w-full rounded-full transition-all ${
-                      isBoosted ? 'bg-slate-500 opacity-80' : `${colors.bar} ${status === 'ideal' ? 'opacity-90' : 'opacity-70'}`
+                    className={`absolute bottom-0 w-full rounded-md transition-all ${
+                      isBoosted
+                        ? 'bg-gradient-to-t from-cyan-500 to-cyan-400 opacity-80'
+                        : isGo
+                          ? `bg-gradient-to-t ${status === 'ideal' ? 'from-emerald-600 to-emerald-400' : 'from-green-600 to-green-400'} opacity-85`
+                          : status === 'marginal'
+                            ? 'bg-gradient-to-t from-amber-600 to-amber-400 opacity-75'
+                            : status === 'danger'
+                              ? 'bg-gradient-to-t from-red-600 to-red-400 opacity-80'
+                              : 'bg-slate-600 opacity-50'
                     }`}
-                    style={{ height: `${nwsBarH}px` }}
+                    style={{ height: `${isBoosted ? barH * 0.7 : barH}px` }}
                   />
                 </div>
 
-                {/* Direction arrow + cardinal label */}
-                <div className="flex flex-col items-center">
-                  <div className="w-5 h-5 flex items-center justify-center">
-                    <Navigation
-                      size={12}
-                      className={`${isNow ? 'text-sky-400' : 'text-slate-500'}`}
-                      style={{ transform: `rotate(${(dirDeg + 180) % 360}deg)` }}
-                    />
-                  </div>
-                  <span className={`text-[9px] font-medium ${isNow ? 'text-sky-400' : 'text-slate-500'}`}>
+                {/* Gust speed if notable */}
+                {gustSpd > bestSpeed * 1.2 && (
+                  <span className="text-[9px] font-bold text-amber-400 mt-0.5">G{displaySpeed(gustSpd)}</span>
+                )}
+
+                {/* Direction */}
+                <div className="flex items-center gap-0.5 mt-0.5">
+                  <Navigation
+                    size={10}
+                    className={isGo ? colors.text : isNow ? 'text-sky-400' : 'text-slate-500'}
+                    style={{ transform: `rotate(${(dirDeg + 180) % 360}deg)` }}
+                  />
+                  <span className={`text-[9px] font-medium ${isGo ? colors.text : isNow ? 'text-sky-400' : 'text-slate-500'}`}>
                     {h.dir || degToDir(dirDeg)}
                   </span>
                 </div>
 
-                {/* Temperature — bottom */}
+                {/* Temp */}
                 {h.temp != null && (
-                  <span className={`text-sm font-medium mt-0.5 ${
-                    isNow ? 'text-sky-300' : 'text-slate-400'
-                  }`}>{Math.round(h.temp)}°</span>
+                  <span className={`text-[10px] mt-0.5 ${isNow ? 'text-sky-300' : 'text-slate-500'}`}>{Math.round(h.temp)}°</span>
                 )}
               </div>
             );

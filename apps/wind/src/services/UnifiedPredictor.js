@@ -1257,11 +1257,12 @@ function brief(regime, decision, propagation, pressure, activities, currentActiv
   let bestAction = '';
   if (decision.decision === 'GO') {
     const isSE = regime.regime === 'se_thermal';
-    const thermalEnd = isSE ? 14 : 17;
+    const isSummer = new Date().getMonth() >= 4 && new Date().getMonth() <= 8;
+    const thermalEnd = isSummer ? 20 : (isSE ? 14 : 17);
     const hoursLeft = Math.max(1, thermalEnd - hour);
     bestAction = isSE
       ? (hoursLeft >= 3
-        ? `SE thermal peaks 9–11 AM — ${hoursLeft} hours of wind ahead`
+        ? `SE thermal ${isSummer ? 'peaks afternoon — ' : 'peaks 9–11 AM — '}${hoursLeft} hours of wind ahead`
         : hoursLeft >= 1
           ? `Window closing — maybe ${hoursLeft} hour${hoursLeft > 1 ? 's' : ''} of SE thermal left`
           : `Thermal fading — get on the water now if you're going`)
@@ -1311,45 +1312,75 @@ function buildHourlyForecast(lakeId, context, calibrationResult, regime, propaga
   const periods = gridData.periods || gridData;
   if (!Array.isArray(periods)) return [];
 
-  const isSEThermal = regime?.regime === 'se_thermal' && regime?.confidence >= 0.5;
+  const isThermal = regime?.regime === 'se_thermal' || regime?.regime === 'thermal';
+  const thermalConfidence = regime?.confidence ?? 0;
   const expectedSpeed = propagation?.expectedSpeed;
   const etaMin = propagation?.eta;
-  const liveSpeed = (propagation?.phase === 'arrived' || propagation?.phase === 'building' || propagation?.phase === 'approaching') ? expectedSpeed : 0;
-  const nowHour = new Date().getHours();
+  const phase = propagation?.phase;
+  const liveSpeed = (phase === 'arrived' || phase === 'building' || phase === 'approaching')
+    ? expectedSpeed : 0;
+  const now = new Date();
+  const nowHour = now.getHours();
+  const month = now.getMonth(); // 0=Jan
+
+  // Thermal window varies by season: summer thermals run later (through sunset)
+  const isSummer = month >= 4 && month <= 8; // May-Sep
+  const thermalStart = 8;
+  const thermalEnd = isSummer ? 21 : 16; // Summer: 9 PM, Winter: 4 PM
+  const peakStart = isSummer ? 14 : 10;   // Summer peaks 2-5 PM, Winter 10 AM-1 PM
+  const peakEnd = isSummer ? 19 : 13;
 
   return periods.slice(0, 24).map(p => {
     let speed = p.windSpeed;
     if (typeof speed === 'string') speed = parseFloat(speed) || 0;
 
     let adjustedSpeed = speed * (calibrationResult?.speedMultiplier ?? 1.0);
+    let adjustedDir = p.windDirection;
     const periodTime = new Date(p.startTime || p.time);
     const periodHour = periodTime.getHours();
+    let boosted = false;
 
     // Override current hour with live readings when live > NWS
     if (periodHour === nowHour && liveSpeed > adjustedSpeed) {
       adjustedSpeed = liveSpeed;
+      boosted = true;
     }
 
-    // SE thermal window: 8 AM - 2 PM (peaks 9-11 AM, fades by noon-2 PM)
-    if (isSEThermal && expectedSpeed > adjustedSpeed) {
-      const thermalWindow = periodHour >= 8 && periodHour <= 14;
-
-      if (thermalWindow) {
-        const now = new Date();
+    // Thermal enhancement: when we detect an active or predicted thermal,
+    // augment the NWS forecast for the thermal window hours.
+    if (isThermal && thermalConfidence >= 0.4 && expectedSpeed > 0) {
+      const inWindow = periodHour >= thermalStart && periodHour <= thermalEnd;
+      if (inWindow && expectedSpeed > adjustedSpeed) {
         const hoursFromNow = (periodTime - now) / 3600000;
         const etaHours = (etaMin || 90) / 60;
 
+        // Only boost hours that are past ETA or already happening
         if (hoursFromNow <= 0 || hoursFromNow >= etaHours - 0.5) {
-          // expectedSpeed is already calibrated from upstream ratios — don't
-          // apply speedMultiplier again (that's for NWS→reality correction)
           const thermalPeak = expectedSpeed;
-          const peakHour = 10;
-          const distFromPeak = Math.abs(periodHour - peakHour);
-          const thermalShape = Math.max(0.5, 1.0 - distFromPeak * 0.1);
-          const thermalSpeed = thermalPeak * thermalShape;
 
+          // Shape: ramp up to peak window, hold, then decay to sunset
+          let thermalShape;
+          if (periodHour >= peakStart && periodHour <= peakEnd) {
+            thermalShape = 1.0; // Full strength during peak
+          } else if (periodHour < peakStart) {
+            thermalShape = 0.5 + 0.5 * ((periodHour - thermalStart) / (peakStart - thermalStart));
+          } else {
+            // Decay after peak toward sunset
+            thermalShape = Math.max(0.3, 1.0 - 0.7 * ((periodHour - peakEnd) / (thermalEnd - peakEnd)));
+          }
+
+          const thermalSpeed = thermalPeak * thermalShape;
           if (thermalSpeed > adjustedSpeed) {
             adjustedSpeed = Math.round(thermalSpeed * 10) / 10;
+            boosted = true;
+            // When thermal is boosting, show thermal direction instead of NWS
+            const thermalDirStr = context?._config?.thermalDirection;
+            if (thermalDirStr) {
+              const m = thermalDirStr.match(/[NSEW]{1,3}/);
+              if (m) adjustedDir = m[0];
+            } else if (context?._config?.primaryWindType?.includes('SE')) {
+              adjustedDir = 'SSE';
+            }
           }
         }
       }
@@ -1359,10 +1390,11 @@ function buildHourlyForecast(lakeId, context, calibrationResult, regime, propaga
       time: p.startTime || p.time,
       speed: Math.round(adjustedSpeed * 10) / 10,
       nwsSpeed: speed,
-      dir: p.windDirection,
+      dir: adjustedDir,
       temperature: p.temperature,
       shortForecast: p.shortForecast || '',
-      thermalBoosted: adjustedSpeed > speed,
+      gust: p.gust ?? null,
+      thermalBoosted: boosted,
     };
   });
 }
