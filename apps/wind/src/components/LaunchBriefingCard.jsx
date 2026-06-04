@@ -19,7 +19,11 @@ import { safeToFixed } from '../utils/safeToFixed';
 
 // ─── Constants ──────────────────────────────────────────────────────
 const COMPASS = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
-const compass = (d) => d == null ? '—' : COMPASS[Math.round((((d % 360) + 360) % 360) / 22.5) % 16];
+const compass = (d) => {
+  if (d == null) return '—';
+  if (typeof d === 'string') return COMPASS.includes(d.toUpperCase()) ? d.toUpperCase() : d;
+  return COMPASS[Math.round((((d % 360) + 360) % 360) / 22.5) % 16];
+};
 
 const PHASE_STYLES = {
   'pre-thermal': { label: 'Pre-thermal', tone: 'blue',    icon: '🌅', gradient: 'from-blue-500/15 via-slate-900/0 to-transparent' },
@@ -50,9 +54,16 @@ function speedColorClass(speed) {
 }
 
 // ─── Geometry helpers ──────────────────────────────────────────────
+const DIR_CARD_TO_DEG = {
+  N: 0, NNE: 22, NE: 45, ENE: 67, E: 90, ESE: 112,
+  SE: 135, SSE: 157, S: 180, SSW: 202, SW: 225, WSW: 247,
+  W: 270, WNW: 292, NW: 315, NNW: 337,
+};
 function dirInArc(dir, arc) {
   if (dir == null || !arc) return false;
-  const d = (((dir % 360) + 360) % 360);
+  const numDir = typeof dir === 'string' ? (DIR_CARD_TO_DEG[dir.toUpperCase()] ?? NaN) : dir;
+  if (!Number.isFinite(numDir)) return false;
+  const d = (((numDir % 360) + 360) % 360);
   const [min, max] = Array.isArray(arc) ? arc : [arc.min, arc.max];
   if (min == null || max == null) return false;
   if (min <= max) return d >= min && d <= max;

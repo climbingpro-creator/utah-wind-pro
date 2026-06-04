@@ -1599,85 +1599,50 @@ export function predict(lakeId, activity, liveStations, modelContext, config, op
   const cal = calibrate(regime, pressure, prop, ctx, hour, month, obs);
 
   // ── Wind speed estimation ──────────────────────────────────────
-  // Priority: ground truth (PWS) > QSF-based estimate (SE thermal) > lakeshore/ratio > ridge
+  // RULE: Ground truth is the ONLY source for current speed.
+  // When ground truth is 0 or missing, the current speed IS 0.
+  // Upstream/fallback stations feed the propagation expected speed
+  // and phase, but NEVER substitute for what's actually at the beach.
   let windSpeed = obs.groundTruth?.speed ?? 0;
   let windDir = obs.groundTruth?.dir ?? null;
   let windGust = obs.groundTruth?.gust ?? null;
   let windSource = obs.groundTruthId || null;
   let speedRatioApplied = 1.0;
+  let usingFallback = false;
 
-  if (windSpeed === 0) {
-    // For SE thermal: QSF is the best predictor of what PWS will see.
-    // QSF SE → PWS roughly 0.75:1 (validated over 3 years of backtest data).
-    // FPS overstates by ~1.7x and often has wind that doesn't reach Zigzag.
-    const eiSE = regime.regime === 'se_thermal' && regime.qsfSignal
-      && obs.earlyIndicator?.speed >= 6;
-    if (eiSE) {
-      const kpvu = obs.allReadings?.KPVU;
-      const kpvuConfirmed = kpvu && kpvu.dir != null && kpvu.dir >= 120 && kpvu.dir <= 200 && kpvu.speed >= 4;
-      const qsfRatio = kpvuConfirmed ? 0.8 : 0.7;
-      windSpeed = obs.earlyIndicator.speed * qsfRatio;
-      windDir = obs.earlyIndicator.dir;
-      windGust = null;
-      windSource = obs.earlyIndicatorId;
-      speedRatioApplied = qsfRatio;
-    }
-  }
-
-  // WU PWS fallback: KUTSARAT88 (0.83x) and KUTSARAT81 (0.85x) are nearly 1:1
-  // with your PWS — much better than FPS (1.7x) for estimating actual beach wind.
-  if (windSpeed === 0) {
+  // If no ground truth, try nearby WU stations (nearly 1:1 ratio)
+  if (windSpeed === 0 && obs.groundTruthId) {
     const wuBest = ['KUTSARAT88', 'KUTSARAT81', 'KUTSARAT62'].map(id => {
       const r = obs.allReadings?.[id];
       return r?.speed > 0 ? { id, ...r } : null;
     }).filter(Boolean).sort((a, b) => b.speed - a.speed)[0];
     if (wuBest) {
-      windSpeed = wuBest.speed;
+      const FALLBACK_SPEED_RATIOS_SE = {
+        KUTSARAT88: 0.83, KUTSARAT81: 0.85, KUTSARAT62: 0.39,
+      };
+      const ratio = FALLBACK_SPEED_RATIOS_SE[wuBest.id] || 1;
+      windSpeed = wuBest.speed / (ratio < 1 ? 1 : ratio);
       windDir = wuBest.dir;
       windGust = wuBest.gust ?? null;
       windSource = wuBest.id;
+      usingFallback = true;
     }
   }
 
+  // If still no reading, use lakeshore BUT mark as fallback — these
+  // are NOT at the beach and overshoot significantly (FPS 1.7x, etc.)
   if (windSpeed === 0 && obs.lakeshore.length > 0) {
     const ls = obs.lakeshore[0];
-    windSpeed = ls.speed;
+    const LAKESHORE_RATIOS = {
+      FPS: 1.7, KPVU: 1.2, UTALP: 1.3, KSLC: 1.4,
+    };
+    const ratio = LAKESHORE_RATIOS[ls.id] || 1.5;
+    windSpeed = ls.speed / ratio;
     windDir = ls.dir;
-    windGust = ls.gust;
+    windGust = ls.gust ? ls.gust / ratio : null;
     windSource = ls.id;
-  }
-  if (windSpeed === 0 && obs.ridge.length > 0) {
-    const r = obs.ridge[0];
-    windSpeed = r.speed;
-    windDir = r.dir;
-    windGust = r.gust;
-    windSource = r.id;
-  }
-
-  // Regime-dependent speed ratios: north flow FPS overstates 2.5-3x at Zigzag,
-  // while SE thermal FPS overstates ~1.7x. Use a higher divisor for north flow.
-  // Speed ratios: how much a station overstates vs PWS (Zigzag ground truth).
-  // Learned from 90 days of WU PWS + MesoWest cross-validation (2025-12 → 2026-03).
-  const FALLBACK_SPEED_RATIOS_SE = {
-    FPS: 1.7, KPVU: 1.2, UTALP: 1.3, KSLC: 1.4,
-    KUTSARAT88: 0.83, KUTSARAT81: 0.85, KUTSARAT62: 0.39,
-    KUTBLUFF18: 0.99, KUTRIVER67: 1.1, KUTDRAPE59: 0.72,
-  };
-  const FALLBACK_SPEED_RATIOS_N = {
-    FPS: 2.8, KPVU: 1.5, UTALP: 1.5, KSLC: 1.6,
-    KUTSARAT88: 0.85, KUTSARAT81: 0.75, KUTSARAT62: 1.13,
-    KUTBLUFF18: 0.65, KUTRIVER67: 0.67, KUTDRAPE132: 0.39,
-  };
-  const ratioTable = regime.regime === 'north_flow' ? FALLBACK_SPEED_RATIOS_N : FALLBACK_SPEED_RATIOS_SE;
-
-  if (obs.groundTruthId === 'PWS' && windSource && windSource !== 'PWS'
-      && windSource !== obs.earlyIndicatorId) {
-    const ratio = ratioTable[windSource];
-    if (ratio && ratio > 0) {
-      speedRatioApplied = ratio;
-      windSpeed = windSpeed / ratio;
-      if (windGust != null) windGust = windGust / ratio;
-    }
+    speedRatioApplied = ratio;
+    usingFallback = true;
   }
 
   // Apply speed multiplier from calibration
@@ -1690,11 +1655,68 @@ export function predict(lakeId, activity, liveStations, modelContext, config, op
   const currentScore = activities[activity] || activities.kiting;
   let decision = decide(activity, currentScore, adjustedSpeed, windGust, windDir, cal.probability, prop, pressure);
 
+  // SAFETY: When using fallback stations (no ground truth), cap at WAIT.
+  // We can't say GO based on an estimate from a station miles away.
+  // The wind might not be at the actual beach yet.
+  const gtActual = obs.groundTruth?.speed ?? 0;
+  if (usingFallback && decision.decision === 'GO') {
+    const p = PROFILES[activity];
+    const verb = ACTIVITY_VERBS[activity] || activity;
+    decision = {
+      decision: 'WAIT',
+      confidence: Math.min(decision.confidence, 0.6),
+      headline: `Nearby stations show wind — not confirmed at your spot yet`,
+      detail: `${windSource} reading ${Math.round(windSpeed * speedRatioApplied)} mph (est. ${Math.round(adjustedSpeed)} at your spot). No ground truth available.`,
+      action: `Wind likely arriving — check live conditions before heading out`,
+    };
+  }
+  // When ground truth IS available but reads < 2 mph (calm/noise), never GO
+  if (!usingFallback && gtActual < 2 && decision.decision === 'GO') {
+    decision = {
+      decision: 'WAIT',
+      confidence: 0.5,
+      headline: `Wind building upstream — ${Math.round(gtActual)} mph at your spot right now`,
+      detail: prop.dominantSource
+        ? `${prop.dominantSource} shows ${Math.round(prop.expectedSpeed || 0)} mph. Expected to arrive soon.`
+        : `Upstream indicators are active. Watch for it to fill in.`,
+      action: `Not here yet — watch your station for pickup`,
+    };
+  }
+
   // Paragliding ground-truth override
   if (activity === 'paragliding') {
     const pgOverride = paraglidingOverride(lakeId, obs, activities, decision, prop);
     activities = pgOverride.activities;
     decision = pgOverride.decision;
+  }
+
+  // NETWORK CONSENSUS: check how many of ALL available stations support
+  // the decision. If we say GO but most nearby stations read calm, warn.
+  const allReadings = Object.entries(obs.allReadings || {});
+  const activeStations = allReadings.filter(([, r]) => r.speed > 0);
+  const windyStations = allReadings.filter(([, r]) => r.speed >= 5);
+  const calmStations = allReadings.filter(([, r]) => r.speed < 3);
+  const networkConsensus = {
+    total: allReadings.length,
+    active: activeStations.length,
+    windy: windyStations.length,
+    calm: calmStations.length,
+    agreement: activeStations.length > 0
+      ? windyStations.length / activeStations.length
+      : 0,
+  };
+
+  // If decision is GO but most of the network is calm, downgrade to WAIT
+  if (decision.decision === 'GO' && networkConsensus.active >= 3
+      && networkConsensus.agreement < 0.3) {
+    decision = {
+      ...decision,
+      decision: 'WAIT',
+      confidence: Math.min(decision.confidence, 0.4),
+      headline: `Some stations show wind but most are calm — be cautious`,
+      detail: `${networkConsensus.windy} of ${networkConsensus.active} stations above 5 mph. Conditions may be localized or just starting.`,
+      action: `Check live stations before heading out`,
+    };
   }
 
   // 9. BRIEF
@@ -1706,14 +1728,41 @@ export function predict(lakeId, activity, liveStations, modelContext, config, op
   // Backward compatibility
   const compat = backwardCompat(cal, regime, prop, pressure, adjustedSpeed, windGust, hour);
 
+  // Detect missing/offline stations so UI can communicate data gaps
+  const missingStations = [];
+  if (config?.stations?.earlyIndicator && !obs.earlyIndicator?.speed) {
+    missingStations.push({
+      id: config.stations.earlyIndicator.id || obs.earlyIndicatorId || 'Early Indicator',
+      name: config.stations.earlyIndicator.name || 'Early indicator',
+      role: 'early_indicator',
+    });
+  }
+  if (obs.groundTruthId && !obs.groundTruth?.speed) {
+    missingStations.push({
+      id: obs.groundTruthId,
+      name: 'Ground truth (PWS)',
+      role: 'ground_truth',
+    });
+  }
+
   return {
     // Core outputs
     decision: decision.decision,
-    confidence: decision.confidence,
+    confidence: usingFallback ? Math.min(decision.confidence, 0.5) : decision.confidence,
     regime: regime.regime,
 
     // Per-activity scores
     activities,
+
+    // Data quality
+    dataQuality: {
+      usingFallback,
+      networkConsensus,
+      fallbackSource: usingFallback ? windSource : null,
+      missingStations,
+      stationCount: Object.keys(obs.allReadings || {}).filter(k => obs.allReadings[k]?.speed > 0).length,
+      hasGroundTruth: (obs.groundTruth?.speed ?? 0) > 0,
+    },
 
     // Wind state
     wind: {
