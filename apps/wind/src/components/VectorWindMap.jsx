@@ -173,7 +173,11 @@ function getCardinalDirection(degrees) {
 }
 
 function StationMarker({ station, stationData, onClick }) {
-  const live = stationData?.find(s => s.id === station.id || s.name?.includes(station.name));
+  const live = stationData?.find(s =>
+    s.id === station.id
+    || s.name?.includes(station.name)
+    || (station.id === 'PWS' && s.isPWS)
+  );
   const hasData = live?.speed != null;
   const color = getStationColor(station);
 
@@ -548,20 +552,24 @@ function PwsWindFieldLayer({ stations }) {
 
   return (
     <Source id="pws-wind-field" type="geojson" data={geojson}>
-      {/* Dead-calm or direction-less stations — small colored dot */}
+      {/* Dead-calm or direction-less stations — small colored dot.
+          Hidden at very low zooms (< 8) to reduce noise. */}
       <Layer
         id="pws-dot"
         type="circle"
         filter={['==', ['get', 'kind'], 'dot']}
+        minzoom={8}
         paint={{
-          'circle-radius': ['interpolate', ['linear'], ['zoom'], 6, 2.5, 10, 3.5, 14, 4.5],
+          'circle-radius': ['interpolate', ['linear'], ['zoom'], 8, 2, 10, 3.5, 14, 4.5],
           'circle-color': ['get', 'color'],
-          'circle-opacity': 0.85,
+          'circle-opacity': ['interpolate', ['linear'], ['zoom'], 8, 0.5, 10, 0.85],
           'circle-stroke-width': 1,
           'circle-stroke-color': 'rgba(0,0,0,0.45)',
         }}
       />
-      {/* Wind arrows — SDF icon tinted by speed-color, rotated to bearing */}
+      {/* Wind arrows — SDF icon tinted by speed-color, rotated to bearing.
+          At low zoom (< 9) let MapLibre declutter by hiding overlapping icons
+          so the field reads cleanly; at zoom 9+ show every station. */}
       <Layer
         id="pws-arrow"
         type="symbol"
@@ -571,15 +579,13 @@ function PwsWindFieldLayer({ stations }) {
           'icon-rotate': ['get', 'rotation'],
           'icon-rotation-alignment': 'map',
           'icon-pitch-alignment': 'map',
-          'icon-allow-overlap': true,
-          'icon-ignore-placement': true,
-          // Scale arrow with both zoom AND wind speed so a 25 mph reading
-          // is visually bigger than a 5 mph reading at the same zoom.
-          // Sizes ~70% bigger than first pass — readable at a glance without
-          // crowding the basemap at typical pan/zoom levels.
+          'icon-allow-overlap': ['step', ['zoom'], false, 9, true],
+          'icon-ignore-placement': ['step', ['zoom'], false, 9, true],
+          'icon-padding': ['interpolate', ['linear'], ['zoom'], 6, 8, 9, 2, 12, 0],
+          'symbol-sort-key': ['*', -1, ['get', 'speed']],
           'icon-size': [
             'interpolate', ['linear'], ['zoom'],
-            6,  ['interpolate', ['linear'], ['get', 'speed'], 0, 0.38, 10, 0.50, 25, 0.62],
+            6,  ['interpolate', ['linear'], ['get', 'speed'], 0, 0.30, 10, 0.42, 25, 0.54],
             10, ['interpolate', ['linear'], ['get', 'speed'], 0, 0.55, 10, 0.75, 25, 0.95],
             14, ['interpolate', ['linear'], ['get', 'speed'], 0, 0.75, 10, 1.00, 25, 1.30],
           ],
@@ -588,7 +594,7 @@ function PwsWindFieldLayer({ stations }) {
           'icon-color': ['get', 'color'],
           'icon-halo-color': 'rgba(0,0,0,0.65)',
           'icon-halo-width': 1.5,
-          'icon-opacity': 0.95,
+          'icon-opacity': ['interpolate', ['linear'], ['zoom'], 6, 0.75, 10, 0.95],
         }}
       />
     </Source>
@@ -766,11 +772,39 @@ export function VectorWindMap({
 
   const { stations: pwsStations, loading: pwsLoading } = usePwsWindField(viewState, showPwsField);
 
+  // Merge dense PWS field with configured stations (including user's PWS)
+  // so the wind field and windstream use ALL available readings.
+  const allFieldStations = useMemo(() => {
+    const ids = new Set(pwsStations.map(s => s.id));
+    const extras = [];
+    for (const s of (stationData || [])) {
+      const id = s.id || s.stationId;
+      if (id && !ids.has(id) && (s.speed != null || s.windSpeed != null)) {
+        const cfg = mapArea?.stations?.find(c => c.id === id || (id === 'PWS' && c.id === 'PWS'));
+        extras.push({
+          id,
+          stationName: s.name || id,
+          lat: cfg?.lat ?? s.lat,
+          lon: cfg?.lng ?? s.lon ?? s.lng,
+          windSpeed: s.speed ?? s.windSpeed,
+          windDir: s.direction ?? s.windDirection ?? s.windDir,
+          windGust: s.gust ?? s.windGust,
+          source: s.isPWS ? 'pws' : 'config',
+        });
+      }
+    }
+    return [...pwsStations, ...extras.filter(e => e.lat != null && e.lon != null)];
+  }, [pwsStations, stationData, mapArea]);
+
   const liveStationsWithCoords = useMemo(() => {
     if (!mapArea) return [];
     return mapArea.stations
       .map(cfg => {
-        const live = stationData?.find(s => s.id === cfg.id || s.name?.includes(cfg.name));
+        const live = stationData?.find(s =>
+          s.id === cfg.id
+          || s.name?.includes(cfg.name)
+          || (cfg.id === 'PWS' && s.isPWS)
+        );
         if (!live || live.speed == null) return null;
         return { ...cfg, ...live, lat: cfg.lat, lng: cfg.lng };
       })
@@ -1104,13 +1138,13 @@ export function VectorWindMap({
             speed={currentSpeed}
           />
 
-          {/* Dense PWS wind field */}
-          {showPwsField && <PwsWindFieldLayer stations={pwsStations} />}
+          {/* Dense PWS wind field — merge configured stations so PWS shows */}
+          {showPwsField && <PwsWindFieldLayer stations={allFieldStations} />}
 
           {/* Animated windstream particles */}
           <WindStreamLayer
             map={mapRef.current?.getMap()}
-            stations={pwsStations}
+            stations={allFieldStations}
             enabled={showWindStream}
           />
 

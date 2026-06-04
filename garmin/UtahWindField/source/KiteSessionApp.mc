@@ -381,6 +381,25 @@ class KiteSessionApp extends Application.AppBase {
         if (gearSetup != null) {
             payload.put("gear_setup", gearSetup);
         }
+
+        // Include GPS track (downsample to max 80 points for CIQ payload limits)
+        if (trackCount > 0) {
+            var trackStep = 1;
+            if (trackCount > 80) {
+                trackStep = trackCount / 80;
+                if (trackStep < 1) { trackStep = 1; }
+            }
+            var track = [];
+            for (var i = 0; i < trackCount; i += trackStep) {
+                if (trackLats[i] != null && trackLons[i] != null) {
+                    track.add([trackLats[i], trackLons[i]]);
+                }
+            }
+            if (track.size() > 0) {
+                payload.put("track", track);
+            }
+        }
+
         uploader.upload(payload);
         review.setUploader(uploader);
 

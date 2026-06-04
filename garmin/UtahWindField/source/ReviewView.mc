@@ -44,6 +44,7 @@ class ReviewView extends WatchUi.View {
     // Upload polling
     hidden var _uploader = null;
     hidden var _pollTimer = null;
+    hidden var _pollCount = 0;
 
     function initialize() {
         View.initialize();
@@ -51,17 +52,22 @@ class ReviewView extends WatchUi.View {
 
     function setUploader(uploader) {
         _uploader = uploader;
+        _pollCount = 0;
         _pollTimer = new Timer.Timer();
         _pollTimer.start(method(:onUploadPoll), 1500, true);
     }
 
     function onUploadPoll() as Void {
+        _pollCount++;
         if (_uploader == null) { return; }
         if (_uploader.uploadStatus.equals("SUCCESS")) {
-            uploadStatus = _uploader.uploadMsg;
+            uploadStatus = "Saved!";
             _pollTimer.stop();
         } else if (_uploader.uploadStatus.equals("FAILED")) {
             uploadStatus = "FAIL " + _uploader.uploadMsg;
+            _pollTimer.stop();
+        } else if (_pollCount > 20) {
+            uploadStatus = "Timeout — check phone BT";
             _pollTimer.stop();
         }
         WatchUi.requestUpdate();
@@ -158,15 +164,21 @@ class ReviewView extends WatchUi.View {
             y += lineH;
         }
 
-        // Upload status
-        dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, H * 88 / 100, Graphics.FONT_XTINY,
-            "Upload: " + uploadStatus, Graphics.TEXT_JUSTIFY_CENTER);
+        // Upload status — prominent so rider sees success/failure
+        var uploadColor = Graphics.COLOR_YELLOW;
+        if (uploadStatus.equals("Saved!")) {
+            uploadColor = Graphics.COLOR_GREEN;
+        } else if (uploadStatus.find("FAIL") != null || uploadStatus.find("Timeout") != null) {
+            uploadColor = Graphics.COLOR_RED;
+        }
+        dc.setColor(uploadColor, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(cx, H * 86 / 100, Graphics.FONT_SMALL,
+            uploadStatus, Graphics.TEXT_JUSTIFY_CENTER);
 
         // Navigation hint
         dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, H * 94 / 100, Graphics.FONT_XTINY,
-            "SELECT = map  |  BACK = exit", Graphics.TEXT_JUSTIFY_CENTER);
+        dc.drawText(cx, H * 93 / 100, Graphics.FONT_XTINY,
+            "SELECT=map  BACK=exit", Graphics.TEXT_JUSTIFY_CENTER);
     }
 
     hidden function _drawMap(dc, W, H, cx) {

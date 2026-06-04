@@ -46,21 +46,48 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
 
   try {
-    const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+    let body;
+    try {
+      body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+    } catch (parseErr) {
+      console.error('[session-upload] body parse error:', parseErr.message, 'raw body type:', typeof req.body);
+      return res.status(400).json({ error: 'Invalid JSON body', detail: parseErr.message });
+    }
+
+    if (!body || typeof body !== 'object') {
+      console.error('[session-upload] empty or non-object body. Content-Type:', req.headers['content-type'], 'body type:', typeof body);
+      return res.status(400).json({ error: 'Empty or invalid request body' });
+    }
+
+    console.log('[session-upload] received:', {
+      type: body.type,
+      device: body.device,
+      hasTrack: !!body.track,
+      duration: body.duration_s,
+      contentType: req.headers['content-type'],
+    });
 
     // Auth: try JWT first (web users), fall back to device_id (watch uploads)
     const auth = await verifyAuth(req);
     let userId = auth.error ? null : auth.user?.id;
-    const deviceId = body?.device || null;
+    const deviceId = body.device || null;
 
     if (!userId && deviceId) {
       const supabase = getSupabase();
-      const { data: link } = await supabase
+      const { data: link, error: linkErr } = await supabase
         .from('garmin_devices')
         .select('user_id')
         .eq('device_id', deviceId)
         .maybeSingle();
-      if (link) userId = link.user_id;
+      if (linkErr) {
+        console.error('[session-upload] garmin_devices lookup error:', linkErr.message);
+      }
+      if (link) {
+        userId = link.user_id;
+        console.log('[session-upload] matched device', deviceId, '→ user', userId);
+      } else {
+        console.warn('[session-upload] device_id not linked:', deviceId, '— session will be anonymous');
+      }
     } else if (auth.error && !deviceId) {
       return res.status(auth.status || 401).json({ error: auth.error });
     }
@@ -126,8 +153,13 @@ export default async function handler(req, res) {
       .single();
 
     if (error) {
-      console.error('[session-upload] insert error:', error.message, error.details, error.hint);
-      return res.status(500).json({ error: 'Failed to store session', detail: error.message });
+      console.error('[session-upload] insert error:', error.message, error.details, error.hint, error.code);
+      return res.status(500).json({
+        error: 'Failed to store session',
+        detail: error.message,
+        hint: error.hint || null,
+        code: error.code || null,
+      });
     }
 
     const sessionId = data.id;

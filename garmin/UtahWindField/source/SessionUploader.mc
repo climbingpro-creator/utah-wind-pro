@@ -39,16 +39,34 @@ class SessionUploader {
     }
 
     function onUploadResponse(responseCode, data) {
+        System.println("[SessionUploader] response code: " + responseCode);
         if (responseCode == 200) {
             uploadStatus = "SUCCESS";
-            if (data != null && data.hasKey("url")) {
-                uploadMsg = data["url"];
+            if (data != null && data.hasKey("sessionId")) {
+                uploadMsg = "Session saved";
             } else {
-                uploadMsg = "Uploaded to UtahWindFinder";
+                uploadMsg = "Uploaded";
+            }
+        } else if (responseCode < 0) {
+            uploadStatus = "FAILED";
+            if (responseCode == -104) {
+                uploadMsg = "No phone — pair BT";
+            } else if (responseCode == -400) {
+                uploadMsg = "No internet";
+            } else if (responseCode == -300) {
+                uploadMsg = "Network timeout";
+            } else if (responseCode == -402) {
+                uploadMsg = "Out of memory";
+            } else {
+                uploadMsg = "CIQ " + responseCode;
             }
         } else {
             uploadStatus = "FAILED";
-            uploadMsg = "HTTP " + responseCode;
+            var detail = "";
+            if (data != null && data.hasKey("error")) {
+                detail = " " + data["error"];
+            }
+            uploadMsg = "HTTP " + responseCode + detail;
         }
     }
 

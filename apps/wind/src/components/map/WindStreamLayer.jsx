@@ -160,6 +160,7 @@ export default function WindStreamLayer({ map, stations, enabled = true }) {
       canvas.style.height = '100%';
       canvas.style.pointerEvents = 'none';
       canvas.style.zIndex = '1';
+      canvas.style.transition = 'opacity 0.3s ease';
       mapCanvas.parentNode.appendChild(canvas);
       canvasRef.current = canvas;
     }
@@ -253,18 +254,24 @@ export default function WindStreamLayer({ map, stations, enabled = true }) {
 
     animRef.current = requestAnimationFrame(animate);
 
-    const onMove = () => {
+    // Hide particles during pan/zoom so they don't drift from their
+    // geographic positions, then rebuild the field when the map settles.
+    const onMoveStart = () => {
+      canvas.style.opacity = '0';
+    };
+    const onMoveEnd = () => {
       updateField();
       resize();
+      canvas.style.opacity = '1';
     };
-    map.on('moveend', onMove);
-    map.on('zoomend', onMove);
+    map.on('movestart', onMoveStart);
+    map.on('moveend', onMoveEnd);
     window.addEventListener('resize', resize);
 
     return () => {
       if (animRef.current) cancelAnimationFrame(animRef.current);
-      map.off('moveend', onMove);
-      map.off('zoomend', onMove);
+      map.off('movestart', onMoveStart);
+      map.off('moveend', onMoveEnd);
       window.removeEventListener('resize', resize);
       if (canvas && canvas.parentNode) {
         const ctx2 = canvas.getContext('2d');

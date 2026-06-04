@@ -664,7 +664,29 @@ export function Dashboard() {
               speed: lakeState?.pws?.windSpeed || lakeState?.wind?.stations?.[0]?.speed,
               waterTemp: lakeState?.pws?.waterTemp ?? null,
             }}
-            stationData={lakeState?.wind?.stations}
+            stationData={(() => {
+              const stations = [...(lakeState?.wind?.stations || [])];
+              const pws = lakeState?.pws;
+              if (pws?.windSpeed != null) {
+                const alreadyInList = stations.some(s => s.isPWS || s.id === 'PWS');
+                if (!alreadyInList) {
+                  const coords = lakeState?.config?.coordinates;
+                  stations.push({
+                    id: 'PWS',
+                    name: pws.name || 'Zig Zag PWS',
+                    speed: pws.windSpeed,
+                    direction: pws.windDirection,
+                    gust: pws.windGust,
+                    temperature: pws.temperature,
+                    isPWS: true,
+                    lat: pws.lat ?? coords?.lat,
+                    lon: pws.lon ?? coords?.lng,
+                    lng: pws.lon ?? coords?.lng,
+                  });
+                }
+              }
+              return stations;
+            })()}
             isLoading={isLoading}
             onSelectLaunch={handleSelectLake}
           />
