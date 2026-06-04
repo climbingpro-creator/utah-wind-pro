@@ -498,30 +498,42 @@ function buildPwsGeoJSON(stations) {
     if (s.lat == null || s.lon == null) continue;
     const speed = s.windSpeed ?? 0;
     const dir = s.windDir;
+    const gust = s.windGust ?? null;
     const color = colorForSpeed(speed);
+    const name = s.stationName || s.name || s.id || 'Unknown';
+    const elevation = s.elevation ?? null;
+    const source = s.source || s.dataSource || 'pws';
+    const obsTime = s.obsTime || null;
 
-    // Show an arrow whenever we know which way the wind is blowing.
-    // Dead-calm (speed < 1) collapses to a dot so we don't draw misleading
-    // arrows for noisy direction readings on stagnant air.
     const hasDir = dir != null && speed >= 1;
+    const shared = {
+      id: s.id,
+      name,
+      speed,
+      gust,
+      dir: dir ?? null,
+      color,
+      elevation,
+      source,
+      obsTime,
+      lat: s.lat,
+      lon: s.lon,
+    };
 
     if (hasDir) {
       features.push({
         type: 'Feature',
         properties: {
+          ...shared,
           kind: 'arrow',
-          color,
-          speed,
-          // Met dir is "from" — arrows should fly with the wind, so add 180°.
           rotation: (dir + 180) % 360,
-          id: s.id,
         },
         geometry: { type: 'Point', coordinates: [s.lon, s.lat] },
       });
     } else {
       features.push({
         type: 'Feature',
-        properties: { kind: 'dot', color, speed, id: s.id },
+        properties: { ...shared, kind: 'dot' },
         geometry: { type: 'Point', coordinates: [s.lon, s.lat] },
       });
     }
@@ -768,6 +780,34 @@ export function VectorWindMap({
     const map = mapRef.current?.getMap();
     if (!map) return;
 
+    // Check dense PWS arrows/dots first — make every station clickable
+    const pwsLayers = ['pws-arrow', 'pws-dot'].filter(id => map.getLayer(id));
+    if (pwsLayers.length > 0) {
+      const hits = map.queryRenderedFeatures(e.point, { layers: pwsLayers });
+      if (hits.length > 0) {
+        const props = hits[0].properties || {};
+        const coords = hits[0].geometry?.coordinates;
+        const station = {
+          id: props.id || 'unknown',
+          name: props.name || props.id || 'Station',
+          lat: props.lat ?? coords?.[1],
+          lng: props.lon ?? coords?.[0],
+          type: props.source || 'pws',
+          elevation: props.elevation,
+        };
+        const live = {
+          speed: props.speed,
+          gust: props.gust,
+          direction: props.dir,
+          obsTime: props.obsTime,
+        };
+        setSelectedStation({ station, live, physicsHints: [] });
+        setSelectedFeature(null);
+        impactLight();
+        return;
+      }
+    }
+
     const waterLayerExists = map.getLayer('water-features-fill');
     if (waterLayerExists) {
       const features = map.queryRenderedFeatures(e.point, {
@@ -909,6 +949,21 @@ export function VectorWindMap({
             // Re-register on styledata in case a style swap clears the image registry.
             ensureWindArrowImage(map);
             map.on('styledata', () => ensureWindArrowImage(map));
+
+            // Pointer cursor on hover over clickable PWS arrows/dots.
+            // Layers are added dynamically by PwsWindFieldLayer, so bind
+            // once they appear via the 'sourcedata' event.
+            const bindCursor = () => {
+              for (const layerId of ['pws-arrow', 'pws-dot']) {
+                if (!map.getLayer(layerId)) continue;
+                if (map._pwsCursorBound?.[layerId]) continue;
+                map.on('mouseenter', layerId, () => { map.getCanvas().style.cursor = 'pointer'; });
+                map.on('mouseleave', layerId, () => { map.getCanvas().style.cursor = 'crosshair'; });
+                map._pwsCursorBound = { ...map._pwsCursorBound, [layerId]: true };
+              }
+            };
+            map.on('sourcedata', bindCursor);
+            bindCursor();
 
             try {
               // Add terrain DEM source (AWS Mapzen Terrarium)
