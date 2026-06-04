@@ -718,7 +718,7 @@ export function Dashboard() {
 
         <SafeComponent name="Today Timeline">
           <Suspense fallback={<ChunkFallback className="h-48" />}>
-            <TodayTimeline locationId={selectedLake} activity={selectedActivity} unifiedHourly={prediction?.hourly} liveDecision={prediction?.decision} liveSpeed={prediction?.thermalPrediction?.expectedSpeed} />
+            <TodayTimeline locationId={selectedLake} activity={selectedActivity} unifiedHourly={prediction?.hourly} liveDecision={prediction?.decision} liveSpeed={prediction?.thermalPrediction?.expectedSpeed} liveGroundTruth={prediction?.wind?.current?.speed} />
           </Suspense>
         </SafeComponent>
 

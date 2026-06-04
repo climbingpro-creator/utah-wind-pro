@@ -176,7 +176,7 @@ function findBestWindow(hours, activity) {
 
 const MPH_TO_KT = 0.868976;
 
-export default function TodayTimeline({ locationId = 'utah-lake', activity = 'kiting', unifiedHourly, liveDecision, liveSpeed }) {
+export default function TodayTimeline({ locationId = 'utah-lake', activity = 'kiting', unifiedHourly, liveDecision, liveSpeed, liveGroundTruth }) {
   const isNowcastActive = useWeatherStore((s) => s.isNowcastActive);
   const hourlyForecast = useWeatherStore((s) => s.hourlyForecast);
   const setHourlyForecast = useWeatherStore((s) => s.setHourlyForecast);
@@ -274,9 +274,13 @@ export default function TodayTimeline({ locationId = 'utah-lake', activity = 'ki
     if (!hourlyForecast || hourlyForecast.length === 0) return null;
     return hourlyForecast.map(h => {
       const dt = h.time ? new Date(h.time) : h.startTime ? new Date(h.startTime) : null;
+      const augmented = h.adjustedWind ?? h.speed ?? h.windSpeed ?? h.nwsSpeed ?? 0;
+      const nws = h.nwsSpeed ?? h.windSpeed ?? augmented;
       return {
         localHour: h.localHour ?? (dt ? dt.getHours() : 0),
-        speed: h.adjustedWind ?? h.speed ?? h.windSpeed ?? h.nwsSpeed ?? 0,
+        speed: augmented,
+        nwsSpeed: nws,
+        thermalBoosted: h.thermalBoosted || (augmented > nws + 1),
         gust: h.gust ?? h.windGust ?? null,
         dir: h.dir ?? h.windDirection ?? '',
         dirDeg: typeof h.dirDeg === 'number' ? h.dirDeg : dirToDeg(h.dir || h.windDirection || ''),
@@ -292,9 +296,13 @@ export default function TodayTimeline({ locationId = 'utah-lake', activity = 'ki
     if (!unifiedHourly || unifiedHourly.length === 0) return null;
     return unifiedHourly.map(h => {
       const dt = h.time ? new Date(h.time) : null;
+      const augmented = h.speed ?? h.nwsSpeed ?? 0;
+      const nws = h.nwsSpeed ?? augmented;
       return {
         localHour: dt ? dt.getHours() : 0,
-        speed: h.speed ?? h.nwsSpeed ?? 0,
+        speed: augmented,
+        nwsSpeed: nws,
+        thermalBoosted: h.thermalBoosted || (augmented > nws + 1),
         gust: h.gust ?? h.windGust ?? null,
         dir: h.dir || '',
         dirDeg: typeof h.dir === 'number' ? h.dir : dirToDeg(h.dir),
@@ -318,7 +326,7 @@ export default function TodayTimeline({ locationId = 'utah-lake', activity = 'ki
   }, [allHourly, nowHour]);
 
   const maxSpeed = useMemo(() =>
-    Math.max(25, ...todayHours.map(h => h.speed || 0)),
+    Math.max(25, ...todayHours.map(h => Math.max(h.speed || 0, h.nwsSpeed || 0))),
   [todayHours]);
 
   const bestWindow = useMemo(() =>
@@ -404,9 +412,11 @@ export default function TodayTimeline({ locationId = 'utah-lake', activity = 'ki
           <div className="flex items-center gap-2 mt-2 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
             <Wind size={16} className="text-amber-400 shrink-0" />
             <span className="text-sm text-amber-300">
-              {liveDecision === 'GO'
-                ? `Live stations show ${liveSpeed ? `~${displaySpeed(liveSpeed)} ${unitLabel}` : 'wind'} — NWS forecast doesn't capture local thermals`
-                : 'Wind building — live stations override NWS hourly forecast'}
+              {liveGroundTruth >= 5
+                ? `Currently ${displaySpeed(liveGroundTruth)} ${unitLabel} at your spot${liveSpeed > liveGroundTruth ? ` — building to ~${displaySpeed(liveSpeed)}` : ''}`
+                : liveSpeed
+                  ? `Upstream predicts ~${displaySpeed(liveSpeed)} ${unitLabel} arriving — ${liveGroundTruth > 0 ? `${displaySpeed(liveGroundTruth)} at your spot now` : 'calm at your spot'}`
+                  : 'Wind building upstream — NWS misses local thermals'}
             </span>
           </div>
         ) : (
@@ -423,9 +433,15 @@ export default function TodayTimeline({ locationId = 'utah-lake', activity = 'ki
       <div className="px-4 pb-2 pt-1 overflow-x-auto scrollbar-hide" ref={scrollRef}>
         <div className="flex gap-1" style={{ minWidth: `${todayHours.length * 60}px` }}>
           {todayHours.map((h, i) => {
-            const status = getHourStatus(h.speed, activity);
+            const augSpeed = h.speed || 0;
+            const nwsSpd = h.nwsSpeed ?? augSpeed;
+            const isBoosted = h.thermalBoosted && augSpeed > nwsSpd + 1;
+            const displaySpd = isBoosted ? augSpeed : nwsSpd;
+
+            const status = getHourStatus(displaySpd, activity);
             const colors = STATUS_COLORS[status];
-            const barHeight = Math.max(8, ((h.speed || 0) / maxSpeed) * 80);
+            const nwsBarH = Math.max(8, (nwsSpd / maxSpeed) * 80);
+            const augBarH = isBoosted ? Math.max(8, (augSpeed / maxSpeed) * 80) : 0;
             const isNow = h.localHour === nowHour;
             const dirDeg = h.dirDeg != null ? h.dirDeg : 0;
 
@@ -451,23 +467,35 @@ export default function TodayTimeline({ locationId = 'utah-lake', activity = 'ki
 
                 {/* Wind speed + gust — above bar */}
                 <div className="flex flex-col items-center">
-                  <span className={`text-sm font-bold tabular-nums ${isNow ? 'text-sky-400' : colors.text}`}>
-                    {displaySpeed(h.speed)}
+                  <span className={`text-sm font-bold tabular-nums ${
+                    isBoosted ? 'text-cyan-400' : isNow ? 'text-sky-400' : colors.text
+                  }`}>
+                    {displaySpeed(isBoosted ? augSpeed : nwsSpd)}
                   </span>
-                  {h.gust != null && h.gust > (h.speed || 0) * 1.25 ? (
+                  {h.gust != null && h.gust > displaySpd * 1.25 ? (
                     <span className="text-[9px] font-semibold text-amber-400">G{displaySpeed(h.gust)}</span>
+                  ) : isBoosted ? (
+                    <span className="text-[9px] font-semibold text-slate-500">NWS {displaySpeed(nwsSpd)}</span>
                   ) : (
                     <span className="text-[9px] text-slate-500">{unitLabel}</span>
                   )}
                 </div>
 
-                {/* Bar */}
+                {/* Bar — dual: augmented prediction behind, NWS in front */}
                 <div className="w-5 bg-slate-800 rounded-full mt-1 mb-1 relative" style={{ height: '70px' }}>
+                  {/* Augmented/thermal bar behind (cyan/green) */}
+                  {isBoosted && (
+                    <div
+                      className="absolute bottom-0 w-full rounded-full bg-cyan-500 opacity-40 transition-all"
+                      style={{ height: `${augBarH}px` }}
+                    />
+                  )}
+                  {/* NWS bar in front (grey or status-colored) */}
                   <div
-                    className={`absolute bottom-0 w-full rounded-full transition-all ${colors.bar} ${
-                      status === 'ideal' ? 'opacity-90' : 'opacity-70'
+                    className={`absolute bottom-0 w-full rounded-full transition-all ${
+                      isBoosted ? 'bg-slate-500 opacity-80' : `${colors.bar} ${status === 'ideal' ? 'opacity-90' : 'opacity-70'}`
                     }`}
-                    style={{ height: `${barHeight}px` }}
+                    style={{ height: `${nwsBarH}px` }}
                   />
                 </div>
 
@@ -497,13 +525,16 @@ export default function TodayTimeline({ locationId = 'utah-lake', activity = 'ki
         </div>
       </div>
 
-      {/* Legend — sport-specific labels */}
+      {/* Legend — sport-specific labels + prediction bar */}
       <div className="flex items-center gap-3 px-4 py-2 border-t border-slate-800/50 text-[10px] text-slate-500 flex-wrap">
         <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-emerald-500" /> {legend.ideal}</div>
         <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-500" /> {legend.good}</div>
         <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-amber-500" /> {legend.marginal}</div>
         <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-red-500" /> Dangerous</div>
         {legend.off && <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-slate-600" /> {legend.off}</div>}
+        {todayHours.some(h => h.thermalBoosted) && (
+          <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-cyan-500 opacity-50" /> AI predicted</div>
+        )}
       </div>
     </div>
   );
