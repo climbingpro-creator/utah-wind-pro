@@ -60,7 +60,9 @@ function buildWindGrid(stations, bounds, gridW, gridH) {
         if (d2 < 1e-8) d2 = 1e-8;
         const w = 1 / d2;
 
-        const rad = (s.windDir * Math.PI) / 180;
+        // windDir is met "from" — add 180° to get the direction wind is GOING
+        const toDir = (s.windDir + 180) % 360;
+        const rad = (toDir * Math.PI) / 180;
         const spd = s.windSpeed;
         uSum += w * spd * Math.sin(rad);
         vSum += w * spd * (-Math.cos(rad));

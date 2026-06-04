@@ -1566,20 +1566,28 @@ async function fetchNwsDenseStations(lat, lng, radiusMiles) {
   try {
     const { discoverStations } = await import('./lib/nwsDiscovery.js');
 
-    // Query multiple grid points to discover more stations. NWS returns
-    // stations for a SINGLE grid point; querying offset points catches
-    // stations that belong to adjacent grids (e.g. Utah County + Salt Lake).
+    // Two-pronged approach for maximum station coverage:
+    // 1. Multi-grid-point discovery (catches adjacent NWS grids)
+    // 2. State-level station list filtered by distance
     const offsets = [
       [0, 0],
-      [0.15, 0], [-0.15, 0], [0, 0.15], [0, -0.15],
+      [0.2, 0], [-0.2, 0], [0, 0.2], [0, -0.2],
+      [0.2, 0.2], [-0.2, 0.2], [0.2, -0.2], [-0.2, -0.2],
     ];
-    const allDiscoveries = await Promise.allSettled(
+
+    const gridDiscovery = Promise.allSettled(
       offsets.map(([dLat, dLng]) => discoverStations(lat + dLat, lng + dLng))
     );
 
+    // State-level: fetch ALL NWS stations in the state, filter by radius.
+    // This catches stations the grid-point API misses (CWOP, COOP, etc.)
+    const stateStations = fetchNwsStateStations(lat, lng).catch(() => []);
+
+    const [gridResults, stateResults] = await Promise.all([gridDiscovery, stateStations]);
+
     const seen = new Set();
     const merged = [];
-    for (const r of allDiscoveries) {
+    for (const r of gridResults) {
       if (r.status !== 'fulfilled' || !r.value) continue;
       for (const s of r.value) {
         if (seen.has(s.id)) continue;
@@ -1587,43 +1595,95 @@ async function fetchNwsDenseStations(lat, lng, radiusMiles) {
         merged.push(s);
       }
     }
+    for (const s of stateResults) {
+      if (seen.has(s.id)) continue;
+      seen.add(s.id);
+      merged.push(s);
+    }
 
     const inRange = merged
       .map(s => ({ ...s, distanceMiles: haversineDistance(lat, lng, s.lat, s.lng) }))
       .filter(s => s.distanceMiles <= radiusMiles)
       .sort((a, b) => a.distanceMiles - b.distanceMiles)
-      .slice(0, 60);
+      .slice(0, 80);
 
-    const results = await Promise.allSettled(
-      inRange.map(async (s) => {
-        const obs = await fetchNwsStationObservation(s.id);
-        if (!obs) return null;
-        return {
-          id: s.id,
-          stationId: s.id,
-          name: s.name,
-          stationName: s.name,
-          lat: s.lat,
-          lon: s.lng,
-          source: 'nws',
-          windSpeed: obs.windSpeed,
-          windDir: obs.windDirection,
-          windGust: obs.windGust,
-          temp: obs.temperature,
-          humidity: obs.humidity,
-          pressure: obs.pressure,
-          obsTime: obs.timestamp,
-          distanceKm: s.distanceMiles * 1.609344,
-          elevation: s.elevation,
-        };
-      })
-    );
+    const BATCH = 20;
+    const allObs = [];
+    for (let i = 0; i < inRange.length; i += BATCH) {
+      const batch = inRange.slice(i, i + BATCH);
+      const results = await Promise.allSettled(
+        batch.map(async (s) => {
+          const obs = await fetchNwsStationObservation(s.id);
+          if (!obs) return null;
+          return {
+            id: s.id,
+            stationId: s.id,
+            name: s.name,
+            stationName: s.name,
+            lat: s.lat,
+            lon: s.lng,
+            source: 'nws',
+            windSpeed: obs.windSpeed,
+            windDir: obs.windDirection,
+            windGust: obs.windGust,
+            temp: obs.temperature,
+            humidity: obs.humidity,
+            pressure: obs.pressure,
+            obsTime: obs.timestamp,
+            distanceKm: s.distanceMiles * 1.609344,
+            elevation: s.elevation,
+          };
+        })
+      );
+      for (const r of results) {
+        if (r.status === 'fulfilled' && r.value) allObs.push(r.value);
+      }
+    }
 
-    return results
-      .filter(r => r.status === 'fulfilled' && r.value)
-      .map(r => r.value);
+    return allObs;
   } catch (err) {
     console.warn('[StationsDense] NWS error:', err.message);
+    return [];
+  }
+}
+
+/**
+ * Fetch ALL NWS observing stations in the state containing the target point.
+ * Uses the NWS /stations endpoint with state filter. This catches CWOP,
+ * COOP, RAWS, and other station types that grid-point discovery misses.
+ */
+async function fetchNwsStateStations(lat, lng) {
+  // Rough state lookup for the western US (covers our service area)
+  let state = 'UT';
+  if (lat > 42) state = lng < -111 ? 'ID' : 'WY';
+  else if (lat < 37) state = lng < -112 ? 'NV' : 'AZ';
+  else if (lng < -114) state = 'NV';
+  else if (lng > -109) state = 'CO';
+
+  const url = `https://api.weather.gov/stations?state=${state}&limit=500`;
+  try {
+    const r = await fetch(url, {
+      headers: { 'User-Agent': '(UtahWindApp, support@utahwindapp.com)', Accept: 'application/geo+json' },
+      signal: AbortSignal.timeout(12000),
+    });
+    if (!r.ok) return [];
+    const data = await r.json();
+    const features = data.features || [];
+
+    return features.map(f => {
+      const props = f.properties || {};
+      const coords = f.geometry?.coordinates;
+      if (!coords || !props.stationIdentifier) return null;
+      return {
+        id: props.stationIdentifier,
+        name: props.name || props.stationIdentifier,
+        lat: coords[1],
+        lng: coords[0],
+        elevation: props.elevation?.value != null
+          ? Math.round(props.elevation.value * 3.28084) : null,
+      };
+    }).filter(Boolean);
+  } catch {
     return [];
   }
 }
@@ -1673,11 +1733,12 @@ async function fetchNwsStationObservation(stationId) {
  * No API key required if UDOT_API_KEY is set; otherwise skipped.
  */
 async function fetchUdotDenseStations(lat, lng, radiusMiles) {
-  const apiKey = process.env.UDOT_API_KEY;
-  if (!apiKey) return [];
-
   try {
-    const url = `https://www.udottraffic.utah.gov/api/v2/get/weatherstations?key=${apiKey}&format=json`;
+    // UDOT RWIS has a public JSON feed that works without an API key
+    const apiKey = process.env.UDOT_API_KEY;
+    const url = apiKey
+      ? `https://www.udottraffic.utah.gov/api/v2/get/weatherstations?key=${apiKey}&format=json`
+      : `https://www.udottraffic.utah.gov/api/v2/get/weatherstations?format=json`;
     const r = await fetch(url, { signal: AbortSignal.timeout(10000) });
     if (!r.ok) return [];
     const all = await r.json();

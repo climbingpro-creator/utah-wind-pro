@@ -279,15 +279,15 @@ function PinDropMarker({ coords }) {
 // whole visible area gets meter coverage. At z>=13 we shrink to keep the API
 // payload reasonable since the user is already zoomed into a specific spot.
 function radiusForZoom(zoom) {
-  if (zoom == null) return 40;
-  if (zoom >= 14) return 15;
-  if (zoom >= 12) return 25;
-  if (zoom >= 11) return 35;
-  if (zoom >= 10) return 50;
-  if (zoom >=  9) return 75;
-  if (zoom >=  8) return 110;
-  if (zoom >=  7) return 160;
-  return 200; // Capped server-side at 200 km anyway
+  if (zoom == null) return 60;
+  if (zoom >= 14) return 20;
+  if (zoom >= 12) return 35;
+  if (zoom >= 11) return 50;
+  if (zoom >= 10) return 75;
+  if (zoom >=  9) return 100;
+  if (zoom >=  8) return 140;
+  if (zoom >=  7) return 200;
+  return 250;
 }
 
 // Haversine in km — for cache-hit decisions
