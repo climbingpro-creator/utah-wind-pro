@@ -501,9 +501,13 @@ function buildPwsGeoJSON(stations) {
   const features = [];
   for (const s of stations) {
     if (s.lat == null || s.lon == null) continue;
-    // Open-Meteo grid points are model interpolation, not real stations —
-    // they feed the windstream field but shouldn't appear as map markers.
+    // Open-Meteo grid points are model interpolation, not real stations
     if (s.source === 'open-meteo' || s.id?.startsWith('OM_')) continue;
+    // Skip stations with stale observations (> 2 hours old)
+    if (s.obsTime) {
+      const ageMs = Date.now() - new Date(s.obsTime).getTime();
+      if (ageMs > 2 * 60 * 60 * 1000) continue;
+    }
     const speed = s.windSpeed ?? 0;
     const dir = s.windDir;
     const gust = s.windGust ?? null;
@@ -513,7 +517,9 @@ function buildPwsGeoJSON(stations) {
     const source = s.source || s.dataSource || 'pws';
     const obsTime = s.obsTime || null;
 
-    const hasDir = dir != null && speed >= 1;
+    // Wind vanes wander randomly below ~2 mph — show dot instead of arrow
+    const hasDir = dir != null && typeof dir === 'number' && !isNaN(dir)
+      && dir >= 0 && dir <= 360 && speed >= 2;
     const shared = {
       id: s.id,
       name,
@@ -534,7 +540,7 @@ function buildPwsGeoJSON(stations) {
         properties: {
           ...shared,
           kind: 'arrow',
-          rotation: (dir + 180) % 360,
+          rotation: ((dir + 180) % 360),
         },
         geometry: { type: 'Point', coordinates: [s.lon, s.lat] },
       });
@@ -784,15 +790,17 @@ export function VectorWindMap({
       const id = s.id || s.stationId;
       if (id && !ids.has(id) && (s.speed != null || s.windSpeed != null)) {
         const cfg = mapArea?.stations?.find(c => c.id === id || (id === 'PWS' && c.id === 'PWS'));
+        const rawDir = s.direction ?? s.windDirection ?? s.windDir;
         extras.push({
           id,
           stationName: s.name || id,
           lat: cfg?.lat ?? s.lat,
           lon: cfg?.lng ?? s.lon ?? s.lng,
           windSpeed: s.speed ?? s.windSpeed,
-          windDir: s.direction ?? s.windDirection ?? s.windDir,
+          windDir: typeof rawDir === 'number' ? rawDir : null,
           windGust: s.gust ?? s.windGust,
-          source: s.isPWS ? 'pws' : 'config',
+          source: s.source ?? (s.isPWS ? 'pws' : 'config'),
+          obsTime: s.obsTime ?? null,
         });
       }
     }

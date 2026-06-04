@@ -31,6 +31,8 @@ const PHASE_STYLES = {
   'peak':        { label: 'Peak',        tone: 'emerald', icon: '🔥', gradient: 'from-emerald-500/20 via-slate-900/0 to-transparent' },
   'fading':      { label: 'Fading',      tone: 'orange',  icon: '🌇', gradient: 'from-orange-500/15 via-slate-900/0 to-transparent' },
   'ended':       { label: 'Ended',       tone: 'slate',   icon: '💤', gradient: 'from-slate-500/10 via-slate-900/0 to-transparent' },
+  'north-flow':  { label: 'North Flow',  tone: 'sky',     icon: '⬇️', gradient: 'from-sky-500/20 via-slate-900/0 to-transparent' },
+  'windy':       { label: 'Wind Active', tone: 'emerald', icon: '💨', gradient: 'from-emerald-500/15 via-slate-900/0 to-transparent' },
 };
 
 const TONE_CLASSES = {
@@ -340,7 +342,24 @@ export default function LaunchBriefingCard({ lakeId, lakeState, hourlyForecast, 
     : { text: 'Off-arc',      tone: 'rose',    icon: <AlertTriangle className="w-3 h-3" /> };
   const badgeCls = TONE_CLASSES[directionBadge.tone];
 
-  const phaseStyle = PHASE_STYLES[prediction?.phase] || PHASE_STYLES['pre-thermal'];
+  // Override thermal phase when conditions are actually windy.
+  // The thermal predictor only tracks SE thermal windows — north flow
+  // and synoptic wind events are invisible to it.
+  let effectivePhase = prediction?.phase;
+  let effectivePhaseMessage = prediction?.phaseMessage;
+  if ((effectivePhase === 'ended' || effectivePhase === 'pre-thermal') && curSpeed >= 10) {
+    const curCardinal = compass(curDir);
+    const isNortherly = curDir != null && (curDir >= 270 || curDir <= 90);
+    if (isNortherly) {
+      effectivePhase = 'north-flow';
+      effectivePhaseMessage = `North flow active — ${Math.round(curSpeed)} mph from ${curCardinal}. Not thermal, but kiteable!`;
+    } else {
+      effectivePhase = 'windy';
+      effectivePhaseMessage = `${Math.round(curSpeed)} mph from ${curCardinal} — wind is active outside thermal window`;
+    }
+  }
+
+  const phaseStyle = PHASE_STYLES[effectivePhase] || PHASE_STYLES['pre-thermal'];
   const phaseTone = TONE_CLASSES[phaseStyle.tone];
 
   // Why bullets
@@ -390,7 +409,7 @@ export default function LaunchBriefingCard({ lakeId, lakeState, hourlyForecast, 
   const currentSpeedColor = speedColorClass(curSpeed);
 
   return (
-    <div className={`relative overflow-hidden rounded-2xl border border-slate-700/60 bg-slate-900/80 backdrop-blur-sm shadow-xl ${prediction?.phase === 'peak' ? `shadow-lg ${phaseTone.glow}` : ''}`}>
+    <div className={`relative overflow-hidden rounded-2xl border border-slate-700/60 bg-slate-900/80 backdrop-blur-sm shadow-xl ${effectivePhase === 'peak' || effectivePhase === 'north-flow' || effectivePhase === 'windy' ? `shadow-lg ${phaseTone.glow}` : ''}`}>
       {/* Phase gradient backdrop */}
       <div className={`absolute inset-0 bg-gradient-to-br ${phaseStyle.gradient} pointer-events-none`} />
 
@@ -414,12 +433,12 @@ export default function LaunchBriefingCard({ lakeId, lakeState, hourlyForecast, 
             </p>
             {/* Phase pill */}
             {prediction && (
-              <div className={`mt-3 inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold border ${phaseTone.text} ${phaseTone.border} ${phaseTone.bg} ${prediction.phase === 'peak' ? 'animate-pulse' : ''}`}>
+              <div className={`mt-3 inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold border ${phaseTone.text} ${phaseTone.border} ${phaseTone.bg} ${effectivePhase === 'peak' ? 'animate-pulse' : ''}`}>
                 <span>{phaseStyle.icon}</span>
                 <span className="tracking-wider uppercase">{phaseStyle.label}</span>
-                {prediction.phaseMessage && (
+                {effectivePhaseMessage && (
                   <span className="text-slate-400 font-normal normal-case tracking-normal ml-1 hidden sm:inline">
-                    · {prediction.phaseMessage}
+                    · {effectivePhaseMessage}
                   </span>
                 )}
               </div>
@@ -502,6 +521,10 @@ export default function LaunchBriefingCard({ lakeId, lakeState, hourlyForecast, 
         ) : prediction?.phase === 'building' || prediction?.phase === 'peak' ? (
           <div className="text-sm text-amber-400/80 py-2">
             {prediction.phase === 'peak' ? 'Peak thermal window active' : 'Thermal building'} — live stations override NWS hourly. Watch indicators below.
+          </div>
+        ) : (effectivePhase === 'north-flow' || effectivePhase === 'windy') ? (
+          <div className="text-sm text-sky-400/80 py-2">
+            {effectivePhase === 'north-flow' ? 'North flow session' : 'Synoptic wind active'} — not a thermal event. NWS hourly may underreport local conditions. Trust live readings.
           </div>
         ) : (
           <div className="text-sm text-slate-400 py-2">

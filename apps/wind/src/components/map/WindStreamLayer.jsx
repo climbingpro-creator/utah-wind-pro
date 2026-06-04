@@ -34,9 +34,24 @@ function buildWindGrid(stations, bounds, gridW, gridH) {
   const dLng = (lngMax - lngMin) / gridW;
   const dLat = (latMax - latMin) / gridH;
 
-  const validStations = stations.filter(
-    s => s.windSpeed != null && s.windSpeed > 0 && s.windDir != null
+  const now = Date.now();
+  const allValid = stations.filter(s => {
+    if (s.windSpeed == null || s.windSpeed < 1 || s.windDir == null) return false;
+    if (typeof s.windDir !== 'number' || isNaN(s.windDir)) return false;
+    if (s.windDir < 0 || s.windDir > 360) return false;
+    if (s.obsTime) {
+      const age = now - new Date(s.obsTime).getTime();
+      if (age > 2 * 60 * 60 * 1000) return false;
+    }
+    return true;
+  });
+
+  // Prefer real station observations; only fall back to Open-Meteo model
+  // data when fewer than 8 real stations are available.
+  const realStations = allValid.filter(s =>
+    s.source !== 'open-meteo' && !s.id?.startsWith('OM_')
   );
+  const validStations = realStations.length >= 8 ? realStations : allValid;
 
   if (validStations.length === 0) return null;
 
@@ -58,9 +73,10 @@ function buildWindGrid(stations, bounds, gridW, gridH) {
         const dlng = (cellLng - sLng) * Math.cos(cellLat * Math.PI / 180);
         let d2 = dlat * dlat + dlng * dlng;
         if (d2 < 1e-8) d2 = 1e-8;
-        const w = 1 / d2;
+        // Real stations get full weight; Open-Meteo model gets 10%
+        const isModel = s.source === 'open-meteo' || s.id?.startsWith('OM_');
+        const w = (1 / d2) * (isModel ? 0.1 : 1);
 
-        // windDir is met "from" — add 180° to get the direction wind is GOING
         const toDir = (s.windDir + 180) % 360;
         const rad = (toDir * Math.PI) / 180;
         const spd = s.windSpeed;

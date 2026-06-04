@@ -326,8 +326,8 @@ export default function TodayTimeline({ locationId = 'utah-lake', activity = 'ki
   }, [allHourly, nowHour]);
 
   const maxSpeed = useMemo(() =>
-    Math.max(25, ...todayHours.map(h => Math.max(h.speed || 0, h.nwsSpeed || 0, h.gust || 0))),
-  [todayHours]);
+    Math.max(25, liveGroundTruth || 0, ...todayHours.map(h => Math.max(h.speed || 0, h.nwsSpeed || 0, h.gust || 0))),
+  [todayHours, liveGroundTruth]);
 
   const bestWindow = useMemo(() =>
     findBestWindow(todayHours, activity),
@@ -395,7 +395,15 @@ export default function TodayTimeline({ locationId = 'utah-lake', activity = 'ki
         </div>
 
         {/* Best Window Callout */}
-        {bestWindow ? (
+        {liveGroundTruth >= 10 && !bestWindow ? (
+          <div className="flex items-center gap-2 mt-2 px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+            <Wind size={16} className="text-emerald-400 shrink-0" />
+            <span className="text-sm font-bold text-emerald-400">
+              Wind active NOW — {displaySpeed(liveGroundTruth)} {unitLabel} at your spot
+              {liveSpeed > liveGroundTruth ? ` (building to ~${displaySpeed(liveSpeed)})` : ''}
+            </span>
+          </div>
+        ) : bestWindow ? (
           <div className="flex items-center gap-2 mt-2 px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
             <Wind size={16} className="text-emerald-400 shrink-0" />
             <div className="flex-1 min-w-0">
@@ -408,7 +416,7 @@ export default function TodayTimeline({ locationId = 'utah-lake', activity = 'ki
             </div>
             <ChevronRight size={14} className="text-emerald-400/50 shrink-0" />
           </div>
-        ) : liveDecision === 'GO' || liveDecision === 'WAIT' ? (
+        ) : liveGroundTruth >= 5 || liveDecision === 'GO' || liveDecision === 'WAIT' ? (
           <div className="flex items-center gap-2 mt-2 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
             <Wind size={16} className="text-amber-400 shrink-0" />
             <span className="text-sm text-amber-300">
@@ -436,14 +444,20 @@ export default function TodayTimeline({ locationId = 'utah-lake', activity = 'ki
             const augSpeed = h.speed || 0;
             const nwsSpd = h.nwsSpeed ?? augSpeed;
             const isBoosted = h.thermalBoosted && augSpeed > nwsSpd + 1;
-            const bestSpeed = Math.max(augSpeed, nwsSpd);
+            const isNow = h.localHour === nowHour;
+
+            // For the current hour, override with live ground truth when
+            // actual conditions are stronger than the NWS forecast
+            const liveOverride = isNow && liveGroundTruth > 0 && liveGroundTruth > augSpeed;
+            const bestSpeed = liveOverride
+              ? liveGroundTruth
+              : Math.max(augSpeed, nwsSpd);
             const gustSpd = h.gust || 0;
 
             const status = getHourStatus(bestSpeed, activity);
             const colors = STATUS_COLORS[status];
             const barH = Math.max(6, (bestSpeed / maxSpeed) * 100);
             const gustBarH = gustSpd > bestSpeed ? Math.max(barH, (gustSpd / maxSpeed) * 100) : 0;
-            const isNow = h.localHour === nowHour;
             const dirDeg = h.dirDeg != null ? h.dirDeg : 0;
             const isGo = status === 'ideal' || status === 'good';
 
@@ -463,7 +477,9 @@ export default function TodayTimeline({ locationId = 'utah-lake', activity = 'ki
                 </span>
 
                 {isNow && (
-                  <span className="text-[9px] font-bold text-sky-400 bg-sky-500/20 rounded px-1 mb-0.5">NOW</span>
+                  <span className={`text-[9px] font-bold rounded px-1 mb-0.5 ${liveOverride ? 'text-emerald-400 bg-emerald-500/20' : 'text-sky-400 bg-sky-500/20'}`}>
+                    {liveOverride ? 'LIVE' : 'NOW'}
+                  </span>
                 )}
 
                 {/* Speed — large, colored by status */}
