@@ -29,6 +29,7 @@ export default function ProUpgrade() {
   const [authError, setAuthError] = useState('');
   const [authSuccess, setAuthSuccess] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
 
   const dark = theme === 'dark';
 
@@ -48,7 +49,8 @@ export default function ProUpgrade() {
     try {
       if (authMode === 'signin') {
         await signIn(email, password);
-        closePaywall();
+        setAuthSuccess('Signed in — starting checkout…');
+        await upgradeToPro();
       } else {
         await signUp(email, password);
         setAuthSuccess('Account created! Check your email to confirm, then sign in.');
@@ -90,10 +92,14 @@ export default function ProUpgrade() {
   }
 
   async function handleUpgrade() {
+    setAuthError('');
+    setCheckoutLoading(true);
     try {
       await upgradeToPro();
     } catch (err) {
       setAuthError(err.message);
+    } finally {
+      setCheckoutLoading(false);
     }
   }
 
@@ -337,11 +343,13 @@ export default function ProUpgrade() {
             </div>
           ) : (
             <div className="space-y-3">
+              {authError && <p className="text-xs text-red-500 text-center">{authError}</p>}
               <button
                 onClick={handleUpgrade}
-                className="w-full py-3 rounded-xl font-bold text-sm bg-gradient-to-r from-sky-500 to-cyan-500 text-white shadow-lg shadow-sky-500/25 hover:shadow-sky-500/40 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                disabled={checkoutLoading}
+                className="w-full py-3 rounded-xl font-bold text-sm bg-gradient-to-r from-sky-500 to-cyan-500 text-white shadow-lg shadow-sky-500/25 hover:shadow-sky-500/40 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
               >
-                Subscribe — $5.99/month
+                {checkoutLoading ? 'Starting checkout…' : 'Subscribe — $5.99/month'}
               </button>
               <p className={`text-center text-[11px] ${dark ? 'text-slate-500' : 'text-slate-400'}`}>
                 Cancel anytime. Instant access to all Pro features.

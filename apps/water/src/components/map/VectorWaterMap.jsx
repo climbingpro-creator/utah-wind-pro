@@ -121,24 +121,88 @@ function resolveSegmentName(geoJsonName, activeLocationId) {
   return geoJsonName;
 }
 
-function resolveLocationId(featureName) {
+function normalizeName(s) {
+  return (s || '')
+    .toLowerCase()
+    .replace(/[—–]/g, '-')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\b(reservoir|lake|river|section)\b/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function haversineMi(lat1, lng1, lat2, lng2) {
+  const toRad = (d) => (d * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a = Math.sin(dLat / 2) ** 2
+    + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return 3959 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function resolveGreenSection(query) {
+  const q = (query || '').toLowerCase();
+  if (!q.includes('green')) return null;
+  if (/\ba\s*section\b|\bsection\s*a\b|\ba\s*sect/.test(q)) return 'green-a';
+  if (/\bb\s*section\b|\bsection\s*b\b/.test(q)) return 'green-b';
+  if (/\bc\s*section\b|\bsection\s*c\b/.test(q)) return 'green-c';
+  if (q.includes('green river') || q.includes('flaming gorge')) return 'green-a';
+  return null;
+}
+
+function resolveLocationId(featureName, coords = null) {
   if (!featureName) return null;
   const lower = featureName.toLowerCase().trim();
+  const norm = normalizeName(featureName);
 
-  for (const [id, loc] of Object.entries(FISHING_LOCATIONS)) {
-    if (!loc || !loc.name) continue;
-    const locName = loc.name.toLowerCase();
-    if (locName === lower) return id;
+  const greenId = resolveGreenSection(featureName);
+  if (greenId && FISHING_LOCATIONS[greenId]) return greenId;
+
+  const exactId = LOCATION_LIST.find((l) => l.id === lower || l.name.toLowerCase() === lower);
+  if (exactId) return exactId.id;
+
+  let best = null;
+  let bestScore = 0;
+  for (const loc of LOCATION_LIST) {
+    const locNorm = normalizeName(loc.name);
+    if (!locNorm) continue;
+    if (norm === locNorm || loc.name.toLowerCase() === lower) {
+      return loc.id;
+    }
+    if (norm.includes(locNorm) || locNorm.includes(norm)) {
+      const score = Math.min(norm.length, locNorm.length);
+      if (score > bestScore) {
+        bestScore = score;
+        best = loc.id;
+      }
+    }
   }
+  if (best && bestScore >= 6) return best;
 
   for (const [id, loc] of Object.entries(FISHING_LOCATIONS)) {
-    if (!loc || !loc.name) continue;
-    const locName = loc.name.toLowerCase();
-    if (lower.includes(locName) || locName.includes(lower)) return id;
+    if (!loc?.name) continue;
+    if (loc.name.toLowerCase() === lower) return id;
   }
 
   const slugified = lower.replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
   if (FISHING_LOCATIONS[slugified]) return slugified;
+  if (LOCATION_LIST.some((l) => l.id === slugified)) return slugified;
+
+  if (coords?.lat != null && coords?.lng != null) {
+    let nearest = null;
+    let nearestMi = 18;
+    for (const loc of LOCATION_LIST) {
+      const fl = FISHING_LOCATIONS[loc.id];
+      const c = fl?.coordinates;
+      if (!c) continue;
+      const mi = haversineMi(coords.lat, coords.lng, c.lat, c.lng);
+      if (mi < nearestMi) {
+        nearestMi = mi;
+        nearest = loc.id;
+      }
+    }
+    if (nearest) return nearest;
+  }
 
   return null;
 }
@@ -922,7 +986,7 @@ export function VectorWaterMap({ currentWeatherData = {}, selectedLocation, onLo
             profile.vectorFeatureType = clickedFeatureType;
           }
 
-          const matchedId = resolveLocationId(clickedFeatureName);
+          const matchedId = resolveLocationId(clickedFeatureName, { lat: coords[0], lng: coords[1] });
           if (matchedId) {
             profile.matchedLocationId = matchedId;
             if (onLocationSelect && matchedId !== selectedLocation) {
@@ -986,7 +1050,7 @@ export function VectorWaterMap({ currentWeatherData = {}, selectedLocation, onLo
     setHasDroppedPin(true);
 
     // Sync global location state so the entire dashboard updates
-    const matchedId = resolveLocationId(result.name);
+    const matchedId = result.locationId || resolveLocationId(result.name, { lat: result.lat, lng: result.lng });
     if (matchedId && onLocationSelect) {
       onLocationSelect(matchedId);
     }
@@ -1018,6 +1082,7 @@ export function VectorWaterMap({ currentWeatherData = {}, selectedLocation, onLo
             isExpanded={searchExpanded}
             onToggle={setSearchExpanded}
             onSelect={handleSearchSelect}
+            catalog={accessMarkers}
           />
           {PMTILES_URL && !searchExpanded && (
             <div className="hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">

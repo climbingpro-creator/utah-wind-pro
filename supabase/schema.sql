@@ -743,3 +743,9 @@ CREATE INDEX IF NOT EXISTS idx_catch_log_location
 
 CREATE INDEX IF NOT EXISTS idx_catch_log_species
   ON catch_log(user_id, species);
+
+-- ── User Feedback (reply columns) ───────────────────────────────
+-- Table already exists in production. These ALTERs are safe to re-run.
+ALTER TABLE user_feedback ADD COLUMN IF NOT EXISTS admin_reply TEXT;
+ALTER TABLE user_feedback ADD COLUMN IF NOT EXISTS replied_at TIMESTAMPTZ;
+ALTER TABLE user_feedback ADD COLUMN IF NOT EXISTS replied_by TEXT;

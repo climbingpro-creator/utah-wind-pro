@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@utahwind/database';
+import { FeedbackReplyPanel } from '@utahwind/ui';
 import {
   Shield, ArrowLeft, CheckCircle, Clock, AlertTriangle, Bug, Lightbulb,
   MessageSquare, ExternalLink, RefreshCw, Trash2, BarChart3, CreditCard,
@@ -325,6 +326,10 @@ export default function AdminDashboard() {
     if (!supabase || !confirm('Delete this feedback permanently?')) return;
     const { error } = await supabase.from('user_feedback').delete().eq('id', id);
     if (!error) setFeedback((prev) => prev.filter((f) => f.id !== id));
+  }
+
+  function applyReply(id, patch) {
+    setFeedback((prev) => prev.map((f) => (f.id === id ? { ...f, ...patch } : f)));
   }
 
   if (checking) {
@@ -873,6 +878,13 @@ export default function AdminDashboard() {
                             </button>
                           </div>
                         </div>
+                        <FeedbackReplyPanel
+                          item={item}
+                          getAuthHeader={getAuthHeader}
+                          replyUrl={`${ADMIN_API}/reply-feedback`}
+                          app="water"
+                          onUpdated={applyReply}
+                        />
                       </div>
                     );
                   })}

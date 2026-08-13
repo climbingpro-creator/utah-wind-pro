@@ -35,6 +35,12 @@ const FORECAST_POINTS = {
   'vernal': { lat: 40.45, lng: -109.52 },
   'panguitch': { lat: 37.82, lng: -112.44 },
   'sulfur-creek': { lat: 41.095, lng: -110.955 },
+  'green-a': { lat: 40.914, lng: -109.422 },
+  'green-b': { lat: 40.905, lng: -109.395 },
+  'green-c': { lat: 40.825, lng: -109.025 },
+  'provo-lower': { lat: 40.334, lng: -111.611 },
+  'provo-middle': { lat: 40.513, lng: -111.464 },
+  'provo-upper': { lat: 40.567, lng: -111.358 },
 };
 
 const LOCATION_TO_FORECAST_KEY = {
@@ -52,6 +58,8 @@ const LOCATION_TO_FORECAST_KEY = {
   'otter-creek': 'panguitch', 'fish-lake': 'panguitch', 'minersville': 'panguitch',
   'piute': 'panguitch', 'panguitch': 'panguitch',
   'quail-creek': 'sand-hollow', 'lake-powell': 'sand-hollow',
+  'green-river': 'green-a', 'flaming-gorge': 'flaming-gorge',
+  'lower-provo': 'provo-lower', 'middle-provo': 'provo-middle', 'provo-river': 'provo-lower',
 };
 
 function resolveForecastKey(locationId) {

@@ -12,17 +12,20 @@
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const EMAIL_FROM = process.env.EMAIL_FROM || 'NotWindy <onboarding@resend.dev>';
 
-async function sendEmail({ to, subject, html }) {
+async function sendEmail({ to, subject, html, replyTo }) {
   if (!RESEND_API_KEY || !to) return { success: false, error: 'not configured' };
 
   try {
+    const payload = { from: EMAIL_FROM, to: [to], subject, html };
+    if (replyTo) payload.reply_to = replyTo;
+
     const resp = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
-      body: JSON.stringify({ from: EMAIL_FROM, to: [to], subject, html }),
+      body: JSON.stringify(payload),
     });
 
     if (!resp.ok) {
@@ -337,4 +340,56 @@ export function buildHatchAlertEmail(locationName, hatch, extra = {}) {
   return { subject, html };
 }
 
-export { sendEmail };
+function escapeHtml(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function nl2br(str) {
+  return escapeHtml(str).replace(/\n/g, '<br>');
+}
+
+/**
+ * Admin reply to a user_feedback submission.
+ * app: 'water' (NotWindy) | 'wind' (LiftForecast)
+ */
+function buildFeedbackReplyEmail({ app = 'water', originalMessage, replyBody }) {
+  const isWater = app !== 'wind';
+  const brand = isWater ? 'NotWindy' : 'LiftForecast';
+  const site = isWater ? 'https://notwindy.com' : 'https://liftforecast.com';
+  const accent = isWater ? '#22d3ee' : '#38bdf8';
+
+  const html = `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width"></head>
+<body style="margin:0;padding:0;background:${COLORS.bg};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <div style="max-width:560px;margin:0 auto;padding:32px 20px;">
+    <div style="text-align:center;margin-bottom:24px;">
+      <span style="font-size:24px;font-weight:800;color:${accent};">${brand}</span>
+      <span style="font-size:11px;color:${COLORS.dim};display:block;margin-top:2px;">Response to your feedback</span>
+    </div>
+    <div style="background:${COLORS.cardBg};border-radius:12px;padding:20px;border:1px solid ${COLORS.cardBorder};">
+      <p style="color:${COLORS.text};font-size:15px;line-height:1.6;margin:0 0 16px;">${nl2br(replyBody)}</p>
+      <div style="margin-top:20px;padding-top:16px;border-top:1px solid ${COLORS.divider};">
+        <div style="font-size:10px;font-weight:700;letter-spacing:0.08em;color:${COLORS.dim};margin-bottom:8px;">YOUR ORIGINAL MESSAGE</div>
+        <p style="color:${COLORS.muted};font-size:13px;line-height:1.5;margin:0;font-style:italic;">${nl2br(originalMessage)}</p>
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:32px;padding-top:16px;border-top:1px solid ${COLORS.divider};">
+      <a href="${site}" style="color:${accent};text-decoration:none;font-size:12px;">Open ${brand}</a>
+      <p style="color:${COLORS.dim};font-size:11px;margin:12px 0 0;">You can reply directly to this email.</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+  return {
+    subject: `Re: your ${brand} feedback`,
+    html,
+  };
+}
+
+export { sendEmail, buildFeedbackReplyEmail };

@@ -2,7 +2,7 @@
   "_meta": {
     "source": "Utah Division of Wildlife Resources — Fishing Guidebook 2025–2026",
     "url": "https://wildlife.utah.gov/fishing",
-    "lastUpdated": "2026-04-10",
+    "lastUpdated": "2026-08-13",
     "notes": "Only waters with SPECIAL regulations are listed here. Any water NOT in this file follows General Statewide rules (4 trout, any species, no size restrictions, all methods). Seasonal closures and emergency orders may override these — always check wildlife.utah.gov."
   },
 
@@ -177,11 +177,13 @@
       "aliases": ["willard-bay"],
       "region": "Box Elder",
       "rules": [
-        { "type": "limit", "text": "Wiper: 6 fish" },
-        { "type": "limit", "text": "Walleye: 6 fish" },
-        { "type": "limit", "text": "Channel catfish: 12 fish" },
-        { "type": "info", "text": "Gizzard shad: Unlawful to possess alive (forage species)" }
-      ]
+        { "type": "limit", "text": "Walleye: 6 fish, only 1 over 24\"" },
+        { "type": "limit", "text": "Wiper: 3 fish (statewide limit)" },
+        { "type": "limit", "text": "Crappie: 10 fish" },
+        { "type": "limit", "text": "Yellow perch: 15 fish" },
+        { "type": "info", "text": "Gizzard shad: possession dead or alive is unlawful, except commercially sold preserved shad" }
+      ],
+      "special": "SHAD BAN — Do not possess gizzard shad (dead or alive) unless they are commercially sold and preserved. Walleye: 6 fish, only 1 over 24 inches."
     },
 
     "fish-lake": {

@@ -126,7 +126,39 @@ const TYPE_LABELS = {
   water: 'Water',
 };
 
-export default function WaterSearch({ onSelect, isExpanded = false, onToggle }) {
+function scoreCatalogMatch(query, loc) {
+  const q = query.toLowerCase().trim();
+  const name = (loc.name || '').toLowerCase();
+  const id = (loc.id || '').replace(/-/g, ' ');
+  if (!q) return 0;
+  if (name === q || id === q) return 100;
+  if (name.startsWith(q) || id.startsWith(q)) return 80;
+  if (name.includes(q) || id.includes(q)) return 60;
+  const tokens = q.split(/\s+/).filter(Boolean);
+  if (tokens.length && tokens.every((t) => name.includes(t) || id.includes(t))) return 50;
+  return 0;
+}
+
+function searchCatalog(query, catalog) {
+  if (!query || query.length < 2 || !catalog?.length) return [];
+  return catalog
+    .map((loc) => ({ loc, score: scoreCatalogMatch(query, loc) }))
+    .filter((r) => r.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 6)
+    .map(({ loc }) => ({
+      id: `local-${loc.id}`,
+      locationId: loc.id,
+      name: loc.name,
+      fullName: 'Utah water — NotWindy catalog',
+      type: loc.type || 'water',
+      lat: loc.lat,
+      lng: loc.lng,
+      boundingBox: null,
+    }));
+}
+
+export default function WaterSearch({ onSelect, isExpanded = false, onToggle, catalog = [] }) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -144,10 +176,21 @@ export default function WaterSearch({ onSelect, isExpanded = false, onToggle }) 
     }
     
     setIsSearching(true);
+    const local = searchCatalog(debouncedQuery, catalog);
+    setResults(local);
     searchWaterBodies(debouncedQuery)
-      .then(setResults)
+      .then((remote) => {
+        const seen = new Set(local.map((r) => r.locationId));
+        const merged = [...local];
+        for (const r of remote) {
+          const key = (r.name || '').toLowerCase();
+          if ([...seen].some((id) => id && key.includes(id.replace(/-/g, ' ')))) continue;
+          merged.push(r);
+        }
+        setResults(merged.slice(0, 8));
+      })
       .finally(() => setIsSearching(false));
-  }, [debouncedQuery]);
+  }, [debouncedQuery, catalog]);
   
   // Focus input when expanded
   useEffect(() => {
@@ -175,6 +218,7 @@ export default function WaterSearch({ onSelect, isExpanded = false, onToggle }) 
       name: result.name,
       type: result.type,
       boundingBox: result.boundingBox,
+      locationId: result.locationId || null,
     });
     setQuery('');
     setResults([]);
@@ -261,9 +305,13 @@ export default function WaterSearch({ onSelect, isExpanded = false, onToggle }) 
                         <span className="text-[10px] font-semibold text-cyan-400 uppercase">
                           {TYPE_LABELS[result.type]}
                         </span>
-                        <span className="text-[10px] text-slate-500 truncate">
-                          {result.fullName?.split(',').slice(1, 3).join(',').trim()}
-                        </span>
+                        {result.locationId ? (
+                          <span className="text-[10px] font-semibold text-emerald-400 uppercase">Full briefing</span>
+                        ) : (
+                          <span className="text-[10px] text-slate-500 truncate">
+                            {result.fullName?.split(',').slice(1, 3).join(',').trim()}
+                          </span>
+                        )}
                       </div>
                     </div>
                     <MapPin className="w-3.5 h-3.5 text-slate-500 shrink-0 mt-1" />

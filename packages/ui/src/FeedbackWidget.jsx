@@ -112,7 +112,7 @@ export function FeedbackWidget({ supabase, userEmail }) {
 
               {/* Email */}
               <div>
-                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">Email (optional)</label>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">Email (needed if you want a reply)</label>
                 <input
                   type="email"
                   value={email}

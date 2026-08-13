@@ -581,7 +581,7 @@ export const FISHING_LOCATIONS = {
       { name: 'South Marina', description: 'Walleye and crappie', species: ['Walleye', 'Black Crappie'], coordinates: { lat: 41.355, lng: -112.085 } },
       { name: 'East Dike Rip-rap', description: 'Smallmouth on rock structure', species: ['Smallmouth Bass', 'Walleye'], coordinates: { lat: 41.370, lng: -112.060 } },
     ],
-    regulations: 'Gizzard shad: unlawful to possess (forage species)',
+    regulations: 'Walleye: 6 fish, only 1 over 24". Wiper: 3. Crappie: 10. Yellow perch: 15. Gizzard shad: unlawful to possess (dead or alive) except commercially preserved.',
     tips: 'Wiper surface feeding on shad schools is explosive action. Watch for bird activity. Smallmouth hold tight to rip-rap and dike structure — drag crawfish imitations along the rocks.',
   },
   'starvation': {

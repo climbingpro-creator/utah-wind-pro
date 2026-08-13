@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@utahwind/database';
+import { FeedbackReplyPanel } from '@utahwind/ui';
 import {
   weatherService, LAKE_CONFIGS, getAllStationIds, learningSystem,
   crossValidationEngine, CROSS_VALIDATION_PAIRS, normalizeWuObservation,
@@ -506,6 +507,10 @@ export default function AdminDashboard() {
     if (!supabase || !confirm('Delete this feedback permanently?')) return;
     const { error } = await supabase.from('user_feedback').delete().eq('id', id);
     if (!error) setFeedback((prev) => prev.filter((f) => f.id !== id));
+  }
+
+  function applyReply(id, patch) {
+    setFeedback((prev) => prev.map((f) => (f.id === id ? { ...f, ...patch } : f)));
   }
 
   if (checking) {
@@ -1597,6 +1602,13 @@ export default function AdminDashboard() {
                             </button>
                           </div>
                         </div>
+                        <FeedbackReplyPanel
+                          item={item}
+                          getAuthHeader={getAuthHeader}
+                          replyUrl={`${import.meta.env.VITE_API_ORIGIN || ''}/api/admin/reply-feedback`}
+                          app="wind"
+                          onUpdated={applyReply}
+                        />
                       </div>
                     );
                   })}

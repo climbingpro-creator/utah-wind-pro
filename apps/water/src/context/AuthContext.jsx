@@ -120,14 +120,20 @@ export function AuthProvider({ children }) {
   }
 
   async function upgradeToPro() {
-    if (!session) {
+    if (!supabase) {
+      setShowPaywall(true);
+      return;
+    }
+    const { data: sess } = await supabase.auth.getSession();
+    const token = sess?.session?.access_token;
+    if (!token) {
       setShowPaywall(true);
       return;
     }
     const resp = await fetch(`${API_ORIGIN}/api/subscribe`, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${session.access_token}`,
+        Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ app: 'water' }),
