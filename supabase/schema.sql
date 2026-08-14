@@ -749,3 +749,4 @@ CREATE INDEX IF NOT EXISTS idx_catch_log_species
 ALTER TABLE user_feedback ADD COLUMN IF NOT EXISTS admin_reply TEXT;
 ALTER TABLE user_feedback ADD COLUMN IF NOT EXISTS replied_at TIMESTAMPTZ;
 ALTER TABLE user_feedback ADD COLUMN IF NOT EXISTS replied_by TEXT;
+ALTER TABLE user_feedback ADD COLUMN IF NOT EXISTS email_sent BOOLEAN;

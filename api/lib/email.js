@@ -9,11 +9,16 @@
  * Env: RESEND_API_KEY, EMAIL_FROM (defaults to alerts@notwindy.com)
  */
 
-async function sendEmail({ to, subject, html, replyTo }) {
-  const apiKey = process.env.RESEND_API_KEY || process.env.RESEND_KEY;
+function emailConfig() {
+  const apiKey = process.env.RESEND_API_KEY || process.env.RESEND_KEY || '';
   const from = process.env.EMAIL_FROM || 'NotWindy <onboarding@resend.dev>';
-  if (!apiKey) return { success: false, error: 'RESEND_API_KEY is not set on the server' };
-  if (!to) return { success: false, error: 'No recipient email' };
+  return { apiKey, from, hasKey: apiKey.length > 0 };
+}
+
+async function sendEmail({ to, subject, html, replyTo }) {
+  const { apiKey, from, hasKey } = emailConfig();
+  if (!hasKey) return { success: false, error: 'RESEND_API_KEY is not set on the server', from };
+  if (!to) return { success: false, error: 'No recipient email', from };
 
   try {
     const payload = { from, to: [to], subject, html };
@@ -28,16 +33,17 @@ async function sendEmail({ to, subject, html, replyTo }) {
       body: JSON.stringify(payload),
     });
 
+    const body = await resp.json().catch(() => ({}));
     if (!resp.ok) {
-      const err = await resp.json().catch(() => ({}));
-      console.error('[email] Resend error:', err);
-      return { success: false, error: err.message || resp.statusText };
+      const detail = body.message || body.name || resp.statusText;
+      console.error('[email] Resend error:', body);
+      return { success: false, error: detail, from, status: resp.status };
     }
 
-    return { success: true };
+    return { success: true, from, id: body.id || null };
   } catch (err) {
     console.error('[email] Send failed:', err);
-    return { success: false, error: err.message };
+    return { success: false, error: err.message, from };
   }
 }
 
@@ -392,4 +398,4 @@ function buildFeedbackReplyEmail({ app = 'water', originalMessage, replyBody }) 
   };
 }
 
-export { sendEmail, buildFeedbackReplyEmail };
+export { sendEmail, buildFeedbackReplyEmail, emailConfig };

@@ -7,16 +7,25 @@
  * Body: { id, message, app: 'water'|'wind', markResolved?: boolean }
  */
 import { verifyAuth, getSupabase } from '../lib/supabase.js';
-import { sendEmail, buildFeedbackReplyEmail } from '../lib/email.js';
+import { sendEmail, buildFeedbackReplyEmail, emailConfig } from '../lib/email.js';
 
 const ALLOWED_ADMINS = ['tyler@aspenearth.com', 'climbingpro@gmail.com'];
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
   res.setHeader('Content-Type', 'application/json');
   if (req.method === 'OPTIONS') return res.status(204).end();
+  if (req.method === 'GET') {
+    const auth = await verifyAuth(req);
+    if (auth.error) return res.status(auth.status || 401).json({ error: auth.error });
+    if (!ALLOWED_ADMINS.includes(auth.user.email?.toLowerCase())) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+    const { hasKey, from } = emailConfig();
+    return res.status(200).json({ ok: true, hasResendKey: hasKey, emailFrom: from });
+  }
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
 
   const auth = await verifyAuth(req);
@@ -48,6 +57,8 @@ export default async function handler(req, res) {
   const to = (item.user_email || '').trim();
   let emailed = false;
   let emailError = null;
+  let emailFrom = emailConfig().from;
+  let resendId = null;
 
   if (to) {
     const payload = buildFeedbackReplyEmail({
@@ -62,6 +73,8 @@ export default async function handler(req, res) {
       replyTo: auth.user.email,
     });
     emailed = !!result.success;
+    emailFrom = result.from || emailFrom;
+    resendId = result.id || null;
     if (!result.success) emailError = result.error || 'Email send failed';
   }
 
@@ -70,6 +83,7 @@ export default async function handler(req, res) {
     admin_reply: message,
     replied_at: now,
     replied_by: auth.user.email,
+    email_sent: emailed,
   };
   if (markResolved && (emailed || !to)) patch.status = 'resolved';
   else if (item.status === 'new') patch.status = 'reviewed';
@@ -83,30 +97,23 @@ export default async function handler(req, res) {
     console.warn('[reply-feedback] column update failed (run schema migration):', updateErr.message);
   }
 
-  if (to && !emailed) {
-    return res.status(200).json({
-      ok: true,
-      emailed: false,
-      needsMailto: true,
-      error: emailError || 'Email send failed',
-      saved: !updateErr,
-      to,
-      status: patch.status || item.status,
-      admin_reply: message,
-      replied_at: now,
-      replied_by: auth.user.email,
-    });
-  }
-
-  return res.status(200).json({
+  const payloadOut = {
     ok: true,
     emailed,
-    to: to || null,
+    needsMailto: !!(to && !emailed),
+    error: emailError,
+    from: emailFrom,
+    hasResendKey: emailConfig().hasKey,
+    resendId,
     saved: !updateErr,
+    to: to || null,
     status: patch.status || item.status,
     admin_reply: message,
     replied_at: now,
     replied_by: auth.user.email,
+    email_sent: emailed,
     anonymous: !to,
-  });
+  };
+
+  return res.status(200).json(payloadOut);
 }

@@ -13,7 +13,7 @@ function mailtoHref(email, app, original, reply) {
 
 function friendlyError(raw) {
   const text = String(raw || '');
-  if (!text || text.startsWith('mailto:') || text.length > 180) {
+  if (!text || text.startsWith('mailto:')) {
     return 'Could not send via Resend. Use Open mail app, or try Send Reply again.';
   }
   return text;
@@ -44,32 +44,26 @@ export function FeedbackReplyPanel({ item, getAuthHeader, replyUrl, app = 'water
         body: JSON.stringify({ id: item.id, message, app, markResolved: true }),
       });
       const data = await resp.json().catch(() => ({}));
+      onUpdated?.(item.id, {
+        admin_reply: message,
+        replied_at: data.replied_at,
+        replied_by: data.replied_by,
+        status: data.status,
+        email_sent: !!data.emailed,
+      });
       if (!resp.ok) {
         setResult({ ok: false, error: friendlyError(data.error || `HTTP ${resp.status}`) });
-      } else if (data.needsMailto) {
-        onUpdated?.(item.id, {
-          admin_reply: message,
-          replied_at: data.replied_at,
-          replied_by: data.replied_by,
-          status: data.status,
-        });
+      } else if (data.emailed) {
+        setResult({ ok: true, emailed: true });
+        setOpen(false);
+      } else {
+        const why = data.error || 'Resend did not accept the message';
+        const from = data.from ? ` From: ${data.from}.` : '';
+        const key = data.hasResendKey === false ? ' API key missing on this server.' : '';
         setResult({
           ok: false,
-          error: 'Reply saved, but Resend did not send. Click Open mail app.',
+          error: `Saved on the ticket, but not emailed. ${why}.${from}${key}`,
         });
-      } else {
-        setResult({
-          ok: true,
-          emailed: data.emailed,
-          anonymous: data.anonymous,
-        });
-        onUpdated?.(item.id, {
-          admin_reply: message,
-          replied_at: data.replied_at,
-          replied_by: data.replied_by,
-          status: data.status,
-        });
-        setOpen(false);
       }
     } catch (err) {
       setResult({ ok: false, error: friendlyError(err.message) });
@@ -81,8 +75,9 @@ export function FeedbackReplyPanel({ item, getAuthHeader, replyUrl, app = 'water
     <div className="mt-3 pt-3 border-t border-white/[0.06]">
       {alreadyReplied && !open && (
         <div className="mb-2 rounded-lg bg-emerald-500/8 border border-emerald-500/15 px-3 py-2">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-400/80 mb-1">
-            Sent {item.replied_at ? new Date(item.replied_at).toLocaleString() : ''}
+          <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${item.email_sent ? 'text-emerald-400/80' : 'text-amber-400/80'}`}>
+            {item.email_sent ? 'Emailed' : 'Saved on ticket — not emailed'}
+            {item.replied_at ? ` · ${new Date(item.replied_at).toLocaleString()}` : ''}
             {item.replied_by ? ` · ${item.replied_by}` : ''}
           </p>
           <p className="text-xs text-slate-300 whitespace-pre-wrap">{item.admin_reply}</p>
@@ -154,7 +149,7 @@ export function FeedbackReplyPanel({ item, getAuthHeader, replyUrl, app = 'water
       {result && (
         <p className={`text-[11px] mt-2 break-words ${result.ok ? 'text-emerald-400' : 'text-red-400'}`}>
           {result.ok
-            ? (result.anonymous ? 'Note saved.' : result.emailed ? 'Reply emailed.' : 'Saved.')
+            ? (result.emailed ? 'Emailed via Resend.' : 'Saved on ticket.')
             : friendlyError(result.error)}
         </p>
       )}
