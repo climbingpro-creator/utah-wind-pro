@@ -4,10 +4,19 @@ import { Send, Mail, Loader, MessageSquare } from 'lucide-react';
 function mailtoHref(email, app, original, reply) {
   const brand = app === 'wind' ? 'LiftForecast' : 'NotWindy';
   const subject = encodeURIComponent(`Re: your ${brand} feedback`);
-  const body = encodeURIComponent(
-    `${reply}\n\n---\nYour original message:\n${original || ''}`
-  );
+  const clipped = [reply, original ? `\n\n---\nYour original message:\n${original}` : '']
+    .join('')
+    .slice(0, 800);
+  const body = encodeURIComponent(clipped);
   return `mailto:${email}?subject=${subject}&body=${body}`;
+}
+
+function friendlyError(raw) {
+  const text = String(raw || '');
+  if (!text || text.startsWith('mailto:') || text.length > 180) {
+    return 'Could not send via Resend. Use Open mail app, or try Send Reply again.';
+  }
+  return text;
 }
 
 export function FeedbackReplyPanel({ item, getAuthHeader, replyUrl, app = 'water', onUpdated }) {
@@ -18,6 +27,9 @@ export function FeedbackReplyPanel({ item, getAuthHeader, replyUrl, app = 'water
 
   const hasEmail = !!(item.user_email && item.user_email.trim());
   const alreadyReplied = !!item.admin_reply;
+  const mailHref = hasEmail
+    ? mailtoHref(item.user_email, app, item.message, draft)
+    : null;
 
   async function sendReply() {
     const message = draft.trim();
@@ -33,17 +45,18 @@ export function FeedbackReplyPanel({ item, getAuthHeader, replyUrl, app = 'water
       });
       const data = await resp.json().catch(() => ({}));
       if (!resp.ok) {
-        setResult({ ok: false, error: data.error || `HTTP ${resp.status}` });
-        if (hasEmail) window.open(mailtoHref(item.user_email, app, item.message, message), '_blank');
-      } else if (data.needsMailto && hasEmail) {
+        setResult({ ok: false, error: friendlyError(data.error || `HTTP ${resp.status}`) });
+      } else if (data.needsMailto) {
         onUpdated?.(item.id, {
           admin_reply: message,
           replied_at: data.replied_at,
           replied_by: data.replied_by,
           status: data.status,
         });
-        setResult({ ok: false, error: 'Opened your mail app — Resend is not configured on the server yet.' });
-        window.open(mailtoHref(item.user_email, app, item.message, message), '_blank');
+        setResult({
+          ok: false,
+          error: 'Reply saved, but Resend did not send. Click Open mail app.',
+        });
       } else {
         setResult({
           ok: true,
@@ -59,7 +72,7 @@ export function FeedbackReplyPanel({ item, getAuthHeader, replyUrl, app = 'water
         setOpen(false);
       }
     } catch (err) {
-      setResult({ ok: false, error: err.message });
+      setResult({ ok: false, error: friendlyError(err.message) });
     }
     setSending(false);
   }
@@ -79,15 +92,16 @@ export function FeedbackReplyPanel({ item, getAuthHeader, replyUrl, app = 'water
       {!open ? (
         <div className="flex items-center gap-2 flex-wrap">
           <button
+            type="button"
             onClick={() => setOpen(true)}
             className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-sky-500/10 text-sky-400 hover:bg-sky-500/20 transition-colors inline-flex items-center gap-1.5"
           >
             {hasEmail ? <Mail className="w-3 h-3" /> : <MessageSquare className="w-3 h-3" />}
             {alreadyReplied ? 'Edit / Resend' : hasEmail ? 'Reply' : 'Add Note'}
           </button>
-          {hasEmail && (
+          {mailHref && (
             <a
-              href={mailtoHref(item.user_email, app, item.message, draft)}
+              href={mailHref}
               className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-white/[0.04] text-slate-400 hover:text-white hover:bg-white/[0.08] transition-colors"
             >
               Open mail app
@@ -110,6 +124,7 @@ export function FeedbackReplyPanel({ item, getAuthHeader, replyUrl, app = 'water
           />
           <div className="flex items-center gap-2 flex-wrap">
             <button
+              type="button"
               onClick={sendReply}
               disabled={sending || !draft.trim()}
               className="text-[11px] font-semibold px-3 py-1.5 rounded-lg bg-sky-500 text-white hover:bg-sky-400 transition-colors inline-flex items-center gap-1.5 disabled:opacity-40"
@@ -117,15 +132,16 @@ export function FeedbackReplyPanel({ item, getAuthHeader, replyUrl, app = 'water
               {sending ? <Loader className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
               {sending ? 'Sending…' : hasEmail ? 'Send Reply' : 'Save Note'}
             </button>
-            {hasEmail && (
+            {mailHref && (
               <a
-                href={mailtoHref(item.user_email, app, item.message, draft)}
+                href={mailHref}
                 className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-white/[0.04] text-slate-400 hover:text-white"
               >
                 Open mail app
               </a>
             )}
             <button
+              type="button"
               onClick={() => { setOpen(false); setResult(null); }}
               className="text-[11px] text-slate-500 hover:text-slate-300 px-2 py-1"
             >
@@ -136,10 +152,10 @@ export function FeedbackReplyPanel({ item, getAuthHeader, replyUrl, app = 'water
       )}
 
       {result && (
-        <p className={`text-[11px] mt-2 ${result.ok ? 'text-emerald-400' : 'text-red-400'}`}>
+        <p className={`text-[11px] mt-2 break-words ${result.ok ? 'text-emerald-400' : 'text-red-400'}`}>
           {result.ok
             ? (result.anonymous ? 'Note saved.' : result.emailed ? 'Reply emailed.' : 'Saved.')
-            : result.error}
+            : friendlyError(result.error)}
         </p>
       )}
     </div>
