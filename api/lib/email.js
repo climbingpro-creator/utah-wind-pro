@@ -18,9 +18,11 @@ function emailEnvNames() {
 function emailConfig() {
   const apiKey = String(process.env.RESEND_API_KEY || process.env.RESEND_KEY || '').trim();
   const from = process.env.EMAIL_FROM || 'NotWindy <onboarding@resend.dev>';
+  const replyTo = process.env.EMAIL_REPLY_TO || 'climbingpro@gmail.com';
   return {
     apiKey,
     from,
+    replyTo,
     hasKey: apiKey.length > 0,
     vercelEnv: process.env.VERCEL_ENV || null,
     vercelUrl: process.env.VERCEL_URL || null,

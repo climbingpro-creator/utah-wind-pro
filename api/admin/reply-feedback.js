@@ -78,7 +78,7 @@ export default async function handler(req, res) {
       to,
       subject: payload.subject,
       html: payload.html,
-      replyTo: auth.user.email,
+      replyTo: emailConfig().replyTo,
     });
     emailed = !!result.success;
     emailFrom = result.from || emailFrom;
