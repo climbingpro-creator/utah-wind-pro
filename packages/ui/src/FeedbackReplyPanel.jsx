@@ -34,6 +34,16 @@ export function FeedbackReplyPanel({ item, getAuthHeader, replyUrl, app = 'water
       const data = await resp.json().catch(() => ({}));
       if (!resp.ok) {
         setResult({ ok: false, error: data.error || `HTTP ${resp.status}` });
+        if (hasEmail) window.open(mailtoHref(item.user_email, app, item.message, message), '_blank');
+      } else if (data.needsMailto && hasEmail) {
+        onUpdated?.(item.id, {
+          admin_reply: message,
+          replied_at: data.replied_at,
+          replied_by: data.replied_by,
+          status: data.status,
+        });
+        setResult({ ok: false, error: 'Opened your mail app — Resend is not configured on the server yet.' });
+        window.open(mailtoHref(item.user_email, app, item.message, message), '_blank');
       } else {
         setResult({
           ok: true,

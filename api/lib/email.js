@@ -9,21 +9,21 @@
  * Env: RESEND_API_KEY, EMAIL_FROM (defaults to alerts@notwindy.com)
  */
 
-const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const EMAIL_FROM = process.env.EMAIL_FROM || 'NotWindy <onboarding@resend.dev>';
-
 async function sendEmail({ to, subject, html, replyTo }) {
-  if (!RESEND_API_KEY || !to) return { success: false, error: 'not configured' };
+  const apiKey = process.env.RESEND_API_KEY || process.env.RESEND_KEY;
+  const from = process.env.EMAIL_FROM || 'NotWindy <onboarding@resend.dev>';
+  if (!apiKey) return { success: false, error: 'RESEND_API_KEY is not set on the server' };
+  if (!to) return { success: false, error: 'No recipient email' };
 
   try {
-    const payload = { from: EMAIL_FROM, to: [to], subject, html };
+    const payload = { from, to: [to], subject, html };
     if (replyTo) payload.reply_to = replyTo;
 
     const resp = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${RESEND_API_KEY}`,
+        Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify(payload),
     });

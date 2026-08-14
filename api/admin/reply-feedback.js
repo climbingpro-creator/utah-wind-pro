@@ -84,11 +84,17 @@ export default async function handler(req, res) {
   }
 
   if (to && !emailed) {
-    return res.status(502).json({
+    return res.status(200).json({
+      ok: true,
+      emailed: false,
+      needsMailto: true,
       error: emailError || 'Email send failed',
       saved: !updateErr,
-      emailed: false,
       to,
+      status: patch.status || item.status,
+      admin_reply: message,
+      replied_at: now,
+      replied_by: auth.user.email,
     });
   }
 
