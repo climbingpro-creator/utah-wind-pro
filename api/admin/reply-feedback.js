@@ -23,8 +23,16 @@ export default async function handler(req, res) {
     if (!ALLOWED_ADMINS.includes(auth.user.email?.toLowerCase())) {
       return res.status(403).json({ error: 'Admin access required' });
     }
-    const { hasKey, from } = emailConfig();
-    return res.status(200).json({ ok: true, hasResendKey: hasKey, emailFrom: from });
+    const cfg = emailConfig();
+    return res.status(200).json({
+      ok: true,
+      hasResendKey: cfg.hasKey,
+      emailFrom: cfg.from,
+      vercelEnv: cfg.vercelEnv,
+      vercelUrl: cfg.vercelUrl,
+      productionUrl: cfg.productionUrl,
+      envNames: cfg.envNames,
+    });
   }
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
 
@@ -104,6 +112,8 @@ export default async function handler(req, res) {
     error: emailError,
     from: emailFrom,
     hasResendKey: emailConfig().hasKey,
+    vercelEnv: emailConfig().vercelEnv,
+    envNames: emailConfig().envNames,
     resendId,
     saved: !updateErr,
     to: to || null,

@@ -9,15 +9,39 @@
  * Env: RESEND_API_KEY, EMAIL_FROM (defaults to alerts@notwindy.com)
  */
 
+function emailEnvNames() {
+  return Object.keys(process.env)
+    .filter((k) => /resend|email/i.test(k))
+    .sort();
+}
+
 function emailConfig() {
-  const apiKey = process.env.RESEND_API_KEY || process.env.RESEND_KEY || '';
+  const apiKey = String(process.env.RESEND_API_KEY || process.env.RESEND_KEY || '').trim();
   const from = process.env.EMAIL_FROM || 'NotWindy <onboarding@resend.dev>';
-  return { apiKey, from, hasKey: apiKey.length > 0 };
+  return {
+    apiKey,
+    from,
+    hasKey: apiKey.length > 0,
+    vercelEnv: process.env.VERCEL_ENV || null,
+    vercelUrl: process.env.VERCEL_URL || null,
+    productionUrl: process.env.VERCEL_PROJECT_PRODUCTION_URL || null,
+    envNames: emailEnvNames(),
+  };
 }
 
 async function sendEmail({ to, subject, html, replyTo }) {
   const { apiKey, from, hasKey } = emailConfig();
-  if (!hasKey) return { success: false, error: 'RESEND_API_KEY is not set on the server', from };
+  if (!hasKey) {
+    const where = [process.env.VERCEL_ENV, process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.VERCEL_URL]
+      .filter(Boolean)
+      .join(' ');
+    const names = emailEnvNames().join(', ') || 'none';
+    return {
+      success: false,
+      error: `RESEND_API_KEY is not set on ${where || 'this server'}. Env names present: ${names}. Add the key on that Vercel project for Production, then Redeploy without build cache.`,
+      from,
+    };
+  }
   if (!to) return { success: false, error: 'No recipient email', from };
 
   try {

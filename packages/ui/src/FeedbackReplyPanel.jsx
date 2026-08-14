@@ -59,10 +59,9 @@ export function FeedbackReplyPanel({ item, getAuthHeader, replyUrl, app = 'water
       } else {
         const why = data.error || 'Resend did not accept the message';
         const from = data.from ? ` From: ${data.from}.` : '';
-        const key = data.hasResendKey === false ? ' API key missing on this server.' : '';
         setResult({
           ok: false,
-          error: `Saved on the ticket, but not emailed. ${why}.${from}${key}`,
+          error: `Saved on the ticket, but not emailed. ${why}${from}`,
         });
       }
     } catch (err) {
