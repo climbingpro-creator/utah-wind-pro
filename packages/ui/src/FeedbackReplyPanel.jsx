@@ -79,7 +79,6 @@ export function FeedbackReplyPanel({ item, getAuthHeader, replyUrl, app = 'water
               ? `Emailed to ${item.user_email || 'the ticket address'}`
               : 'Saved on ticket — not emailed'}
             {item.replied_at ? ` · ${new Date(item.replied_at).toLocaleString()}` : ''}
-            {item.replied_by ? ` · sent by ${item.replied_by}` : ''}
           </p>
           <p className="text-xs text-slate-300 whitespace-pre-wrap">{item.admin_reply}</p>
         </div>
