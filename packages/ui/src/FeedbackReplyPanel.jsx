@@ -75,9 +75,11 @@ export function FeedbackReplyPanel({ item, getAuthHeader, replyUrl, app = 'water
       {alreadyReplied && !open && (
         <div className="mb-2 rounded-lg bg-emerald-500/8 border border-emerald-500/15 px-3 py-2">
           <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${item.email_sent ? 'text-emerald-400/80' : 'text-amber-400/80'}`}>
-            {item.email_sent ? 'Emailed' : 'Saved on ticket — not emailed'}
+            {item.email_sent
+              ? `Emailed to ${item.user_email || 'the ticket address'}`
+              : 'Saved on ticket — not emailed'}
             {item.replied_at ? ` · ${new Date(item.replied_at).toLocaleString()}` : ''}
-            {item.replied_by ? ` · ${item.replied_by}` : ''}
+            {item.replied_by ? ` · sent by ${item.replied_by}` : ''}
           </p>
           <p className="text-xs text-slate-300 whitespace-pre-wrap">{item.admin_reply}</p>
         </div>
