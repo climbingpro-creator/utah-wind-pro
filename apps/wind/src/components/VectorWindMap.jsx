@@ -1299,29 +1299,50 @@ export function VectorWindMap({
         {/* Legend */}
         <div className={`absolute bottom-2 left-2 bg-slate-900/90 rounded-lg px-3 py-2 text-xs text-slate-300 z-20 ${syntheticData ? 'opacity-0 pointer-events-none' : ''}`}>
           <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-1.5">
-              <div className="w-3.5 h-3.5 rounded-full bg-cyan-500 border-2 border-cyan-300 flex items-center justify-center">
-                <Wind className="w-2 h-2 text-white" />
-              </div>
-              <span>Forecast</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-sm bg-amber-400 border border-amber-300" />
-              <span>NWS</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-sm bg-purple-500 border border-purple-400" style={{ transform: 'rotate(45deg)' }} />
-              <span>Ridge</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-full bg-blue-500 border border-blue-400" />
-              <span>N Flow</span>
-            </div>
-            {showPwsField && (
-              <div className="flex items-center gap-1.5">
-                <Wind className="w-3 h-3 text-emerald-400" />
-                <span>PWS ({pwsStations.length})</span>
-              </div>
+            {lockedView ? (
+              <>
+                <div className="flex items-center gap-1.5">
+                  <Wind className="w-3 h-3 text-sky-400" />
+                  <span>Arrow, 2 mph and up</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-slate-400" />
+                  <span>Dot, under 2 mph</span>
+                </div>
+                {showPwsField && (
+                  <div className="flex items-center gap-1.5">
+                    <Wind className="w-3 h-3 text-emerald-400" />
+                    <span>Meters ({pwsStations.length})</span>
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3.5 h-3.5 rounded-full bg-cyan-500 border-2 border-cyan-300 flex items-center justify-center">
+                    <Wind className="w-2 h-2 text-white" />
+                  </div>
+                  <span>Forecast</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded-sm bg-amber-400 border border-amber-300" />
+                  <span>NWS</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded-sm bg-purple-500 border border-purple-400" style={{ transform: 'rotate(45deg)' }} />
+                  <span>Ridge</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded-full bg-blue-500 border border-blue-400" />
+                  <span>N Flow</span>
+                </div>
+                {showPwsField && (
+                  <div className="flex items-center gap-1.5">
+                    <Wind className="w-3 h-3 text-emerald-400" />
+                    <span>PWS ({pwsStations.length})</span>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -1354,7 +1375,7 @@ export function VectorWindMap({
               ? 'Scanning...'
               : showPwsField
                 ? `${pwsStations.length} meters`
-                : 'PWS Off'}
+                : (lockedView ? 'Meters off' : 'PWS Off')}
           </span>
         </button>
 
