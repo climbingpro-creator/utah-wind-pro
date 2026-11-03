@@ -5,6 +5,7 @@ export { useWeatherStore, useWeatherData } from './store/useWeatherStore.js';
 export { weatherService } from './services/WeatherService.js';
 export {
   generateWindField,
+  tremontonFluidNow,
   setWindFieldLearnedWeights,
   setCrossValidationEngine,
   STATION_NODES,

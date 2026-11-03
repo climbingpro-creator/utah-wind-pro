@@ -77,6 +77,9 @@ const STATION_NODES = {
   KFIR:  { name: 'First Divide (WYDOT)', lat: 41.2765, lng: -110.8007, elevation: 7579, type: 'lakeshore' },
   KEVW:  { name: 'Evanston Airport',    lat: 41.2750, lng: -111.0350, elevation: 7143, type: 'synoptic' },
   UT1:   { name: 'Wahsatch Hill EB',    lat: 41.1952, lng: -111.114,  elevation: 6814, type: 'gateway' },
+  KBMC:  { name: 'Brigham City Airport', lat: 41.5524, lng: -112.0622, elevation: 4229, type: 'synoptic' },
+  KOGD:  { name: 'Ogden Airport',       lat: 41.1961, lng: -112.0122, elevation: 4455, type: 'synoptic' },
+  TREMONTON: { name: 'Tremonton fields', lat: 41.7119, lng: -112.1658, elevation: 4330, type: 'valley' },
 };
 
 // Propagation edges: how wind flows from one station to another
@@ -151,6 +154,16 @@ const PROPAGATION_EDGES = [
     headingRange: [240, 310], description: 'Wahsatch → First Divide (I-80 terrain channeling)' },
   { from: 'KEVW', to: 'KFIR', delay: 20, attenuation: 0.90, channeling: 1.05,
     headingRange: [240, 320], description: 'Evanston → First Divide (local corridor)' },
+
+  // Bear River valley. South-to-southwest wind runs north from the airports
+  // toward Tremonton. A north wind at Brigham is already downstream of town,
+  // so it is not an upstream path. Cache Valley is not on this graph.
+  { from: 'KBMC', to: 'TREMONTON', delay: 40, attenuation: 0.85, channeling: 1.05,
+    headingRange: [160, 250], description: 'Brigham airport → Tremonton, Bear River valley pull north' },
+  { from: 'KOGD', to: 'KBMC', delay: 35, attenuation: 0.80, channeling: 1.0,
+    headingRange: [160, 250], description: 'Ogden → Brigham along the valley' },
+  { from: 'KOGD', to: 'TREMONTON', delay: 70, attenuation: 0.70, channeling: 1.0,
+    headingRange: [160, 250], description: 'Ogden → Tremonton, full valley run' },
 ];
 
 // Location-to-station mapping: which stations best represent each launch
@@ -173,6 +186,7 @@ const LOCATION_STATIONS = {
   'strawberry-river':   { primary: 'UTCOP', secondary: ['RVZU1', 'DSTU1'], upstreamNorth: ['KSLC', 'CCPUT'], upstreamThermal: ['UTCOP', 'RVZU1'] },
   'skyline-drive':      { primary: 'SKY',   secondary: ['UTESU', 'UTMPK'], upstreamNorth: ['KSLC', 'UTMPK'], upstreamThermal: ['SKY', 'UTESU'] },
   'sulfur-creek':       { primary: 'KFIR',  secondary: ['KEVW'], upstreamNorth: ['KSLC'], upstreamThermal: ['UT1', 'KEVW'] },
+  'tremonton':          { primary: 'TREMONTON', secondary: ['KBMC'], upstreamNorth: [], upstreamThermal: ['KBMC', 'KOGD'] },
 };
 
 // Shadow station mappings: FREE WU PWS stations that can replace paid Synoptic stations
@@ -674,5 +688,60 @@ function buildStationReadings(upstreamData, lakeState, mesoData) {
 }
 
 // ─── EXPORTS FOR CASCADE VISUALIZATION ────────────────────────────
+
+/**
+ * Bear River valley run for the Tremonton fields.
+ * Uses the same propagation edges as the rest of the engine.
+ * Returns Data Unavailable when no meter is blowing up the valley.
+ * Does not fill a calm or a north wind with a default speed.
+ */
+export function tremontonFluidNow(readings) {
+  const kbmc = readings?.KBMC;
+  const kogd = readings?.KOGD;
+  if (kbmc?.speed == null && kogd?.speed == null) {
+    return {
+      status: 'unavailable',
+      speed: null,
+      direction: null,
+      sources: [],
+      detail: 'Data Unavailable. No Brigham or Ogden meter to run through the valley.',
+    };
+  }
+
+  let translation = {
+    factor: 1,
+    confidence: 'edge',
+    description: 'Using the valley path as drawn. No second meter to measure how much the terrain knocks the wind down.',
+  };
+  if (kbmc?.speed != null && kogd?.speed != null && kogd.speed >= 3) {
+    translation = calculateTranslationFactor(
+      { speed: kbmc.speed, direction: kbmc.direction },
+      { KOGD: kogd },
+    );
+  }
+
+  const hour = new Date().getHours();
+  const result = propagateToLocation('tremonton', hour, hour, readings, translation);
+  if (!result.sources?.length || result.speed == null) {
+    return {
+      status: 'unavailable',
+      speed: null,
+      direction: null,
+      sources: [],
+      translation,
+      detail: 'Those meters are not blowing up the Bear River valley, so the fluid path has nothing to carry. Data Unavailable.',
+    };
+  }
+
+  const from = result.sources.map(s => s.station).join(' and ');
+  return {
+    status: 'ready',
+    speed: +safeToFixed(result.speed, 1),
+    direction: result.direction,
+    sources: result.sources,
+    translation,
+    detail: `The valley path carries about ${safeToFixed(result.speed, 1)} mph from ${from} toward the Tremonton fields. This is the airport-to-town run, not the pivot.`,
+  };
+}
 
 export { STATION_NODES, PROPAGATION_EDGES, LOCATION_STATIONS, isDaylightHour, DAYLIGHT };

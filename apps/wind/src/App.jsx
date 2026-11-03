@@ -13,6 +13,7 @@ import { useModelContext } from './hooks/useModelContext';
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const Login = lazy(() => import('./pages/Login'));
 const ScienceSheet = lazy(() => import('./pages/ScienceSheet'));
+const TremontonFarmTrial = lazy(() => import('./pages/TremontonFarmTrial'));
 
 function useSWRegistration() {
   const [updateReady, setUpdateReady] = useState(false);
@@ -109,6 +110,14 @@ function AppShell() {
     return (
       <Suspense fallback={<div className="flex items-center justify-center min-h-screen text-white/50">Loading...</div>}>
         <Login />
+      </Suspense>
+    );
+  }
+
+  if (hash === '#farm' || hash === '#tremonton') {
+    return (
+      <Suspense fallback={<div className="flex items-center justify-center min-h-screen text-white/50">Loading the Tremonton fields...</div>}>
+        <TremontonFarmTrial />
       </Suspense>
     );
   }

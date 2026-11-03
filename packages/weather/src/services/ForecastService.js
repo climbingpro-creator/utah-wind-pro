@@ -27,6 +27,7 @@ const FORECAST_POINTS = {
   'utah-lake': { lat: 40.30, lng: -111.88 },
   'deer-creek': { lat: 40.48, lng: -111.50 },
   'willard-bay': { lat: 41.38, lng: -112.07 },
+  'tremonton': { lat: 41.7119, lng: -112.1658 },
   'bear-lake': { lat: 41.95, lng: -111.30 },
   'strawberry': { lat: 40.17, lng: -111.13 },
   'sand-hollow': { lat: 37.10, lng: -113.40 },

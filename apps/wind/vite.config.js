@@ -31,6 +31,15 @@ export default defineConfig({
     }),
     visualizer({ open: true, filename: 'bundle-stats.html', gzipSize: true }),
   ],
+  server: {
+    proxy: {
+      '/api': {
+        target: 'https://liftforecast.com',
+        changeOrigin: true,
+        secure: true,
+      },
+    },
+  },
   build: {
     rollupOptions: {
       output: {

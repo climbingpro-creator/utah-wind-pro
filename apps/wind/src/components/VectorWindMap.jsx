@@ -685,6 +685,9 @@ export function VectorWindMap({
   stationData = [],
   isLoading,
   onSelectLaunch,
+  lockedView = null,
+  onFieldStations,
+  flowOn = false,
 }) {
   const mapRef = useRef(null);
   const [mapArea, setMapArea] = useState(null);
@@ -697,7 +700,10 @@ export function VectorWindMap({
   const [pmtilesReady, setPmtilesReady] = useState(false);
   const [showSatellite, setShowSatellite] = useState(false);
   const [showPwsField, setShowPwsField] = useState(true);
-  const [showWindStream, setShowWindStream] = useState(false);
+  const [showWindStream, setShowWindStream] = useState(flowOn);
+  useEffect(() => {
+    if (flowOn) setShowWindStream(true);
+  }, [flowOn]);
   const [viewState, setViewState] = useState({
     longitude: -111.83,
     latitude: 40.23,
@@ -705,6 +711,7 @@ export function VectorWindMap({
   });
 
   useEffect(() => {
+    if (lockedView) return;
     if (!selectedLake && 'geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
@@ -719,7 +726,7 @@ export function VectorWindMap({
         { timeout: 5000, maximumAge: 300000 }
       );
     }
-  }, []);
+  }, [lockedView, selectedLake]);
 
   useEffect(() => {
     if (!PMTILES_URL) {
@@ -735,6 +742,23 @@ export function VectorWindMap({
   }, []);
 
   useEffect(() => {
+    if (lockedView?.latitude != null && lockedView?.longitude != null) {
+      setMapArea({
+        name: lockedView.name || 'Field',
+        center: [lockedView.longitude, lockedView.latitude],
+        zoom: lockedView.zoom ?? 11,
+        launches: [],
+        stations: [],
+      });
+      setViewState({
+        longitude: lockedView.longitude,
+        latitude: lockedView.latitude,
+        zoom: lockedView.zoom ?? 11,
+        pitch: lockedView.pitch ?? 0,
+        bearing: lockedView.bearing ?? 0,
+      });
+      return;
+    }
     // First check the hardcoded MAP_AREAS for hyper-tuned coverage areas
     let area = null;
     if (selectedLake?.startsWith('utah-lake')) {
@@ -763,7 +787,7 @@ export function VectorWindMap({
         zoom: area.zoom,
       }));
     }
-  }, [selectedLake]);
+  }, [selectedLake, lockedView]);
 
   // Toggle satellite layer visibility
   useEffect(() => {
@@ -806,6 +830,12 @@ export function VectorWindMap({
     }
     return [...pwsStations, ...extras.filter(e => e.lat != null && e.lon != null)];
   }, [pwsStations, stationData, mapArea]);
+
+  const onFieldRef = useRef(onFieldStations);
+  onFieldRef.current = onFieldStations;
+  useEffect(() => {
+    onFieldRef.current?.(allFieldStations, pwsLoading);
+  }, [allFieldStations, pwsLoading]);
 
   const liveStationsWithCoords = useMemo(() => {
     if (!mapArea) return [];

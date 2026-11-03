@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Bell, Brain, RefreshCw, Wifi, WifiOff, Trophy, LogIn, LogOut, Shield, Crown } from 'lucide-react';
+import { Bell, Brain, RefreshCw, Wifi, WifiOff, Trophy, LogIn, LogOut, Shield, Crown, Sprout } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 import { useAuth } from '../context/AuthContext';
 import { SPOT_SLUG_MAP } from '../config/spotSlugs';
@@ -79,6 +79,19 @@ export default function AppHeader({
               )}
               <span>{formatTime(lastUpdated)}</span>
             </div>
+
+            <button
+              type="button"
+              onClick={() => { window.location.hash = '#farm'; }}
+              aria-label="Tremonton farm trial"
+              className={`${btnBase} ${theme === 'dark'
+                ? 'hover:bg-emerald-500/10 text-emerald-400/80 hover:text-emerald-300'
+                : 'hover:bg-emerald-50 text-emerald-600'
+              }`}
+            >
+              <Sprout className="w-4 h-4" />
+              <span className="text-[8px] leading-none font-medium">Farm</span>
+            </button>
 
             {(() => {
               const slug = SPOT_SLUG_MAP[selectedLake];
