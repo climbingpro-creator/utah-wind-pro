@@ -233,7 +233,16 @@ export default function TremontonFarmTrial() {
           Cards use the nearest fresh Bear River Valley meter inside 25 miles. Logan stays over the Wellsvilles and out of the call.
         </p>
 
-        <VectorWindMap lockedView={LOCKED_VIEW} onFieldStations={onFieldStations} flowOn />
+        <VectorWindMap
+          lockedView={LOCKED_VIEW}
+          onFieldStations={onFieldStations}
+          flowOn
+          windData={
+            chosen && chosen.speed != null && chosen.dir != null
+              ? { speed: chosen.speed, direction: chosen.dir }
+              : null
+          }
+        />
 
         <p className={`text-sm ${dark ? 'text-slate-200' : 'text-slate-800'}`}>
           {waiting ? 'Reading the meters…' : describeMeter(chosen)}
