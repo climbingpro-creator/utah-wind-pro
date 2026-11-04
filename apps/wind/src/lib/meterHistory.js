@@ -29,11 +29,14 @@ export async function fetchMeterHistory(stationIds, hours = 48) {
         if (mph != null && (mph < 0 || mph > 100)) continue;
         const gustRaw = p.windGust?.value;
         const gust = gustRaw == null ? null : +(gustRaw * KMH_TO_MPH).toFixed(1);
+        const tempC = p.temperature?.value;
+        const tempF = tempC == null ? null : +((tempC * 9) / 5 + 32).toFixed(1);
         points.push({
           t: p.timestamp,
           mph,
           gust: gust != null && gust >= 0 && gust <= 120 ? gust : null,
           dir: p.windDirection?.value ?? null,
+          tempF: tempF != null && tempF >= -40 && tempF <= 120 ? tempF : null,
         });
       }
       return { id, points };

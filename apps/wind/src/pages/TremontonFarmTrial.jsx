@@ -24,6 +24,15 @@ import {
   uvCall,
   waterDemand,
 } from '../lib/microclimate';
+import {
+  pickSegmentArchive,
+  pickSegmentMeter,
+  plowCall,
+  roadSegment,
+  segmentHistoryNote,
+  segmentWind,
+  splitWhy,
+} from '../lib/roadCast';
 
 const LOCKED_VIEW = {
   longitude: TREMONTON.lng,
@@ -94,7 +103,7 @@ export default function TremontonFarmTrial() {
   const [hours, setHours] = useState(null);
   const [forecastState, setForecastState] = useState('loading');
   const [history, setHistory] = useState({ state: 'waiting', rows: [] });
-  const [climate, setClimate] = useState({ state: 'loading', valley: null, ridge: null });
+  const [climate, setClimate] = useState({ state: 'loading', valley: null, ridge: null, pass: null });
 
   const onFieldStations = useCallback((stations, loading) => {
     setField(prev => ({
@@ -124,10 +133,11 @@ export default function TremontonFarmTrial() {
   }, []);
 
   const meters = useMemo(() => readMeters(field.stations), [field.stations]);
-  const historyIds = useMemo(
-    () => meters.filter(m => m.source === 'nws' && m.airshed === 'Bear River Valley').slice(0, 4).map(m => m.id).join(','),
-    [meters],
-  );
+  const historyIds = useMemo(() => {
+    const valley = meters.filter(m => m.source === 'nws' && roadSegment(m) === 'valley').slice(0, 3);
+    const pass = meters.filter(m => m.source === 'nws' && roadSegment(m) === 'pass').slice(0, 1);
+    return [...valley, ...pass].map(m => m.id).join(',');
+  }, [meters]);
 
   useEffect(() => {
     if (!historyIds) return undefined;
@@ -143,7 +153,7 @@ export default function TremontonFarmTrial() {
 
   const chosen = pickFieldMeter(meters);
   const bear = meters.filter(m => m.airshed === 'Bear River Valley');
-  const cache = meters.filter(m => m.airshed === 'Cache Valley');
+  const cache = meters.filter(m => m.airshed === 'Cache Valley' && roadSegment(m) !== 'pass');
   const waiting = !field.seen || (field.loading && !chosen);
 
   const trendSeries = (history.rows || []).find(r => r.id === chosen?.id && r.points?.length)
@@ -173,7 +183,7 @@ export default function TremontonFarmTrial() {
     let cancel = false;
     fetchMicroclimate()
       .then(result => { if (!cancel) setClimate(result); })
-      .catch(() => { if (!cancel) setClimate({ state: 'unavailable', valley: null, ridge: null }); });
+      .catch(() => { if (!cancel) setClimate({ state: 'unavailable', valley: null, ridge: null, pass: null }); });
     return () => { cancel = true; };
   }, []);
 
@@ -204,6 +214,28 @@ export default function TremontonFarmTrial() {
   const water = waiting ? null : waterWindow({ meter: chosen, hours: hours || [] });
   const sprinkler = waiting ? null : sprinklerWindow(chosen);
   const spray = waiting ? null : sprayWindow({ meter: chosen, hours: hours || [] });
+  const valleyRoad = pickSegmentMeter(meters, 'valley') || (chosen && roadSegment(chosen) === 'valley' ? chosen : null);
+  const passRoad = pickSegmentMeter(meters, 'pass');
+  const valleyArchive = pickSegmentArchive(meters, 'valley');
+  const passArchive = pickSegmentArchive(meters, 'pass');
+  const roadWhy = climateSettled ? splitWhy({ valley: climate.valley, pass: climate.pass, fluid }) : null;
+  const valleyPlow = climateSettled ? plowCall({
+    place: 'Valley lanes',
+    snowIn6: climate.valley?.snowNext6 ?? null,
+    rainIn6: climate.valley?.rainNext6 ?? null,
+    tempMin6: climate.valley?.tempMinNext6 ?? null,
+    meterTemp: valleyRoad?.tempF ?? null,
+    meterName: valleyRoad?.name,
+  }) : null;
+  const passPlow = climateSettled ? plowCall({
+    place: 'Sardine Summit',
+    snowIn6: climate.pass?.snowNext6 ?? null,
+    rainIn6: climate.pass?.rainNext6 ?? null,
+    tempMin6: climate.pass?.tempMinNext6 ?? null,
+    meterTemp: passRoad?.tempF ?? null,
+    meterName: passRoad?.name,
+  }) : null;
+  const historyById = Object.fromEntries((history.rows || []).map(row => [row.id, row]));
 
   const page = dark ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900';
   const muted = dark ? 'text-slate-400' : 'text-slate-500';
@@ -254,6 +286,34 @@ export default function TremontonFarmTrial() {
           <CallCard kicker="Sprinklers" call={sprinkler} dark={dark} />
           <CallCard kicker="Spray window" call={spray} dark={dark} />
         </div>
+
+        <section className="space-y-3">
+          <div>
+            <h2 className="text-base font-semibold">Roads</h2>
+            <p className={`mt-1 text-sm leading-relaxed ${dark ? 'text-slate-200' : 'text-slate-800'}`}>
+              {roadWhy?.title || 'Reading the meters…'}
+            </p>
+            <p className={`mt-1 text-sm leading-relaxed ${muted}`}>
+              {roadWhy?.detail || 'Waiting on the valley grid and the Sardine Summit grid.'}
+            </p>
+          </div>
+          <div className="grid gap-3 md:grid-cols-3">
+            <CallCard kicker="Valley lanes" call={valleyPlow} dark={dark} />
+            <CallCard kicker="Sardine Summit" call={passPlow} dark={dark} />
+            <CallCard
+              kicker="Cache Valley"
+              call={{
+                status: 'unavailable',
+                title: 'Not used',
+                detail: 'Logan and the Cache Valley meters stay over the Wellsvilles. They are not a plow call for I-15 or for Sardine Summit.',
+              }}
+              dark={dark}
+            />
+          </div>
+          <p className={`text-sm ${muted}`}>
+            Valley wind: {segmentWind(valleyRoad)} Pass wind: {segmentWind(passRoad)} {segmentHistoryNote(valleyArchive, historyById[valleyArchive?.id])} {segmentHistoryNote(passArchive, historyById[passArchive?.id])}
+          </p>
+        </section>
 
         <div className="grid gap-3 md:grid-cols-3">
           <CallCard kicker="Rain, next 24 hours" call={rain} dark={dark} />

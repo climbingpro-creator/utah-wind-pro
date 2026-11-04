@@ -8,6 +8,8 @@
 
 export const VALLEY_GRID = { name: 'Tremonton valley floor', lat: 41.7119, lng: -112.1658 };
 export const RIDGE_GRID = { name: 'Wellsville west face', lat: 41.62, lng: -112.02 };
+// USGS GNIS Sardine Summit, Box Elder County. The US-89/91 pass, not Cache Valley.
+export const PASS_GRID = { name: 'Sardine Summit', lat: 41.5496566, lng: -111.9541115 };
 
 const M_TO_FT = 3.28084;
 const HOURS = 24;
@@ -68,22 +70,27 @@ function summarizeGrid(place, grid) {
     rainIn24: sumFirst(hourly.precipitation, HOURS),
     snowIn24: sumFirst(hourly.snowfall, HOURS),
     etIn24: sumFirst(hourly.et0_fao_evapotranspiration, HOURS),
+    rainNext6: sumFirst(hourly.precipitation, 6),
+    snowNext6: sumFirst(hourly.snowfall, 6),
+    tempMinNext6: minFirst(hourly.temperature_2m, 6),
   };
 }
 
 export async function fetchMicroclimate() {
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${VALLEY_GRID.lat},${RIDGE_GRID.lat}&longitude=${VALLEY_GRID.lng},${RIDGE_GRID.lng}&current=temperature_2m,relative_humidity_2m,uv_index&hourly=temperature_2m,relative_humidity_2m,precipitation,snowfall,uv_index,et0_fao_evapotranspiration&temperature_unit=fahrenheit&precipitation_unit=inch&timezone=America%2FDenver&forecast_days=2`;
+  const places = [VALLEY_GRID, RIDGE_GRID, PASS_GRID];
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${places.map(p => p.lat).join(',')}&longitude=${places.map(p => p.lng).join(',')}&current=temperature_2m,relative_humidity_2m,uv_index&hourly=temperature_2m,relative_humidity_2m,precipitation,snowfall,uv_index,et0_fao_evapotranspiration&temperature_unit=fahrenheit&precipitation_unit=inch&timezone=America%2FDenver&forecast_days=2`;
   const resp = await fetch(url);
   if (!resp.ok) {
-    return { state: 'unavailable', valley: null, ridge: null };
+    return { state: 'unavailable', valley: null, ridge: null, pass: null };
   }
   const body = await resp.json();
   const grids = Array.isArray(body) ? body : [body];
-  if (!grids[0]) return { state: 'unavailable', valley: null, ridge: null };
+  if (!grids[0]) return { state: 'unavailable', valley: null, ridge: null, pass: null };
   return {
     state: 'ready',
     valley: summarizeGrid(VALLEY_GRID, grids[0]),
     ridge: grids[1] ? summarizeGrid(RIDGE_GRID, grids[1]) : null,
+    pass: grids[2] ? summarizeGrid(PASS_GRID, grids[2]) : null,
   };
 }
 
