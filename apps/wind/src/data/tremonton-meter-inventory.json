@@ -1,0 +1,36 @@
+{
+  "generatedAt": "2026-11-02T18:20:00-07:00",
+  "center": { "name": "Tremonton", "lat": 41.7119, "lng": -112.1658 },
+  "radiusMiles": 25,
+  "historyAsked": { "start": "2022-11-02", "end": "2026-11-02" },
+  "sourcesRequested": ["mesowest", "weather-underground", "ambient"],
+  "pullStatus": {
+    "mesowest": "Blocked. SYNOPTIC_TOKEN is in .env (32 characters) and Synoptic answered 403: Unauthorized. Review your account access settings in the customer console. No station list and no history were returned.",
+    "weatherUnderground": "Blocked. WU_API_KEY is in .env and Weather Underground answered: API key is throttled. No nearby search and no history this run.",
+    "ambient": "Not called. AMBIENT_API_KEY and AMBIENT_APP_KEY are not in .env. Ambient's API only lists devices on the account, so there is no valley-wide search until those keys are added."
+  },
+  "savedHistory": {
+    "source": "tempest",
+    "why": "The three requested accounts could not be read tonight. Perry is the one wind meter already wired in the wind app that sits inside the 25-mile circle and answered.",
+    "stationId": 148360,
+    "name": "Perry",
+    "lat": 41.44492,
+    "lng": -112.04522,
+    "milesFromTremonton": 19.3,
+    "airshed": "Bear River Valley",
+    "firstDay": "2024-07-26",
+    "lastDay": "2026-11-02",
+    "days": 830,
+    "notFourYears": "This station's first stored day is 2024-07-26. Nothing before that was invented.",
+    "resolution": "Daily summary, not hourly. WeatherFlow did not return a device id, so the 1-minute archive could not be paged.",
+    "file": "apps/wind/src/data/tremonton-perry-daily.csv",
+    "raw": "scripts/data/tremonton/tempest-perry-148360-stats.json"
+  },
+  "metersToPullWhenKeysWork": [
+    { "source": "mesowest", "id": "KBMC", "name": "Brigham City Regional Airport", "miles": 12.3, "airshed": "Bear River Valley", "archiveBeginKnownFromIem": "2002-08-16" },
+    { "source": "weather-underground", "id": "KUTBRIGHA6", "name": "Brigham City", "lat": 41.51, "lng": -111.98, "miles": 16.9, "airshed": "Bear River Valley", "note": "Already listed in packages/weather/src/config/wuPwsNetwork.js. Not re-fetched tonight." },
+    { "source": "weather-underground", "id": "KUTWILLA3", "name": "Willard", "lat": 41.4, "lng": -112.04, "miles": 22.4, "airshed": "Bear River Valley", "note": "Already listed in wuPwsNetwork.js. Not re-fetched tonight." },
+    { "source": "tempest", "id": "148360", "name": "Perry", "miles": 19.3, "airshed": "Bear River Valley", "historySaved": true },
+    { "source": "mesowest", "id": "KLGU", "name": "Logan-Cache Airport", "miles": 17.1, "airshed": "Cache Valley", "note": "Over the Wellsvilles. Keep out of the Tremonton field sample." }
+  ]
+}
