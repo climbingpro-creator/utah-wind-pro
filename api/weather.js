@@ -35,6 +35,8 @@ import { isUdotStation, fetchUdotLatest } from './lib/udotAdapter.js';
 import { checkRateLimit } from './lib/redis.js';
 import { discoverAndFetchMulti } from './lib/nwsDiscovery.js';
 
+import { fetchUdotRoadStations } from './lib/udotRoadsFeed.js';
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -81,14 +83,29 @@ export default async function handler(req, res) {
       return await handleWuPwsDense(res, req.query);
     } else if (source === 'stations-dense') {
       return await handleStationsDense(res, req.query);
+    } else if (source === 'udot-roads') {
+      return await handleUdotRoads(res);
     } else {
-      return res.status(400).json({ error: 'Invalid source. Use: ambient, ambient-history, radial, radial-multi, synoptic, synoptic-radial, synoptic-history, wu-nearby, wu-pws, wu-pws-history, wu-pws-dense, stations-dense' });
+      return res.status(400).json({ error: 'Invalid source. Use: ambient, ambient-history, radial, radial-multi, synoptic, synoptic-radial, synoptic-history, wu-nearby, wu-pws, wu-pws-history, wu-pws-dense, stations-dense, udot-roads' });
     }
   } catch (error) {
     console.error(`[API Proxy] ${source} error:`, error.message);
     return res.status(502).json({
       error: 'Upstream API error',
       source,
+    });
+  }
+}
+
+async function handleUdotRoads(res) {
+  try {
+    const stations = await fetchUdotRoadStations(process.env.UDOT_API_KEY);
+    res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=120');
+    return res.status(200).json({ stationCount: stations.length, stations });
+  } catch (err) {
+    const status = err.code === 'NO_KEY' ? 500 : 502;
+    return res.status(status).json({
+      error: err.code === 'NO_KEY' ? 'UDOT_API_KEY not configured' : 'UDOT feed failed',
     });
   }
 }

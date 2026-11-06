@@ -16,7 +16,10 @@
  * Canvas is synchronized with MapLibre's render loop via requestAnimationFrame.
  */
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef } from 'react';
+import { flowScreenPoint, flowScreenStep } from '../../lib/flowScreen';
+import { deflectFlow, terrainStepMeters, terrainWeight } from '../../lib/terrainWind';
+import { loadViewElevation } from '../../lib/terrariumSampler';
 
 const PARTICLE_COUNT = 2500;
 const PARTICLE_LIFETIME = 80;
@@ -24,7 +27,14 @@ const TRAIL_FADE = 0.94;
 const SPEED_SCALE = 0.0012;
 const GRID_RES = 32;
 
-function buildWindGrid(stations, bounds, gridW, gridH) {
+function shiftMeters(lat, lon, eastM, northM) {
+  return {
+    lat: lat + northM / 110540,
+    lon: lon + eastM / (111320 * Math.cos((lat * Math.PI) / 180)),
+  };
+}
+
+function buildWindGrid(stations, bounds, gridW, gridH, sampleElevation, zoom = 0) {
   const grid = new Float32Array(gridW * gridH * 3); // u, v, speed per cell
 
   const lngMin = bounds.west;
@@ -54,6 +64,10 @@ function buildWindGrid(stations, bounds, gridW, gridH) {
   const validStations = realStations.length >= 8 ? realStations : allValid;
 
   if (validStations.length === 0) return null;
+
+  const midLat = (latMin + latMax) / 2;
+  const viewMeters = Math.abs(lngMax - lngMin) * 111320 * Math.cos((midLat * Math.PI) / 180);
+  const step = terrainStepMeters(zoom, viewMeters);
 
   for (let gy = 0; gy < gridH; gy++) {
     const cellLat = latMin + (gy + 0.5) * dLat;
@@ -87,8 +101,31 @@ function buildWindGrid(stations, bounds, gridW, gridH) {
       }
 
       if (wSum > 0) {
-        grid[idx] = uSum / wSum;
-        grid[idx + 1] = vSum / wSum;
+        let u = uSum / wSum;
+        let v = vSum / wSum;
+        if (typeof sampleElevation === 'function' && terrainWeight(zoom) > 0 && Math.hypot(u, v) >= 1.5) {
+          const speed = Math.hypot(u, v);
+          const eastUnit = u / speed;
+          const northUnit = -v / speed;
+          const at = (eastM, northM) => {
+            const p = shiftMeters(cellLat, cellLng, eastM, northM);
+            return sampleElevation(p.lat, p.lon);
+          };
+          const flow = deflectFlow(u, -v, {
+            here: sampleElevation(cellLat, cellLng),
+            east: at(step, 0),
+            west: at(-step, 0),
+            north: at(0, step),
+            south: at(0, -step),
+            upwind: at(-eastUnit * step * 3, -northUnit * step * 3),
+            downwind: at(eastUnit * step * 1.5, northUnit * step * 1.5),
+            stepM: step,
+          }, zoom);
+          u = flow.u;
+          v = -flow.v;
+        }
+        grid[idx] = u;
+        grid[idx + 1] = v;
         grid[idx + 2] = spdSum / wSum;
       }
     }
@@ -124,32 +161,20 @@ function sampleGrid(field, lng, lat) {
 }
 
 function speedToColor(speed) {
-  if (speed < 3) return [100, 116, 139, 0.25];
-  if (speed < 6) return [56, 189, 248, 0.4];
-  if (speed < 10) return [34, 211, 238, 0.55];
-  if (speed < 15) return [74, 222, 128, 0.65];
-  if (speed < 20) return [250, 204, 21, 0.7];
-  if (speed < 25) return [251, 146, 60, 0.8];
-  return [248, 113, 113, 0.85];
+  if (speed < 3) return [71, 85, 105, 0.62];
+  if (speed < 6) return [3, 105, 161, 0.8];
+  if (speed < 10) return [14, 116, 144, 0.86];
+  if (speed < 15) return [21, 128, 61, 0.9];
+  if (speed < 20) return [180, 83, 9, 0.92];
+  if (speed < 25) return [194, 65, 12, 0.94];
+  return [185, 28, 28, 0.96];
 }
 
-export default function WindStreamLayer({ map, stations, enabled = true }) {
+export default function WindStreamLayer({ map, stations, enabled = true, sampleElevation = null }) {
   const canvasRef = useRef(null);
   const animRef = useRef(null);
   const particlesRef = useRef(null);
   const fieldRef = useRef(null);
-
-  const initParticles = useCallback((w, h) => {
-    const particles = [];
-    for (let i = 0; i < PARTICLE_COUNT; i++) {
-      particles.push({
-        x: Math.random() * w,
-        y: Math.random() * h,
-        age: Math.floor(Math.random() * PARTICLE_LIFETIME),
-      });
-    }
-    return particles;
-  }, []);
 
   useEffect(() => {
     if (!map || !enabled || !stations?.length) {
@@ -182,6 +207,14 @@ export default function WindStreamLayer({ map, stations, enabled = true }) {
     }
     canvas.style.display = 'block';
 
+    const spawnParticle = (age) => {
+      const dpr = window.devicePixelRatio || 1;
+      const ll = map.unproject([
+        Math.random() * (canvas.width / dpr),
+        Math.random() * (canvas.height / dpr),
+      ]);
+      return { lng: ll.lng, lat: ll.lat, age };
+    };
     const resize = () => {
       const dpr = window.devicePixelRatio || 1;
       const rect = mapCanvas.getBoundingClientRect();
@@ -189,23 +222,55 @@ export default function WindStreamLayer({ map, stations, enabled = true }) {
       canvas.height = rect.height * dpr;
       canvas.style.width = rect.width + 'px';
       canvas.style.height = rect.height + 'px';
-      particlesRef.current = initParticles(canvas.width, canvas.height);
+      const particles = [];
+      for (let i = 0; i < PARTICLE_COUNT; i++) {
+        particles.push(spawnParticle(Math.floor(Math.random() * PARTICLE_LIFETIME)));
+      }
+      particlesRef.current = particles;
     };
     resize();
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    let viewToken = 0;
+    let fineSample = null;
+
     const updateField = () => {
       const bounds = map.getBounds();
+      const zoom = map.getZoom();
+      const sample = fineSample || sampleElevation;
+      const cols = terrainWeight(zoom) > 0 ? 48 : GRID_RES;
       fieldRef.current = buildWindGrid(stations, {
         west: bounds.getWest(),
         east: bounds.getEast(),
         south: bounds.getSouth(),
         north: bounds.getNorth(),
-      }, GRID_RES, GRID_RES);
+      }, cols, cols, sample, zoom);
     };
-    updateField();
+    const refreshTerrain = () => {
+      const token = ++viewToken;
+      const zoom = map.getZoom();
+      const bounds = map.getBounds();
+      if (zoom < 8) fineSample = null;
+      updateField();
+      if (zoom < 8 || typeof sampleElevation !== 'function') return;
+      loadViewElevation(
+        bounds.getWest(),
+        bounds.getSouth(),
+        bounds.getEast(),
+        bounds.getNorth(),
+        zoom,
+      ).then(sample => {
+        if (token !== viewToken) return;
+        if (typeof sample === 'function') {
+          const coarse = sampleElevation;
+          fineSample = (lat, lon) => sample(lat, lon) ?? coarse?.(lat, lon) ?? null;
+        }
+        updateField();
+      }).catch(() => {});
+    };
+    refreshTerrain();
 
     const animate = () => {
       const field = fieldRef.current;
@@ -216,12 +281,21 @@ export default function WindStreamLayer({ map, stations, enabled = true }) {
 
       const w = canvas.width;
       const h = canvas.height;
+      const dpr = window.devicePixelRatio || 1;
+      const cssW = w / dpr;
+      const cssH = h / dpr;
       const particles = particlesRef.current;
-      const bounds = map.getBounds();
-      const west = bounds.getWest();
-      const east = bounds.getEast();
-      const south = bounds.getSouth();
-      const north = bounds.getNorth();
+      const center = map.getCenter();
+      const originPx = map.project(center);
+      const eastPx = map.project([center.lng + 0.02, center.lat]);
+      const northPx = map.project([center.lng, center.lat + 0.02]);
+      const basis = {
+        ex: (eastPx.x - originPx.x) / 0.02,
+        ey: (eastPx.y - originPx.y) / 0.02,
+        nx: (northPx.x - originPx.x) / 0.02,
+        ny: (northPx.y - originPx.y) / 0.02,
+      };
+      const origin = { lng: center.lng, lat: center.lat, x: originPx.x, y: originPx.y };
 
       // Fade previous frame
       ctx.globalCompositeOperation = 'destination-in';
@@ -230,37 +304,38 @@ export default function WindStreamLayer({ map, stations, enabled = true }) {
       ctx.globalCompositeOperation = 'source-over';
 
       for (const p of particles) {
-        const lng = west + (p.x / w) * (east - west);
-        const lat = north - (p.y / h) * (north - south);
-
-        const [u, v, spd] = sampleGrid(field, lng, lat);
+        const [u, v, spd] = sampleGrid(field, p.lng, p.lat);
         if (spd < 0.5) {
           p.age = PARTICLE_LIFETIME;
         }
 
+        const here = flowScreenPoint(p.lng, p.lat, origin, basis);
+        const step = flowScreenStep(u, v, basis, cssW, cssH, SPEED_SCALE);
+        const x0 = here.x * dpr;
+        const y0 = here.y * dpr;
+        const x1 = step ? (here.x + step.dx) * dpr : x0;
+        const y1 = step ? (here.y + step.dy) * dpr : y0;
+
         const [r, g, b, a] = speedToColor(spd);
-        const lineWidth = Math.max(0.5, Math.min(spd / 8, 2.5));
-
-        const dx = u * SPEED_SCALE * w;
-        const dy = v * SPEED_SCALE * h;
-
-        const nx = p.x + dx;
-        const ny = p.y + dy;
-
+        const cssWidth = Math.max(1.15, Math.min(0.7 + spd / 22, 1.85));
         ctx.beginPath();
-        ctx.moveTo(p.x, p.y);
-        ctx.lineTo(nx, ny);
+        ctx.moveTo(x0, y0);
+        ctx.lineTo(x1, y1);
         ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${a})`;
-        ctx.lineWidth = lineWidth;
+        ctx.lineWidth = cssWidth * dpr;
         ctx.stroke();
 
-        p.x = nx;
-        p.y = ny;
+        if (step) {
+          p.lng += step.dLng;
+          p.lat += step.dLat;
+        }
         p.age++;
 
-        if (p.age >= PARTICLE_LIFETIME || p.x < 0 || p.x > w || p.y < 0 || p.y > h) {
-          p.x = Math.random() * w;
-          p.y = Math.random() * h;
+        const off = here.x < 0 || here.x > cssW || here.y < 0 || here.y > cssH;
+        if (p.age >= PARTICLE_LIFETIME || off) {
+          const next = spawnParticle(0);
+          p.lng = next.lng;
+          p.lat = next.lat;
           p.age = 0;
         }
       }
@@ -276,7 +351,7 @@ export default function WindStreamLayer({ map, stations, enabled = true }) {
       canvas.style.opacity = '0';
     };
     const onMoveEnd = () => {
-      updateField();
+      refreshTerrain();
       resize();
       canvas.style.opacity = '1';
     };
@@ -295,7 +370,7 @@ export default function WindStreamLayer({ map, stations, enabled = true }) {
         canvas.style.display = 'none';
       }
     };
-  }, [map, stations, enabled, initParticles]);
+  }, [map, stations, enabled, sampleElevation]);
 
   return null;
 }

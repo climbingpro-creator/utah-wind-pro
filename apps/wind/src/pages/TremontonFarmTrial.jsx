@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { getHourlyForecast, tremontonFluidNow } from '@utahwind/weather';
-import { VectorWindMap } from '../components/VectorWindMap';
+import RoadConditionMap from '../components/map/RoadConditionMap';
 import { useTheme } from '../context/ThemeContext';
 import {
   TREMONTON,
@@ -105,12 +105,20 @@ export default function TremontonFarmTrial() {
   const [history, setHistory] = useState({ state: 'waiting', rows: [] });
   const [climate, setClimate] = useState({ state: 'loading', valley: null, ridge: null, pass: null });
 
-  const onFieldStations = useCallback((stations, loading) => {
-    setField(prev => ({
-      stations: stations || [],
-      loading: !!loading,
-      seen: prev.seen || !!loading || (stations?.length > 0),
-    }));
+  useEffect(() => {
+    let cancel = false;
+    setField(prev => ({ ...prev, loading: true }));
+    const url = `/api/weather?source=stations-dense&lat=${TREMONTON.lat}&lon=${TREMONTON.lng}&radius=75`;
+    fetch(url)
+      .then(resp => (resp.ok ? resp.json() : Promise.reject(new Error('stations'))))
+      .then(body => {
+        if (cancel) return;
+        setField({ stations: body.observations || [], loading: false, seen: true });
+      })
+      .catch(() => {
+        if (!cancel) setField({ stations: [], loading: false, seen: true });
+      });
+    return () => { cancel = true; };
   }, []);
 
   useEffect(() => {
@@ -249,32 +257,38 @@ export default function TremontonFarmTrial() {
             <p className="text-sm font-extrabold tracking-tight text-sky-500">LiftForecast</p>
             <h1 className="text-base font-semibold">Tremonton fields</h1>
           </div>
-          <button
-            type="button"
-            onClick={() => { window.location.hash = ''; }}
-            className={`rounded-lg px-3 py-2 text-sm ${dark ? 'text-slate-300 hover:bg-white/5' : 'text-slate-600 hover:bg-slate-100'}`}
-          >
-            Wind app
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => { window.location.hash = '#roads'; }}
+              className={`rounded-lg px-3 py-2 text-sm ${dark ? 'text-slate-300 hover:bg-white/5' : 'text-slate-600 hover:bg-slate-100'}`}
+            >
+              Roads
+            </button>
+            <button
+              type="button"
+              onClick={() => { window.location.hash = ''; }}
+              className={`rounded-lg px-3 py-2 text-sm ${dark ? 'text-slate-300 hover:bg-white/5' : 'text-slate-600 hover:bg-slate-100'}`}
+            >
+              Wind app
+            </button>
+          </div>
         </div>
       </header>
 
+      <div className="relative h-[calc(100dvh-4.25rem)] min-h-[28rem]">
+        <RoadConditionMap frame={LOCKED_VIEW} />
+        <div className={`pointer-events-none absolute bottom-3 left-3 max-w-[280px] rounded-lg border px-2 py-1.5 text-[11px] leading-snug ${dark ? 'border-slate-700 bg-slate-950/90 text-slate-200' : 'border-slate-200 bg-white/95 text-slate-700'}`}>
+          <p>Green dry, amber damp, blue wet, white snow. The colored line is the road. Click it.</p>
+          <p className="mt-1">Zoom in and the flow bends around a hill. In the lee of a peak it turns back. The ground does not add speed.</p>
+        </div>
+      </div>
+
       <main className="mx-auto max-w-6xl space-y-4 px-4 py-4">
         <p className={`text-sm leading-relaxed ${muted}`}>
-          Every dot is a wind meter. Arrows are those meters at 2 mph and up. The flow is the fluid field from the same meters, draped on the terrain.
+          The map is the same road-meter flow as the Utah roads page, framed on the Tremonton fields.
           Cards use the nearest fresh Bear River Valley meter inside 25 miles. Logan stays over the Wellsvilles and out of the call.
         </p>
-
-        <VectorWindMap
-          lockedView={LOCKED_VIEW}
-          onFieldStations={onFieldStations}
-          flowOn
-          windData={
-            chosen && chosen.speed != null && chosen.dir != null
-              ? { speed: chosen.speed, direction: chosen.dir }
-              : null
-          }
-        />
 
         <p className={`text-sm ${dark ? 'text-slate-200' : 'text-slate-800'}`}>
           {waiting ? 'Reading the meters…' : describeMeter(chosen)}

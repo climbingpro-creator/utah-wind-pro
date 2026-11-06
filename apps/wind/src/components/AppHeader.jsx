@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Bell, Brain, RefreshCw, Wifi, WifiOff, Trophy, LogIn, LogOut, Shield, Crown, Sprout } from 'lucide-react';
+import { Bell, Brain, RefreshCw, Wifi, WifiOff, Trophy, LogIn, LogOut, Shield, Crown, Sprout, Route } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 import { useAuth } from '../context/AuthContext';
 import { SPOT_SLUG_MAP } from '../config/spotSlugs';
@@ -91,6 +91,19 @@ export default function AppHeader({
             >
               <Sprout className="w-4 h-4" />
               <span className="text-[8px] leading-none font-medium">Farm</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => { window.location.hash = '#roads'; }}
+              aria-label="Utah road conditions"
+              className={`${btnBase} ${theme === 'dark'
+                ? 'hover:bg-sky-500/10 text-sky-300/80 hover:text-sky-200'
+                : 'hover:bg-sky-50 text-sky-600'
+              }`}
+            >
+              <Route className="w-4 h-4" />
+              <span className="text-[8px] leading-none font-medium">Roads</span>
             </button>
 
             {(() => {

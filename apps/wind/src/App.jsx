@@ -14,6 +14,7 @@ const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const Login = lazy(() => import('./pages/Login'));
 const ScienceSheet = lazy(() => import('./pages/ScienceSheet'));
 const TremontonFarmTrial = lazy(() => import('./pages/TremontonFarmTrial'));
+const UtahRoads = lazy(() => import('./pages/UtahRoads'));
 
 function useSWRegistration() {
   const [updateReady, setUpdateReady] = useState(false);
@@ -110,6 +111,14 @@ function AppShell() {
     return (
       <Suspense fallback={<div className="flex items-center justify-center min-h-screen text-white/50">Loading...</div>}>
         <Login />
+      </Suspense>
+    );
+  }
+
+  if (hash === '#roads' || hash === '#udot') {
+    return (
+      <Suspense fallback={<div className="flex items-center justify-center min-h-screen text-white/50">Loading Utah roads...</div>}>
+        <UtahRoads />
       </Suspense>
     );
   }
