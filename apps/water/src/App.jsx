@@ -4,6 +4,7 @@ import { Fish, Ship, Waves, RefreshCw, Wifi, WifiOff, Sun, Moon, CheckCircle,
   Shield, Clock, Lightbulb, TrendingUp, TrendingDown, Minus, LogIn, LogOut, Crown, CreditCard, Sparkles, Brain, Star, Camera, Lock, Bell } from 'lucide-react';
 import { ErrorBoundary, FeedbackWidget, initAnalytics, trackPageView } from '@utahwind/ui';
 import { supabase } from '@utahwind/database';
+import { captureCampaignParams, initMetaPixel } from './lib/campaign';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { useWeatherData, getHourlyForecast, findAllSportWindows, isNativeApp } from '@utahwind/weather';
@@ -28,6 +29,7 @@ const VectorWaterMap = lazy(() => import('./components/map/VectorWaterMap'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const Login = lazy(() => import('./pages/Login'));
 const EngineTest = lazy(() => import('./pages/EngineTest'));
+const CampaignLanding = lazy(() => import('./pages/CampaignLanding'));
 const ProUpgrade = lazy(() => import('./components/ProUpgrade'));
 const LearnView = lazy(() => import('./components/LearnView'));
 const AlertSettings = lazy(() => import('./components/AlertSettings'));
@@ -215,7 +217,21 @@ function generateWaterBriefing(activity, speed, gust, pressureData, boatingPred,
 
 function AppShell() {
   const hash = useHashRoute();
+  const hashPath = (hash || '').split('?')[0];
   useNativePlatform();
+
+  useEffect(() => {
+    captureCampaignParams();
+    initMetaPixel();
+  }, []);
+
+  if (hashPath === '#go') {
+    return (
+      <Suspense fallback={<div className="flex items-center justify-center min-h-screen text-white/50">Loading…</div>}>
+        <CampaignLanding />
+      </Suspense>
+    );
+  }
 
   if (hash === '#admin') {
     return (

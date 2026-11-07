@@ -34,10 +34,20 @@ function sendBatch(rows) {
   });
 }
 
+function campaignMeta() {
+  if (typeof localStorage === 'undefined') return {};
+  try {
+    const raw = localStorage.getItem('nw_campaign_utm') || localStorage.getItem('uw_campaign_utm');
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
 export function trackEvent(eventType, metadata = {}) {
   const row = {
     event_type: eventType,
-    metadata,
+    metadata: { ...campaignMeta(), ...metadata },
     created_at: new Date().toISOString(),
   };
 

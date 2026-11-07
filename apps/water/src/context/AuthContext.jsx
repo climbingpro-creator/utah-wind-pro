@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { trackEvent } from '@utahwind/ui';
 import { supabase } from '@utahwind/database';
+import { trackMeta } from '../lib/campaign';
 
 const TRIAL_KEY = 'uwg_trial_start';
 const TRIAL_DAYS = 14;
@@ -48,6 +50,8 @@ export function AuthProvider({ children }) {
 
     const params = new URLSearchParams(window.location.search);
     if (params.get('subscription') === 'success') {
+      trackMeta('Purchase', { value: 5.99, currency: 'USD' });
+      trackEvent('purchase', { app: 'water', value: 5.99, currency: 'USD' });
       window.history.replaceState({}, '', window.location.pathname);
     }
 
@@ -117,6 +121,8 @@ export function AuthProvider({ children }) {
     const now = Date.now();
     localStorage.setItem(TRIAL_KEY, String(now));
     setTrialStart(now);
+    trackMeta('StartTrial', { value: 5.99, currency: 'USD', predicted_ltv: 5.99 });
+    trackEvent('start_trial', { app: 'water' });
   }
 
   async function upgradeToPro() {
@@ -147,6 +153,8 @@ export function AuthProvider({ children }) {
     }
     if (data.error) throw new Error(data.error);
     if (!data.url) throw new Error('No checkout URL returned');
+    trackMeta('InitiateCheckout', { value: 5.99, currency: 'USD' });
+    trackEvent('initiate_checkout', { app: 'water' });
     window.location.href = data.url;
   }
 
