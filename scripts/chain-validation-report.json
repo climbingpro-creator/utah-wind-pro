@@ -1,0 +1,7028 @@
+{
+  "generated": "2026-06-01T16:07:03.375Z",
+  "days": 30,
+  "chains": [
+    {
+      "chainKey": "zigzag:se_thermal",
+      "label": "SE Thermal → Zigzag",
+      "flowDir": "S → N",
+      "totalDays": 31,
+      "signalDays": 23,
+      "arrivedDays": 16,
+      "hitRate": 70,
+      "nodeStats": {
+        "QSF": {
+          "name": "Spanish Fork Canyon",
+          "configuredLag": -120,
+          "firedDays": 15,
+          "directionMatchDays": 0,
+          "avgSpeed": 7.1,
+          "avgOnsetHour": 7.7,
+          "optional": false
+        },
+        "KPVU": {
+          "name": "Provo Airport",
+          "configuredLag": -60,
+          "firedDays": 9,
+          "directionMatchDays": 0,
+          "avgSpeed": 6.9,
+          "avgOnsetHour": 11.8,
+          "optional": false
+        },
+        "KUTLEHI160": {
+          "name": "Lehi (WU PWS)",
+          "configuredLag": -40,
+          "firedDays": 19,
+          "directionMatchDays": 0,
+          "avgSpeed": 4.2,
+          "avgOnsetHour": 7.7,
+          "optional": true
+        },
+        "FPS": {
+          "name": "Flight Park South",
+          "configuredLag": -30,
+          "firedDays": 8,
+          "directionMatchDays": 0,
+          "avgSpeed": 9.4,
+          "avgOnsetHour": 11.1,
+          "optional": false
+        },
+        "KUTSARAT62": {
+          "name": "Saratoga Springs N (WU)",
+          "configuredLag": -10,
+          "firedDays": 22,
+          "directionMatchDays": 0,
+          "avgSpeed": 4.1,
+          "avgOnsetHour": 7.9,
+          "optional": true
+        },
+        "KUTSARAT88": {
+          "name": "Saratoga Springs S (WU)",
+          "configuredLag": -5,
+          "firedDays": 22,
+          "directionMatchDays": 0,
+          "avgSpeed": 4.1,
+          "avgOnsetHour": 8.1,
+          "optional": true
+        },
+        "PWS": {
+          "name": "Zigzag (Your Station)",
+          "configuredLag": 0,
+          "firedDays": 16,
+          "directionMatchDays": 0,
+          "avgSpeed": 6.1,
+          "avgOnsetHour": 11.2,
+          "optional": false
+        }
+      },
+      "lagErrors": {
+        "QSF": [
+          {
+            "date": "2026-05-02",
+            "actualLagMinutes": -480,
+            "configuredLag": -120,
+            "error": -360
+          },
+          {
+            "date": "2026-05-03",
+            "actualLagMinutes": -420,
+            "configuredLag": -120,
+            "error": -300
+          },
+          {
+            "date": "2026-05-04",
+            "actualLagMinutes": -120,
+            "configuredLag": -120,
+            "error": 0
+          },
+          {
+            "date": "2026-05-07",
+            "actualLagMinutes": -60,
+            "configuredLag": -120,
+            "error": 60
+          },
+          {
+            "date": "2026-05-11",
+            "actualLagMinutes": -480,
+            "configuredLag": -120,
+            "error": -360
+          },
+          {
+            "date": "2026-05-13",
+            "actualLagMinutes": 480,
+            "configuredLag": -120,
+            "error": 600
+          },
+          {
+            "date": "2026-05-23",
+            "actualLagMinutes": -360,
+            "configuredLag": -120,
+            "error": -240
+          },
+          {
+            "date": "2026-05-26",
+            "actualLagMinutes": -180,
+            "configuredLag": -120,
+            "error": -60
+          },
+          {
+            "date": "2026-05-27",
+            "actualLagMinutes": -120,
+            "configuredLag": -120,
+            "error": 0
+          },
+          {
+            "date": "2026-05-28",
+            "actualLagMinutes": -240,
+            "configuredLag": -120,
+            "error": -120
+          }
+        ],
+        "KPVU": [
+          {
+            "date": "2026-05-04",
+            "actualLagMinutes": 120,
+            "configuredLag": -60,
+            "error": 180
+          },
+          {
+            "date": "2026-05-05",
+            "actualLagMinutes": 0,
+            "configuredLag": -60,
+            "error": 60
+          },
+          {
+            "date": "2026-05-13",
+            "actualLagMinutes": 120,
+            "configuredLag": -60,
+            "error": 180
+          },
+          {
+            "date": "2026-05-25",
+            "actualLagMinutes": 360,
+            "configuredLag": -60,
+            "error": 420
+          },
+          {
+            "date": "2026-05-26",
+            "actualLagMinutes": 0,
+            "configuredLag": -60,
+            "error": 60
+          },
+          {
+            "date": "2026-05-27",
+            "actualLagMinutes": 120,
+            "configuredLag": -60,
+            "error": 180
+          },
+          {
+            "date": "2026-05-28",
+            "actualLagMinutes": -60,
+            "configuredLag": -60,
+            "error": 0
+          },
+          {
+            "date": "2026-05-29",
+            "actualLagMinutes": 300,
+            "configuredLag": -60,
+            "error": 360
+          },
+          {
+            "date": "2026-05-30",
+            "actualLagMinutes": 60,
+            "configuredLag": -60,
+            "error": 120
+          }
+        ],
+        "KUTLEHI160": [
+          {
+            "date": "2026-05-02",
+            "actualLagMinutes": -360,
+            "configuredLag": -40,
+            "error": -320
+          },
+          {
+            "date": "2026-05-03",
+            "actualLagMinutes": -300,
+            "configuredLag": -40,
+            "error": -260
+          },
+          {
+            "date": "2026-05-04",
+            "actualLagMinutes": -120,
+            "configuredLag": -40,
+            "error": -80
+          },
+          {
+            "date": "2026-05-05",
+            "actualLagMinutes": -60,
+            "configuredLag": -40,
+            "error": -20
+          },
+          {
+            "date": "2026-05-07",
+            "actualLagMinutes": -60,
+            "configuredLag": -40,
+            "error": -20
+          },
+          {
+            "date": "2026-05-11",
+            "actualLagMinutes": -480,
+            "configuredLag": -40,
+            "error": -440
+          },
+          {
+            "date": "2026-05-13",
+            "actualLagMinutes": -120,
+            "configuredLag": -40,
+            "error": -80
+          },
+          {
+            "date": "2026-05-20",
+            "actualLagMinutes": -180,
+            "configuredLag": -40,
+            "error": -140
+          },
+          {
+            "date": "2026-05-23",
+            "actualLagMinutes": -300,
+            "configuredLag": -40,
+            "error": -260
+          },
+          {
+            "date": "2026-05-25",
+            "actualLagMinutes": -240,
+            "configuredLag": -40,
+            "error": -200
+          },
+          {
+            "date": "2026-05-26",
+            "actualLagMinutes": -180,
+            "configuredLag": -40,
+            "error": -140
+          },
+          {
+            "date": "2026-05-27",
+            "actualLagMinutes": -60,
+            "configuredLag": -40,
+            "error": -20
+          },
+          {
+            "date": "2026-05-28",
+            "actualLagMinutes": -240,
+            "configuredLag": -40,
+            "error": -200
+          },
+          {
+            "date": "2026-05-29",
+            "actualLagMinutes": -120,
+            "configuredLag": -40,
+            "error": -80
+          },
+          {
+            "date": "2026-05-30",
+            "actualLagMinutes": -180,
+            "configuredLag": -40,
+            "error": -140
+          }
+        ],
+        "FPS": [
+          {
+            "date": "2026-05-04",
+            "actualLagMinutes": 60,
+            "configuredLag": -30,
+            "error": 90
+          },
+          {
+            "date": "2026-05-07",
+            "actualLagMinutes": 60,
+            "configuredLag": -30,
+            "error": 90
+          },
+          {
+            "date": "2026-05-13",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          },
+          {
+            "date": "2026-05-25",
+            "actualLagMinutes": 60,
+            "configuredLag": -30,
+            "error": 90
+          },
+          {
+            "date": "2026-05-26",
+            "actualLagMinutes": 60,
+            "configuredLag": -30,
+            "error": 90
+          },
+          {
+            "date": "2026-05-27",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          },
+          {
+            "date": "2026-05-28",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          },
+          {
+            "date": "2026-05-29",
+            "actualLagMinutes": 420,
+            "configuredLag": -30,
+            "error": 450
+          }
+        ],
+        "KUTSARAT62": [
+          {
+            "date": "2026-05-02",
+            "actualLagMinutes": -420,
+            "configuredLag": -10,
+            "error": -410
+          },
+          {
+            "date": "2026-05-03",
+            "actualLagMinutes": -300,
+            "configuredLag": -10,
+            "error": -290
+          },
+          {
+            "date": "2026-05-04",
+            "actualLagMinutes": -60,
+            "configuredLag": -10,
+            "error": -50
+          },
+          {
+            "date": "2026-05-05",
+            "actualLagMinutes": -60,
+            "configuredLag": -10,
+            "error": -50
+          },
+          {
+            "date": "2026-05-07",
+            "actualLagMinutes": -60,
+            "configuredLag": -10,
+            "error": -50
+          },
+          {
+            "date": "2026-05-11",
+            "actualLagMinutes": -420,
+            "configuredLag": -10,
+            "error": -410
+          },
+          {
+            "date": "2026-05-13",
+            "actualLagMinutes": -120,
+            "configuredLag": -10,
+            "error": -110
+          },
+          {
+            "date": "2026-05-20",
+            "actualLagMinutes": -180,
+            "configuredLag": -10,
+            "error": -170
+          },
+          {
+            "date": "2026-05-23",
+            "actualLagMinutes": -300,
+            "configuredLag": -10,
+            "error": -290
+          },
+          {
+            "date": "2026-05-25",
+            "actualLagMinutes": -300,
+            "configuredLag": -10,
+            "error": -290
+          },
+          {
+            "date": "2026-05-26",
+            "actualLagMinutes": -60,
+            "configuredLag": -10,
+            "error": -50
+          },
+          {
+            "date": "2026-05-27",
+            "actualLagMinutes": 0,
+            "configuredLag": -10,
+            "error": 10
+          },
+          {
+            "date": "2026-05-28",
+            "actualLagMinutes": -240,
+            "configuredLag": -10,
+            "error": -230
+          },
+          {
+            "date": "2026-05-29",
+            "actualLagMinutes": -120,
+            "configuredLag": -10,
+            "error": -110
+          },
+          {
+            "date": "2026-05-30",
+            "actualLagMinutes": -180,
+            "configuredLag": -10,
+            "error": -170
+          }
+        ],
+        "KUTSARAT88": [
+          {
+            "date": "2026-05-02",
+            "actualLagMinutes": -420,
+            "configuredLag": -5,
+            "error": -415
+          },
+          {
+            "date": "2026-05-03",
+            "actualLagMinutes": -300,
+            "configuredLag": -5,
+            "error": -295
+          },
+          {
+            "date": "2026-05-04",
+            "actualLagMinutes": -60,
+            "configuredLag": -5,
+            "error": -55
+          },
+          {
+            "date": "2026-05-05",
+            "actualLagMinutes": -60,
+            "configuredLag": -5,
+            "error": -55
+          },
+          {
+            "date": "2026-05-07",
+            "actualLagMinutes": -60,
+            "configuredLag": -5,
+            "error": -55
+          },
+          {
+            "date": "2026-05-11",
+            "actualLagMinutes": -480,
+            "configuredLag": -5,
+            "error": -475
+          },
+          {
+            "date": "2026-05-13",
+            "actualLagMinutes": -120,
+            "configuredLag": -5,
+            "error": -115
+          },
+          {
+            "date": "2026-05-20",
+            "actualLagMinutes": -180,
+            "configuredLag": -5,
+            "error": -175
+          },
+          {
+            "date": "2026-05-23",
+            "actualLagMinutes": -300,
+            "configuredLag": -5,
+            "error": -295
+          },
+          {
+            "date": "2026-05-25",
+            "actualLagMinutes": -300,
+            "configuredLag": -5,
+            "error": -295
+          },
+          {
+            "date": "2026-05-26",
+            "actualLagMinutes": -60,
+            "configuredLag": -5,
+            "error": -55
+          },
+          {
+            "date": "2026-05-27",
+            "actualLagMinutes": 0,
+            "configuredLag": -5,
+            "error": 5
+          },
+          {
+            "date": "2026-05-28",
+            "actualLagMinutes": -240,
+            "configuredLag": -5,
+            "error": -235
+          },
+          {
+            "date": "2026-05-29",
+            "actualLagMinutes": -60,
+            "configuredLag": -5,
+            "error": -55
+          },
+          {
+            "date": "2026-05-30",
+            "actualLagMinutes": -180,
+            "configuredLag": -5,
+            "error": -175
+          },
+          {
+            "date": "2026-06-01",
+            "actualLagMinutes": 0,
+            "configuredLag": -5,
+            "error": 5
+          }
+        ],
+        "PWS": []
+      },
+      "speedRatioActuals": {
+        "KUTSARAT88": [
+          {
+            "date": "2026-05-02",
+            "nodeSpeed": 3.6,
+            "targetSpeed": 5.3,
+            "actualRatio": 0.68,
+            "configRatio": 1
+          },
+          {
+            "date": "2026-05-03",
+            "nodeSpeed": 4,
+            "targetSpeed": 5.1,
+            "actualRatio": 0.78,
+            "configRatio": 1
+          },
+          {
+            "date": "2026-05-04",
+            "nodeSpeed": 4.1,
+            "targetSpeed": 5.1,
+            "actualRatio": 0.8,
+            "configRatio": 1
+          },
+          {
+            "date": "2026-05-05",
+            "nodeSpeed": 4.5,
+            "targetSpeed": 5.2,
+            "actualRatio": 0.87,
+            "configRatio": 1
+          },
+          {
+            "date": "2026-05-07",
+            "nodeSpeed": 3.7,
+            "targetSpeed": 5.6,
+            "actualRatio": 0.66,
+            "configRatio": 1
+          },
+          {
+            "date": "2026-05-11",
+            "nodeSpeed": 3.3,
+            "targetSpeed": 6,
+            "actualRatio": 0.55,
+            "configRatio": 1
+          },
+          {
+            "date": "2026-05-13",
+            "nodeSpeed": 3.6,
+            "targetSpeed": 6.6,
+            "actualRatio": 0.55,
+            "configRatio": 1
+          },
+          {
+            "date": "2026-05-20",
+            "nodeSpeed": 4,
+            "targetSpeed": 5.2,
+            "actualRatio": 0.77,
+            "configRatio": 1
+          },
+          {
+            "date": "2026-05-23",
+            "nodeSpeed": 5.6,
+            "targetSpeed": 6.3,
+            "actualRatio": 0.89,
+            "configRatio": 1
+          },
+          {
+            "date": "2026-05-25",
+            "nodeSpeed": 4.5,
+            "targetSpeed": 5.6,
+            "actualRatio": 0.8,
+            "configRatio": 1
+          },
+          {
+            "date": "2026-05-26",
+            "nodeSpeed": 4.5,
+            "targetSpeed": 5.7,
+            "actualRatio": 0.79,
+            "configRatio": 1
+          },
+          {
+            "date": "2026-05-27",
+            "nodeSpeed": 7.7,
+            "targetSpeed": 7.7,
+            "actualRatio": 1,
+            "configRatio": 1
+          },
+          {
+            "date": "2026-05-28",
+            "nodeSpeed": 3.4,
+            "targetSpeed": 11.6,
+            "actualRatio": 0.29,
+            "configRatio": 1
+          },
+          {
+            "date": "2026-05-29",
+            "nodeSpeed": 4.3,
+            "targetSpeed": 5.2,
+            "actualRatio": 0.83,
+            "configRatio": 1
+          },
+          {
+            "date": "2026-05-30",
+            "nodeSpeed": 4,
+            "targetSpeed": 5.9,
+            "actualRatio": 0.68,
+            "configRatio": 1
+          },
+          {
+            "date": "2026-06-01",
+            "nodeSpeed": 5.5,
+            "targetSpeed": 5.5,
+            "actualRatio": 1,
+            "configRatio": 1
+          }
+        ],
+        "FPS": [
+          {
+            "date": "2026-05-04",
+            "nodeSpeed": 8,
+            "targetSpeed": 5.1,
+            "actualRatio": 1.57,
+            "configRatio": 1.7
+          },
+          {
+            "date": "2026-05-07",
+            "nodeSpeed": 8.4,
+            "targetSpeed": 5.6,
+            "actualRatio": 1.5,
+            "configRatio": 1.7
+          },
+          {
+            "date": "2026-05-13",
+            "nodeSpeed": 8.7,
+            "targetSpeed": 6.6,
+            "actualRatio": 1.32,
+            "configRatio": 1.7
+          },
+          {
+            "date": "2026-05-25",
+            "nodeSpeed": 8.2,
+            "targetSpeed": 5.6,
+            "actualRatio": 1.46,
+            "configRatio": 1.7
+          },
+          {
+            "date": "2026-05-26",
+            "nodeSpeed": 10.1,
+            "targetSpeed": 5.7,
+            "actualRatio": 1.77,
+            "configRatio": 1.7
+          },
+          {
+            "date": "2026-05-27",
+            "nodeSpeed": 8.9,
+            "targetSpeed": 7.7,
+            "actualRatio": 1.16,
+            "configRatio": 1.7
+          },
+          {
+            "date": "2026-05-28",
+            "nodeSpeed": 14.8,
+            "targetSpeed": 11.6,
+            "actualRatio": 1.28,
+            "configRatio": 1.7
+          },
+          {
+            "date": "2026-05-29",
+            "nodeSpeed": 8.3,
+            "targetSpeed": 5.2,
+            "actualRatio": 1.6,
+            "configRatio": 1.7
+          }
+        ]
+      },
+      "lagSummary": {
+        "QSF": {
+          "samples": 10,
+          "configuredLag": -120,
+          "actualAvgLag": -198,
+          "meanError": -78,
+          "mae": 210,
+          "recommendedLag": -198
+        },
+        "KPVU": {
+          "samples": 9,
+          "configuredLag": -60,
+          "actualAvgLag": 113,
+          "meanError": 173,
+          "mae": 173,
+          "recommendedLag": 113
+        },
+        "KUTLEHI160": {
+          "samples": 15,
+          "configuredLag": -40,
+          "actualAvgLag": -200,
+          "meanError": -160,
+          "mae": 160,
+          "recommendedLag": -200
+        },
+        "FPS": {
+          "samples": 8,
+          "configuredLag": -30,
+          "actualAvgLag": 83,
+          "meanError": 113,
+          "mae": 113,
+          "recommendedLag": 83
+        },
+        "KUTSARAT62": {
+          "samples": 15,
+          "configuredLag": -10,
+          "actualAvgLag": -188,
+          "meanError": -178,
+          "mae": 179,
+          "recommendedLag": -188
+        },
+        "KUTSARAT88": {
+          "samples": 16,
+          "configuredLag": -5,
+          "actualAvgLag": -176,
+          "meanError": -171,
+          "mae": 173,
+          "recommendedLag": -176
+        },
+        "PWS": {
+          "samples": 0
+        }
+      },
+      "speedRatioSummary": {
+        "KUTSARAT88": {
+          "configRatio": 1,
+          "actualAvgRatio": 0.75,
+          "samples": 16,
+          "recommendation": null
+        },
+        "FPS": {
+          "configRatio": 1.7,
+          "actualAvgRatio": 1.46,
+          "samples": 8,
+          "recommendation": null
+        }
+      }
+    },
+    {
+      "chainKey": "zigzag:north_flow",
+      "label": "North Flow → Zigzag",
+      "flowDir": "N → S",
+      "totalDays": 31,
+      "signalDays": 20,
+      "arrivedDays": 19,
+      "hitRate": 95,
+      "nodeStats": {
+        "KSLC": {
+          "name": "SLC Airport",
+          "configuredLag": -60,
+          "firedDays": 11,
+          "directionMatchDays": 0,
+          "avgSpeed": 9.4,
+          "avgOnsetHour": 14.3,
+          "optional": false
+        },
+        "KUTSANDY188": {
+          "name": "Sandy (WU PWS)",
+          "configuredLag": -50,
+          "firedDays": 17,
+          "directionMatchDays": 0,
+          "avgSpeed": 6.2,
+          "avgOnsetHour": 12.7,
+          "optional": true
+        },
+        "KUTDRAPE132": {
+          "name": "Draper (WU PWS)",
+          "configuredLag": -40,
+          "firedDays": 17,
+          "directionMatchDays": 0,
+          "avgSpeed": 6.2,
+          "avgOnsetHour": 12.7,
+          "optional": true
+        },
+        "UTALP": {
+          "name": "Point of Mountain",
+          "configuredLag": -30,
+          "firedDays": 16,
+          "directionMatchDays": 0,
+          "avgSpeed": 9,
+          "avgOnsetHour": 12.2,
+          "optional": false
+        },
+        "FPS": {
+          "name": "Flight Park South",
+          "configuredLag": -15,
+          "firedDays": 12,
+          "directionMatchDays": 0,
+          "avgSpeed": 10.1,
+          "avgOnsetHour": 12.5,
+          "optional": false
+        },
+        "PWS": {
+          "name": "Zigzag (Your Station)",
+          "configuredLag": 0,
+          "firedDays": 20,
+          "directionMatchDays": 0,
+          "avgSpeed": 8,
+          "avgOnsetHour": 12.7,
+          "optional": false
+        }
+      },
+      "lagErrors": {
+        "KSLC": [
+          {
+            "date": "2026-05-06",
+            "actualLagMinutes": 180,
+            "configuredLag": -60,
+            "error": 240
+          },
+          {
+            "date": "2026-05-07",
+            "actualLagMinutes": 0,
+            "configuredLag": -60,
+            "error": 60
+          },
+          {
+            "date": "2026-05-08",
+            "actualLagMinutes": 60,
+            "configuredLag": -60,
+            "error": 120
+          },
+          {
+            "date": "2026-05-09",
+            "actualLagMinutes": 540,
+            "configuredLag": -60,
+            "error": 600
+          },
+          {
+            "date": "2026-05-14",
+            "actualLagMinutes": 480,
+            "configuredLag": -60,
+            "error": 540
+          },
+          {
+            "date": "2026-05-15",
+            "actualLagMinutes": 0,
+            "configuredLag": -60,
+            "error": 60
+          },
+          {
+            "date": "2026-05-17",
+            "actualLagMinutes": 600,
+            "configuredLag": -60,
+            "error": 660
+          },
+          {
+            "date": "2026-05-18",
+            "actualLagMinutes": 0,
+            "configuredLag": -60,
+            "error": 60
+          },
+          {
+            "date": "2026-05-20",
+            "actualLagMinutes": 0,
+            "configuredLag": -60,
+            "error": 60
+          },
+          {
+            "date": "2026-05-21",
+            "actualLagMinutes": 180,
+            "configuredLag": -60,
+            "error": 240
+          },
+          {
+            "date": "2026-05-23",
+            "actualLagMinutes": 60,
+            "configuredLag": -60,
+            "error": 120
+          }
+        ],
+        "KUTSANDY188": [
+          {
+            "date": "2026-05-04",
+            "actualLagMinutes": 60,
+            "configuredLag": -50,
+            "error": 110
+          },
+          {
+            "date": "2026-05-06",
+            "actualLagMinutes": -60,
+            "configuredLag": -50,
+            "error": -10
+          },
+          {
+            "date": "2026-05-07",
+            "actualLagMinutes": 0,
+            "configuredLag": -50,
+            "error": 50
+          },
+          {
+            "date": "2026-05-08",
+            "actualLagMinutes": -120,
+            "configuredLag": -50,
+            "error": -70
+          },
+          {
+            "date": "2026-05-09",
+            "actualLagMinutes": 60,
+            "configuredLag": -50,
+            "error": 110
+          },
+          {
+            "date": "2026-05-14",
+            "actualLagMinutes": 0,
+            "configuredLag": -50,
+            "error": 50
+          },
+          {
+            "date": "2026-05-15",
+            "actualLagMinutes": -60,
+            "configuredLag": -50,
+            "error": -10
+          },
+          {
+            "date": "2026-05-16",
+            "actualLagMinutes": -120,
+            "configuredLag": -50,
+            "error": -70
+          },
+          {
+            "date": "2026-05-17",
+            "actualLagMinutes": 0,
+            "configuredLag": -50,
+            "error": 50
+          },
+          {
+            "date": "2026-05-18",
+            "actualLagMinutes": 0,
+            "configuredLag": -50,
+            "error": 50
+          },
+          {
+            "date": "2026-05-19",
+            "actualLagMinutes": 0,
+            "configuredLag": -50,
+            "error": 50
+          },
+          {
+            "date": "2026-05-21",
+            "actualLagMinutes": -60,
+            "configuredLag": -50,
+            "error": -10
+          },
+          {
+            "date": "2026-05-22",
+            "actualLagMinutes": 180,
+            "configuredLag": -50,
+            "error": 230
+          },
+          {
+            "date": "2026-05-24",
+            "actualLagMinutes": 420,
+            "configuredLag": -50,
+            "error": 470
+          },
+          {
+            "date": "2026-05-31",
+            "actualLagMinutes": 240,
+            "configuredLag": -50,
+            "error": 290
+          },
+          {
+            "date": "2026-06-01",
+            "actualLagMinutes": -60,
+            "configuredLag": -50,
+            "error": -10
+          }
+        ],
+        "KUTDRAPE132": [
+          {
+            "date": "2026-05-04",
+            "actualLagMinutes": 60,
+            "configuredLag": -40,
+            "error": 100
+          },
+          {
+            "date": "2026-05-06",
+            "actualLagMinutes": -60,
+            "configuredLag": -40,
+            "error": -20
+          },
+          {
+            "date": "2026-05-07",
+            "actualLagMinutes": 0,
+            "configuredLag": -40,
+            "error": 40
+          },
+          {
+            "date": "2026-05-08",
+            "actualLagMinutes": -120,
+            "configuredLag": -40,
+            "error": -80
+          },
+          {
+            "date": "2026-05-09",
+            "actualLagMinutes": 60,
+            "configuredLag": -40,
+            "error": 100
+          },
+          {
+            "date": "2026-05-14",
+            "actualLagMinutes": 0,
+            "configuredLag": -40,
+            "error": 40
+          },
+          {
+            "date": "2026-05-15",
+            "actualLagMinutes": -60,
+            "configuredLag": -40,
+            "error": -20
+          },
+          {
+            "date": "2026-05-16",
+            "actualLagMinutes": -120,
+            "configuredLag": -40,
+            "error": -80
+          },
+          {
+            "date": "2026-05-17",
+            "actualLagMinutes": 0,
+            "configuredLag": -40,
+            "error": 40
+          },
+          {
+            "date": "2026-05-18",
+            "actualLagMinutes": 0,
+            "configuredLag": -40,
+            "error": 40
+          },
+          {
+            "date": "2026-05-19",
+            "actualLagMinutes": 0,
+            "configuredLag": -40,
+            "error": 40
+          },
+          {
+            "date": "2026-05-21",
+            "actualLagMinutes": -60,
+            "configuredLag": -40,
+            "error": -20
+          },
+          {
+            "date": "2026-05-22",
+            "actualLagMinutes": 180,
+            "configuredLag": -40,
+            "error": 220
+          },
+          {
+            "date": "2026-05-24",
+            "actualLagMinutes": 420,
+            "configuredLag": -40,
+            "error": 460
+          },
+          {
+            "date": "2026-05-31",
+            "actualLagMinutes": 240,
+            "configuredLag": -40,
+            "error": 280
+          },
+          {
+            "date": "2026-06-01",
+            "actualLagMinutes": -60,
+            "configuredLag": -40,
+            "error": -20
+          }
+        ],
+        "UTALP": [
+          {
+            "date": "2026-05-04",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          },
+          {
+            "date": "2026-05-06",
+            "actualLagMinutes": -60,
+            "configuredLag": -30,
+            "error": -30
+          },
+          {
+            "date": "2026-05-08",
+            "actualLagMinutes": -120,
+            "configuredLag": -30,
+            "error": -90
+          },
+          {
+            "date": "2026-05-09",
+            "actualLagMinutes": 120,
+            "configuredLag": -30,
+            "error": 150
+          },
+          {
+            "date": "2026-05-12",
+            "actualLagMinutes": 60,
+            "configuredLag": -30,
+            "error": 90
+          },
+          {
+            "date": "2026-05-14",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          },
+          {
+            "date": "2026-05-15",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          },
+          {
+            "date": "2026-05-16",
+            "actualLagMinutes": -120,
+            "configuredLag": -30,
+            "error": -90
+          },
+          {
+            "date": "2026-05-17",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          },
+          {
+            "date": "2026-05-18",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          },
+          {
+            "date": "2026-05-19",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          },
+          {
+            "date": "2026-05-21",
+            "actualLagMinutes": -60,
+            "configuredLag": -30,
+            "error": -30
+          },
+          {
+            "date": "2026-05-22",
+            "actualLagMinutes": 120,
+            "configuredLag": -30,
+            "error": 150
+          },
+          {
+            "date": "2026-05-24",
+            "actualLagMinutes": 300,
+            "configuredLag": -30,
+            "error": 330
+          },
+          {
+            "date": "2026-05-31",
+            "actualLagMinutes": 120,
+            "configuredLag": -30,
+            "error": 150
+          },
+          {
+            "date": "2026-06-01",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          }
+        ],
+        "FPS": [
+          {
+            "date": "2026-05-06",
+            "actualLagMinutes": 60,
+            "configuredLag": -15,
+            "error": 75
+          },
+          {
+            "date": "2026-05-07",
+            "actualLagMinutes": 0,
+            "configuredLag": -15,
+            "error": 15
+          },
+          {
+            "date": "2026-05-08",
+            "actualLagMinutes": -60,
+            "configuredLag": -15,
+            "error": -45
+          },
+          {
+            "date": "2026-05-09",
+            "actualLagMinutes": 180,
+            "configuredLag": -15,
+            "error": 195
+          },
+          {
+            "date": "2026-05-14",
+            "actualLagMinutes": 60,
+            "configuredLag": -15,
+            "error": 75
+          },
+          {
+            "date": "2026-05-15",
+            "actualLagMinutes": 60,
+            "configuredLag": -15,
+            "error": 75
+          },
+          {
+            "date": "2026-05-16",
+            "actualLagMinutes": 120,
+            "configuredLag": -15,
+            "error": 135
+          },
+          {
+            "date": "2026-05-17",
+            "actualLagMinutes": 360,
+            "configuredLag": -15,
+            "error": 375
+          },
+          {
+            "date": "2026-05-18",
+            "actualLagMinutes": 0,
+            "configuredLag": -15,
+            "error": 15
+          },
+          {
+            "date": "2026-05-19",
+            "actualLagMinutes": 240,
+            "configuredLag": -15,
+            "error": 255
+          },
+          {
+            "date": "2026-05-21",
+            "actualLagMinutes": 0,
+            "configuredLag": -15,
+            "error": 15
+          },
+          {
+            "date": "2026-06-01",
+            "actualLagMinutes": 0,
+            "configuredLag": -15,
+            "error": 15
+          }
+        ],
+        "PWS": []
+      },
+      "speedRatioActuals": {
+        "FPS": [
+          {
+            "date": "2026-05-06",
+            "nodeSpeed": 12,
+            "targetSpeed": 5.5,
+            "actualRatio": 2.18,
+            "configRatio": 1.5
+          },
+          {
+            "date": "2026-05-07",
+            "nodeSpeed": 8.1,
+            "targetSpeed": 8.5,
+            "actualRatio": 0.95,
+            "configRatio": 1.5
+          },
+          {
+            "date": "2026-05-08",
+            "nodeSpeed": 10.3,
+            "targetSpeed": 6.4,
+            "actualRatio": 1.61,
+            "configRatio": 1.5
+          },
+          {
+            "date": "2026-05-09",
+            "nodeSpeed": 10.3,
+            "targetSpeed": 4.5,
+            "actualRatio": 2.29,
+            "configRatio": 1.5
+          },
+          {
+            "date": "2026-05-14",
+            "nodeSpeed": 8.3,
+            "targetSpeed": 7.2,
+            "actualRatio": 1.15,
+            "configRatio": 1.5
+          },
+          {
+            "date": "2026-05-15",
+            "nodeSpeed": 10.4,
+            "targetSpeed": 9.7,
+            "actualRatio": 1.07,
+            "configRatio": 1.5
+          },
+          {
+            "date": "2026-05-16",
+            "nodeSpeed": 8.6,
+            "targetSpeed": 8,
+            "actualRatio": 1.07,
+            "configRatio": 1.5
+          },
+          {
+            "date": "2026-05-17",
+            "nodeSpeed": 9.5,
+            "targetSpeed": 7.5,
+            "actualRatio": 1.27,
+            "configRatio": 1.5
+          },
+          {
+            "date": "2026-05-18",
+            "nodeSpeed": 13.4,
+            "targetSpeed": 11.8,
+            "actualRatio": 1.14,
+            "configRatio": 1.5
+          },
+          {
+            "date": "2026-05-19",
+            "nodeSpeed": 11.2,
+            "targetSpeed": 8.2,
+            "actualRatio": 1.37,
+            "configRatio": 1.5
+          },
+          {
+            "date": "2026-05-21",
+            "nodeSpeed": 9.4,
+            "targetSpeed": 9.9,
+            "actualRatio": 0.95,
+            "configRatio": 1.5
+          },
+          {
+            "date": "2026-06-01",
+            "nodeSpeed": 10,
+            "targetSpeed": 7.9,
+            "actualRatio": 1.27,
+            "configRatio": 1.5
+          }
+        ]
+      },
+      "lagSummary": {
+        "KSLC": {
+          "samples": 11,
+          "configuredLag": -60,
+          "actualAvgLag": 191,
+          "meanError": 251,
+          "mae": 251,
+          "recommendedLag": 191
+        },
+        "KUTSANDY188": {
+          "samples": 16,
+          "configuredLag": -50,
+          "actualAvgLag": 30,
+          "meanError": 80,
+          "mae": 103,
+          "recommendedLag": 30
+        },
+        "KUTDRAPE132": {
+          "samples": 16,
+          "configuredLag": -40,
+          "actualAvgLag": 30,
+          "meanError": 70,
+          "mae": 100,
+          "recommendedLag": 30
+        },
+        "UTALP": {
+          "samples": 16,
+          "configuredLag": -30,
+          "actualAvgLag": 23,
+          "meanError": 53,
+          "mae": 83,
+          "recommendedLag": 23
+        },
+        "FPS": {
+          "samples": 12,
+          "configuredLag": -15,
+          "actualAvgLag": 85,
+          "meanError": 100,
+          "mae": 108,
+          "recommendedLag": 85
+        },
+        "PWS": {
+          "samples": 0
+        }
+      },
+      "speedRatioSummary": {
+        "FPS": {
+          "configRatio": 1.5,
+          "actualAvgRatio": 1.36,
+          "samples": 12,
+          "recommendation": null
+        }
+      }
+    },
+    {
+      "chainKey": "lincoln:se_thermal",
+      "label": "SE Thermal → Lincoln Beach",
+      "flowDir": "S → N",
+      "totalDays": 31,
+      "signalDays": 15,
+      "arrivedDays": 5,
+      "hitRate": 33,
+      "nodeStats": {
+        "QSF": {
+          "name": "Spanish Fork Canyon",
+          "configuredLag": -90,
+          "firedDays": 15,
+          "directionMatchDays": 0,
+          "avgSpeed": 7.1,
+          "avgOnsetHour": 7.7,
+          "optional": false
+        },
+        "KPVU": {
+          "name": "Provo Airport",
+          "configuredLag": 0,
+          "firedDays": 9,
+          "directionMatchDays": 0,
+          "avgSpeed": 6.9,
+          "avgOnsetHour": 11.8,
+          "optional": false
+        }
+      },
+      "lagErrors": {
+        "QSF": [
+          {
+            "date": "2026-05-04",
+            "actualLagMinutes": -240,
+            "configuredLag": -90,
+            "error": -150
+          },
+          {
+            "date": "2026-05-13",
+            "actualLagMinutes": 360,
+            "configuredLag": -90,
+            "error": 450
+          },
+          {
+            "date": "2026-05-26",
+            "actualLagMinutes": -180,
+            "configuredLag": -90,
+            "error": -90
+          },
+          {
+            "date": "2026-05-27",
+            "actualLagMinutes": -240,
+            "configuredLag": -90,
+            "error": -150
+          },
+          {
+            "date": "2026-05-28",
+            "actualLagMinutes": -180,
+            "configuredLag": -90,
+            "error": -90
+          }
+        ],
+        "KPVU": []
+      },
+      "speedRatioActuals": {},
+      "lagSummary": {
+        "QSF": {
+          "samples": 5,
+          "configuredLag": -90,
+          "actualAvgLag": -96,
+          "meanError": -6,
+          "mae": 186,
+          "recommendedLag": -96
+        },
+        "KPVU": {
+          "samples": 0
+        }
+      },
+      "speedRatioSummary": {}
+    },
+    {
+      "chainKey": "lincoln:north_flow",
+      "label": "North Flow → Lincoln Beach",
+      "flowDir": "N → S",
+      "totalDays": 31,
+      "signalDays": 19,
+      "arrivedDays": 18,
+      "hitRate": 95,
+      "nodeStats": {
+        "KSLC": {
+          "name": "SLC Airport",
+          "configuredLag": -90,
+          "firedDays": 11,
+          "directionMatchDays": 0,
+          "avgSpeed": 9.4,
+          "avgOnsetHour": 14.3,
+          "optional": false
+        },
+        "UTALP": {
+          "name": "Point of Mountain",
+          "configuredLag": -60,
+          "firedDays": 16,
+          "directionMatchDays": 0,
+          "avgSpeed": 9,
+          "avgOnsetHour": 12.2,
+          "optional": false
+        },
+        "FPS": {
+          "name": "Flight Park South",
+          "configuredLag": -30,
+          "firedDays": 12,
+          "directionMatchDays": 0,
+          "avgSpeed": 10.1,
+          "avgOnsetHour": 12.5,
+          "optional": false
+        },
+        "KPVU": {
+          "name": "Provo Airport",
+          "configuredLag": 0,
+          "firedDays": 18,
+          "directionMatchDays": 0,
+          "avgSpeed": 8.5,
+          "avgOnsetHour": 13,
+          "optional": false
+        }
+      },
+      "lagErrors": {
+        "KSLC": [
+          {
+            "date": "2026-05-06",
+            "actualLagMinutes": 120,
+            "configuredLag": -90,
+            "error": 210
+          },
+          {
+            "date": "2026-05-07",
+            "actualLagMinutes": 0,
+            "configuredLag": -90,
+            "error": 90
+          },
+          {
+            "date": "2026-05-09",
+            "actualLagMinutes": 360,
+            "configuredLag": -90,
+            "error": 450
+          },
+          {
+            "date": "2026-05-14",
+            "actualLagMinutes": 420,
+            "configuredLag": -90,
+            "error": 510
+          },
+          {
+            "date": "2026-05-15",
+            "actualLagMinutes": -60,
+            "configuredLag": -90,
+            "error": 30
+          },
+          {
+            "date": "2026-05-17",
+            "actualLagMinutes": 600,
+            "configuredLag": -90,
+            "error": 690
+          },
+          {
+            "date": "2026-05-18",
+            "actualLagMinutes": 0,
+            "configuredLag": -90,
+            "error": 90
+          },
+          {
+            "date": "2026-05-20",
+            "actualLagMinutes": 0,
+            "configuredLag": -90,
+            "error": 90
+          },
+          {
+            "date": "2026-05-21",
+            "actualLagMinutes": 180,
+            "configuredLag": -90,
+            "error": 270
+          },
+          {
+            "date": "2026-05-23",
+            "actualLagMinutes": 0,
+            "configuredLag": -90,
+            "error": 90
+          }
+        ],
+        "UTALP": [
+          {
+            "date": "2026-05-04",
+            "actualLagMinutes": 0,
+            "configuredLag": -60,
+            "error": 60
+          },
+          {
+            "date": "2026-05-06",
+            "actualLagMinutes": -120,
+            "configuredLag": -60,
+            "error": -60
+          },
+          {
+            "date": "2026-05-09",
+            "actualLagMinutes": -60,
+            "configuredLag": -60,
+            "error": 0
+          },
+          {
+            "date": "2026-05-12",
+            "actualLagMinutes": -60,
+            "configuredLag": -60,
+            "error": 0
+          },
+          {
+            "date": "2026-05-14",
+            "actualLagMinutes": -60,
+            "configuredLag": -60,
+            "error": 0
+          },
+          {
+            "date": "2026-05-15",
+            "actualLagMinutes": -60,
+            "configuredLag": -60,
+            "error": 0
+          },
+          {
+            "date": "2026-05-16",
+            "actualLagMinutes": -120,
+            "configuredLag": -60,
+            "error": -60
+          },
+          {
+            "date": "2026-05-17",
+            "actualLagMinutes": 0,
+            "configuredLag": -60,
+            "error": 60
+          },
+          {
+            "date": "2026-05-18",
+            "actualLagMinutes": 0,
+            "configuredLag": -60,
+            "error": 60
+          },
+          {
+            "date": "2026-05-19",
+            "actualLagMinutes": 0,
+            "configuredLag": -60,
+            "error": 60
+          },
+          {
+            "date": "2026-05-21",
+            "actualLagMinutes": -60,
+            "configuredLag": -60,
+            "error": 0
+          },
+          {
+            "date": "2026-05-22",
+            "actualLagMinutes": 60,
+            "configuredLag": -60,
+            "error": 120
+          },
+          {
+            "date": "2026-05-24",
+            "actualLagMinutes": 240,
+            "configuredLag": -60,
+            "error": 300
+          },
+          {
+            "date": "2026-05-31",
+            "actualLagMinutes": 120,
+            "configuredLag": -60,
+            "error": 180
+          },
+          {
+            "date": "2026-06-01",
+            "actualLagMinutes": -60,
+            "configuredLag": -60,
+            "error": 0
+          }
+        ],
+        "FPS": [
+          {
+            "date": "2026-05-06",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          },
+          {
+            "date": "2026-05-07",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          },
+          {
+            "date": "2026-05-09",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          },
+          {
+            "date": "2026-05-14",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          },
+          {
+            "date": "2026-05-15",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          },
+          {
+            "date": "2026-05-16",
+            "actualLagMinutes": 120,
+            "configuredLag": -30,
+            "error": 150
+          },
+          {
+            "date": "2026-05-17",
+            "actualLagMinutes": 360,
+            "configuredLag": -30,
+            "error": 390
+          },
+          {
+            "date": "2026-05-18",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          },
+          {
+            "date": "2026-05-19",
+            "actualLagMinutes": 240,
+            "configuredLag": -30,
+            "error": 270
+          },
+          {
+            "date": "2026-05-21",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          },
+          {
+            "date": "2026-06-01",
+            "actualLagMinutes": -60,
+            "configuredLag": -30,
+            "error": -30
+          }
+        ],
+        "KPVU": []
+      },
+      "speedRatioActuals": {},
+      "lagSummary": {
+        "KSLC": {
+          "samples": 10,
+          "configuredLag": -90,
+          "actualAvgLag": 162,
+          "meanError": 252,
+          "mae": 252,
+          "recommendedLag": 162
+        },
+        "UTALP": {
+          "samples": 15,
+          "configuredLag": -60,
+          "actualAvgLag": -12,
+          "meanError": 48,
+          "mae": 64,
+          "recommendedLag": -12
+        },
+        "FPS": {
+          "samples": 11,
+          "configuredLag": -30,
+          "actualAvgLag": 60,
+          "meanError": 90,
+          "mae": 95,
+          "recommendedLag": 60
+        },
+        "KPVU": {
+          "samples": 0
+        }
+      },
+      "speedRatioSummary": {}
+    },
+    {
+      "chainKey": "vineyard:sw_thermal",
+      "label": "S/SW Onshore → Vineyard",
+      "flowDir": "S → N",
+      "totalDays": 31,
+      "signalDays": 18,
+      "arrivedDays": 13,
+      "hitRate": 72,
+      "nodeStats": {
+        "QSF": {
+          "name": "Spanish Fork Canyon",
+          "configuredLag": -90,
+          "firedDays": 16,
+          "directionMatchDays": 0,
+          "avgSpeed": 7.3,
+          "avgOnsetHour": 7.8,
+          "optional": false
+        },
+        "KPVU": {
+          "name": "Provo Airport",
+          "configuredLag": -45,
+          "firedDays": 8,
+          "directionMatchDays": 0,
+          "avgSpeed": 8,
+          "avgOnsetHour": 12.3,
+          "optional": false
+        },
+        "FPS": {
+          "name": "Flight Park South",
+          "configuredLag": 0,
+          "firedDays": 14,
+          "directionMatchDays": 0,
+          "avgSpeed": 8,
+          "avgOnsetHour": 10.4,
+          "optional": false
+        }
+      },
+      "lagErrors": {
+        "QSF": [
+          {
+            "date": "2026-05-02",
+            "actualLagMinutes": -240,
+            "configuredLag": -90,
+            "error": -150
+          },
+          {
+            "date": "2026-05-03",
+            "actualLagMinutes": -180,
+            "configuredLag": -90,
+            "error": -90
+          },
+          {
+            "date": "2026-05-04",
+            "actualLagMinutes": -120,
+            "configuredLag": -90,
+            "error": -30
+          },
+          {
+            "date": "2026-05-07",
+            "actualLagMinutes": -180,
+            "configuredLag": -90,
+            "error": -90
+          },
+          {
+            "date": "2026-05-10",
+            "actualLagMinutes": -240,
+            "configuredLag": -90,
+            "error": -150
+          },
+          {
+            "date": "2026-05-11",
+            "actualLagMinutes": -240,
+            "configuredLag": -90,
+            "error": -150
+          },
+          {
+            "date": "2026-05-12",
+            "actualLagMinutes": -240,
+            "configuredLag": -90,
+            "error": -150
+          },
+          {
+            "date": "2026-05-13",
+            "actualLagMinutes": 120,
+            "configuredLag": -90,
+            "error": 210
+          },
+          {
+            "date": "2026-05-24",
+            "actualLagMinutes": -120,
+            "configuredLag": -90,
+            "error": -30
+          },
+          {
+            "date": "2026-05-26",
+            "actualLagMinutes": -300,
+            "configuredLag": -90,
+            "error": -210
+          },
+          {
+            "date": "2026-05-27",
+            "actualLagMinutes": -300,
+            "configuredLag": -90,
+            "error": -210
+          },
+          {
+            "date": "2026-05-28",
+            "actualLagMinutes": -180,
+            "configuredLag": -90,
+            "error": -90
+          },
+          {
+            "date": "2026-05-29",
+            "actualLagMinutes": 420,
+            "configuredLag": -90,
+            "error": 510
+          }
+        ],
+        "KPVU": [
+          {
+            "date": "2026-05-04",
+            "actualLagMinutes": 420,
+            "configuredLag": -45,
+            "error": 465
+          },
+          {
+            "date": "2026-05-13",
+            "actualLagMinutes": 180,
+            "configuredLag": -45,
+            "error": 225
+          },
+          {
+            "date": "2026-05-26",
+            "actualLagMinutes": 0,
+            "configuredLag": -45,
+            "error": 45
+          },
+          {
+            "date": "2026-05-27",
+            "actualLagMinutes": 120,
+            "configuredLag": -45,
+            "error": 165
+          },
+          {
+            "date": "2026-05-28",
+            "actualLagMinutes": 0,
+            "configuredLag": -45,
+            "error": 45
+          },
+          {
+            "date": "2026-05-29",
+            "actualLagMinutes": 300,
+            "configuredLag": -45,
+            "error": 345
+          }
+        ],
+        "FPS": []
+      },
+      "speedRatioActuals": {
+        "FPS": [
+          {
+            "date": "2026-05-02",
+            "nodeSpeed": 6.9,
+            "targetSpeed": 6.9,
+            "actualRatio": 1,
+            "configRatio": 1.3
+          },
+          {
+            "date": "2026-05-03",
+            "nodeSpeed": 6.1,
+            "targetSpeed": 6.1,
+            "actualRatio": 1,
+            "configRatio": 1.3
+          },
+          {
+            "date": "2026-05-04",
+            "nodeSpeed": 6.6,
+            "targetSpeed": 6.6,
+            "actualRatio": 1,
+            "configRatio": 1.3
+          },
+          {
+            "date": "2026-05-07",
+            "nodeSpeed": 8.4,
+            "targetSpeed": 8.4,
+            "actualRatio": 1,
+            "configRatio": 1.3
+          },
+          {
+            "date": "2026-05-10",
+            "nodeSpeed": 6.2,
+            "targetSpeed": 6.2,
+            "actualRatio": 1,
+            "configRatio": 1.3
+          },
+          {
+            "date": "2026-05-11",
+            "nodeSpeed": 6.6,
+            "targetSpeed": 6.6,
+            "actualRatio": 1,
+            "configRatio": 1.3
+          },
+          {
+            "date": "2026-05-12",
+            "nodeSpeed": 7.8,
+            "targetSpeed": 7.8,
+            "actualRatio": 1,
+            "configRatio": 1.3
+          },
+          {
+            "date": "2026-05-13",
+            "nodeSpeed": 8.7,
+            "targetSpeed": 8.7,
+            "actualRatio": 1,
+            "configRatio": 1.3
+          },
+          {
+            "date": "2026-05-24",
+            "nodeSpeed": 6.4,
+            "targetSpeed": 6.4,
+            "actualRatio": 1,
+            "configRatio": 1.3
+          },
+          {
+            "date": "2026-05-25",
+            "nodeSpeed": 6.5,
+            "targetSpeed": 6.5,
+            "actualRatio": 1,
+            "configRatio": 1.3
+          },
+          {
+            "date": "2026-05-26",
+            "nodeSpeed": 11.3,
+            "targetSpeed": 11.3,
+            "actualRatio": 1,
+            "configRatio": 1.3
+          },
+          {
+            "date": "2026-05-27",
+            "nodeSpeed": 15.4,
+            "targetSpeed": 15.4,
+            "actualRatio": 1,
+            "configRatio": 1.3
+          },
+          {
+            "date": "2026-05-28",
+            "nodeSpeed": 7.9,
+            "targetSpeed": 7.9,
+            "actualRatio": 1,
+            "configRatio": 1.3
+          },
+          {
+            "date": "2026-05-29",
+            "nodeSpeed": 6.6,
+            "targetSpeed": 6.6,
+            "actualRatio": 1,
+            "configRatio": 1.3
+          }
+        ]
+      },
+      "lagSummary": {
+        "QSF": {
+          "samples": 13,
+          "configuredLag": -90,
+          "actualAvgLag": -138,
+          "meanError": -48,
+          "mae": 159,
+          "recommendedLag": -138
+        },
+        "KPVU": {
+          "samples": 6,
+          "configuredLag": -45,
+          "actualAvgLag": 170,
+          "meanError": 215,
+          "mae": 215,
+          "recommendedLag": 170
+        },
+        "FPS": {
+          "samples": 0
+        }
+      },
+      "speedRatioSummary": {
+        "FPS": {
+          "configRatio": 1.3,
+          "actualAvgRatio": 1,
+          "samples": 14,
+          "recommendation": 1
+        }
+      }
+    },
+    {
+      "chainKey": "mm19:canyon_drainage",
+      "label": "Canyon Drainage → MM19",
+      "flowDir": "SE → NW",
+      "totalDays": 31,
+      "signalDays": 14,
+      "arrivedDays": 4,
+      "hitRate": 29,
+      "nodeStats": {
+        "QSF": {
+          "name": "Spanish Fork Canyon",
+          "configuredLag": -30,
+          "firedDays": 14,
+          "directionMatchDays": 0,
+          "avgSpeed": 7,
+          "avgOnsetHour": 7,
+          "optional": false
+        },
+        "KPVU": {
+          "name": "Provo Airport",
+          "configuredLag": 0,
+          "firedDays": 9,
+          "directionMatchDays": 0,
+          "avgSpeed": 7.4,
+          "avgOnsetHour": 11.6,
+          "optional": false
+        }
+      },
+      "lagErrors": {
+        "QSF": [
+          {
+            "date": "2026-05-04",
+            "actualLagMinutes": -240,
+            "configuredLag": -30,
+            "error": -210
+          },
+          {
+            "date": "2026-05-26",
+            "actualLagMinutes": -180,
+            "configuredLag": -30,
+            "error": -150
+          },
+          {
+            "date": "2026-05-27",
+            "actualLagMinutes": -120,
+            "configuredLag": -30,
+            "error": -90
+          },
+          {
+            "date": "2026-05-28",
+            "actualLagMinutes": -240,
+            "configuredLag": -30,
+            "error": -210
+          }
+        ],
+        "KPVU": []
+      },
+      "speedRatioActuals": {},
+      "lagSummary": {
+        "QSF": {
+          "samples": 4,
+          "configuredLag": -30,
+          "actualAvgLag": -195,
+          "meanError": -165,
+          "mae": 165,
+          "recommendedLag": -195
+        },
+        "KPVU": {
+          "samples": 0
+        }
+      },
+      "speedRatioSummary": {}
+    },
+    {
+      "chainKey": "potm-south:se_thermal",
+      "label": "SE Thermal → Flight Park South",
+      "flowDir": "S → N",
+      "totalDays": 31,
+      "signalDays": 19,
+      "arrivedDays": 8,
+      "hitRate": 42,
+      "nodeStats": {
+        "QSF": {
+          "name": "Spanish Fork Canyon",
+          "configuredLag": -120,
+          "firedDays": 15,
+          "directionMatchDays": 0,
+          "avgSpeed": 7.1,
+          "avgOnsetHour": 7.7,
+          "optional": false
+        },
+        "KPVU": {
+          "name": "Provo Airport",
+          "configuredLag": -60,
+          "firedDays": 9,
+          "directionMatchDays": 0,
+          "avgSpeed": 6.9,
+          "avgOnsetHour": 11.7,
+          "optional": false
+        },
+        "FPS": {
+          "name": "Flight Park South",
+          "configuredLag": 0,
+          "firedDays": 8,
+          "directionMatchDays": 0,
+          "avgSpeed": 9.5,
+          "avgOnsetHour": 11,
+          "optional": false
+        }
+      },
+      "lagErrors": {
+        "QSF": [
+          {
+            "date": "2026-05-04",
+            "actualLagMinutes": -180,
+            "configuredLag": -120,
+            "error": -60
+          },
+          {
+            "date": "2026-05-07",
+            "actualLagMinutes": -120,
+            "configuredLag": -120,
+            "error": 0
+          },
+          {
+            "date": "2026-05-13",
+            "actualLagMinutes": 480,
+            "configuredLag": -120,
+            "error": 600
+          },
+          {
+            "date": "2026-05-26",
+            "actualLagMinutes": -240,
+            "configuredLag": -120,
+            "error": -120
+          },
+          {
+            "date": "2026-05-27",
+            "actualLagMinutes": -120,
+            "configuredLag": -120,
+            "error": 0
+          },
+          {
+            "date": "2026-05-28",
+            "actualLagMinutes": -240,
+            "configuredLag": -120,
+            "error": -120
+          }
+        ],
+        "KPVU": [
+          {
+            "date": "2026-05-04",
+            "actualLagMinutes": 60,
+            "configuredLag": -60,
+            "error": 120
+          },
+          {
+            "date": "2026-05-13",
+            "actualLagMinutes": 120,
+            "configuredLag": -60,
+            "error": 180
+          },
+          {
+            "date": "2026-05-25",
+            "actualLagMinutes": 360,
+            "configuredLag": -60,
+            "error": 420
+          },
+          {
+            "date": "2026-05-26",
+            "actualLagMinutes": -60,
+            "configuredLag": -60,
+            "error": 0
+          },
+          {
+            "date": "2026-05-27",
+            "actualLagMinutes": 60,
+            "configuredLag": -60,
+            "error": 120
+          },
+          {
+            "date": "2026-05-28",
+            "actualLagMinutes": -60,
+            "configuredLag": -60,
+            "error": 0
+          },
+          {
+            "date": "2026-05-29",
+            "actualLagMinutes": -120,
+            "configuredLag": -60,
+            "error": -60
+          }
+        ],
+        "FPS": []
+      },
+      "speedRatioActuals": {},
+      "lagSummary": {
+        "QSF": {
+          "samples": 6,
+          "configuredLag": -120,
+          "actualAvgLag": -70,
+          "meanError": 50,
+          "mae": 150,
+          "recommendedLag": -70
+        },
+        "KPVU": {
+          "samples": 7,
+          "configuredLag": -60,
+          "actualAvgLag": 51,
+          "meanError": 111,
+          "mae": 129,
+          "recommendedLag": 51
+        },
+        "FPS": {
+          "samples": 0
+        }
+      },
+      "speedRatioSummary": {}
+    },
+    {
+      "chainKey": "potm-north:north_flow",
+      "label": "North Flow → Flight Park North",
+      "flowDir": "N → S",
+      "totalDays": 31,
+      "signalDays": 11,
+      "arrivedDays": 8,
+      "hitRate": 73,
+      "nodeStats": {
+        "KSLC": {
+          "name": "SLC Airport",
+          "configuredLag": -60,
+          "firedDays": 11,
+          "directionMatchDays": 0,
+          "avgSpeed": 9.4,
+          "avgOnsetHour": 14.3,
+          "optional": false
+        },
+        "UTALP": {
+          "name": "Point of Mountain North",
+          "configuredLag": 0,
+          "firedDays": 16,
+          "directionMatchDays": 0,
+          "avgSpeed": 9,
+          "avgOnsetHour": 12.2,
+          "optional": false
+        }
+      },
+      "lagErrors": {
+        "KSLC": [
+          {
+            "date": "2026-05-06",
+            "actualLagMinutes": 240,
+            "configuredLag": -60,
+            "error": 300
+          },
+          {
+            "date": "2026-05-08",
+            "actualLagMinutes": 180,
+            "configuredLag": -60,
+            "error": 240
+          },
+          {
+            "date": "2026-05-09",
+            "actualLagMinutes": 420,
+            "configuredLag": -60,
+            "error": 480
+          },
+          {
+            "date": "2026-05-14",
+            "actualLagMinutes": 480,
+            "configuredLag": -60,
+            "error": 540
+          },
+          {
+            "date": "2026-05-15",
+            "actualLagMinutes": 0,
+            "configuredLag": -60,
+            "error": 60
+          },
+          {
+            "date": "2026-05-17",
+            "actualLagMinutes": 600,
+            "configuredLag": -60,
+            "error": 660
+          },
+          {
+            "date": "2026-05-18",
+            "actualLagMinutes": 0,
+            "configuredLag": -60,
+            "error": 60
+          },
+          {
+            "date": "2026-05-21",
+            "actualLagMinutes": 240,
+            "configuredLag": -60,
+            "error": 300
+          }
+        ],
+        "UTALP": []
+      },
+      "speedRatioActuals": {},
+      "lagSummary": {
+        "KSLC": {
+          "samples": 8,
+          "configuredLag": -60,
+          "actualAvgLag": 270,
+          "meanError": 330,
+          "mae": 330,
+          "recommendedLag": 270
+        },
+        "UTALP": {
+          "samples": 0
+        }
+      },
+      "speedRatioSummary": {}
+    },
+    {
+      "chainKey": "deer-creek:canyon_thermal",
+      "label": "Canyon Thermal → Deer Creek",
+      "flowDir": "Canyon → Dam",
+      "totalDays": 31,
+      "signalDays": 25,
+      "arrivedDays": 15,
+      "hitRate": 60,
+      "nodeStats": {
+        "KUTPLEAS11": {
+          "name": "Pleasant Grove WU",
+          "configuredLag": -75,
+          "firedDays": 19,
+          "directionMatchDays": 0,
+          "avgSpeed": 4.8,
+          "avgOnsetHour": 9.7,
+          "optional": true
+        },
+        "UTLPC": {
+          "name": "Lower Provo Canyon",
+          "configuredLag": -60,
+          "firedDays": 16,
+          "directionMatchDays": 0,
+          "avgSpeed": 5.7,
+          "avgOnsetHour": 12.9,
+          "optional": false
+        },
+        "UTPCY": {
+          "name": "Provo Canyon MP10",
+          "configuredLag": -45,
+          "firedDays": 20,
+          "directionMatchDays": 0,
+          "avgSpeed": 5.3,
+          "avgOnsetHour": 12.1,
+          "optional": false
+        },
+        "KUTCEDAR10": {
+          "name": "Cedar Hills WU",
+          "configuredLag": -35,
+          "firedDays": 19,
+          "directionMatchDays": 0,
+          "avgSpeed": 4.8,
+          "avgOnsetHour": 9.7,
+          "optional": true
+        },
+        "UTCHL": {
+          "name": "Charleston",
+          "configuredLag": -20,
+          "firedDays": 15,
+          "directionMatchDays": 0,
+          "avgSpeed": 5.5,
+          "avgOnsetHour": 12.4,
+          "optional": false
+        },
+        "KUTMIDWA37": {
+          "name": "Midway WU",
+          "configuredLag": -10,
+          "firedDays": 20,
+          "directionMatchDays": 0,
+          "avgSpeed": 4.7,
+          "avgOnsetHour": 11.6,
+          "optional": true
+        },
+        "UTDCD": {
+          "name": "Deer Creek Dam",
+          "configuredLag": 0,
+          "firedDays": 15,
+          "directionMatchDays": 0,
+          "avgSpeed": 5.5,
+          "avgOnsetHour": 12.4,
+          "optional": false
+        }
+      },
+      "lagErrors": {
+        "KUTPLEAS11": [
+          {
+            "date": "2026-05-04",
+            "actualLagMinutes": -240,
+            "configuredLag": -75,
+            "error": -165
+          },
+          {
+            "date": "2026-05-07",
+            "actualLagMinutes": 60,
+            "configuredLag": -75,
+            "error": 135
+          },
+          {
+            "date": "2026-05-11",
+            "actualLagMinutes": -480,
+            "configuredLag": -75,
+            "error": -405
+          },
+          {
+            "date": "2026-05-12",
+            "actualLagMinutes": -300,
+            "configuredLag": -75,
+            "error": -225
+          },
+          {
+            "date": "2026-05-13",
+            "actualLagMinutes": -120,
+            "configuredLag": -75,
+            "error": -45
+          },
+          {
+            "date": "2026-05-20",
+            "actualLagMinutes": -360,
+            "configuredLag": -75,
+            "error": -285
+          },
+          {
+            "date": "2026-05-23",
+            "actualLagMinutes": -240,
+            "configuredLag": -75,
+            "error": -165
+          },
+          {
+            "date": "2026-05-24",
+            "actualLagMinutes": -360,
+            "configuredLag": -75,
+            "error": -285
+          },
+          {
+            "date": "2026-05-26",
+            "actualLagMinutes": 60,
+            "configuredLag": -75,
+            "error": 135
+          },
+          {
+            "date": "2026-05-28",
+            "actualLagMinutes": -60,
+            "configuredLag": -75,
+            "error": 15
+          },
+          {
+            "date": "2026-05-29",
+            "actualLagMinutes": -240,
+            "configuredLag": -75,
+            "error": -165
+          },
+          {
+            "date": "2026-05-30",
+            "actualLagMinutes": -180,
+            "configuredLag": -75,
+            "error": -105
+          }
+        ],
+        "UTLPC": [
+          {
+            "date": "2026-05-04",
+            "actualLagMinutes": -60,
+            "configuredLag": -60,
+            "error": 0
+          },
+          {
+            "date": "2026-05-07",
+            "actualLagMinutes": 0,
+            "configuredLag": -60,
+            "error": 60
+          },
+          {
+            "date": "2026-05-11",
+            "actualLagMinutes": -360,
+            "configuredLag": -60,
+            "error": -300
+          },
+          {
+            "date": "2026-05-12",
+            "actualLagMinutes": 0,
+            "configuredLag": -60,
+            "error": 60
+          },
+          {
+            "date": "2026-05-13",
+            "actualLagMinutes": 0,
+            "configuredLag": -60,
+            "error": 60
+          },
+          {
+            "date": "2026-05-16",
+            "actualLagMinutes": 0,
+            "configuredLag": -60,
+            "error": 60
+          },
+          {
+            "date": "2026-05-20",
+            "actualLagMinutes": 180,
+            "configuredLag": -60,
+            "error": 240
+          },
+          {
+            "date": "2026-05-23",
+            "actualLagMinutes": 180,
+            "configuredLag": -60,
+            "error": 240
+          },
+          {
+            "date": "2026-05-24",
+            "actualLagMinutes": 0,
+            "configuredLag": -60,
+            "error": 60
+          },
+          {
+            "date": "2026-05-26",
+            "actualLagMinutes": 0,
+            "configuredLag": -60,
+            "error": 60
+          },
+          {
+            "date": "2026-05-28",
+            "actualLagMinutes": 360,
+            "configuredLag": -60,
+            "error": 420
+          },
+          {
+            "date": "2026-05-29",
+            "actualLagMinutes": 0,
+            "configuredLag": -60,
+            "error": 60
+          },
+          {
+            "date": "2026-05-30",
+            "actualLagMinutes": 0,
+            "configuredLag": -60,
+            "error": 60
+          }
+        ],
+        "UTPCY": [
+          {
+            "date": "2026-05-04",
+            "actualLagMinutes": -180,
+            "configuredLag": -45,
+            "error": -135
+          },
+          {
+            "date": "2026-05-07",
+            "actualLagMinutes": 180,
+            "configuredLag": -45,
+            "error": 225
+          },
+          {
+            "date": "2026-05-11",
+            "actualLagMinutes": -360,
+            "configuredLag": -45,
+            "error": -315
+          },
+          {
+            "date": "2026-05-12",
+            "actualLagMinutes": -180,
+            "configuredLag": -45,
+            "error": -135
+          },
+          {
+            "date": "2026-05-13",
+            "actualLagMinutes": -60,
+            "configuredLag": -45,
+            "error": -15
+          },
+          {
+            "date": "2026-05-15",
+            "actualLagMinutes": 0,
+            "configuredLag": -45,
+            "error": 45
+          },
+          {
+            "date": "2026-05-16",
+            "actualLagMinutes": -120,
+            "configuredLag": -45,
+            "error": -75
+          },
+          {
+            "date": "2026-05-20",
+            "actualLagMinutes": -60,
+            "configuredLag": -45,
+            "error": -15
+          },
+          {
+            "date": "2026-05-23",
+            "actualLagMinutes": -60,
+            "configuredLag": -45,
+            "error": -15
+          },
+          {
+            "date": "2026-05-24",
+            "actualLagMinutes": -180,
+            "configuredLag": -45,
+            "error": -135
+          },
+          {
+            "date": "2026-05-26",
+            "actualLagMinutes": 0,
+            "configuredLag": -45,
+            "error": 45
+          },
+          {
+            "date": "2026-05-28",
+            "actualLagMinutes": 420,
+            "configuredLag": -45,
+            "error": 465
+          },
+          {
+            "date": "2026-05-29",
+            "actualLagMinutes": -60,
+            "configuredLag": -45,
+            "error": -15
+          },
+          {
+            "date": "2026-05-31",
+            "actualLagMinutes": -60,
+            "configuredLag": -45,
+            "error": -15
+          }
+        ],
+        "KUTCEDAR10": [
+          {
+            "date": "2026-05-04",
+            "actualLagMinutes": -240,
+            "configuredLag": -35,
+            "error": -205
+          },
+          {
+            "date": "2026-05-07",
+            "actualLagMinutes": 60,
+            "configuredLag": -35,
+            "error": 95
+          },
+          {
+            "date": "2026-05-11",
+            "actualLagMinutes": -480,
+            "configuredLag": -35,
+            "error": -445
+          },
+          {
+            "date": "2026-05-12",
+            "actualLagMinutes": -300,
+            "configuredLag": -35,
+            "error": -265
+          },
+          {
+            "date": "2026-05-13",
+            "actualLagMinutes": -120,
+            "configuredLag": -35,
+            "error": -85
+          },
+          {
+            "date": "2026-05-20",
+            "actualLagMinutes": -360,
+            "configuredLag": -35,
+            "error": -325
+          },
+          {
+            "date": "2026-05-23",
+            "actualLagMinutes": -240,
+            "configuredLag": -35,
+            "error": -205
+          },
+          {
+            "date": "2026-05-24",
+            "actualLagMinutes": -360,
+            "configuredLag": -35,
+            "error": -325
+          },
+          {
+            "date": "2026-05-26",
+            "actualLagMinutes": 60,
+            "configuredLag": -35,
+            "error": 95
+          },
+          {
+            "date": "2026-05-28",
+            "actualLagMinutes": -60,
+            "configuredLag": -35,
+            "error": -25
+          },
+          {
+            "date": "2026-05-29",
+            "actualLagMinutes": -240,
+            "configuredLag": -35,
+            "error": -205
+          },
+          {
+            "date": "2026-05-30",
+            "actualLagMinutes": -180,
+            "configuredLag": -35,
+            "error": -145
+          }
+        ],
+        "UTCHL": [
+          {
+            "date": "2026-05-04",
+            "actualLagMinutes": 0,
+            "configuredLag": -20,
+            "error": 20
+          },
+          {
+            "date": "2026-05-07",
+            "actualLagMinutes": 0,
+            "configuredLag": -20,
+            "error": 20
+          },
+          {
+            "date": "2026-05-11",
+            "actualLagMinutes": 0,
+            "configuredLag": -20,
+            "error": 20
+          },
+          {
+            "date": "2026-05-12",
+            "actualLagMinutes": 0,
+            "configuredLag": -20,
+            "error": 20
+          },
+          {
+            "date": "2026-05-13",
+            "actualLagMinutes": 0,
+            "configuredLag": -20,
+            "error": 20
+          },
+          {
+            "date": "2026-05-15",
+            "actualLagMinutes": 0,
+            "configuredLag": -20,
+            "error": 20
+          },
+          {
+            "date": "2026-05-16",
+            "actualLagMinutes": 0,
+            "configuredLag": -20,
+            "error": 20
+          },
+          {
+            "date": "2026-05-20",
+            "actualLagMinutes": 0,
+            "configuredLag": -20,
+            "error": 20
+          },
+          {
+            "date": "2026-05-23",
+            "actualLagMinutes": 0,
+            "configuredLag": -20,
+            "error": 20
+          },
+          {
+            "date": "2026-05-24",
+            "actualLagMinutes": 0,
+            "configuredLag": -20,
+            "error": 20
+          },
+          {
+            "date": "2026-05-26",
+            "actualLagMinutes": 0,
+            "configuredLag": -20,
+            "error": 20
+          },
+          {
+            "date": "2026-05-28",
+            "actualLagMinutes": 0,
+            "configuredLag": -20,
+            "error": 20
+          },
+          {
+            "date": "2026-05-29",
+            "actualLagMinutes": 0,
+            "configuredLag": -20,
+            "error": 20
+          },
+          {
+            "date": "2026-05-30",
+            "actualLagMinutes": 0,
+            "configuredLag": -20,
+            "error": 20
+          },
+          {
+            "date": "2026-05-31",
+            "actualLagMinutes": 0,
+            "configuredLag": -20,
+            "error": 20
+          }
+        ],
+        "KUTMIDWA37": [
+          {
+            "date": "2026-05-04",
+            "actualLagMinutes": -180,
+            "configuredLag": -10,
+            "error": -170
+          },
+          {
+            "date": "2026-05-07",
+            "actualLagMinutes": -60,
+            "configuredLag": -10,
+            "error": -50
+          },
+          {
+            "date": "2026-05-11",
+            "actualLagMinutes": -240,
+            "configuredLag": -10,
+            "error": -230
+          },
+          {
+            "date": "2026-05-12",
+            "actualLagMinutes": -60,
+            "configuredLag": -10,
+            "error": -50
+          },
+          {
+            "date": "2026-05-13",
+            "actualLagMinutes": -60,
+            "configuredLag": -10,
+            "error": -50
+          },
+          {
+            "date": "2026-05-15",
+            "actualLagMinutes": 0,
+            "configuredLag": -10,
+            "error": 10
+          },
+          {
+            "date": "2026-05-16",
+            "actualLagMinutes": -60,
+            "configuredLag": -10,
+            "error": -50
+          },
+          {
+            "date": "2026-05-20",
+            "actualLagMinutes": 0,
+            "configuredLag": -10,
+            "error": 10
+          },
+          {
+            "date": "2026-05-23",
+            "actualLagMinutes": -60,
+            "configuredLag": -10,
+            "error": -50
+          },
+          {
+            "date": "2026-05-24",
+            "actualLagMinutes": 0,
+            "configuredLag": -10,
+            "error": 10
+          },
+          {
+            "date": "2026-05-26",
+            "actualLagMinutes": -240,
+            "configuredLag": -10,
+            "error": -230
+          },
+          {
+            "date": "2026-05-28",
+            "actualLagMinutes": 0,
+            "configuredLag": -10,
+            "error": 10
+          },
+          {
+            "date": "2026-05-29",
+            "actualLagMinutes": -60,
+            "configuredLag": -10,
+            "error": -50
+          },
+          {
+            "date": "2026-05-30",
+            "actualLagMinutes": -240,
+            "configuredLag": -10,
+            "error": -230
+          },
+          {
+            "date": "2026-05-31",
+            "actualLagMinutes": -360,
+            "configuredLag": -10,
+            "error": -350
+          }
+        ],
+        "UTDCD": []
+      },
+      "speedRatioActuals": {
+        "UTLPC": [
+          {
+            "date": "2026-05-04",
+            "nodeSpeed": 6.3,
+            "targetSpeed": 4.8,
+            "actualRatio": 1.31,
+            "configRatio": 1.2
+          },
+          {
+            "date": "2026-05-07",
+            "nodeSpeed": 4.7,
+            "targetSpeed": 4.6,
+            "actualRatio": 1.02,
+            "configRatio": 1.2
+          },
+          {
+            "date": "2026-05-11",
+            "nodeSpeed": 4.2,
+            "targetSpeed": 6.1,
+            "actualRatio": 0.69,
+            "configRatio": 1.2
+          },
+          {
+            "date": "2026-05-12",
+            "nodeSpeed": 6.4,
+            "targetSpeed": 5.2,
+            "actualRatio": 1.23,
+            "configRatio": 1.2
+          },
+          {
+            "date": "2026-05-13",
+            "nodeSpeed": 8.2,
+            "targetSpeed": 8.8,
+            "actualRatio": 0.93,
+            "configRatio": 1.2
+          },
+          {
+            "date": "2026-05-16",
+            "nodeSpeed": 6.4,
+            "targetSpeed": 8.9,
+            "actualRatio": 0.72,
+            "configRatio": 1.2
+          },
+          {
+            "date": "2026-05-20",
+            "nodeSpeed": 5.9,
+            "targetSpeed": 4.3,
+            "actualRatio": 1.37,
+            "configRatio": 1.2
+          },
+          {
+            "date": "2026-05-23",
+            "nodeSpeed": 5,
+            "targetSpeed": 4.3,
+            "actualRatio": 1.16,
+            "configRatio": 1.2
+          },
+          {
+            "date": "2026-05-24",
+            "nodeSpeed": 7.9,
+            "targetSpeed": 5.9,
+            "actualRatio": 1.34,
+            "configRatio": 1.2
+          },
+          {
+            "date": "2026-05-26",
+            "nodeSpeed": 4.6,
+            "targetSpeed": 4.2,
+            "actualRatio": 1.1,
+            "configRatio": 1.2
+          },
+          {
+            "date": "2026-05-28",
+            "nodeSpeed": 9.4,
+            "targetSpeed": 4.6,
+            "actualRatio": 2.04,
+            "configRatio": 1.2
+          },
+          {
+            "date": "2026-05-29",
+            "nodeSpeed": 4.7,
+            "targetSpeed": 7.2,
+            "actualRatio": 0.65,
+            "configRatio": 1.2
+          },
+          {
+            "date": "2026-05-30",
+            "nodeSpeed": 4.1,
+            "targetSpeed": 4.3,
+            "actualRatio": 0.95,
+            "configRatio": 1.2
+          }
+        ],
+        "UTPCY": [
+          {
+            "date": "2026-05-04",
+            "nodeSpeed": 4.4,
+            "targetSpeed": 4.8,
+            "actualRatio": 0.92,
+            "configRatio": 1.1
+          },
+          {
+            "date": "2026-05-07",
+            "nodeSpeed": 8.5,
+            "targetSpeed": 4.6,
+            "actualRatio": 1.85,
+            "configRatio": 1.1
+          },
+          {
+            "date": "2026-05-11",
+            "nodeSpeed": 4.8,
+            "targetSpeed": 6.1,
+            "actualRatio": 0.79,
+            "configRatio": 1.1
+          },
+          {
+            "date": "2026-05-12",
+            "nodeSpeed": 4.4,
+            "targetSpeed": 5.2,
+            "actualRatio": 0.85,
+            "configRatio": 1.1
+          },
+          {
+            "date": "2026-05-13",
+            "nodeSpeed": 7.5,
+            "targetSpeed": 8.8,
+            "actualRatio": 0.85,
+            "configRatio": 1.1
+          },
+          {
+            "date": "2026-05-15",
+            "nodeSpeed": 5.3,
+            "targetSpeed": 4.3,
+            "actualRatio": 1.23,
+            "configRatio": 1.1
+          },
+          {
+            "date": "2026-05-16",
+            "nodeSpeed": 4.1,
+            "targetSpeed": 8.9,
+            "actualRatio": 0.46,
+            "configRatio": 1.1
+          },
+          {
+            "date": "2026-05-20",
+            "nodeSpeed": 4,
+            "targetSpeed": 4.3,
+            "actualRatio": 0.93,
+            "configRatio": 1.1
+          },
+          {
+            "date": "2026-05-23",
+            "nodeSpeed": 4.9,
+            "targetSpeed": 4.3,
+            "actualRatio": 1.14,
+            "configRatio": 1.1
+          },
+          {
+            "date": "2026-05-24",
+            "nodeSpeed": 5.1,
+            "targetSpeed": 5.9,
+            "actualRatio": 0.86,
+            "configRatio": 1.1
+          },
+          {
+            "date": "2026-05-26",
+            "nodeSpeed": 4.4,
+            "targetSpeed": 4.2,
+            "actualRatio": 1.05,
+            "configRatio": 1.1
+          },
+          {
+            "date": "2026-05-28",
+            "nodeSpeed": 9.9,
+            "targetSpeed": 4.6,
+            "actualRatio": 2.15,
+            "configRatio": 1.1
+          },
+          {
+            "date": "2026-05-29",
+            "nodeSpeed": 4.7,
+            "targetSpeed": 7.2,
+            "actualRatio": 0.65,
+            "configRatio": 1.1
+          },
+          {
+            "date": "2026-05-31",
+            "nodeSpeed": 4.7,
+            "targetSpeed": 4.4,
+            "actualRatio": 1.07,
+            "configRatio": 1.1
+          }
+        ],
+        "UTCHL": [
+          {
+            "date": "2026-05-04",
+            "nodeSpeed": 4.8,
+            "targetSpeed": 4.8,
+            "actualRatio": 1,
+            "configRatio": 0.9
+          },
+          {
+            "date": "2026-05-07",
+            "nodeSpeed": 4.6,
+            "targetSpeed": 4.6,
+            "actualRatio": 1,
+            "configRatio": 0.9
+          },
+          {
+            "date": "2026-05-11",
+            "nodeSpeed": 6.1,
+            "targetSpeed": 6.1,
+            "actualRatio": 1,
+            "configRatio": 0.9
+          },
+          {
+            "date": "2026-05-12",
+            "nodeSpeed": 5.2,
+            "targetSpeed": 5.2,
+            "actualRatio": 1,
+            "configRatio": 0.9
+          },
+          {
+            "date": "2026-05-13",
+            "nodeSpeed": 8.8,
+            "targetSpeed": 8.8,
+            "actualRatio": 1,
+            "configRatio": 0.9
+          },
+          {
+            "date": "2026-05-15",
+            "nodeSpeed": 4.3,
+            "targetSpeed": 4.3,
+            "actualRatio": 1,
+            "configRatio": 0.9
+          },
+          {
+            "date": "2026-05-16",
+            "nodeSpeed": 8.9,
+            "targetSpeed": 8.9,
+            "actualRatio": 1,
+            "configRatio": 0.9
+          },
+          {
+            "date": "2026-05-20",
+            "nodeSpeed": 4.3,
+            "targetSpeed": 4.3,
+            "actualRatio": 1,
+            "configRatio": 0.9
+          },
+          {
+            "date": "2026-05-23",
+            "nodeSpeed": 4.3,
+            "targetSpeed": 4.3,
+            "actualRatio": 1,
+            "configRatio": 0.9
+          },
+          {
+            "date": "2026-05-24",
+            "nodeSpeed": 5.9,
+            "targetSpeed": 5.9,
+            "actualRatio": 1,
+            "configRatio": 0.9
+          },
+          {
+            "date": "2026-05-26",
+            "nodeSpeed": 4.2,
+            "targetSpeed": 4.2,
+            "actualRatio": 1,
+            "configRatio": 0.9
+          },
+          {
+            "date": "2026-05-28",
+            "nodeSpeed": 4.6,
+            "targetSpeed": 4.6,
+            "actualRatio": 1,
+            "configRatio": 0.9
+          },
+          {
+            "date": "2026-05-29",
+            "nodeSpeed": 7.2,
+            "targetSpeed": 7.2,
+            "actualRatio": 1,
+            "configRatio": 0.9
+          },
+          {
+            "date": "2026-05-30",
+            "nodeSpeed": 4.3,
+            "targetSpeed": 4.3,
+            "actualRatio": 1,
+            "configRatio": 0.9
+          },
+          {
+            "date": "2026-05-31",
+            "nodeSpeed": 4.4,
+            "targetSpeed": 4.4,
+            "actualRatio": 1,
+            "configRatio": 0.9
+          }
+        ],
+        "KUTMIDWA37": [
+          {
+            "date": "2026-05-04",
+            "nodeSpeed": 3.3,
+            "targetSpeed": 4.8,
+            "actualRatio": 0.69,
+            "configRatio": 0.85
+          },
+          {
+            "date": "2026-05-07",
+            "nodeSpeed": 3.6,
+            "targetSpeed": 4.6,
+            "actualRatio": 0.78,
+            "configRatio": 0.85
+          },
+          {
+            "date": "2026-05-11",
+            "nodeSpeed": 7,
+            "targetSpeed": 6.1,
+            "actualRatio": 1.15,
+            "configRatio": 0.85
+          },
+          {
+            "date": "2026-05-12",
+            "nodeSpeed": 3.7,
+            "targetSpeed": 5.2,
+            "actualRatio": 0.71,
+            "configRatio": 0.85
+          },
+          {
+            "date": "2026-05-13",
+            "nodeSpeed": 5.2,
+            "targetSpeed": 8.8,
+            "actualRatio": 0.59,
+            "configRatio": 0.85
+          },
+          {
+            "date": "2026-05-15",
+            "nodeSpeed": 4.3,
+            "targetSpeed": 4.3,
+            "actualRatio": 1,
+            "configRatio": 0.85
+          },
+          {
+            "date": "2026-05-16",
+            "nodeSpeed": 7.9,
+            "targetSpeed": 8.9,
+            "actualRatio": 0.89,
+            "configRatio": 0.85
+          },
+          {
+            "date": "2026-05-20",
+            "nodeSpeed": 4.3,
+            "targetSpeed": 4.3,
+            "actualRatio": 1,
+            "configRatio": 0.85
+          },
+          {
+            "date": "2026-05-23",
+            "nodeSpeed": 3.2,
+            "targetSpeed": 4.3,
+            "actualRatio": 0.74,
+            "configRatio": 0.85
+          },
+          {
+            "date": "2026-05-24",
+            "nodeSpeed": 5.9,
+            "targetSpeed": 5.9,
+            "actualRatio": 1,
+            "configRatio": 0.85
+          },
+          {
+            "date": "2026-05-26",
+            "nodeSpeed": 3.3,
+            "targetSpeed": 4.2,
+            "actualRatio": 0.79,
+            "configRatio": 0.85
+          },
+          {
+            "date": "2026-05-28",
+            "nodeSpeed": 4.6,
+            "targetSpeed": 4.6,
+            "actualRatio": 1,
+            "configRatio": 0.85
+          },
+          {
+            "date": "2026-05-29",
+            "nodeSpeed": 3.5,
+            "targetSpeed": 7.2,
+            "actualRatio": 0.49,
+            "configRatio": 0.85
+          },
+          {
+            "date": "2026-05-30",
+            "nodeSpeed": 3.8,
+            "targetSpeed": 4.3,
+            "actualRatio": 0.88,
+            "configRatio": 0.85
+          },
+          {
+            "date": "2026-05-31",
+            "nodeSpeed": 3.1,
+            "targetSpeed": 4.4,
+            "actualRatio": 0.7,
+            "configRatio": 0.85
+          }
+        ]
+      },
+      "lagSummary": {
+        "KUTPLEAS11": {
+          "samples": 12,
+          "configuredLag": -75,
+          "actualAvgLag": -205,
+          "meanError": -130,
+          "mae": 178,
+          "recommendedLag": -205
+        },
+        "UTLPC": {
+          "samples": 13,
+          "configuredLag": -60,
+          "actualAvgLag": 23,
+          "meanError": 83,
+          "mae": 129,
+          "recommendedLag": 23
+        },
+        "UTPCY": {
+          "samples": 14,
+          "configuredLag": -45,
+          "actualAvgLag": -51,
+          "meanError": -6,
+          "mae": 118,
+          "recommendedLag": -51
+        },
+        "KUTCEDAR10": {
+          "samples": 12,
+          "configuredLag": -35,
+          "actualAvgLag": -205,
+          "meanError": -170,
+          "mae": 202,
+          "recommendedLag": -205
+        },
+        "UTCHL": {
+          "samples": 15,
+          "configuredLag": -20,
+          "actualAvgLag": 0,
+          "meanError": 20,
+          "mae": 20,
+          "recommendedLag": 0
+        },
+        "KUTMIDWA37": {
+          "samples": 15,
+          "configuredLag": -10,
+          "actualAvgLag": -108,
+          "meanError": -98,
+          "mae": 103,
+          "recommendedLag": -108
+        },
+        "UTDCD": {
+          "samples": 0
+        }
+      },
+      "speedRatioSummary": {
+        "UTLPC": {
+          "configRatio": 1.2,
+          "actualAvgRatio": 1.12,
+          "samples": 13,
+          "recommendation": null
+        },
+        "UTPCY": {
+          "configRatio": 1.1,
+          "actualAvgRatio": 1.06,
+          "samples": 14,
+          "recommendation": null
+        },
+        "UTCHL": {
+          "configRatio": 0.9,
+          "actualAvgRatio": 1,
+          "samples": 15,
+          "recommendation": null
+        },
+        "KUTMIDWA37": {
+          "configRatio": 0.85,
+          "actualAvgRatio": 0.83,
+          "samples": 15,
+          "recommendation": null
+        }
+      }
+    },
+    {
+      "chainKey": "deer-creek:north_flow",
+      "label": "North Flow → Deer Creek",
+      "flowDir": "SLC → Heber → Dam",
+      "totalDays": 31,
+      "signalDays": 17,
+      "arrivedDays": 12,
+      "hitRate": 71,
+      "nodeStats": {
+        "KSLC": {
+          "name": "SLC Airport",
+          "configuredLag": -90,
+          "firedDays": 11,
+          "directionMatchDays": 0,
+          "avgSpeed": 9.4,
+          "avgOnsetHour": 14.3,
+          "optional": false
+        },
+        "KUTHEBER105": {
+          "name": "Heber City E WU",
+          "configuredLag": -45,
+          "firedDays": 12,
+          "directionMatchDays": 0,
+          "avgSpeed": 5.5,
+          "avgOnsetHour": 14.7,
+          "optional": true
+        },
+        "KHCR": {
+          "name": "Heber Airport",
+          "configuredLag": -30,
+          "firedDays": 10,
+          "directionMatchDays": 0,
+          "avgSpeed": 6.2,
+          "avgOnsetHour": 14.4,
+          "optional": false
+        },
+        "UTDCD": {
+          "name": "Deer Creek Dam",
+          "configuredLag": 0,
+          "firedDays": 12,
+          "directionMatchDays": 0,
+          "avgSpeed": 5.5,
+          "avgOnsetHour": 14.7,
+          "optional": false
+        }
+      },
+      "lagErrors": {
+        "KSLC": [
+          {
+            "date": "2026-05-06",
+            "actualLagMinutes": 60,
+            "configuredLag": -90,
+            "error": 150
+          },
+          {
+            "date": "2026-05-09",
+            "actualLagMinutes": 60,
+            "configuredLag": -90,
+            "error": 150
+          },
+          {
+            "date": "2026-05-15",
+            "actualLagMinutes": -240,
+            "configuredLag": -90,
+            "error": -150
+          },
+          {
+            "date": "2026-05-17",
+            "actualLagMinutes": 60,
+            "configuredLag": -90,
+            "error": 150
+          },
+          {
+            "date": "2026-05-18",
+            "actualLagMinutes": 0,
+            "configuredLag": -90,
+            "error": 90
+          },
+          {
+            "date": "2026-05-21",
+            "actualLagMinutes": -180,
+            "configuredLag": -90,
+            "error": -90
+          }
+        ],
+        "KUTHEBER105": [
+          {
+            "date": "2026-05-04",
+            "actualLagMinutes": 0,
+            "configuredLag": -45,
+            "error": 45
+          },
+          {
+            "date": "2026-05-06",
+            "actualLagMinutes": 0,
+            "configuredLag": -45,
+            "error": 45
+          },
+          {
+            "date": "2026-05-09",
+            "actualLagMinutes": 0,
+            "configuredLag": -45,
+            "error": 45
+          },
+          {
+            "date": "2026-05-15",
+            "actualLagMinutes": 0,
+            "configuredLag": -45,
+            "error": 45
+          },
+          {
+            "date": "2026-05-16",
+            "actualLagMinutes": 0,
+            "configuredLag": -45,
+            "error": 45
+          },
+          {
+            "date": "2026-05-17",
+            "actualLagMinutes": 0,
+            "configuredLag": -45,
+            "error": 45
+          },
+          {
+            "date": "2026-05-18",
+            "actualLagMinutes": 0,
+            "configuredLag": -45,
+            "error": 45
+          },
+          {
+            "date": "2026-05-19",
+            "actualLagMinutes": 0,
+            "configuredLag": -45,
+            "error": 45
+          },
+          {
+            "date": "2026-05-21",
+            "actualLagMinutes": 0,
+            "configuredLag": -45,
+            "error": 45
+          },
+          {
+            "date": "2026-05-24",
+            "actualLagMinutes": 0,
+            "configuredLag": -45,
+            "error": 45
+          },
+          {
+            "date": "2026-05-25",
+            "actualLagMinutes": 0,
+            "configuredLag": -45,
+            "error": 45
+          },
+          {
+            "date": "2026-05-31",
+            "actualLagMinutes": 0,
+            "configuredLag": -45,
+            "error": 45
+          }
+        ],
+        "KHCR": [
+          {
+            "date": "2026-05-04",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          },
+          {
+            "date": "2026-05-06",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          },
+          {
+            "date": "2026-05-09",
+            "actualLagMinutes": 120,
+            "configuredLag": -30,
+            "error": 150
+          },
+          {
+            "date": "2026-05-15",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          },
+          {
+            "date": "2026-05-17",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          },
+          {
+            "date": "2026-05-18",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          },
+          {
+            "date": "2026-05-19",
+            "actualLagMinutes": 60,
+            "configuredLag": -30,
+            "error": 90
+          },
+          {
+            "date": "2026-05-21",
+            "actualLagMinutes": 60,
+            "configuredLag": -30,
+            "error": 90
+          },
+          {
+            "date": "2026-05-24",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          },
+          {
+            "date": "2026-05-25",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          }
+        ],
+        "UTDCD": []
+      },
+      "speedRatioActuals": {},
+      "lagSummary": {
+        "KSLC": {
+          "samples": 6,
+          "configuredLag": -90,
+          "actualAvgLag": -40,
+          "meanError": 50,
+          "mae": 130,
+          "recommendedLag": -40
+        },
+        "KUTHEBER105": {
+          "samples": 12,
+          "configuredLag": -45,
+          "actualAvgLag": 0,
+          "meanError": 45,
+          "mae": 45,
+          "recommendedLag": 0
+        },
+        "KHCR": {
+          "samples": 10,
+          "configuredLag": -30,
+          "actualAvgLag": 24,
+          "meanError": 54,
+          "mae": 54,
+          "recommendedLag": 24
+        },
+        "UTDCD": {
+          "samples": 0
+        }
+      },
+      "speedRatioSummary": {}
+    },
+    {
+      "chainKey": "willard-bay:south_flow",
+      "label": "South Flow → Willard Bay",
+      "flowDir": "S → N",
+      "totalDays": 31,
+      "signalDays": 17,
+      "arrivedDays": 11,
+      "hitRate": 65,
+      "nodeStats": {
+        "KSLC": {
+          "name": "SLC Airport",
+          "configuredLag": -90,
+          "firedDays": 15,
+          "directionMatchDays": 0,
+          "avgSpeed": 9.4,
+          "avgOnsetHour": 10.3,
+          "optional": false
+        },
+        "KHIF": {
+          "name": "Hill AFB",
+          "configuredLag": -60,
+          "firedDays": 14,
+          "directionMatchDays": 0,
+          "avgSpeed": 6.9,
+          "avgOnsetHour": 11.2,
+          "optional": false
+        },
+        "KOGD": {
+          "name": "Ogden Airport",
+          "configuredLag": -30,
+          "firedDays": 10,
+          "directionMatchDays": 0,
+          "avgSpeed": 7.5,
+          "avgOnsetHour": 11.3,
+          "optional": false
+        },
+        "UR328": {
+          "name": "Willard Bay South",
+          "configuredLag": 0,
+          "firedDays": 14,
+          "directionMatchDays": 0,
+          "avgSpeed": 8,
+          "avgOnsetHour": 12.9,
+          "optional": false
+        }
+      },
+      "lagErrors": {
+        "KSLC": [
+          {
+            "date": "2026-05-04",
+            "actualLagMinutes": -60,
+            "configuredLag": -90,
+            "error": 30
+          },
+          {
+            "date": "2026-05-07",
+            "actualLagMinutes": -180,
+            "configuredLag": -90,
+            "error": -90
+          },
+          {
+            "date": "2026-05-11",
+            "actualLagMinutes": -120,
+            "configuredLag": -90,
+            "error": -30
+          },
+          {
+            "date": "2026-05-13",
+            "actualLagMinutes": -240,
+            "configuredLag": -90,
+            "error": -150
+          },
+          {
+            "date": "2026-05-24",
+            "actualLagMinutes": -60,
+            "configuredLag": -90,
+            "error": 30
+          },
+          {
+            "date": "2026-05-25",
+            "actualLagMinutes": -120,
+            "configuredLag": -90,
+            "error": -30
+          },
+          {
+            "date": "2026-05-26",
+            "actualLagMinutes": -120,
+            "configuredLag": -90,
+            "error": -30
+          },
+          {
+            "date": "2026-05-27",
+            "actualLagMinutes": -240,
+            "configuredLag": -90,
+            "error": -150
+          },
+          {
+            "date": "2026-05-28",
+            "actualLagMinutes": -60,
+            "configuredLag": -90,
+            "error": 30
+          },
+          {
+            "date": "2026-05-29",
+            "actualLagMinutes": 0,
+            "configuredLag": -90,
+            "error": 90
+          }
+        ],
+        "KHIF": [
+          {
+            "date": "2026-05-04",
+            "actualLagMinutes": -60,
+            "configuredLag": -60,
+            "error": 0
+          },
+          {
+            "date": "2026-05-07",
+            "actualLagMinutes": -60,
+            "configuredLag": -60,
+            "error": 0
+          },
+          {
+            "date": "2026-05-11",
+            "actualLagMinutes": -120,
+            "configuredLag": -60,
+            "error": -60
+          },
+          {
+            "date": "2026-05-13",
+            "actualLagMinutes": -120,
+            "configuredLag": -60,
+            "error": -60
+          },
+          {
+            "date": "2026-05-24",
+            "actualLagMinutes": 0,
+            "configuredLag": -60,
+            "error": 60
+          },
+          {
+            "date": "2026-05-25",
+            "actualLagMinutes": 0,
+            "configuredLag": -60,
+            "error": 60
+          },
+          {
+            "date": "2026-05-26",
+            "actualLagMinutes": -60,
+            "configuredLag": -60,
+            "error": 0
+          },
+          {
+            "date": "2026-05-27",
+            "actualLagMinutes": -120,
+            "configuredLag": -60,
+            "error": -60
+          },
+          {
+            "date": "2026-05-28",
+            "actualLagMinutes": 120,
+            "configuredLag": -60,
+            "error": 180
+          },
+          {
+            "date": "2026-05-29",
+            "actualLagMinutes": 0,
+            "configuredLag": -60,
+            "error": 60
+          },
+          {
+            "date": "2026-05-30",
+            "actualLagMinutes": -180,
+            "configuredLag": -60,
+            "error": -120
+          }
+        ],
+        "KOGD": [
+          {
+            "date": "2026-05-04",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          },
+          {
+            "date": "2026-05-07",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          },
+          {
+            "date": "2026-05-11",
+            "actualLagMinutes": -60,
+            "configuredLag": -30,
+            "error": -30
+          },
+          {
+            "date": "2026-05-13",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          },
+          {
+            "date": "2026-05-24",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          },
+          {
+            "date": "2026-05-25",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          },
+          {
+            "date": "2026-05-26",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          },
+          {
+            "date": "2026-05-27",
+            "actualLagMinutes": 120,
+            "configuredLag": -30,
+            "error": 150
+          },
+          {
+            "date": "2026-05-28",
+            "actualLagMinutes": 120,
+            "configuredLag": -30,
+            "error": 150
+          },
+          {
+            "date": "2026-05-30",
+            "actualLagMinutes": -180,
+            "configuredLag": -30,
+            "error": -150
+          }
+        ],
+        "UR328": []
+      },
+      "speedRatioActuals": {},
+      "lagSummary": {
+        "KSLC": {
+          "samples": 10,
+          "configuredLag": -90,
+          "actualAvgLag": -120,
+          "meanError": -30,
+          "mae": 66,
+          "recommendedLag": -120
+        },
+        "KHIF": {
+          "samples": 11,
+          "configuredLag": -60,
+          "actualAvgLag": -55,
+          "meanError": 5,
+          "mae": 60,
+          "recommendedLag": -55
+        },
+        "KOGD": {
+          "samples": 10,
+          "configuredLag": -30,
+          "actualAvgLag": 0,
+          "meanError": 30,
+          "mae": 66,
+          "recommendedLag": 0
+        },
+        "UR328": {
+          "samples": 0
+        }
+      },
+      "speedRatioSummary": {}
+    },
+    {
+      "chainKey": "jordanelle:canyon_thermal",
+      "label": "Canyon Thermal → Jordanelle",
+      "flowDir": "Canyon → Valley",
+      "totalDays": 31,
+      "signalDays": 21,
+      "arrivedDays": 16,
+      "hitRate": 76,
+      "nodeStats": {
+        "UTLPC": {
+          "name": "Lower Provo Canyon",
+          "configuredLag": -60,
+          "firedDays": 16,
+          "directionMatchDays": 0,
+          "avgSpeed": 5.7,
+          "avgOnsetHour": 12.9,
+          "optional": false
+        },
+        "UTCHL": {
+          "name": "Charleston",
+          "configuredLag": -30,
+          "firedDays": 19,
+          "directionMatchDays": 0,
+          "avgSpeed": 5.3,
+          "avgOnsetHour": 12.4,
+          "optional": false
+        },
+        "KHCR": {
+          "name": "Heber Airport",
+          "configuredLag": 0,
+          "firedDays": 16,
+          "directionMatchDays": 0,
+          "avgSpeed": 6.3,
+          "avgOnsetHour": 13,
+          "optional": false
+        }
+      },
+      "lagErrors": {
+        "UTLPC": [
+          {
+            "date": "2026-05-04",
+            "actualLagMinutes": 60,
+            "configuredLag": -60,
+            "error": 120
+          },
+          {
+            "date": "2026-05-07",
+            "actualLagMinutes": -60,
+            "configuredLag": -60,
+            "error": 0
+          },
+          {
+            "date": "2026-05-11",
+            "actualLagMinutes": -60,
+            "configuredLag": -60,
+            "error": 0
+          },
+          {
+            "date": "2026-05-12",
+            "actualLagMinutes": 0,
+            "configuredLag": -60,
+            "error": 60
+          },
+          {
+            "date": "2026-05-13",
+            "actualLagMinutes": 60,
+            "configuredLag": -60,
+            "error": 120
+          },
+          {
+            "date": "2026-05-14",
+            "actualLagMinutes": -120,
+            "configuredLag": -60,
+            "error": -60
+          },
+          {
+            "date": "2026-05-16",
+            "actualLagMinutes": 60,
+            "configuredLag": -60,
+            "error": 120
+          },
+          {
+            "date": "2026-05-20",
+            "actualLagMinutes": 0,
+            "configuredLag": -60,
+            "error": 60
+          },
+          {
+            "date": "2026-05-23",
+            "actualLagMinutes": 120,
+            "configuredLag": -60,
+            "error": 180
+          },
+          {
+            "date": "2026-05-24",
+            "actualLagMinutes": 120,
+            "configuredLag": -60,
+            "error": 180
+          },
+          {
+            "date": "2026-05-26",
+            "actualLagMinutes": -60,
+            "configuredLag": -60,
+            "error": 0
+          },
+          {
+            "date": "2026-05-28",
+            "actualLagMinutes": -180,
+            "configuredLag": -60,
+            "error": -120
+          },
+          {
+            "date": "2026-05-29",
+            "actualLagMinutes": 0,
+            "configuredLag": -60,
+            "error": 60
+          }
+        ],
+        "UTCHL": [
+          {
+            "date": "2026-05-04",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          },
+          {
+            "date": "2026-05-07",
+            "actualLagMinutes": -60,
+            "configuredLag": -30,
+            "error": -30
+          },
+          {
+            "date": "2026-05-11",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          },
+          {
+            "date": "2026-05-12",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          },
+          {
+            "date": "2026-05-13",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          },
+          {
+            "date": "2026-05-14",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          },
+          {
+            "date": "2026-05-15",
+            "actualLagMinutes": -60,
+            "configuredLag": -30,
+            "error": -30
+          },
+          {
+            "date": "2026-05-16",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          },
+          {
+            "date": "2026-05-20",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          },
+          {
+            "date": "2026-05-23",
+            "actualLagMinutes": -60,
+            "configuredLag": -30,
+            "error": -30
+          },
+          {
+            "date": "2026-05-24",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          },
+          {
+            "date": "2026-05-26",
+            "actualLagMinutes": -60,
+            "configuredLag": -30,
+            "error": -30
+          },
+          {
+            "date": "2026-05-28",
+            "actualLagMinutes": -540,
+            "configuredLag": -30,
+            "error": -510
+          },
+          {
+            "date": "2026-05-29",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          },
+          {
+            "date": "2026-05-31",
+            "actualLagMinutes": -60,
+            "configuredLag": -30,
+            "error": -30
+          },
+          {
+            "date": "2026-06-01",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          }
+        ],
+        "KHCR": []
+      },
+      "speedRatioActuals": {},
+      "lagSummary": {
+        "UTLPC": {
+          "samples": 13,
+          "configuredLag": -60,
+          "actualAvgLag": -5,
+          "meanError": 55,
+          "mae": 83,
+          "recommendedLag": -5
+        },
+        "UTCHL": {
+          "samples": 16,
+          "configuredLag": -30,
+          "actualAvgLag": -52,
+          "meanError": -22,
+          "mae": 60,
+          "recommendedLag": -52
+        },
+        "KHCR": {
+          "samples": 0
+        }
+      },
+      "speedRatioSummary": {}
+    },
+    {
+      "chainKey": "strawberry:ridge_flow",
+      "label": "Ridge Flow → Strawberry",
+      "flowDir": "W → E",
+      "totalDays": 31,
+      "signalDays": 26,
+      "arrivedDays": 26,
+      "hitRate": 100,
+      "nodeStats": {
+        "KSLC": {
+          "name": "SLC Airport",
+          "configuredLag": -120,
+          "firedDays": 6,
+          "directionMatchDays": 0,
+          "avgSpeed": 7.4,
+          "avgOnsetHour": 14.8,
+          "optional": false
+        },
+        "KPVU": {
+          "name": "Provo Airport",
+          "configuredLag": -90,
+          "firedDays": 1,
+          "directionMatchDays": 0,
+          "avgSpeed": 11.3,
+          "avgOnsetHour": 16,
+          "optional": false
+        },
+        "CCPUT": {
+          "name": "Currant Creek Pass",
+          "configuredLag": -45,
+          "firedDays": 24,
+          "directionMatchDays": 0,
+          "avgSpeed": 7.1,
+          "avgOnsetHour": 11.2,
+          "optional": false
+        },
+        "UTCOP": {
+          "name": "Strawberry Co-op",
+          "configuredLag": 0,
+          "firedDays": 28,
+          "directionMatchDays": 0,
+          "avgSpeed": 6.8,
+          "avgOnsetHour": 11.6,
+          "optional": false
+        }
+      },
+      "lagErrors": {
+        "KSLC": [
+          {
+            "date": "2026-05-06",
+            "actualLagMinutes": 420,
+            "configuredLag": -120,
+            "error": 540
+          },
+          {
+            "date": "2026-05-15",
+            "actualLagMinutes": 60,
+            "configuredLag": -120,
+            "error": 180
+          },
+          {
+            "date": "2026-05-17",
+            "actualLagMinutes": 0,
+            "configuredLag": -120,
+            "error": 120
+          },
+          {
+            "date": "2026-05-18",
+            "actualLagMinutes": 540,
+            "configuredLag": -120,
+            "error": 660
+          },
+          {
+            "date": "2026-05-19",
+            "actualLagMinutes": -120,
+            "configuredLag": -120,
+            "error": 0
+          },
+          {
+            "date": "2026-05-29",
+            "actualLagMinutes": -180,
+            "configuredLag": -120,
+            "error": -60
+          }
+        ],
+        "KPVU": [
+          {
+            "date": "2026-05-04",
+            "actualLagMinutes": 360,
+            "configuredLag": -90,
+            "error": 450
+          }
+        ],
+        "CCPUT": [
+          {
+            "date": "2026-05-02",
+            "actualLagMinutes": 60,
+            "configuredLag": -45,
+            "error": 105
+          },
+          {
+            "date": "2026-05-03",
+            "actualLagMinutes": 0,
+            "configuredLag": -45,
+            "error": 45
+          },
+          {
+            "date": "2026-05-05",
+            "actualLagMinutes": 300,
+            "configuredLag": -45,
+            "error": 345
+          },
+          {
+            "date": "2026-05-06",
+            "actualLagMinutes": -120,
+            "configuredLag": -45,
+            "error": -75
+          },
+          {
+            "date": "2026-05-07",
+            "actualLagMinutes": 60,
+            "configuredLag": -45,
+            "error": 105
+          },
+          {
+            "date": "2026-05-08",
+            "actualLagMinutes": -60,
+            "configuredLag": -45,
+            "error": -15
+          },
+          {
+            "date": "2026-05-09",
+            "actualLagMinutes": -120,
+            "configuredLag": -45,
+            "error": -75
+          },
+          {
+            "date": "2026-05-10",
+            "actualLagMinutes": 0,
+            "configuredLag": -45,
+            "error": 45
+          },
+          {
+            "date": "2026-05-11",
+            "actualLagMinutes": 60,
+            "configuredLag": -45,
+            "error": 105
+          },
+          {
+            "date": "2026-05-12",
+            "actualLagMinutes": 120,
+            "configuredLag": -45,
+            "error": 165
+          },
+          {
+            "date": "2026-05-14",
+            "actualLagMinutes": 0,
+            "configuredLag": -45,
+            "error": 45
+          },
+          {
+            "date": "2026-05-15",
+            "actualLagMinutes": 0,
+            "configuredLag": -45,
+            "error": 45
+          },
+          {
+            "date": "2026-05-16",
+            "actualLagMinutes": 60,
+            "configuredLag": -45,
+            "error": 105
+          },
+          {
+            "date": "2026-05-17",
+            "actualLagMinutes": -120,
+            "configuredLag": -45,
+            "error": -75
+          },
+          {
+            "date": "2026-05-18",
+            "actualLagMinutes": 0,
+            "configuredLag": -45,
+            "error": 45
+          },
+          {
+            "date": "2026-05-19",
+            "actualLagMinutes": -360,
+            "configuredLag": -45,
+            "error": -315
+          },
+          {
+            "date": "2026-05-20",
+            "actualLagMinutes": -120,
+            "configuredLag": -45,
+            "error": -75
+          },
+          {
+            "date": "2026-05-21",
+            "actualLagMinutes": -60,
+            "configuredLag": -45,
+            "error": -15
+          },
+          {
+            "date": "2026-05-22",
+            "actualLagMinutes": -60,
+            "configuredLag": -45,
+            "error": -15
+          },
+          {
+            "date": "2026-05-23",
+            "actualLagMinutes": 60,
+            "configuredLag": -45,
+            "error": 105
+          },
+          {
+            "date": "2026-05-24",
+            "actualLagMinutes": 120,
+            "configuredLag": -45,
+            "error": 165
+          },
+          {
+            "date": "2026-05-30",
+            "actualLagMinutes": 180,
+            "configuredLag": -45,
+            "error": 225
+          },
+          {
+            "date": "2026-05-31",
+            "actualLagMinutes": 60,
+            "configuredLag": -45,
+            "error": 105
+          },
+          {
+            "date": "2026-06-01",
+            "actualLagMinutes": 60,
+            "configuredLag": -45,
+            "error": 105
+          }
+        ],
+        "UTCOP": []
+      },
+      "speedRatioActuals": {},
+      "lagSummary": {
+        "KSLC": {
+          "samples": 6,
+          "configuredLag": -120,
+          "actualAvgLag": 120,
+          "meanError": 240,
+          "mae": 260,
+          "recommendedLag": 120
+        },
+        "KPVU": {
+          "samples": 1,
+          "configuredLag": -90,
+          "actualAvgLag": 360,
+          "meanError": 450,
+          "mae": 450,
+          "recommendedLag": 360
+        },
+        "CCPUT": {
+          "samples": 24,
+          "configuredLag": -45,
+          "actualAvgLag": 5,
+          "meanError": 50,
+          "mae": 105,
+          "recommendedLag": 5
+        },
+        "UTCOP": {
+          "samples": 0
+        }
+      },
+      "speedRatioSummary": {}
+    },
+    {
+      "chainKey": "bear-lake:west_flow",
+      "label": "West Wind → Bear Lake",
+      "flowDir": "W → E",
+      "totalDays": 31,
+      "signalDays": 11,
+      "arrivedDays": 9,
+      "hitRate": 82,
+      "nodeStats": {
+        "KLGU": {
+          "name": "Logan Airport",
+          "configuredLag": -60,
+          "firedDays": 11,
+          "directionMatchDays": 0,
+          "avgSpeed": 6.2,
+          "avgOnsetHour": 13.1,
+          "optional": false
+        },
+        "BERU1": {
+          "name": "Bear River RAWS",
+          "configuredLag": 0,
+          "firedDays": 18,
+          "directionMatchDays": 0,
+          "avgSpeed": 9.5,
+          "avgOnsetHour": 13.4,
+          "optional": false
+        }
+      },
+      "lagErrors": {
+        "KLGU": [
+          {
+            "date": "2026-05-07",
+            "actualLagMinutes": 240,
+            "configuredLag": -60,
+            "error": 300
+          },
+          {
+            "date": "2026-05-08",
+            "actualLagMinutes": 60,
+            "configuredLag": -60,
+            "error": 120
+          },
+          {
+            "date": "2026-05-09",
+            "actualLagMinutes": 0,
+            "configuredLag": -60,
+            "error": 60
+          },
+          {
+            "date": "2026-05-15",
+            "actualLagMinutes": 120,
+            "configuredLag": -60,
+            "error": 180
+          },
+          {
+            "date": "2026-05-16",
+            "actualLagMinutes": 120,
+            "configuredLag": -60,
+            "error": 180
+          },
+          {
+            "date": "2026-05-20",
+            "actualLagMinutes": -120,
+            "configuredLag": -60,
+            "error": -60
+          },
+          {
+            "date": "2026-05-21",
+            "actualLagMinutes": 60,
+            "configuredLag": -60,
+            "error": 120
+          },
+          {
+            "date": "2026-05-23",
+            "actualLagMinutes": 60,
+            "configuredLag": -60,
+            "error": 120
+          },
+          {
+            "date": "2026-06-01",
+            "actualLagMinutes": 180,
+            "configuredLag": -60,
+            "error": 240
+          }
+        ],
+        "BERU1": []
+      },
+      "speedRatioActuals": {},
+      "lagSummary": {
+        "KLGU": {
+          "samples": 9,
+          "configuredLag": -60,
+          "actualAvgLag": 80,
+          "meanError": 140,
+          "mae": 153,
+          "recommendedLag": 80
+        },
+        "BERU1": {
+          "samples": 0
+        }
+      },
+      "speedRatioSummary": {}
+    },
+    {
+      "chainKey": "skyline:ridge_flow",
+      "label": "Ridge Flow → Skyline",
+      "flowDir": "W → E",
+      "totalDays": 31,
+      "signalDays": 24,
+      "arrivedDays": 21,
+      "hitRate": 88,
+      "nodeStats": {
+        "KSLC": {
+          "name": "SLC Airport",
+          "configuredLag": -120,
+          "firedDays": 3,
+          "directionMatchDays": 0,
+          "avgSpeed": 9.6,
+          "avgOnsetHour": 15,
+          "optional": false
+        },
+        "UTESU": {
+          "name": "Ephraim Ridge",
+          "configuredLag": -30,
+          "firedDays": 23,
+          "directionMatchDays": 0,
+          "avgSpeed": 9,
+          "avgOnsetHour": 10.8,
+          "optional": false
+        },
+        "SKY": {
+          "name": "Skyline Drive",
+          "configuredLag": 0,
+          "firedDays": 21,
+          "directionMatchDays": 0,
+          "avgSpeed": 10.8,
+          "avgOnsetHour": 11.4,
+          "optional": false
+        }
+      },
+      "lagErrors": {
+        "KSLC": [
+          {
+            "date": "2026-05-06",
+            "actualLagMinutes": 420,
+            "configuredLag": -120,
+            "error": 540
+          },
+          {
+            "date": "2026-05-17",
+            "actualLagMinutes": 0,
+            "configuredLag": -120,
+            "error": 120
+          }
+        ],
+        "UTESU": [
+          {
+            "date": "2026-05-05",
+            "actualLagMinutes": -120,
+            "configuredLag": -30,
+            "error": -90
+          },
+          {
+            "date": "2026-05-06",
+            "actualLagMinutes": -60,
+            "configuredLag": -30,
+            "error": -30
+          },
+          {
+            "date": "2026-05-07",
+            "actualLagMinutes": -60,
+            "configuredLag": -30,
+            "error": -30
+          },
+          {
+            "date": "2026-05-08",
+            "actualLagMinutes": -120,
+            "configuredLag": -30,
+            "error": -90
+          },
+          {
+            "date": "2026-05-09",
+            "actualLagMinutes": -120,
+            "configuredLag": -30,
+            "error": -90
+          },
+          {
+            "date": "2026-05-11",
+            "actualLagMinutes": -60,
+            "configuredLag": -30,
+            "error": -30
+          },
+          {
+            "date": "2026-05-12",
+            "actualLagMinutes": -120,
+            "configuredLag": -30,
+            "error": -90
+          },
+          {
+            "date": "2026-05-13",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          },
+          {
+            "date": "2026-05-14",
+            "actualLagMinutes": -60,
+            "configuredLag": -30,
+            "error": -30
+          },
+          {
+            "date": "2026-05-15",
+            "actualLagMinutes": -120,
+            "configuredLag": -30,
+            "error": -90
+          },
+          {
+            "date": "2026-05-16",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          },
+          {
+            "date": "2026-05-17",
+            "actualLagMinutes": -60,
+            "configuredLag": -30,
+            "error": -30
+          },
+          {
+            "date": "2026-05-18",
+            "actualLagMinutes": -60,
+            "configuredLag": -30,
+            "error": -30
+          },
+          {
+            "date": "2026-05-20",
+            "actualLagMinutes": -120,
+            "configuredLag": -30,
+            "error": -90
+          },
+          {
+            "date": "2026-05-21",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          },
+          {
+            "date": "2026-05-22",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          },
+          {
+            "date": "2026-05-23",
+            "actualLagMinutes": -60,
+            "configuredLag": -30,
+            "error": -30
+          },
+          {
+            "date": "2026-05-24",
+            "actualLagMinutes": -120,
+            "configuredLag": -30,
+            "error": -90
+          },
+          {
+            "date": "2026-05-30",
+            "actualLagMinutes": -60,
+            "configuredLag": -30,
+            "error": -30
+          },
+          {
+            "date": "2026-05-31",
+            "actualLagMinutes": -60,
+            "configuredLag": -30,
+            "error": -30
+          },
+          {
+            "date": "2026-06-01",
+            "actualLagMinutes": -60,
+            "configuredLag": -30,
+            "error": -30
+          }
+        ],
+        "SKY": []
+      },
+      "speedRatioActuals": {},
+      "lagSummary": {
+        "KSLC": {
+          "samples": 2,
+          "configuredLag": -120,
+          "actualAvgLag": 210,
+          "meanError": 330,
+          "mae": 330,
+          "recommendedLag": 210
+        },
+        "UTESU": {
+          "samples": 21,
+          "configuredLag": -30,
+          "actualAvgLag": -69,
+          "meanError": -39,
+          "mae": 50,
+          "recommendedLag": -69
+        },
+        "SKY": {
+          "samples": 0
+        }
+      },
+      "speedRatioSummary": {}
+    },
+    {
+      "chainKey": "echo:i80_corridor",
+      "label": "I-80 Corridor → Echo Reservoir",
+      "flowDir": "W → E (I-80)",
+      "totalDays": 31,
+      "signalDays": 21,
+      "arrivedDays": 18,
+      "hitRate": 86,
+      "nodeStats": {
+        "KSLC": {
+          "name": "SLC Airport",
+          "configuredLag": -90,
+          "firedDays": 3,
+          "directionMatchDays": 0,
+          "avgSpeed": 9.6,
+          "avgOnsetHour": 15,
+          "optional": false
+        },
+        "UTALP": {
+          "name": "Point of Mountain",
+          "configuredLag": -75,
+          "firedDays": 2,
+          "directionMatchDays": 0,
+          "avgSpeed": 6.3,
+          "avgOnsetHour": 10.5,
+          "optional": false
+        },
+        "KUTPARKCITY4": {
+          "name": "Park City (WU)",
+          "configuredLag": -45,
+          "firedDays": 15,
+          "directionMatchDays": 0,
+          "avgSpeed": 6.3,
+          "avgOnsetHour": 13.3,
+          "optional": true
+        },
+        "KUTWANSH1": {
+          "name": "Wanship (WU)",
+          "configuredLag": -20,
+          "firedDays": 16,
+          "directionMatchDays": 0,
+          "avgSpeed": 6,
+          "avgOnsetHour": 12.3,
+          "optional": true
+        },
+        "KUTCOALV2": {
+          "name": "Coalville (WU)",
+          "configuredLag": 0,
+          "firedDays": 19,
+          "directionMatchDays": 0,
+          "avgSpeed": 6.7,
+          "avgOnsetHour": 12.6,
+          "optional": false
+        }
+      },
+      "lagErrors": {
+        "KSLC": [
+          {
+            "date": "2026-05-06",
+            "actualLagMinutes": 120,
+            "configuredLag": -90,
+            "error": 210
+          },
+          {
+            "date": "2026-05-17",
+            "actualLagMinutes": -180,
+            "configuredLag": -90,
+            "error": -90
+          }
+        ],
+        "UTALP": [
+          {
+            "date": "2026-05-04",
+            "actualLagMinutes": -120,
+            "configuredLag": -75,
+            "error": -45
+          }
+        ],
+        "KUTPARKCITY4": [
+          {
+            "date": "2026-05-07",
+            "actualLagMinutes": 0,
+            "configuredLag": -45,
+            "error": 45
+          },
+          {
+            "date": "2026-05-08",
+            "actualLagMinutes": -60,
+            "configuredLag": -45,
+            "error": -15
+          },
+          {
+            "date": "2026-05-09",
+            "actualLagMinutes": -120,
+            "configuredLag": -45,
+            "error": -75
+          },
+          {
+            "date": "2026-05-11",
+            "actualLagMinutes": 120,
+            "configuredLag": -45,
+            "error": 165
+          },
+          {
+            "date": "2026-05-14",
+            "actualLagMinutes": 180,
+            "configuredLag": -45,
+            "error": 225
+          },
+          {
+            "date": "2026-05-15",
+            "actualLagMinutes": 0,
+            "configuredLag": -45,
+            "error": 45
+          },
+          {
+            "date": "2026-05-16",
+            "actualLagMinutes": 180,
+            "configuredLag": -45,
+            "error": 225
+          },
+          {
+            "date": "2026-05-17",
+            "actualLagMinutes": 0,
+            "configuredLag": -45,
+            "error": 45
+          },
+          {
+            "date": "2026-05-21",
+            "actualLagMinutes": 0,
+            "configuredLag": -45,
+            "error": 45
+          },
+          {
+            "date": "2026-05-23",
+            "actualLagMinutes": 0,
+            "configuredLag": -45,
+            "error": 45
+          },
+          {
+            "date": "2026-05-24",
+            "actualLagMinutes": 0,
+            "configuredLag": -45,
+            "error": 45
+          },
+          {
+            "date": "2026-05-30",
+            "actualLagMinutes": 480,
+            "configuredLag": -45,
+            "error": 525
+          },
+          {
+            "date": "2026-05-31",
+            "actualLagMinutes": 120,
+            "configuredLag": -45,
+            "error": 165
+          },
+          {
+            "date": "2026-06-01",
+            "actualLagMinutes": 120,
+            "configuredLag": -45,
+            "error": 165
+          }
+        ],
+        "KUTWANSH1": [
+          {
+            "date": "2026-05-04",
+            "actualLagMinutes": 0,
+            "configuredLag": -20,
+            "error": 20
+          },
+          {
+            "date": "2026-05-05",
+            "actualLagMinutes": -240,
+            "configuredLag": -20,
+            "error": -220
+          },
+          {
+            "date": "2026-05-06",
+            "actualLagMinutes": 60,
+            "configuredLag": -20,
+            "error": 80
+          },
+          {
+            "date": "2026-05-07",
+            "actualLagMinutes": 0,
+            "configuredLag": -20,
+            "error": 20
+          },
+          {
+            "date": "2026-05-08",
+            "actualLagMinutes": -60,
+            "configuredLag": -20,
+            "error": -40
+          },
+          {
+            "date": "2026-05-11",
+            "actualLagMinutes": 0,
+            "configuredLag": -20,
+            "error": 20
+          },
+          {
+            "date": "2026-05-14",
+            "actualLagMinutes": 180,
+            "configuredLag": -20,
+            "error": 200
+          },
+          {
+            "date": "2026-05-15",
+            "actualLagMinutes": -120,
+            "configuredLag": -20,
+            "error": -100
+          },
+          {
+            "date": "2026-05-16",
+            "actualLagMinutes": 0,
+            "configuredLag": -20,
+            "error": 20
+          },
+          {
+            "date": "2026-05-23",
+            "actualLagMinutes": 0,
+            "configuredLag": -20,
+            "error": 20
+          },
+          {
+            "date": "2026-05-24",
+            "actualLagMinutes": 0,
+            "configuredLag": -20,
+            "error": 20
+          },
+          {
+            "date": "2026-05-29",
+            "actualLagMinutes": -360,
+            "configuredLag": -20,
+            "error": -340
+          },
+          {
+            "date": "2026-05-30",
+            "actualLagMinutes": 60,
+            "configuredLag": -20,
+            "error": 80
+          },
+          {
+            "date": "2026-05-31",
+            "actualLagMinutes": 0,
+            "configuredLag": -20,
+            "error": 20
+          },
+          {
+            "date": "2026-06-01",
+            "actualLagMinutes": 60,
+            "configuredLag": -20,
+            "error": 80
+          }
+        ],
+        "KUTCOALV2": []
+      },
+      "speedRatioActuals": {},
+      "lagSummary": {
+        "KSLC": {
+          "samples": 2,
+          "configuredLag": -90,
+          "actualAvgLag": -30,
+          "meanError": 60,
+          "mae": 150,
+          "recommendedLag": -30
+        },
+        "UTALP": {
+          "samples": 1,
+          "configuredLag": -75,
+          "actualAvgLag": -120,
+          "meanError": -45,
+          "mae": 45,
+          "recommendedLag": -120
+        },
+        "KUTPARKCITY4": {
+          "samples": 14,
+          "configuredLag": -45,
+          "actualAvgLag": 73,
+          "meanError": 118,
+          "mae": 131,
+          "recommendedLag": 73
+        },
+        "KUTWANSH1": {
+          "samples": 15,
+          "configuredLag": -20,
+          "actualAvgLag": -28,
+          "meanError": -8,
+          "mae": 85,
+          "recommendedLag": -28
+        },
+        "KUTCOALV2": {
+          "samples": 0
+        }
+      },
+      "speedRatioSummary": {}
+    },
+    {
+      "chainKey": "rockport:sw_corridor",
+      "label": "SW Corridor → Rockport",
+      "flowDir": "SW → NE",
+      "totalDays": 31,
+      "signalDays": 21,
+      "arrivedDays": 15,
+      "hitRate": 71,
+      "nodeStats": {
+        "KSLC": {
+          "name": "SLC Airport",
+          "configuredLag": -75,
+          "firedDays": 1,
+          "directionMatchDays": 0,
+          "avgSpeed": 13.8,
+          "avgOnsetHour": 18,
+          "optional": false
+        },
+        "KUTPARKCITY4": {
+          "name": "Park City (WU)",
+          "configuredLag": -45,
+          "firedDays": 13,
+          "directionMatchDays": 0,
+          "avgSpeed": 6.1,
+          "avgOnsetHour": 13.4,
+          "optional": true
+        },
+        "KUTWANSH1": {
+          "name": "Wanship (WU)",
+          "configuredLag": -20,
+          "firedDays": 18,
+          "directionMatchDays": 0,
+          "avgSpeed": 5,
+          "avgOnsetHour": 11.7,
+          "optional": true
+        },
+        "KUTCOALV2": {
+          "name": "Coalville (WU)",
+          "configuredLag": 0,
+          "firedDays": 18,
+          "directionMatchDays": 0,
+          "avgSpeed": 6.8,
+          "avgOnsetHour": 12.8,
+          "optional": false
+        }
+      },
+      "lagErrors": {
+        "KSLC": [
+          {
+            "date": "2026-05-04",
+            "actualLagMinutes": 180,
+            "configuredLag": -75,
+            "error": 255
+          }
+        ],
+        "KUTPARKCITY4": [
+          {
+            "date": "2026-05-04",
+            "actualLagMinutes": 0,
+            "configuredLag": -45,
+            "error": 45
+          },
+          {
+            "date": "2026-05-07",
+            "actualLagMinutes": 120,
+            "configuredLag": -45,
+            "error": 165
+          },
+          {
+            "date": "2026-05-08",
+            "actualLagMinutes": -60,
+            "configuredLag": -45,
+            "error": -15
+          },
+          {
+            "date": "2026-05-09",
+            "actualLagMinutes": -120,
+            "configuredLag": -45,
+            "error": -75
+          },
+          {
+            "date": "2026-05-11",
+            "actualLagMinutes": 60,
+            "configuredLag": -45,
+            "error": 105
+          },
+          {
+            "date": "2026-05-23",
+            "actualLagMinutes": 60,
+            "configuredLag": -45,
+            "error": 105
+          },
+          {
+            "date": "2026-05-24",
+            "actualLagMinutes": 60,
+            "configuredLag": -45,
+            "error": 105
+          },
+          {
+            "date": "2026-05-29",
+            "actualLagMinutes": 0,
+            "configuredLag": -45,
+            "error": 45
+          },
+          {
+            "date": "2026-05-30",
+            "actualLagMinutes": 480,
+            "configuredLag": -45,
+            "error": 525
+          },
+          {
+            "date": "2026-06-01",
+            "actualLagMinutes": 120,
+            "configuredLag": -45,
+            "error": 165
+          }
+        ],
+        "KUTWANSH1": [
+          {
+            "date": "2026-05-04",
+            "actualLagMinutes": -240,
+            "configuredLag": -20,
+            "error": -220
+          },
+          {
+            "date": "2026-05-05",
+            "actualLagMinutes": -240,
+            "configuredLag": -20,
+            "error": -220
+          },
+          {
+            "date": "2026-05-07",
+            "actualLagMinutes": 120,
+            "configuredLag": -20,
+            "error": 140
+          },
+          {
+            "date": "2026-05-08",
+            "actualLagMinutes": -60,
+            "configuredLag": -20,
+            "error": -40
+          },
+          {
+            "date": "2026-05-11",
+            "actualLagMinutes": 0,
+            "configuredLag": -20,
+            "error": 20
+          },
+          {
+            "date": "2026-05-13",
+            "actualLagMinutes": 360,
+            "configuredLag": -20,
+            "error": 380
+          },
+          {
+            "date": "2026-05-16",
+            "actualLagMinutes": 0,
+            "configuredLag": -20,
+            "error": 20
+          },
+          {
+            "date": "2026-05-24",
+            "actualLagMinutes": 60,
+            "configuredLag": -20,
+            "error": 80
+          },
+          {
+            "date": "2026-05-25",
+            "actualLagMinutes": 0,
+            "configuredLag": -20,
+            "error": 20
+          },
+          {
+            "date": "2026-05-29",
+            "actualLagMinutes": -360,
+            "configuredLag": -20,
+            "error": -340
+          },
+          {
+            "date": "2026-05-30",
+            "actualLagMinutes": -60,
+            "configuredLag": -20,
+            "error": -40
+          },
+          {
+            "date": "2026-05-31",
+            "actualLagMinutes": 0,
+            "configuredLag": -20,
+            "error": 20
+          },
+          {
+            "date": "2026-06-01",
+            "actualLagMinutes": 120,
+            "configuredLag": -20,
+            "error": 140
+          }
+        ],
+        "KUTCOALV2": []
+      },
+      "speedRatioActuals": {},
+      "lagSummary": {
+        "KSLC": {
+          "samples": 1,
+          "configuredLag": -75,
+          "actualAvgLag": 180,
+          "meanError": 255,
+          "mae": 255,
+          "recommendedLag": 180
+        },
+        "KUTPARKCITY4": {
+          "samples": 10,
+          "configuredLag": -45,
+          "actualAvgLag": 72,
+          "meanError": 117,
+          "mae": 135,
+          "recommendedLag": 72
+        },
+        "KUTWANSH1": {
+          "samples": 13,
+          "configuredLag": -20,
+          "actualAvgLag": -23,
+          "meanError": -3,
+          "mae": 129,
+          "recommendedLag": -23
+        },
+        "KUTCOALV2": {
+          "samples": 0
+        }
+      },
+      "speedRatioSummary": {}
+    },
+    {
+      "chainKey": "east-canyon:weber_corridor",
+      "label": "Weber Canyon → East Canyon",
+      "flowDir": "SW → NE",
+      "totalDays": 31,
+      "signalDays": 23,
+      "arrivedDays": 14,
+      "hitRate": 61,
+      "nodeStats": {
+        "KSLC": {
+          "name": "SLC Airport",
+          "configuredLag": -75,
+          "firedDays": 1,
+          "directionMatchDays": 0,
+          "avgSpeed": 13.8,
+          "avgOnsetHour": 18,
+          "optional": false
+        },
+        "KUTHENEF1": {
+          "name": "Henefer (WU)",
+          "configuredLag": -30,
+          "firedDays": 23,
+          "directionMatchDays": 0,
+          "avgSpeed": 5.3,
+          "avgOnsetHour": 12.2,
+          "optional": true
+        },
+        "KUTMORGA4": {
+          "name": "Morgan (WU)",
+          "configuredLag": 0,
+          "firedDays": 17,
+          "directionMatchDays": 0,
+          "avgSpeed": 6.4,
+          "avgOnsetHour": 13.8,
+          "optional": false
+        }
+      },
+      "lagErrors": {
+        "KSLC": [
+          {
+            "date": "2026-05-04",
+            "actualLagMinutes": 240,
+            "configuredLag": -75,
+            "error": 315
+          }
+        ],
+        "KUTHENEF1": [
+          {
+            "date": "2026-05-03",
+            "actualLagMinutes": -120,
+            "configuredLag": -30,
+            "error": -90
+          },
+          {
+            "date": "2026-05-04",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          },
+          {
+            "date": "2026-05-07",
+            "actualLagMinutes": -120,
+            "configuredLag": -30,
+            "error": -90
+          },
+          {
+            "date": "2026-05-08",
+            "actualLagMinutes": -120,
+            "configuredLag": -30,
+            "error": -90
+          },
+          {
+            "date": "2026-05-11",
+            "actualLagMinutes": -60,
+            "configuredLag": -30,
+            "error": -30
+          },
+          {
+            "date": "2026-05-13",
+            "actualLagMinutes": 60,
+            "configuredLag": -30,
+            "error": 90
+          },
+          {
+            "date": "2026-05-16",
+            "actualLagMinutes": 60,
+            "configuredLag": -30,
+            "error": 90
+          },
+          {
+            "date": "2026-05-17",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          },
+          {
+            "date": "2026-05-21",
+            "actualLagMinutes": 240,
+            "configuredLag": -30,
+            "error": 270
+          },
+          {
+            "date": "2026-05-24",
+            "actualLagMinutes": -60,
+            "configuredLag": -30,
+            "error": -30
+          },
+          {
+            "date": "2026-05-26",
+            "actualLagMinutes": 60,
+            "configuredLag": -30,
+            "error": 90
+          },
+          {
+            "date": "2026-05-29",
+            "actualLagMinutes": -360,
+            "configuredLag": -30,
+            "error": -330
+          },
+          {
+            "date": "2026-05-30",
+            "actualLagMinutes": -540,
+            "configuredLag": -30,
+            "error": -510
+          },
+          {
+            "date": "2026-06-01",
+            "actualLagMinutes": -60,
+            "configuredLag": -30,
+            "error": -30
+          }
+        ],
+        "KUTMORGA4": []
+      },
+      "speedRatioActuals": {},
+      "lagSummary": {
+        "KSLC": {
+          "samples": 1,
+          "configuredLag": -75,
+          "actualAvgLag": 240,
+          "meanError": 315,
+          "mae": 315,
+          "recommendedLag": 240
+        },
+        "KUTHENEF1": {
+          "samples": 14,
+          "configuredLag": -30,
+          "actualAvgLag": -73,
+          "meanError": -43,
+          "mae": 129,
+          "recommendedLag": -73
+        },
+        "KUTMORGA4": {
+          "samples": 0
+        }
+      },
+      "speedRatioSummary": {}
+    },
+    {
+      "chainKey": "yuba:i15_south",
+      "label": "I-15 South → Yuba",
+      "flowDir": "S → N (I-15)",
+      "totalDays": 31,
+      "signalDays": 13,
+      "arrivedDays": 13,
+      "hitRate": 100,
+      "nodeStats": {
+        "KPVU": {
+          "name": "Provo Airport",
+          "configuredLag": -90,
+          "firedDays": 5,
+          "directionMatchDays": 0,
+          "avgSpeed": 10.3,
+          "avgOnsetHour": 13.2,
+          "optional": false
+        },
+        "QSF": {
+          "name": "Spanish Fork Canyon",
+          "configuredLag": -75,
+          "firedDays": 7,
+          "directionMatchDays": 0,
+          "avgSpeed": 8.8,
+          "avgOnsetHour": 14.7,
+          "optional": false
+        },
+        "UTRKY": {
+          "name": "Rocky Ridge (UDOT)",
+          "configuredLag": -30,
+          "firedDays": 13,
+          "directionMatchDays": 0,
+          "avgSpeed": 6.9,
+          "avgOnsetHour": 11,
+          "optional": false
+        },
+        "UTLMP": {
+          "name": "Lampson Canyon (UDOT)",
+          "configuredLag": 0,
+          "firedDays": 15,
+          "directionMatchDays": 0,
+          "avgSpeed": 6.9,
+          "avgOnsetHour": 10,
+          "optional": false
+        }
+      },
+      "lagErrors": {
+        "KPVU": [
+          {
+            "date": "2026-05-13",
+            "actualLagMinutes": 240,
+            "configuredLag": -90,
+            "error": 330
+          },
+          {
+            "date": "2026-05-26",
+            "actualLagMinutes": 180,
+            "configuredLag": -90,
+            "error": 270
+          },
+          {
+            "date": "2026-05-27",
+            "actualLagMinutes": 240,
+            "configuredLag": -90,
+            "error": 330
+          },
+          {
+            "date": "2026-05-28",
+            "actualLagMinutes": 120,
+            "configuredLag": -90,
+            "error": 210
+          },
+          {
+            "date": "2026-05-29",
+            "actualLagMinutes": 120,
+            "configuredLag": -90,
+            "error": 210
+          }
+        ],
+        "QSF": [
+          {
+            "date": "2026-05-11",
+            "actualLagMinutes": 480,
+            "configuredLag": -75,
+            "error": 555
+          },
+          {
+            "date": "2026-05-12",
+            "actualLagMinutes": 540,
+            "configuredLag": -75,
+            "error": 615
+          },
+          {
+            "date": "2026-05-13",
+            "actualLagMinutes": 180,
+            "configuredLag": -75,
+            "error": 255
+          },
+          {
+            "date": "2026-05-26",
+            "actualLagMinutes": 240,
+            "configuredLag": -75,
+            "error": 315
+          },
+          {
+            "date": "2026-05-27",
+            "actualLagMinutes": 240,
+            "configuredLag": -75,
+            "error": 315
+          },
+          {
+            "date": "2026-05-28",
+            "actualLagMinutes": 120,
+            "configuredLag": -75,
+            "error": 195
+          },
+          {
+            "date": "2026-05-29",
+            "actualLagMinutes": 120,
+            "configuredLag": -75,
+            "error": 195
+          }
+        ],
+        "UTRKY": [
+          {
+            "date": "2026-05-04",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          },
+          {
+            "date": "2026-05-05",
+            "actualLagMinutes": 120,
+            "configuredLag": -30,
+            "error": 150
+          },
+          {
+            "date": "2026-05-07",
+            "actualLagMinutes": 120,
+            "configuredLag": -30,
+            "error": 150
+          },
+          {
+            "date": "2026-05-11",
+            "actualLagMinutes": 60,
+            "configuredLag": -30,
+            "error": 90
+          },
+          {
+            "date": "2026-05-12",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          },
+          {
+            "date": "2026-05-13",
+            "actualLagMinutes": 60,
+            "configuredLag": -30,
+            "error": 90
+          },
+          {
+            "date": "2026-05-23",
+            "actualLagMinutes": 60,
+            "configuredLag": -30,
+            "error": 90
+          },
+          {
+            "date": "2026-05-24",
+            "actualLagMinutes": 60,
+            "configuredLag": -30,
+            "error": 90
+          },
+          {
+            "date": "2026-05-25",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          },
+          {
+            "date": "2026-05-26",
+            "actualLagMinutes": 60,
+            "configuredLag": -30,
+            "error": 90
+          },
+          {
+            "date": "2026-05-27",
+            "actualLagMinutes": 180,
+            "configuredLag": -30,
+            "error": 210
+          },
+          {
+            "date": "2026-05-28",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          },
+          {
+            "date": "2026-05-29",
+            "actualLagMinutes": 180,
+            "configuredLag": -30,
+            "error": 210
+          }
+        ],
+        "UTLMP": []
+      },
+      "speedRatioActuals": {},
+      "lagSummary": {
+        "KPVU": {
+          "samples": 5,
+          "configuredLag": -90,
+          "actualAvgLag": 180,
+          "meanError": 270,
+          "mae": 270,
+          "recommendedLag": 180
+        },
+        "QSF": {
+          "samples": 7,
+          "configuredLag": -75,
+          "actualAvgLag": 274,
+          "meanError": 349,
+          "mae": 349,
+          "recommendedLag": 274
+        },
+        "UTRKY": {
+          "samples": 13,
+          "configuredLag": -30,
+          "actualAvgLag": 69,
+          "meanError": 99,
+          "mae": 99,
+          "recommendedLag": 69
+        },
+        "UTLMP": {
+          "samples": 0
+        }
+      },
+      "speedRatioSummary": {}
+    },
+    {
+      "chainKey": "sand-hollow:desert_thermal",
+      "label": "Desert Thermal → Sand Hollow",
+      "flowDir": "SW → NE",
+      "totalDays": 31,
+      "signalDays": 29,
+      "arrivedDays": 12,
+      "hitRate": 41,
+      "nodeStats": {
+        "KCDC": {
+          "name": "Cedar City Regional",
+          "configuredLag": -75,
+          "firedDays": 19,
+          "directionMatchDays": 0,
+          "avgSpeed": 9.5,
+          "avgOnsetHour": 12.3,
+          "optional": false
+        },
+        "KUTHURRIC3": {
+          "name": "Hurricane (WU)",
+          "configuredLag": -30,
+          "firedDays": 29,
+          "directionMatchDays": 0,
+          "avgSpeed": 7.3,
+          "avgOnsetHour": 12.4,
+          "optional": true
+        },
+        "KSGU": {
+          "name": "St George Airport",
+          "configuredLag": 0,
+          "firedDays": 13,
+          "directionMatchDays": 0,
+          "avgSpeed": 8.5,
+          "avgOnsetHour": 13.5,
+          "optional": false
+        }
+      },
+      "lagErrors": {
+        "KCDC": [
+          {
+            "date": "2026-05-03",
+            "actualLagMinutes": -180,
+            "configuredLag": -75,
+            "error": -105
+          },
+          {
+            "date": "2026-05-04",
+            "actualLagMinutes": -180,
+            "configuredLag": -75,
+            "error": -105
+          },
+          {
+            "date": "2026-05-07",
+            "actualLagMinutes": 60,
+            "configuredLag": -75,
+            "error": 135
+          },
+          {
+            "date": "2026-05-13",
+            "actualLagMinutes": -300,
+            "configuredLag": -75,
+            "error": -225
+          },
+          {
+            "date": "2026-05-16",
+            "actualLagMinutes": -360,
+            "configuredLag": -75,
+            "error": -285
+          },
+          {
+            "date": "2026-05-17",
+            "actualLagMinutes": -60,
+            "configuredLag": -75,
+            "error": 15
+          },
+          {
+            "date": "2026-05-26",
+            "actualLagMinutes": -60,
+            "configuredLag": -75,
+            "error": 15
+          },
+          {
+            "date": "2026-05-27",
+            "actualLagMinutes": 420,
+            "configuredLag": -75,
+            "error": 495
+          },
+          {
+            "date": "2026-05-28",
+            "actualLagMinutes": -180,
+            "configuredLag": -75,
+            "error": -105
+          }
+        ],
+        "KUTHURRIC3": [
+          {
+            "date": "2026-05-03",
+            "actualLagMinutes": -60,
+            "configuredLag": -30,
+            "error": -30
+          },
+          {
+            "date": "2026-05-04",
+            "actualLagMinutes": -60,
+            "configuredLag": -30,
+            "error": -30
+          },
+          {
+            "date": "2026-05-05",
+            "actualLagMinutes": -480,
+            "configuredLag": -30,
+            "error": -450
+          },
+          {
+            "date": "2026-05-06",
+            "actualLagMinutes": -180,
+            "configuredLag": -30,
+            "error": -150
+          },
+          {
+            "date": "2026-05-07",
+            "actualLagMinutes": -420,
+            "configuredLag": -30,
+            "error": -390
+          },
+          {
+            "date": "2026-05-08",
+            "actualLagMinutes": -120,
+            "configuredLag": -30,
+            "error": -90
+          },
+          {
+            "date": "2026-05-13",
+            "actualLagMinutes": -120,
+            "configuredLag": -30,
+            "error": -90
+          },
+          {
+            "date": "2026-05-16",
+            "actualLagMinutes": -300,
+            "configuredLag": -30,
+            "error": -270
+          },
+          {
+            "date": "2026-05-17",
+            "actualLagMinutes": -180,
+            "configuredLag": -30,
+            "error": -150
+          },
+          {
+            "date": "2026-05-26",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          },
+          {
+            "date": "2026-05-27",
+            "actualLagMinutes": 60,
+            "configuredLag": -30,
+            "error": 90
+          },
+          {
+            "date": "2026-05-28",
+            "actualLagMinutes": -240,
+            "configuredLag": -30,
+            "error": -210
+          }
+        ],
+        "KSGU": []
+      },
+      "speedRatioActuals": {},
+      "lagSummary": {
+        "KCDC": {
+          "samples": 9,
+          "configuredLag": -75,
+          "actualAvgLag": -93,
+          "meanError": -18,
+          "mae": 165,
+          "recommendedLag": -93
+        },
+        "KUTHURRIC3": {
+          "samples": 12,
+          "configuredLag": -30,
+          "actualAvgLag": -175,
+          "meanError": -145,
+          "mae": 165,
+          "recommendedLag": -175
+        },
+        "KSGU": {
+          "samples": 0
+        }
+      },
+      "speedRatioSummary": {}
+    },
+    {
+      "chainKey": "pineview:canyon_flow",
+      "label": "Ogden Canyon → Pineview",
+      "flowDir": "W → E",
+      "totalDays": 31,
+      "signalDays": 26,
+      "arrivedDays": 21,
+      "hitRate": 81,
+      "nodeStats": {
+        "KOGD": {
+          "name": "Ogden Airport",
+          "configuredLag": -60,
+          "firedDays": 22,
+          "directionMatchDays": 0,
+          "avgSpeed": 6.9,
+          "avgOnsetHour": 13.6,
+          "optional": false
+        },
+        "UTHUN": {
+          "name": "Huntsville (UDOT)",
+          "configuredLag": -20,
+          "firedDays": 25,
+          "directionMatchDays": 0,
+          "avgSpeed": 5.7,
+          "avgOnsetHour": 13.4,
+          "optional": false
+        },
+        "UTPVD": {
+          "name": "Pineview Dam",
+          "configuredLag": 0,
+          "firedDays": 21,
+          "directionMatchDays": 0,
+          "avgSpeed": 6.8,
+          "avgOnsetHour": 13.6,
+          "optional": false
+        }
+      },
+      "lagErrors": {
+        "KOGD": [
+          {
+            "date": "2026-05-03",
+            "actualLagMinutes": 60,
+            "configuredLag": -60,
+            "error": 120
+          },
+          {
+            "date": "2026-05-04",
+            "actualLagMinutes": -180,
+            "configuredLag": -60,
+            "error": -120
+          },
+          {
+            "date": "2026-05-07",
+            "actualLagMinutes": 60,
+            "configuredLag": -60,
+            "error": 120
+          },
+          {
+            "date": "2026-05-08",
+            "actualLagMinutes": 60,
+            "configuredLag": -60,
+            "error": 120
+          },
+          {
+            "date": "2026-05-09",
+            "actualLagMinutes": 120,
+            "configuredLag": -60,
+            "error": 180
+          },
+          {
+            "date": "2026-05-11",
+            "actualLagMinutes": 0,
+            "configuredLag": -60,
+            "error": 60
+          },
+          {
+            "date": "2026-05-12",
+            "actualLagMinutes": -60,
+            "configuredLag": -60,
+            "error": 0
+          },
+          {
+            "date": "2026-05-14",
+            "actualLagMinutes": -60,
+            "configuredLag": -60,
+            "error": 0
+          },
+          {
+            "date": "2026-05-15",
+            "actualLagMinutes": 0,
+            "configuredLag": -60,
+            "error": 60
+          },
+          {
+            "date": "2026-05-16",
+            "actualLagMinutes": 60,
+            "configuredLag": -60,
+            "error": 120
+          },
+          {
+            "date": "2026-05-19",
+            "actualLagMinutes": -120,
+            "configuredLag": -60,
+            "error": -60
+          },
+          {
+            "date": "2026-05-20",
+            "actualLagMinutes": 0,
+            "configuredLag": -60,
+            "error": 60
+          },
+          {
+            "date": "2026-05-21",
+            "actualLagMinutes": 60,
+            "configuredLag": -60,
+            "error": 120
+          },
+          {
+            "date": "2026-05-23",
+            "actualLagMinutes": 0,
+            "configuredLag": -60,
+            "error": 60
+          },
+          {
+            "date": "2026-05-24",
+            "actualLagMinutes": 180,
+            "configuredLag": -60,
+            "error": 240
+          },
+          {
+            "date": "2026-05-29",
+            "actualLagMinutes": -360,
+            "configuredLag": -60,
+            "error": -300
+          },
+          {
+            "date": "2026-05-31",
+            "actualLagMinutes": 60,
+            "configuredLag": -60,
+            "error": 120
+          },
+          {
+            "date": "2026-06-01",
+            "actualLagMinutes": -60,
+            "configuredLag": -60,
+            "error": 0
+          }
+        ],
+        "UTHUN": [
+          {
+            "date": "2026-05-02",
+            "actualLagMinutes": -120,
+            "configuredLag": -20,
+            "error": -100
+          },
+          {
+            "date": "2026-05-03",
+            "actualLagMinutes": -60,
+            "configuredLag": -20,
+            "error": -40
+          },
+          {
+            "date": "2026-05-04",
+            "actualLagMinutes": -60,
+            "configuredLag": -20,
+            "error": -40
+          },
+          {
+            "date": "2026-05-07",
+            "actualLagMinutes": -60,
+            "configuredLag": -20,
+            "error": -40
+          },
+          {
+            "date": "2026-05-08",
+            "actualLagMinutes": 0,
+            "configuredLag": -20,
+            "error": 20
+          },
+          {
+            "date": "2026-05-09",
+            "actualLagMinutes": 0,
+            "configuredLag": -20,
+            "error": 20
+          },
+          {
+            "date": "2026-05-11",
+            "actualLagMinutes": -60,
+            "configuredLag": -20,
+            "error": -40
+          },
+          {
+            "date": "2026-05-12",
+            "actualLagMinutes": -60,
+            "configuredLag": -20,
+            "error": -40
+          },
+          {
+            "date": "2026-05-13",
+            "actualLagMinutes": -180,
+            "configuredLag": -20,
+            "error": -160
+          },
+          {
+            "date": "2026-05-14",
+            "actualLagMinutes": -60,
+            "configuredLag": -20,
+            "error": -40
+          },
+          {
+            "date": "2026-05-15",
+            "actualLagMinutes": -60,
+            "configuredLag": -20,
+            "error": -40
+          },
+          {
+            "date": "2026-05-16",
+            "actualLagMinutes": 0,
+            "configuredLag": -20,
+            "error": 20
+          },
+          {
+            "date": "2026-05-19",
+            "actualLagMinutes": -180,
+            "configuredLag": -20,
+            "error": -160
+          },
+          {
+            "date": "2026-05-20",
+            "actualLagMinutes": 0,
+            "configuredLag": -20,
+            "error": 20
+          },
+          {
+            "date": "2026-05-21",
+            "actualLagMinutes": 0,
+            "configuredLag": -20,
+            "error": 20
+          },
+          {
+            "date": "2026-05-23",
+            "actualLagMinutes": 0,
+            "configuredLag": -20,
+            "error": 20
+          },
+          {
+            "date": "2026-05-24",
+            "actualLagMinutes": 240,
+            "configuredLag": -20,
+            "error": 260
+          },
+          {
+            "date": "2026-05-29",
+            "actualLagMinutes": -60,
+            "configuredLag": -20,
+            "error": -40
+          },
+          {
+            "date": "2026-05-30",
+            "actualLagMinutes": 0,
+            "configuredLag": -20,
+            "error": 20
+          },
+          {
+            "date": "2026-05-31",
+            "actualLagMinutes": 0,
+            "configuredLag": -20,
+            "error": 20
+          },
+          {
+            "date": "2026-06-01",
+            "actualLagMinutes": 0,
+            "configuredLag": -20,
+            "error": 20
+          }
+        ],
+        "UTPVD": []
+      },
+      "speedRatioActuals": {},
+      "lagSummary": {
+        "KOGD": {
+          "samples": 18,
+          "configuredLag": -60,
+          "actualAvgLag": -10,
+          "meanError": 50,
+          "mae": 103,
+          "recommendedLag": -10
+        },
+        "UTHUN": {
+          "samples": 21,
+          "configuredLag": -20,
+          "actualAvgLag": -34,
+          "meanError": -14,
+          "mae": 56,
+          "recommendedLag": -34
+        },
+        "UTPVD": {
+          "samples": 0
+        }
+      },
+      "speedRatioSummary": {}
+    },
+    {
+      "chainKey": "sulfur-creek:west_flow",
+      "label": "West Jet Stream → Sulphur Creek",
+      "flowDir": "W → E (I-80 corridor)",
+      "totalDays": 31,
+      "signalDays": 23,
+      "arrivedDays": 20,
+      "hitRate": 87,
+      "nodeStats": {
+        "KSLC": {
+          "name": "SLC Airport",
+          "configuredLag": -90,
+          "firedDays": 4,
+          "directionMatchDays": 0,
+          "avgSpeed": 9,
+          "avgOnsetHour": 14,
+          "optional": false
+        },
+        "UT1": {
+          "name": "Wahsatch Hill EB",
+          "configuredLag": -30,
+          "firedDays": 18,
+          "directionMatchDays": 0,
+          "avgSpeed": 11.5,
+          "avgOnsetHour": 13.2,
+          "optional": false
+        },
+        "KEVW": {
+          "name": "Evanston Airport",
+          "configuredLag": -15,
+          "firedDays": 21,
+          "directionMatchDays": 0,
+          "avgSpeed": 10.6,
+          "avgOnsetHour": 13.3,
+          "optional": false
+        },
+        "KFIR": {
+          "name": "First Divide (WYDOT)",
+          "configuredLag": 0,
+          "firedDays": 22,
+          "directionMatchDays": 0,
+          "avgSpeed": 11.2,
+          "avgOnsetHour": 12,
+          "optional": false
+        }
+      },
+      "lagErrors": {
+        "KSLC": [
+          {
+            "date": "2026-05-06",
+            "actualLagMinutes": -60,
+            "configuredLag": -90,
+            "error": 30
+          },
+          {
+            "date": "2026-05-21",
+            "actualLagMinutes": 60,
+            "configuredLag": -90,
+            "error": 150
+          }
+        ],
+        "UT1": [
+          {
+            "date": "2026-05-02",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          },
+          {
+            "date": "2026-05-03",
+            "actualLagMinutes": 60,
+            "configuredLag": -30,
+            "error": 90
+          },
+          {
+            "date": "2026-05-04",
+            "actualLagMinutes": 360,
+            "configuredLag": -30,
+            "error": 390
+          },
+          {
+            "date": "2026-05-07",
+            "actualLagMinutes": 120,
+            "configuredLag": -30,
+            "error": 150
+          },
+          {
+            "date": "2026-05-08",
+            "actualLagMinutes": 180,
+            "configuredLag": -30,
+            "error": 210
+          },
+          {
+            "date": "2026-05-09",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          },
+          {
+            "date": "2026-05-11",
+            "actualLagMinutes": 180,
+            "configuredLag": -30,
+            "error": 210
+          },
+          {
+            "date": "2026-05-14",
+            "actualLagMinutes": 360,
+            "configuredLag": -30,
+            "error": 390
+          },
+          {
+            "date": "2026-05-15",
+            "actualLagMinutes": 60,
+            "configuredLag": -30,
+            "error": 90
+          },
+          {
+            "date": "2026-05-16",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          },
+          {
+            "date": "2026-05-20",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          },
+          {
+            "date": "2026-05-21",
+            "actualLagMinutes": 60,
+            "configuredLag": -30,
+            "error": 90
+          },
+          {
+            "date": "2026-05-23",
+            "actualLagMinutes": 60,
+            "configuredLag": -30,
+            "error": 90
+          },
+          {
+            "date": "2026-05-24",
+            "actualLagMinutes": 240,
+            "configuredLag": -30,
+            "error": 270
+          },
+          {
+            "date": "2026-05-29",
+            "actualLagMinutes": 420,
+            "configuredLag": -30,
+            "error": 450
+          },
+          {
+            "date": "2026-05-30",
+            "actualLagMinutes": -60,
+            "configuredLag": -30,
+            "error": -30
+          },
+          {
+            "date": "2026-05-31",
+            "actualLagMinutes": 120,
+            "configuredLag": -30,
+            "error": 150
+          },
+          {
+            "date": "2026-06-01",
+            "actualLagMinutes": 0,
+            "configuredLag": -30,
+            "error": 30
+          }
+        ],
+        "KEVW": [
+          {
+            "date": "2026-05-02",
+            "actualLagMinutes": 60,
+            "configuredLag": -15,
+            "error": 75
+          },
+          {
+            "date": "2026-05-03",
+            "actualLagMinutes": 0,
+            "configuredLag": -15,
+            "error": 15
+          },
+          {
+            "date": "2026-05-04",
+            "actualLagMinutes": 240,
+            "configuredLag": -15,
+            "error": 255
+          },
+          {
+            "date": "2026-05-05",
+            "actualLagMinutes": 0,
+            "configuredLag": -15,
+            "error": 15
+          },
+          {
+            "date": "2026-05-06",
+            "actualLagMinutes": 120,
+            "configuredLag": -15,
+            "error": 135
+          },
+          {
+            "date": "2026-05-07",
+            "actualLagMinutes": 60,
+            "configuredLag": -15,
+            "error": 75
+          },
+          {
+            "date": "2026-05-08",
+            "actualLagMinutes": 180,
+            "configuredLag": -15,
+            "error": 195
+          },
+          {
+            "date": "2026-05-09",
+            "actualLagMinutes": -60,
+            "configuredLag": -15,
+            "error": -45
+          },
+          {
+            "date": "2026-05-11",
+            "actualLagMinutes": 180,
+            "configuredLag": -15,
+            "error": 195
+          },
+          {
+            "date": "2026-05-14",
+            "actualLagMinutes": -60,
+            "configuredLag": -15,
+            "error": -45
+          },
+          {
+            "date": "2026-05-15",
+            "actualLagMinutes": 60,
+            "configuredLag": -15,
+            "error": 75
+          },
+          {
+            "date": "2026-05-16",
+            "actualLagMinutes": 0,
+            "configuredLag": -15,
+            "error": 15
+          },
+          {
+            "date": "2026-05-20",
+            "actualLagMinutes": 0,
+            "configuredLag": -15,
+            "error": 15
+          },
+          {
+            "date": "2026-05-21",
+            "actualLagMinutes": -60,
+            "configuredLag": -15,
+            "error": -45
+          },
+          {
+            "date": "2026-05-23",
+            "actualLagMinutes": 60,
+            "configuredLag": -15,
+            "error": 75
+          },
+          {
+            "date": "2026-05-24",
+            "actualLagMinutes": 360,
+            "configuredLag": -15,
+            "error": 375
+          },
+          {
+            "date": "2026-05-29",
+            "actualLagMinutes": 420,
+            "configuredLag": -15,
+            "error": 435
+          },
+          {
+            "date": "2026-05-30",
+            "actualLagMinutes": -60,
+            "configuredLag": -15,
+            "error": -45
+          },
+          {
+            "date": "2026-05-31",
+            "actualLagMinutes": -60,
+            "configuredLag": -15,
+            "error": -45
+          },
+          {
+            "date": "2026-06-01",
+            "actualLagMinutes": 120,
+            "configuredLag": -15,
+            "error": 135
+          }
+        ],
+        "KFIR": []
+      },
+      "speedRatioActuals": {
+        "UT1": [
+          {
+            "date": "2026-05-02",
+            "nodeSpeed": 8.1,
+            "targetSpeed": 10.2,
+            "actualRatio": 0.79,
+            "configRatio": 1.1
+          },
+          {
+            "date": "2026-05-03",
+            "nodeSpeed": 8.6,
+            "targetSpeed": 10.2,
+            "actualRatio": 0.84,
+            "configRatio": 1.1
+          },
+          {
+            "date": "2026-05-04",
+            "nodeSpeed": 13.4,
+            "targetSpeed": 9,
+            "actualRatio": 1.49,
+            "configRatio": 1.1
+          },
+          {
+            "date": "2026-05-07",
+            "nodeSpeed": 16.4,
+            "targetSpeed": 20.9,
+            "actualRatio": 0.78,
+            "configRatio": 1.1
+          },
+          {
+            "date": "2026-05-08",
+            "nodeSpeed": 10.6,
+            "targetSpeed": 8,
+            "actualRatio": 1.32,
+            "configRatio": 1.1
+          },
+          {
+            "date": "2026-05-09",
+            "nodeSpeed": 9.7,
+            "targetSpeed": 11.4,
+            "actualRatio": 0.85,
+            "configRatio": 1.1
+          },
+          {
+            "date": "2026-05-11",
+            "nodeSpeed": 14.3,
+            "targetSpeed": 9.6,
+            "actualRatio": 1.49,
+            "configRatio": 1.1
+          },
+          {
+            "date": "2026-05-14",
+            "nodeSpeed": 13.2,
+            "targetSpeed": 10,
+            "actualRatio": 1.32,
+            "configRatio": 1.1
+          },
+          {
+            "date": "2026-05-15",
+            "nodeSpeed": 11.8,
+            "targetSpeed": 13.5,
+            "actualRatio": 0.87,
+            "configRatio": 1.1
+          },
+          {
+            "date": "2026-05-16",
+            "nodeSpeed": 14.2,
+            "targetSpeed": 14.8,
+            "actualRatio": 0.96,
+            "configRatio": 1.1
+          },
+          {
+            "date": "2026-05-20",
+            "nodeSpeed": 8.6,
+            "targetSpeed": 12.2,
+            "actualRatio": 0.7,
+            "configRatio": 1.1
+          },
+          {
+            "date": "2026-05-21",
+            "nodeSpeed": 12.6,
+            "targetSpeed": 18.2,
+            "actualRatio": 0.69,
+            "configRatio": 1.1
+          },
+          {
+            "date": "2026-05-23",
+            "nodeSpeed": 13.4,
+            "targetSpeed": 12.9,
+            "actualRatio": 1.04,
+            "configRatio": 1.1
+          },
+          {
+            "date": "2026-05-24",
+            "nodeSpeed": 10.4,
+            "targetSpeed": 9.4,
+            "actualRatio": 1.11,
+            "configRatio": 1.1
+          },
+          {
+            "date": "2026-05-29",
+            "nodeSpeed": 11.5,
+            "targetSpeed": 8.8,
+            "actualRatio": 1.31,
+            "configRatio": 1.1
+          },
+          {
+            "date": "2026-05-30",
+            "nodeSpeed": 9.5,
+            "targetSpeed": 10,
+            "actualRatio": 0.95,
+            "configRatio": 1.1
+          },
+          {
+            "date": "2026-05-31",
+            "nodeSpeed": 12.5,
+            "targetSpeed": 9.3,
+            "actualRatio": 1.34,
+            "configRatio": 1.1
+          },
+          {
+            "date": "2026-06-01",
+            "nodeSpeed": 8.6,
+            "targetSpeed": 8.2,
+            "actualRatio": 1.05,
+            "configRatio": 1.1
+          }
+        ],
+        "KEVW": [
+          {
+            "date": "2026-05-02",
+            "nodeSpeed": 8.7,
+            "targetSpeed": 10.2,
+            "actualRatio": 0.85,
+            "configRatio": 0.85
+          },
+          {
+            "date": "2026-05-03",
+            "nodeSpeed": 7.3,
+            "targetSpeed": 10.2,
+            "actualRatio": 0.72,
+            "configRatio": 0.85
+          },
+          {
+            "date": "2026-05-04",
+            "nodeSpeed": 7.3,
+            "targetSpeed": 9,
+            "actualRatio": 0.81,
+            "configRatio": 0.85
+          },
+          {
+            "date": "2026-05-05",
+            "nodeSpeed": 6.6,
+            "targetSpeed": 8.4,
+            "actualRatio": 0.79,
+            "configRatio": 0.85
+          },
+          {
+            "date": "2026-05-06",
+            "nodeSpeed": 7.7,
+            "targetSpeed": 9.6,
+            "actualRatio": 0.8,
+            "configRatio": 0.85
+          },
+          {
+            "date": "2026-05-07",
+            "nodeSpeed": 18.1,
+            "targetSpeed": 20.9,
+            "actualRatio": 0.87,
+            "configRatio": 0.85
+          },
+          {
+            "date": "2026-05-08",
+            "nodeSpeed": 9.4,
+            "targetSpeed": 8,
+            "actualRatio": 1.18,
+            "configRatio": 0.85
+          },
+          {
+            "date": "2026-05-09",
+            "nodeSpeed": 10.8,
+            "targetSpeed": 11.4,
+            "actualRatio": 0.95,
+            "configRatio": 0.85
+          },
+          {
+            "date": "2026-05-11",
+            "nodeSpeed": 16,
+            "targetSpeed": 9.6,
+            "actualRatio": 1.67,
+            "configRatio": 0.85
+          },
+          {
+            "date": "2026-05-14",
+            "nodeSpeed": 6.9,
+            "targetSpeed": 10,
+            "actualRatio": 0.69,
+            "configRatio": 0.85
+          },
+          {
+            "date": "2026-05-15",
+            "nodeSpeed": 14.1,
+            "targetSpeed": 13.5,
+            "actualRatio": 1.04,
+            "configRatio": 0.85
+          },
+          {
+            "date": "2026-05-16",
+            "nodeSpeed": 15.4,
+            "targetSpeed": 14.8,
+            "actualRatio": 1.04,
+            "configRatio": 0.85
+          },
+          {
+            "date": "2026-05-20",
+            "nodeSpeed": 8.6,
+            "targetSpeed": 12.2,
+            "actualRatio": 0.7,
+            "configRatio": 0.85
+          },
+          {
+            "date": "2026-05-21",
+            "nodeSpeed": 16.7,
+            "targetSpeed": 18.2,
+            "actualRatio": 0.92,
+            "configRatio": 0.85
+          },
+          {
+            "date": "2026-05-23",
+            "nodeSpeed": 14.8,
+            "targetSpeed": 12.9,
+            "actualRatio": 1.15,
+            "configRatio": 0.85
+          },
+          {
+            "date": "2026-05-24",
+            "nodeSpeed": 10.7,
+            "targetSpeed": 9.4,
+            "actualRatio": 1.14,
+            "configRatio": 0.85
+          },
+          {
+            "date": "2026-05-29",
+            "nodeSpeed": 12.6,
+            "targetSpeed": 8.8,
+            "actualRatio": 1.43,
+            "configRatio": 0.85
+          },
+          {
+            "date": "2026-05-30",
+            "nodeSpeed": 6.5,
+            "targetSpeed": 10,
+            "actualRatio": 0.65,
+            "configRatio": 0.85
+          },
+          {
+            "date": "2026-05-31",
+            "nodeSpeed": 7.9,
+            "targetSpeed": 9.3,
+            "actualRatio": 0.85,
+            "configRatio": 0.85
+          },
+          {
+            "date": "2026-06-01",
+            "nodeSpeed": 11.3,
+            "targetSpeed": 8.2,
+            "actualRatio": 1.38,
+            "configRatio": 0.85
+          }
+        ]
+      },
+      "lagSummary": {
+        "KSLC": {
+          "samples": 2,
+          "configuredLag": -90,
+          "actualAvgLag": 0,
+          "meanError": 90,
+          "mae": 90,
+          "recommendedLag": 0
+        },
+        "UT1": {
+          "samples": 18,
+          "configuredLag": -30,
+          "actualAvgLag": 120,
+          "meanError": 150,
+          "mae": 153,
+          "recommendedLag": 120
+        },
+        "KEVW": {
+          "samples": 20,
+          "configuredLag": -15,
+          "actualAvgLag": 78,
+          "meanError": 93,
+          "mae": 116,
+          "recommendedLag": 78
+        },
+        "KFIR": {
+          "samples": 0
+        }
+      },
+      "speedRatioSummary": {
+        "UT1": {
+          "configRatio": 1.1,
+          "actualAvgRatio": 1.05,
+          "samples": 18,
+          "recommendation": null
+        },
+        "KEVW": {
+          "configRatio": 0.85,
+          "actualAvgRatio": 0.98,
+          "samples": 20,
+          "recommendation": null
+        }
+      }
+    },
+    {
+      "chainKey": "sulfur-creek:evanston_local",
+      "label": "Evanston Local → Sulphur Creek",
+      "flowDir": "N → S (Evanston corridor)",
+      "totalDays": 31,
+      "signalDays": 24,
+      "arrivedDays": 21,
+      "hitRate": 88,
+      "nodeStats": {
+        "KEVW": {
+          "name": "Evanston Airport",
+          "configuredLag": -20,
+          "firedDays": 24,
+          "directionMatchDays": 0,
+          "avgSpeed": 9.4,
+          "avgOnsetHour": 12.3,
+          "optional": false
+        },
+        "KFIR": {
+          "name": "First Divide (WYDOT)",
+          "configuredLag": 0,
+          "firedDays": 23,
+          "directionMatchDays": 0,
+          "avgSpeed": 10.5,
+          "avgOnsetHour": 11.2,
+          "optional": false
+        }
+      },
+      "lagErrors": {
+        "KEVW": [
+          {
+            "date": "2026-05-02",
+            "actualLagMinutes": 0,
+            "configuredLag": -20,
+            "error": 20
+          },
+          {
+            "date": "2026-05-03",
+            "actualLagMinutes": 0,
+            "configuredLag": -20,
+            "error": 20
+          },
+          {
+            "date": "2026-05-04",
+            "actualLagMinutes": 60,
+            "configuredLag": -20,
+            "error": 80
+          },
+          {
+            "date": "2026-05-05",
+            "actualLagMinutes": 0,
+            "configuredLag": -20,
+            "error": 20
+          },
+          {
+            "date": "2026-05-06",
+            "actualLagMinutes": 120,
+            "configuredLag": -20,
+            "error": 140
+          },
+          {
+            "date": "2026-05-07",
+            "actualLagMinutes": 60,
+            "configuredLag": -20,
+            "error": 80
+          },
+          {
+            "date": "2026-05-08",
+            "actualLagMinutes": 180,
+            "configuredLag": -20,
+            "error": 200
+          },
+          {
+            "date": "2026-05-09",
+            "actualLagMinutes": 0,
+            "configuredLag": -20,
+            "error": 20
+          },
+          {
+            "date": "2026-05-11",
+            "actualLagMinutes": 180,
+            "configuredLag": -20,
+            "error": 200
+          },
+          {
+            "date": "2026-05-13",
+            "actualLagMinutes": 60,
+            "configuredLag": -20,
+            "error": 80
+          },
+          {
+            "date": "2026-05-14",
+            "actualLagMinutes": -60,
+            "configuredLag": -20,
+            "error": -40
+          },
+          {
+            "date": "2026-05-15",
+            "actualLagMinutes": 60,
+            "configuredLag": -20,
+            "error": 80
+          },
+          {
+            "date": "2026-05-16",
+            "actualLagMinutes": 0,
+            "configuredLag": -20,
+            "error": 20
+          },
+          {
+            "date": "2026-05-20",
+            "actualLagMinutes": -60,
+            "configuredLag": -20,
+            "error": -40
+          },
+          {
+            "date": "2026-05-21",
+            "actualLagMinutes": 180,
+            "configuredLag": -20,
+            "error": 200
+          },
+          {
+            "date": "2026-05-23",
+            "actualLagMinutes": 0,
+            "configuredLag": -20,
+            "error": 20
+          },
+          {
+            "date": "2026-05-24",
+            "actualLagMinutes": 0,
+            "configuredLag": -20,
+            "error": 20
+          },
+          {
+            "date": "2026-05-29",
+            "actualLagMinutes": -60,
+            "configuredLag": -20,
+            "error": -40
+          },
+          {
+            "date": "2026-05-30",
+            "actualLagMinutes": -60,
+            "configuredLag": -20,
+            "error": -40
+          },
+          {
+            "date": "2026-05-31",
+            "actualLagMinutes": -60,
+            "configuredLag": -20,
+            "error": -40
+          },
+          {
+            "date": "2026-06-01",
+            "actualLagMinutes": 0,
+            "configuredLag": -20,
+            "error": 20
+          }
+        ],
+        "KFIR": []
+      },
+      "speedRatioActuals": {},
+      "lagSummary": {
+        "KEVW": {
+          "samples": 21,
+          "configuredLag": -20,
+          "actualAvgLag": 29,
+          "meanError": 49,
+          "mae": 68,
+          "recommendedLag": 29
+        },
+        "KFIR": {
+          "samples": 0
+        }
+      },
+      "speedRatioSummary": {}
+    }
+  ]
+}
